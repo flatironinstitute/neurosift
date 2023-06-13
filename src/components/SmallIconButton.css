@@ -1,0 +1,9 @@
+.SmallIconButton.enabled:hover {
+    background-color:gray;
+    color: white;
+}
+
+.SmallIconButton.disabled {
+    color: gray
+}
+
