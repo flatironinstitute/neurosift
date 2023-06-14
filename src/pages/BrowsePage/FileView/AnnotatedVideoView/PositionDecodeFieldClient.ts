@@ -23,7 +23,7 @@ class PositionDecodeFieldClient {
         this.#jsonlClient = new JsonlClient(uri, rtcshareClient)
     }
     async getFrame(frameIndex: number): Promise<undefined | PositionDecodeFieldFrame> {
-        const d = await this.#jsonlClient.getFrame(frameIndex)
+        const d = await this.#jsonlClient.getRecord(frameIndex + 1)
         if (d) {
             const dr = d as any as PositionDecodeFieldFrameRaw
             const indices = new Uint16Array(_base64ToArrayBuffer(dr.i))
@@ -36,7 +36,7 @@ class PositionDecodeFieldClient {
         else return undefined
     }
     async getHeader(): Promise<PositionDecodeFieldHeader | undefined> {
-        const h = await this.#jsonlClient.getHeader()
+        const h = await this.#jsonlClient.getRecord(0)
         return h ? h as PositionDecodeFieldHeader : undefined
     }
 }
