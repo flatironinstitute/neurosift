@@ -1,4 +1,4 @@
-import { isArrayOf, isEqualTo, isNumber, isOneOf, isString, validateObject, optional, isBoolean } from "@figurl/core-utils"
+import { isArrayOf, isEqualTo, isNumber, isOneOf, isString, default as validateObject, optional, isBoolean } from "../../../types/validateObject"
 
 type FRPlotData = {
     unitId: number | string

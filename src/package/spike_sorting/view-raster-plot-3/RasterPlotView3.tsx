@@ -1,11 +1,11 @@
-import { colorForUnitId, validateObject, isEqualTo, isString, isArrayOf, isOneOf, isNumber } from '@figurl/core-utils'
+import validateObject, { isEqualTo, isString, isArrayOf, isOneOf, isNumber } from '../../../types/validateObject'
 import { FunctionComponent, useCallback, useEffect, useMemo, useState } from 'react'
 import TimeScrollView2, { useTimeScrollView2 } from '../../component-time-scroll-view-2/TimeScrollView2'
 import { useTimeRange, useTimeseriesSelectionInitialization } from '../../context-timeseries-selection'
 import { idToNum, useSelectedUnitIds } from '../../context-unit-selection'
 import { RasterPlotView3Data } from './RasterPlotView3Data'
 import { Opts, Plot, PlotData } from './WorkerTypes'
-import {serviceQuery, getFileData} from '@figurl/interface'
+import { colorForUnitId } from '../unit-colors'
 
 type Props = {
     data: RasterPlotView3Data
@@ -87,12 +87,13 @@ const useSpikeTrains = (spike_trains_uri: string) => {
 
     useEffect(() => {
         (async () => {
-            const spikeTrainsAttributes = await getFileData(`${spike_trains_uri}/.zattrs`, () => {}, {responseType: 'json'})
-            if (!isSpikeTrainsAttributes(spikeTrainsAttributes)) {
-                console.warn(spikeTrainsAttributes)
-                throw Error('Unexpected spike trains attributes')
-            }
-            setSpikeTrainsAttributes(spikeTrainsAttributes)
+            // todo!!
+            // const spikeTrainsAttributes = await getFileData(`${spike_trains_uri}/.zattrs`, () => {}, {responseType: 'json'})
+            // if (!isSpikeTrainsAttributes(spikeTrainsAttributes)) {
+            //     console.warn(spikeTrainsAttributes)
+            //     throw Error('Unexpected spike trains attributes')
+            // }
+            // setSpikeTrainsAttributes(spikeTrainsAttributes)
         })()
     }, [spike_trains_uri])
 
@@ -108,61 +109,62 @@ const useSpikeTrains = (spike_trains_uri: string) => {
         let canceled = false
         const timer = Date.now()
         ;(async () => {
-            if (!spikeTrainsAttributes) return
+            // todo!!
+            // if (!spikeTrainsAttributes) return
 
-            const spikeTimesList: (Float32Array[])[] = spikeTrainsAttributes.units.map(u => ([]))
+            // const spikeTimesList: (Float32Array[])[] = spikeTrainsAttributes.units.map(u => ([]))
 
-            for (let i = 0; i < spikeTrainsAttributes.blocks.length; i ++) {
-                const blockAttributes = await getFileData(`${spike_trains_uri}/blocks/${i}/.zattrs`, () => {}, {responseType: 'json'})
-                if (!isBlockAttributes(blockAttributes)) {
-                    console.warn(blockAttributes)
-                    throw Error('Unexpected block attributes')
-                }
-                if (canceled) return
-                const query = {
-                    type: 'get_array_chunk',
-                    path: spike_trains_uri,
-                    name: `blocks/${i}/spike_trains`,
-                    slices: [{start: 0, stop: blockAttributes.total_num_spikes, step: 1}]
-                }
-                const {result, binaryPayload} = await serviceQuery(`zarr`, query)
-                if (canceled) return
-                if (!result.success) {
-                    throw Error(`Error in service query: ${result.error}`)
-                }
-                if (result.dtype !== 'float32') {
-                    throw Error(`Unexpected dtype: ${result.dtype}`)
-                }
-                console.info(`Loaded block ${i} in ${Date.now() - timer} ms`)
-                const spikeTimesSec = new Float32Array(binaryPayload)
-                let position = 0
-                for (let i = 0; i < blockAttributes.units.length; i ++) {
-                    const unit = blockAttributes.units[i]
-                    const {num_spikes} = unit
-                    const spikeTimes = spikeTimesSec.slice(position, position + num_spikes)
-                    spikeTimesList[i].push(spikeTimes)
-                    position += num_spikes
-                }
-            }
+            // for (let i = 0; i < spikeTrainsAttributes.blocks.length; i ++) {
+            //     const blockAttributes = await getFileData(`${spike_trains_uri}/blocks/${i}/.zattrs`, () => {}, {responseType: 'json'})
+            //     if (!isBlockAttributes(blockAttributes)) {
+            //         console.warn(blockAttributes)
+            //         throw Error('Unexpected block attributes')
+            //     }
+            //     if (canceled) return
+            //     const query = {
+            //         type: 'get_array_chunk',
+            //         path: spike_trains_uri,
+            //         name: `blocks/${i}/spike_trains`,
+            //         slices: [{start: 0, stop: blockAttributes.total_num_spikes, step: 1}]
+            //     }
+            //     const {result, binaryPayload} = await serviceQuery(`zarr`, query)
+            //     if (canceled) return
+            //     if (!result.success) {
+            //         throw Error(`Error in service query: ${result.error}`)
+            //     }
+            //     if (result.dtype !== 'float32') {
+            //         throw Error(`Unexpected dtype: ${result.dtype}`)
+            //     }
+            //     console.info(`Loaded block ${i} in ${Date.now() - timer} ms`)
+            //     const spikeTimesSec = new Float32Array(binaryPayload)
+            //     let position = 0
+            //     for (let i = 0; i < blockAttributes.units.length; i ++) {
+            //         const unit = blockAttributes.units[i]
+            //         const {num_spikes} = unit
+            //         const spikeTimes = spikeTimesSec.slice(position, position + num_spikes)
+            //         spikeTimesList[i].push(spikeTimes)
+            //         position += num_spikes
+            //     }
+            // }
 
-            const plots0: Plot[] = []
-            for (let i = 0; i < spikeTrainsAttributes.units.length; i ++) {
-                const stList = spikeTimesList[i]
-                // concatenate these float32arrays
-                const numSpikes = stList.reduce((sum, x) => (sum + x.length), 0)
-                const spikeTimesSec = new Float32Array(numSpikes)
-                let position = 0
-                for (const st of stList) {
-                    spikeTimesSec.set(st, position)
-                    position += st.length
-                }
-                plots0.push({
-                    unitId: spikeTrainsAttributes.units[i].unit_id,
-                    spikeTimesSec: spikeTimesSec,
-                    color: 'black' // assigned below
-                })
-            }
-            setPlots(plots0)
+            // const plots0: Plot[] = []
+            // for (let i = 0; i < spikeTrainsAttributes.units.length; i ++) {
+            //     const stList = spikeTimesList[i]
+            //     // concatenate these float32arrays
+            //     const numSpikes = stList.reduce((sum, x) => (sum + x.length), 0)
+            //     const spikeTimesSec = new Float32Array(numSpikes)
+            //     let position = 0
+            //     for (const st of stList) {
+            //         spikeTimesSec.set(st, position)
+            //         position += st.length
+            //     }
+            //     plots0.push({
+            //         unitId: spikeTrainsAttributes.units[i].unit_id,
+            //         spikeTimesSec: spikeTimesSec,
+            //         color: 'black' // assigned below
+            //     })
+            // }
+            // setPlots(plots0)
         })()
         return () => {canceled = true}
     }, [spikeTrainsAttributes, spike_trains_uri])

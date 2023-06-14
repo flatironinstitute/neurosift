@@ -1,4 +1,4 @@
-import { Checkbox } from '@material-ui/core'
+import { Checkbox } from '@mui/material'
 import React, { FunctionComponent } from 'react'
 import './SortableTableWidget.css'
 

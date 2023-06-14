@@ -1,7 +1,7 @@
 import { Matrix } from 'mathjs';
 import { useMemo } from 'react';
 import { useTimeseriesSelection } from '../context-timeseries-selection';
-import { TimeseriesLayoutOpts } from '../types/TimeseriesLayoutOpts';
+import { TimeseriesLayoutOpts } from '../saneslab/view-firing-rates-plot/FiringRatesPlotView';
 import { convert1dDataSeries } from '../util-point-projection';
 
 type PartialMargins = {

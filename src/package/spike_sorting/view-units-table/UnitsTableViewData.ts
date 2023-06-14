@@ -1,4 +1,4 @@
-import { isArrayOf, isEqualTo, isNumber, isOneOf, isString, optional, validateObject } from "@figurl/core-utils"
+import { isArrayOf, isEqualTo, isNumber, isOneOf, isString, optional, default as validateObject } from "../../../types/validateObject"
 
 type UTColumn = {
     key: string

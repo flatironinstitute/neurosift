@@ -1,4 +1,4 @@
-import { TableCell, TableRow } from '@material-ui/core'
+import { TableCell, TableRow } from '@mui/material'
 import React, { FunctionComponent } from 'react'
 import './SortableTableWidget.css'
 import SortableTableWidgetCheckbox from './SortableTableWidgetCheckbox'

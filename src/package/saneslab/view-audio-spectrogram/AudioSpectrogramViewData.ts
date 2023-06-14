@@ -1,4 +1,4 @@
-import { isEqualTo, isNumber, validateObject } from "@figurl/core-utils"
+import validateObject, { isEqualTo, isNumber } from "../../../types/validateObject"
 
 export type AudioSpectrogramViewData = {
     type: 'saneslab.AudioSpectrogram',

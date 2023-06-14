@@ -1,4 +1,4 @@
-import { SortingRule, UnitSelectionAction } from ".."
+import { SortingRule, UnitSelectionAction } from "../context-unit-selection"
 export interface SortableTableWidgetRow {
     rowId: string | number
     data: {[key: string]: {

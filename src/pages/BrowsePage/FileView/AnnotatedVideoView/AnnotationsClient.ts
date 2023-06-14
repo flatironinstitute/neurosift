@@ -1,3 +1,4 @@
+import RtcshareFileSystemClient from "../../../../rtcshare/RtcshareDataManager/RtcshareFileSystemClient"
 import JsonlClient from "./JsonlClient"
 
 export type AnnotationElement = {
@@ -18,8 +19,8 @@ export type AnnotationFrame = {
 
 class AnnotationsClient {
     #jsonlClient: JsonlClient
-    constructor(private uri: string) {
-        this.#jsonlClient = new JsonlClient(uri)
+    constructor(private uri: string, private rtcshareClient: RtcshareFileSystemClient) {
+        this.#jsonlClient = new JsonlClient(uri, rtcshareClient)
     }
     async getFrame(frameIndex: number): Promise<undefined | AnnotationFrame> {
         const d = await this.#jsonlClient.getFrame(frameIndex)

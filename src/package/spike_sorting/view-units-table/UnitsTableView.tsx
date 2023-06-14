@@ -1,9 +1,9 @@
 import React, { FunctionComponent, KeyboardEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
-import { idToNum, INITIALIZE_UNITS, sortIds, UNIQUE_SELECT_FIRST, UNIQUE_SELECT_LAST, UNIQUE_SELECT_NEXT, UNIQUE_SELECT_PREVIOUS, useSelectedUnitIds } from '../context-unit-selection';
-import { ColorPatchUnitIdLabel, ColorPatchUnitLabelProps, mergeGroupForUnitId, SortableTableWidget, SortableTableWidgetColumn, SortableTableWidgetRow } from '../component-sortable-table';
-import { defaultUnitsTableBottomToolbarOptions, UnitsTableBottomToolbar, UnitsTableBottomToolbarOptions } from '../ViewToolbar';
+import { ColorPatchUnitIdLabel, ColorPatchUnitLabelProps, mergeGroupForUnitId, SortableTableWidget, SortableTableWidgetColumn, SortableTableWidgetRow } from '../../component-sortable-table';
+import { useSortingCuration } from '../../context-sorting-curation';
+import { idToNum, INITIALIZE_UNITS, sortIds, UNIQUE_SELECT_FIRST, UNIQUE_SELECT_LAST, UNIQUE_SELECT_NEXT, UNIQUE_SELECT_PREVIOUS, useSelectedUnitIds } from '../../context-unit-selection';
+import { defaultUnitsTableBottomToolbarOptions, UnitsTableBottomToolbar, UnitsTableBottomToolbarOptions } from '../../ViewToolbar';
 import { UnitsTableViewData } from './UnitsTableViewData';
-import { useSortingCuration } from '../context-sorting-curation';
 
 type Props = {
     data: UnitsTableViewData

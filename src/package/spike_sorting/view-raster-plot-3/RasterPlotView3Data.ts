@@ -1,4 +1,4 @@
-import { isEqualTo, isString, validateObject } from "@figurl/core-utils"
+import { isEqualTo, isString, default as validateObject } from "../../../types/validateObject"
 
 export type RasterPlotView3Data = {
     type: 'neurosift.RasterPlotView'

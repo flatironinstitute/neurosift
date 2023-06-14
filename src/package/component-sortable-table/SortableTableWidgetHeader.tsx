@@ -1,7 +1,7 @@
 import { faCaretDown, faCaretUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Grid, LinearProgress, TableCell, TableHead, TableRow } from '@material-ui/core';
-import { UnitSelectionAction, UnitSelectionState, TOGGLE_SELECT_ALL, UPDATE_SORT_FIELDS, SortingRule } from '..';
+import { Grid, LinearProgress, TableCell, TableHead, TableRow } from '@mui/material';
+import { SortingRule, TOGGLE_SELECT_ALL, UnitSelectionAction, UnitSelectionState, UPDATE_SORT_FIELDS } from '../context-unit-selection';
 import React, { FunctionComponent, useCallback, useMemo } from 'react';
 import './SortableTableWidget.css';
 import SortableTableWidgetCheckbox from './SortableTableWidgetCheckbox';
@@ -37,7 +37,7 @@ export const sorterCallbackWrapper = (rowsMap: RowsDict, colsMap: ColsDict): (ru
     return (rules: SortingRule[]) => sortRows(rowsMap, colsMap, rules)
 }
 const sortRows = (rowsMap: RowsDict, colsMap: ColsDict, rules: SortingRule[]) => {
-    let _draft = Array.from(rowsMap.values())
+    const _draft = Array.from(rowsMap.values())
     rules.forEach(rule => {
         const columnName = rule.columnName
         const column = colsMap.get(columnName)

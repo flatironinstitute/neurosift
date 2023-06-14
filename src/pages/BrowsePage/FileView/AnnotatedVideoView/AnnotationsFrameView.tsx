@@ -1,4 +1,5 @@
 import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
+import { useRtcshare } from "../../../../rtcshare/useRtcshare";
 import { AffineTransform } from "./AffineTransform";
 import AnnotationsClient, { AnnotationElement, AnnotationFrame } from "./AnnotationsClient";
 
@@ -33,9 +34,11 @@ const AnnotationsFrameView: FunctionComponent<Props> = ({annotationsUri, colorsF
 	// 		setAnnotationsUrl(annotationsUri)
 	// 	}
 	// }, [annotationsUri])
+	const {client: rtcshareClient} = useRtcshare()
 	const annotationsClient = useMemo(() => {
-		return new AnnotationsClient(annotationsUri)
-	}, [annotationsUri])
+		if (!rtcshareClient) return undefined
+		return new AnnotationsClient(annotationsUri, rtcshareClient)
+	}, [annotationsUri, rtcshareClient])
 	const [annotationFrame, setAnnotationFrame] = useState<AnnotationFrame | undefined>()
 	useEffect(() => {
 		setAnnotationFrame(undefined)

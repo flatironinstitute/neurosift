@@ -1,6 +1,6 @@
-import { Table, TableBody, TableCell, TableContainer } from '@material-ui/core';
+import { Table, TableBody, TableCell, TableContainer } from '@mui/material';
 import { FunctionComponent, useCallback, useMemo } from 'react';
-import { allUnitSelectionState, voidClickHandler } from '..';
+import { allUnitSelectionState, voidClickHandler } from '../context-unit-selection';
 import './SortableTableWidget.css';
 import SortableTableWidgetContentRow from './SortableTableWidgetContentRow';
 import SortableTableWidgetHeaderRow, { sorterCallbackWrapper } from './SortableTableWidgetHeader';
