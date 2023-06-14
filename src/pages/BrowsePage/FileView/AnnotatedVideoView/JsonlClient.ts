@@ -2,13 +2,11 @@ import RtcshareFileSystemClient from "../../../../rtcshare/RtcshareDataManager/R
 
 const chunkSize = 1000 * 1000 * 1 // 1MB chunks. Is this a good choice?
 
-interface JsonlHeader {recordByteLengths: number[]}
-
 class JsonlClient {
     #initializing = false
     #chunks: {[chunkIndex: number]: string} = {}
-    #header: JsonlHeader | undefined
-    #framePositions: number[] | undefined
+    #header: number[] | undefined
+    #recordPositions: number[] | undefined
     #fetchingChunks = new Set<number>()
     constructor(private uri: string, private rtcshareClient: RtcshareFileSystemClient) {
 
@@ -45,13 +43,13 @@ class JsonlClient {
             }
             this.#header = JSON.parse(headerRecordText)
             if (this.#header) {
-                this.#framePositions = []
+                this.#recordPositions = []
                 let pos = headerRecordText.length + 1
-                for (const aa of this.#header.recordByteLengths) {
-                    this.#framePositions.push(pos)
+                for (const aa of this.#header) {
+                    this.#recordPositions.push(pos)
                     pos += aa + 1
                 }
-                this.#framePositions.push(pos)
+                this.#recordPositions.push(pos)
             }
         }
         catch(err) {
@@ -61,18 +59,23 @@ class JsonlClient {
             this.#initializing = false
         }
     }
-    async getFrame(frameIndex: number): Promise<undefined | {[key: string]: any}> {
+    async getRecord(frameIndex: number): Promise<undefined | {[key: string]: any}> {
         await this.initialize()
-        if (!this.#framePositions) return undefined // unexpected
+        if (!this.#recordPositions) return undefined // unexpected
         if (frameIndex < 0) return undefined
-        if (frameIndex + 1 >= this.#framePositions.length) return undefined
-        const d = await this._fetchData(this.#framePositions[frameIndex], this.#framePositions[frameIndex + 1] - 1)
+        if (frameIndex + 1 >= this.#recordPositions.length) return undefined
+        const d = await this._fetchData(this.#recordPositions[frameIndex], this.#recordPositions[frameIndex + 1] - 1)
         if (!d) return undefined
         return JSON.parse(d)
     }
     async getHeader() {
         await this.initialize()
         return this.#header
+    }
+    public get numRecords() {
+        const h = this.#header
+        if (!h) return 0
+        return h.length
     }
     _haveEnoughDataToReadHeaderRecord() {
         let i = 0
@@ -120,7 +123,7 @@ class JsonlClient {
         try {
             const i1 = chunkSize * i
             const i2 = chunkSize * (i + 1)
-            const buf = await this.rtcshareClient.readFile(this.uri, i1, i2)
+            const buf = await this.rtcshareClient.readFile(this.uri.slice('rtcshare://'.length), i1, i2)
             // decode array buffer to string
             const decoder = new TextDecoder()
             const txt = decoder.decode(buf)

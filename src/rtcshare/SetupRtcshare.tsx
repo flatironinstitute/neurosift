@@ -1,5 +1,5 @@
 import { FunctionComponent, PropsWithChildren, useCallback, useEffect, useMemo, useReducer, useState } from "react"
-import { useWebrtc, webrtcConnectionToService } from "./config"
+import { useWebrtc, getWebrtcConnectionToService } from "./config"
 import postApiRequest from "./postApiRequest"
 import { initialRtcshareData, RtcshareContext, rtcshareReducer } from "./RtcshareDataManager/RtcshareData"
 import RtcshareFileSystemClient from "./RtcshareDataManager/RtcshareFileSystemClient"
@@ -40,6 +40,7 @@ const SetupRtcshare: FunctionComponent<PropsWithChildren> = ({children}) => {
         }
         function check() {
             if (canceled) return
+            const webrtcConnectionToService = getWebrtcConnectionToService()
             const ss = webrtcConnectionToService?.status || 'pending'
             if ((ss === 'connected') || (ss === 'error')) {
                 setWebrtcConnectionStatus(ss)

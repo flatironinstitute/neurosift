@@ -60,6 +60,7 @@ export type NSFigViewItem = {
     name: string
     type: 'AnnotatedVideo'
     data: string
+    annotation?: string
 }
 
 const isNSFigViewItem = (x: any): x is NSFigViewItem => {
@@ -72,7 +73,8 @@ const isNSFigViewItem = (x: any): x is NSFigViewItem => {
     if (validateObject(x, {
         name: isString,
         type: isEqualTo('AnnotatedVideo'),
-        data: isString
+        data: isString,
+        annotation: optional(isString)
     })) return true
 
     return false

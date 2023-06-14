@@ -1,13 +1,16 @@
-import { serviceBaseUrl, useWebrtc, webrtcConnectionToService } from "./config"
+import { serviceBaseUrl, useWebrtc, getWebrtcConnectionToService } from "./config"
 import parseMessageWithBinaryPayload from "./parseMessageWithBinaryPayload"
 import { isRtcshareResponse, RtcshareRequest, RtcshareResponse } from "./RtcshareRequest"
 
 const postApiRequest = async (request: RtcshareRequest): Promise<{response: RtcshareResponse, binaryPayload: ArrayBuffer | undefined}> => {
+    const webrtcConnectionToService = getWebrtcConnectionToService()
     if ((useWebrtc) && (request.type !== 'probeRequest') && (request.type !== 'webrtcSignalingRequest')) {
         if (!webrtcConnectionToService) {
             throw Error('No webrtc connection to service')
         }
-        return webrtcConnectionToService.postApiRequest(request)
+        if (webrtcConnectionToService.status === 'connected') {
+            return webrtcConnectionToService.postApiRequest(request)
+        }
     }
     const rr = await fetch(
         `${serviceBaseUrl}/api`,

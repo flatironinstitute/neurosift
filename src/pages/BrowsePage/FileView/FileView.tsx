@@ -2,6 +2,7 @@ import { FunctionComponent } from "react";
 import NSFigFileView from "./NSFigFileView";
 import ScriptFileView from "./ScriptFileView";
 import TimeseriesGraphFileView from "./TimeseriesGraphFileView";
+import VideoAnnotationFileView from "./VideoAnnotationFileView";
 import VideoFileView from "./VideoFileView";
 
 type Props = {
@@ -21,13 +22,19 @@ const FileView: FunctionComponent<Props> = ({width, height, filePath}) => {
             <ScriptFileView width={width} height={height} filePath={filePath} />
         )
     }
-    else if (filePath.endsWith('.tsg')) {
+    else if (filePath.endsWith('.ns-tsg')) {
         // TimeseriesGraph
         return (
             <TimeseriesGraphFileView width={width} height={height} filePath={filePath} />
         )
     }
-    else if (filePath.endsWith('.nsfig')) {
+    else if (filePath.endsWith('.ns-van')) {
+        // Video annotation
+        return (
+            <VideoAnnotationFileView width={width} height={height} filePath={filePath} />
+        )
+    }
+    else if (filePath.endsWith('.ns-fig')) {
         return (
             <NSFigFileView width={width} height={height} filePath={filePath} />
         )

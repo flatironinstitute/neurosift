@@ -2,11 +2,11 @@ import { PlayArrow, Stop } from "@mui/icons-material";
 import { Checkbox, createTheme, FormControl, FormControlLabel, IconButton, MenuItem, Select, SelectChangeEvent, Slider, ThemeProvider } from "@mui/material";
 import { FunctionComponent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRtcshare } from "../../../../rtcshare/useRtcshare";
-import { AnnotatedVideoNode } from "./AnnotatedVideoViewData";
-import AnnotationsFrameView from "./AnnotationsFrameView";
 import { getNodeColor } from "./getNodeColor";
 import PositionDecodeFieldFrameView from "./PositionDecodeFieldFrameView";
 import useWheelZoom from "./useWheelZoom";
+import VideoAnnotationClient, { VideoAnnotationNode } from "./VideoAnnotationClient";
+import VideoAnnotationFrameView from "./VideoAnnotationFrameView";
 import VideoClient from "./VideoView/VideoClient";
 import VideoViewCanvas from "./VideoView/VideoViewCanvas";
 
@@ -17,8 +17,7 @@ type Props ={
 	currentTime: number
 	setCurrentTime: (t: number) => void
 	videoUri?: string
-	annotationsUri?: string
-	nodes?: AnnotatedVideoNode[]
+	annotationUri?: string
 	positionDecodeFieldUri?: string
 	videoWidth: number
 	videoHeight: number
@@ -40,12 +39,41 @@ const theme = createTheme({
 	}
 });
 
-const AnnotatedVideoViewArea: FunctionComponent<Props> = ({width, height, currentTime, setCurrentTime, videoUri, annotationsUri, nodes, positionDecodeFieldUri, videoWidth, videoHeight, samplingFrequency, frameCount}) => {
+const AnnotatedVideoViewArea: FunctionComponent<Props> = ({width, height, currentTime, setCurrentTime, videoUri, annotationUri, positionDecodeFieldUri, videoWidth, videoHeight, samplingFrequency, frameCount}) => {
 	const bottomBarHeight = 40
 
 	const [showAnnotations, setShowAnnotations] = useState(true)
 	const [showPositionDecodeField, setShowPositionDecodeField] = useState(true)
 	const [showVideo, setShowVideo] = useState(true)
+
+	const {client: rtcshareClient} = useRtcshare()
+
+	const [annotationClient, setAnnotationClient] = useState<VideoAnnotationClient | undefined>(undefined)
+	useEffect(() => {
+		let canceled = false
+		if (!annotationUri) return
+		if (!rtcshareClient) return
+		;(async () => {
+			const client = new VideoAnnotationClient(annotationUri, rtcshareClient)
+			await client.initialize()
+			if (canceled) return
+			setAnnotationClient(client)
+		})()
+		return () => {canceled = true}
+	}, [annotationUri, rtcshareClient])
+
+	const [nodes, setNodes] = useState<VideoAnnotationNode[] | undefined>(undefined)
+
+	useEffect(() => {
+		if (!annotationClient) return
+		let canceled = false
+		;(async () => {
+			const nodes = await annotationClient.getNodes()
+			if (canceled) return
+			setNodes(nodes)
+		})()
+		return () => {canceled = true}
+	}, [annotationClient])
 	
 	// const {visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange} = useTimeRange()
 	const height2 = height - bottomBarHeight
@@ -84,7 +112,7 @@ const AnnotatedVideoViewArea: FunctionComponent<Props> = ({width, height, curren
 		currentTimeRef.current = currentTime || 0
 	}, [currentTime])
 
-	const [upToDate, setUpToDate] = useState<boolean>(false)
+	const [upToDate, setUpToDate] = useState<boolean>(true)
 
 	useEffect(() => {
 		if (!playing) return
@@ -120,8 +148,6 @@ const AnnotatedVideoViewArea: FunctionComponent<Props> = ({width, height, curren
 		}
 		return ret
 	}, [nodes])
-
-	const {client: rtcshareClient} = useRtcshare()
 
 	const videoClient = useMemo(() => (
 		videoUri && rtcshareClient ? new VideoClient(videoUri, rtcshareClient) : undefined
@@ -184,11 +210,11 @@ const AnnotatedVideoViewArea: FunctionComponent<Props> = ({width, height, curren
 			</div>
 			<div className="annotations-frame" style={{position: 'absolute', left: rect.x, top: rect.y, width: rect.w, height: rect.h}}>
 				{
-					annotationsUri && showAnnotations && <AnnotationsFrameView
+					annotationUri && showAnnotations && annotationClient && <VideoAnnotationFrameView
 						width={rect.w}
 						height={rect.h}
 						timeSec={currentTime}
-						annotationsUri={annotationsUri}
+						annotationClient={annotationClient}
 						colorsForNodeIds={colorsForNodeIds}
 						affineTransform={affineTransform}
 						samplingFrequency={samplingFrequency}
@@ -221,7 +247,7 @@ const AnnotatedVideoViewArea: FunctionComponent<Props> = ({width, height, curren
 						/>
 					</FormControl>
 					&nbsp;&nbsp;&nbsp;
-					{annotationsUri && <FormControlLabel
+					{annotationUri && <FormControlLabel
 						control={<Checkbox checked={showAnnotations} onClick={() => {setShowAnnotations(a => !a)}} />}
 						disabled={playing}
 						label="annotations"
@@ -231,7 +257,7 @@ const AnnotatedVideoViewArea: FunctionComponent<Props> = ({width, height, curren
 						disabled={playing}
 						label="position decode field"
 					/>}
-					{videoUri && <FormControlLabel
+					{videoUri && (positionDecodeFieldUri || annotationUri) && <FormControlLabel
 						control={<Checkbox checked={showVideo} onClick={() => {setShowVideo(a => !a)}} />}
 						disabled={playing}
 						label="video"

@@ -1,6 +1,7 @@
+import json
 import numpy as np
 from typing import List, Union
-from .View import View
+from ._serialize import _serialize
 
 
 class TGDataset:
@@ -29,7 +30,7 @@ class TGSeries:
             'title': self._title
         }
 
-class TimeseriesGraph(View):
+class TimeseriesGraph:
     def __init__(self, *,
         legend_opts: Union[None, dict]=None,
         y_range: Union[List[float], None]=None,
@@ -120,10 +121,11 @@ class TimeseriesGraph(View):
         if self._hide_toolbar:
             ret['hideToolbar'] = self._hide_toolbar
         return ret
-    def register_task_handlers(self, task_backend):
-        return super().register_task_handlers(task_backend)
-    def child_views(self) -> List[View]:
-        return []
+    def save(self, fname: str):
+        if not fname.endswith('.ns-tsg'):
+            raise Exception('TimeseriesGraph::save fname argument must end with .ns-tsg')
+        with open(fname, 'w') as f:
+            json.dump(_serialize(self.to_dict()), f, indent=2)
     def _add_series(self, *, type: str, name: str, t: np.ndarray, y: np.ndarray, attributes: dict):
         if t.ndim != 1:
             print('WARNING: TimeseriesGraph::_add_series t argument is not 1D array. Using squeeze.')

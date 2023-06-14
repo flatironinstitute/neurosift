@@ -7,27 +7,25 @@ export type AnnotatedVideoNode = {
 }
 
 export type AnnotatedVideoViewData = {
-    type: 'misc.AnnotatedVideo',
+    type: 'AnnotatedVideo',
     videoUri?: string
     videoWidth: number
     videoHeight: number
     videoNumFrames: number
     samplingFrequency: number
-    annotationsUri?: string
-    nodesUri?: string
+    annotationUri?: string
     positionDecodeFieldUri?: string
 }
 
 export const isAnnotatedVideoViewData = (x: any): x is AnnotatedVideoViewData => {
     return validateObject(x, {
-        type: isEqualTo('misc.AnnotatedVideo'),
+        type: isEqualTo('AnnotatedVideo'),
         videoUri: optional(isString),
         videoWidth: isNumber,
         videoHeight: isNumber,
         videoNumFrames: isNumber,
         samplingFrequency: isNumber,
-        annotationsUri: optional(isString),
-        nodesUri: optional(isString),
+        annotationUri: optional(isString),
         positionDecodeFieldUri: optional(isString)
     })
 }

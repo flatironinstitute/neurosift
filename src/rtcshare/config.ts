@@ -11,10 +11,13 @@ export const serviceBaseUrl = queryParams.sh ? (
     defaultServiceBaseUrl
 )
 
-export const useWebrtc = queryParams.webrtc === '1'
+export const useWebrtc = queryParams.webrtc !== '0'
 
-export let webrtcConnectionToService: WebrtcConnectionToService | undefined
+let webrtcConnectionToService: WebrtcConnectionToService | undefined = undefined
 
-if ((useWebrtc) && (!webrtcConnectionToService)) {
-    webrtcConnectionToService = new WebrtcConnectionToService()
+export const getWebrtcConnectionToService = () => {
+    if ((useWebrtc) && (!webrtcConnectionToService)) {
+        webrtcConnectionToService = new WebrtcConnectionToService()
+    }
+    return webrtcConnectionToService
 }

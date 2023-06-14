@@ -1,10 +1,9 @@
 import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
-import { useRtcshare } from "../../../../rtcshare/useRtcshare";
 import { AffineTransform } from "./AffineTransform";
-import AnnotationsClient, { AnnotationElement, AnnotationFrame } from "./AnnotationsClient";
+import VideoAnnotationClient, { VideoAnnotationElement, VideoAnnotationFrame } from "./VideoAnnotationClient";
 
 type Props ={
-	annotationsUri: string
+	annotationClient: VideoAnnotationClient
 	colorsForNodeIds: {[nodeId: string]: string}
 	timeSec: number | undefined
 	samplingFrequency: number
@@ -20,7 +19,7 @@ const defaultMarkerRadius = 4
 // The default width of a line or connector object
 const defaultLineWidth = 1.1
 
-const AnnotationsFrameView: FunctionComponent<Props> = ({annotationsUri, colorsForNodeIds, timeSec, width, height, affineTransform, samplingFrequency, scale}) => {
+const VideoAnnotationFrameView: FunctionComponent<Props> = ({annotationClient, colorsForNodeIds, timeSec, width, height, affineTransform, samplingFrequency, scale}) => {
 	// const [annotationsUrl, setAnnotationsUrl] = useState<string>()
 	// useEffect(() => {
 	// 	if (annotationsUri.startsWith('sha1://')) {
@@ -34,25 +33,20 @@ const AnnotationsFrameView: FunctionComponent<Props> = ({annotationsUri, colorsF
 	// 		setAnnotationsUrl(annotationsUri)
 	// 	}
 	// }, [annotationsUri])
-	const {client: rtcshareClient} = useRtcshare()
-	const annotationsClient = useMemo(() => {
-		if (!rtcshareClient) return undefined
-		return new AnnotationsClient(annotationsUri, rtcshareClient)
-	}, [annotationsUri, rtcshareClient])
-	const [annotationFrame, setAnnotationFrame] = useState<AnnotationFrame | undefined>()
+	
+	const [annotationFrame, setAnnotationFrame] = useState<VideoAnnotationFrame | undefined>()
 	useEffect(() => {
 		setAnnotationFrame(undefined)
 		if (timeSec === undefined) return
-		if (!annotationsClient) return
 		const frameIndex = Math.round(timeSec * samplingFrequency)
 		if (frameIndex < 0) return
 		let canceled = false
-		annotationsClient.getFrame(frameIndex).then(f => {
+		annotationClient.getFrame(frameIndex).then(f => {
 			if (canceled) return
 			setAnnotationFrame(f)
 		})
 		return () => {canceled = true}
-	}, [annotationsClient, timeSec, samplingFrequency])
+	}, [annotationClient, timeSec, samplingFrequency])
 
 	const zoomScaleFactor = useMemo(() => {
 		if (!affineTransform) return 1
@@ -73,7 +67,7 @@ const AnnotationsFrameView: FunctionComponent<Props> = ({annotationsUri, colorsF
 
 		const elements = annotationFrame?.e || []
 
-		const drawNode = (n: AnnotationElement & {t: 'n'}) => {
+		const drawNode = (n: VideoAnnotationElement & {t: 'n'}) => {
 			const o = {
 				x: n.x * scale[0],
 				y: n.y * scale[1],
@@ -111,9 +105,9 @@ const AnnotationsFrameView: FunctionComponent<Props> = ({annotationsUri, colorsF
 			attributes.lineColor && ctxt.stroke()
 		}
 
-		const drawEdge = (n: AnnotationElement & {t: 'e'}) => {
-			const e1 = elements.filter(e => (e.i === n.i1 && e.t === 'n')).map(e => (e as AnnotationElement & {t: 'n'}))[0]
-			const e2 = elements.filter(e => (e.i === n.i2 && e.t === 'n')).map(e => (e as AnnotationElement & {t: 'n'}))[0]
+		const drawEdge = (n: VideoAnnotationElement & {t: 'e'}) => {
+			const e1 = elements.filter(e => (e.i === n.i1 && e.t === 'n')).map(e => (e as VideoAnnotationElement & {t: 'n'}))[0]
+			const e2 = elements.filter(e => (e.i === n.i2 && e.t === 'n')).map(e => (e as VideoAnnotationElement & {t: 'n'}))[0]
 			if ((e1) && (e2)) {
 				const o = {
 					attributes: {
@@ -166,7 +160,7 @@ const AnnotationsFrameView: FunctionComponent<Props> = ({annotationsUri, colorsF
 		}
 		
 		ctxt.restore()
-	}, [affineTransform, annotationsClient, timeSec, annotationFrame, zoomScaleFactor, scale, colorsForNodeIds])
+	}, [affineTransform, annotationClient, timeSec, annotationFrame, zoomScaleFactor, scale, colorsForNodeIds])
 	return (
 		<div style={{position: 'absolute', width, height}}>
 			<canvas
@@ -180,4 +174,4 @@ const AnnotationsFrameView: FunctionComponent<Props> = ({annotationsUri, colorsF
 
 
 
-export default AnnotationsFrameView
+export default VideoAnnotationFrameView

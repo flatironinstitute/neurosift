@@ -5,6 +5,7 @@ import { AnnotatedVideoView, AnnotatedVideoViewData } from "./AnnotatedVideoView
 
 type Props = {
     filePath: string
+    annotationFilePath?: string
     width: number
     height: number
 }
@@ -16,7 +17,7 @@ type VideoInfo = {
     frame_count: number
 }
 
-const VideoFileView: FunctionComponent<Props> = ({ filePath, width, height }) => {
+const VideoFileView: FunctionComponent<Props> = ({ filePath, annotationFilePath, width, height }) => {
     const {client} = useRtcshare()
     const [videoInfo, setVideoInfo] = useState<VideoInfo>()
     useEffect(() => {
@@ -32,8 +33,9 @@ const VideoFileView: FunctionComponent<Props> = ({ filePath, width, height }) =>
     const annotatedVideoViewData: AnnotatedVideoViewData | undefined = useMemo(() => {
         if (!videoInfo) return undefined
         return {
-            type: 'misc.AnnotatedVideo',
+            type: 'AnnotatedVideo',
             videoUri: `rtcshare://${filePath}`,
+            annotationUri: annotationFilePath ? `rtcshare://${annotationFilePath}` : undefined,
             videoWidth: videoInfo.width,
             videoHeight: videoInfo.height,
             videoNumFrames: videoInfo.frame_count,
@@ -42,7 +44,7 @@ const VideoFileView: FunctionComponent<Props> = ({ filePath, width, height }) =>
             nodesUri: undefined,
             positionDecodeFieldUri: undefined
         }
-    }, [filePath, videoInfo])
+    }, [filePath, annotationFilePath, videoInfo])
     if (!annotatedVideoViewData) {
         return <div>Loading</div>
     }
