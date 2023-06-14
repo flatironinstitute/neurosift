@@ -1,5 +1,5 @@
-import { randomAlphaString } from "@figurl/core-utils"
 import React, { useCallback, useContext, useMemo } from "react"
+import { randomAlphaString } from "../../rtcshare/WebrtcConnectionToService"
 import AnnotationAction from "./AnnotationAction"
 
 export type Annotation = {

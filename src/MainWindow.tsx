@@ -1,6 +1,7 @@
 import { FunctionComponent } from "react";
 import ApplicationBar, { applicationBarHeight } from "./ApplicationBar";
 import GitHubAuthPage from "./GitHub/GitHubAuthPage";
+import { SetupTimeseriesSelection } from "./package/context-timeseries-selection";
 import AboutPage from "./pages/AboutPage/AboutPage";
 import BrowsePage from "./pages/BrowsePage/BrowsePage";
 import { SetupOpenTabs } from "./pages/BrowsePage/OpenTabsContext";
@@ -28,7 +29,9 @@ const MainWindow: FunctionComponent<Props> = () => {
                         <AboutPage width={width} height={height - applicationBarHeight} />
                     ) : route.page === 'browse' ? (
                         <SetupOpenTabs>
-                            <BrowsePage folder={route.folder} width={width} height={height - applicationBarHeight} />
+                            <SetupTimeseriesSelection>
+                                <BrowsePage folder={route.folder} width={width} height={height - applicationBarHeight} />
+                            </SetupTimeseriesSelection>
                         </SetupOpenTabs>
                     ) : route.page === 'github-auth' ? (
                         <GitHubAuthPage />

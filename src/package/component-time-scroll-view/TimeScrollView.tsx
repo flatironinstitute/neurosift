@@ -1,9 +1,9 @@
-import { Splitter } from '@figurl/core-views';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import Splitter from '../../components/Splitter';
 import { DefaultToolbarWidth } from '../component-time-scroll-view';
 import { useAnnotations } from '../context-annotations';
 import { useTimeRange } from '../context-timeseries-selection';
-import { TimeseriesLayoutOpts } from '../types/TimeseriesLayoutOpts';
+import { TimeseriesLayoutOpts } from '../saneslab/view-firing-rates-plot/FiringRatesPlotView';
 import { convert1dDataSeries, use1dScalingMatrix } from '../util-point-projection';
 import { ViewToolbar } from '../ViewToolbar';
 import { useTimeTicks } from './TimeAxisTicks';

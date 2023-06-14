@@ -1,6 +1,6 @@
-import { BaseCanvas } from '@figurl/core-views';
 import React, { FunctionComponent, useCallback } from 'react';
 import { TickSet } from '../component-time-scroll-view/YAxisTicks';
+import BaseCanvas from './BaseCanvas';
 import {TimeTick} from './timeTicks'
 import { paintAxes } from './TSV2PaintAxes';
 

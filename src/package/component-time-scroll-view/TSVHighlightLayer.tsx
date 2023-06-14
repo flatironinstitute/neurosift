@@ -1,5 +1,5 @@
-import { BaseCanvas } from '@figurl/core-views';
 import { useMemo } from 'react';
+import BaseCanvas from '../component-time-scroll-view-2/BaseCanvas';
 import { PixelHighlightSpanSet } from './TimeScrollViewSpans';
 
 export type TSVHighlightLayerProps = {

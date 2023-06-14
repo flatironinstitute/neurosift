@@ -1,5 +1,5 @@
-import { validateObject } from "@figurl/core-utils"
-import { isArrayOf, isNumber, optional } from "@figurl/core-utils"
+import validateObject from "../../types/validateObject"
+import { isArrayOf, isNumber, optional } from "../../types/validateObject"
 
 export type HighlightIntervalSet = {
     intervalStarts: number[]

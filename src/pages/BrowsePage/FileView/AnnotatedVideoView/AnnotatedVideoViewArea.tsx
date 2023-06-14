@@ -83,8 +83,12 @@ const AnnotatedVideoViewArea: FunctionComponent<Props> = ({width, height, curren
 	useEffect(() => {
 		currentTimeRef.current = currentTime || 0
 	}, [currentTime])
+
+	const [upToDate, setUpToDate] = useState<boolean>(false)
+
 	useEffect(() => {
 		if (!playing) return
+		if (!upToDate) return
 		// if ((videoUri) && (showVideo)) {
 		// 	// the playing is taken care of by the video frame view
 		// 	return
@@ -104,7 +108,7 @@ const AnnotatedVideoViewArea: FunctionComponent<Props> = ({width, height, curren
 		}
 		rr = requestAnimationFrame(update)
 		return () => {cancelAnimationFrame(rr); canceled = true}
-	}, [playing, videoUri, setCurrentTime, playbackRate, showVideo, frameCount, samplingFrequency])
+	}, [playing, upToDate, videoUri, setCurrentTime, playbackRate, showVideo, frameCount, samplingFrequency])
 
 	const colorsForNodeIds = useMemo(() => {
 		const ret: {[nodeId: string]: string} = {}
@@ -146,10 +150,25 @@ const AnnotatedVideoViewArea: FunctionComponent<Props> = ({width, height, curren
 							width={rect.w}
 							height={rect.h}
 							affineTransform={affineTransform}
+							setUpToDate={setUpToDate}
 						/>
 					)
 				}
 			</div>
+			{
+				!upToDate && (
+					<div style={{position: 'absolute', left: rect.x, top: rect.y, width: rect.w, height: rect.h, backgroundColor: 'rgba(0, 0, 0, 0.5)'}}>
+						{/* Loading icon in center */}
+						<div style={{position: 'absolute', left: rect.w / 2 - 50, top: rect.h / 2 - 50, width: 100, height: 100, backgroundColor: 'rgba(255, 255, 255, 0.5)', borderRadius: 10}}>
+							<div style={{position: 'absolute', left: 0, top: 0, width: 100, height: 100, display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+								<div className="spinner-border" role="status">
+									<span className="visually-hidden">Loading...</span>
+								</div>
+							</div>
+						</div>	
+					</div>
+				)
+			}
 			<div className="position-decode-field-frame" style={{position: 'absolute', left: rect.x, top: rect.y, width: rect.w, height: rect.h}}>
 				{
 					positionDecodeFieldUri && showPositionDecodeField && <PositionDecodeFieldFrameView

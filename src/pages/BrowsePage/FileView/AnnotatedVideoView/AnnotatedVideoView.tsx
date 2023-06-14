@@ -37,6 +37,8 @@ const AnnotatedVideoView: FunctionComponent<Props> = ({data, width, height}) => 
         <AnnotatedVideoWidget
             width={width}
             height={height}
+            currentTime={currentTime || 0}
+            setCurrentTime={setCurrentTime}
             videoUri={videoUri}
             annotationsUri={annotationsUri}
             nodes={nodes}

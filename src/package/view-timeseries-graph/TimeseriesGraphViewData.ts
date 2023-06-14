@@ -1,12 +1,12 @@
-import { isArrayOf, isBoolean, isEqualTo, isNumber, isString, optional, validateObject } from "@figurl/core-utils"
+import { default as validateObject, isArrayOf, isBoolean, isEqualTo, isNumber, isString, optional } from "../../types/validateObject"
 
 type LegendOpts = {
     location: 'northwest' | 'northeast'
 }
 
 type GridlineOpts = {
-    hide_x: boolean
-    hide_y: boolean
+    hideX: boolean
+    hideY: boolean
 }
 
 type Dataset = {

@@ -8,9 +8,10 @@ type Props = {
     width: number
     height: number
     affineTransform?: AffineTransform
+    setUpToDate: (upToDate: boolean) => void
 }
 
-const VideoViewCanvas: FunctionComponent<Props> = ({videoClient, currentTime, width, height, affineTransform}) => {
+const VideoViewCanvas: FunctionComponent<Props> = ({videoClient, currentTime, width, height, affineTransform, setUpToDate}) => {
     const canvasRef = useRef<any>(null)
 	useEffect(() => {
         let canceled = false
@@ -25,9 +26,11 @@ const VideoViewCanvas: FunctionComponent<Props> = ({videoClient, currentTime, wi
             const videoInfo = await videoClient.videoInfo()
             const fps = videoInfo.fps
             const currentFrame = Math.round(currentTime * fps)
+            setUpToDate(false)
             const frameImage = await videoClient.getFrameImage(currentFrame)
             if (canceled) return
             if (!frameImage) return
+            setUpToDate(true)
             const b64 = arrayBufferToBase64(frameImage)
             const dataUrl = `data:image/jpeg;base64,${b64}`
 

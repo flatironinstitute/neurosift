@@ -1,4 +1,4 @@
-import { FunctionComponent, useState } from "react";
+import { FunctionComponent } from "react";
 import AnnotatedVideoViewArea from "./AnnotatedVideoViewArea";
 import { AnnotatedVideoNode } from "./AnnotatedVideoViewData";
 // import { colorForPointIndex } from "./PoseViewport";
@@ -6,6 +6,8 @@ import { AnnotatedVideoNode } from "./AnnotatedVideoViewData";
 type Props ={
 	width: number
 	height: number
+	currentTime: number
+	setCurrentTime: (t: number) => void
 	videoUri?: string
 	videoWidth: number
 	videoHeight: number
@@ -17,7 +19,7 @@ type Props ={
 	// canEditPose: boolean
 }
 
-const AnnotatedVideoWidget: FunctionComponent<Props> = ({width, height, videoUri, videoWidth, videoHeight, videoNumFrames, samplingFrequency, annotationsUri, nodes, positionDecodeFieldUri}) => {
+const AnnotatedVideoWidget: FunctionComponent<Props> = ({width, height, currentTime, setCurrentTime, videoUri, videoWidth, videoHeight, videoNumFrames, samplingFrequency, annotationsUri, nodes, positionDecodeFieldUri}) => {
 	// const topPanelHeight = 100
 	// const legendWidth = 50
 	const topPanelHeight = 0
@@ -25,8 +27,6 @@ const AnnotatedVideoWidget: FunctionComponent<Props> = ({width, height, videoUri
 	
 	const viewAreaWidth = width - legendWidth
 	const viewAreaHeight = height - topPanelHeight - 5
-
-	const [currentTime, setCurrentTime] = useState<number>(0)
 
 	return (
 		<div className="AnnotatedVideoWidget" style={{position: 'absolute', width, height, overflow: 'hidden'}}>

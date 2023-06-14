@@ -35,7 +35,7 @@ class VideoClient {
         const info = await this._getInfo()
         return info
     }
-    async getFrameImage(frameIndex: number) {
+    async getFrameImage(frameIndex: number): Promise<ArrayBuffer> {
         const info = await this._getInfo()
         const chunkIndex = Math.floor(frameIndex / numFramesPerChunk)
         await this._fetchChunk(chunkIndex)

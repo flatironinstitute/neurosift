@@ -1,4 +1,4 @@
-import { Checkbox, FormGroup, IconButton, Switch } from '@material-ui/core';
+import { Checkbox, FormGroup, IconButton, Switch } from '@mui/material';
 import React, { FunctionComponent, useMemo } from 'react';
 import "./ToolbarStyles.css";
 

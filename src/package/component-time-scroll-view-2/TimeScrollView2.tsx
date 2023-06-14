@@ -1,5 +1,5 @@
-import { Splitter } from '@figurl/core-views';
 import React, { FunctionComponent, useCallback, useEffect, useMemo, useRef } from 'react';
+import Splitter from '../../components/Splitter';
 import { DefaultToolbarWidth, useYAxisTicks } from '../component-time-scroll-view';
 import useActionToolbar from '../component-time-scroll-view/TimeScrollViewActionsToolbar';
 import useTimeScrollEventHandlers, { suppressWheelScroll } from '../component-time-scroll-view/TimeScrollViewInteractions/TimeScrollViewEventHandlers';

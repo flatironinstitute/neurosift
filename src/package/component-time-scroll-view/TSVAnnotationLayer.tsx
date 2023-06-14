@@ -1,6 +1,6 @@
 import { Annotation } from '../context-annotations';
-import { BaseCanvas } from '@figurl/core-views';
 import { useCallback } from 'react';
+import BaseCanvas from '../component-time-scroll-view-2/BaseCanvas';
 
 type PixelTimepointAnnotation = {
     annotation: Annotation
@@ -28,7 +28,7 @@ const TSVAnnotationLayer = (props: TSVAnnotationLayerProps) => {
     const paint = useCallback((context: CanvasRenderingContext2D) => {
         context.clearRect(0, 0, context.canvas.width, context.canvas.height)
 
-        for (let x of pixelTimeIntervalAnnotations) {
+        for (const x of pixelTimeIntervalAnnotations) {
             const aa = x.annotation
             if (aa.type !== 'time-interval') throw Error('Unexpected')
             // at some point, we may want to do something with the annotation label
@@ -42,7 +42,7 @@ const TSVAnnotationLayer = (props: TSVAnnotationLayerProps) => {
             context.strokeRect(t1, margins.top, t2 - t1, context.canvas.height - margins.bottom - margins.top)
         }
 
-        for (let x of pixelTimepointAnnotations) {
+        for (const x of pixelTimepointAnnotations) {
             const aa = x.annotation
             if (aa.type !== 'timepoint') throw Error('Unexpected')
             // at some point, we may want to do something with the annotation label
