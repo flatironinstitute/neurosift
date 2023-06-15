@@ -20,6 +20,7 @@
     "@mui/icons-material": "^5.11.16",
     "@mui/material": "^5.13.0",
     "chroma-js": "^2.4.2",
+    "colormap": "^2.3.2",
     "crypto-js": "^4.1.1",
     "github-markdown-css": "^5.2.0",
     "js-yaml": "^4.1.0",
@@ -42,6 +43,7 @@
   },
   "devDependencies": {
     "@types/chroma-js": "^2.4.0",
+    "@types/colormap": "^2.3.1",
     "@types/crypto-js": "^4.1.1",
     "@types/js-yaml": "^4.0.5",
     "@types/pako": "^2.0.0",

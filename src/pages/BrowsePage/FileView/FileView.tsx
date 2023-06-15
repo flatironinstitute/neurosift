@@ -1,4 +1,5 @@
 import { FunctionComponent } from "react";
+import AudioSpectrogramFileView from "./AudioSpectrogramFileView";
 import NSFigFileView from "./NSFigFileView";
 import ScriptFileView from "./ScriptFileView";
 import SpikeTrainsFileView from "./SpikeTrainsFileView";
@@ -39,6 +40,12 @@ const FileView: FunctionComponent<Props> = ({width, height, filePath}) => {
         // Spike trains
         return (
             <SpikeTrainsFileView width={width} height={height} filePath={filePath} />
+        )
+    }
+    else if (filePath.endsWith('.ns-asp')) {
+        // Audio spectrogram
+        return (
+            <AudioSpectrogramFileView width={width} height={height} filePath={filePath} />
         )
     }
     else if (filePath.endsWith('.ns-fig')) {

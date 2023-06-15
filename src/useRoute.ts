@@ -22,7 +22,7 @@ const useRoute = () => {
                 page: 'about'
             }
         }
-        else if (p.startsWith('/browse/') || (p === '/browse')) {
+        else if (p.startsWith('/b/') || (p === '/b') || (p.startsWith('/browse/') || (p === '/browse'))) {
             const a = p.split('/')
             const folder = a.slice(2).join('/')
             return {
@@ -50,7 +50,7 @@ const useRoute = () => {
             navigate('/about' + location.search)
         }
         else if (r.page === 'browse') {
-            navigate(`/browse/${r.folder}` + location.search)
+            navigate(`/b/${r.folder}` + location.search)
         }
         else if (r.page === 'github-auth') {
             navigate('/github/auth' + location.search)

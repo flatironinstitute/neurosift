@@ -70,7 +70,8 @@ const FileBrowser: FunctionComponent<Props> = ({onOpenFile, currentFolderPath, s
     const handleClickFile = useCallback((fileId: string) => {
         const file = files.find(x => x.id === fileId)
         if (!file) return
-        if (file.isDir) {
+        const fileExt = '.' + file.name.split('.').pop()
+        if ((file.isDir) && (!['.ns-asp'].includes(fileExt))) {
             const newFolder = join(currentFolderPath, file.name)
             setCurrentFolderPath(newFolder)
             return
