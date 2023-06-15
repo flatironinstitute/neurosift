@@ -204,7 +204,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({width, height, onCanvasEleme
 
     if (hideToolbar) {
         return (
-            <div ref={divRef}>
+            <div ref={divRef} style={{position: 'absolute', width, height, background: 'white'}}>
                 {content}
             </div>
         )

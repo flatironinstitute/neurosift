@@ -1,6 +1,7 @@
 import { FunctionComponent } from "react";
 import NSFigFileView from "./NSFigFileView";
 import ScriptFileView from "./ScriptFileView";
+import SpikeTrainsFileView from "./SpikeTrainsFileView";
 import TimeseriesGraphFileView from "./TimeseriesGraphFileView";
 import VideoAnnotationFileView from "./VideoAnnotationFileView";
 import VideoFileView from "./VideoFileView";
@@ -32,6 +33,12 @@ const FileView: FunctionComponent<Props> = ({width, height, filePath}) => {
         // Video annotation
         return (
             <VideoAnnotationFileView width={width} height={height} filePath={filePath} />
+        )
+    }
+    else if (filePath.endsWith('.ns-spt')) {
+        // Spike trains
+        return (
+            <SpikeTrainsFileView width={width} height={height} filePath={filePath} />
         )
     }
     else if (filePath.endsWith('.ns-fig')) {

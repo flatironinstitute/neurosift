@@ -1,2 +1,3 @@
 from .TimeseriesGraph import TimeseriesGraph
 from .VideoAnnotation import VideoAnnotation, VideoAnnotationNode, VideoAnnotationFrame, VideoAnnotationElement, VideoAnnotationNodeElement, VideoAnnotationEdgeElement
+from .SpikeTrains import SpikeTrains, SpikeTrain

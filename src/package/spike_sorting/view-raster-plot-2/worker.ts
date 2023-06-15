@@ -88,7 +88,7 @@ const drawDebounced = debounce(draw, 10)
 
 type PixelPlot = {
     y: number,
-    x: number[] | Float32Array
+    x: number[]
     unitId: string | number
     color: string
     hovered: boolean

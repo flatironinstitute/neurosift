@@ -22,7 +22,7 @@ type ZoomResolverProps = {
 const zoomUpdate: DebounceThrottleUpdater<ZoomStateProperties, ZoomStateRefs> = (refs, state) => {
     const { divRef } = refs
     const { zoomsCount } = state
-    const divHasFocus = (divRef?.current as any)['_hasFocus']
+    const divHasFocus = ((divRef?.current as any) || {})['_hasFocus']
     const unchanged = !divHasFocus || zoomsCount === 0
     if (!unchanged) {
         refs.zoomsCount.current += zoomsCount

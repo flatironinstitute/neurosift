@@ -1,6 +1,6 @@
 export type Plot = {
     unitId: number | string
-    spikeTimesSec: number[] | Float32Array
+    spikeTimesSec: number[]
     color: string
 }
 

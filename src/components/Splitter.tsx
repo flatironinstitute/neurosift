@@ -22,8 +22,8 @@ const defaultGripMargin = 2
 // see: https://github.com/react-grid-layout/react-draggable/issues/652
 const Draggable1: any = Draggable
 
-const Splitter: FunctionComponent<PropsWithChildren<Props> & {ref?: React.Ref<HTMLDivElement>}> = (props) => {
-    const {width, height, initialPosition, onChange, adjustable=true, positionFromRight=false, direction='horizontal', hideSecondChild, ref} = props
+const Splitter: FunctionComponent<PropsWithChildren<Props> & {ref?: React.Ref<HTMLDivElement>}> = React.forwardRef((props, ref) => {
+    const {width, height, initialPosition, onChange, adjustable=true, positionFromRight=false, direction='horizontal', hideSecondChild} = props
 
     const size1 = direction === 'horizontal' ? width : height
     // const size2 = direction === 'horizontal' ? height : width
@@ -170,6 +170,8 @@ const Splitter: FunctionComponent<PropsWithChildren<Props> & {ref?: React.Ref<HT
             </div>
         </div>
     )
-}
+})
+
+Splitter.displayName = 'Splitter'
 
 export default Splitter
