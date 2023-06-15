@@ -1,5 +1,5 @@
-import { FunctionComponent, useEffect } from "react"
-import { useTimeseriesSelection, useTimeseriesSelectionInitialization } from "../../../../package/context-timeseries-selection"
+import { FunctionComponent, useCallback, useContext, useEffect } from "react"
+import { TimeseriesSelectionContext, useTimeseriesSelection, useTimeseriesSelectionInitialization } from "../../../../package/context-timeseries-selection"
 import { AnnotatedVideoViewData } from "./AnnotatedVideoViewData"
 import AnnotatedVideoWidget from "./AnnotatedVideoWidget"
 
@@ -11,19 +11,23 @@ type Props = {
 
 const AnnotatedVideoView: FunctionComponent<Props> = ({data, width, height}) => {
 	const {samplingFrequency, videoUri, videoWidth, videoHeight, videoNumFrames, annotationUri, positionDecodeFieldUri} = data
-    const {currentTime, setCurrentTime} = useTimeseriesSelection()
+    const {currentTime} = useTimeseriesSelection()
+    const {timeseriesSelectionDispatch} = useContext(TimeseriesSelectionContext)
+    const handleSetCurrentTime = useCallback((time: number) => {
+        timeseriesSelectionDispatch({type: 'setFocusTime', currentTimeSec: time, autoScrollVisibleTimeRange: true})
+    }, [timeseriesSelectionDispatch])
     useTimeseriesSelectionInitialization(0, videoNumFrames / samplingFrequency)
     useEffect(() => {
         if (currentTime === undefined) {
-            setTimeout(() => setCurrentTime(0), 1) // for some reason we need to use setTimeout for initialization - probably because we are waiting for useTimeseriesSelectionInitialization
+            setTimeout(() => handleSetCurrentTime(0), 1) // for some reason we need to use setTimeout for initialization - probably because we are waiting for useTimeseriesSelectionInitialization
         }
-    }, [currentTime, setCurrentTime])
+    }, [currentTime, handleSetCurrentTime])
 	return (
         <AnnotatedVideoWidget
             width={width}
             height={height}
             currentTime={currentTime || 0}
-            setCurrentTime={setCurrentTime}
+            setCurrentTime={handleSetCurrentTime}
             videoUri={videoUri}
             annotationUri={annotationUri}
             positionDecodeFieldUri={positionDecodeFieldUri}
