@@ -1,3 +1,4 @@
+import { isTimeseriesAnnotationFileData, TimeseriesAnnotationFileData } from "../../TimeseriesAnnotation/TimeseriesAnnotationFileData"
 import { default as validateObject, isArrayOf, isBoolean, isEqualTo, isNumber, isString, optional } from "../../types/validateObject"
 
 type LegendOpts = {
@@ -55,6 +56,7 @@ export type TimeseriesGraphViewData = {
     yRange?: [number, number]
     gridlineOpts?: GridlineOpts
     hideToolbar?: boolean
+    annotation?: TimeseriesAnnotationFileData
 }
 
 export const isTimeseriesGraphViewData = (x: any): x is TimeseriesGraphViewData => {
@@ -80,6 +82,7 @@ export const isTimeseriesGraphViewData = (x: any): x is TimeseriesGraphViewData 
             hideX: isBoolean,
             hideY: isBoolean
         })),
-        hideToolbar: optional(isBoolean)
+        hideToolbar: optional(isBoolean),
+        annotation: optional(isTimeseriesAnnotationFileData)
     }, {allowAdditionalFields: true})
 }

@@ -3,6 +3,7 @@ import AudioSpectrogramFileView from "./AudioSpectrogramFileView";
 import NSFigFileView from "./NSFigFileView";
 import ScriptFileView from "./ScriptFileView";
 import SpikeTrainsFileView from "./SpikeTrainsFileView";
+import TimeseriesAnnotationFileView from "./TimeseriesAnnotationFileView";
 import TimeseriesGraphFileView from "./TimeseriesGraphFileView";
 import VideoAnnotationFileView from "./VideoAnnotationFileView";
 import VideoFileView from "./VideoFileView";
@@ -46,6 +47,12 @@ const FileView: FunctionComponent<Props> = ({width, height, filePath}) => {
         // Audio spectrogram
         return (
             <AudioSpectrogramFileView width={width} height={height} filePath={filePath} />
+        )
+    }
+    else if (filePath.endsWith('.ns-tsa')) {
+        // timeseries annotation
+        return (
+            <TimeseriesAnnotationFileView width={width} height={height} filePath={filePath} />
         )
     }
     else if (filePath.endsWith('.ns-fig')) {

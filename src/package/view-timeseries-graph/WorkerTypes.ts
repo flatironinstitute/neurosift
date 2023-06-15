@@ -19,3 +19,18 @@ export type ResolvedSeries = {
     t: number[]
     y: number[]
 }
+
+export type TimeseriesAnnotationData = {
+    type: 'TimeseriesAnnotation'
+    events: {
+        s: number // start time sec
+        e: number // end time sec
+        t: string // type
+        i: string // id
+    }[]
+    event_types: {
+        event_type: string
+        label: string
+        color_index: number
+    }[]
+}

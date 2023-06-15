@@ -1,9 +1,10 @@
-import { Opts, ResolvedSeries } from "./WorkerTypes";
+import { Opts, ResolvedSeries, TimeseriesAnnotationData } from "./WorkerTypes";
 
 let canvas: HTMLCanvasElement | undefined = undefined
 let opts: Opts | undefined = undefined
 let resolvedSeries: ResolvedSeries[] | undefined = undefined
 let plotSeries: PlotSeries[] | undefined = undefined
+let annotation: TimeseriesAnnotationData | undefined = undefined
 
 onmessage = function (evt) {
     if (evt.data.canvas) {
@@ -16,6 +17,10 @@ onmessage = function (evt) {
     }
     if (evt.data.resolvedSeries) {
         resolvedSeries = evt.data.resolvedSeries
+        drawDebounced()
+    }
+    if (evt.data.annotation) {
+        annotation = evt.data.annotation
         drawDebounced()
     }
 }
@@ -84,6 +89,18 @@ async function draw() {
         // the wait time is equal to the render time
         const elapsed = Date.now() - timer
         await sleepMsec(elapsed)
+    }
+
+    if (annotation) {
+        await drawAnnotation({
+            canvasContext,
+            canvasWidth,
+            canvasHeight,
+            visibleStartTimeSec,
+            visibleEndTimeSec,
+            margins,
+            annotation
+        })
     }
 }
 
@@ -266,5 +283,98 @@ function sleepMsec(msec: number) {
         setTimeout(resolve, msec)
     })
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN drawAnnotation
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+let drawAnnotationDrawCode = 0
+
+const drawAnnotation = async (o: {
+    canvasContext: CanvasRenderingContext2D
+    canvasWidth: number
+    canvasHeight: number
+    visibleStartTimeSec: number
+    visibleEndTimeSec: number
+    margins: {left: number, right: number, top: number, bottom: number}
+    annotation: TimeseriesAnnotationData
+}) => {
+    drawAnnotationDrawCode += 1
+    const thisDrawAnnotationDrawCode = drawAnnotationDrawCode
+
+    const {canvasContext, canvasWidth, canvasHeight, visibleStartTimeSec, visibleEndTimeSec, margins, annotation} = o
+
+    const {events, event_types} = annotation
+
+    const eventsFiltered = events.filter(e => (e.s <= visibleEndTimeSec) && (e.e >= visibleStartTimeSec))
+
+    const colors = [
+        [255, 0, 0],
+        [0, 255, 0],
+        [0, 0, 255],
+        [255, 255, 0],
+        [255, 0, 255],
+        [0, 255, 255],
+        [255, 128, 0],
+        [255, 0, 128],
+        [128, 255, 0],
+        [0, 255, 128],
+        [128, 0, 255],
+        [0, 128, 255]
+    ] as [number, number, number][]
+    const colorsForEventTypes: {[key: string]: [number, number, number]} = {}
+    for (const et of event_types) {
+        const color = colors[et.color_index % colors.length]
+        colorsForEventTypes[et.event_type] = color
+    }
+
+    let timer = Date.now()
+    for (const pass of ['rect', 'line']) {
+        for (const e of eventsFiltered) {
+            if (thisDrawAnnotationDrawCode !== drawAnnotationDrawCode) return
+            
+            const color = colorsForEventTypes[e.t]
+            if (e.e > e.s) {
+                if (pass !== 'rect') continue
+                const R = {
+                    x: margins.left + (e.s - visibleStartTimeSec) / (visibleEndTimeSec - visibleStartTimeSec) * (canvasWidth - margins.left - margins.right),
+                    y: margins.top,
+                    w: (e.e - e.s) / (visibleEndTimeSec - visibleStartTimeSec) * (canvasWidth - margins.left - margins.right),
+                    h: canvasHeight - margins.top - margins.bottom
+                }
+                canvasContext.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},0.3)`
+                canvasContext.fillRect(R.x, R.y, R.w, R.h)
+                const elapsed = Date.now() - timer
+                if (elapsed > 100) {
+                    await sleepMsec(elapsed)
+                    timer = Date.now()
+                }
+            }
+            else {
+                if (pass !== 'line') continue
+                const pt1 = {
+                    x: margins.left + (e.s - visibleStartTimeSec) / (visibleEndTimeSec - visibleStartTimeSec) * (canvasWidth - margins.left - margins.right),
+                    y: margins.top
+                }
+                const pt2 = {
+                    x: pt1.x,
+                    y: canvasHeight - margins.bottom
+                }
+                canvasContext.strokeStyle = `rgba(${color[0]},${color[1]},${color[2]},1)`
+                canvasContext.beginPath()
+                canvasContext.moveTo(pt1.x, pt1.y)
+                canvasContext.lineTo(pt2.x, pt2.y)
+                canvasContext.stroke()
+            }
+        }
+    }
+    function sleepMsec(msec: number) {
+        return new Promise((resolve) => {
+            setTimeout(resolve, msec)
+        })
+    }
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+// END drawAnnotation
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // export { }

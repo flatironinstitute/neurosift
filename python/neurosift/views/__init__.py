@@ -2,3 +2,4 @@ from .TimeseriesGraph import TimeseriesGraph
 from .VideoAnnotation import VideoAnnotation, VideoAnnotationNode, VideoAnnotationFrame, VideoAnnotationElement, VideoAnnotationNodeElement, VideoAnnotationEdgeElement
 from .SpikeTrains import SpikeTrains, SpikeTrain
 from .create_audio_spectrogram import create_audio_spectrogram
+from .TimeseriesAnnotation import TimeseriesAnnotation, TimeseriesAnnotationEvent, TimeseriesAnnotationEventType

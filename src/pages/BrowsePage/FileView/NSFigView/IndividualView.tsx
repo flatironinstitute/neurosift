@@ -17,6 +17,7 @@ const IndividualView: FunctionComponent<Props> = ({view, path, width, height}) =
         return (
             <TimeseriesGraphFileView
                 filePath={join(path, view.data)}
+                annotationFilePath={view.annotation ? join(path, view.annotation) : undefined}
                 width={width}
                 height={height}
             />

@@ -56,6 +56,7 @@ export type NSFigViewItem = {
     name: string
     type: 'TimeseriesGraph'
     data: string
+    annotation?: string
 } | {
     name: string
     type: 'AnnotatedVideo'
@@ -75,7 +76,8 @@ const isNSFigViewItem = (x: any): x is NSFigViewItem => {
     if (validateObject(x, {
         name: isString,
         type: isEqualTo('TimeseriesGraph'),
-        data: isString
+        data: isString,
+        annotation: optional(isString)
     })) return true
 
     if (validateObject(x, {

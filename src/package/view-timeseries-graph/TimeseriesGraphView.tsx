@@ -92,6 +92,14 @@ const TimeseriesGraphView: FunctionComponent<Props> = ({data, width, height}) =>
         })
     }, [canvasWidth, canvasHeight, margins, visibleStartTimeSec, visibleEndTimeSec, worker, hideLegend, legendOpts, minValue, maxValue])
 
+    useEffect(() => {
+        if (!worker) return
+        if (!data.annotation) return
+        worker.postMessage({
+            annotation: data.annotation
+        })
+    }, [worker, data.annotation])
+
     const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === 'l') {
             setHideLegend(v => (!v))
