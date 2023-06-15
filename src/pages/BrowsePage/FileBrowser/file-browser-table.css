@@ -7,6 +7,12 @@
     margin: 0px 0;
 }
 
+.file-browser-table td {
+    word-break: break-all;
+    max-width: 250px;
+    overflow: hidden;
+}
+
 .file-browser-table thead tr {
     background-color: #009879;
     color: #ffffff;

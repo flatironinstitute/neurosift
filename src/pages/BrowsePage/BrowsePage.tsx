@@ -12,7 +12,7 @@ type Props = {
 
 const BrowsePage: FunctionComponent<Props> = ({width, height, folder}) => {
     const {openTab} = useOpenTabs()
-    const initialPosition = Math.max(250, Math.min(1000, width / 3))
+    const initialPosition = Math.max(250, Math.min(450, width / 3))
     return (
         <Splitter
             width={width}
