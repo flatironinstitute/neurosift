@@ -60,17 +60,17 @@ class SpectrogramClient {
         if (!this.#spectrogramInfo) throw Error(`Spectrogram info not initialized`)
         return this.#spectrogramInfo.numFrequencies
     }
-    getValue(dsFactor: number, t: number, f: number) {
+    getValues(dsFactor: number, t: number) {
         const chunkIndex = Math.floor(t / chunkSize)
         const chunk = (this.#chunks[dsFactor] || {})[chunkIndex]
         if (!chunk) {
             this._fetchChunk(dsFactor, chunkIndex) // initiate fetching of the chunk
-            return NaN
+            return undefined
         }
         if (!this.#spectrogramInfo) throw Error(`Unexpected: spectrogram info not initialized`)
         const numFrequencies = this.#spectrogramInfo.numFrequencies
         const i = Math.floor(t) % chunkSize
-        return chunk[i * numFrequencies + f]
+        return chunk.slice(i * numFrequencies, (i + 1) * numFrequencies)
     }
     async _fetchChunk(dsFactor: number, i: number) {
         await this.initialize()

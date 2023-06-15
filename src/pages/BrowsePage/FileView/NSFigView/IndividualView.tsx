@@ -1,7 +1,9 @@
 import { FunctionComponent } from "react";
+import SpectrogramWidget from "../../../../spectrogram/SpectrogramWidget";
 import TimeseriesGraphFileView from "../TimeseriesGraphFileView";
 import VideoFileView from "../VideoFileView";
 import { NSFigViewItem } from "./NSFigViewData";
+import SpikeTrainsFileView from "../SpikeTrainsFileView";
 
 type Props = {
     view: NSFigViewItem
@@ -25,6 +27,24 @@ const IndividualView: FunctionComponent<Props> = ({view, path, width, height}) =
             <VideoFileView
                 filePath={join(path, view.data)}
                 annotationFilePath={view.annotation ? join(path, view.annotation) : undefined}
+                width={width}
+                height={height}
+            />
+        )
+    }
+    else if (view.type === 'AudioSpectrogram') {
+        return (
+            <SpectrogramWidget
+                spectrogramUri={`rtcshare://${join(path, view.data)}`}
+                width={width}
+                height={height}
+            />
+        )
+    }
+    else if (view.type === 'RasterPlot') {
+        return (
+            <SpikeTrainsFileView
+                filePath={join(path, view.data)}
                 width={width}
                 height={height}
             />

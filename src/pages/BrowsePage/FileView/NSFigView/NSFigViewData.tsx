@@ -61,6 +61,14 @@ export type NSFigViewItem = {
     type: 'AnnotatedVideo'
     data: string
     annotation?: string
+} | {
+    name: string
+    type: 'AudioSpectrogram'
+    data: string
+} | {
+    name: string
+    type: 'RasterPlot'
+    data: string
 }
 
 const isNSFigViewItem = (x: any): x is NSFigViewItem => {
@@ -75,6 +83,18 @@ const isNSFigViewItem = (x: any): x is NSFigViewItem => {
         type: isEqualTo('AnnotatedVideo'),
         data: isString,
         annotation: optional(isString)
+    })) return true
+
+    if (validateObject(x, {
+        name: isString,
+        type: isEqualTo('AudioSpectrogram'),
+        data: isString
+    })) return true
+
+    if (validateObject(x, {
+        name: isString,
+        type: isEqualTo('RasterPlot'),
+        data: isString
     })) return true
 
     return false

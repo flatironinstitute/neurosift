@@ -1,9 +1,10 @@
-import { FunctionComponent, useCallback, useEffect, useMemo, useState } from "react";
-import SpectrogramClient from "./SpectrogramClient";
 import colormap from 'colormap';
-import { useRtcshare } from "../rtcshare/useRtcshare";
+import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import { DefaultToolbarWidth, usePanelDimensions, useTimeseriesMargins } from "../package/component-time-scroll-view";
+import TimeScrollView2, { useTimeScrollView2 } from "../package/component-time-scroll-view-2/TimeScrollView2";
 import { useTimeRange, useTimeseriesSelectionInitialization } from "../package/context-timeseries-selection";
-import { DefaultToolbarWidth, TimeScrollView, TimeScrollViewPanel, usePanelDimensions, useTimeseriesMargins } from "../package/component-time-scroll-view";
+import { useRtcshare } from "../rtcshare/useRtcshare";
+import SpectrogramClient from "./SpectrogramClient";
 
 type Props ={
 	width: number
@@ -44,12 +45,19 @@ type ChildProps = {
 	spectrogramClient: SpectrogramClient
 }
 
+const gridlineOpts = {
+	hideX: false,
+	hideY: true
+}
+
 const SpectrogramWidgetChild: FunctionComponent<ChildProps> = ({width, height, spectrogramClient}) => {
 	const numTimepoints = spectrogramClient.numTimepoints
 	const samplingFrequency = spectrogramClient.samplingFrequency
 	useTimeseriesSelectionInitialization(0, numTimepoints / samplingFrequency)
     const {visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange} = useTimeRange()
 	const [refreshCode, setRefreshCode] = useState(0)
+
+	const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | undefined>()
 
 	useEffect(() => {
 		setVisibleTimeRange(0, Math.min(numTimepoints / samplingFrequency, 20))
@@ -61,16 +69,15 @@ const SpectrogramWidgetChild: FunctionComponent<ChildProps> = ({width, height, s
 		})
 	}, [spectrogramClient])
 
-	const margins = useTimeseriesMargins(timeseriesLayoutOpts)
-	const panelCount = 1
-    const toolbarWidth = timeseriesLayoutOpts?.hideTimeAxis ? 0 : DefaultToolbarWidth
-    const { panelWidth, panelHeight } = usePanelDimensions(width - toolbarWidth, height, panelCount, panelSpacing, margins)
-
-	const [imageDataInfo, setImageDataInfo] = useState<{imageData: ImageData, i1: number, i2: number} | undefined>(undefined)
+	const {canvasWidth, canvasHeight, margins} = useTimeScrollView2({width, height})
 
 	useEffect(() => {
 		if (visibleStartTimeSec === undefined) return undefined
 		if (visibleEndTimeSec === undefined) return undefined
+
+		const panelWidth = canvasWidth - margins.left - margins.right
+		const panelHeight = canvasHeight - margins.top - margins.bottom
+
 		const i1 = Math.floor(visibleStartTimeSec * samplingFrequency) - 1
 		const i2 = Math.floor(visibleEndTimeSec * samplingFrequency) + 1
 		const downsampleFactor = determinePower3DownsampleFactor(i2 - i1, panelWidth)
@@ -81,29 +88,38 @@ const SpectrogramWidgetChild: FunctionComponent<ChildProps> = ({width, height, s
 		const nT_ds = i2_ds - i1_ds
 		if (!nT_ds) return undefined
 		
-		let imageData: ImageData | undefined = undefined
 		const data: number[] = []
 		const nF = spectrogramClient.numFrequencies
+
+		// preallocate data
 		for (let ff = 0; ff < nF; ff++) {
 			for (let it = 0; it < nT_ds; it++) {
-				const val = spectrogramClient.getValue(downsampleFactor, i1_ds + it, nF - 1 - ff)
-				const c = colorForSpectrogramValue(val)
-				data.push(...c)
+				data.push(...[0, 0, 0, 0])
 			}
 		}
-		const clampedData = Uint8ClampedArray.from(data)
-		imageData = new ImageData(clampedData, nT_ds, nF)
-		
-		setImageDataInfo({imageData, i1, i2})
-    }, [spectrogramClient, samplingFrequency, visibleStartTimeSec, visibleEndTimeSec, panelWidth, refreshCode])
 
-	const paintPanel = useCallback((context: CanvasRenderingContext2D, props: PanelProps) => {
-		if (!imageDataInfo) return
-		if (visibleStartTimeSec === undefined) return
-		if (visibleEndTimeSec === undefined) return
-		const {imageData, i1, i2} = imageDataInfo
-		if (!imageData) return
-		context.clearRect(0, 0, panelWidth, panelHeight)
+		for (let it = 0; it < nT_ds; it++) {
+			const t = i1_ds + it
+			const vals = spectrogramClient.getValues(downsampleFactor, t)
+			if (vals) {
+				for (let ff = 0; ff < nF; ff++) {
+					const val: number = vals[ff]
+					const c = colorForSpectrogramValue(val)
+					const ind = (nF - 1 - ff) * nT_ds + it
+					data[ind * 4 + 0] = c[0]
+					data[ind * 4 + 1] = c[1]
+					data[ind * 4 + 2] = c[2]
+					data[ind * 4 + 3] = c[3]
+				}
+			}
+		}
+
+		const clampedData = Uint8ClampedArray.from(data)
+		const imageData = new ImageData(clampedData, nT_ds, nF)
+
+		const context = canvasElement?.getContext('2d')
+		if (!context) return
+		context.clearRect(0, 0, width, height)
 		const offscreenCanvas = document.createElement('canvas')
 		offscreenCanvas.width = imageData.width
 		offscreenCanvas.height = imageData.height
@@ -116,31 +132,32 @@ const SpectrogramWidgetChild: FunctionComponent<ChildProps> = ({width, height, s
 		const p2 = (i2 / samplingFrequency - visibleStartTimeSec) / (visibleEndTimeSec - visibleStartTimeSec)
 
 		const rect = {
-			x: p1 * panelWidth,
-			y: 50,
+			x: margins.left + p1 * panelWidth,
+			y: margins.bottom + 50,
 			w: (p2 - p1) * panelWidth,
 			h: panelHeight - 100
 		}
 
 		context.drawImage(offscreenCanvas, rect.x, rect.y, rect.w, rect.h)
-	}, [imageDataInfo, visibleStartTimeSec, visibleEndTimeSec, samplingFrequency, panelWidth, panelHeight])
-	const panels: TimeScrollViewPanel<PanelProps>[] = useMemo(() => {
-        return [{
-            key: `spectrogram`,
-            label: ``,
-            props: {} as PanelProps,
-            paint: paintPanel
-        }]
-    }, [paintPanel])
+		
+    }, [spectrogramClient, samplingFrequency, visibleStartTimeSec, visibleEndTimeSec, canvasWidth, refreshCode, canvasElement, canvasHeight, width, height, margins])
+	
+	const yAxisInfo = useMemo(() => ({
+        showTicks: false,
+        yMin: 0,
+        yMax: 1
+    }), [])
+
 	return (
-		<TimeScrollView
-			margins={margins}
-			panels={panels}
-			panelSpacing={panelSpacing}
-			timeseriesLayoutOpts={timeseriesLayoutOpts}
-			width={width}
-			height={height}
-		/>
+		<TimeScrollView2
+            onCanvasElement={elmt => setCanvasElement(elmt)}
+            gridlineOpts={gridlineOpts}
+            // onKeyDown={handleKeyDown}
+            width={width}
+            height={height}
+            yAxisInfo={yAxisInfo}
+            hideToolbar={false}
+        />
 	)
 }
 

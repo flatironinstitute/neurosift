@@ -130,13 +130,19 @@ const FileBrowser: FunctionComponent<Props> = ({onOpenFile, currentFolderPath, s
 }
 
 export const FileIcon: FunctionComponent<{fileName: string, isDir: boolean}> = ({fileName, isDir}) => {
+    const ext = fileName.split('.').pop()
+
     // folder color is a dark pale blue
     const folderColor = '#80a0a0'
     if (isDir) {
-        return <FontAwesomeIcon icon={faFile as any} style={{color: folderColor}} />
+        if (ext?.startsWith('ns-')) {
+            return <FontAwesomeIcon icon={faFile as any} style={{color: 'darkgreen'}} />
+        }
+        else {
+            return <FontAwesomeIcon icon={faFile as any} style={{color: folderColor}} />
+        }
     }
 
-    const ext = fileName.split('.').pop()
     if (ext === 'py') {
         return <FontAwesomeIcon icon={faPython} style={{color: 'darkblue'}} />
     }
@@ -145,6 +151,9 @@ export const FileIcon: FunctionComponent<{fileName: string, isDir: boolean}> = (
     }
     else if ((ext === 'mp4') || (ext === 'avi')) {
         return <FontAwesomeIcon icon={faVideo as any} style={{color: 'darkred'}} />
+    }
+    else if (ext?.startsWith('ns-')) {
+        return <FontAwesomeIcon icon={faFileText as any} style={{color: 'darkgreen'}} />
     }
     else {
         return <FontAwesomeIcon icon={faFileText as any} style={{color: 'gray'}} />

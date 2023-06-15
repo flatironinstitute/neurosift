@@ -77,7 +77,7 @@ const AnnotatedVideoViewArea: FunctionComponent<Props> = ({width, height, curren
 	
 	// const {visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange} = useTimeRange()
 	const height2 = height - bottomBarHeight
-	const legendWidth = nodes ? 150 : 0
+	const legendWidth = nodes ? Math.min(150, width / 4) : 0
 	const width2 = width - legendWidth
 	const W = videoWidth * height2 < videoHeight * width2 ? videoWidth * height2 / videoHeight : width2
 	const H = videoWidth * height2 < videoHeight * width2 ? height2 : videoHeight * width2 / videoWidth

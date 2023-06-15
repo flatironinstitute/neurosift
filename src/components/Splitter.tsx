@@ -141,7 +141,7 @@ const Splitter: FunctionComponent<PropsWithChildren<Props> & {ref?: React.Ref<HT
         onChange && onChange(newGripPosition)
     }
     return (
-        <div className="splitter" style={{...style0, position: 'relative'}}>
+        <div className="splitter" style={{...style0, position: 'relative', background: 'white'}}>
             <div key="child1" style={{...style1, position: 'absolute'}} className="SplitterChild">
                 <child1.type {...child1.props} width={direction === 'horizontal' ? size1A : width} height={direction === 'horizontal' ? height : size1A} />
             </div>

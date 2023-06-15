@@ -36,10 +36,9 @@ class TimeseriesGraph:
         y_range: Union[List[float], None]=None,
         hide_x_gridlines: Union[bool, None]=None,
         hide_y_gridlines: Union[bool, None]=None,
-        hide_toolbar: bool=False,
-        **kwargs
+        hide_toolbar: bool=False
     ) -> None:
-        super().__init__('TimeseriesGraph', **kwargs)
+        self.type = 'TimeseriesGraph'
         self._datasets = []
         self._series = []
         self._legend_opts = legend_opts
