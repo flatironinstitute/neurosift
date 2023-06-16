@@ -16,12 +16,6 @@ class SpikeTrain:
             raise Exception('spike_times_sec must be float32 or int32')
         self.unit_id = unit_id
         self.spike_times_sec = spike_times_sec
-    def to_dict(self):
-        ret = {
-            'unitId': self.unit_id,
-            'spikeTimesSec': self.spike_times_sec
-        }
-        return ret
 
 class SpikeTrains:
     def __init__(self, *,
@@ -40,8 +34,47 @@ class SpikeTrains:
             'spikeTrains': [a.to_dict() for a in self._spike_trains]
         }
         return ret
-    def save(self, fname: str):
+    def save(self, fname: str, block_size_sec: float=300):
         if not fname.endswith('ns-spt'):
             raise Exception('File name must end with .ns-spt')
+        
+        block_starts = np.arange(self._start_time_sec, self._end_time_sec, block_size_sec)
+        block_ends = np.concatenate([block_starts[1:], [self._end_time_sec]])
+        
+        # split into blocks
+        json_lines: list[str] = []
+        x = {
+            'type': 'SpikeTrains',
+            'startTimeSec': self._start_time_sec,
+            'endTimeSec': self._end_time_sec,
+            'blockSizeSec': block_size_sec,
+            'numBlocks': len(block_starts),
+            'units': [{
+                'unitId': a.unit_id,
+                'numSpikes': len(a.spike_times_sec)
+            } for a in self._spike_trains]
+        }
+        json_lines.append(json.dumps(_serialize(x)))
+
+        for block_start, block_end in zip(block_starts, block_ends):
+            x = {
+                'startTimeSec': block_start,
+                'endTimeSec': block_end,
+                'units': [
+                    {
+                        'unitId': a.unit_id,
+                        'spikeTimesSec': a.spike_times_sec[
+                            (a.spike_times_sec >= block_start) & (a.spike_times_sec < block_end)
+                        ]
+                    }
+                    for a in self._spike_trains
+                ]
+            }
+            json_lines.append(json.dumps(_serialize(x)))
+        
+        json_lines_sizes = [len(a) for a in json_lines]
+
         with open(fname, 'w') as f:
-            json.dump(_serialize(self.to_dict()), f, indent=2)
+            f.write(json.dumps(json_lines_sizes) + '\n')
+            for a in json_lines:
+                f.write(a + '\n')

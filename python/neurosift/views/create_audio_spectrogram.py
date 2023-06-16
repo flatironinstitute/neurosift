@@ -45,17 +45,21 @@ def create_audio_spectrogram(*,
         sr_spectrogram = float(1 / (spectrogram_times[1] - spectrogram_times[0]))
         spectrograms.append(s.T) # Use transpose so we have Nt x Nf
     print(f'Spectrogram sampling rate (Hz): {sr_spectrogram}')
-    spectrogram_for_gui = sum(spectrograms)
+    spectrogram_for_gui = np.log(sum(spectrograms) + 1e-6)
 
     print('Auto detecting maxval')
     maxval = _auto_detect_spectrogram_maxval(spectrogram_for_gui, sr_spectrogram=sr_spectrogram)
-    minval = 0
+    minval = np.percentile(spectrogram_for_gui, 0.5)
     print(f'Absolute spectrogram max: {np.max(spectrogram_for_gui)}')
     print(f'Auto detected spectrogram max: {maxval}')
 
     print('Scaling spectogram data')
+    
     # Nf x Nt
-    spectrogram_for_gui: np.ndarray = np.floor((spectrogram_for_gui - minval) / (maxval - minval) * 255).astype(np.uint8)
+    scaled_vals = (spectrogram_for_gui - minval) / (maxval - minval + 1e-6) * 255
+    scaled_vals = np.clip(scaled_vals, 0, 255)
+
+    spectrogram_for_gui: np.ndarray = scaled_vals.astype(np.uint8)
 
     # threshold = np.percentile(spectrogram_for_gui[freq_range[0]:freq_range[1]], threshold_pct)
     # print(f'Using threshold: {threshold} ({threshold_pct} pct)')

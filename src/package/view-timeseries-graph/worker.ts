@@ -1,10 +1,10 @@
-import { Opts, ResolvedSeries, TimeseriesAnnotationData } from "./WorkerTypes";
+import { Opts, ResolvedSeries, TimeseriesAnnotationFileData } from "./WorkerTypes";
 
 let canvas: HTMLCanvasElement | undefined = undefined
 let opts: Opts | undefined = undefined
 let resolvedSeries: ResolvedSeries[] | undefined = undefined
 let plotSeries: PlotSeries[] | undefined = undefined
-let annotation: TimeseriesAnnotationData | undefined = undefined
+let annotation: TimeseriesAnnotationFileData | undefined = undefined
 
 onmessage = function (evt) {
     if (evt.data.canvas) {
@@ -296,7 +296,7 @@ const drawAnnotation = async (o: {
     visibleStartTimeSec: number
     visibleEndTimeSec: number
     margins: {left: number, right: number, top: number, bottom: number}
-    annotation: TimeseriesAnnotationData
+    annotation: TimeseriesAnnotationFileData
 }) => {
     drawAnnotationDrawCode += 1
     const thisDrawAnnotationDrawCode = drawAnnotationDrawCode

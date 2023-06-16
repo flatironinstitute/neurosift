@@ -43,7 +43,7 @@ const TimeseriesGraphView: FunctionComponent<Props> = ({data, width, height}) =>
     useTimeseriesSelectionInitialization(minTime, maxTime, timeOffset || 0)
     const {visibleStartTimeSec, visibleEndTimeSec } = useTimeRange(timeOffset || 0) // timeOffset is subtracted from start and end after getting from the global state
 
-    const {canvasWidth, canvasHeight, margins} = useTimeScrollView2({width, height})
+    const {canvasWidth, canvasHeight, margins} = useTimeScrollView2({width, height, hideToolbar})
 
     const [hideLegend, setHideLegend] = useState<boolean>(false)
 

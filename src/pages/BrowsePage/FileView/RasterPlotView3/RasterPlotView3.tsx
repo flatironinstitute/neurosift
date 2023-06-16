@@ -1,13 +1,13 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { FunctionComponent, useCallback, useEffect, useMemo, useState } from 'react'
-import TimeScrollView2, { useTimeScrollView2 } from '../../component-time-scroll-view-2/TimeScrollView2'
-import { useTimeRange, useTimeseriesSelectionInitialization } from '../../context-timeseries-selection'
-import { idToNum, useSelectedUnitIds } from '../../context-unit-selection'
-import { colorForUnitId } from '../unit-colors'
-import { RasterPlotView2Data } from './RasterPlotView2Data'
-import { Opts, PlotData } from './WorkerTypes'
+import TimeScrollView2, { useTimeScrollView2 } from '../../../../package/component-time-scroll-view-2/TimeScrollView2'
+import { useTimeRange, useTimeseriesSelectionInitialization } from '../../../../package/context-timeseries-selection'
+import { useSelectedUnitIds } from '../../../../package/context-unit-selection'
+import SpikeTrainsClient from './SpikeTrainsClient'
+import { Opts } from './WorkerTypes'
 
 type Props = {
-    data: RasterPlotView2Data
+    spikeTrainsClient: SpikeTrainsClient
     width: number
     height: number
 }
@@ -23,8 +23,10 @@ const yAxisInfo = {
     yMax: undefined
 }
 
-const RasterPlotView2: FunctionComponent<Props> = ({data, width, height}) => {
-    const {startTimeSec, endTimeSec, plots, hideToolbar} = data
+const RasterPlotView3: FunctionComponent<Props> = ({spikeTrainsClient, width, height}) => {
+    const startTimeSec = spikeTrainsClient.startTimeSec!
+    const endTimeSec = spikeTrainsClient.endTimeSec!
+    const hideToolbar = false
     useTimeseriesSelectionInitialization(startTimeSec, endTimeSec)
     const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange()
 
@@ -54,31 +56,29 @@ const RasterPlotView2: FunctionComponent<Props> = ({data, width, height}) => {
         }
     }, [canvasElement])
 
-    const plotData = useMemo(() => {
-        const ret: PlotData = {
-            plots: plots.map(p => ({
-                ...p,
-                color: colorForUnitId(idToNum(p.unitId))
-            }))
-        }
-        return ret
-    }, [plots])
-
     useEffect(() => {
+        let canceled = false
         if (!worker) return
         if (visibleStartTimeSec === undefined) return
         if (visibleEndTimeSec === undefined) return
-        const bufferSec = (visibleEndTimeSec - visibleStartTimeSec) / 3
-        const plotDataFiltered = {
-            plots: plotData.plots.map(plot => ({
-                ...plot,
-                spikeTimesSec: plot.spikeTimesSec.filter(t => (visibleStartTimeSec - bufferSec <= t) && (t <= visibleEndTimeSec + bufferSec))
-            }))
-        }
-        worker.postMessage({
-            plotData: plotDataFiltered
-        })
-    }, [plotData, worker, visibleStartTimeSec, visibleEndTimeSec])
+
+        ;(async () => {
+            const bufferSec = (visibleEndTimeSec - visibleStartTimeSec) / 3
+            const dd = await spikeTrainsClient.getData(visibleStartTimeSec - bufferSec, visibleEndTimeSec + bufferSec)
+            if (canceled) return
+            const plotData = {
+                plots: dd.map(unit => ({
+                    unitId: unit.unitId,
+                    spikeTimesSec: unit.spikeTimesSec
+                }))
+            }
+            worker.postMessage({
+                plotData
+            })
+        })()
+
+        return () => {canceled = true}
+    }, [worker, visibleStartTimeSec, visibleEndTimeSec, spikeTrainsClient])
 
     const {canvasWidth, canvasHeight, margins} = useTimeScrollView2({width, height})
 
@@ -100,16 +100,19 @@ const RasterPlotView2: FunctionComponent<Props> = ({data, width, height}) => {
         })
     }, [canvasWidth, canvasHeight, margins, visibleStartTimeSec, visibleEndTimeSec, worker, hoveredUnitId, selectedUnitIds])
 
-    const numUnits = plots.length
+    const unitIds = useMemo(() => (
+        spikeTrainsClient.unitIds!
+    ), [spikeTrainsClient.unitIds])
 
     const pixelToUnitId = useCallback((p: {x: number, y: number}) => {
+        const numUnits = unitIds.length
         const frac = 1 - (p.y - margins.top) / (canvasHeight - margins.top - margins.bottom)
         const index = Math.round(frac * numUnits - 0.5)
         if ((0 <= index) && (index < numUnits)) {
-            return plots[index].unitId
+            return unitIds[index]
         }
         else return undefined
-    }, [canvasHeight, plots, margins, numUnits])
+    }, [canvasHeight, margins, unitIds])
 
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
         const boundingRect = e.currentTarget.getBoundingClientRect()
@@ -155,4 +158,4 @@ const RasterPlotView2: FunctionComponent<Props> = ({data, width, height}) => {
     )
 }
 
-export default RasterPlotView2
+export default RasterPlotView3

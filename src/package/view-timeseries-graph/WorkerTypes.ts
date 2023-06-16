@@ -20,7 +20,7 @@ export type ResolvedSeries = {
     y: number[]
 }
 
-export type TimeseriesAnnotationData = {
+export type TimeseriesAnnotationFileData = {
     type: 'TimeseriesAnnotation'
     events: {
         s: number // start time sec

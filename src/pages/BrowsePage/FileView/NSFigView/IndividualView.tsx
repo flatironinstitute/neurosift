@@ -37,6 +37,7 @@ const IndividualView: FunctionComponent<Props> = ({view, path, width, height}) =
         return (
             <SpectrogramWidget
                 spectrogramUri={`rtcshare://${join(path, view.data)}`}
+                annotationFilePath={view.annotation ? join(path, view.annotation) : undefined}
                 width={width}
                 height={height}
             />
