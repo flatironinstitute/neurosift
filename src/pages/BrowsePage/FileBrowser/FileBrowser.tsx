@@ -1,16 +1,18 @@
 import { faPython } from "@fortawesome/free-brands-svg-icons";
 import { faFile, faFileText, faVideo } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Delete, DriveFileRenameOutline, FileCopy } from "@mui/icons-material";
-import { FunctionComponent, useCallback, useEffect, useState } from "react";
+import { FunctionComponent, useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import { FaBox, FaBoxOpen, FaPencilAlt, FaPiedPiper, FaSearch } from "react-icons/fa";
 import SmallIconButton from "../../../components/SmallIconButton";
 import { useRtcshare } from "../../../rtcshare/useRtcshare";
 import { timeAgoString } from "../../../timeStrings";
+import "./file-browser-table.css";
 import formatByteCount from "./formatByteCount";
-import "./file-browser-table.css"
 
 type Props = {
-    onOpenFile: (path: string) => void
+    width: number
+    height: number
+    onOpenTab: (tabName: string) => void
     currentFolderPath: string
     setCurrentFolderPath: (path: string) => void
 }
@@ -23,9 +25,31 @@ type FileItem = {
     isDir: boolean
 }
 
-const FileBrowser: FunctionComponent<Props> = ({onOpenFile, currentFolderPath, setCurrentFolderPath}) => {
+type SelectedFilesState = {
+    [key: string]: boolean
+}
+
+type SelectedFilesAction = {
+    type: 'toggle'
+    fileName: string
+}
+
+const selectedFilesReducer = (state: SelectedFilesState, action: SelectedFilesAction) => {
+    if (action.type === 'toggle') {
+        const newState = {...state}
+        newState[action.fileName] = !newState[action.fileName]
+        return newState
+    }
+    else {
+        return state
+    }
+}
+
+const FileBrowser: FunctionComponent<Props> = ({onOpenTab, currentFolderPath, setCurrentFolderPath, width, height}) => {
     const {client} = useRtcshare()
     const [files, setFiles] = useState<FileItem[]>([])
+
+    const [selectedFiles, selectedFilesDispatch] = useReducer(selectedFilesReducer, {})
 
     const [contextMenu, setContextMenu] = useState<{visible: boolean, x: number, y: number, fileId: string}>({ visible: false, x: 0, y: 0, fileId: '' })
 
@@ -76,9 +100,9 @@ const FileBrowser: FunctionComponent<Props> = ({onOpenFile, currentFolderPath, s
             setCurrentFolderPath(newFolder)
             return
         }
-        onOpenFile(fileId)
+        onOpenTab(`file:${fileId}`)
         setContextMenu({ visible: false, x: 0, y: 0, fileId: '' })
-    }, [onOpenFile, currentFolderPath, files, setCurrentFolderPath])
+    }, [onOpenTab, currentFolderPath, files, setCurrentFolderPath])
 
     const handleContextMenuAction = useCallback((fileId: string, action: string) => {
         if (action === 'delete') {
@@ -90,31 +114,74 @@ const FileBrowser: FunctionComponent<Props> = ({onOpenFile, currentFolderPath, s
         else if (action === 'rename') {
             // onRenameFile(fileId)
         }
+        else if (action === 'edit') {
+            onOpenTab(`edit:${fileId}`)
+        }
         setContextMenu({ visible: false, x: 0, y: 0, fileId: '' })
-    }, [])
+    }, [onOpenTab])
+
+    const topBarHeight = 30
+    const selectedFilesList = useMemo(() => {
+        const ret: string[] = []
+        for (const k in selectedFiles) {
+            if (selectedFiles[k]) {
+                ret.push(k)
+            }
+        }
+        ret.sort()
+        return ret
+    }, [selectedFiles])
+
+    const okayToViewFigure = useMemo(() => {
+        if (selectedFilesList.length <= 1) return false
+        for (const k of selectedFilesList) {
+            if (selectedFiles[k]) {
+                const ext = k.split('.').pop()
+                if ((!ext?.startsWith('ns-')) && (ext !== 'avi') && (ext !== 'mp4')) return false
+                if (ext === 'ns-fig') return false
+            }
+        }
+        return true
+    }, [selectedFiles, selectedFilesList])
     
     return (
-        <div onMouseLeave={() => {setContextMenu({visible: false, x: 0, y: 0, fileId: ''})}} style={{position: 'absolute'}}>
-            <table className="file-browser-table">
-                <tbody>
-                    <tr key=".." onClick={() => setCurrentFolderPath(join(currentFolderPath, '..'))} style={{cursor: 'pointer'}}>
-                        <td><FileIcon fileName=".." isDir={true} /></td>
-                        <td>..</td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                    {
-                        files.map(x => (
-                            <tr key={x.id} onClick={() => handleClickFile(x.id)} onContextMenu={(evt) => handleContextMenu(evt, x.id)} style={{cursor: 'pointer'}}>
-                                <td><FileIcon fileName={x.name} isDir={x.isDir} /></td>
-                                <td>{x.name}</td>
-                                <td>{timeAgoString(x.timestampModified)}</td>
-                                <td>{formatByteCount(x.size)}</td>
-                            </tr>
-                        ))
-                    }
-                </tbody>
-            </table>
+        <div onMouseLeave={() => {setContextMenu({visible: false, x: 0, y: 0, fileId: ''})}} style={{position: 'absolute', width, height}}>
+            <div style={{position: 'absolute', top: 0, left: 0, width, height: topBarHeight, backgroundColor: 'rgb(240, 240, 240)', borderBottom: 'solid 1px rgb(200, 200, 200)'}}>
+                {
+                    okayToViewFigure && (
+                        <div style={{position: 'absolute', top: 0, left: 0, width: 100, height: topBarHeight, display: 'flex', alignItems: 'center', paddingLeft: 10}}>
+                            <SmallIconButton icon={<FaPiedPiper />} onClick={() => {
+                                const x = JSON.stringify(selectedFilesList.map(f => (`${currentFolderPath}/${f}`)))
+                                onOpenTab(`figure:${x}`)
+                            }} label={`view ${selectedFilesList.length}`} />
+                        </div>
+                    )
+                }
+            </div>
+            <div style={{position: 'absolute', top: topBarHeight, left: 5, width: width - 10, height: height - topBarHeight, overflowY: 'auto'}}>
+                <table className="file-browser-table">
+                    <tbody>
+                        <tr key=".." onClick={() => setCurrentFolderPath(join(currentFolderPath, '..'))} style={{cursor: 'pointer', userSelect: 'none'}}>
+                            <td />
+                            <td><FileIcon fileName=".." isDir={true} /></td>
+                            <td>..</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        {
+                            files.map(x => (
+                                <tr key={x.id} onContextMenu={(evt) => handleContextMenu(evt, x.id)} style={{cursor: 'pointer', userSelect: 'none'}}>
+                                    <td><Checkbox checked={!!selectedFiles[x.name]} onToggle={() => selectedFilesDispatch({type: 'toggle', fileName: x.name})} /></td>
+                                    <td onClick={() => handleClickFile(x.id)}><FileIcon fileName={x.name} isDir={x.isDir} /></td>
+                                    <td onClick={() => handleClickFile(x.id)}>{x.name}</td>
+                                    <td onClick={() => handleClickFile(x.id)}>{timeAgoString(x.timestampModified)}</td>
+                                    <td onClick={() => handleClickFile(x.id)}>{formatByteCount(x.size)}</td>
+                                </tr>
+                            ))
+                        }
+                    </tbody>
+                </table>
+            </div>
             {
                 contextMenu.visible && (
                     <ContextMenu
@@ -125,6 +192,14 @@ const FileBrowser: FunctionComponent<Props> = ({onOpenFile, currentFolderPath, s
                     />
                 )
             }
+        </div>
+    )
+}
+
+const Checkbox: FunctionComponent<{checked: boolean, onToggle: () => void}> = ({checked, onToggle}) => {
+    return (
+        <div className="file-browser-checkbox" onClick={onToggle}>
+            <input type="checkbox" checked={checked} onChange={() => {}} />
         </div>
     )
 }
@@ -161,18 +236,28 @@ export const FileIcon: FunctionComponent<{fileName: string, isDir: boolean}> = (
 }
 
 const ContextMenu: FunctionComponent<{ x: number, y: number, fileId: string, onAction: (fileId: string, a: string) => void}> = ({x, y, fileId, onAction}) => {
-    const options = [
-        {
-            id: "delete",
-            label: <span><SmallIconButton icon={<Delete />} /> delete {fileId}</span>
-        }, {
-            id: "rename",
-            label: <span><SmallIconButton icon={<DriveFileRenameOutline />} /> rename...</span>
-        }, {
-            id: "duplicate",
-            label: <span><SmallIconButton icon={<FileCopy />} /> duplicate...</span>
-        }
-    ]
+    const options: {
+        id: string
+        label: any
+    }[] = []
+    if (fileId.endsWith('.ns-fig')) {
+        options.push({
+            id: "edit",
+            label: <span><SmallIconButton icon={<FaPencilAlt />} /> edit {fileId}</span>
+        })
+    }
+    // options = options.concat([
+    //     {
+    //         id: "delete",
+    //         label: <span><SmallIconButton icon={<Delete />} /> delete {fileId}</span>
+    //     }, {
+    //         id: "rename",
+    //         label: <span><SmallIconButton icon={<DriveFileRenameOutline />} /> rename...</span>
+    //     }, {
+    //         id: "duplicate",
+    //         label: <span><SmallIconButton icon={<FileCopy />} /> duplicate...</span>
+    //     }
+    // ])
   
     const onClick = (option: string) => {
       onAction(fileId, option)

@@ -27,7 +27,6 @@ export const computeSizes = (
     items: NSFigLayoutItem[],
     collapsedItems: number[]
 ) => {
-    const itemCount = items.length
     const adjustedItemProperties = items.map((x, i) => {
         if (collapsedItems.includes(i)) {
             return {...x, minSize: 0, maxSize: 0, stretch: 1}
@@ -112,20 +111,24 @@ const BoxLayoutView: FunctionComponent<Props> = ({layout, views, path, width, he
     //     x.collapsible = true
     // }
 
+    const {editNSFigMode} = layout
+    const extraVMargin = editNSFigMode ? 15 : 0
+    const extraHMargin = editNSFigMode ? 15 : 0
+
     const [collapsedItems, collapsedItemsDispatch] = useReducer(collapsedItemsReducer, [])
 
     const {scrollbar, items, showTitles, direction} = layout
     const itemPositions: ItemPosition[] = useMemo(() => {
         if (direction === 'horizontal') {
             const ret: ItemPosition[] = []
-            const itemWidths = computeSizes(!scrollbar ? width : undefined, items, collapsedItems)
-            let x = 0
+            const itemWidths = computeSizes(!scrollbar ? width - extraHMargin : undefined, items, collapsedItems)
+            let x = extraHMargin
             for (let i=0; i<items.length; i++) {
                 ret.push({
                     left: x,
-                    top: 0,
+                    top: extraVMargin,
                     width: itemWidths[i],
-                    height,
+                    height: height - extraVMargin,
                     title: items[i].title
                 })
                 x += itemWidths[i]
@@ -135,12 +138,12 @@ const BoxLayoutView: FunctionComponent<Props> = ({layout, views, path, width, he
         else {
             const ret: ItemPosition[] = []
             const itemHeights = computeSizes(!scrollbar ? height : undefined, items, collapsedItems)
-            let y = 0
+            let y = extraVMargin
             for (let i=0; i<items.length; i++) {
                 ret.push({
-                    left: 0,
+                    left: extraHMargin,
                     top: y,
-                    width,
+                    width: width - extraHMargin,
                     height: itemHeights[i],
                     title: items[i].title,
                     collapsible: items[i].collapsible
@@ -149,7 +152,7 @@ const BoxLayoutView: FunctionComponent<Props> = ({layout, views, path, width, he
             }
             return ret
         }
-    }, [direction, items, width, height, scrollbar, collapsedItems])
+    }, [direction, items, width, height, scrollbar, collapsedItems, extraHMargin, extraVMargin])
 
     const divStyle: React.CSSProperties = useMemo(() => {
         const ret: React.CSSProperties = {
@@ -175,10 +178,27 @@ const BoxLayoutView: FunctionComponent<Props> = ({layout, views, path, width, he
         return ret
     }, [scrollbar, width, height, direction])
 
+    const editNSFigBoxPosition = useMemo(() => {
+        if (!editNSFigMode) return undefined
+        return {
+            left: 0,
+            top: 0,
+            width,
+            height: extraVMargin
+        }
+    }, [editNSFigMode, width, extraVMargin])
+
     const titleFontSize = direction === 'vertical' ? 25 : 20
     const titleDim = titleFontSize + 3
     return (
         <div style={divStyle}>
+            {
+                editNSFigMode && (
+                    <div style={{position: 'absolute', ...editNSFigBoxPosition, backgroundColor: '#efe', color: 'darkblue', fontSize: 12}}>
+                        Box ({layout.direction})
+                    </div>
+                )
+            }
             {
                 items.map((item, i) => {
                     const p = itemPositions[i]

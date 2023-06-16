@@ -1,7 +1,7 @@
 .file-browser-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.9em;
+    font-size: 0.75em;
     font-family: sans-serif;
     text-align: left;
     margin: 0px 0;
@@ -21,7 +21,7 @@
 
 .file-browser-table th,
 .file-browser-table td {
-    padding: 5px 2px;
+    padding: 2px 2px;
 }
 
 .file-browser-table tbody tr {

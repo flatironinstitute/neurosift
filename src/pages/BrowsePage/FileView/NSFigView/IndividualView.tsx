@@ -4,6 +4,7 @@ import TimeseriesGraphFileView from "../TimeseriesGraphFileView";
 import VideoFileView from "../VideoFileView";
 import { NSFigViewItem } from "./NSFigViewData";
 import SpikeTrainsFileView from "../SpikeTrainsFileView";
+import EditNSFigViewItemView from "./EditNSFigViewItemView";
 
 type Props = {
     view: NSFigViewItem
@@ -47,6 +48,16 @@ const IndividualView: FunctionComponent<Props> = ({view, path, width, height}) =
         return (
             <SpikeTrainsFileView
                 filePath={join(path, view.data)}
+                width={width}
+                height={height}
+            />
+        )
+    }
+    else if (view.type === 'EditNSFigViewItem') {
+        return (
+            <EditNSFigViewItemView
+                view={view.view}
+                path={path}
                 width={width}
                 height={height}
             />

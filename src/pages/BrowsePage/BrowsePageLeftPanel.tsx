@@ -6,16 +6,18 @@ type Props = {
     width: number
     height: number
     folder: string
-    onOpenFile: (filePath: string) => void
+    onOpenTab: (tabName: string) => void
 }
 
-const BrowsePageLeftPanel: FunctionComponent<Props> = ({width, height, folder, onOpenFile}) => {
+const BrowsePageLeftPanel: FunctionComponent<Props> = ({width, height, folder, onOpenTab}) => {
     const {setRoute} = useRoute()
     return (
         <FileBrowser
+            width={width}
+            height={height}
             currentFolderPath={folder}
             setCurrentFolderPath={folderPath => setRoute({page: 'browse', folder: folderPath})}
-            onOpenFile={onOpenFile}
+            onOpenTab={onOpenTab}
         />
     )
 }

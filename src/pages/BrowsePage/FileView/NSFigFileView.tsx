@@ -57,7 +57,7 @@ const NSFigFileView: FunctionComponent<Props> = ({width, height, filePath}) => {
     )
 }
 
-const directoryOfFile = (filePath: string) => {
+export const directoryOfFile = (filePath: string) => {
     const ind = filePath.lastIndexOf('/')
     if (ind >= 0) return filePath.slice(0, ind)
     return ''

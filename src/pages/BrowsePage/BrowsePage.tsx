@@ -20,7 +20,7 @@ const BrowsePage: FunctionComponent<Props> = ({width, height, folder}) => {
             initialPosition={initialPosition}
             direction='horizontal'
         >
-            <BrowsePageLeftPanel width={0} height={0} folder={folder} onOpenFile={fileName => openTab(`file:${fileName}`)} />
+            <BrowsePageLeftPanel width={0} height={0} folder={folder} onOpenTab={openTab} />
             <BrowsePageMainPanel width={0} height={0} />
         </Splitter>
     )

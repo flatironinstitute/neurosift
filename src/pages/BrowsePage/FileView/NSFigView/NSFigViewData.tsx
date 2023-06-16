@@ -26,11 +26,13 @@ export type NSFigLayout = {
     items: NSFigLayoutItem[]
     scrollbar?: boolean
     showTitles?: boolean
+    editNSFigMode?: boolean
 } | {
     type: 'Splitter'
     direction: 'horizontal' | 'vertical'
     item1: NSFigLayoutItem
     item2: NSFigLayoutItem
+    editNSFigMode?: boolean
 }
 
 const isNSFigLayout = (x: any): x is NSFigLayout => {
@@ -39,14 +41,16 @@ const isNSFigLayout = (x: any): x is NSFigLayout => {
         direction: isOneOf([isEqualTo('horizontal'), isEqualTo('vertical')]),
         items: isArrayOf(isNSFigLayoutItem),
         scrollbar: optional(isBoolean),
-        showTitles: optional(isBoolean)
+        showTitles: optional(isBoolean),
+        editNSFigMode: optional(isBoolean)
     })) return true
 
     if (validateObject(x, {
         type: isEqualTo('Splitter'),
         direction: isOneOf([isEqualTo('horizontal'), isEqualTo('vertical')]),
         item1: isNSFigLayoutItem,
-        item2: isNSFigLayoutItem
+        item2: isNSFigLayoutItem,
+        editNSFigMode: optional(isBoolean)
     })) return true
 
     return false
@@ -71,6 +75,10 @@ export type NSFigViewItem = {
     name: string
     type: 'RasterPlot'
     data: string
+} | {
+    name: string
+    type: 'EditNSFigViewItem'
+    view: NSFigViewItem
 }
 
 const isNSFigViewItem = (x: any): x is NSFigViewItem => {
@@ -99,6 +107,12 @@ const isNSFigViewItem = (x: any): x is NSFigViewItem => {
         name: isString,
         type: isEqualTo('RasterPlot'),
         data: isString
+    })) return true
+
+    if (validateObject(x, {
+        name: isString,
+        type: isEqualTo('EditNSFigViewItem'),
+        view: isNSFigViewItem
     })) return true
 
     return false
