@@ -6,6 +6,8 @@ setup(
     include_package_data=True,
     package_data={},
     install_requires=[
+        'rtcshare',
+        'kachery_cloud',
         'zarr'
     ]
 )
