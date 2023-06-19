@@ -1,6 +1,7 @@
 import { FunctionComponent } from "react";
 import AudioSpectrogramFileView from "./AudioSpectrogramFileView";
 import NSFigFileView from "./NSFigFileView";
+import PositionDecodeFieldFileView from "./PositionDecodeFieldFileView";
 import ScriptFileView from "./ScriptFileView";
 import SpikeTrainsFileView from "./SpikeTrainsFileView";
 import TimeseriesAnnotationFileView from "./TimeseriesAnnotationFileView";
@@ -35,6 +36,12 @@ const FileView: FunctionComponent<Props> = ({width, height, filePath}) => {
         // Video annotation
         return (
             <VideoAnnotationFileView width={width} height={height} filePath={filePath} />
+        )
+    }
+    else if (filePath.endsWith('.ns-pdf')) {
+        // Position decode field
+        return (
+            <PositionDecodeFieldFileView width={width} height={height} filePath={filePath} />
         )
     }
     else if (filePath.endsWith('.ns-spt')) {

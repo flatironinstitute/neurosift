@@ -66,6 +66,7 @@ export type NSFigViewItem = {
     type: 'AnnotatedVideo'
     data: string
     annotation?: string
+    position_decode_field?: string
 } | {
     name: string
     type: 'AudioSpectrogram'

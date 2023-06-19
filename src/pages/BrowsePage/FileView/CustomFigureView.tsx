@@ -23,6 +23,7 @@ const CustomFigureView: FunctionComponent<Props> = ({fileNames, width, height}) 
         }
         const timeseriesAnnotationFile = fileNames.find(x => x.endsWith('.ns-tsa'))
         const videoAnnotationFile = fileNames.find(x => x.endsWith('.ns-van'))
+        const positionDecodeFieldFile = fileNames.find(x => x.endsWith('.ns-pdf'))
         for (const fileName of fileNames) {
             if (fileName.endsWith('.ns-tsg')) {
                 ret.views.push({
@@ -64,7 +65,8 @@ const CustomFigureView: FunctionComponent<Props> = ({fileNames, width, height}) 
                     name: fileName,
                     type: 'AnnotatedVideo',
                     data: fileName,
-                    annotation: videoAnnotationFile
+                    annotation: videoAnnotationFile,
+                    position_decode_field: positionDecodeFieldFile
                 })
                 layout.items.push({
                     stretch: 1,

@@ -1,4 +1,4 @@
-import { BrowserRouter } from 'react-router-dom'
+import { HashRouter } from 'react-router-dom'
 import GithubAuthSetup from './GithubAuth/GithubAuthSetup'
 import MainWindow from './MainWindow'
 import SetupRtcshare from './rtcshare/SetupRtcshare'
@@ -6,11 +6,11 @@ import SetupRtcshare from './rtcshare/SetupRtcshare'
 function App() {
   return (
     <GithubAuthSetup>
-      <BrowserRouter>
+      <HashRouter>
         <SetupRtcshare>
           <MainWindow />
         </SetupRtcshare>
-      </BrowserRouter>
+      </HashRouter>
     </GithubAuthSetup>
   )
 }

@@ -195,7 +195,7 @@ const AnnotatedVideoViewArea: FunctionComponent<Props> = ({width, height, curren
 					</div>
 				)
 			}
-			<div className="position-decode-field-frame" style={{position: 'absolute', left: rect.x, top: rect.y, width: rect.w, height: rect.h}}>
+			<div className="position-decode-frame" style={{position: 'absolute', left: rect.x, top: rect.y, width: rect.w, height: rect.h}}>
 				{
 					positionDecodeFieldUri && showPositionDecodeField && <PositionDecodeFieldFrameView
 						width={rect.w}
@@ -255,7 +255,7 @@ const AnnotatedVideoViewArea: FunctionComponent<Props> = ({width, height, curren
 					{positionDecodeFieldUri && <FormControlLabel
 						control={<Checkbox checked={showPositionDecodeField} onClick={() => {setShowPositionDecodeField(a => !a)}} />}
 						disabled={playing}
-						label="position decode field"
+						label="position decode"
 					/>}
 					{videoUri && (positionDecodeFieldUri || annotationUri) && <FormControlLabel
 						control={<Checkbox checked={showVideo} onClick={() => {setShowVideo(a => !a)}} />}

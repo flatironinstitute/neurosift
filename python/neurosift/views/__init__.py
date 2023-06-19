@@ -3,3 +3,4 @@ from .VideoAnnotation import VideoAnnotation, VideoAnnotationNode, VideoAnnotati
 from .SpikeTrains import SpikeTrains, SpikeTrain
 from .create_audio_spectrogram import create_audio_spectrogram
 from .TimeseriesAnnotation import TimeseriesAnnotation, TimeseriesAnnotationEvent, TimeseriesAnnotationEventType
+from .PositionDecodeField import PositionDecodeField, PositionDecodeFieldBin, PositionDecodeFieldFrame

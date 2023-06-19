@@ -26,16 +26,8 @@ class SpikeTrains:
         self._start_time_sec = start_time_sec
         self._end_time_sec = end_time_sec
         self._spike_trains = spike_trains
-    def to_dict(self) -> dict:
-        ret = {
-            'type': 'SpikeTrains',
-            'startTimeSec': self._start_time_sec,
-            'endTimeSec': self._end_time_sec,
-            'spikeTrains': [a.to_dict() for a in self._spike_trains]
-        }
-        return ret
     def save(self, fname: str, block_size_sec: float=300):
-        if not fname.endswith('ns-spt'):
+        if not fname.endswith('.ns-spt'):
             raise Exception('File name must end with .ns-spt')
         
         block_starts = np.arange(self._start_time_sec, self._end_time_sec, block_size_sec)

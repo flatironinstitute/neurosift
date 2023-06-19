@@ -19,8 +19,8 @@ const PositionDecodeFieldFrameView: FunctionComponent<Props> = ({positionDecodeF
 		if (!rtcshareClient) return undefined
 		return new PositionDecodeFieldClient(positionDecodeFieldUri, rtcshareClient)
 	}, [positionDecodeFieldUri, rtcshareClient])
-	const [positionDecodeFieldFrame, setPositionDecodeFieldFrame] = useState<PositionDecodeFieldFrame | undefined>()
-	const [positionDecodeFieldHeader, setPositionDecodeFieldHeader] = useState<PositionDecodeFieldHeader | undefined>()
+	const [positionDecodeFrame, setPositionDecodeFieldFrame] = useState<PositionDecodeFieldFrame | undefined>()
+	const [positionDecodeHeader, setPositionDecodeFieldHeader] = useState<PositionDecodeFieldHeader | undefined>()
 	useEffect(() => {
 		positionDecodeFieldClient?.getHeader().then(h => {
 			setPositionDecodeFieldHeader(h)
@@ -51,28 +51,35 @@ const PositionDecodeFieldFrameView: FunctionComponent<Props> = ({positionDecodeF
 		const ff = affineTransform.forward
 		ctxt.transform(ff[0][0], ff[1][0], ff[0][1], ff[1][1], ff[0][2], ff[1][2])
 
-		const header = positionDecodeFieldHeader
+		const header = positionDecodeHeader
 		if (!header) return
-		ctxt.fillStyle = 'blue'
-		for (const bin of header.bins) {
-			ctxt.fillRect(bin.x * scale[0], bin.y * scale[1], bin.w * scale[0] + 1, bin.h * scale[1] + 1)
-		}
 
-		const frame = positionDecodeFieldFrame
+		const alpha = 0.7
+
+		const frame = positionDecodeFrame
+		const usedIndices = new Set<number>()
 		if (frame) {
 			for (let i = 0; i < frame.indices.length; i++) {
+				usedIndices.add(frame.indices[i])
 				const index = frame.indices[i]
 				const bin = header.bins[index]
 
 				const value = frame.values[i]
-				const c = colorForValue(value / header.maxValue)
+				const c = colorForValue(value / header.max_value, alpha)
 				ctxt.fillStyle = c
 				ctxt.fillRect(bin.x * scale[0], bin.y * scale[1], bin.w * scale[0] + 1, bin.h * scale[1] + 1)
 			}
 		}
+
+		ctxt.fillStyle = `rgba(0,0,255,${alpha})`
+		for (let i = 0; i < header.bins.length; i++) {
+			const bin = header.bins[i]
+			if (usedIndices.has(i)) continue
+			ctxt.fillRect(bin.x * scale[0], bin.y * scale[1], bin.w * scale[0] + 1, bin.h * scale[1] + 1)
+		}
 		
 		ctxt.restore()
-	}, [affineTransform, positionDecodeFieldClient, timeSec, positionDecodeFieldFrame, positionDecodeFieldHeader, scale])
+	}, [affineTransform, positionDecodeFieldClient, timeSec, positionDecodeFrame, positionDecodeHeader, scale])
 	return (
 		<div style={{position: 'absolute', width, height}}>
 			<canvas
@@ -84,9 +91,9 @@ const PositionDecodeFieldFrameView: FunctionComponent<Props> = ({positionDecodeF
 	)
 }
 
-const colorForValue = (v: number) => {
+const colorForValue = (v: number, alpha: number) => {
 	const g = Math.floor(v * 255)
-	return `rgb(${g},${g},${g})`
+	return `rgba(${g},${g},${g},${alpha})`
 }
 
 export default PositionDecodeFieldFrameView

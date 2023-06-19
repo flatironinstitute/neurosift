@@ -29,6 +29,7 @@ const IndividualView: FunctionComponent<Props> = ({view, path, width, height}) =
             <VideoFileView
                 filePath={join(path, view.data)}
                 annotationFilePath={view.annotation ? join(path, view.annotation) : undefined}
+                positionDecodeFieldFilePath={view.position_decode_field ? join(path, view.position_decode_field) : undefined}
                 width={width}
                 height={height}
             />

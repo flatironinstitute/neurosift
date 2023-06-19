@@ -11,5 +11,6 @@ export default defineConfig({
   },
   define: {
     "process.env": {}
-  }
+  },
+  base: "https://scratchrealm.github.io/neurosift",
 })
