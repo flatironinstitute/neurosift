@@ -2,7 +2,7 @@
 
 Interactive neuroscience visualizations in the browser.
 
-Neurosift provides a platform for the creation, visualization, and sharing of complex neuroscience data straight from your web browser. It caters to both individual users through its local mode, allowing the processing of views directly from your device, as well as a remote access function for presenting your findings to other users on different machines. With Neurosift, you have the ability to construct a multitude of synchronized visuals such as spike raster plots, audio spectrograms, videos, video annotations, position decoding fields, and timeseries graphs.
+Neurosift provides a platform for the creation, visualization, and sharing of complex neuroscience data straight from your web browser. It caters to both individual users through its local mode, allowing the processing of views directly from your device, as well as a remote access function for presenting your findings to other users on different machines. With Neurosift, you have the ability to construct a multitude of synchronized visuals such as spike raster plots, audio spectrograms, videos, video annotations, position decode fields, and timeseries graphs.
 
 ## Necessary System Specifications
 
@@ -55,7 +55,7 @@ Then you will need to modify the URL in your web browser to include the remote a
 
 To visualize a video, simply browse to and click the video file through the web browser. You can then use the controls to play, pause, and seek through the video. You can also click on the slider to seek to a specific time. Right now, only .mp4 and .avi files are supported (but we can easily expand this to other formats - just let us know).
 
-## Visualizing video annotations
+## Video annotations
 
 A Neurosift video annotation is a .ns-van file that contains a list of video frame annotations, including nodes and edges. You can create such a file using the neurosift Python package.
 
@@ -117,6 +117,63 @@ A = nv.VideoAnnotation(
 )
 A.save('video_annotation.ns-van')
 ```
+
+## Timeseries graphs
+
+A timeseries graph is a .ns-tsg file that contains a list of time series elements for plotting. You can create such a file using the neurosift Python package.
+
+Here is an example script that will download the data and create an example timeseries graph file. You can create this .py file in the test directory and run it from there. It will create a file called head_velocity.ns-tsg in the test directory. Then you can browse to this file through the web browser and visualize it.
+
+```python
+import numpy as np
+import kachery_cloud as kcl
+import neurosift.views as nv
+
+
+def create_head_velocity_plot():
+    head_velocity_fname = kcl.load_file('sha1://dc71cc4b13d2162dfb16747fbb4ffef9b18688e5?label=head_velocity_newSmooth.npy)
+    head_velocity = np.load(head_velocity_fname)
+    sampling_frequency = 30
+    tg = nv.TimeseriesGraph()
+    tg.add_line_series(
+        name='head-velocity',
+        t=(np.arange(0, len(head_velocity)) / sampling_frequency).astype(np.float32),
+        y=head_velocity.astype(np.float32),
+        color='black'
+    )
+    return tg
+
+def main():
+    head_velocity_plot = create_head_velocity_plot()
+    head_velocity_plot.save('head_velocity.ns-tsg')
+
+if __name__ == '__main__':
+    main()
+```
+
+## Audio spectrograms
+
+TODO
+
+## Spike raster plots
+
+TODO
+
+## Position decode fields
+
+TODO
+
+## Other visualizations
+
+TODO
+
+## Contributing
+
+We welcome feedback and code contributions. Please submit a pull request or issue on the GitHub page.
+
+## License
+
+Neurosift is licensed under the terms of the Apache License 2.0.
 
 ## Authors
 
