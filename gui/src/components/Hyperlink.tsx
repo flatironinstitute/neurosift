@@ -1,6 +1,6 @@
 import React, { FunctionComponent, PropsWithChildren } from "react";
 
-type Props ={
+type Props = {
 	onClick?: () => void
 	color?: string
 	disabled?: boolean

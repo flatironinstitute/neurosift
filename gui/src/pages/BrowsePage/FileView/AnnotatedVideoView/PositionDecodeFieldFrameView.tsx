@@ -3,7 +3,7 @@ import { useRtcshare } from "../../../../rtcshare/useRtcshare";
 import { AffineTransform } from "./AffineTransform";
 import PositionDecodeFieldClient, { PositionDecodeFieldFrame, PositionDecodeFieldHeader } from "./PositionDecodeFieldClient";
 
-type Props ={
+type Props = {
 	positionDecodeFieldUri: string
 	timeSec: number | undefined
 	samplingFrequency: number

@@ -7,7 +7,7 @@ import { useRtcshare } from "../rtcshare/useRtcshare";
 import { isTimeseriesAnnotationFileData, TimeseriesAnnotationFileData } from '../TimeseriesAnnotation/TimeseriesAnnotationFileData';
 import SpectrogramClient from "./SpectrogramClient";
 
-type Props ={
+type Props = {
 	width: number
 	height: number
 	spectrogramUri: string

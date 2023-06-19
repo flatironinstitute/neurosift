@@ -2,7 +2,7 @@ import { FunctionComponent, useCallback, useEffect, useMemo } from "react";
 import { DefaultToolbarWidth, TimeScrollView, TimeScrollViewPanel, usePanelDimensions, useTimeseriesMargins } from "../../component-time-scroll-view";
 import { useTimeRange, useTimeseriesSelectionInitialization } from "../../context-timeseries-selection";
 
-type Props ={
+type Props = {
 	width: number
 	height: number
 	spectrogram: {

@@ -2,7 +2,7 @@ import { Button, Input } from "@mui/material";
 import { FunctionComponent, useCallback, useState } from "react";
 import { getGitHubTokenInfoFromLocalStorage, setGitHubTokenInfoToLocalStorage } from "../GithubAuth/getGithubAuthFromLocalStorage";
 
-type Props ={
+type Props = {
 	onChange: () => void
 }
 

@@ -12,7 +12,7 @@ import rehypeRaw from "rehype-raw";
 import remarkGfm from 'remark-gfm';
 import remarkMathPlugin from 'remark-math';
 
-type Props ={
+type Props = {
 	source: string
 }
 

@@ -6,7 +6,7 @@ import Hyperlink from "../components/Hyperlink";
 import { useGithubAuth } from "../GithubAuth/useGithubAuth";
 import PersonalAccessTokenWindow from "./PersonalAccessTokenWindow";
 
-type Props ={
+type Props = {
 	onClose?: () => void
 	onChange: () => void
 	defaultScope: '' | 'repo'

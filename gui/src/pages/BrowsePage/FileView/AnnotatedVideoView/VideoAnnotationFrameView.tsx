@@ -2,7 +2,7 @@ import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
 import { AffineTransform } from "./AffineTransform";
 import VideoAnnotationClient, { VideoAnnotationElement, VideoAnnotationFrame } from "./VideoAnnotationClient";
 
-type Props ={
+type Props = {
 	annotationClient: VideoAnnotationClient
 	colorsForNodeIds: {[nodeId: string]: string}
 	timeSec: number | undefined

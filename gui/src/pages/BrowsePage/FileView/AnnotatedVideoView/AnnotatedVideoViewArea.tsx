@@ -11,7 +11,7 @@ import VideoClient from "./VideoView/VideoClient";
 import VideoViewCanvas from "./VideoView/VideoViewCanvas";
 
 
-type Props ={
+type Props = {
 	width: number
 	height: number
 	currentTime: number

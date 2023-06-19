@@ -2,7 +2,7 @@ import { FunctionComponent } from "react";
 import AnnotatedVideoViewArea from "./AnnotatedVideoViewArea";
 // import { colorForPointIndex } from "./PoseViewport";
 
-type Props ={
+type Props = {
 	width: number
 	height: number
 	currentTime: number
