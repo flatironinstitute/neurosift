@@ -11,7 +11,7 @@ export const serviceBaseUrl = queryParams.sh ? (
     defaultServiceBaseUrl
 )
 
-export const useWebrtc = queryParams.webrtc !== '0'
+export const useWebrtc = queryParams.webrtc === '1'
 
 let webrtcConnectionToService: WebrtcConnectionToService | undefined = undefined
 

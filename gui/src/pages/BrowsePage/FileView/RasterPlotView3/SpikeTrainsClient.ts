@@ -2,6 +2,17 @@ import deserializeReturnValue from "../../../../deserializeReturnValue"
 import RtcshareFileSystemClient from "../../../../rtcshare/RtcshareDataManager/RtcshareFileSystemClient"
 import JsonlClient from "../AnnotatedVideoView/JsonlClient"
 
+export interface SpikeTrainsClientType {
+    initialize(): Promise<void>
+    startTimeSec: number
+    endTimeSec: number
+    unitIds: (number | string)[]
+    getData(t1: number, t2: number): Promise<{
+        unitId: number | string
+        spikeTimesSec: number[]
+    }[]>
+}
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 class SpikeTrainsClient {
     #jsonlClient: JsonlClient

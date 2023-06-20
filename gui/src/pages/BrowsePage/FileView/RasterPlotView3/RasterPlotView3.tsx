@@ -3,11 +3,11 @@ import { FunctionComponent, useCallback, useEffect, useMemo, useState } from 're
 import TimeScrollView2, { useTimeScrollView2 } from '../../../../package/component-time-scroll-view-2/TimeScrollView2'
 import { useTimeRange, useTimeseriesSelectionInitialization } from '../../../../package/context-timeseries-selection'
 import { useSelectedUnitIds } from '../../../../package/context-unit-selection'
-import SpikeTrainsClient from './SpikeTrainsClient'
+import { SpikeTrainsClientType } from './SpikeTrainsClient'
 import { Opts } from './WorkerTypes'
 
 type Props = {
-    spikeTrainsClient: SpikeTrainsClient
+    spikeTrainsClient: SpikeTrainsClientType
     width: number
     height: number
 }

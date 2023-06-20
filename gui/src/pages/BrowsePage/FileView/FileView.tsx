@@ -2,6 +2,7 @@ import { FunctionComponent } from "react";
 import AudioSpectrogramFileView from "./AudioSpectrogramFileView";
 import NSFigFileView from "./NSFigFileView";
 import PositionDecodeFieldFileView from "./PositionDecodeFieldFileView";
+import PynappleSessionFileView from "./PynappleSessionFileView";
 import ScriptFileView from "./ScriptFileView";
 import SpikeTrainsFileView from "./SpikeTrainsFileView";
 import TimeseriesAnnotationFileView from "./TimeseriesAnnotationFileView";
@@ -16,62 +17,72 @@ type Props = {
 }
 
 const FileView: FunctionComponent<Props> = ({width, height, filePath}) => {
+    let view
     if ((filePath.endsWith('.avi')) || (filePath.endsWith('.mp4'))) {
-        return (
+        view = (
             <VideoFileView width={width} height={height} filePath={filePath} />
         )
     }
     else if (filePath.endsWith('.py')) {
-        return (
+        view = (
             <ScriptFileView width={width} height={height} filePath={filePath} />
         )
     }
     else if (filePath.endsWith('.ns-tsg')) {
         // TimeseriesGraph
-        return (
+        view = (
             <TimeseriesGraphFileView width={width} height={height} filePath={filePath} />
         )
     }
     else if (filePath.endsWith('.ns-van')) {
         // Video annotation
-        return (
+        view = (
             <VideoAnnotationFileView width={width} height={height} filePath={filePath} />
         )
     }
     else if (filePath.endsWith('.ns-pdf')) {
         // Position decode field
-        return (
+        view = (
             <PositionDecodeFieldFileView width={width} height={height} filePath={filePath} />
         )
     }
     else if (filePath.endsWith('.ns-spt')) {
         // Spike trains
-        return (
+        view = (
             <SpikeTrainsFileView width={width} height={height} filePath={filePath} />
         )
     }
     else if (filePath.endsWith('.ns-asp')) {
         // Audio spectrogram
-        return (
+        view = (
             <AudioSpectrogramFileView width={width} height={height} filePath={filePath} />
         )
     }
     else if (filePath.endsWith('.ns-tsa')) {
         // timeseries annotation
-        return (
+        view = (
             <TimeseriesAnnotationFileView width={width} height={height} filePath={filePath} />
         )
     }
     else if (filePath.endsWith('.ns-fig')) {
-        return (
+        view = (
             <NSFigFileView width={width} height={height} filePath={filePath} />
         )
     }
-    return (
-        <div style={{position: 'absolute', width, height, background: 'white'}}>
-            <div style={{position: 'absolute', left: 20, top: 20, fontSize: 20}}>{filePath}</div>
-        </div>
-    )
+    else if (filePath.endsWith('.pynapple')) {
+        // pynapple session
+        view = (
+            <PynappleSessionFileView width={width} height={height} filePath={filePath} />
+        )
+    }
+    else {
+        view = (
+            <div style={{position: 'absolute', width, height, background: 'white'}}>
+                <div style={{position: 'absolute', left: 20, top: 20, fontSize: 20}}>{filePath}</div>
+            </div>
+        )
+    }
+    return view
 }
 
 export default FileView

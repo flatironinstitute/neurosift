@@ -26,6 +26,17 @@ class SpikeTrains:
         self._start_time_sec = start_time_sec
         self._end_time_sec = end_time_sec
         self._spike_trains = spike_trains
+    def to_single_buffer(self) -> bytes:
+        ret = {
+            'type': 'SpikeTrains',
+            'startTimeSec': self._start_time_sec,
+            'endTimeSec': self._end_time_sec,
+            'units': [{
+                'unitId': a.unit_id,
+                'spikeTimesSec': a.spike_times_sec
+            } for a in self._spike_trains]
+        }
+        return json.dumps(_serialize(ret)).encode('utf-8')
     def save(self, fname: str, block_size_sec: float=300):
         if not fname.endswith('.ns-spt'):
             raise Exception('File name must end with .ns-spt')

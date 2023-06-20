@@ -29,9 +29,7 @@ const MainWindow: FunctionComponent<Props> = () => {
                         <AboutPage width={width} height={height - applicationBarHeight} />
                     ) : route.page === 'browse' ? (
                         <SetupOpenTabs>
-                            <SetupTimeseriesSelection>
-                                <BrowsePage folder={route.folder} width={width} height={height - applicationBarHeight} />
-                            </SetupTimeseriesSelection>
+                            <BrowsePage folder={route.folder} width={width} height={height - applicationBarHeight} />
                         </SetupOpenTabs>
                     ) : route.page === 'github-auth' ? (
                         <GitHubAuthPage />

@@ -1,8 +1,8 @@
 import { faPython } from "@fortawesome/free-brands-svg-icons";
-import { faFile, faFileText, faVideo } from "@fortawesome/free-solid-svg-icons";
+import { faBox, faFile, faFileText, faVideo } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { FunctionComponent, useCallback, useEffect, useMemo, useReducer, useState } from "react";
-import { FaBox, FaBoxOpen, FaPencilAlt, FaPiedPiper, FaSearch } from "react-icons/fa";
+import { FaPencilAlt, FaPiedPiper } from "react-icons/fa";
 import SmallIconButton from "../../../components/SmallIconButton";
 import { useRtcshare } from "../../../rtcshare/useRtcshare";
 import { timeAgoString } from "../../../timeStrings";
@@ -95,7 +95,7 @@ const FileBrowser: FunctionComponent<Props> = ({onOpenTab, currentFolderPath, se
         const file = files.find(x => x.id === fileId)
         if (!file) return
         const fileExt = '.' + file.name.split('.').pop()
-        if ((file.isDir) && (!['.ns-asp'].includes(fileExt))) {
+        if ((file.isDir) && (!['.ns-asp', '.pynapple'].includes(fileExt))) {
             const newFolder = join(currentFolderPath, file.name)
             setCurrentFolderPath(newFolder)
             return
@@ -212,6 +212,9 @@ export const FileIcon: FunctionComponent<{fileName: string, isDir: boolean}> = (
     if (isDir) {
         if (ext?.startsWith('ns-')) {
             return <FontAwesomeIcon icon={faFile as any} style={{color: 'darkgreen'}} />
+        }
+        else if (ext === 'pynapple') {
+            return <FontAwesomeIcon icon={faBox as any} style={{color: 'orange'}} />
         }
         else {
             return <FontAwesomeIcon icon={faFile as any} style={{color: folderColor}} />
