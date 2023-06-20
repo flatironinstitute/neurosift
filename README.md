@@ -22,7 +22,7 @@ cd neurosift/python
 pip install -e .
 ```
 
-Next, create a folder for your data and generate some test files:
+Next, create a folder for your data and include some test files:
 
 ```bash
 mkdir -p ~/rtcshare_data/test
@@ -51,125 +51,18 @@ rtcshare start --dir . --enable-remote-access
 
 Then you will need to modify the URL in your web browser to include the remote access server address. (TODO: explain how to do this)
 
-## Visualizing videos
+## Visualizations
 
-To visualize a video, simply browse to and click the video file through the web browser. You can then use the controls to play, pause, and seek through the video. You can also click on the slider to seek to a specific time. Right now, only .mp4 and .avi files are supported (but we can easily expand this to other formats - just let us know).
-
-## Video annotations
-
-A Neurosift video annotation is a .ns-van file that contains a list of video frame annotations, including nodes and edges. You can create such a file using the neurosift Python package.
-
-Here is an example script that will download the data and create an example video annotation file. You can create this .py file in the test directory and run it from there. It will create a file called video_annotation.ns-van in the test directory. Then you can browse to this file through the web browser and visualize it.
-
-```python
-# prepare_video_annotation.py
-
-import numpy as np
-import cv2
-import kachery_cloud as kcl
-import neurosift.views as nv
-
-
-nose_annotations_npy_uri = 'sha1://e2f20d56d6e4ecbce18112027a8cc13e3554d3ac?label=nose_annotations_noInterp.npy'
-butt_annotations_npy_uri = 'sha1://d35f0f5a6deceb49c3fd0528ee52566a804ccd37?label=butt_annotations_noInterp.npy'
-head_annotations_npy_uri = 'sha1://e1c57fb7dac7c493db5b884d43c819763011a779?label=head_annotations_noInterp.npy'
-
-head_annotations = kcl.load_npy(head_annotations_npy_uri).astype(np.float32)
-butt_annotations = kcl.load_npy(butt_annotations_npy_uri).astype(np.float32)
-nose_annotations = kcl.load_npy(nose_annotations_npy_uri).astype(np.float32)
-
-width = 640
-height = 512
-fps = 30.0
-num_frames = 62999
-
-frames: list[nv.VideoAnnotationFrame] = []
-for j in range(num_frames):
-    elements: list[nv.VideoAnnotationElement] = []
-    p_head = head_annotations[j]
-    p_butt = butt_annotations[j]
-    p_nose = nose_annotations[j]
-    if not np.isnan(p_head[0]):
-        elements.append(nv.VideoAnnotationNodeElement('h', x=p_head[0], y=p_head[1]))
-    if not np.isnan(p_butt[0]):
-        elements.append(nv.VideoAnnotationNodeElement('b', x=p_butt[0], y=p_butt[1]))
-    if not np.isnan(p_nose[0]):
-        elements.append(nv.VideoAnnotationNodeElement('n', x=p_nose[0], y=p_nose[1]))
-    if not np.isnan(p_nose[0]) and not np.isnan(p_head[0]):
-        elements.append(nv.VideoAnnotationEdgeElement('n-h', id1='n', id2='h'))
-    if not np.isnan(p_head[0]) and not np.isnan(p_butt[0]):
-        elements.append(nv.VideoAnnotationEdgeElement('h-b', id1='h', id2='b'))
-    F = nv.VideoAnnotationFrame(elements=elements)
-    frames.append(F)
-
-nodes: list[nv.VideoAnnotationNode] = [
-    nv.VideoAnnotationNode(id='n', label='nose', color_index=0),
-    nv.VideoAnnotationNode(id='h', label='head', color_index=1),
-    nv.VideoAnnotationNode(id='b', label='butt', color_index=2)
-]
-
-A = nv.VideoAnnotation(
-    width=width,
-    height=height,
-    frames_per_second=fps,
-    frames=frames,
-    nodes=nodes
-)
-A.save('video_annotation.ns-van')
-```
-
-## Timeseries graphs
-
-A timeseries graph is a .ns-tsg file that contains a list of time series elements for plotting. You can create such a file using the neurosift Python package.
-
-Here is an example script that will download the data and create an example timeseries graph file. You can create this .py file in the test directory and run it from there. It will create a file called head_velocity.ns-tsg in the test directory. Then you can browse to this file through the web browser and visualize it.
-
-```python
-import numpy as np
-import kachery_cloud as kcl
-import neurosift.views as nv
-
-
-def create_head_velocity_plot():
-    head_velocity_fname = kcl.load_file('sha1://dc71cc4b13d2162dfb16747fbb4ffef9b18688e5?label=head_velocity_newSmooth.npy)
-    head_velocity = np.load(head_velocity_fname)
-    sampling_frequency = 30
-    tg = nv.TimeseriesGraph()
-    tg.add_line_series(
-        name='head-velocity',
-        t=(np.arange(0, len(head_velocity)) / sampling_frequency).astype(np.float32),
-        y=head_velocity.astype(np.float32),
-        color='black'
-    )
-    return tg
-
-def main():
-    head_velocity_plot = create_head_velocity_plot()
-    head_velocity_plot.save('head_velocity.ns-tsg')
-
-if __name__ == '__main__':
-    main()
-```
-
-## Audio spectrograms
-
-TODO
-
-## Spike raster plots
-
-TODO
-
-## Position decode fields
-
-TODO
-
-## Other visualizations
-
-TODO
+* [Videos](./doc/videos.md)
+* [Video annotations](./doc/video_annotations.md)
+* [Timeseries graphs](./doc/timeseries_graphs.md)
+* [Audio spectrograms](./doc/audio_spectrograms.md)
+* [Spike raster plots](./doc/spike_raster_plots.md)
+* [Position decode fields](./doc/position_decode_fields.md)
 
 ## Contributing
 
-We welcome feedback and code contributions. Please submit a pull request or issue on the GitHub page.
+We welcome feedback and code contributions. Please submit a pull request or open an issue.
 
 ## License
 
