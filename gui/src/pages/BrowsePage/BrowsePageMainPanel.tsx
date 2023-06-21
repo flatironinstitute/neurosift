@@ -95,6 +95,9 @@ const labelFromTabName = (tabName: string) => {
     else if (tabName.startsWith('pynapple-objects:')) {
         return 'pyn:' + tabName.split('|').slice(1).map(s => s.split(':')[0]).join('|')
     }
+    else if (tabName.startsWith('edit:')) {
+        return 'edit:' + tabName.slice('edit:'.length).split('/').pop() || ''
+    }
     return tabName
 }
 

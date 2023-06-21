@@ -4,9 +4,9 @@ import JsonlClient from "../AnnotatedVideoView/JsonlClient"
 
 export interface SpikeTrainsClientType {
     initialize(): Promise<void>
-    startTimeSec: number
-    endTimeSec: number
-    unitIds: (number | string)[]
+    startTimeSec: number | undefined
+    endTimeSec: number | undefined
+    unitIds: (number | string)[] | undefined
     getData(t1: number, t2: number): Promise<{
         unitId: number | string
         spikeTimesSec: number[]

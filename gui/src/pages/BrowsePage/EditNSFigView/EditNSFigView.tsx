@@ -1,9 +1,11 @@
 import yaml from 'js-yaml';
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import Splitter from '../../../components/Splitter';
 import { useRtcshare } from "../../../rtcshare/useRtcshare";
 import { directoryOfFile } from '../FileView/NSFigFileView';
 import NSFigView from '../FileView/NSFigView/NSFigView';
 import { isNSFigViewData, NSFigLayout, NSFigViewData } from "../FileView/NSFigView/NSFigViewData";
+import TextEditor from '../FileView/TextEditor/TextEditor';
 
 type Props = {
     width: number
@@ -12,7 +14,11 @@ type Props = {
 }
 
 const EditNSFigView: FunctionComponent<Props> = ({width, height, filePath}) => {
-    const [text, setText] = useState<string | undefined>(undefined)
+    const [yamlText, setYamlText] = useState<string | undefined>(undefined)
+    const [editedYamlText, setEditedYamlText] = useState<string | undefined>(undefined)
+    useEffect(() => {
+        setEditedYamlText(yamlText)
+    }, [yamlText])
 
     const {client} = useRtcshare()
 
@@ -25,7 +31,7 @@ const EditNSFigView: FunctionComponent<Props> = ({width, height, filePath}) => {
             // array buffer to text
             const decoder = new TextDecoder('utf-8')
             const txt = decoder.decode(buf)
-            setText(txt)
+            setYamlText(txt)
         })()
         return () => {canceled = true}
     }, [client, filePath])
@@ -33,16 +39,27 @@ const EditNSFigView: FunctionComponent<Props> = ({width, height, filePath}) => {
     const [viewData, setViewData] = useState<NSFigViewData | undefined>(undefined)
 
     useEffect(() => {
-        if (!text) return
-        // parse yaml text
-        const d = yaml.load(text)
-        if (!isNSFigViewData(d)) {
-            console.warn(d)
-            console.warn('Invalid nsfig view data')
+        if (!editedYamlText) {
+            setViewData(undefined)
             return
         }
-        setViewData(d)
-    }, [text])
+        try {
+            const d = yaml.load(editedYamlText)
+            if (!isNSFigViewData(d)) {
+                console.warn(d)
+                console.warn('Invalid nsfig view data')
+                setViewData(undefined)
+                return
+            }
+            setViewData(d)
+        }
+        catch (err) {
+            console.warn(err)
+            console.warn('Error parsing yaml')
+            setViewData(undefined)
+            return
+        }
+    }, [editedYamlText])
 
     const viewData2: NSFigViewData | undefined = useMemo(() => {
         if (!viewData) return undefined
@@ -85,17 +102,32 @@ const EditNSFigView: FunctionComponent<Props> = ({width, height, filePath}) => {
         }
     }, [viewData])
 
-    if (!viewData2) {
-        return <div>...</div>
-    }
-
     return (
-        <NSFigView
-            path={directoryOfFile(filePath)}
-            data={viewData2}
+        <Splitter
             width={width}
             height={height}
-        />
+            initialPosition={Math.min(1200, Math.max(200, width / 2))}
+        >
+            <TextEditor
+                text={yamlText}
+                onSaveText={() => {}}
+                editedText={editedYamlText}
+                onSetEditedText={setEditedYamlText}
+                language="yaml"
+                readOnly={false}
+                wordWrap={false}
+                label={filePath.slice(directoryOfFile(filePath).length + 1)}
+                fontSize={13}
+                width={0}
+                height={0}
+            />
+            <NSFigView
+                path={directoryOfFile(filePath)}
+                data={viewData2}
+                width={0}
+                height={0}
+            />
+        </Splitter>
     )
 }
 

@@ -4,13 +4,16 @@ import { NSFigViewData } from "./NSFigViewData";
 import SplitterLayoutView from "./SplitterLayoutView";
 
 type Props = {
-    data: NSFigViewData
+    data?: NSFigViewData
     path: string
     width: number
     height: number
 }
 
 const NSFigView: FunctionComponent<Props> = ({data, path, width, height}) => {
+    if (!data) {
+        return <div>No data</div>
+    }
     const {layout, views} = data
     if (layout.type === 'Box') {
         return (

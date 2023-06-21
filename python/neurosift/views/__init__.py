@@ -4,3 +4,6 @@ from .SpikeTrains import SpikeTrains, SpikeTrain
 from .create_audio_spectrogram import create_audio_spectrogram
 from .TimeseriesAnnotation import TimeseriesAnnotation, TimeseriesAnnotationEvent, TimeseriesAnnotationEventType
 from .PositionDecodeField import PositionDecodeField, PositionDecodeFieldBin, PositionDecodeFieldFrame
+from .Autocorrelograms import Autocorrelograms, AutocorrelogramItem, create_autocorrelograms
+from .CrossCorrelograms import CrossCorrelograms, CrossCorrelogramItem
+from .AverageWaveforms import AverageWaveforms, AverageWaveformItem

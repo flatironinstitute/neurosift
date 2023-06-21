@@ -19,6 +19,7 @@ type Props = {
     wordWrap?: boolean
     onReload?: () => void
     toolbarItems?: ToolbarItem[]
+    fontSize?: number
     label: string
     width: number
     height: number
@@ -32,7 +33,7 @@ export type ToolbarItem = {
     color?: string
 }
 
-const TextEditor: FunctionComponent<Props> = ({defaultText, text, onSaveText, editedText, onSetEditedText, readOnly, wordWrap, onReload, toolbarItems, language, label, width, height}) => {
+const TextEditor: FunctionComponent<Props> = ({defaultText, text, onSaveText, editedText, onSetEditedText, readOnly, wordWrap, onReload, toolbarItems, language, label, fontSize, width, height}) => {
     const handleChange = useCallback((value: string | undefined) => {
         onSetEditedText(value || '')
     }, [onSetEditedText])
@@ -109,7 +110,8 @@ const TextEditor: FunctionComponent<Props> = ({defaultText, text, onSaveText, ed
                         readOnly,
                         domReadOnly: readOnly,
                         wordWrap: wordWrap ? 'on' : 'off',
-                        theme: 'vs-stan' // unfortunately we cannot do this on a per-editor basis - it's a global setting
+                        theme: 'vs-stan', // unfortunately we cannot do this on a per-editor basis - it's a global setting
+                        fontSize
                     }}
                 />
             </div>
