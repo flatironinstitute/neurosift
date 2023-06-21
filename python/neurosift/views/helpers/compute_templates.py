@@ -1,11 +1,10 @@
 import numpy.typing as npt
 import numpy as np
-import spikeinterface as si
 import time
 from .extract_snippets import extract_snippets
 
 
-def compute_templates(*, traces: npt.NDArray[np.float32], sorting: si.BaseSorting):
+def compute_templates(*, traces: npt.NDArray[np.float32], sorting):
     unit_ids = sorting.unit_ids
     K = len(unit_ids)
     M = traces.shape[1]

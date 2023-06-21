@@ -37,6 +37,7 @@
     "react-markdown": "^8.0.7",
     "react-router-dom": "^6.11.1",
     "react-syntax-highlighter": "^15.5.0",
+    "react-visibility-sensor": "^5.1.1",
     "rehype-mathjax": "^4.0.2",
     "rehype-raw": "^6.1.1",
     "remark-gfm": "^3.0.1",

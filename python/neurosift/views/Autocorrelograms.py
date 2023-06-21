@@ -1,6 +1,5 @@
 import numpy as np
 from typing import List, Union
-import spikeinterface as si
 from .helpers.compute_correlogram_data import compute_correlogram_data
 from ._serialize import _serialize
 
@@ -46,7 +45,9 @@ class Autocorrelograms:
         with open(path, 'w') as f:
             json.dump(_serialize(self.to_dict()), f, indent=2)
 
-def create_autocorrelograms(*, sorting: si.BaseSorting, output_path: str):
+def create_autocorrelograms(*, sorting, output_path: str):
+    if not output_path.endswith('.ns-acg'):
+        raise Exception('File name must end with .ns-acg')
     autocorrelograms: AutocorrelogramItem = []
     unit_ids = sorting.get_unit_ids()
     for unit_id in unit_ids:

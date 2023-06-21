@@ -73,6 +73,17 @@ const CustomFigureView: FunctionComponent<Props> = ({fileNames, width, height}) 
                     view: fileName
                 })
             }
+            else if (fileName.endsWith('.ns-acg')) {
+                ret.views.push({
+                    name: fileName,
+                    type: 'Autocorrelograms',
+                    data: fileName
+                })
+                layout.items.push({
+                    stretch: 1,
+                    view: fileName
+                })
+            }
         }
         return ret
     }, [fileNames])

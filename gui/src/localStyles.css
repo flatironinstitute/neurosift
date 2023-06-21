@@ -1,0 +1,74 @@
+
+.unitEntryBase {
+    padding-right: 13px;
+    padding-top: 10px;
+}
+
+.unselectedUnitEntry {
+    border: 1px transparent solid;
+    font-weight: normal;
+    color: black;
+    background-color: white;
+}
+
+.selectedUnitEntry {
+    border: 1px solid blue;
+    font-weight: bold;
+    color: black;
+    background-color: #b5d1ff;
+}
+
+.unitIdsColumnLabelStyle {
+    min-width: 200px;
+    font-weight: bold;
+    padding: 7px 5px 7px 5px;
+}
+
+.unitLabelsStyle {
+    padding-right: 3px;
+    color: #333333;
+}
+
+.plotUnitLabel {
+    text-align: left;
+    margin-left: 20px;
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+/* .plotWrapperStyle {
+    min-height: 228px;
+    min-width: 206px;
+} */
+
+.plotWrapperButtonParent {
+    display: inline-block
+}
+
+.plotWrapperStyleButton {
+    padding-top: 50px;
+}
+
+.plotUnselectedStyle {
+    border: 3px solid rgb(202, 224, 231);
+}
+
+.plotSelectedStyle {
+    border: 3px solid #9999ff;
+    background-color: white
+}
+.plotUnselectableStyle {
+    border: 3px solid transparent;
+}
+
+.plotCurrentStyle {
+    border: 3px solid blue;
+    background-color: white;
+}
+
+.plotLabelStyle {
+    font-weight: bold;
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+}

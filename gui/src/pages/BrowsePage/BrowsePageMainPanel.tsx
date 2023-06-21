@@ -1,5 +1,6 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useReducer } from "react";
 import { SetupTimeseriesSelection } from "../../package/context-timeseries-selection";
+import { defaultUnitSelection, UnitSelectionContext, unitSelectionReducer } from "../../package/context-unit-selection";
 import TabWidget from "../../TabWidget/TabWidget";
 import EditNSFigView from "./EditNSFigView/EditNSFigView";
 import { FileIcon } from "./FileBrowser/FileBrowser";
@@ -36,23 +37,26 @@ const BrowsePageMainPanel: FunctionComponent<{width: number, height: number}> = 
 }
 
 const TabChild: FunctionComponent<{tabName: string, width: number, height: number}> = ({tabName, width, height}) => {
+    const [unitSelection, unitSelectionDispatch] = useReducer(unitSelectionReducer, defaultUnitSelection)
     return (
         <SetupTimeseriesSelection>
-            {
-                tabName.startsWith('file:') ? (
-                    <FileView key={tabName} width={width} height={height} filePath={tabName.slice('file:'.length)} />
-                ) : tabName.startsWith('edit:') && (tabName.endsWith('.ns-fig')) ? (
-                    <EditNSFigView key={tabName} width={width} height={height} filePath={tabName.slice('edit:'.length)} />
-                ) : tabName.startsWith('figure:') ? (
-                    <CustomFigureView key={tabName} width={width} height={height} fileNames={JSON.parse(tabName.slice('figure:'.length))} />
-                ) : tabName.startsWith('pynapple-object:') ? (                    
-                    <PynappleObjectView key={tabName} width={width} height={height} sessionPath={getSessionPathFromPynappleObjectTabName(tabName)} objectName={getObjectNameFromPynappleObjectTabName(tabName)} objectType={getObjectTypeFromPynappleObjectTabName(tabName)} />
-                ) : tabName.startsWith('pynapple-objects:') ? (
-                    <PynappleObjectsView key={tabName} width={width} height={height} sessionPath={getSessionPathFromPynappleObjectsTabName(tabName)} objects={getObjectsFromObjectsTabName(tabName)} />
-                ) : (
-                    <div key={tabName}>Not implemented</div>
-                )
-            }
+            <UnitSelectionContext.Provider value={{unitSelection, unitSelectionDispatch}}>
+                {
+                    tabName.startsWith('file:') ? (
+                        <FileView key={tabName} width={width} height={height} filePath={tabName.slice('file:'.length)} />
+                    ) : tabName.startsWith('edit:') && (tabName.endsWith('.ns-fig')) ? (
+                        <EditNSFigView key={tabName} width={width} height={height} filePath={tabName.slice('edit:'.length)} />
+                    ) : tabName.startsWith('figure:') ? (
+                        <CustomFigureView key={tabName} width={width} height={height} fileNames={JSON.parse(tabName.slice('figure:'.length))} />
+                    ) : tabName.startsWith('pynapple-object:') ? (                    
+                        <PynappleObjectView key={tabName} width={width} height={height} sessionPath={getSessionPathFromPynappleObjectTabName(tabName)} objectName={getObjectNameFromPynappleObjectTabName(tabName)} objectType={getObjectTypeFromPynappleObjectTabName(tabName)} />
+                    ) : tabName.startsWith('pynapple-objects:') ? (
+                        <PynappleObjectsView key={tabName} width={width} height={height} sessionPath={getSessionPathFromPynappleObjectsTabName(tabName)} objects={getObjectsFromObjectsTabName(tabName)} />
+                    ) : (
+                        <div key={tabName}>Not implemented</div>
+                    )
+                }
+            </UnitSelectionContext.Provider>
         </SetupTimeseriesSelection>
     )
 }

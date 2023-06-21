@@ -80,6 +80,10 @@ export type NSFigViewItem = {
     name: string
     type: 'EditNSFigViewItem'
     view: NSFigViewItem
+} | {
+    name: string
+    type: 'Autocorrelograms'
+    data: string
 }
 
 const isNSFigViewItem = (x: any): x is NSFigViewItem => {
@@ -114,6 +118,12 @@ const isNSFigViewItem = (x: any): x is NSFigViewItem => {
         name: isString,
         type: isEqualTo('EditNSFigViewItem'),
         view: isNSFigViewItem
+    })) return true
+
+    if (validateObject(x, {
+        name: isString,
+        type: isEqualTo('Autocorrelograms'),
+        data: isString
     })) return true
 
     return false

@@ -1,5 +1,6 @@
 import { FunctionComponent } from "react";
 import AudioSpectrogramFileView from "./AudioSpectrogramFileView";
+import AutocorrelogramsFileView from "./AutocorrelogramsFileView";
 import NSFigFileView from "./NSFigFileView";
 import PositionDecodeFieldFileView from "./PositionDecodeFieldFileView";
 import PynappleSessionFileView from "./PynappleSessionFileView";
@@ -73,6 +74,11 @@ const FileView: FunctionComponent<Props> = ({width, height, filePath}) => {
         // pynapple session
         view = (
             <PynappleSessionFileView width={width} height={height} filePath={filePath} />
+        )
+    }
+    else if (filePath.endsWith('.ns-acg')) {
+        view = (
+            <AutocorrelogramsFileView width={width} height={height} filePath={filePath} />
         )
     }
     else {

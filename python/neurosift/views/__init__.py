@@ -7,3 +7,4 @@ from .PositionDecodeField import PositionDecodeField, PositionDecodeFieldBin, Po
 from .Autocorrelograms import Autocorrelograms, AutocorrelogramItem, create_autocorrelograms
 from .CrossCorrelograms import CrossCorrelograms, CrossCorrelogramItem
 from .AverageWaveforms import AverageWaveforms, AverageWaveformItem
+from .create_spike_sorting_summary import create_spike_sorting_summary
