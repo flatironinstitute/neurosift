@@ -14,8 +14,7 @@ def create_spike_sorting_summary(*,
     sorting,
     output_path: str,
     unit_ids: list,
-    num_channels_per_neighborhood: int,
-    owner_id: str
+    num_channels_per_neighborhood: int
 ):
     if not output_path.endswith('.ns-sps'):
         raise Exception('Output path must end with .ns-sps')
@@ -37,10 +36,13 @@ def create_spike_sorting_summary(*,
     
     # create the output folder
     os.makedirs(output_path)
+
+    # Extracting traces
+    traces = recording.get_traces()
     
     # compute full templates
     print('Computing full templates...')
-    full_templates = compute_templates(traces=recording.get_traces(), sorting=sorting)
+    full_templates = compute_templates(traces=traces, sorting=sorting)
 
     # determine peak channels from full templates
     print('Determining peak channels...')
@@ -74,7 +76,7 @@ def create_spike_sorting_summary(*,
         spike_times = sorting.get_unit_spike_train(unit_id, segment_index=0)
         spike_times_sec = spike_times / recording.get_sampling_frequency()
         autocorrelogram = compute_correlogram_data(sorting=sorting, unit_id1=unit_id, window_size_msec=100, bin_size_msec=1)
-        snippets_in_neighborhood = extract_snippets_in_channel_neighborhood(traces=recording.get_traces(), times=spike_times, neighborhood=channel_neighborhood["channel_indices"], T1=30, T2=30)
+        snippets_in_neighborhood = extract_snippets_in_channel_neighborhood(traces=traces, times=spike_times, neighborhood=channel_neighborhood["channel_indices"], T1=30, T2=30)
             
         channel_neighborhood_indices = channel_neighborhood['channel_indices']
         channel_locations_in_neighborhood = np.array(recording.get_channel_locations())[channel_neighborhood_indices]
@@ -148,8 +150,8 @@ def create_spike_sorting_summary(*,
         cross_correlogram = compute_correlogram_data(sorting=sorting, unit_id1=unit_pair_id[0], unit_id2=unit_pair_id[1], window_size_msec=100, bin_size_msec=1)
         channel_locations_in_neighborhood = np.array(recording.get_channel_locations())[channel_neighborhood_channel_indices]
 
-        snippets_1_in_neighborhood = extract_snippets_in_channel_neighborhood(traces=recording.get_traces(), times=spike_times_1, neighborhood=channel_neighborhood_channel_indices, T1=30, T2=30)
-        snippets_2_in_neighborhood = extract_snippets_in_channel_neighborhood(traces=recording.get_traces(), times=spike_times_2, neighborhood=channel_neighborhood_channel_indices, T1=30, T2=30)
+        snippets_1_in_neighborhood = extract_snippets_in_channel_neighborhood(traces=traces, times=spike_times_1, neighborhood=channel_neighborhood_channel_indices, T1=30, T2=30)
+        snippets_2_in_neighborhood = extract_snippets_in_channel_neighborhood(traces=traces, times=spike_times_2, neighborhood=channel_neighborhood_channel_indices, T1=30, T2=30)
 
         average_waveform_1_in_neighborhood = np.median(snippets_1_in_neighborhood, axis=0)
         average_waveform_2_in_neighborhood = np.median(snippets_2_in_neighborhood, axis=0)
