@@ -1,6 +1,7 @@
 import numpy as np
-from typing import List, Union
+from typing import List, Union, Tuple
 from ._serialize import _serialize
+from .helpers.compute_correlogram_data import compute_correlogram_data
 
 
 class CrossCorrelogramItem:
@@ -46,3 +47,20 @@ class CrossCorrelograms:
         import json
         with open(path, 'w') as f:
             json.dump(_serialize(self.to_dict()), f, indent=2)
+
+def create_cross_correlograms(*, sorting, unit_pairs: list[Tuple[int]], output_path: str):
+    if not output_path.endswith('.ns-ccg'):
+        raise Exception('File name must end with .ns-ccg')
+    cross_correlograms: CrossCorrelogramItem = []
+    for unit_pair in unit_pairs:
+        ac = compute_correlogram_data(sorting=sorting, unit_id1=unit_pair[0], unit_id2=unit_pair[1], window_size_msec=100, bin_size_msec=1)
+        item = CrossCorrelogramItem(
+            unit_id1=unit_pair[0],
+            unit_id2=unit_pair[1],
+            bin_edges_sec=ac['bin_edges_sec'],
+            bin_counts=ac['bin_counts']
+        )
+        cross_correlograms.append(item)
+    
+    X = CrossCorrelograms(cross_correlograms)
+    X.save(output_path)

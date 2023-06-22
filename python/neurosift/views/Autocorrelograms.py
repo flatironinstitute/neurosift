@@ -59,5 +59,5 @@ def create_autocorrelograms(*, sorting, output_path: str):
         )
         autocorrelograms.append(item)
     
-    autocorrelograms = Autocorrelograms(autocorrelograms)
-    autocorrelograms.save(output_path)
+    X = Autocorrelograms(autocorrelograms)
+    X.save(output_path)

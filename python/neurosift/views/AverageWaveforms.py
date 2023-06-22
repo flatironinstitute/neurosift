@@ -44,8 +44,6 @@ class AverageWaveforms:
         }
         if self._channel_locations is not None:
             ret['channelLocations'] = self._channel_locations
-        if self._show_reference_probe is not None:
-            ret['showReferenceProbe'] = self._show_reference_probe
         return ret
     def save(self, path: str) -> None:
         if not path.endswith('.ns-awf'):
