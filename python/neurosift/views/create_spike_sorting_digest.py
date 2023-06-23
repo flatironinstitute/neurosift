@@ -41,26 +41,26 @@ def create_spike_sorting_digest(*,
     unit_ids = serialize_ids(sorting.get_unit_ids())
     channel_ids = serialize_ids(recording.get_channel_ids())
 
-    print('Creating autocorrelograms.acg...')
+    print('Creating autocorrelograms.ns-acg...')
     create_autocorrelograms(
         sorting=sorting,
-        output_path=f'{output_path}/autocorrelograms.acg',
+        output_path=f'{output_path}/autocorrelograms.ns-acg',
     )
 
-    print(f'Creating spike_trains.spt...')
+    print(f'Creating spike_trains.ns-spt...')
     spike_trains: list[SpikeTrain] = []
     for unit_id in unit_ids:
         spike_times = sorting.get_unit_spike_train(unit_id, segment_index=0)
         spike_trains.append(SpikeTrain(
             unit_id=unit_id,
-            spike_times_sec=spike_times
+            spike_times_sec=spike_times.astype(np.float32)
         ))
     X = SpikeTrains(
-        start_time=0,
-        end_time=recording.get_num_frames() / recording.get_sampling_frequency(),
+        start_time_sec=0,
+        end_time_sec=recording.get_num_frames() / recording.get_sampling_frequency(),
         spike_trains=spike_trains
     )
-    X.save(f'{output_path}/spike_trains.spt', block_size_sec=300)
+    X.save(f'{output_path}/spike_trains.ns-spt', block_size_sec=300)
 
     data_zarr_fname = f'{output_path}/data.zarr'
     data_zarr_root_group = zarr.open(data_zarr_fname, mode="w")
@@ -86,21 +86,21 @@ def create_spike_sorting_digest(*,
         total_duration_sec=subsample_total_duration_sec
     )
 
-    # Creating subsampled_spike_trains.spt
-    print('Creating subsampled_spike_trains.spt...')
+    # Creating subsampled_spike_trains.ns-spt
+    print('Creating subsampled_spike_trains.ns-spt...')
     spike_trains: list[SpikeTrain] = []
     for unit_id in unit_ids:
         spike_times = subsampled_sorting.get_unit_spike_train(unit_id, segment_index=0)
         spike_trains.append(SpikeTrain(
             unit_id=unit_id,
-            spike_times_sec=spike_times
+            spike_times_sec=spike_times.astype(np.float32)
         ))
     X = SpikeTrains(
-        start_time=0,
-        end_time=subsample_total_duration_sec,
+        start_time_sec=0,
+        end_time_sec=subsample_total_duration_sec,
         spike_trains=spike_trains
     )
-    X.save(f'{output_path}/subsampled_spike_trains.spt', block_size_sec=300)
+    X.save(f'{output_path}/subsampled_spike_trains.ns-spt', block_size_sec=300)
 
     # Computing full templates
     print('Computing full templates...')
@@ -176,11 +176,12 @@ def create_spike_sorting_digest(*,
 
         avg_waveforms_list.append(AverageWaveformItem(
             unit_id=unit_id,
-            channel_ids=channel_neighborhood['channel_ids']
+            channel_ids=channel_neighborhood['channel_ids'],
+            waveform=average_waveform_in_neighborhood
         ))
     
     # Writing average_waveforms.awf
-    print('Writing average_waveforms.awf...')
+    print('Writing average_waveforms.ns-awf...')
     channel_locations_dict = {}
     for i in range(len(channel_ids)):
         channel_locations_dict[str(channel_ids[i])] = recording.get_channel_locations()[i, :].tolist()
@@ -188,7 +189,7 @@ def create_spike_sorting_digest(*,
         average_waveforms=avg_waveforms_list,
         channel_locations=channel_locations_dict
     )
-    X_avg_waveforms.save(f'{output_path}/average_waveforms.awf')
+    X_avg_waveforms.save(f'{output_path}/average_waveforms.ns-awf')
     
     # Computing unit template correlations
     print('Computing unit template correlations...')
@@ -216,11 +217,11 @@ def create_spike_sorting_digest(*,
     print(f'Using {len(unit_pair_ids)} unit pairs for similarity comparison.')
 
     # Creating cross_correlograms.ccg
-    print('Creating cross_correlograms.ccg...')
+    print('Creating cross_correlograms.ns-ccg...')
     create_cross_correlograms(
         sorting=subsampled_sorting,
         unit_pairs=unit_pair_ids,
-        output_path=f'{output_path}/cross_correlograms.ccg'
+        output_path=f'{output_path}/cross_correlograms.ns-ccg'
     )
 
     # create spike_sorting_digest_info.json
@@ -300,7 +301,8 @@ def get_subsampled_sorting(
     sorting, *,
     recording,
     segment_duration_sec: float,
-    total_duration_sec: float
+    total_duration_sec: float,
+    margin_num_frames: int = 100
 ):
     import spikeinterface as si
     
@@ -322,7 +324,7 @@ def get_subsampled_sorting(
         for i in range(len(chunk_sizes)):
             start_frame = int(i * (chunk_sizes[i] + spacing))
             end_frame = int(start_frame + chunk_sizes[i])
-            spike_times_list.append(st[(st >= start_frame) & (st < end_frame)] - start_frame + t_offset)
+            spike_times_list.append(st[(st >= start_frame + margin_num_frames) & (st < end_frame - margin_num_frames)] - start_frame + t_offset)
             t_offset += chunk_sizes[i]
         spike_times = np.concatenate(spike_times_list)
         spike_trains_dict[unit_id] = spike_times

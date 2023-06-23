@@ -37,8 +37,7 @@ class CrossCorrelograms:
     def to_dict(self) -> dict:
         ret = {
             'type': 'CrossCorrelograms',
-            'crossCorrelograms': [a.to_dict() for a in self._cross_correlograms],
-            'hideUnitSelector': self._hide_unit_selector
+            'crossCorrelograms': [a.to_dict() for a in self._cross_correlograms]
         }
         return ret
     def save(self, path: str) -> None:
