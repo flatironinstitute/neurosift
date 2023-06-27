@@ -4,10 +4,11 @@ import { AutocorrelogramsView, AutocorrelogramsViewData } from "../../../../pack
 import { AverageWaveformsView, AverageWaveformsViewData } from "../../../../package/view-average-waveforms";
 import { useRtcshare } from "../../../../rtcshare/useRtcshare";
 import TabWidget from "../../../../TabWidget/TabWidget";
-import AutocorrelogramsFileView, { useAutocorrelogramsViewData } from "../AutocorrelogramsFileView";
-import AverageWaveformsFileView, { useAverageWaveformsViewData } from "../AverageWaveformsFileView";
+import { useAutocorrelogramsViewData } from "../AutocorrelogramsFileView";
+import { useAverageWaveformsViewData } from "../AverageWaveformsFileView";
 import SelectedUnitTab from "./SelectedUnitTab";
 import UnitBoxesTab from "./UnitBoxesTab";
+import UnitPairsTab from "./UnitPairsTab";
 import UnitsTable from "./UnitsTable";
 
 type Props = {
@@ -62,6 +63,11 @@ const tabs = [
     {
         id: 'selected-unit',
         label: 'Selected unit',
+        closeable: false
+    },
+    {
+        id: 'unit-pairs',
+        label: 'Unit pairs',
         closeable: false
     }
 ]
@@ -118,6 +124,12 @@ const SpikeSortingDigestView: FunctionComponent<Props> = ({width, height, path})
                     digestInfo={digestInfo}
                     autocorrelogramsViewData={autocorrelogramsViewData}
                     averageWaveformsViewData={averageWaveformsViewData}
+                />
+                <UnitPairsTab
+                    width={0}
+                    height={0}
+                    path={path}
+                    digestInfo={digestInfo}
                 />
             </TabWidget>
         </Splitter>
