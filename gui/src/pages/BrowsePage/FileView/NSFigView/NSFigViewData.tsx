@@ -84,6 +84,10 @@ export type NSFigViewItem = {
     name: string
     type: 'Autocorrelograms'
     data: string
+} | {
+    name: string
+    type: 'AverageWaveforms'
+    data: string
 }
 
 const isNSFigViewItem = (x: any): x is NSFigViewItem => {
@@ -123,6 +127,12 @@ const isNSFigViewItem = (x: any): x is NSFigViewItem => {
     if (validateObject(x, {
         name: isString,
         type: isEqualTo('Autocorrelograms'),
+        data: isString
+    })) return true
+
+    if (validateObject(x, {
+        name: isString,
+        type: isEqualTo('AverageWaveforms'),
         data: isString
     })) return true
 

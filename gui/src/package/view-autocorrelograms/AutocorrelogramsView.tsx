@@ -27,6 +27,9 @@ const AutocorrelogramsView: FunctionComponent<Props> = ({data, width, height}) =
         unitIdSelectionDispatch({ type: INITIALIZE_UNITS, newUnitOrder: sortIds(data.autocorrelograms.map(aw => aw.unitId))})
     }, [data.autocorrelograms, unitIdSelectionDispatch])
 
+    const baseBoxWidth = 80
+    const baseBoxHeight = 80
+
     const plots: PGPlot[] = useMemo(() => (data.autocorrelograms.filter(a => (toolbarOptions.onlyShowSelected ? selectedUnitIds.has(a.unitId) : true)).map(ac => ({
         unitId: ac.unitId,
         key: ac.unitId,
@@ -37,8 +40,8 @@ const AutocorrelogramsView: FunctionComponent<Props> = ({data, width, height}) =
             binEdgesSec: ac.binEdgesSec,
             binCounts: ac.binCounts,
             color: getUnitColor(idToNum(ac.unitId)),
-            width: 120 * plotBoxScaleFactor,
-            height: 120 * plotBoxScaleFactor,
+            width: baseBoxWidth * plotBoxScaleFactor,
+            height: baseBoxHeight * plotBoxScaleFactor,
             hideXAxis: !showXAxis
         }
     }))), [data.autocorrelograms, plotClickHandlerGenerator, toolbarOptions.onlyShowSelected, selectedUnitIds, showXAxis, plotBoxScaleFactor])

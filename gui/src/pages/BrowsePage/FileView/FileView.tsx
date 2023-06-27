@@ -1,10 +1,13 @@
 import { FunctionComponent } from "react";
 import AudioSpectrogramFileView from "./AudioSpectrogramFileView";
 import AutocorrelogramsFileView from "./AutocorrelogramsFileView";
+import AverageWaveformsFileView from "./AverageWaveformsFileView";
+import IpynbFileView from "./IpynbFileView";
 import NSFigFileView from "./NSFigFileView";
 import PositionDecodeFieldFileView from "./PositionDecodeFieldFileView";
 import PynappleSessionFileView from "./PynappleSessionFileView";
 import ScriptFileView from "./ScriptFileView";
+import SpikeSortingDigestFileView from "./SpikeSortingDigestFileView";
 import SpikeTrainsFileView from "./SpikeTrainsFileView";
 import TimeseriesAnnotationFileView from "./TimeseriesAnnotationFileView";
 import TimeseriesGraphFileView from "./TimeseriesGraphFileView";
@@ -27,6 +30,11 @@ const FileView: FunctionComponent<Props> = ({width, height, filePath}) => {
     else if (filePath.endsWith('.py')) {
         view = (
             <ScriptFileView width={width} height={height} filePath={filePath} />
+        )
+    }
+    else if (filePath.endsWith('.ipynb')) {
+        view = (
+            <IpynbFileView width={width} height={height} filePath={filePath} />
         )
     }
     else if (filePath.endsWith('.ns-tsg')) {
@@ -77,8 +85,21 @@ const FileView: FunctionComponent<Props> = ({width, height, filePath}) => {
         )
     }
     else if (filePath.endsWith('.ns-acg')) {
+        // autocorrelograms
         view = (
             <AutocorrelogramsFileView width={width} height={height} filePath={filePath} />
+        )
+    }
+    else if (filePath.endsWith('.ns-awf')) {
+        // average waveforms
+        view = (
+            <AverageWaveformsFileView width={width} height={height} filePath={filePath} />
+        )
+    }
+    else if (filePath.endsWith('.ns-ssd')) {
+        // spike sorting digest
+        view = (
+            <SpikeSortingDigestFileView width={width} height={height} filePath={filePath} />
         )
     }
     else {

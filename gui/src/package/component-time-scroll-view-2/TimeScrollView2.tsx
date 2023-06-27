@@ -22,6 +22,7 @@ type Props = {
     onMouseMove?: (e: React.MouseEvent) => void
     onMouseOut?: (e: React.MouseEvent) => void
     hideToolbar?: boolean
+    shiftZoom?: boolean
     yAxisInfo?: {
         showTicks: boolean
         yMin?: number
@@ -33,7 +34,7 @@ const defaultMargins = {
     left: 30,
     right: 20,
     top: 20,
-    bottom: 30
+    bottom: 40
 }
 
 export const useTimeScrollView2 = ({width, height, hideToolbar}: {width: number, height: number, hideToolbar?: boolean}) => {
@@ -51,7 +52,7 @@ export const useTimeScrollView2 = ({width, height, hideToolbar}: {width: number,
     }
 }
 
-const TimeScrollView2: FunctionComponent<Props> = ({width, height, onCanvasElement, gridlineOpts, onKeyDown, onMouseDown, onMouseMove, onMouseOut, onMouseUp, hideToolbar, yAxisInfo}) => {
+const TimeScrollView2: FunctionComponent<Props> = ({width, height, onCanvasElement, gridlineOpts, onKeyDown, onMouseDown, onMouseMove, onMouseOut, onMouseUp, hideToolbar, yAxisInfo, shiftZoom}) => {
     const { visibleStartTimeSec, visibleEndTimeSec, zoomTimeseriesSelection, panTimeseriesSelection } = useTimeRange()
     const {currentTime, currentTimeInterval } = useTimeseriesSelection()
     const timeRange = useMemo(() => (
@@ -120,7 +121,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({width, height, onCanvasEleme
     const divRef = useRef<HTMLDivElement | null>(null)
     useEffect(() => suppressWheelScroll(divRef), [divRef])
     const panelWidthSeconds = (visibleEndTimeSec ?? 0) - (visibleStartTimeSec ?? 0)
-    const handleWheel = useTimeScrollZoom(divRef, zoomTimeseriesSelection)
+    const handleWheel = useTimeScrollZoom(divRef, zoomTimeseriesSelection, {shiftZoom})
     const {handleMouseDown, handleMouseUp, handleMouseLeave, handleMouseMove} = useTimeScrollEventHandlers(margins.left, canvasWidth - margins.left - margins.right, panelWidthSeconds, divRef)
 
     const handleKeyDown: React.KeyboardEventHandler = useCallback((e) => {

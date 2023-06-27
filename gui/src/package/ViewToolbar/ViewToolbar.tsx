@@ -1,5 +1,6 @@
 import { Checkbox, FormGroup, IconButton, Switch } from '@mui/material';
 import React, { FunctionComponent, useMemo } from 'react';
+import SmallIconButton from '../../components/SmallIconButton';
 import "./ToolbarStyles.css";
 
 interface Props {
@@ -30,10 +31,17 @@ type ToolbarElement = {
 }
 
 const ToolbarButton: FunctionComponent<ToolbarElement> = (props: ToolbarElement) => {
-    const color = props.selected ? 'secondary' : 'inherit'
+    // const color = props.selected ? 'secondary' : 'inherit'
     return (
         <span title={props.title} key={props.elementIndex + '-span'}>
-            <IconButton
+            <SmallIconButton
+                title={props.title}
+                onClick={props.onClick}
+                key={props.elementIndex}
+                disabled={props.disabled ? true : false}
+                icon={props.icon}
+            />
+            {/* <IconButton
                 title={props.title}
                 onClick={props.onClick}
                 key={props.elementIndex}
@@ -42,7 +50,7 @@ const ToolbarButton: FunctionComponent<ToolbarElement> = (props: ToolbarElement)
                 disabled={props.disabled ? true : false}
             >
                 {props.icon}
-            </IconButton>
+            </IconButton> */}
         </span>
     )
 }
@@ -87,14 +95,23 @@ const ToolbarToggle: FunctionComponent<ToolbarElement> = (props: ToolbarElement)
 
 const ToolbarCheckbox: FunctionComponent<ToolbarElement> = (props: ToolbarElement) => {
     return (
-        <Checkbox
+        <input
+            type="checkbox"
             key={props.elementIndex}
             checked={props.selected}
-            onClick={props.onClick}
-            style={{padding: 1, paddingLeft: 6 }}
+            onChange={props.onClick}
             title={props.title}
             disabled={props.disabled}
+            style={{cursor: 'pointer'}}
         />
+        // <Checkbox
+        //     key={props.elementIndex}
+        //     checked={props.selected}
+        //     onClick={props.onClick}
+        //     style={{padding: 1, paddingLeft: 6 }}
+        //     title={props.title}
+        //     disabled={props.disabled}
+        // />
     )
 }
 

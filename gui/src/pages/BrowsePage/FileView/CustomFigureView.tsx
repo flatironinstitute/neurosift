@@ -84,6 +84,17 @@ const CustomFigureView: FunctionComponent<Props> = ({fileNames, width, height}) 
                     view: fileName
                 })
             }
+            else if (fileName.endsWith('.ns-awf')) {
+                ret.views.push({
+                    name: fileName,
+                    type: 'AverageWaveforms',
+                    data: fileName
+                })
+                layout.items.push({
+                    stretch: 1,
+                    view: fileName
+                })
+            }
         }
         return ret
     }, [fileNames])

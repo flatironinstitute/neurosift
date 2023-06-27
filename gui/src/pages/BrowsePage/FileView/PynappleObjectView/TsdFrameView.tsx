@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import deserializeReturnValue from "../../../../deserializeReturnValue";
-import { colorForUnitId } from "../../../../package/spike_sorting/unit-colors";
+import { getUnitColor } from "../../../../package/spike_sorting/view-units-table";
 import { TimeseriesGraphView, TimeseriesGraphViewData } from "../../../../package/view-timeseries-graph";
 import { useRtcshare } from "../../../../rtcshare/useRtcshare";
 
@@ -62,7 +62,7 @@ const TsdFrameView: FunctionComponent<Props> = ({width, height, sessionPath, obj
                     y: 'y'
                 },
                 attributes: {
-                    color: colorForUnitId(i)
+                    color: getUnitColor(i)
                 }
             }))
         }

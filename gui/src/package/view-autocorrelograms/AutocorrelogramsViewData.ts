@@ -1,6 +1,6 @@
 import validateObject, { isArrayOf, isEqualTo, isNumber, isOneOf, isString } from "../../types/validateObject"
 
-type AutocorrelogramData = {
+export type AutocorrelogramData = {
     unitId: number | string
     binEdgesSec: number[]
     binCounts: number[]

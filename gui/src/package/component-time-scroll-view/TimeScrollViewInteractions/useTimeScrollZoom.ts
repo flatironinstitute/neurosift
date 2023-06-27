@@ -48,13 +48,14 @@ export const useThrottledZoom = (divRef: React.MutableRefObject<HTMLDivElement |
     return zoomHandler
 }
 
-const useTimeScrollZoom = (divRef: React.MutableRefObject<HTMLDivElement | null>, zoomTimeseriesSelection: ZoomFn) => {
+const useTimeScrollZoom = (divRef: React.MutableRefObject<HTMLDivElement | null>, zoomTimeseriesSelection: ZoomFn, opts: {shiftZoom?: boolean}={}) => {
     const { throttler } = useThrottledZoom(divRef, zoomTimeseriesSelection)
     const wheelHandler = useCallback((e: React.WheelEvent) => {
+        if (opts.shiftZoom && !e.shiftKey) return
         if (e.deltaY === 0) return
         const zoomsCount = -e.deltaY/100
         throttler({zoomsCount})
-    }, [throttler])
+    }, [throttler, opts])
     
     return wheelHandler
 }

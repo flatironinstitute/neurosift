@@ -95,7 +95,7 @@ const FileBrowser: FunctionComponent<Props> = ({onOpenTab, currentFolderPath, se
         const file = files.find(x => x.id === fileId)
         if (!file) return
         const fileExt = '.' + file.name.split('.').pop()
-        if ((file.isDir) && (!['.ns-asp', '.pynapple'].includes(fileExt))) {
+        if ((file.isDir) && (!['.ns-asp', '.ns-ssd', '.pynapple'].includes(fileExt))) {
             const newFolder = join(currentFolderPath, file.name)
             setCurrentFolderPath(newFolder)
             return

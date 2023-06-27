@@ -2,7 +2,7 @@ import { FunctionComponent, useCallback, useEffect, useMemo, useState } from 're
 import TimeScrollView2, { useTimeScrollView2 } from '../../component-time-scroll-view-2/TimeScrollView2'
 import { useTimeRange, useTimeseriesSelectionInitialization } from '../../context-timeseries-selection'
 import { idToNum, useSelectedUnitIds } from '../../context-unit-selection'
-import { colorForUnitId } from '../unit-colors'
+import { getUnitColor } from '../view-units-table'
 import { RasterPlotView2Data } from './RasterPlotView2Data'
 import { Opts, PlotData } from './WorkerTypes'
 
@@ -58,7 +58,7 @@ const RasterPlotView2: FunctionComponent<Props> = ({data, width, height}) => {
         const ret: PlotData = {
             plots: plots.map(p => ({
                 ...p,
-                color: colorForUnitId(idToNum(p.unitId))
+                color: getUnitColor(idToNum(p.unitId))
             }))
         }
         return ret

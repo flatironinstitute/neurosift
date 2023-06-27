@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import deserializeReturnValue from "../../../deserializeReturnValue";
-import { AutocorrelogramsView, AutocorrelogramsViewData, isAutocorrelogramsViewData } from "../../../package/view-autocorrelograms";
+import { AverageWaveformsView, AverageWaveformsViewData, isAverageWaveformsViewData } from "../../../package/view-average-waveforms";
 import { useRtcshare } from "../../../rtcshare/useRtcshare";
 
 type Props = {
@@ -9,10 +9,10 @@ type Props = {
     filePath: string
 }
 
-export const useAutocorrelogramsViewData = (filePath: string) => {
+export const useAverageWaveformsViewData = (filePath: string) => {
     const {client} = useRtcshare()
     const [text, setText] = useState<string | undefined>(undefined)
-    const [viewData, setViewData] = useState<AutocorrelogramsViewData | undefined>(undefined)
+    const [viewData, setViewData] = useState<AverageWaveformsViewData | undefined>(undefined)
 
     useEffect(() => {
         let canceled = false
@@ -34,9 +34,9 @@ export const useAutocorrelogramsViewData = (filePath: string) => {
         ; (async () => {
             const d = await deserializeReturnValue(JSON.parse(text))
             if (canceled) return
-            if (!isAutocorrelogramsViewData(d)) {
+            if (!isAverageWaveformsViewData(d)) {
                 console.warn(d)
-                console.warn('Invalid autocorrelograms view data')
+                console.warn('Invalid average waveforms view data')
                 return
             }
             setViewData(d)
@@ -47,15 +47,15 @@ export const useAutocorrelogramsViewData = (filePath: string) => {
     return viewData
 }
 
-const AutocorrelogramsFileView: FunctionComponent<Props> = ({width, height, filePath}) => {
-    const viewData = useAutocorrelogramsViewData(filePath)
+const AverageWaveformsFileView: FunctionComponent<Props> = ({width, height, filePath}) => {
+    const viewData = useAverageWaveformsViewData(filePath)
 
     if (!viewData) {
         return <div>...</div>
     }
 
     return (
-        <AutocorrelogramsView
+        <AverageWaveformsView
             data={viewData}
             width={width}
             height={height}
@@ -63,4 +63,4 @@ const AutocorrelogramsFileView: FunctionComponent<Props> = ({width, height, file
     )
 }
 
-export default AutocorrelogramsFileView
+export default AverageWaveformsFileView

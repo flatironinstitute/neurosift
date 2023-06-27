@@ -7,7 +7,7 @@ interface TimeWidgetToolbarProps {
     panTimeseriesSelection: (direction: PanDirection, pct?: number) => void
 }
 
-export const DefaultToolbarWidth = 36
+export const DefaultToolbarWidth = 18
 
 
 const TimeWidgetToolbarEntries = (props: TimeWidgetToolbarProps): ToolbarItem[] => {
