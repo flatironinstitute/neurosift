@@ -12,9 +12,16 @@ Neurosift provides a platform for the creation, visualization, and sharing of co
 
 ## Instructions for Installation and Setup
 
-We suggest installing Neurosift within a conda environment or a virtual environment.
+We suggest installing Neurosift within a conda environment or a virtual environment. For example, to create and activate a conda environment named neurosift:
 
-First, clone the repository and install from source:
+```bash
+conda create -n neurosift python=3.9
+conda activate neurosift
+```
+
+**prerequisite**: Install [NodeJS v16 or higher](https://nodejs.org/en/download).
+
+Clone the repository and install from source:
 
 ```bash
 git clone https://github.com/scratchrealm/neurosift

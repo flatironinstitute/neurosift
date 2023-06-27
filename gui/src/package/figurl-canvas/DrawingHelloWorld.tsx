@@ -140,7 +140,7 @@ const clickEventHandler = (e: React.MouseEvent, pixelSpacePoints: Vec2[]) => {
     const clickPoint: Vec2 = [e.clientX - boundingRect.x, e.clientY - boundingRect.y]
 
     pixelSpacePoints.forEach((pt, ii) => {
-        if (norm([pt[0] - clickPoint[0], pt[1] - clickPoint[1]]) < 3) {
+        if (norm([pt[0] - clickPoint[0], pt[1] - clickPoint[1]]) as number < 3) {
             console.log(`You just clicked point ${ii}!`)
         }
     })

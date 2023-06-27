@@ -228,7 +228,7 @@ export const getElectrodeAtPoint = (electrodes: PixelSpaceElectrode[], pixelRadi
     // to be in the radius of any other. So we use a for ... of loop, allowing early stopping.
     for (const e of electrodes) {
         // const dist = norm([point.x - otherPoint.x, point.y - otherPoint.y])
-        if (norm([e.pixelX - mouseLoc[0], e.pixelY - mouseLoc[1]]) < pixelRadius) return e.e.id
+        if (norm([e.pixelX - mouseLoc[0], e.pixelY - mouseLoc[1]]) as number < pixelRadius) return e.e.id
     }
     return undefined
 }
