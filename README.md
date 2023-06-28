@@ -60,12 +60,18 @@ Then you will need to modify the URL in your web browser to include the remote a
 
 ## Visualizations
 
-* [Videos](./doc/videos.md)
-* [Video annotations](./doc/video_annotations.md)
-* [Timeseries graphs](./doc/timeseries_graphs.md)
-* [Audio spectrograms](./doc/audio_spectrograms.md)
-* [Spike raster plots](./doc/spike_raster_plots.md)
-* [Position decode fields](./doc/position_decode_fields.md)
+Here's a table
+
+| Visualization | File types | Description |
+| --- | --- | --- |
+| [Audio spectrogram](./doc/audio_spectrogram.md) | .ns-asp | Audio spectrogram |
+| [Composite figure](./doc/composite_figure.md) | .ns-fig | Composite figure of multiple visualizations in a custom layout |
+| [Position decode field](./doc/position_decode_field.md) | .ns-pdf | Animal position decode field |
+| [Spike raster plot](./doc/spike_raster_plot.md) | .ns-spt | Raster plot view of spike trains |
+| [Timeseries annotation](./timeseries_annotation.md) | .ns-tsa | Annotation of a timeseries graph |
+| [Timeseries graph](./doc/timeseries_graph.md) | .ns-tsg | Timeseries data in a scrollable time view |
+| [Video](./doc/video.md) | .mp4, .avi | Video / movie |
+| [Video annotation](./doc/video_annotation.md) | .ns-van | Annotation of a video |
 
 ## Contributing
 
@@ -78,3 +84,5 @@ Neurosift is licensed under the terms of the Apache License 2.0.
 ## Authors
 
 Jeremy Magland, Jeff Soules, and Ralph Peterson
+
+Center for Computational Mathematics and Center for Computational Neuroscience, Flatiron Institute, Simons Foundation
