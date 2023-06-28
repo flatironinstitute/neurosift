@@ -2,6 +2,8 @@
 
 Interactive neuroscience visualizations in the browser.
 
+:warning: Under construction.
+
 Neurosift provides a platform for the creation, visualization, and sharing of complex neuroscience data straight from your web browser. It caters to both individual users through its local mode, allowing the processing of views directly from your device, as well as a remote access function for presenting your findings to other users on different machines. With Neurosift, you have the ability to construct a multitude of synchronized visuals such as spike raster plots, audio spectrograms, videos, video annotations, position decode fields, and timeseries graphs.
 
 ## Necessary System Specifications
