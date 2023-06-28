@@ -7,6 +7,7 @@ import NSFigFileView from "./NSFigFileView";
 import PositionDecodeFieldFileView from "./PositionDecodeFieldFileView";
 import PynappleSessionFileView from "./PynappleSessionFileView";
 import ScriptFileView from "./ScriptFileView";
+import SleapFileView from "./SleapFileView";
 import SpikeSortingDigestFileView from "./SpikeSortingDigestFileView";
 import SpikeTrainsFileView from "./SpikeTrainsFileView";
 import TimeseriesAnnotationFileView from "./TimeseriesAnnotationFileView";
@@ -100,6 +101,12 @@ const FileView: FunctionComponent<Props> = ({width, height, filePath}) => {
         // spike sorting digest
         view = (
             <SpikeSortingDigestFileView width={width} height={height} filePath={filePath} />
+        )
+    }
+    else if (filePath.endsWith('.slp')) {
+        // sleap file
+        view = (
+            <SleapFileView width={width} height={height} filePath={filePath} />
         )
     }
     else {

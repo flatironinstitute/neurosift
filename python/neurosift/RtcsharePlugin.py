@@ -9,6 +9,7 @@ import os
 class RtcsharePlugin:
     def initialize(context):
         context.register_service('pynapple', PynappleService)
+        context.register_service('sleap', SleapService)
 
 class PynappleService:
     def handle_query(query: dict, *, dir: str, user_id: Union[str, None]=None) -> Tuple[dict, bytes]:
@@ -52,12 +53,8 @@ class PynappleService:
         elif type0 == 'get_tsgroup':
             object_name: str = query['object_name']
             session_uri: str = query['session_uri']
-            if session_uri.startswith('$dir'):
-                session_uri = f'{dir}/{session_uri[len("$dir"):]}'
-            if not session_uri.startswith('rtcshare://'):
-                raise Exception(f'Invalid session uri: {session_uri}')
-            session_relpath = session_uri[len('rtcshare://'):]
-            session_fullpath = os.path.join(os.environ['RTCSHARE_DIR'], session_relpath)
+
+            session_fullpath = _full_path_from_uri(session_uri, dir=dir)
             session = nap.load_session(session_fullpath, 'neurosuite')
 
             obj = getattr(session, object_name)
@@ -90,13 +87,7 @@ class PynappleService:
             }, X.to_single_buffer()
         elif type0 == 'get_tsdframe':
             object_name: str = query['object_name']
-            session_uri: str = query['session_uri']
-            if session_uri.startswith('$dir'):
-                session_uri = f'{dir}/{session_uri[len("$dir"):]}'
-            if not session_uri.startswith('rtcshare://'):
-                raise Exception(f'Invalid session uri: {session_uri}')
-            session_relpath = session_uri[len('rtcshare://'):]
-            session_fullpath = os.path.join(os.environ['RTCSHARE_DIR'], session_relpath)
+            session_fullpath = _full_path_from_uri(session_uri, dir=dir)
             session = nap.load_session(session_fullpath, 'neurosuite')
 
             obj: TsdFrame = getattr(session, object_name)
@@ -115,3 +106,45 @@ class PynappleService:
             }, json.dumps(_serialize(ret)).encode('utf-8')
         else:
             raise Exception(f'Unexpected query type: {type0}')
+
+class SleapService:
+    def handle_query(query: dict, *, dir: str, user_id: Union[str, None]=None) -> Tuple[dict, bytes]:
+        import sleap_io.io.slp as slp
+        from sleap_io.model.skeleton import Symmetry
+        type0 = query['type']
+        if type0 == 'get_skeletons':
+            slp_file_uri: str = query['slp_file_uri']
+            slp_file_fullpath = _full_path_from_uri(slp_file_uri, dir=dir)
+            xx = slp.read_labels(slp_file_fullpath)
+            def _skeleton_to_dict(skeleton: slp.Skeleton):
+                return {
+                    'name': skeleton.name,
+                    'node_names': skeleton.node_names,
+                    'edge_inds': skeleton.edge_inds,
+                    'symmetries': [
+                        [
+                            node.name
+                            for node in sym.nodes 
+                        ]
+                        for sym in skeleton.symmetries
+                    ]
+                }
+                
+            skeletons = [
+                _skeleton_to_dict(skeleton)
+                for skeleton in xx.skeletons
+            ]
+            xx.labeled_frames
+            return {
+                'skeletons': skeletons,
+                'success': True
+            }, b''
+
+def _full_path_from_uri(uri: str, *, dir: str) -> str:
+    if uri.startswith('$dir'):
+        uri = f'{dir}/{uri[len("$dir"):]}'
+    if not uri.startswith('rtcshare://'):
+        raise Exception(f'Invalid uri: {uri}')
+    relpath = uri[len('rtcshare://'):]
+    fullpath = os.path.join(os.environ['RTCSHARE_DIR'], relpath)
+    return fullpath
