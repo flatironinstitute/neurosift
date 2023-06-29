@@ -4,13 +4,13 @@ Interactive neuroscience visualizations in the browser.
 
 :warning: Under construction.
 
-Neurosift provides a platform for the creation, visualization, and sharing of complex neuroscience data straight from your web browser. It caters to both individual users through its local mode, allowing the processing of views directly from your device, as well as a remote access function for presenting your findings to other users on different machines. With Neurosift, you have the ability to construct a multitude of synchronized visuals such as spike raster plots, audio spectrograms, videos, video annotations, position decode fields, and timeseries graphs.
+Neurosift provides a platform for the visualization of neuroscience data in the web browser. It caters to both individual users through its local mode, allowing the visualization of views directly from your device, as well as a remote access function for presenting your findings to other users on different machines. With Neurosift, you have the ability to construct a multitude of synchronized visuals such as spike raster plots, audio spectrograms, videos, video annotations, position decode fields, timeseries graphs, and more.
 
-## Necessary System Specifications
+## System Specifications
 
-* Operating Systems: Linux, Mac, or Windows
-* Web Browsers: Chrome or Firefox
-* Software: NodeJS v16 or higher
+* Operating System: Linux, Mac, or Windows
+* Web Browser: Chrome, Firefox, and probably others
+* Required software: NodeJS v16 or higher
 
 ## Instructions for Installation and Setup
 
@@ -36,14 +36,14 @@ Next, create a folder for your data and include some test files:
 ```bash
 mkdir -p ~/rtcshare_data/test
 cd ~/rtcshare_data/test
-# transfer some data files into this test directory, these could be in .mp4, .avi, or .py formats
+# Transfer some data files into this test directory. These could be in .mp4, .avi, .py, .ipynb, or other formats.
 ```
 
 Share the data folder utilizing rtcshare:
 
 ```bash
 cd ~/rtcshare_data
-rtcshare start --dir .
+rtcshare start --dir . --plugins neurosift
 # keep this terminal window running
 ```
 
@@ -55,14 +55,12 @@ To make your visualizations remotely accessible, for instance, to share your wor
 
 ```bash
 cd ~/rtcshare_data
-rtcshare start --dir . --enable-remote-access
+rtcshare start --dir . --plugins neurosift --enable-remote-access
 ```
 
-Then you will need to modify the URL in your web browser to include the remote access server address. (TODO: explain how to do this)
+Make a note of the remote URL corresponding to this shared directory. From the neurosift home page, you can click "Connect to remote rtcshare" and enter this URL.
 
 ## Visualizations
-
-Here's a table
 
 | Visualization | File types | Description |
 | --- | --- | --- |
@@ -70,6 +68,7 @@ Here's a table
 | [Composite figure](./doc/composite_figure.md) | .ns-fig | Composite figure of multiple visualizations in a custom layout |
 | [Position decode field](./doc/position_decode_field.md) | .ns-pdf | Animal position decode field |
 | [Spike raster plot](./doc/spike_raster_plot.md) | .ns-spt | Raster plot view of spike trains |
+| SLEAP file | .slp | WIP |
 | [Timeseries annotation](./timeseries_annotation.md) | .ns-tsa | Annotation of a timeseries graph |
 | [Timeseries graph](./doc/timeseries_graph.md) | .ns-tsg | Timeseries data in a scrollable time view |
 | [Video](./doc/video.md) | .mp4, .avi | Video / movie |
