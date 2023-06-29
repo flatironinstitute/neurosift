@@ -43,7 +43,8 @@
     "rehype-raw": "^6.1.1",
     "remark-gfm": "^3.0.1",
     "remark-math": "^5.1.1",
-    "simple-peer": "^9.11.1"
+    "simple-peer": "^9.11.1",
+    "webnwb": "^0.1.0"
   },
   "devDependencies": {
     "@types/chroma-js": "^2.4.0",

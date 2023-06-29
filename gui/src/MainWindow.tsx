@@ -5,6 +5,7 @@ import AboutPage from "./pages/AboutPage/AboutPage";
 import BrowsePage from "./pages/BrowsePage/BrowsePage";
 import { SetupOpenTabs } from "./pages/BrowsePage/OpenTabsContext";
 import HomePage from "./pages/HomePage/HomePage";
+import TestPage from "./pages/TestPage/TestPage";
 import StatusBar, { statusBarHeight } from "./StatusBar";
 import useRoute from "./useRoute";
 import useWindowDimensions from "./useWindowDimensions";
@@ -34,6 +35,11 @@ const MainWindow: FunctionComponent<Props> = () => {
                         </SetupOpenTabs>
                     ) : route.page === 'github-auth' ? (
                         <GitHubAuthPage />
+                    ) : route.page === 'test' ? (
+                        <TestPage
+                            width={width}
+                            height={H}
+                         />
                     ) : (
                         <div>404</div>
                     )

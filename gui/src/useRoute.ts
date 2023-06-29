@@ -9,6 +9,8 @@ export type Route = {
     page: 'browse'
     folder: string
 } | {
+    page: 'test'
+} | {
     page: 'github-auth'
 }
 
@@ -35,6 +37,11 @@ const useRoute = () => {
                 page: 'github-auth'
             }
         }
+        else if (p === '/test') {
+            return {
+                page: 'test'
+            }
+        }
         else {
             return {
                 page: 'home'
@@ -54,6 +61,9 @@ const useRoute = () => {
         }
         else if (r.page === 'github-auth') {
             navigate('/github/auth' + location.search)
+        }
+        else if (r.page === 'test') {
+            navigate('/test' + location.search)
         }
     }, [navigate, location.search])
 
