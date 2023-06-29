@@ -13,9 +13,14 @@ export class NwbFileWrapper {
     get topLevelGroupNames(): string[] {
         return Object.keys(this.nwbFile)
     }
-    async loadGroup(name: string): Promise<NwbFileGroup> {
+    async loadGroup(name: string): Promise<NwbFileGroup | undefined> {
         const obj = await this.nwbFile[name]
-        return new NwbFileGroup(obj)
+        if (obj) {
+            return new NwbFileGroup(obj)
+        }
+        else {
+            return undefined
+        }
     }
 }
 
