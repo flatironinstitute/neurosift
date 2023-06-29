@@ -4,6 +4,7 @@ import AutocorrelogramsFileView from "./AutocorrelogramsFileView";
 import AverageWaveformsFileView from "./AverageWaveformsFileView";
 import IpynbFileView from "./IpynbFileView";
 import NSFigFileView from "./NSFigFileView";
+import NwbZarrFileView from "./NwbZarrFileView";
 import PositionDecodeFieldFileView from "./PositionDecodeFieldFileView";
 import PynappleSessionFileView from "./PynappleSessionFileView";
 import ScriptFileView from "./ScriptFileView";
@@ -107,6 +108,11 @@ const FileView: FunctionComponent<Props> = ({width, height, filePath}) => {
         // sleap file
         view = (
             <SleapFileView width={width} height={height} filePath={filePath} />
+        )
+    }
+    else if (filePath.endsWith('.nwb.zarr')) {
+        view = (
+            <NwbZarrFileView width={width} height={height} filePath={filePath} />
         )
     }
     else {

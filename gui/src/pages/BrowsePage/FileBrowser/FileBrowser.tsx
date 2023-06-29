@@ -94,8 +94,13 @@ const FileBrowser: FunctionComponent<Props> = ({onOpenTab, currentFolderPath, se
     const handleClickFile = useCallback((fileId: string) => {
         const file = files.find(x => x.id === fileId)
         if (!file) return
-        const fileExt = '.' + file.name.split('.').pop()
-        if ((file.isDir) && (!['.ns-asp', '.ns-ssd', '.pynapple'].includes(fileExt))) {
+        function endsWith(str: string, suffixes: string[]) {
+            for (const suffix of suffixes) {
+                if (str.endsWith(suffix)) return true
+            }
+            return false
+        }
+        if ((file.isDir) && (!endsWith(file.name, ['.ns-asp', '.ns-ssd', '.pynapple', '.nwb.zarr']))) {
             const newFolder = join(currentFolderPath, file.name)
             setCurrentFolderPath(newFolder)
             return

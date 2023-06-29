@@ -67,7 +67,7 @@ class ZarrArrayClient {
             throw Error(`Unable to get array chunk for ${this.uri} ${this.arrayName}`)
         }
         if (!binaryPayload) throw Error('Unexpected: no binary payload')
-        let data_1d: Uint8Array | Uint16Array | Int16Array | Uint32Array | Int32Array | Float32Array
+        let data_1d: Uint8Array | Uint16Array | Int16Array | Uint32Array | Int32Array | Float32Array | Float64Array
         if (result.dtype === 'uint8') {
             data_1d = new Uint8Array(binaryPayload)
         }
@@ -85,6 +85,25 @@ class ZarrArrayClient {
         }
         else if (result.dtype === 'float32') {
             data_1d = new Float32Array(binaryPayload)
+        }
+        else if (result.dtype === 'int64') {
+            const x = new BigInt64Array(binaryPayload)
+            // can't really handle 64-bit integers in javascript, so we're going to convert to 32-bit integers at the risk of overflow
+            data_1d = new Int32Array(x.length)
+            for (let i = 0; i < x.length; i++) {
+                data_1d[i] = Number(x[i])
+            }
+        }
+        else if (result.dtype === 'uint64') {
+            const x = new BigUint64Array(binaryPayload)
+            // can't really handle 64-bit integers in javascript, so we're going to convert to 32-bit integers at the risk of overflow
+            data_1d = new Uint32Array(x.length)
+            for (let i = 0; i < x.length; i++) {
+                data_1d[i] = Number(x[i])
+            }
+        }
+        else if (result.dtype === 'float64') {
+            data_1d = new Float64Array(binaryPayload)
         }
         else {
             throw Error(`Unexpected data type for zarr array: ${result.dtype}`)
