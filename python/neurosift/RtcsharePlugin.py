@@ -9,7 +9,8 @@ import os
 class RtcsharePlugin:
     def initialize(context):
         context.register_service('pynapple', PynappleService)
-        context.register_service('sleap', SleapService)
+        context.register_service('neurosift.sleap', SleapService)
+        context.register_service('sleap', SleapService) # temporary alias
 
 class PynappleService:
     def handle_query(query: dict, *, dir: str, user_id: Union[str, None]=None) -> Tuple[dict, bytes]:

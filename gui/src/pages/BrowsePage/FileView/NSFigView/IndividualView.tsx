@@ -48,7 +48,7 @@ const IndividualView: FunctionComponent<Props> = ({view, path, width, height}) =
     else if (view.type === 'RasterPlot') {
         return (
             <SpikeTrainsFileView
-                filePath={join(path, view.data)}
+                filePath={specialJoin(path, view.data)}
                 width={width}
                 height={height}
             />
@@ -65,6 +65,11 @@ const IndividualView: FunctionComponent<Props> = ({view, path, width, height}) =
         )
     }
     return <div>{(view as any).type} {path} {width} {height}</div>
+}
+
+const specialJoin = (a: string, b: string) => {
+    if (b.startsWith('remote-nwb|')) return b
+    else return join(a, b)
 }
 
 const join = (a: string, b: string) => {

@@ -6,6 +6,7 @@ import BrowsePage from "./pages/BrowsePage/BrowsePage";
 import { SetupOpenTabs } from "./pages/BrowsePage/OpenTabsContext";
 import HomePage from "./pages/HomePage/HomePage";
 import TestPage from "./pages/TestPage/TestPage";
+import TestPage_Wasm from "./pages/TestPage/TestPage_Wasm";
 import StatusBar, { statusBarHeight } from "./StatusBar";
 import useRoute from "./useRoute";
 import useWindowDimensions from "./useWindowDimensions";
@@ -13,6 +14,8 @@ import useWindowDimensions from "./useWindowDimensions";
 type Props = {
     // none
 }
+
+const urlQueryParams = new URLSearchParams(window.location.search)
 
 const MainWindow: FunctionComponent<Props> = () => {
     const {route} = useRoute()
@@ -36,10 +39,17 @@ const MainWindow: FunctionComponent<Props> = () => {
                     ) : route.page === 'github-auth' ? (
                         <GitHubAuthPage />
                     ) : route.page === 'test' ? (
-                        <TestPage
-                            width={width}
-                            height={H}
-                         />
+                        urlQueryParams.get('wasm') === '1' ? (
+                            <TestPage_Wasm
+                                width={width}
+                                height={H}
+                            />
+                        ) : (
+                            <TestPage
+                                width={width}
+                                height={H}
+                            />
+                        )
                     ) : (
                         <div>404</div>
                     )

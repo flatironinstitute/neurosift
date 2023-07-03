@@ -14,19 +14,24 @@ async function deserializeReturnValue(x: any): Promise<any> {
             const shape = x.shape
             const dtype = x.dtype
             let dataBuffer
-            if (x.data_b64) {
-                const data_b64 = x.data_b64
-                dataBuffer = _base64ToArrayBuffer(data_b64)
-                // dataBuffer = Buffer.from(data_b64, 'base64')
-            }
-            else if (x.data_gzip_b64) {
-                const data_gzip_b64 = x.data_gzip_b64
-                const aa = _base64ToArrayBuffer(data_gzip_b64)
-                // const aa = Buffer.from(data_gzip_b64, 'base64')
-                dataBuffer = gunzip(aa)
+            if (shape[0] === 0) {
+                dataBuffer = new Uint8Array(0)
             }
             else {
-                throw Error('Missing data_b64 or data_gzip_b64')
+                if (x.data_b64) {
+                    const data_b64 = x.data_b64
+                    dataBuffer = _base64ToArrayBuffer(data_b64)
+                    // dataBuffer = Buffer.from(data_b64, 'base64')
+                }
+                else if (x.data_gzip_b64) {
+                    const data_gzip_b64 = x.data_gzip_b64
+                    const aa = _base64ToArrayBuffer(data_gzip_b64)
+                    // const aa = Buffer.from(data_gzip_b64, 'base64')
+                    dataBuffer = gunzip(aa)
+                }
+                else {
+                    throw Error('Missing data_b64 or data_gzip_b64')
+                }
             }
             if (!dataBuffer) throw Error('No dataBuffer')
             // const data_b64 = x.data_b64 as string

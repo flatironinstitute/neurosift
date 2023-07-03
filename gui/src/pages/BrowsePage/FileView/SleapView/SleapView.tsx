@@ -23,7 +23,7 @@ const useSlpSkeletons = (filePath: string) => {
         if (!rtcshareClient) return
         let canceled = false
         const loadSkeletons = async () => {
-            const {result} = await rtcshareClient.serviceQuery('sleap', {
+            const {result} = await rtcshareClient.serviceQuery('neurosift.sleap', {
                 type: 'get_skeletons',
                 slp_file_uri: `rtcshare://${filePath}`
             })
