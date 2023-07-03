@@ -76,10 +76,11 @@ export const useTimeRange = (timestampOffset=0) => {
     if (timeseriesSelection.visibleEndTimeSec === undefined || timeseriesSelection.visibleStartTimeSec === undefined) {
         console.warn('WARNING: useTimeRange() with uninitialized timeseries selection state. Time ranges replaced with MIN_SAFE_INTEGER.')
     }
-    const zoomTimeseriesSelection = useCallback((direction: ZoomDirection, factor?: number) => {
+    const zoomTimeseriesSelection = useCallback((direction: ZoomDirection, factor?: number, hoverTimeSec?: number) => {
         timeseriesSelectionDispatch({
             type: direction === 'in' ? 'zoomIn' : 'zoomOut',
-            factor
+            factor,
+            hoverTimeSec
         })
     }, [timeseriesSelectionDispatch])
     const panTimeseriesSelection = useCallback((direction: PanDirection, pct?: number) => {
@@ -189,6 +190,7 @@ type PanTimeseriesSelectionDeltaTAction = {
 type ZoomTimeseriesSelectionAction = {
     type: 'zoomIn' | 'zoomOut',
     factor?: number // Factor should always be >= 1 (if we zoom in, we'll use the inverse of factor.)
+    hoverTimeSec?: number
 }
 
 type SetVisibleTimeRangeAction = {
@@ -330,11 +332,10 @@ const zoomTime = (state: TimeseriesSelection, action: ZoomTimeseriesSelectionAct
         visibleEndTimeSec: state.timeseriesEndTimeSec
     }
 
-    // We want to maintain the position of the anchor time point relative to the start of the old window.
-    // Anchor is the currentTimeSec, if set, otherwise we just use the midpoint of the old window.
-    const anchorTimeSec = state.currentTimeSec ?? state.visibleStartTimeSec + (currentWindow / 2)
+    const anchorTimeSec = action.hoverTimeSec !== undefined ? (action.hoverTimeSec) : (state.currentTimeSec ?? state.visibleStartTimeSec + (currentWindow / 2))
+
     // Find the distance of the focus from the window start, as a fraction of the total window length.
-    const anchorTimeFrac = state.currentTimeSec ? (state.currentTimeSec - state.visibleStartTimeSec) / currentWindow : 0.5
+    const anchorTimeFrac = (anchorTimeSec - state.visibleStartTimeSec) / currentWindow
     // Now the new start time = anchor time - (fraction * new window size), unless that'd put us earlier than the start of the timeseries.
     let newStart = Math.max(anchorTimeSec - anchorTimeFrac * newWindow, state.timeseriesStartTimeSec)
     const newEnd = Math.min(newStart + newWindow, state.timeseriesEndTimeSec)

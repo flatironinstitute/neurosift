@@ -62,7 +62,14 @@ const RasterPlotView3: FunctionComponent<Props> = ({spikeTrainsClient, width, he
         if (visibleStartTimeSec === undefined) return
         if (visibleEndTimeSec === undefined) return
 
-        ;(async () => {
+        if (visibleEndTimeSec - visibleStartTimeSec > 60 * 15) {
+            worker.postMessage({
+                plotData: null
+            })
+            return
+        }
+
+        (async () => {
             const bufferSec = (visibleEndTimeSec - visibleStartTimeSec) / 3
             const dd = await spikeTrainsClient.getData(visibleStartTimeSec - bufferSec, visibleEndTimeSec + bufferSec)
             if (canceled) return

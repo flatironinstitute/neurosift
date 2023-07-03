@@ -2,19 +2,19 @@ import { Opts, Plot, PlotData } from "./WorkerTypes";
 
 let canvas: HTMLCanvasElement | undefined = undefined
 let opts: Opts | undefined = undefined
-let plotData: PlotData | undefined = undefined
+let plotData: PlotData | null | undefined = undefined
 // let plotDataFiltered: PlotData | undefined = undefined 
 
 onmessage = function (evt) {
-    if (evt.data.canvas) {
+    if (evt.data.canvas !== undefined) {
         canvas = evt.data.canvas
         drawDebounced()
     }
-    if (evt.data.opts) {
+    if (evt.data.opts !== undefined) {
         opts = evt.data.opts
         drawDebounced()
     }
-    if (evt.data.plotData) {
+    if (evt.data.plotData !== undefined) {
         plotData = evt.data.plotData
         drawDebounced()
     }
@@ -36,7 +36,6 @@ let drawCode = 0
 async function draw() {
     if (!canvas) return
     if (!opts) return
-    if (!plotData) return
 
     const {margins, canvasWidth, canvasHeight, visibleStartTimeSec, visibleEndTimeSec, hoveredUnitId, selectedUnitIds} = opts
 
@@ -46,6 +45,19 @@ async function draw() {
 
     const canvasContext = canvas.getContext("2d")
     if (!canvasContext) return
+
+    if (plotData === null) {
+        canvasContext.clearRect(0, 0, canvasWidth, canvasHeight)
+        // draw text in the center of the canvas in pink: "Zoom in to view raster plot"
+        canvasContext.fillStyle = 'pink'
+        canvasContext.textAlign = 'center'
+        canvasContext.textBaseline = 'middle'
+        canvasContext.font = '20px Arial'
+        canvasContext.fillText('Zoom in (mouse-wheel) to view raster plot', canvasWidth / 2, canvasHeight / 2)
+        return
+    }
+
+    if (!plotData) return
     drawCode += 1
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const thisDrawCode = drawCode
