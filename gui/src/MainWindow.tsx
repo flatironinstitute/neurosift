@@ -22,11 +22,11 @@ const MainWindow: FunctionComponent<Props> = () => {
     const {width, height} = useWindowDimensions()
     const H = height - applicationBarHeight - statusBarHeight
     return (
-        <div style={{position: 'absolute', width, height}}>
-            <div style={{position: 'absolute', width, height: applicationBarHeight}}>
+        <div className="MainWindow" style={{position: 'absolute', width, height, overflow: 'hidden'}}>
+            <div className="MainWindowApplicationBar" style={{position: 'absolute', width, height: applicationBarHeight, overflow: 'hidden'}}>
                 <ApplicationBar />
             </div>
-            <div style={{position: 'absolute', top: applicationBarHeight, width, height: H}}>
+            <div className="MainWindowContent" style={{position: 'absolute', top: applicationBarHeight, width, height: H, overflow: 'hidden'}}>
                 {
                     route.page === 'home' ? (
                         <HomePage width={width} height={H} />
@@ -55,7 +55,7 @@ const MainWindow: FunctionComponent<Props> = () => {
                     )
                 }
             </div>
-            <div style={{position: 'absolute', bottom: 0, width, height: statusBarHeight, backgroundColor: '#eee'}}>
+            <div className="MainWindowStatusBar" style={{position: 'absolute', bottom: 0, width, height: statusBarHeight, backgroundColor: '#eee', overflow: 'hidden'}}>
                 <StatusBar
                     width={width}
                     height={statusBarHeight}
