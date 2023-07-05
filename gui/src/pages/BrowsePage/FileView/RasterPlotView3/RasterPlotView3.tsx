@@ -56,22 +56,28 @@ const RasterPlotView3: FunctionComponent<Props> = ({spikeTrainsClient, width, he
         }
     }, [canvasElement])
 
+    const {blockStartIndex, blockEndIndex, zoomInRequired} = useMemo(() => {
+        if ((visibleStartTimeSec === undefined) || (visibleEndTimeSec === undefined)) {
+            return {blockStartIndex: undefined, blockEndIndex: undefined, zoomInRequired: false}
+        }
+        if (visibleEndTimeSec - visibleStartTimeSec > 60 * 15) {
+            return {blockStartIndex: undefined, blockEndIndex: undefined, zoomInRequired: true}
+        }
+        const startTimeSec = spikeTrainsClient.startTimeSec!
+        const blockSizeSec = spikeTrainsClient.blockSizeSec!
+        const blockStartIndex = Math.floor((visibleStartTimeSec - startTimeSec) / blockSizeSec)
+        const blockEndIndex = Math.floor((visibleEndTimeSec - startTimeSec) / blockSizeSec) + 1
+        return {blockStartIndex, blockEndIndex, zoomInRequired: false}
+    }, [spikeTrainsClient, visibleStartTimeSec, visibleEndTimeSec])
+
     useEffect(() => {
         let canceled = false
         if (!worker) return
-        if (visibleStartTimeSec === undefined) return
-        if (visibleEndTimeSec === undefined) return
-
-        if (visibleEndTimeSec - visibleStartTimeSec > 60 * 15) {
-            worker.postMessage({
-                plotData: null
-            })
-            return
-        }
+        if (blockStartIndex === undefined) return
+        if (blockEndIndex === undefined) return
 
         (async () => {
-            const bufferSec = (visibleEndTimeSec - visibleStartTimeSec) / 3
-            const dd = await spikeTrainsClient.getData(visibleStartTimeSec - bufferSec, visibleEndTimeSec + bufferSec)
+            const dd = await spikeTrainsClient.getData(blockStartIndex, blockEndIndex)
             if (canceled) return
             const plotData = {
                 plots: dd.map(unit => ({
@@ -85,7 +91,7 @@ const RasterPlotView3: FunctionComponent<Props> = ({spikeTrainsClient, width, he
         })()
 
         return () => {canceled = true}
-    }, [worker, visibleStartTimeSec, visibleEndTimeSec, spikeTrainsClient])
+    }, [worker, blockStartIndex, blockEndIndex, spikeTrainsClient])
 
     const {canvasWidth, canvasHeight, margins} = useTimeScrollView2({width, height})
 
@@ -100,12 +106,13 @@ const RasterPlotView3: FunctionComponent<Props> = ({spikeTrainsClient, width, he
             visibleStartTimeSec,
             visibleEndTimeSec,
             hoveredUnitId,
-            selectedUnitIds: [...selectedUnitIds]
+            selectedUnitIds: [...selectedUnitIds],
+            zoomInRequired
         }
         worker.postMessage({
             opts
         })
-    }, [canvasWidth, canvasHeight, margins, visibleStartTimeSec, visibleEndTimeSec, worker, hoveredUnitId, selectedUnitIds])
+    }, [canvasWidth, canvasHeight, margins, visibleStartTimeSec, visibleEndTimeSec, worker, hoveredUnitId, selectedUnitIds, zoomInRequired])
 
     const unitIds = useMemo(() => (
         spikeTrainsClient.unitIds!

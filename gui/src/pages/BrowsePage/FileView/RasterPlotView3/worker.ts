@@ -1,8 +1,8 @@
-import { Opts, Plot, PlotData } from "./WorkerTypes";
+import { Opts, PlotData } from "./WorkerTypes";
 
 let canvas: HTMLCanvasElement | undefined = undefined
 let opts: Opts | undefined = undefined
-let plotData: PlotData | null | undefined = undefined
+let plotData: PlotData | undefined = undefined
 // let plotDataFiltered: PlotData | undefined = undefined 
 
 onmessage = function (evt) {
@@ -37,7 +37,7 @@ async function draw() {
     if (!canvas) return
     if (!opts) return
 
-    const {margins, canvasWidth, canvasHeight, visibleStartTimeSec, visibleEndTimeSec, hoveredUnitId, selectedUnitIds} = opts
+    const {margins, canvasWidth, canvasHeight, visibleStartTimeSec, visibleEndTimeSec, hoveredUnitId, selectedUnitIds, zoomInRequired} = opts
 
     // this is important because main thread no longer has control of canvas (it seems)
     canvas.width = canvasWidth
@@ -46,7 +46,7 @@ async function draw() {
     const canvasContext = canvas.getContext("2d")
     if (!canvasContext) return
 
-    if (plotData === null) {
+    if (zoomInRequired) {
         canvasContext.clearRect(0, 0, canvasWidth, canvasHeight)
         // draw text in the center of the canvas in pink: "Zoom in to view raster plot"
         canvasContext.fillStyle = 'pink'

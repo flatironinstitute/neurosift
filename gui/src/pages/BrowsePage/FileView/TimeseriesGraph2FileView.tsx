@@ -4,6 +4,8 @@ import { useRtcshare } from "../../../rtcshare/useRtcshare";
 import RasterPlotView3 from "./RasterPlotView3/RasterPlotView3";
 import SpikeTrainsClient, { SpikeTrainsClientType } from "./RasterPlotView3/SpikeTrainsClient";
 import SpikeTrainsClientFromRemoteNwb from "./RasterPlotView3/SpikeTrainsClientFromRemoteNwb";
+import TimeseriesGraph2Client from "./TimeseriesGraph2View/TimeseriesGraph2Client";
+import TimeseriesGraph2View from "./TimeseriesGraph2View/TimeseriesGraph2View";
 
 type Props = {
     width: number
@@ -11,32 +13,25 @@ type Props = {
     filePath: string
 }
 
-const SpikeTrainsFileView: FunctionComponent<Props> = ({width, height, filePath}) => {
+const TimeseriesGraph2FileView: FunctionComponent<Props> = ({width, height, filePath}) => {
     const {client} = useRtcshare()
-    const [spikeTrainsClient, setSpikeTrainsClient] = useState<SpikeTrainsClientType>()
+    const [timeseriesGraph2Client, setTimeseriesGraph2Client] = useState<TimeseriesGraph2Client>()
 
     useEffect(() => {
         let canceled = false
         if (!client) return
         ; (async () => {
-            let stc: SpikeTrainsClientType
-            if (filePath.startsWith('remote-nwb|')) {
-                const url = filePath.slice('remote-nwb|'.length)
-                stc = new SpikeTrainsClientFromRemoteNwb(url)
-            }
-            else {
-                stc = new SpikeTrainsClient(filePath, client)
-            }
-            await stc.initialize()
+            const cc = new TimeseriesGraph2Client(filePath, client)
+            await cc.initialize()
             if (canceled) return
-            setSpikeTrainsClient(stc)
+            setTimeseriesGraph2Client(cc)
         })()
         return () => {canceled = true}
     }, [client, filePath])
 
     // initialize the visible time range
-    const startTimeSec = spikeTrainsClient?.startTimeSec
-    const endTimeSec = spikeTrainsClient?.endTimeSec
+    const startTimeSec = timeseriesGraph2Client?.startTimeSec
+    const endTimeSec = timeseriesGraph2Client?.endTimeSec
     const { setVisibleTimeRange } = useTimeRange()
     useEffect(() => {
         if (startTimeSec === undefined) return
@@ -44,15 +39,15 @@ const SpikeTrainsFileView: FunctionComponent<Props> = ({width, height, filePath}
         setVisibleTimeRange(startTimeSec, Math.min(startTimeSec + 60 * 3, endTimeSec))
     }, [startTimeSec, endTimeSec, setVisibleTimeRange])
 
-    if (!spikeTrainsClient) return <div>Loading...</div>
+    if (!timeseriesGraph2Client) return <div>Loading...</div>
 
     return (
-        <RasterPlotView3
-            spikeTrainsClient={spikeTrainsClient}
+        <TimeseriesGraph2View
+            client={timeseriesGraph2Client}
             width={width}
             height={height}
         />
     )
 }
 
-export default SpikeTrainsFileView
+export default TimeseriesGraph2FileView

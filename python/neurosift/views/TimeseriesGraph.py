@@ -8,10 +8,14 @@ class TGDataset:
     def __init__(self, *, name: str, data: dict) -> None:
         self._name = name
         self._data = data
-    def to_dict(self):
+    def to_dict(self, *, start_time_sec: float, end_time_sec: float):
+        inds = np.where((self._data['t'] >= start_time_sec) & (self._data['t'] <= end_time_sec))[0]
         return {
             'name': self._name,
-            'data': self._data
+            'data': {
+                't': self._data['t'][inds],
+                'y': self._data['y'][inds]
+            }
         }
 
 class TGSeries:
@@ -99,32 +103,60 @@ class TimeseriesGraph:
     def add_series(self, s: TGSeries):
         self._series.append(s)
         return self
-    def to_dict(self) -> dict:
-        ret = {
-            'type': self.type,
-            'datasets': [ds.to_dict() for ds in self._datasets],
+    def save(self, fname: str, block_size_sec: float=300):
+        if not fname.endswith('.ns-tgr'):
+            raise Exception('TimeseriesGraph::save fname argument must end with .ns-tgr')
+        
+        start_time_sec = float(np.min([ds._data['t'][0] for ds in self._datasets]))
+        end_time_sec = float(np.max([ds._data['t'][-1] for ds in self._datasets]))
+        
+        block_starts = np.arange(start_time_sec, end_time_sec, block_size_sec)
+        block_ends = np.concatenate([block_starts[1:], [end_time_sec]])
+
+        # split into blocks
+        json_lines: list[str] = []
+        header = {
+            'type': 'TimeseriesGraph',
+            'startTimeSec': start_time_sec,
+            'endTimeSec': end_time_sec,
+            'blockSizeSec': block_size_sec,
+            'numBlocks': len(block_starts),
             'series': [s.to_dict() for s in self._series]
         }
         if self._time_offset is not None:
-            ret['timeOffset'] = self._time_offset
+            header['timeOffset'] = self._time_offset
         if self._legend_opts is not None:
-            ret['legendOpts'] = self._legend_opts
+            header['legendOpts'] = self._legend_opts
         if self._y_range is not None:
             assert len(self._y_range) == 2
-            ret['yRange'] = self._y_range
+            header['yRange'] = self._y_range
         if (self._hide_x_gridlines is not None) or (self._hide_y_gridlines is not None):
-            ret['gridlineOpts'] = {
+            header['gridlineOpts'] = {
                 'hideX': True if self._hide_x_gridlines is True else False,
                 'hideY': True if self._hide_y_gridlines is True else False
             }
         if self._hide_toolbar:
-            ret['hideToolbar'] = self._hide_toolbar
-        return ret
-    def save(self, fname: str):
-        if not fname.endswith('.ns-tsg'):
-            raise Exception('TimeseriesGraph::save fname argument must end with .ns-tsg')
+            header['hideToolbar'] = self._hide_toolbar
+        json_lines.append(json.dumps(_serialize(header)))
+
+        for block_start, block_end in zip(block_starts, block_ends):
+            x = {
+                'startTimeSec': block_start,
+                'endTimeSec': block_end,
+                'datasets': [
+                    ds.to_dict(start_time_sec=block_start, end_time_sec=block_end)
+                    for ds in self._datasets
+                ]
+            }
+            json_lines.append(json.dumps(_serialize(x)))
+        
+        json_line_sizes = [len(line) for line in json_lines]
+
         with open(fname, 'w') as f:
-            json.dump(_serialize(self.to_dict()), f, indent=2)
+            f.write(json.dumps(json_line_sizes) + '\n')
+            for line in json_lines:
+                f.write(line + '\n')
+
     def _add_series(self, *, type: str, name: str, t: np.ndarray, y: np.ndarray, attributes: dict):
         if t.ndim != 1:
             print('WARNING: TimeseriesGraph::_add_series t argument is not 1D array. Using squeeze.')

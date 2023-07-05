@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { getRemoteH5File } from "../../../TestPage/RemoteH5File/helpers"
 import { DatasetDataType, RemoteH5File } from "../../../TestPage/RemoteH5File/RemoteH5File"
 
@@ -8,6 +9,7 @@ class SpikeTrainsClientFromRemoteNwb {
     // #spikeTimes: DatasetDataType | undefined
     #startTimeSec: number | undefined
     #endTimeSec: number | undefined
+    #blockSizeSec = 60 * 5
     constructor(private url: string) {
     }
     async initialize() {
@@ -27,11 +29,14 @@ class SpikeTrainsClientFromRemoteNwb {
     get endTimeSec() {
         return this.#endTimeSec
     }
+    get blockSizeSec() {
+        return this.#blockSizeSec
+    }
     get unitIds() {
         if (!this.#unitIds) throw Error('Unexpected: unitIds not initialized')
         return Array.from(this.#unitIds)
     }
-    async getData(t1: number, t2: number) {
+    async getData(blockStartIndex: number, blockEndIndex: number) {
         await this.initialize()
         if (!this.#unitIds) throw Error('Unexpected: unitIds not initialized')
         if (!this.#spikeTimesIndices) throw Error('Unexpected: spikeTimesIndices not initialized')
@@ -41,6 +46,8 @@ class SpikeTrainsClientFromRemoteNwb {
             unitId: number | string
             spikeTimesSec: number[]
         }[] = []
+        const t1 = this.#startTimeSec! + blockStartIndex * this.#blockSizeSec
+        const t2 = this.#startTimeSec! + blockEndIndex * this.#blockSizeSec
         for (let ii = 0; ii < this.#unitIds.length; ii++) {
             const i1 = ii === 0 ? 0 : this.#spikeTimesIndices[ii - 1]
             const i2 = this.#spikeTimesIndices[ii]

@@ -16,4 +16,5 @@ export type Opts = {
     visibleEndTimeSec: number
     hoveredUnitId: string | number | undefined
     selectedUnitIds: (string | number)[]
+    zoomInRequired: boolean
 }

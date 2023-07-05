@@ -6,6 +6,7 @@ export interface SpikeTrainsClientType {
     initialize(): Promise<void>
     startTimeSec: number | undefined
     endTimeSec: number | undefined
+    blockSizeSec: number | undefined
     unitIds: (number | string)[] | undefined
     getData(t1: number, t2: number): Promise<{
         unitId: number | string
@@ -56,10 +57,13 @@ class SpikeTrainsClient {
     get endTimeSec() {
         return this.#headerRecord?.endTimeSec
     }
+    get blockSizeSec() {
+        return this.#headerRecord?.blockSizeSec
+    }
     get unitIds() {
         return this.#headerRecord?.units.map(u => (u.unitId))
     }
-    async getData(t1: number, t2: number) {
+    async getData(startBlockIndex: number, endBlockIndex: number) {
         await this.initialize()
         const ret: {
             unitId: number | string
@@ -72,14 +76,12 @@ class SpikeTrainsClient {
             })
         }
 
-        const blockIndex1 = Math.floor(t1 / this.#headerRecord!.blockSizeSec)
-        const blockIndex2 = Math.floor(t2 / this.#headerRecord!.blockSizeSec)
-        for (let i = blockIndex1; i <= blockIndex2; i++) {
+        for (let i = startBlockIndex; i <= endBlockIndex; i++) {
             if ((i >= 0) && (i < this.#headerRecord!.numBlocks)) {
                 const block = await deserializeReturnValue(await this.#jsonlClient.getRecord(i + 1))
                 for (let j = 0; j < block.units.length; j++) {
                     const unitId = block.units[j].unitId
-                    const spikeTimesSec = block.units[j].spikeTimesSec.filter((t: number) => (t >= t1 && t < t2))
+                    const spikeTimesSec = block.units[j].spikeTimesSec
                     const a = ret.filter(a => (a.unitId === unitId))[0]
                     a.spikeTimesSec = a.spikeTimesSec.concat(spikeTimesSec)
                 }

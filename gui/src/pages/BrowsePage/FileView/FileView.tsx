@@ -12,6 +12,7 @@ import SleapFileView from "./SleapFileView";
 import SpikeSortingDigestFileView from "./SpikeSortingDigestFileView";
 import SpikeTrainsFileView from "./SpikeTrainsFileView";
 import TimeseriesAnnotationFileView from "./TimeseriesAnnotationFileView";
+import TimeseriesGraph2FileView from "./TimeseriesGraph2FileView";
 import TimeseriesGraphFileView from "./TimeseriesGraphFileView";
 import VideoAnnotationFileView from "./VideoAnnotationFileView";
 import VideoFileView from "./VideoFileView";
@@ -43,6 +44,12 @@ const FileView: FunctionComponent<Props> = ({width, height, filePath}) => {
         // TimeseriesGraph
         view = (
             <TimeseriesGraphFileView width={width} height={height} filePath={filePath} />
+        )
+    }
+    else if (filePath.endsWith('.ns-tgr')) {
+        // TimeseriesGraph2
+        view = (
+            <TimeseriesGraph2FileView width={width} height={height} filePath={filePath} />
         )
     }
     else if (filePath.endsWith('.ns-van')) {

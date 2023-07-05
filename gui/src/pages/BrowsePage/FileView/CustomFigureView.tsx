@@ -37,6 +37,18 @@ const CustomFigureView: FunctionComponent<Props> = ({fileNames, width, height}) 
                     view: fileName
                 })
             }
+            else if (fileName.endsWith('.ns-tgr')) {
+                ret.views.push({
+                    name: fileName,
+                    type: 'TimeseriesGraph2',
+                    data: fileName,
+                    annotation: timeseriesAnnotationFile
+                })
+                layout.items.push({
+                    stretch: 1,
+                    view: fileName
+                })
+            }
             else if (fileName.endsWith('.ns-asp')) {
                 ret.views.push({
                     name: fileName,
