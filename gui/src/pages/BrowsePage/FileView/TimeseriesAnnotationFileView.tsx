@@ -2,7 +2,6 @@ import { FunctionComponent, useEffect, useState } from "react";
 import { useRtcshare } from "../../../rtcshare/useRtcshare";
 import { isTimeseriesAnnotationFileData, TimeseriesAnnotationFileData } from "../../../TimeseriesAnnotation/TimeseriesAnnotationFileData";
 import TimeseriesAnnotationWidget from "../../../TimeseriesAnnotation/TimeseriesAnnotationWidget";
-import { SpikeTrainsFileData } from "./SpikeTrainsFileView";
 
 type Props = {
     width: number

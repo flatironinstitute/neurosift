@@ -21,6 +21,7 @@ type SpikeTrainsData = {
 }
 
 class SpikeTrainsClientFromSpikeTrainsData {
+    #blockSizeSec = 60 * 5
     constructor(private spikeTrainsData: SpikeTrainsData) {
     }
     async initialize() {
@@ -31,13 +32,18 @@ class SpikeTrainsClientFromSpikeTrainsData {
     get endTimeSec() {
         return this.spikeTrainsData.endTimeSec
     }
+    get blockSizeSec() {
+        return this.#blockSizeSec
+    }
     get unitIds() {
         return this.spikeTrainsData.units.map(u => u.unitId)
     }
-    async getData(startTimeSec: number, endTimeSec: number) {
+    async getData(startBlockIndex: number, endBlockIndex: number) {
+        const t1 = this.startTimeSec + startBlockIndex * this.blockSizeSec
+        const t2 = this.startTimeSec + endBlockIndex * this.blockSizeSec
         return this.spikeTrainsData.units.map(u => ({
             unitId: u.unitId,
-            spikeTimesSec: u.spikeTimesSec.filter(t => (t >= startTimeSec) && (t < endTimeSec))
+            spikeTimesSec: u.spikeTimesSec.filter(t => (t >= t1) && (t < t2))
         }))
     }
 }
