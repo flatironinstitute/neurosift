@@ -1,10 +1,15 @@
 import { postRemoteH5WorkerRequest } from "./helpers"
 
 export type RemoteH5Group = {
+  path: string
+  subgroups: RemoteH5Subgroup[]
+  datasets: RemoteH5Dataset[]
+  attrs: { [key: string]: any }
+}
+
+export type RemoteH5Subgroup = {
   name: string
   path: string
-  groups: RemoteH5Group[]
-  datasets: RemoteH5Dataset[]
 }
 
 export type RemoteH5Dataset = {
@@ -12,6 +17,7 @@ export type RemoteH5Dataset = {
   path: string
   shape: number[]
   dtype: string
+  attrs: { [key: string]: any }
 }
 
 export type DatasetDataType = Float32Array | Float64Array | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array
@@ -62,11 +68,16 @@ export class RemoteH5File {
   }
   async getDatasetData(path: string, o: { slice?: [number, number][], allowBigInt?: boolean }): Promise<DatasetDataType> {
     const { slice, allowBigInt } = o
+    // const chunkMode = slice ? (
+    //   product(slice.map(s => s[1] - s[0])) >= 1e5 ? 'large-chunks' : 'small-chunks'
+    // ) : 'small-chunks'
+    const chunkMode = 'small-chunks' // for now only do small chunks until we can figure out a better way
     const resp = await postRemoteH5WorkerRequest({
       type: 'getDatasetData',
       url: this.url,
       path,
-      slice
+      slice,
+      chunkMode
     })
     const { data } = resp
     let x = data
@@ -100,4 +111,10 @@ export const getRemoteH5File = async (url: string) => {
   }
   await globalRemoteH5Files[url].initialize()
   return globalRemoteH5Files[url]
+}
+
+const product = (arr: number[]) => {
+  let val = 1
+  for (const a of arr) val *= a
+  return val
 }

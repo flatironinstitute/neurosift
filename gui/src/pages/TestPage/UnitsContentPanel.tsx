@@ -1,33 +1,34 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react"
 import './nwb-table.css'
-import { NwbFileGroup } from "./NwbView"
+import { DatasetDataType, RemoteH5File, RemoteH5Group } from "./RemoteH5File/RemoteH5File"
 
 type Props = {
-    group: NwbFileGroup
+    nwbFile: RemoteH5File
+    group: RemoteH5Group
 }
 
-const useArray = (group: NwbFileGroup, name: string) => {
-    const [array, setArray] = useState<number[] | undefined>(undefined)
+const useArray = (nwbFile: RemoteH5File, group: RemoteH5Group, name: string) => {
+    const [array, setArray] = useState<DatasetDataType | undefined>(undefined)
     useEffect(() => {
         let canceled = false
         const load = async () => {
-            const x = await group.loadArray(name)
+            const x = await nwbFile.getDatasetData(`${group.path}/${name}`, {})
             if (canceled) return
-            setArray(x as number[])
+            setArray(x)
         }
         load()
         return () => {canceled = true}
-    }, [group, name])
+    }, [nwbFile, group, name])
     return array
 }
 
-const UnitsContentPanel: FunctionComponent<Props> = ({group}) => {
-    const unitIds = useArray(group, 'id')
-    const firingRates = useArray(group, 'avg_firing_rate')
-    const isiViolations = useArray(group, 'isi_violation')
-    const probeIndices = useArray(group, 'probe_index')
-    const regions = useArray(group, 'region')
-    const spikeTimesIndices = useArray(group, 'spike_times_index')
+const UnitsContentPanel: FunctionComponent<Props> = ({nwbFile, group}) => {
+    const unitIds = useArray(nwbFile, group, 'id')
+    const firingRates = useArray(nwbFile, group, 'avg_firing_rate')
+    const isiViolations = useArray(nwbFile, group, 'isi_violation')
+    const probeIndices = useArray(nwbFile, group, 'probe_index')
+    const regions = useArray(nwbFile, group, 'region')
+    const spikeTimesIndices = useArray(nwbFile, group, 'spike_times_index')
     const numSpikes = useMemo(() => {
         if (!spikeTimesIndices) return undefined
         return spikeTimesIndices.map((ind, i) => {
@@ -39,9 +40,9 @@ const UnitsContentPanel: FunctionComponent<Props> = ({group}) => {
             }
         })
     }, [spikeTimesIndices])
-    const xLocations = useArray(group, 'x')
-    const yLocations = useArray(group, 'y')
-    const zLocations = useArray(group, 'z')
+    const xLocations = useArray(nwbFile, group, 'x')
+    const yLocations = useArray(nwbFile, group, 'y')
+    const zLocations = useArray(nwbFile, group, 'z')
 
     if (!unitIds) return <div>Loading...</div>
     return (

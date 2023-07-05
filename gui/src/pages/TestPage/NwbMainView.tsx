@@ -1,22 +1,25 @@
-import { FunctionComponent, useEffect, useState } from "react"
+import { FunctionComponent, useContext, useEffect, useState } from "react"
+import AcquisitionContentPanel from "./AcquisitionContentPanel"
+import { NwbFileContext } from "./NwbFileContext"
 import { RemoteH5File, RemoteH5Group } from "./RemoteH5File/RemoteH5File"
-import UnitsContentPanel_Wasm from "./UnitsContentPanel_Wasm"
+import UnitsContentPanel from "./UnitsContentPanel"
 
 type Props = {
     width: number
     height: number
-    nwbFile: RemoteH5File
 }
 
-const NwbView_Wasm: FunctionComponent<Props> = ({width, height, nwbFile}) => {
+const NwbMainView: FunctionComponent<Props> = ({width, height}) => {
+    const nwbFile = useContext(NwbFileContext)
+    if (!nwbFile) throw Error('Unexpected: nwbFile is undefined (no context provider)')
     const [topLevelGroupNames, setTopLevelGroupNames] = useState<string[] | undefined>(undefined)
     const [topLevelDatasetNames, setTopLevelDatasetNames] = useState<string[] | undefined>(undefined)
     useEffect(() => {
         let canceled = false
         const load = async () => {
-            const {groups, datasets} = await nwbFile.getGroup('/')
+            const {subgroups, datasets} = await nwbFile.getGroup('/')
             if (canceled) return
-            setTopLevelGroupNames(groups.map(g => (g.name)))
+            setTopLevelGroupNames(subgroups.map(sg => (sg.name)))
             setTopLevelDatasetNames(datasets.map(d => (d.name)))
         }
         load()
@@ -114,7 +117,7 @@ const TitlePanelText: FunctionComponent<TitlePanelTextProps> = ({name, group, nw
         return <UnitsTitlePanelText name={name} group={group} nwbFile={nwbFile} />
     }
     else {
-        return <span>({group.groups.length + group.datasets.length})</span>
+        return <span>({group.subgroups.length + group.datasets.length})</span>
     }
 }
 
@@ -144,14 +147,17 @@ type ContentPanelProps = {
 
 const ContentPanel: FunctionComponent<ContentPanelProps> = ({name, group, nwbFile}) => {
     if (name === 'units') {
-        return <UnitsContentPanel_Wasm nwbFile={nwbFile} group={group} />
+        return <UnitsContentPanel nwbFile={nwbFile} group={group} />
+    }
+    else if (name === 'acquisition') {
+        return <AcquisitionContentPanel nwbFile={nwbFile} group={group} />
     }
     return (
         <div style={{marginLeft: 10}}>
             {
-                group.groups.map((g) => (
-                    <div key={g.name}>
-                        {g.name}
+                group.subgroups.map((sg) => (
+                    <div key={sg.name}>
+                        {sg.name}
                     </div>
                 ))
             }
@@ -166,4 +172,4 @@ const ContentPanel: FunctionComponent<ContentPanelProps> = ({name, group, nwbFil
     )
 }
 
-export default NwbView_Wasm
+export default NwbMainView

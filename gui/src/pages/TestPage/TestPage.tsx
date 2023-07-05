@@ -1,6 +1,8 @@
 import { FunctionComponent, useEffect, useState } from "react"
-import nwb from 'webnwb' 
-import NwbView from "./NwbView"
+import { NwbFileContext } from "./NwbFileContext"
+import { SetupNwbOpenTabs } from "./NwbOpenTabsContext"
+import NwbTabWidget from "./NwbTabWidget"
+import { getRemoteH5File, RemoteH5File } from "./RemoteH5File/RemoteH5File"
 
 type Props = {
     width: number
@@ -11,25 +13,27 @@ type Props = {
 const url = 'https://dandiarchive.s3.amazonaws.com/blobs/c86/cdf/c86cdfba-e1af-45a7-8dfd-d243adc20ced'
 
 const TestPage: FunctionComponent<Props> = ({width, height}) => {
-    const [nwbFile, setNwbFile] = useState<any>(undefined)
+    const [nwbFile, setNwbFile] = useState<RemoteH5File | undefined>(undefined)
     useEffect(() => {
+        let canceled = false
         const load = async () => {
-            const io = new nwb.NWBHDF5IO()
-            console.log('loading 1')
-            const file = await io.load(url, { useStreaming: true })
-            console.log('loading 2')
-            ; (window as any)._file = file
-            setNwbFile(file)
+            const f = await getRemoteH5File(url)
+            if (canceled) return
+            setNwbFile(f)
         }
         load()
+        return () => {canceled = true}
     }, [])
     if (!nwbFile) return <div>Loading {url}</div>
     return (
-        <NwbView
-            width={width}
-            height={height}
-            nwbFile={nwbFile}
-        />
+        <NwbFileContext.Provider value={nwbFile}>
+            <SetupNwbOpenTabs>
+                <NwbTabWidget
+                    width={width}
+                    height={height}
+                />
+            </SetupNwbOpenTabs>
+        </NwbFileContext.Provider>
     )
 }
 

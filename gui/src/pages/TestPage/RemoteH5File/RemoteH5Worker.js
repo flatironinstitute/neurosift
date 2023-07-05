@@ -4,12 +4,14 @@ const globalFiles = {}
 const globalGroupCache = {}
 const globalDatasetCache = {}
 
+// type ChunkMode = 'small-chunks' | 'large-chunks'
+
 const getGroup = (url, path) => {
     const kk = `${url}|${path}`
     if (globalGroupCache[kk]) {
         return globalGroupCache[kk]
     }
-    const file = globalFiles[url]
+    const file = globalFiles[url + '|small-chunks']
     if (!file) {
         throw new Error('file not initialized')
     }
@@ -17,13 +19,13 @@ const getGroup = (url, path) => {
     if (!group) {
         throw new Error('group not found')
     }
-    const groups = []
+    const subgroups = []
     const datasets = []
     for (const item of group.items()) {
         const subName = item[0]
         const x = item[1]
         if (x.type === 'Group') {
-            groups.push({
+            subgroups.push({
                 name: subName,
                 path: x.path
             })
@@ -35,21 +37,26 @@ const getGroup = (url, path) => {
             })
         }
     }
+    const attrs = {}
+    for (let attributeKey in group.attrs) {
+        attrs[attributeKey] = group.attrs[attributeKey].value
+    }
     const group0 = {
         path,
-        groups,
-        datasets
+        subgroups,
+        datasets,
+        attrs
     }
     globalGroupCache[kk] = group0
     return group0
 }
 
-const getDataset = (url, path) => {
-    const kk = `${url}|${path}`
+const getDataset = (url, path, chunkMode) => {
+    const kk = `${url}|${path}|${chunkMode}`
     if (globalDatasetCache[kk]) {
         return globalDatasetCache[kk]
     }
-    const file = globalFiles[url]
+    const file = globalFiles[url + '|' + chunkMode]
     if (!file) {
         throw new Error('file not initialized')
     }
@@ -88,13 +95,18 @@ self.onmessage = function (e) {
             }
             controller.abort();
 
-            // compute hash of url
-            const hash = url.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0)
-            const fname = `${hash}.h5`
-            FS.createLazyFile('/', fname, url, true, false, headResponseHeaders);
+            // for now we're only going to do small chunks until we can figure out a better way to do this
+            for (const chunkMode of ['small-chunks']) {
+                // compute hash of url + '|' + chunkMode
+                const hash = (url + '|' + chunkMode).split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0)
+                const fname = `${hash}.h5`
+                const chunkSize = chunkMode === 'small-chunks' ? 1024 * 20 : 1024 * 1024
+                FS.createLazyFile('/', fname, url, true, false, headResponseHeaders, chunkSize);
 
-            const file = new h5wasm.File(fname);
-            globalFiles[url] = file
+                const file = new h5wasm.File(fname);
+                globalFiles[url + '|' + chunkMode] = file
+            }
+
             sendResponse({
                 success: true
             })
@@ -119,7 +131,7 @@ self.onmessage = function (e) {
         else if (req.type === 'getDataset') {
             let dataset
             try {
-                dataset = getDataset(req.url, req.path)
+                dataset = getDataset(req.url, req.path, 'small-chunks')
             }
             catch (e) {
                 sendResponse({
@@ -128,9 +140,13 @@ self.onmessage = function (e) {
                 })
                 return
             }
+            const attrs = {}
+            for (let attributeKey in dataset.attrs) {
+                attrs[attributeKey] = dataset.attrs[attributeKey].value
+            }
             const ds0 = {
                 path: req.path,
-                attrs: dataset.attrs,
+                attrs,
                 dtype: dataset.dtype,
                 shape: dataset.shape
             }
@@ -142,9 +158,14 @@ self.onmessage = function (e) {
         else if (req.type === 'getDatasetData') {
             let data
             try {
-                const dataset = getDataset(req.url, req.path)
+                const dataset = getDataset(req.url, req.path, req.chunkMode)
                 if (req.slice) {
+                    // if (req.slice.length === 2) {
+                    //     data = read_slice_one_column_at_a_time(dataset, req.slice)
+                    // }
+                    // else {
                     data = dataset.slice(req.slice)
+                    // }
                 }
                 else {
                     data = dataset.value
@@ -167,3 +188,23 @@ self.onmessage = function (e) {
         handleRequest(d)
     }
 }
+
+// const read_slice_one_column_at_a_time = (dataset, slice) => {
+//     const columns = []
+//     for (let c = slice[1][0]; c < slice[1][1]; c++) {
+//         const slice0 = [slice[0], [c, c + 1]]
+//         const data = dataset.slice(slice0)
+//         columns.push(data)
+//     }
+//     // concatenate columns, each is of type Float32Array | Float64Array | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array
+//     const dtype = columns[0].constructor
+//     const n = columns[0].length
+//     const data = new dtype(n * columns.length)
+//     for (let ic = 0; ic < columns.length; ic++) {
+//         const column = columns[ic]
+//         for (let i = 0; i < n; i++) {
+//             data[ic + i * columns.length] = column[i]
+//         }
+//     }
+//     return data
+// }
