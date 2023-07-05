@@ -19,6 +19,15 @@ const EditNSFigViewItemView: FunctionComponent<Props> = ({view, path, width, hei
             </div>
         )
     }
+    else if (view.type === 'TimeseriesGraph2') {
+        return (
+            <div>
+                {c1}
+                <div>data: {view.data}</div>
+                <div>annotation: {view.annotation}</div>
+            </div>
+        )
+    }
     else if (view.type === 'AnnotatedVideo') {
         return (
             <div>
