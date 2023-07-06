@@ -3,6 +3,7 @@ import { FunctionComponent, useReducer } from "react";
 import { SetupTimeseriesSelection } from "../../package/context-timeseries-selection";
 import { defaultUnitSelection, UnitSelectionContext, unitSelectionReducer } from "../../package/context-unit-selection";
 import TabWidget from "../../TabWidget/TabWidget";
+import NwbAcquisitionItemsView from "./NwbAcquisitionItemsView/NwbAcquisitionItemsView";
 import NwbAcquisitionItemView from "./NwbAcquisitionItemView/NwbAcquisitionItemView";
 import NwbMainView from "./NwbMainView";
 import { useNwbOpenTabs } from "./NwbOpenTabsContext";
@@ -41,8 +42,10 @@ const TabChild: FunctionComponent<{tabName: string, width: number, height: numbe
                 {
                     tabName === 'main' ? (
                         <NwbMainView key={tabName} width={width} height={height} />
-                    ) : tabName.startsWith('acquisition') ? (
+                    ) : tabName.startsWith('acquisition:') ? (
                         <NwbAcquisitionItemView key={tabName} width={width} height={height} itemName={tabName.slice(`acquisition:`.length)} />
+                    ) : tabName.startsWith('acquisitions:') ? (
+                        <NwbAcquisitionItemsView key={tabName} width={width} height={height} itemNames={tabName.slice(`acquisitions:`.length).split('@')} />
                     ) : (
                         <div key={tabName}>Not implemented</div>
                     )

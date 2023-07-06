@@ -45,7 +45,6 @@ class RemoteH5WorkerWrapper {
     if (this.#runningRequest) return
     if (this.#pendingRequests.length === 0) return
     const rr = this.#pendingRequests.shift()!
-    console.log(`----------- run ${this.#pendingRequests.length} pending requests`)
     this.#runningRequest = rr
     let completed = false
     const doResolve = (resp: any) => {

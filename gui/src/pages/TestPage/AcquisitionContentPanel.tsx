@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect, useState } from "react"
+import { FunctionComponent, useEffect, useReducer, useState } from "react"
 import Hyperlink from "../../components/Hyperlink"
 import './nwb-table.css'
 import { useNwbOpenTabs } from "./NwbOpenTabsContext"
@@ -9,39 +9,87 @@ type Props = {
     group: RemoteH5Group
 }
 
+type SubgroupSelectionState = string[]
+
+type SubgroupSelectionAction = {
+    type: 'toggle'
+    subgroupName: string
+}
+
+const subgroupSelectionReducer = (state: SubgroupSelectionState, action: SubgroupSelectionAction): SubgroupSelectionState => {
+    if (action.type === 'toggle') {
+        if (state.includes(action.subgroupName)) {
+            return state.filter(s => (s !== action.subgroupName))
+        }
+        else {
+            return [...state, action.subgroupName].sort()
+        }
+    }
+    else {
+        return state
+    }
+}
+
 const AcquisitionContentPanel: FunctionComponent<Props> = ({nwbFile, group}) => {
+    const [subgroupSelection, subgroupSelectionDispatch] = useReducer(subgroupSelectionReducer, [])
+    const {openTab} = useNwbOpenTabs()
     return (
-        <table className="nwb-table">
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>Neurodata type</th>
-                    <th>Description</th>
-                    <th>Comments</th>
-                    <th>Data</th>
-                </tr>
-            </thead>
-            <tbody>
-                {
-                    group.subgroups.map((sg, ii) => (
-                        <GroupTableRow
-                            key={ii}
-                            nwbFile={nwbFile}
-                            subgroup={sg}
-                        />
-                    ))
-                }
-            </tbody>
-        </table>
+        <div>
+            <table className="nwb-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Item</th>
+                        <th>Neurodata type</th>
+                        <th>Description</th>
+                        <th>Comments</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {
+                        group.subgroups.map((sg) => (
+                            <GroupTableRow
+                                key={sg.name}
+                                nwbFile={nwbFile}
+                                subgroup={sg}
+                                selected={subgroupSelection.includes(sg.name)}
+                                onToggleSelect={() => subgroupSelectionDispatch({
+                                    type: 'toggle',
+                                    subgroupName: sg.name
+                                })}
+                            />
+                        ))
+                    }
+                </tbody>
+            </table>
+            {
+                subgroupSelection.length > 0 && (
+                    <button
+                        onClick={() => {
+                            if (subgroupSelection.length === 1) {
+                                openTab(`acquisition:${subgroupSelection[0]}`)
+                            }
+                            else if (subgroupSelection.length > 1) {
+                                const subgroupNames = subgroupSelection.join('@')
+                                openTab(`acquisitions:${subgroupNames}`)
+                            }
+                        }}
+                    >View {subgroupSelection.length}</button>
+                )
+            }
+        </div>
     )
 }
 
 type GroupTableRowProps = {
     nwbFile: RemoteH5File
     subgroup: RemoteH5Subgroup
+    selected: boolean
+    onToggleSelect: () => void
 }
 
-const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, subgroup}) => {
+const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, subgroup, selected, onToggleSelect}) => {
     const [group, setGroup] = useState<RemoteH5Group | undefined>(undefined)
     const [data, setData] = useState<RemoteH5Dataset | undefined>(undefined)
     useEffect(() => {
@@ -67,6 +115,9 @@ const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, subgroup
     const {openTab} = useNwbOpenTabs()
     return (
         <tr>
+            <td>
+                <input type="checkbox" checked={selected} onClick={onToggleSelect} />
+            </td>
             <td>
                 <Hyperlink onClick={() => openTab(`acquisition:${subgroup.name}`)}>{subgroup.name}</Hyperlink>
             </td>
