@@ -59,6 +59,12 @@ const labelFromTabName = (tabName: string) => {
     if (tabName === 'main') {
         return 'main'
     }
+    else if (tabName.startsWith('acquisition:')) {
+        return `${tabName.slice(`acquisition:`.length)}`
+    }
+    else if (tabName.startsWith('acquisitions:')) {
+        return `acquisitions: ${tabName.slice(`acquisitions:`.length).split('@').length}`
+    }
     return tabName
 }
 
