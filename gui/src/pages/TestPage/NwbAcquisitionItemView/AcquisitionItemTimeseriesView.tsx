@@ -3,6 +3,7 @@ import TimeScrollView2, { useTimeScrollView2 } from "../../../package/component-
 import { useTimeRange, useTimeseriesSelectionInitialization } from "../../../package/context-timeseries-selection";
 import { NwbFileContext } from "../NwbFileContext";
 import { RemoteH5Dataset, RemoteH5File } from "../RemoteH5File/RemoteH5File";
+import TimeseriesSelectionBar from "./TimeseriesSelectionBar";
 import { DataSeries, Opts } from "./WorkerTypes";
 
 type Props = {
@@ -241,7 +242,15 @@ const AcquisitionItemTimeseriesView: FunctionComponent<Props> = ({ width, height
     useEffect(() => {
         if (!canvasElement) return
         const worker = new Worker(new URL('./worker', import.meta.url))
-        const offscreenCanvas = canvasElement.transferControlToOffscreen();
+        let offscreenCanvas: OffscreenCanvas
+        try {
+            offscreenCanvas = canvasElement.transferControlToOffscreen();
+        }
+        catch(err) {
+            console.warn(err)
+            console.warn('Unable to transfer control to offscreen canvas (expected during dev)')
+            return
+        }
         worker.postMessage({
             canvas: offscreenCanvas,
         }, [offscreenCanvas])
@@ -262,15 +271,24 @@ const AcquisitionItemTimeseriesView: FunctionComponent<Props> = ({ width, height
         })
     }, [worker, dataSeries])
 
+    const timeSelectionBarHeight = 20
+
     return (
-        <TimeScrollView2
-            width={width}
-            height={height}
-            onCanvasElement={setCanvasElement}
-            gridlineOpts={gridlineOpts}
-            yAxisInfo={yAxisInfo}
-            hideToolbar={hideToolbar}
-        />
+        <div style={{position: 'absolute', width, height}}>
+            <div style={{position: 'absolute', width, height: timeSelectionBarHeight}}>
+                <TimeseriesSelectionBar width={width} height={timeSelectionBarHeight - 5} />
+            </div>
+            <div style={{position: 'absolute', top: timeSelectionBarHeight, width, height: height - timeSelectionBarHeight}}>
+                <TimeScrollView2
+                    width={width}
+                    height={height - timeSelectionBarHeight}
+                    onCanvasElement={setCanvasElement}
+                    gridlineOpts={gridlineOpts}
+                    yAxisInfo={yAxisInfo}
+                    hideToolbar={hideToolbar}
+                />
+            </div>
+        </div>
     )
 }
 

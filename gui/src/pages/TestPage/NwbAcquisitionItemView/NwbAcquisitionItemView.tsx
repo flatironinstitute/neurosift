@@ -3,6 +3,7 @@ import Splitter from "../../../components/Splitter"
 import { NwbFileContext } from "../NwbFileContext"
 import { RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import AcquisitionItemTimeseriesView from "./AcquisitionItemTimeseriesView"
+import TimeseriesSelectionWidget from "./TimeseriesSelectionWidget"
 
 type Props = {
     width: number
@@ -56,26 +57,29 @@ type LeftPanelProps = {
 
 const LeftPanel: FunctionComponent<LeftPanelProps> = ({width, height, itemName, group}) => {
     return (
-        <table className="nwb-table">
-            <tbody>
-                <tr>
-                    <td>Item name</td>
-                    <td>{itemName}</td>
-                </tr>
-                <tr>
-                    <td>Neurodata type</td>
-                    <td>{group?.attrs?.neurodata_type}</td>
-                </tr>
-                <tr>
-                    <td>Description</td>
-                    <td>{group?.attrs?.description}</td>
-                </tr>
-                <tr>
-                    <td>Comments</td>
-                    <td>{group?.attrs?.comments}</td>
-                </tr>
-            </tbody>
-        </table>
+        <div>
+            <table className="nwb-table">
+                <tbody>
+                    <tr>
+                        <td>Item name</td>
+                        <td>{itemName}</td>
+                    </tr>
+                    <tr>
+                        <td>Neurodata type</td>
+                        <td>{group?.attrs?.neurodata_type}</td>
+                    </tr>
+                    <tr>
+                        <td>Description</td>
+                        <td>{group?.attrs?.description}</td>
+                    </tr>
+                    <tr>
+                        <td>Comments</td>
+                        <td>{group?.attrs?.comments}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <TimeseriesSelectionWidget />
+        </div>
     )
 }
 
