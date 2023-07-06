@@ -1,9 +1,10 @@
-import { FunctionComponent, useContext, useEffect, useState } from "react"
+import { FunctionComponent, useContext } from "react"
 import Splitter from "../../../components/Splitter"
+import TimeseriesSelectionWidget from "../NwbAcquisitionItemView/TimeseriesSelectionWidget"
 import { NwbFileContext } from "../NwbFileContext"
+import { useGroup } from "../NwbMainView"
 import { RemoteH5Group } from "../RemoteH5File/RemoteH5File"
-import AcquisitionItemTimeseriesView from "./AcquisitionItemTimeseriesView"
-import TimeseriesSelectionWidget from "./TimeseriesSelectionWidget"
+import NwbTimeIntervalsView from "./NwbTimeIntervalsView"
 
 type Props = {
     width: number
@@ -11,21 +12,11 @@ type Props = {
     itemName: string
 }
 
-const NwbAcquisitionItemView: FunctionComponent<Props> = ({width, height, itemName}) => {
+const NwbProcessingBehaviorItemView: FunctionComponent<Props> = ({width, height, itemName}) => {
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is undefined (no context provider)')
-    const [group, setGroup] = useState<RemoteH5Group | undefined>(undefined)
-    useEffect(() => {
-        let canceled = false
-        const load = async () => {
-            const grp = await nwbFile.getGroup(`acquisition/${itemName}`)
-            if (canceled) return
-            setGroup(grp)
-        }
-        load()
-        return () => {canceled = true}
-    }, [nwbFile, itemName])
-
+    const group = useGroup(nwbFile, `/processing/behavior/${itemName}`)
+    
     return (
         <Splitter
             direction="horizontal"
@@ -39,11 +30,18 @@ const NwbAcquisitionItemView: FunctionComponent<Props> = ({width, height, itemNa
                 itemName={itemName}
                 group={group}
             />
-            <AcquisitionItemTimeseriesView
-                width={0}
-                height={0}
-                objectPath={`/acquisition/${itemName}`}
-            />
+            {
+                group ? (
+                    <NwbTimeIntervalsView
+                        width={0}
+                        height={0}
+                        nwbFile={nwbFile}
+                        group={group}
+                    />
+                ) : (
+                    <div>loading group...</div>
+                )
+            }
         </Splitter>
     )
 }
@@ -83,4 +81,4 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({width, height, itemName, 
     )
 }
 
-export default NwbAcquisitionItemView
+export default NwbProcessingBehaviorItemView

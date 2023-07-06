@@ -87,7 +87,7 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({width, height, itemNames}
                             <AcquisitionItemTimeseriesView
                                 width={width}
                                 height={H - titleBarHeight}
-                                itemName={itemName}
+                                objectPath={`/acquisition/${itemName}`}
                             />
                         </div>
                     </div>

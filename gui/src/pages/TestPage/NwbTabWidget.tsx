@@ -7,6 +7,8 @@ import NwbAcquisitionItemsView from "./NwbAcquisitionItemsView/NwbAcquisitionIte
 import NwbAcquisitionItemView from "./NwbAcquisitionItemView/NwbAcquisitionItemView";
 import NwbMainView from "./NwbMainView";
 import { useNwbOpenTabs } from "./NwbOpenTabsContext";
+import NwbProcessingBehaviorItemView from "./NwbProcessingBehaviorItemView/NwbProcessingBehaviorItemView";
+import NwbProcessingEcephysItemView from "./NwbProcessingEcephysItemView/NwbProcessingEcephysItemView";
 
 const NwbTabWidget: FunctionComponent<{width: number, height: number}> = ({width, height}) => {
     const {openTabs, currentTabName, setCurrentTab, closeTab} = useNwbOpenTabs()
@@ -46,6 +48,10 @@ const TabChild: FunctionComponent<{tabName: string, width: number, height: numbe
                         <NwbAcquisitionItemView key={tabName} width={width} height={height} itemName={tabName.slice(`acquisition:`.length)} />
                     ) : tabName.startsWith('acquisitions:') ? (
                         <NwbAcquisitionItemsView key={tabName} width={width} height={height} itemNames={tabName.slice(`acquisitions:`.length).split('@')} />
+                    ) : tabName.startsWith('processing/behavior:') ? (
+                        <NwbProcessingBehaviorItemView key={tabName} width={width} height={height} itemName={tabName.slice(`processing/behavior:`.length)} />
+                    ) : tabName.startsWith('processing/ecephys:') ? (
+                        <NwbProcessingEcephysItemView key={tabName} width={width} height={height} itemName={tabName.slice(`processing/ecephys:`.length)} />
                     ) : (
                         <div key={tabName}>Not implemented</div>
                     )

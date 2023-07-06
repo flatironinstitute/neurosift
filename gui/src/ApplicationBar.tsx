@@ -45,7 +45,7 @@ const ApplicationBar: FunctionComponent<Props> = () => {
                             <span style={{fontFamily: 'courier', color: 'lightgray', cursor: 'pointer'}} title={`Signed in as ${userId}`} onClick={openGitHubAccessWindow}><UserIdComponent userId={userId} />&nbsp;&nbsp;</span>
                         )
                     }
-                    <span style={{paddingBottom: 0, cursor: 'pointer'}} onClick={openGitHubAccessWindow} title={signedIn ? "Manage log in" : "Log in"}>
+                    {/* <span style={{paddingBottom: 0, cursor: 'pointer'}} onClick={openGitHubAccessWindow} title={signedIn ? "Manage log in" : "Log in"}>
                         {
                             signedIn ? (
                                 <Logout />
@@ -59,7 +59,7 @@ const ApplicationBar: FunctionComponent<Props> = () => {
                                 <span style={{position: 'relative', top: -5}}>Log in</span>
                             )
                         }
-                    </span>
+                    </span> */}
                 </Toolbar>
             </AppBar>
             <ModalWindow

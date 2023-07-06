@@ -11,6 +11,8 @@ const a0 = 6
 const a1 = 3
 const b0 = 15
 
+export const timeSelectionBarHeight = 20
+
 const TimeseriesSelectionBar: FunctionComponent<Props> = ({width, height}) => {
 
     const {visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange} = useTimeRange()

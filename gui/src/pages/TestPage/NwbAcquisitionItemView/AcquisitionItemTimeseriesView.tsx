@@ -4,13 +4,13 @@ import { useTimeRange, useTimeseriesSelectionInitialization } from "../../../pac
 import { NwbFileContext } from "../NwbFileContext";
 import { Canceler } from "../RemoteH5File/helpers";
 import { RemoteH5Dataset, RemoteH5File } from "../RemoteH5File/RemoteH5File";
-import TimeseriesSelectionBar from "./TimeseriesSelectionBar";
+import TimeseriesSelectionBar, { timeSelectionBarHeight } from "./TimeseriesSelectionBar";
 import { DataSeries, Opts } from "./WorkerTypes";
 
 type Props = {
     width: number
     height: number
-    itemName: string
+    objectPath: string
 }
 
 const gridlineOpts = {
@@ -89,7 +89,7 @@ class DatasetChunkingClient {
 
 const hideToolbar = false
 
-const AcquisitionItemTimeseriesView: FunctionComponent<Props> = ({ width, height, itemName }) => {
+const AcquisitionItemTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath }) => {
     const [samplingFrequency, setSamplingFrequency] = useState<number | undefined>(undefined)
     const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | undefined>()
     const [worker, setWorker] = useState<Worker | null>(null)
@@ -106,16 +106,16 @@ const AcquisitionItemTimeseriesView: FunctionComponent<Props> = ({ width, height
     useEffect(() => {
         let canceled = false
         const load = async () => {
-            const dset = await nwbFile.getDataset(`acquisition/${itemName}/data`)
+            const dset = await nwbFile.getDataset(`${objectPath}/data`)
             if (canceled) return
-            const ds1 = await nwbFile.getDataset(`/acquisition/${itemName}/starting_time`) // this is unintuitive: the sampling rate is an attribute of starting_time-
+            const ds1 = await nwbFile.getDataset(`${objectPath}/starting_time`) // this is unintuitive: the sampling rate is an attribute of starting_time-
             if (canceled) return
             setDataset(dset)
             setSamplingFrequency(ds1.attrs['rate'])
         }
         load()
         return () => {canceled = true}
-    }, [nwbFile, itemName])
+    }, [nwbFile, objectPath])
 
     // Set chunkSize
     const chunkSize = useMemo(() => (
@@ -202,7 +202,7 @@ const AcquisitionItemTimeseriesView: FunctionComponent<Props> = ({ width, height
         }
     }, [datasetChunkingClient, startChunkIndex, endChunkIndex, samplingFrequency, dataset, chunkSize, zoomInRequired])
 
-    const {canvasWidth, canvasHeight, margins} = useTimeScrollView2({width, height, hideToolbar})
+    const {canvasWidth, canvasHeight, margins} = useTimeScrollView2({width, height: height - timeSelectionBarHeight, hideToolbar})
 
     // Set valueRange
     const [valueRange, setValueRange] = useState<{min: number, max: number} | undefined>(undefined)
@@ -278,8 +278,6 @@ const AcquisitionItemTimeseriesView: FunctionComponent<Props> = ({ width, height
             dataSeries
         })
     }, [worker, dataSeries])
-
-    const timeSelectionBarHeight = 20
 
     return (
         <div style={{position: 'absolute', width, height}}>
