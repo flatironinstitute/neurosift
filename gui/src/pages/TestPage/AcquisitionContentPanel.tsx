@@ -1,6 +1,7 @@
 import { FunctionComponent, useEffect, useReducer, useState } from "react"
 import Hyperlink from "../../components/Hyperlink"
 import './nwb-table.css'
+import { Abbreviate } from "./NwbAcquisitionItemView/NwbAcquisitionItemView"
 import { useNwbOpenTabs } from "./NwbOpenTabsContext"
 import { RemoteH5Dataset, RemoteH5File, RemoteH5Group, RemoteH5Subgroup } from "./RemoteH5File/RemoteH5File"
 
@@ -124,7 +125,7 @@ const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, subgroup
             </td>
             <td>{group ? group.attrs['neurodata_type'] : ''}</td>
             <td>{group ? group.attrs['description'] : ''}</td>
-            <td>{group ? group.attrs['comments'] : ''}</td>
+            <td>{group ? <Abbreviate>{group.attrs['comments']}</Abbreviate> : ''}</td>
             <td>{data ? `${data.dtype} ${formatShape(data.shape)}` : ''}</td>
         </tr>
     )

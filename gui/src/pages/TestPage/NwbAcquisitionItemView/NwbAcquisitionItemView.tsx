@@ -1,4 +1,4 @@
-import { FunctionComponent, useContext, useEffect, useState } from "react"
+import { FunctionComponent, PropsWithChildren, useContext, useEffect, useState } from "react"
 import Splitter from "../../../components/Splitter"
 import { NwbFileContext } from "../NwbFileContext"
 import { RemoteH5Group } from "../RemoteH5File/RemoteH5File"
@@ -74,13 +74,28 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({width, height, itemName, 
                     </tr>
                     <tr>
                         <td>Comments</td>
-                        <td>{group?.attrs?.comments}</td>
+                        <td><Abbreviate>{group?.attrs?.comments}</Abbreviate></td>
                     </tr>
                 </tbody>
             </table>
             <TimeseriesSelectionWidget />
         </div>
     )
+}
+
+export const Abbreviate: FunctionComponent<PropsWithChildren> = ({children}) => {
+    return (
+        <span>{abbreviateText(children as string)}</span>
+    )
+}
+
+const abbreviateText = (text: string | undefined) => {
+    if (text === undefined) return ''
+    const maxLen = 300
+    if (text.length <= maxLen) return text
+    const abbrev = text.slice(0, maxLen) + '...'
+    console.log('--- abc', text, abbrev)
+    return abbrev
 }
 
 export default NwbAcquisitionItemView

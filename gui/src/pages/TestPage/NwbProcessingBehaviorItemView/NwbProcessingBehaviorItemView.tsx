@@ -1,5 +1,6 @@
 import { FunctionComponent, useContext } from "react"
 import Splitter from "../../../components/Splitter"
+import { Abbreviate } from "../NwbAcquisitionItemView/NwbAcquisitionItemView"
 import TimeseriesSelectionWidget from "../NwbAcquisitionItemView/TimeseriesSelectionWidget"
 import { NwbFileContext } from "../NwbFileContext"
 import { useGroup } from "../NwbMainView"
@@ -72,7 +73,7 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({width, height, itemName, 
                     </tr>
                     <tr>
                         <td>Comments</td>
-                        <td>{group?.attrs?.comments}</td>
+                        <td><Abbreviate>{group?.attrs?.comments}</Abbreviate></td>
                     </tr>
                 </tbody>
             </table>

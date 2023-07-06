@@ -14,12 +14,14 @@ type Props = {
 
 const ProcessingContentPanel: FunctionComponent<Props> = ({nwbFile, group}) => {
     const {openTab} = useNwbOpenTabs()
+    const hasBehavior = group.subgroups.filter(sg => (sg.name === 'behavior')).length > 0
+    const hasEcephys = group.subgroups.filter(sg => (sg.name === 'ecephys')).length > 0
     return (
         <div>
             <div style={{fontWeight: 'bold', paddingTop: 20, paddingBottom: 5}}>Behavior</div>
-            <ProcessingBehaviorContentPanel nwbFile={nwbFile} />
+            {hasBehavior && <ProcessingBehaviorContentPanel nwbFile={nwbFile} />}
             <div style={{fontWeight: 'bold', paddingTop: 20, paddingBottom: 5}}>Ecephys</div>
-            <ProcessingEcephysContentPanel nwbFile={nwbFile} />
+            {hasEcephys && <ProcessingEcephysContentPanel nwbFile={nwbFile} />}
             <div style={{fontWeight: 'bold', paddingTop: 20, paddingBottom: 5}}>Other</div>
             {
                 group.subgroups.filter(sg => (!['behavior', 'ecephys'].includes(sg.name))).map((sg) => (

@@ -45,7 +45,7 @@ const getGroup = async (url, path) => {
     }
     const group = file.get(path)
     if (!group) {
-        throw new Error('group not found')
+        throw new Error(`group not found: ${path}`)
     }
     const subgroups = []
     const datasets = []
