@@ -6,6 +6,7 @@ import { NSFigViewItem } from "./NSFigViewData";
 import SpikeTrainsFileView from "../SpikeTrainsFileView";
 import EditNSFigViewItemView from "./EditNSFigViewItemView";
 import TimeseriesGraph2FileView from "../TimeseriesGraph2FileView";
+import AutocorrelogramsFileView from "../AutocorrelogramsFileView";
 
 type Props = {
     view: NSFigViewItem
@@ -59,6 +60,15 @@ const IndividualView: FunctionComponent<Props> = ({view, path, width, height}) =
     else if (view.type === 'RasterPlot') {
         return (
             <SpikeTrainsFileView
+                filePath={specialJoin(path, view.data)}
+                width={width}
+                height={height}
+            />
+        )
+    }
+    else if (view.type === 'Autocorrelograms') {
+        return (
+            <AutocorrelogramsFileView
                 filePath={specialJoin(path, view.data)}
                 width={width}
                 height={height}
