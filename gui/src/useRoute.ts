@@ -11,6 +11,9 @@ export type Route = {
 } | {
     page: 'test'
 } | {
+    page: 'nwb'
+    url: string
+} | {
     page: 'github-auth'
 }
 
@@ -18,6 +21,7 @@ const useRoute = () => {
     const location = useLocation()
     const navigate = useNavigate()
     const p = location.pathname
+    const search = location.search
     const route: Route = useMemo(() => {
         if (p === '/about') {
             return {
@@ -40,6 +44,13 @@ const useRoute = () => {
         else if (p === '/test') {
             return {
                 page: 'test'
+            }
+        }
+        else if (p === '/nwb') {
+            const query = parseSearchString(location.search)
+            return {
+                page: 'nwb',
+                url: query.url
             }
         }
         else {
@@ -65,12 +76,25 @@ const useRoute = () => {
         else if (r.page === 'test') {
             navigate('/test' + location.search)
         }
+        else if (r.page === 'nwb') {
+            navigate(`/nwb?url=` + r.url)
+        }
     }, [navigate, location.search])
 
     return {
         route,
         setRoute
     }    
+}
+
+const parseSearchString = (search: string) => {
+    const query: { [key: string]: string } = {}
+    const a = search.slice(1).split('&')
+    for (const s of a) {
+        const b = s.split('=')
+        query[b[0]] = b[1]
+    }
+    return query
 }
 
 export default useRoute

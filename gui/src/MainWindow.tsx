@@ -40,6 +40,12 @@ const MainWindow: FunctionComponent<Props> = () => {
                             width={width}
                             height={H}
                         />
+                    ) : route.page === 'nwb' ? (
+                        <TestPage
+                            width={width}
+                            height={H}
+                            url={route.url}
+                        />
                     ) : (
                         <div>404</div>
                     )
