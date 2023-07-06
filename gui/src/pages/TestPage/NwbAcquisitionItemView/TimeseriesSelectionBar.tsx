@@ -7,7 +7,8 @@ type Props = {
     height: number
 }
 
-const a0 = 5
+const a0 = 6
+const a1 = 3
 const b0 = 15
 
 const TimeseriesSelectionBar: FunctionComponent<Props> = ({width, height}) => {
@@ -65,7 +66,6 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({width, height}) => {
     }, [])
 
     const handleDragStop = useCallback((evt: DraggableEvent, ui: DraggableData) => {
-        console.log('--- drag stop', ui.x)
         const deltaX = ui.x
         const t1 = timeseriesStartTimeSec ?? 0
         const t2 = timeseriesEndTimeSec ?? 1
@@ -89,17 +89,17 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({width, height}) => {
             onMouseUp={handleMouseUp}
         >
             <div style={{position: 'absolute', left: 0, top: a0, width, height: height - a0 * 2, backgroundColor: 'lightgray'}} />
+            <div style={{position: 'absolute', left: x0 - 1, top: 0, width: 3, height: height, backgroundColor: 'red'}} />
             <Draggable
                 axis="x"
                 onDrag={(evt: DraggableEvent, ui: DraggableData) => handleDrag(evt, ui)}
                 onStop={(evt: DraggableEvent, ui: DraggableData) => handleDragStop(evt, ui)}
                 position={dragPosition}
             >
-                <div style={{position: 'absolute', left: y1, top: 0, width: y2 - y1 + 1, height: height, backgroundColor: 'black'}}>
-                    <div style={{position: 'absolute', left: x1 - y1, top: 0, width: x2 - x1 + 1, height: height, backgroundColor: 'gray'}} />
+                <div style={{position: 'absolute', left: y1, top: a1, width: y2 - y1 + 1, height: height - a1 * 2, backgroundColor: 'black'}}>
+                    <div style={{position: 'absolute', left: x1 - y1, top: 0, width: x2 - x1 + 1, height: height - a1 * 2, backgroundColor: 'gray'}} />
                 </div>
             </Draggable>
-            <div style={{position: 'absolute', left: x0, top: 0, width: 1, height: height, backgroundColor: 'red'}} />
         </div>
     )
 }

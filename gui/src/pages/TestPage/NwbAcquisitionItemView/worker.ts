@@ -63,7 +63,7 @@ async function draw() {
         const coordToPixel = (p: {x: number, y: number}): {x: number, y: number} => {
             return {
                 x: margins.left + (p.x - visibleStartTimeSec) / (visibleEndTimeSec - visibleStartTimeSec) * (canvasWidth - margins.left - margins.right),
-                y: canvasHeight - margins.bottom - (p.y - minValue) / (maxValue - minValue) * (canvasHeight - margins.top - margins.bottom)
+                y: !isNaN(p.y) ? canvasHeight - margins.bottom - (p.y - minValue) / (maxValue - minValue) * (canvasHeight - margins.top - margins.bottom) : NaN
             }
         }
         
@@ -211,9 +211,16 @@ const paintPanel = (context: CanvasRenderingContext2D, props: PanelProps) => {
         if (dim.type === 'line') {
             applyLineAttributes(context, dim.attributes)
             context.beginPath()
+            let lastIsUndefined = true
             dim.pixelTimes.forEach((x, ii) => {
                 const y = dim.pixelValues[ii]
-                ii === 0 ? context.moveTo(x, y) : context.lineTo(x, y)
+                if ((y === undefined) || (isNaN(y))) {
+                    lastIsUndefined = true
+                }
+                else {
+                    lastIsUndefined ? context.moveTo(x, y) : context.lineTo(x, y)
+                    lastIsUndefined = false
+                }
             })
             context.stroke()
             context.setLineDash([])

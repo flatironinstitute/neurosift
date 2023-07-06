@@ -1,4 +1,4 @@
-import { postRemoteH5WorkerRequest } from "./helpers"
+import { Canceler, postRemoteH5WorkerRequest } from "./helpers"
 
 export type RemoteH5Group = {
   path: string
@@ -23,51 +23,36 @@ export type RemoteH5Dataset = {
 export type DatasetDataType = Float32Array | Float64Array | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array
 
 export class RemoteH5File {
-  #initialized = false
-  #initializing = false
   #groupCache: { [path: string]: RemoteH5Group } = {}
   #datasetCache: { [path: string]: RemoteH5Dataset } = {}
   constructor(private url: string) {
 
   }
-  async initialize() {
-    if (this.#initialized) return
-    if (this.#initializing) {
-      while (!this.#initialized) {
-        await new Promise(resolve => setTimeout(resolve, 100))
-      }
-      return
-    }
-    this.#initializing = true
-    await postRemoteH5WorkerRequest({
-      type: 'initialize',
-      url: this.url
-    })
-    this.#initializing = false
-    this.#initialized = true
-  }
   async getGroup(path: string): Promise<RemoteH5Group> {
     if (this.#groupCache[path]) return this.#groupCache[path]
+    const dummyCanceler = {onCancel: []}
     const resp = await postRemoteH5WorkerRequest({
       type: 'getGroup',
       url: this.url,
       path,
-    })
+    }, dummyCanceler)
     this.#groupCache[path] = resp.group
     return this.#groupCache[path]
   }
   async getDataset(path: string): Promise<RemoteH5Dataset> {
     if (this.#datasetCache[path]) return this.#datasetCache[path]
+    const dummyCanceler = {onCancel: []}
     const resp = await postRemoteH5WorkerRequest({
       type: 'getDataset',
       url: this.url,
       path,
-    })
+    }, dummyCanceler)
     this.#datasetCache[path] = resp.dataset
     return this.#datasetCache[path]
   }
-  async getDatasetData(path: string, o: { slice?: [number, number][], allowBigInt?: boolean }): Promise<DatasetDataType> {
-    const { slice, allowBigInt } = o
+  async getDatasetData(path: string, o: { slice?: [number, number][], allowBigInt?: boolean, canceler?: Canceler}): Promise<DatasetDataType> {
+    const { slice, allowBigInt, canceler } = o
+    const dummyCanceler = {onCancel: []}
     // const chunkMode = slice ? (
     //   product(slice.map(s => s[1] - s[0])) >= 1e5 ? 'large-chunks' : 'small-chunks'
     // ) : 'small-chunks'
@@ -78,7 +63,7 @@ export class RemoteH5File {
       path,
       slice,
       chunkMode
-    })
+    }, canceler || dummyCanceler)
     const { data } = resp
     let x = data
     if (!allowBigInt) {
@@ -109,12 +94,5 @@ export const getRemoteH5File = async (url: string) => {
   if (!globalRemoteH5Files[url]) {
     globalRemoteH5Files[url] = new RemoteH5File(url)
   }
-  await globalRemoteH5Files[url].initialize()
   return globalRemoteH5Files[url]
-}
-
-const product = (arr: number[]) => {
-  let val = 1
-  for (const a of arr) val *= a
-  return val
 }

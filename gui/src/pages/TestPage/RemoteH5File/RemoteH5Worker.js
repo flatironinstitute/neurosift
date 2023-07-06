@@ -6,14 +6,42 @@ const globalDatasetCache = {}
 
 // type ChunkMode = 'small-chunks' | 'large-chunks'
 
-const getGroup = (url, path) => {
+const initializeIfNeeded = async (url, chunkMode) => {
+    if (globalFiles[url + '|' + chunkMode]) {
+        return
+    }
+    const {FS} = await h5wasm.ready
+
+    const controller = new AbortController();
+    const signal = controller.signal;
+    const response = await fetch(url, { signal }) // this is the only reason we need this function to be async
+    const headResponseHeaders = {
+        "Content-length": response.headers.get("Content-length"),
+        // "Accept-Ranges": response.headers.get("Accept-Ranges"),
+        "Accept-Ranges": "bytes", // force this for now
+        "Content-Encoding": response.headers.get("Content-Encoding"),
+    }
+    controller.abort();
+
+    // compute hash of url + '|' + chunkMode
+    const hash = (url + '|' + chunkMode).split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0)
+    const fname = `${hash}.h5`
+    const chunkSize = chunkMode === 'small-chunks' ? 1024 * 20 : 1024 * 1024
+    FS.createLazyFile('/', fname, url, true, false, headResponseHeaders, chunkSize);
+
+    const file = new h5wasm.File(fname);
+    globalFiles[url + '|' + chunkMode] = file
+}
+
+const getGroup = async (url, path) => {
     const kk = `${url}|${path}`
     if (globalGroupCache[kk]) {
         return globalGroupCache[kk]
     }
+    await initializeIfNeeded(url, 'small-chunks')
     const file = globalFiles[url + '|small-chunks']
     if (!file) {
-        throw new Error('file not initialized')
+        throw new Error('unexpected: file not initialized')
     }
     const group = file.get(path)
     if (!group) {
@@ -51,14 +79,15 @@ const getGroup = (url, path) => {
     return group0
 }
 
-const getDataset = (url, path, chunkMode) => {
+const getDataset = async (url, path, chunkMode) => {
     const kk = `${url}|${path}|${chunkMode}`
     if (globalDatasetCache[kk]) {
         return globalDatasetCache[kk]
     }
+    await initializeIfNeeded(url, chunkMode)
     const file = globalFiles[url + '|' + chunkMode]
     if (!file) {
-        throw new Error('file not initialized')
+        throw new Error('unexpected: file not initialized')
     }
     const dataset = file.get(path)
     if (!dataset) {
@@ -80,41 +109,10 @@ self.onmessage = function (e) {
                 response
             })
         }
-        if (req.type === 'initialize') {
-            const {FS} = await h5wasm.ready
-
-            const url = req.url
-            const controller = new AbortController();
-            const signal = controller.signal;
-            const response = await fetch(url, { signal }) // this is the only reason we need this function to be async
-            const headResponseHeaders = {
-                "Content-length": response.headers.get("Content-length"),
-                // "Accept-Ranges": response.headers.get("Accept-Ranges"),
-                "Accept-Ranges": "bytes", // force this for now
-                "Content-Encoding": response.headers.get("Content-Encoding"),
-            }
-            controller.abort();
-
-            // for now we're only going to do small chunks until we can figure out a better way to do this
-            for (const chunkMode of ['small-chunks']) {
-                // compute hash of url + '|' + chunkMode
-                const hash = (url + '|' + chunkMode).split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0)
-                const fname = `${hash}.h5`
-                const chunkSize = chunkMode === 'small-chunks' ? 1024 * 20 : 1024 * 1024
-                FS.createLazyFile('/', fname, url, true, false, headResponseHeaders, chunkSize);
-
-                const file = new h5wasm.File(fname);
-                globalFiles[url + '|' + chunkMode] = file
-            }
-
-            sendResponse({
-                success: true
-            })
-        }
-        else if (req.type === 'getGroup') {
+        if (req.type === 'getGroup') {
             let group
             try {
-                group = getGroup(req.url, req.path)
+                group = await getGroup(req.url, req.path)
             }
             catch (e) {
                 sendResponse({
@@ -131,7 +129,7 @@ self.onmessage = function (e) {
         else if (req.type === 'getDataset') {
             let dataset
             try {
-                dataset = getDataset(req.url, req.path, 'small-chunks')
+                dataset = await getDataset(req.url, req.path, 'small-chunks')
             }
             catch (e) {
                 sendResponse({
@@ -158,7 +156,7 @@ self.onmessage = function (e) {
         else if (req.type === 'getDatasetData') {
             let data
             try {
-                const dataset = getDataset(req.url, req.path, req.chunkMode)
+                const dataset = await getDataset(req.url, req.path, req.chunkMode)
                 if (req.slice) {
                     // if (req.slice.length === 2) {
                     //     data = read_slice_one_column_at_a_time(dataset, req.slice)
