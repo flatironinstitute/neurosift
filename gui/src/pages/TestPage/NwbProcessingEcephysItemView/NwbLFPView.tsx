@@ -1,6 +1,6 @@
 import { FunctionComponent } from "react"
 import AcquisitionItemTimeseriesView from "../NwbAcquisitionItemView/AcquisitionItemTimeseriesView"
-import { useDataset, useGroup } from "../NwbMainView"
+import { useDataset, useGroup } from "../NwbMainView/NwbMainView"
 import { RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 
 type Props = {

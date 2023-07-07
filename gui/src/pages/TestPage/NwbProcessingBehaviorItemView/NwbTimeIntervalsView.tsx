@@ -1,5 +1,5 @@
 import { FunctionComponent } from "react"
-import { useDatasetData } from "../NwbMainView"
+import { useDatasetData } from "../NwbMainView/NwbMainView"
 import { RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import NwbTimeIntervalsWidget from "./NwbTimeIntervalsWidget"
 
