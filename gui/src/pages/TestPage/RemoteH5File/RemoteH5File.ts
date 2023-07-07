@@ -25,7 +25,7 @@ export type DatasetDataType = Float32Array | Float64Array | Int8Array | Int16Arr
 export class RemoteH5File {
   #groupCache: { [path: string]: RemoteH5Group } = {}
   #datasetCache: { [path: string]: RemoteH5Dataset } = {}
-  constructor(private url: string) {
+  constructor(private url: string, private metaUrl: string | undefined) {
 
   }
   async getGroup(path: string): Promise<RemoteH5Group> {
@@ -33,7 +33,7 @@ export class RemoteH5File {
     const dummyCanceler = {onCancel: []}
     const resp = await postRemoteH5WorkerRequest({
       type: 'getGroup',
-      url: this.url,
+      url: this.metaUrl || this.url,
       path,
     }, dummyCanceler)
     this.#groupCache[path] = resp.group
@@ -44,13 +44,19 @@ export class RemoteH5File {
     const dummyCanceler = {onCancel: []}
     const resp = await postRemoteH5WorkerRequest({
       type: 'getDataset',
-      url: this.url,
+      url: this.metaUrl || this.url,
       path,
     }, dummyCanceler)
     this.#datasetCache[path] = resp.dataset
     return this.#datasetCache[path]
   }
   async getDatasetData(path: string, o: { slice?: [number, number][], allowBigInt?: boolean, canceler?: Canceler}): Promise<DatasetDataType> {
+    const ds = await this.getDataset(path)
+    let urlToUse: string = this.metaUrl || this.url
+    if (product(ds.shape) > 100) {
+      urlToUse = this.url
+    }
+
     const { slice, allowBigInt, canceler } = o
     const dummyCanceler = {onCancel: []}
     // const chunkMode = slice ? (
@@ -59,7 +65,7 @@ export class RemoteH5File {
     const chunkMode = 'small-chunks' // for now only do small chunks until we can figure out a better way
     const resp = await postRemoteH5WorkerRequest({
       type: 'getDatasetData',
-      url: this.url,
+      url: urlToUse,
       path,
       slice,
       chunkMode
@@ -90,9 +96,16 @@ export class RemoteH5File {
   }
 }
 const globalRemoteH5Files: { [url: string]: RemoteH5File } = {}
-export const getRemoteH5File = async (url: string) => {
-  if (!globalRemoteH5Files[url]) {
-    globalRemoteH5Files[url] = new RemoteH5File(url)
+export const getRemoteH5File = async (url: string, metaUrl: string | undefined) => {
+  const kk = url + '|' + metaUrl
+  if (!globalRemoteH5Files[kk]) {
+    globalRemoteH5Files[kk] = new RemoteH5File(url, metaUrl)
   }
-  return globalRemoteH5Files[url]
+  return globalRemoteH5Files[kk]
+}
+
+const product = (x: number[]) => {
+  let p = 1
+  for (let i = 0; i < x.length; i++) p *= x[i]
+  return p
 }

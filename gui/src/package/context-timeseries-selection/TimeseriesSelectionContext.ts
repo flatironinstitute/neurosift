@@ -74,7 +74,7 @@ export type PanDirection = 'forward' | 'back'
 export const useTimeRange = (timestampOffset=0) => {
     const {timeseriesSelection, timeseriesSelectionDispatch} = useContext(TimeseriesSelectionContext)
     if (timeseriesSelection.visibleEndTimeSec === undefined || timeseriesSelection.visibleStartTimeSec === undefined) {
-        console.warn('WARNING: useTimeRange() with uninitialized timeseries selection state. Time ranges replaced with MIN_SAFE_INTEGER.')
+        // console.warn('WARNING: useTimeRange() with uninitialized timeseries selection state. Time ranges replaced with MIN_SAFE_INTEGER.')
     }
     const zoomTimeseriesSelection = useCallback((direction: ZoomDirection, factor?: number, hoverTimeSec?: number) => {
         timeseriesSelectionDispatch({

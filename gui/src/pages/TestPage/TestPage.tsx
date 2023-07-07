@@ -21,7 +21,8 @@ const TestPage: FunctionComponent<Props> = ({width, height, url}) => {
     useEffect(() => {
         let canceled = false
         const load = async () => {
-            const f = await getRemoteH5File(url || defaultUrl)
+            const metaUrl = await getMetaUrl(url || defaultUrl)
+            const f = await getRemoteH5File(url || defaultUrl, metaUrl)
             if (canceled) return
             setNwbFile(f)
         }
@@ -39,6 +40,24 @@ const TestPage: FunctionComponent<Props> = ({width, height, url}) => {
             </SetupNwbOpenTabs>
         </NwbFileContext.Provider>
     )
+}
+
+const getMetaUrl = async (url: string) => {
+    const aa = 'https://dandiarchive.s3.amazonaws.com/'
+    if (!url.startsWith(aa)) {
+        return undefined
+    }
+    const pp = url.slice(aa.length)
+    const candidateMetaUrl = `https://neurosift.org/nwb-meta/dandiarchive/${pp}`
+    try {
+        const resp = await fetch(candidateMetaUrl, {method: 'HEAD'})
+        if (resp.status === 200) return candidateMetaUrl
+        // status of 404 means it wasn't found
+    }
+    catch(err: any) {
+        console.warn(`Unable to HEAD ${candidateMetaUrl}: ${err.message}`)
+    }
+    return undefined
 }
 
 export default TestPage

@@ -12,7 +12,7 @@ class SpikeTrainsClientFromRemoteNwb {
     constructor(private url: string) {
     }
     async initialize() {
-        const nwbFile = await getRemoteH5File(this.url)
+        const nwbFile = await getRemoteH5File(this.url, undefined)
         this.#nwbFile = nwbFile
         this.#unitIds = await nwbFile.getDatasetData('/units/id', {})
         this.#spikeTimesIndices = await nwbFile.getDatasetData('/units/spike_times_index', {})

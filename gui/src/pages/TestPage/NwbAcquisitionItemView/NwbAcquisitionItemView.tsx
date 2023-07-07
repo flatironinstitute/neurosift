@@ -94,7 +94,6 @@ const abbreviateText = (text: string | undefined) => {
     const maxLen = 300
     if (text.length <= maxLen) return text
     const abbrev = text.slice(0, maxLen) + '...'
-    console.log('--- abc', text, abbrev)
     return abbrev
 }
 

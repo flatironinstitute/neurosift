@@ -1,11 +1,9 @@
-import { FunctionComponent, useEffect, useReducer, useState } from "react"
-import Hyperlink from "../../components/Hyperlink"
+import { FunctionComponent } from "react"
 import './nwb-table.css'
-import { useGroup } from "./NwbMainView"
 import { useNwbOpenTabs } from "./NwbOpenTabsContext"
 import ProcessingBehaviorContentPanel from "./ProcessingBehaviorContentPanel"
 import ProcessingEcephysContentPanel from "./ProcessingEcephysContentPanel"
-import { RemoteH5Dataset, RemoteH5File, RemoteH5Group, RemoteH5Subgroup } from "./RemoteH5File/RemoteH5File"
+import { RemoteH5File, RemoteH5Group } from "./RemoteH5File/RemoteH5File"
 
 type Props = {
     nwbFile: RemoteH5File
