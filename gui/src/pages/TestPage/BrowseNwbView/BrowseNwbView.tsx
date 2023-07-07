@@ -69,7 +69,7 @@ type TopLevelGroupViewProps = {
 const TopLevelGroupView: FunctionComponent<TopLevelGroupViewProps> = ({nwbFile, name}) => {
     const [expanded, setExpanded] = useState(false)
     const group = useGroup(nwbFile, '/' + name)
-    const titlePanelBackgroundColor = expanded ? '#595' : '#6a6'
+    const titlePanelBackgroundColor = expanded ? '#797' : '#8a8'
     const titlePanelTextColor = expanded ? 'white' : '#fff'
     return (
         <div style={{marginLeft: 10}}>

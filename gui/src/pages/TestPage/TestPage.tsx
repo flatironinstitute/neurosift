@@ -1,8 +1,9 @@
-import { FunctionComponent, useEffect, useState } from "react"
+import { FunctionComponent, useEffect, useReducer, useState } from "react"
 import { NwbFileContext } from "./NwbFileContext"
 import { SetupNwbOpenTabs } from "./NwbOpenTabsContext"
 import NwbTabWidget from "./NwbTabWidget"
 import { getRemoteH5File, RemoteH5File } from "./RemoteH5File/RemoteH5File"
+import { SelectedNwbItemsContext, selectedNwbItemsReducer } from "./SelectedNwbItemsContext"
 
 type Props = {
     width: number
@@ -17,6 +18,7 @@ const defaultUrl = `https://dandiarchive.s3.amazonaws.com/blobs/${defaultId.slic
 
 const TestPage: FunctionComponent<Props> = ({width, height, url}) => {
     const [nwbFile, setNwbFile] = useState<RemoteH5File | undefined>(undefined)
+    const [selectedNwbItemsState, selectedNwbItemsDispatch] = useReducer(selectedNwbItemsReducer, {selectedNwbItems: []})
 
     useEffect(() => {
         let canceled = false
@@ -32,12 +34,14 @@ const TestPage: FunctionComponent<Props> = ({width, height, url}) => {
     if (!nwbFile) return <div>Loading {url}</div>
     return (
         <NwbFileContext.Provider value={nwbFile}>
-            <SetupNwbOpenTabs>
-                <NwbTabWidget
-                    width={width}
-                    height={height}
-                />
-            </SetupNwbOpenTabs>
+            <SelectedNwbItemsContext.Provider value={{selectedNwbItemsState, selectedNwbItemsDispatch}}>
+                <SetupNwbOpenTabs>
+                    <NwbTabWidget
+                        width={width}
+                        height={height}
+                    />
+                </SetupNwbOpenTabs>
+            </SelectedNwbItemsContext.Provider>
         </NwbFileContext.Provider>
     )
 }

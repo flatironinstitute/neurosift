@@ -1,11 +1,11 @@
-import '../nwb-table.css'
-import { FunctionComponent, useEffect, useReducer, useState } from "react"
+import { FunctionComponent, useEffect, useState } from "react"
 import Hyperlink from "../../../components/Hyperlink"
-import { subgroupSelectionReducer } from "./AcquisitionContentPanel"
-import { Abbreviate } from "../NwbAcquisitionItemView/NwbAcquisitionItemView"
-import { useGroup } from "./NwbMainView"
+import '../nwb-table.css'
+import Abbreviate from "../NwbAcquisitionItemView/Abbreviate"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 import { RemoteH5File, RemoteH5Group, RemoteH5Subgroup } from "../RemoteH5File/RemoteH5File"
+import { useSelectedNwbItems } from '../SelectedNwbItemsContext'
+import { useGroup } from "./NwbMainView"
 
 type Props = {
     nwbFile: RemoteH5File
@@ -13,8 +13,7 @@ type Props = {
 
 const ProcessingBehaviorContentPanel: FunctionComponent<Props> = ({nwbFile}) => {
     const group = useGroup(nwbFile, '/processing/behavior')
-    const [subgroupSelection, subgroupSelectionDispatch] = useReducer(subgroupSelectionReducer, [])
-    const {openTab} = useNwbOpenTabs()
+    const {selectedNwbItemPaths, toggleSelectedNwbItem} = useSelectedNwbItems()
     if (!group) return <div>...</div>
     return (
         <div>
@@ -35,32 +34,13 @@ const ProcessingBehaviorContentPanel: FunctionComponent<Props> = ({nwbFile}) => 
                                 key={sg.name}
                                 nwbFile={nwbFile}
                                 subgroup={sg}
-                                selected={subgroupSelection.includes(sg.name)}
-                                onToggleSelect={() => subgroupSelectionDispatch({
-                                    type: 'toggle',
-                                    subgroupName: sg.name
-                                })}
+                                selected={selectedNwbItemPaths.includes(sg.path)}
+                                onToggleSelect={(neurodataType) => toggleSelectedNwbItem(sg.path, neurodataType)}
                             />
                         ))
                     }
                 </tbody>
             </table>
-            {
-                subgroupSelection.length > 0 && (
-                    <button
-                        onClick={() => {
-                            if (subgroupSelection.length === 1) {
-                                openTab(`processing/behavior:${subgroupSelection[0]}`)
-                            }
-                            else if (subgroupSelection.length > 1) {
-                                const subgroupNames = subgroupSelection.join('@')
-                                openTab(`processing/behaviors:${subgroupNames}`)
-                            }
-                        }}
-                        style={{marginTop: 5}}
-                    >View {subgroupSelection.length}</button>
-                )
-            }
         </div>
     )
 }
@@ -69,7 +49,7 @@ type GroupTableRowProps = {
     nwbFile: RemoteH5File
     subgroup: RemoteH5Subgroup
     selected: boolean
-    onToggleSelect: () => void
+    onToggleSelect: (neurodataType: string) => void
 }
 
 const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, subgroup, selected, onToggleSelect}) => {
@@ -85,23 +65,20 @@ const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, subgroup
         return () => {canceled = true}
     }, [nwbFile, subgroup.path])
     const {openTab} = useNwbOpenTabs()
+    const neurodataType = group ? group.attrs['neurodata_type'] : ''
     return (
         <tr>
             <td>
-                <input type="checkbox" checked={selected} onClick={onToggleSelect} onChange={() => {}} />
+                <input type="checkbox" checked={selected} disabled={!neurodataType} onClick={() => onToggleSelect(neurodataType)} onChange={() => {}} />
             </td>
             <td>
-                <Hyperlink onClick={() => openTab(`processing/behavior:${subgroup.name}`)}>{subgroup.name}</Hyperlink>
+                <Hyperlink disabled={!neurodataType} onClick={() => openTab(`neurodata-item:${subgroup.path}|${neurodataType}`)}>{subgroup.name}</Hyperlink>
             </td>
             <td>{group ? group.attrs['neurodata_type'] : ''}</td>
             <td>{group ? group.attrs['description'] : ''}</td>
             <td>{group ? <Abbreviate>{group.attrs['comments']}</Abbreviate> : ''}</td>
         </tr>
     )
-}
-
-const formatShape = (shape: number[]) => {
-    return `[${shape.join(', ')}]`
 }
 
 export default ProcessingBehaviorContentPanel

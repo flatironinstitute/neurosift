@@ -1,39 +1,18 @@
-import { FunctionComponent, useEffect, useReducer, useState } from "react"
+import { FunctionComponent, useEffect, useState } from "react"
 import Hyperlink from "../../../components/Hyperlink"
 import '../nwb-table.css'
-import { Abbreviate } from "../NwbAcquisitionItemView/NwbAcquisitionItemView"
+import Abbreviate from "../NwbAcquisitionItemView/Abbreviate"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 import { RemoteH5Dataset, RemoteH5File, RemoteH5Group, RemoteH5Subgroup } from "../RemoteH5File/RemoteH5File"
+import { useSelectedNwbItems } from "../SelectedNwbItemsContext"
 
 type Props = {
     nwbFile: RemoteH5File
     group: RemoteH5Group
 }
 
-export type SubgroupSelectionState = string[]
-
-export type SubgroupSelectionAction = {
-    type: 'toggle'
-    subgroupName: string
-}
-
-export const subgroupSelectionReducer = (state: SubgroupSelectionState, action: SubgroupSelectionAction): SubgroupSelectionState => {
-    if (action.type === 'toggle') {
-        if (state.includes(action.subgroupName)) {
-            return state.filter(s => (s !== action.subgroupName))
-        }
-        else {
-            return [...state, action.subgroupName].sort()
-        }
-    }
-    else {
-        return state
-    }
-}
-
 const AcquisitionContentPanel: FunctionComponent<Props> = ({nwbFile, group}) => {
-    const [subgroupSelection, subgroupSelectionDispatch] = useReducer(subgroupSelectionReducer, [])
-    const {openTab} = useNwbOpenTabs()
+    const {selectedNwbItemPaths, toggleSelectedNwbItem} = useSelectedNwbItems()
     return (
         <div>
             <table className="nwb-table">
@@ -54,32 +33,13 @@ const AcquisitionContentPanel: FunctionComponent<Props> = ({nwbFile, group}) => 
                                 key={sg.name}
                                 nwbFile={nwbFile}
                                 subgroup={sg}
-                                selected={subgroupSelection.includes(sg.name)}
-                                onToggleSelect={() => subgroupSelectionDispatch({
-                                    type: 'toggle',
-                                    subgroupName: sg.name
-                                })}
+                                selected={selectedNwbItemPaths.includes(sg.path)}
+                                onToggleSelect={(neurodataType) => toggleSelectedNwbItem(sg.path, neurodataType)}
                             />
                         ))
                     }
                 </tbody>
             </table>
-            {
-                subgroupSelection.length > 0 && (
-                    <button
-                        onClick={() => {
-                            if (subgroupSelection.length === 1) {
-                                openTab(`acquisition:${subgroupSelection[0]}`)
-                            }
-                            else if (subgroupSelection.length > 1) {
-                                const subgroupNames = subgroupSelection.join('@')
-                                openTab(`acquisitions:${subgroupNames}`)
-                            }
-                        }}
-                        style={{marginTop: 5}}
-                    >View {subgroupSelection.length}</button>
-                )
-            }
         </div>
     )
 }
@@ -88,7 +48,7 @@ type GroupTableRowProps = {
     nwbFile: RemoteH5File
     subgroup: RemoteH5Subgroup
     selected: boolean
-    onToggleSelect: () => void
+    onToggleSelect: (neurodataType: string) => void
 }
 
 const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, subgroup, selected, onToggleSelect}) => {
@@ -115,15 +75,16 @@ const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, subgroup
         return () => {canceled = true}
     }, [nwbFile, subgroup.path])
     const {openTab} = useNwbOpenTabs()
+    const neurodataType = group ? group.attrs['neurodata_type'] : ''
     return (
         <tr>
             <td>
-                <input type="checkbox" checked={selected} onClick={onToggleSelect} onChange={() => {}} />
+                <input type="checkbox" checked={selected} disabled={!neurodataType} onClick={() => onToggleSelect(neurodataType)} onChange={() => {}} />
             </td>
             <td>
-                <Hyperlink onClick={() => openTab(`acquisition:${subgroup.name}`)}>{subgroup.name}</Hyperlink>
+                <Hyperlink disabled={!neurodataType} onClick={() => openTab(`neurodata-item:${subgroup.path}|${neurodataType}`)}>{subgroup.name}</Hyperlink>
             </td>
-            <td>{group ? group.attrs['neurodata_type'] : ''}</td>
+            <td>{neurodataType}</td>
             <td>{group ? group.attrs['description'] : ''}</td>
             <td>{group ? <Abbreviate>{group.attrs['comments']}</Abbreviate> : ''}</td>
             <td>{data ? `${data.dtype} ${formatShape(data.shape)}` : ''}</td>
