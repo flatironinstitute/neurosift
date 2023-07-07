@@ -26,7 +26,7 @@ conda activate neurosift
 Clone the repository and install from source:
 
 ```bash
-git clone https://github.com/scratchrealm/neurosift
+git clone https://github.com/flatironinstitute/neurosift
 cd neurosift/python
 pip install -e .
 ```

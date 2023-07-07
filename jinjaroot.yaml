@@ -3,6 +3,6 @@ pythonProjectVersion: 0.2.0
 projectAuthor: Jeremy Magland
 projectAuthorEmail: jmagland@flatironinstitute.org
 projectDescription:
-projectUrl: https://github.com/scratchrealm/neurosift
-projectBugTrackerUrl: https://github.com/scratchrealm/neurosift/issues
+projectUrl: https://github.com/flatironinstitute/neurosift
+projectBugTrackerUrl: https://github.com/flatironinstitute/neurosift/issues
 pythonPackageDir: ./python
