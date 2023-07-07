@@ -28,7 +28,7 @@ const TestPage: FunctionComponent<Props> = ({width, height, url}) => {
         }
         load()
         return () => {canceled = true}
-    }, [])
+    }, [url])
     if (!nwbFile) return <div>Loading {url}</div>
     return (
         <NwbFileContext.Provider value={nwbFile}>

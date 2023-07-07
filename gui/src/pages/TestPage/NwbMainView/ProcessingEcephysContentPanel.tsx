@@ -1,18 +1,18 @@
 import { FunctionComponent, useEffect, useReducer, useState } from "react"
-import Hyperlink from "../../components/Hyperlink"
+import Hyperlink from "../../../components/Hyperlink"
 import { subgroupSelectionReducer } from "./AcquisitionContentPanel"
-import './nwb-table.css'
-import { Abbreviate } from "./NwbAcquisitionItemView/NwbAcquisitionItemView"
+import '../nwb-table.css'
+import { Abbreviate } from "../NwbAcquisitionItemView/NwbAcquisitionItemView"
 import { useGroup } from "./NwbMainView"
-import { useNwbOpenTabs } from "./NwbOpenTabsContext"
-import { RemoteH5Dataset, RemoteH5File, RemoteH5Group, RemoteH5Subgroup } from "./RemoteH5File/RemoteH5File"
+import { useNwbOpenTabs } from "../NwbOpenTabsContext"
+import { RemoteH5Dataset, RemoteH5File, RemoteH5Group, RemoteH5Subgroup } from "../RemoteH5File/RemoteH5File"
 
 type Props = {
     nwbFile: RemoteH5File
 }
 
-const ProcessingBehaviorContentPanel: FunctionComponent<Props> = ({nwbFile}) => {
-    const group = useGroup(nwbFile, '/processing/behavior')
+const ProcessingEcephysContentPanel: FunctionComponent<Props> = ({nwbFile}) => {
+    const group = useGroup(nwbFile, '/processing/ecephys')
     const [subgroupSelection, subgroupSelectionDispatch] = useReducer(subgroupSelectionReducer, [])
     const {openTab} = useNwbOpenTabs()
     if (!group) return <div>...</div>
@@ -50,11 +50,11 @@ const ProcessingBehaviorContentPanel: FunctionComponent<Props> = ({nwbFile}) => 
                     <button
                         onClick={() => {
                             if (subgroupSelection.length === 1) {
-                                openTab(`processing/behavior:${subgroupSelection[0]}`)
+                                openTab(`processing/ecephys:${subgroupSelection[0]}`)
                             }
                             else if (subgroupSelection.length > 1) {
                                 const subgroupNames = subgroupSelection.join('@')
-                                openTab(`processing/behaviors:${subgroupNames}`)
+                                openTab(`processing/ecephyses:${subgroupNames}`)
                             }
                         }}
                         style={{marginTop: 5}}
@@ -74,6 +74,7 @@ type GroupTableRowProps = {
 
 const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, subgroup, selected, onToggleSelect}) => {
     const [group, setGroup] = useState<RemoteH5Group | undefined>(undefined)
+    const [data, setData] = useState<RemoteH5Dataset | undefined>(undefined)
     useEffect(() => {
         let canceled = false
         const load = async () => {
@@ -91,7 +92,7 @@ const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, subgroup
                 <input type="checkbox" checked={selected} onClick={onToggleSelect} onChange={() => {}} />
             </td>
             <td>
-                <Hyperlink onClick={() => openTab(`processing/behavior:${subgroup.name}`)}>{subgroup.name}</Hyperlink>
+                <Hyperlink onClick={() => openTab(`processing/ecephys:${subgroup.name}`)}>{subgroup.name}</Hyperlink>
             </td>
             <td>{group ? group.attrs['neurodata_type'] : ''}</td>
             <td>{group ? group.attrs['description'] : ''}</td>
@@ -100,8 +101,4 @@ const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, subgroup
     )
 }
 
-const formatShape = (shape: number[]) => {
-    return `[${shape.join(', ')}]`
-}
-
-export default ProcessingBehaviorContentPanel
+export default ProcessingEcephysContentPanel

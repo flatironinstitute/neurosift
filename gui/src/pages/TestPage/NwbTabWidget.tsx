@@ -3,9 +3,10 @@ import { FunctionComponent, useReducer } from "react";
 import { SetupTimeseriesSelection } from "../../package/context-timeseries-selection";
 import { defaultUnitSelection, UnitSelectionContext, unitSelectionReducer } from "../../package/context-unit-selection";
 import TabWidget from "../../TabWidget/TabWidget";
+import BrowseNwbView from "./BrowseNwbView/BrowseNwbView";
 import NwbAcquisitionItemsView from "./NwbAcquisitionItemsView/NwbAcquisitionItemsView";
 import NwbAcquisitionItemView from "./NwbAcquisitionItemView/NwbAcquisitionItemView";
-import NwbMainView from "./NwbMainView";
+import NwbMainView from "./NwbMainView/NwbMainView";
 import { useNwbOpenTabs } from "./NwbOpenTabsContext";
 import NwbProcessingBehaviorItemView from "./NwbProcessingBehaviorItemView/NwbProcessingBehaviorItemView";
 import NwbProcessingEcephysItemView from "./NwbProcessingEcephysItemView/NwbProcessingEcephysItemView";
@@ -44,6 +45,8 @@ const TabChild: FunctionComponent<{tabName: string, width: number, height: numbe
                 {
                     tabName === 'main' ? (
                         <NwbMainView key={tabName} width={width} height={height} />
+                    ) : tabName === 'browse-nwb' ? (
+                        <BrowseNwbView key={tabName} width={width} height={height} />
                     ) : tabName.startsWith('acquisition:') ? (
                         <NwbAcquisitionItemView key={tabName} width={width} height={height} itemName={tabName.slice(`acquisition:`.length)} />
                     ) : tabName.startsWith('acquisitions:') ? (
@@ -82,10 +85,7 @@ const titleFromTabName = (tabName: string) => {
 }
 
 const iconFromTabName = (tabName: string) => {
-    if (tabName === 'main') {
-        return <Square />
-    }
-    else return undefined
+    return undefined
 }
 
 export default NwbTabWidget

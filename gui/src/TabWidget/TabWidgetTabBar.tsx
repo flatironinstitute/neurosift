@@ -31,19 +31,15 @@ const TabWidgetTabBar: FunctionComponent<Props> = ({ tabs, currentTabIndex, onCu
         >
             {tabs.map((tab, i) => (
                 <Tab key={i} title={tab.title} label={
-                    tab.closeable ? (
-                        <span>
-                            {
-                                tab.icon ? (
-                                    <span style={{marginRight: 4}}>{tab.icon}</span>
-                                ) : <span />
-                            }
-                            <span style={{textTransform: 'none', fontSize: 14}}>{tab.label}</span>
-                            &nbsp;&nbsp;<span onClick={() => {onCloseTab(tab.id)}}>✕</span>
-                        </span>
-                    ) : (
-                        tab.label
-                    )
+                    <span>
+                        {
+                            tab.icon ? (
+                                <span style={{marginRight: 4}}>{tab.icon}</span>
+                            ) : <span />
+                        }
+                        <span style={{textTransform: 'none', fontSize: 14}}>{tab.label}</span>
+                        &nbsp;&nbsp;{tab.closeable && <span onClick={() => {onCloseTab(tab.id)}}>✕</span>}
+                    </span>
                 } sx={{minHeight: 0, height: 0, fontSize: 12}} />
             ))}
         </Tabs>

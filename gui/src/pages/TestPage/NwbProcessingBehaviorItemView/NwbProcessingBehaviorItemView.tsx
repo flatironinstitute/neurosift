@@ -3,7 +3,7 @@ import Splitter from "../../../components/Splitter"
 import { Abbreviate } from "../NwbAcquisitionItemView/NwbAcquisitionItemView"
 import TimeseriesSelectionWidget from "../NwbAcquisitionItemView/TimeseriesSelectionWidget"
 import { NwbFileContext } from "../NwbFileContext"
-import { useGroup } from "../NwbMainView"
+import { useGroup } from "../NwbMainView/NwbMainView"
 import { RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import NwbTimeIntervalsView from "./NwbTimeIntervalsView"
 
