@@ -1,4 +1,3 @@
-import { Square } from "@mui/icons-material";
 import { FunctionComponent, useReducer } from "react";
 import { SetupTimeseriesSelection } from "../../package/context-timeseries-selection";
 import { defaultUnitSelection, UnitSelectionContext, unitSelectionReducer } from "../../package/context-unit-selection";
@@ -6,12 +5,8 @@ import TabWidget from "../../TabWidget/TabWidget";
 import BrowseNwbView from "./BrowseNwbView/BrowseNwbView";
 import NeurodataItemsView from "./NeurodataItemView/NeurodataItemsView";
 import NeurodataItemView from "./NeurodataItemView/NeurodataItemView";
-import NwbAcquisitionItemsView from "./NwbAcquisitionItemsView/NwbAcquisitionItemsView";
-import NwbAcquisitionItemView from "./NwbAcquisitionItemView/Abbreviate";
 import NwbMainView from "./NwbMainView/NwbMainView";
 import { useNwbOpenTabs } from "./NwbOpenTabsContext";
-import NwbProcessingBehaviorItemView from "./NwbProcessingBehaviorItemView/NwbProcessingBehaviorItemView";
-import NwbProcessingEcephysItemView from "./NwbProcessingEcephysItemView/NwbProcessingEcephysItemView";
 
 const NwbTabWidget: FunctionComponent<{width: number, height: number}> = ({width, height}) => {
     const {openTabs, currentTabName, setCurrentTab, closeTab} = useNwbOpenTabs()
