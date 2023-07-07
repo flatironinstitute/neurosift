@@ -85,8 +85,6 @@ type Props = {
 }
 
 const defaultNwbOpenTabsState: NwbOpenTabsState = {
-    // openTabs: [{tabName: 'main'}, {tabName: `acquisition:position_sensor1`}],
-    // currentTabName: 'acquisition:position_sensor1'
     openTabs: [{tabName: 'main'}],
     currentTabName: 'main'
 }
