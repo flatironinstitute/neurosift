@@ -87,8 +87,8 @@ const ConnectToRemoteComponent: FunctionComponent = () => {
                             let url2 = editUrlText
 
                             // handle case where user pasted in the entire URL where sh is a query parameter
-                            if (url2.startsWith('https://scratchrealm.github.io')) {
-                                // for example: https://scratchrealm.github.io/rtcshare?sh=https://rtcshare-proxy.herokuapp.com/s/...&webrtc=1
+                            if (url2.startsWith('https://flatironinstitute.github.io')) {
+                                // for example: https://flatironinstitute.github.io/rtcshare?sh=https://rtcshare-proxy.herokuapp.com/s/...&webrtc=1
                                 const urlObj2 = new URL(url2)
                                 const sh = urlObj2.searchParams.get('sh')
                                 if (sh) {

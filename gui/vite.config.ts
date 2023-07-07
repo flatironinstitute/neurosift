@@ -12,5 +12,5 @@ export default defineConfig({
   define: {
     "process.env": {}
   },
-  base: "https://scratchrealm.github.io/neurosift",
+  base: "https://flatironinstitute.github.io/neurosift",
 })

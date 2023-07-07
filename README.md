@@ -47,7 +47,7 @@ rtcshare start --dir . --plugins neurosift
 # keep this terminal window running
 ```
 
-Go to https://scratchrealm.github.io/neurosift in your web browser. From here, you should be able to navigate to the test directory and see your files. You can then click on the files to visualize them.
+Go to https://flatironinstitute.github.io/neurosift in your web browser. From here, you should be able to navigate to the test directory and see your files. You can then click on the files to visualize them.
 
 ## Remote Access Capability
 
