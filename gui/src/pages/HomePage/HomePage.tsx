@@ -1,4 +1,5 @@
 import { FunctionComponent, useCallback, useState } from "react";
+import { FaGithub } from "react-icons/fa";
 import Hyperlink from "../../components/Hyperlink";
 import { defaultServiceBaseUrl, serviceBaseUrl } from "../../rtcshare/config";
 import { useRtcshareConnection } from "../../RtcshareConnection/RtcshareConnectionContext";
@@ -13,6 +14,10 @@ type Props = {
 const HomePage: FunctionComponent<Props> = ({width, height}) => {
     return (
         <div style={{padding: 20}}>
+            <h2>Welcome to Neurosift</h2>
+            <p><Hyperlink href="https://github.com/flatironinstitute/neurosift/blob/main/README.md" target="_blank">About this project</Hyperlink></p>
+            <p><FaGithub /> Please <Hyperlink href="https://github.com/flatironinstitute/neurosift" target="_blank">star us</Hyperlink> on GitHub.</p>
+            <hr / >
             <CheckRtcshareConnectivity />
         </div>
     )
@@ -103,7 +108,7 @@ const ConnectToRemoteComponent: FunctionComponent = () => {
                         <button onClick={() => setTextEditVisible(false)}>Cancel</button>
                     </div>
                 ) : (
-                    <Hyperlink onClick={() => setTextEditVisible(true)}>Connect to remote rtcshare</Hyperlink>
+                    <Hyperlink color="black" onClick={() => setTextEditVisible(true)}>Connect to remote rtcshare</Hyperlink>
                 )
             }
         </div>
