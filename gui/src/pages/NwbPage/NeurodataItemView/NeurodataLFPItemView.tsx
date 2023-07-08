@@ -9,10 +9,10 @@ type Props = {
     width: number
     height: number
     path: string
-    condenced?: boolean
+    condensed?: boolean
 }
 
-const NeurodataSpatialSeriesItemView: FunctionComponent<Props> = ({width, height, path, condenced}) => {
+const NeurodataLFPItemView: FunctionComponent<Props> = ({width, height, path, condensed}) => {
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is undefined (no context provider)')
     const group = useGroup(nwbFile, path)
@@ -21,11 +21,11 @@ const NeurodataSpatialSeriesItemView: FunctionComponent<Props> = ({width, height
         <AcquisitionItemTimeseriesView
             width={width}
             height={height}
-            objectPath={path}
+            objectPath={path + '/LFP'}
         />
     )
 
-    if (condenced) return content
+    if (condensed) return content
 
     return (
         <Splitter
@@ -45,4 +45,4 @@ const NeurodataSpatialSeriesItemView: FunctionComponent<Props> = ({width, height
     )
 }
 
-export default NeurodataSpatialSeriesItemView
+export default NeurodataLFPItemView

@@ -16,7 +16,7 @@ type Props = {
 const defaultId = 'c86cdfba-e1af-45a7-8dfd-d243adc20ced'
 const defaultUrl = `https://dandiarchive.s3.amazonaws.com/blobs/${defaultId.slice(0, 3)}/${defaultId.slice(3, 6)}/${defaultId}`
 
-const TestPage: FunctionComponent<Props> = ({width, height, url}) => {
+const NwbPage: FunctionComponent<Props> = ({width, height, url}) => {
     const [nwbFile, setNwbFile] = useState<RemoteH5File | undefined>(undefined)
     const [selectedNwbItemsState, selectedNwbItemsDispatch] = useReducer(selectedNwbItemsReducer, {selectedNwbItems: []})
 
@@ -64,4 +64,4 @@ const getMetaUrl = async (url: string) => {
     return undefined
 }
 
-export default TestPage
+export default NwbPage

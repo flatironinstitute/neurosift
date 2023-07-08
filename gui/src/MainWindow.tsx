@@ -5,7 +5,7 @@ import AboutPage from "./pages/AboutPage/AboutPage";
 import BrowsePage from "./pages/BrowsePage/BrowsePage";
 import { SetupOpenTabs } from "./pages/BrowsePage/OpenTabsContext";
 import HomePage from "./pages/HomePage/HomePage";
-import TestPage from "./pages/TestPage/TestPage";
+import NwbPage from "./pages/NwbPage/NwbPage";
 import StatusBar, { statusBarHeight } from "./StatusBar";
 import useRoute from "./useRoute";
 import useWindowDimensions from "./useWindowDimensions";
@@ -36,12 +36,12 @@ const MainWindow: FunctionComponent<Props> = () => {
                     ) : route.page === 'github-auth' ? (
                         <GitHubAuthPage />
                     ) : route.page === 'test' ? (
-                        <TestPage
+                        <NwbPage
                             width={width}
                             height={H}
                         />
                     ) : route.page === 'nwb' ? (
-                        <TestPage
+                        <NwbPage
                             width={width}
                             height={H}
                             url={route.url}

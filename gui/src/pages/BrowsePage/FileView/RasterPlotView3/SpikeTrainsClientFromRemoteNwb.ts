@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { DatasetDataType, getRemoteH5File, RemoteH5File } from "../../../TestPage/RemoteH5File/RemoteH5File"
+import { DatasetDataType, getRemoteH5File, RemoteH5File } from "../../../NwbPage/RemoteH5File/RemoteH5File"
 
 class SpikeTrainsClientFromRemoteNwb {
     #nwbFile: RemoteH5File | undefined

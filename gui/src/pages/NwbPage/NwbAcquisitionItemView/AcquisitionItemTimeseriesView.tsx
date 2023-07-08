@@ -2,8 +2,9 @@ import { FunctionComponent, useContext, useEffect, useMemo, useState } from "rea
 import TimeScrollView2, { useTimeScrollView2 } from "../../../package/component-time-scroll-view-2/TimeScrollView2";
 import { useTimeRange, useTimeseriesSelectionInitialization } from "../../../package/context-timeseries-selection";
 import { NwbFileContext } from "../NwbFileContext";
+import { useDataset } from "../NwbMainView/NwbMainView";
 import { Canceler } from "../RemoteH5File/helpers";
-import { RemoteH5Dataset, RemoteH5File } from "../RemoteH5File/RemoteH5File";
+import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient";
 import TimeseriesSelectionBar, { timeSelectionBarHeight } from "./TimeseriesSelectionBar";
 import { DataSeries, Opts } from "./WorkerTypes";
 
@@ -24,98 +25,23 @@ const yAxisInfo = {
     yMax: undefined
 }
 
-class DatasetChunkingClient {
-    #chunks: {[k: number]: number[][]} = {}
-    constructor(private nwbFile: RemoteH5File, private dataset: RemoteH5Dataset, private chunkSize: number) {
-    }
-    async getConcatenatedChunk(startChunkIndex: number, endChunkIndex: number, canceler: Canceler): Promise<{concatenatedChunk: number[][], completed: boolean}> {
-        const timer = Date.now()
-        const chunks: (number[][])[] = []
-        let completed = true
-        for (let ii = startChunkIndex; ii < endChunkIndex; ii ++) {
-            if (!this.#chunks[ii]) {
-                // there's a problem -- what if the chunk load gets canceled elsewhere. Not sure what to do.
-                await this._loadChunk(ii, canceler)
-            }
-            chunks.push(this.#chunks[ii])
-            const elapsedSec = (Date.now() - timer) / 1000
-            if (elapsedSec > 2) {
-                completed = false
-                break
-            }
-        }
-        const n1 = sum(chunks.map(ch => ((ch[0] || []).length)))
-        const concatenatedChunk: number[][] = []
-        const N1 = this.dataset.shape[1] || 1
-        for (let i = 0; i < N1; i ++) {
-            const x: number[] = []
-            for (let j = 0; j < n1; j ++) {
-                x.push(NaN)
-            }
-            concatenatedChunk.push(x)
-        }
-        let i1 = 0
-        for (let ii = startChunkIndex; ii < endChunkIndex; ii ++) {
-            const chunk = this.#chunks[ii]
-            if (chunk) {
-                for (let i = 0; i < chunk.length; i ++) {
-                    for (let j = 0; j < chunk[i].length; j ++) {
-                        concatenatedChunk[i][i1 + j] = chunk[i][j]
-                    }
-                }
-                i1 += (chunk[0] || []).length
-            }
-        }
-        return {concatenatedChunk, completed}
-    }
-    private async _loadChunk(chunkIndex: number, canceler: Canceler) {
-        const shape = this.dataset.shape
-        const i1 = chunkIndex * this.chunkSize
-        const i2 = Math.min(i1 + this.chunkSize, shape[0])
-        const N1 = Math.min(shape[1] || 1, 5) // for now limit to 5 columns (until we can figure out why reading is so slow)
-        const slice: [number, number][] = shape.length === 1 ? [[i1, i2]] : [[i1, i2], [0, N1]]
-        const data = await this.nwbFile.getDatasetData(this.dataset.path, {slice, canceler})
-        const chunk: number[][] = []
-        for (let i = 0; i < N1; i ++) {
-            const x: number[] = []
-            for (let j = 0; j < i2 - i1; j ++) {
-                x.push(data[i + j * N1])
-            }
-            chunk.push(x)
-        }
-        this.#chunks[chunkIndex] = chunk
-    }
-}
-
 const hideToolbar = false
 
 const AcquisitionItemTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath }) => {
-    const [samplingFrequency, setSamplingFrequency] = useState<number | undefined>(undefined)
     const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | undefined>()
     const [worker, setWorker] = useState<Worker | null>(null)
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is undefined (no context provider)')
-    const [dataset, setDataset] = useState<RemoteH5Dataset | undefined>(undefined)
-    const [datasetChunkingClient, setDatasetChunkingClient] = useState<DatasetChunkingClient | undefined>(undefined)
+    const [datasetChunkingClient, setDatasetChunkingClient] = useState<TimeseriesDatasetChunkingClient | undefined>(undefined)
+    const {visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange } = useTimeRange()
+
+    const dataset = useDataset(nwbFile, `${objectPath}/data`)
+    const startingTimeDataset = useDataset(nwbFile, `${objectPath}/starting_time`)
+    const samplingFrequency = startingTimeDataset ? startingTimeDataset.attrs['rate'] : undefined
+
     const startTime = samplingFrequency && dataset ? 0 : undefined
     const endTime = samplingFrequency && dataset ? dataset.shape[0] / samplingFrequency : undefined
     useTimeseriesSelectionInitialization(startTime, endTime)
-    const {visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange } = useTimeRange()
-
-    // Set dataset and samplingFrequency
-    useEffect(() => {
-        let canceled = false
-        const load = async () => {
-            const dset = await nwbFile.getDataset(`${objectPath}/data`)
-            if (canceled) return
-            const ds1 = await nwbFile.getDataset(`${objectPath}/starting_time`) // this is unintuitive: the sampling rate is an attribute of starting_time-
-            if (canceled) return
-            setDataset(dset)
-            setSamplingFrequency(ds1.attrs['rate'])
-        }
-        load()
-        return () => {canceled = true}
-    }, [nwbFile, objectPath])
 
     // Set chunkSize
     const chunkSize = useMemo(() => (
@@ -135,7 +61,7 @@ const AcquisitionItemTimeseriesView: FunctionComponent<Props> = ({ width, height
     useEffect(() => {
         if (!nwbFile) return
         if (!dataset) return
-        const client = new DatasetChunkingClient(nwbFile, dataset, chunkSize)
+        const client = new TimeseriesDatasetChunkingClient(nwbFile, dataset, chunkSize)
         setDatasetChunkingClient(client)
     }, [dataset, nwbFile, chunkSize])
 
@@ -296,14 +222,6 @@ const AcquisitionItemTimeseriesView: FunctionComponent<Props> = ({ width, height
             </div>
         </div>
     )
-}
-
-const sum = (x: number[]) => {
-    let s = 0
-    for (let i = 0; i < x.length; i ++) {
-        s += x[i]
-    }
-    return s
 }
 
 export default AcquisitionItemTimeseriesView

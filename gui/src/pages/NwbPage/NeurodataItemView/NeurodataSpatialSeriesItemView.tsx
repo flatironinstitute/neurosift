@@ -1,31 +1,31 @@
 import { FunctionComponent, useContext } from "react"
 import Splitter from "../../../components/Splitter"
-import AcquisitionItemTimeseriesView from "../NwbAcquisitionItemView/AcquisitionItemTimeseriesView"
 import { NwbFileContext } from "../NwbFileContext"
 import { useGroup } from "../NwbMainView/NwbMainView"
+import SpatialSeriesWidget from "../SpatialSeriesWidget/SpatialSeriesWidget"
 import NeurodataItemViewLeftPanel from "./NeurodataItemViewLeftPanel"
 
 type Props = {
     width: number
     height: number
     path: string
-    condenced?: boolean
+    condensed?: boolean
 }
 
-const NeurodataLFPItemView: FunctionComponent<Props> = ({width, height, path, condenced}) => {
+const NeurodataSpatialSeriesItemView: FunctionComponent<Props> = ({width, height, path, condensed}) => {
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is undefined (no context provider)')
     const group = useGroup(nwbFile, path)
 
     const content = (
-        <AcquisitionItemTimeseriesView
+        <SpatialSeriesWidget
             width={width}
             height={height}
-            objectPath={path + '/LFP'}
+            objectPath={path}
         />
     )
 
-    if (condenced) return content
+    if (condensed) return content
 
     return (
         <Splitter
@@ -45,4 +45,4 @@ const NeurodataLFPItemView: FunctionComponent<Props> = ({width, height, path, co
     )
 }
 
-export default NeurodataLFPItemView
+export default NeurodataSpatialSeriesItemView
