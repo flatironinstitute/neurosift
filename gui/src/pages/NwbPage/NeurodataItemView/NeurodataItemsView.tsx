@@ -85,7 +85,7 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({width, height, items}) =>
                                 height={H - titleBarHeight}
                                 path={item.path}
                                 neurodataType={item.neurodataType}
-                                condenced={true}
+                                condensed={true}
                             />
                         </div>
                     </div>

@@ -1,5 +1,6 @@
 import { FunctionComponent } from "react"
 import { useTimeRange, useTimeseriesSelection } from "../../../package/context-timeseries-selection"
+import PlayControl from "./PlayControl"
 
 type Props = {
     // none
@@ -13,6 +14,8 @@ const TimeseriesSelectionWidget: FunctionComponent<Props> = () => {
             <pre>select: {formatTimestamp(currentTime)}</pre>
             <pre>start:  {formatTimestamp(visibleStartTimeSec)}</pre>
             <pre>end:    {formatTimestamp(visibleEndTimeSec)}</pre>
+            <div>&nbsp;</div>
+            <PlayControl />
         </div>
     )
 }

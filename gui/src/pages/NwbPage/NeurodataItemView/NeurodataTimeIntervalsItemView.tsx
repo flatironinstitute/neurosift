@@ -3,29 +3,32 @@ import Splitter from "../../../components/Splitter"
 import AcquisitionItemTimeseriesView from "../NwbAcquisitionItemView/AcquisitionItemTimeseriesView"
 import { NwbFileContext } from "../NwbFileContext"
 import { useGroup } from "../NwbMainView/NwbMainView"
+import NwbTimeIntervalsView from "../NwbProcessingBehaviorItemView/NwbTimeIntervalsView"
 import NeurodataItemViewLeftPanel from "./NeurodataItemViewLeftPanel"
 
 type Props = {
     width: number
     height: number
     path: string
-    condenced?: boolean
+    condensed?: boolean
 }
 
-const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({width, height, path, condenced}) => {
+const NeurodataTimeIntervalsItemView: FunctionComponent<Props> = ({width, height, path, condensed}) => {
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is undefined (no context provider)')
     const group = useGroup(nwbFile, path)
+    if (!group) return <div>Loading...</div>
 
     const content = (
-        <AcquisitionItemTimeseriesView
+        <NwbTimeIntervalsView
             width={width}
             height={height}
-            objectPath={path}
+            nwbFile={nwbFile}
+            group={group}
         />
     )
 
-    if (condenced) return content
+    if (condensed) return content
 
     return (
         <Splitter
@@ -40,9 +43,9 @@ const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({width, height, p
                 path={path}
                 group={group}
             />
-            {content}  
+            {content}
         </Splitter>
     )
 }
 
-export default NeurodataTimeSeriesItemView
+export default NeurodataTimeIntervalsItemView
