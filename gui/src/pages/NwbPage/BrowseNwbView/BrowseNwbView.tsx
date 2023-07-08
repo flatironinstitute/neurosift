@@ -3,6 +3,7 @@ import { NwbFileContext } from "../NwbFileContext"
 import { useDataset, useDatasetData, useGroup } from "../NwbMainView/NwbMainView"
 import { RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import './nwb-attributes-table.css'
+import TopLevelGroupContentPanel from "./TopLevelGroupContentPanel"
 
 type Props = {
     width: number
@@ -42,7 +43,8 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({width, height, nwbFile}) 
                 ))
             }
             <hr />
-            {
+            <TopLevelGroupContentPanel name={'/'} group={rootGroup} nwbFile={nwbFile} excludeGroups={true} />
+            {/* {
                 rootGroup.datasets.map((ds) => (
                     <TopLevelDatasetView
                         key={ds.name}
@@ -56,7 +58,7 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({width, height, nwbFile}) 
                 <AttributesView
                     attrs={rootGroup.attrs}
                 />
-            }
+            } */}
         </div>
     )
 }
@@ -126,40 +128,6 @@ const GroupTitlePanelText: FunctionComponent<GroupTitlePanelTextProps> = ({name,
     return <span>({group.subgroups.length + group.datasets.length})</span>
 }
 
-type TopLevelGroupContentPanelProps = {
-    name: string
-    group: RemoteH5Group
-    nwbFile: RemoteH5File
-}
-
-const TopLevelGroupContentPanel: FunctionComponent<TopLevelGroupContentPanelProps> = ({group}) => {
-    return (
-        <div>
-            <div style={{marginLeft: 10}}>
-                {
-                    group.subgroups.map((sg) => (
-                        <div key={sg.name}>
-                            {sg.name}
-                        </div>
-                    ))
-                }
-                <hr />
-                {
-                    group.datasets.map((d) => (
-                        <div key={d.name}>
-                            DS: {d.name}
-                        </div>
-                    ))
-                }
-                <hr />
-            </div>
-            <AttributesView
-                attrs={group.attrs}
-            />
-        </div>
-    )
-}
-
 type DatasetTitlePanelTextProps = {
     name: string
     dataset: RemoteH5Dataset | undefined
@@ -220,7 +188,7 @@ const AttributesView: FunctionComponent<{attrs: {[key: string]: any}}>= ({attrs}
         )
 }
 
-const valueToString = (val: any): string => {
+export const valueToString = (val: any): string => {
     if (typeof(val) === 'string') {
         return val
     }
