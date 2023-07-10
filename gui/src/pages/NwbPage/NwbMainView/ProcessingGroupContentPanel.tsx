@@ -74,7 +74,7 @@ const ProcessingGroupContentPanel: FunctionComponent<Props> = ({nwbFile, groupPa
                     if (gg) {
                         for (const subsubgroup of gg.subgroups) {
                             ret.push({
-                                name: 'LFP/' + subsubgroup.name,
+                                name: subgroup.name + '/' + subsubgroup.name,
                                 path: subsubgroup.path
                             })
                         }
