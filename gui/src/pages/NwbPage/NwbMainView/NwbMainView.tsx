@@ -1,4 +1,4 @@
-import { FunctionComponent, useContext, useEffect, useState } from "react"
+import { FunctionComponent, useContext, useEffect, useMemo, useState } from "react"
 import Splitter from "../../../components/Splitter"
 import { NwbFileContext } from "../NwbFileContext"
 import { RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
@@ -7,6 +7,8 @@ import AcquisitionContentPanel from "./AcquisitionContentPanel"
 import NwbMainLeftPanel from "./NwbMainLeftPanel"
 import ProcessingBehaviorContentPanel from "./ProcessingBehaviorContentPanel"
 import ProcessingEcephysContentPanel from "./ProcessingEcephysContentPanel"
+import ProcessingGroupContentPanel from "./ProcessingGroupContentPanel"
+import SpecificationsContentPanel from "./SpecificationsContentPanel"
 
 type Props = {
     width: number
@@ -49,55 +51,53 @@ type Heading = {
     groupPath: string
 }
 
-const headings: Heading[] = [
-    {
-        name: 'acquisition',
-        label: 'acquisition',
-        groupPath: '/acquisition'
-    },
-    {
-        name: 'analysis',
-        label: 'analysis',
-        groupPath: '/analysis'
-    },
-    {
-        name: 'general',
-        label: 'general',
-        groupPath: '/general'
-    },
-    {
-        name: 'processing/behavior',
-        label: 'processing/behavior',
-        groupPath: '/processing/behavior'
-    },
-    {
-        name: 'processing/ecephys',
-        label: 'processing/ecephys',
-        groupPath: '/processing/ecephys'
-    },
-    {
-        name: 'processing/spikes',
-        label: 'processing/spikes',
-        groupPath: '/processing/spikes'
-    },
-    {
-        name: 'specifications',
-        label: 'specifications',
-        groupPath: '/specifications'
-    },
-    {
-        name: 'stimulus',
-        label: 'stimulus',
-        groupPath: '/stimulus'
-    },
-    {
-        name: 'units',
-        label: 'units',
-        groupPath: '/units'
-    }
-]
-
 const MainPanel: FunctionComponent<MainPanelProps> = ({width, height, nwbFile}) => {
+    const processinGroup = useGroup(nwbFile, '/processing')
+    const headings = useMemo(() => {
+        const hh: Heading[] = []
+        hh.push({
+            name: 'acquisition',
+            label: 'acquisition',
+            groupPath: '/acquisition'
+        })
+        hh.push({
+            name: 'analysis',
+            label: 'analysis',
+            groupPath: '/analysis'
+        })
+        hh.push({
+            name: 'general',
+            label: 'general',
+            groupPath: '/general'
+        })
+
+        if (processinGroup) {
+            processinGroup.subgroups.forEach(sg => {
+                hh.push({
+                    name: `processing/${sg.name}`,
+                    label: `processing/${sg.name}`,
+                    groupPath: `/processing/${sg.name}`
+                })
+            })
+        }
+
+        hh.push({
+            name: 'specifications',
+            label: 'specifications',
+            groupPath: '/specifications'
+        })
+        hh.push({
+            name: 'stimulus',
+            label: 'stimulus',
+            groupPath: '/stimulus'
+        })
+        hh.push({
+            name: 'units',
+            label: 'units',
+            groupPath: '/units'
+        })
+        return hh
+    }, [processinGroup])
     return (
         <div style={{position: 'absolute', width, height, overflowY: 'auto'}}>
             {
@@ -187,11 +187,11 @@ const TopLevelContentPanel: FunctionComponent<TopLevelContentPanelProps> = ({hea
     else if (name === 'acquisition') {
         return <AcquisitionContentPanel nwbFile={nwbFile} group={group} />
     }
-    else if (name === 'processing/behavior') {
-        return <ProcessingBehaviorContentPanel nwbFile={nwbFile} />
+    else if (name.startsWith('processing/')) {
+        return <ProcessingGroupContentPanel nwbFile={nwbFile} groupPath={heading.groupPath} />
     }
-    else if (name === 'processing/ecephys') {
-        return <ProcessingEcephysContentPanel nwbFile={nwbFile} />
+    else if (name === 'specifications') {
+        return <SpecificationsContentPanel nwbFile={nwbFile} />
     }
     return (
         <div style={{marginLeft: 10}}>

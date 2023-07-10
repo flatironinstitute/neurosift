@@ -39,6 +39,7 @@ const NeurodataSpatialSeriesItemView: FunctionComponent<Props> = ({width, height
                 height={0}
                 path={path}
                 group={group}
+                viewName="SpatialSeries"
             />
             {content}
         </Splitter>

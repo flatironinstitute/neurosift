@@ -7,9 +7,10 @@ type Props = {
     height: number
     path: string
     group: RemoteH5Group | undefined
+    viewName: string
 }
 
-const NeurodataItemViewLeftPanel: FunctionComponent<Props> = ({width, height, path, group}) => {
+const NeurodataItemViewLeftPanel: FunctionComponent<Props> = ({width, height, path, group, viewName}) => {
     return (
         <div>
             <table className="nwb-table">
@@ -29,6 +30,10 @@ const NeurodataItemViewLeftPanel: FunctionComponent<Props> = ({width, height, pa
                     <tr>
                         <td>Comments</td>
                         <td><Abbreviate>{group?.attrs?.comments}</Abbreviate></td>
+                    </tr>
+                    <tr>
+                        <td>View</td>
+                        <td>{viewName}</td>
                     </tr>
                 </tbody>
             </table>

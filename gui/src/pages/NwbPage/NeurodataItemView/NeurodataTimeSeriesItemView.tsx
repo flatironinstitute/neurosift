@@ -39,6 +39,7 @@ const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({width, height, p
                 height={0}
                 path={path}
                 group={group}
+                viewName="TimeSeries"
             />
             {content}  
         </Splitter>

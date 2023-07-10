@@ -42,6 +42,7 @@ const NeurodataTimeIntervalsItemView: FunctionComponent<Props> = ({width, height
                 height={0}
                 path={path}
                 group={group}
+                viewName="TimeIntervals"
             />
             {content}
         </Splitter>
