@@ -4,6 +4,40 @@ let canvas: HTMLCanvasElement | undefined = undefined
 let opts: Opts | undefined = undefined
 let dataSeries: DataSeries | undefined = undefined
 
+type Tick = {
+    value: number
+    major: boolean
+}
+
+const xTargetTickSpacingPx = 180
+const ytargetTickSpacingPx = 80
+
+const getTicks = (min: number, max: number, numPixels: number, targetTickSpacingPx: number): Tick[] => {
+    const dataRange = max - min
+    if (!dataRange) return []
+    // get the step size for the ticks
+    // stepSize / dataRange * numPixels ~= tickSpacingPx
+    // stepSize ~= tickSpacingPx * dataRange / numPixels
+    const stepSizeCandidateMinBase = Math.floor(Math.log10(targetTickSpacingPx * dataRange / numPixels))
+    const candidateMultipliers = [1, 2, 5]
+    const candidateStepSizes = candidateMultipliers.map(m => m * Math.pow(10, stepSizeCandidateMinBase))
+    const distances = candidateStepSizes.map(s => Math.abs(s - targetTickSpacingPx * dataRange / numPixels))
+    const bestIndex = distances.indexOf(Math.min(...distances))
+    const bestStepSize = candidateStepSizes[bestIndex]
+
+    const i1 = Math.ceil(min / bestStepSize)
+    const i2 = Math.floor(max / bestStepSize)
+    const ticks: Tick[] = []
+    for (let i = i1; i <= i2; i ++) {
+        const v = i * bestStepSize
+        ticks.push({
+            value: v,
+            major: false // fix this
+        })
+    }
+    return ticks
+}
+
 onmessage = function (evt) {
     if (evt.data.canvas) {
         canvas = evt.data.canvas
@@ -50,17 +84,87 @@ async function draw() {
     canvasContext.clearRect(0, 0, canvasWidth, canvasHeight)
 
     const timer = Date.now()
-    const valueRange = {xMin, xMax, yMin, yMax}
+
+    const scale = Math.min((canvasWidth - margins.left - margins.right) / (xMax - xMin), (canvasHeight - margins.top - margins.bottom) / (yMax - yMin))
+    const offsetX = (canvasWidth - margins.left - margins.right - (xMax - xMin) * scale) / 2
+    const offsetY = (canvasHeight - margins.top - margins.bottom - (yMax - yMin) * scale) / 2
     const coordToPixel = (p: {x: number, y: number}) => {
-        const {xMin, xMax, yMin, yMax} = valueRange
-        const scale = Math.min((canvasWidth - margins.left - margins.right) / (xMax - xMin), (canvasHeight - margins.top - margins.bottom) / (yMax - yMin))
-        const offsetX = (canvasWidth - margins.left - margins.right - (xMax - xMin) * scale) / 2
-        const offsetY = (canvasHeight - margins.top - margins.bottom - (yMax - yMin) * scale) / 2
         return {
             x: !isNaN(p.x) ? margins.left + offsetX + (p.x - xMin) * scale : NaN, 
             y: !isNaN(p.y) ? canvasHeight - margins.bottom - offsetY - (p.y - yMin) * scale : NaN
         }
     }
+
+    const formatTickLabel = (value: number) => {
+        // do not have excess zeros on the right
+        const s = value.toFixed(10)
+        const i = s.indexOf('.')
+        if (i < 0) return s
+        let j = s.length - 1
+        while (j > i) {
+            if (s[j] !== '0') break
+            j--
+        }
+        // remove a trailing decimal point
+        if (s[j] === '.') j--
+        return s.slice(0, j + 1)
+    }
+
+    const xTicks = getTicks(xMin, xMax, canvasWidth - margins.left - margins.right, xTargetTickSpacingPx)
+    const drawXAxis = () => {
+        const p1 = coordToPixel({x: xMin, y: yMin})
+        const p2 = coordToPixel({x: xMax, y: yMin})
+        canvasContext.beginPath()
+        canvasContext.moveTo(p1.x, p1.y)
+        canvasContext.lineTo(p2.x, p2.y)
+        canvasContext.strokeStyle = 'rgb(0,0,0)'
+        canvasContext.stroke()
+
+        for (const tick of xTicks) {
+            const p = coordToPixel({x: tick.value, y: yMin})
+            canvasContext.beginPath()
+            canvasContext.moveTo(p.x, p.y)
+            canvasContext.lineTo(p.x, p.y + 5)
+            canvasContext.strokeStyle = 'rgb(0,0,0)'
+            canvasContext.stroke()
+
+            // draw the tick label
+            canvasContext.font = '12px sans-serif'
+            canvasContext.fillStyle = 'rgb(0,0,0)'
+            canvasContext.textAlign = 'center'
+            canvasContext.textBaseline = 'top'
+            canvasContext.fillText(formatTickLabel(tick.value), p.x, p.y + 7)
+        }
+    }
+    drawXAxis()
+
+    const yTicks = getTicks(yMin, yMax, canvasHeight - margins.top - margins.bottom, ytargetTickSpacingPx)
+    const drawYAxis = () => {
+        const p1 = coordToPixel({x: xMin, y: yMin})
+        const p2 = coordToPixel({x: xMin, y: yMax})
+        canvasContext.beginPath()
+        canvasContext.moveTo(p1.x, p1.y)
+        canvasContext.lineTo(p2.x, p2.y)
+        canvasContext.strokeStyle = 'rgb(0,0,0)'
+        canvasContext.stroke()
+
+        for (const tick of yTicks) {
+            const p = coordToPixel({x: xMin, y: tick.value})
+            canvasContext.beginPath()
+            canvasContext.moveTo(p.x, p.y)
+            canvasContext.lineTo(p.x - 5, p.y)
+            canvasContext.strokeStyle = 'rgb(0,0,0)'
+            canvasContext.stroke()
+
+            // draw the tick label
+            canvasContext.font = '12px sans-serif'
+            canvasContext.fillStyle = 'rgb(0,0,0)'
+            canvasContext.textAlign = 'right'
+            canvasContext.textBaseline = 'middle'
+            canvasContext.fillText(formatTickLabel(tick.value), p.x - 7, p.y)
+        }
+    }
+    drawYAxis()
 
     const tToColor = (t: number) => {
         const frac = (t - visibleStartTimeSec) / (visibleEndTimeSec - visibleStartTimeSec)

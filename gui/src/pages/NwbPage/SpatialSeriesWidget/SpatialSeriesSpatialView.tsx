@@ -13,19 +13,6 @@ type Props = {
     objectPath: string
 }
 
-const gridlineOpts = {
-    hideX: false,
-    hideY: true
-}
-
-const yAxisInfo = {
-    showTicks: false,
-    yMin: undefined,
-    yMax: undefined
-}
-
-const hideToolbar = false
-
 const SpatialSeriesSpatialView: FunctionComponent<Props> = ({ width, height, objectPath }) => {
     const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | undefined>()
     const [worker, setWorker] = useState<Worker | null>(null)
@@ -125,7 +112,7 @@ const SpatialSeriesSpatialView: FunctionComponent<Props> = ({ width, height, obj
 
     const canvasWidth = width
     const canvasHeight = height - timeSelectionBarHeight
-    const margins = useMemo(() => ({left: 20, right: 20, top: 20, bottom: 20}), [])
+    const margins = useMemo(() => ({left: 50, right: 20, top: 20, bottom: 50}), [])
 
     // Set valueRange
     const [valueRange, setValueRange] = useState<{xMin: number, xMax: number, yMin: number, yMax: number} | undefined>(undefined)
