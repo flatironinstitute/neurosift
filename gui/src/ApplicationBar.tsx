@@ -1,6 +1,7 @@
 import { Login, Logout } from "@mui/icons-material";
 import { AppBar, Toolbar } from "@mui/material";
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
+import Hyperlink from "./components/Hyperlink";
 import ModalWindow from "./components/ModalWindow/ModalWindow";
 import GitHubLoginWindow from "./GitHub/GitHubLoginWindow";
 import { useGithubAuth } from "./GithubAuth/useGithubAuth";
@@ -33,12 +34,17 @@ const ApplicationBar: FunctionComponent<Props> = () => {
     // light greenish background color for app bar
     const barColor = '#e0ffe0'
 
+    const bannerColor = '#00a000'
+
+    const star = <span style={{color: bannerColor, fontSize: 20}}>★</span>
+
     return (
         <span>
             <AppBar position="static" style={{height: applicationBarHeight - 10, color: 'black', background: barColor}}>
                 <Toolbar style={{minHeight: applicationBarHeight - 10}}>
                     <img src={logoUrl} alt="logo" height={30} style={{paddingBottom: 5, cursor: 'pointer'}} onClick={onHome} />
                     <div onClick={onHome} style={{cursor: 'pointer'}}>&nbsp;&nbsp;&nbsp;Neurosift</div>
+                    <div style={{color: bannerColor}}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{star} This viewer is in alpha and is under <Hyperlink color={bannerColor} href="https://github.com/flatironinstitute/neurosift" target="_blank">active development</Hyperlink> {star}</div>
                     <span style={{marginLeft: 'auto'}} />
                     {
                         signedIn && (
