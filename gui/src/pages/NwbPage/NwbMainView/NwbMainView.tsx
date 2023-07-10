@@ -5,8 +5,6 @@ import { RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/Re
 import UnitsContentPanel from "../UnitsContentPanel"
 import AcquisitionContentPanel from "./AcquisitionContentPanel"
 import NwbMainLeftPanel from "./NwbMainLeftPanel"
-import ProcessingBehaviorContentPanel from "./ProcessingBehaviorContentPanel"
-import ProcessingEcephysContentPanel from "./ProcessingEcephysContentPanel"
 import ProcessingGroupContentPanel from "./ProcessingGroupContentPanel"
 import SpecificationsContentPanel from "./SpecificationsContentPanel"
 
