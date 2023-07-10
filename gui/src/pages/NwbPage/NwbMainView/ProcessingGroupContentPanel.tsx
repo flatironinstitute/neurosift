@@ -69,7 +69,7 @@ const ProcessingGroupContentPanel: FunctionComponent<Props> = ({nwbFile, groupPa
                 // BehavioralTimeSeries holds TimeSeries
                 // EyeTracking holds SpatialSeries
                 // Position holds SpatialSeries
-                if (['LFP', 'Fluorescence', 'DFOverF', 'BehavioralTimeSeries', 'EyeTracking', 'Position'].includes(subgroup.name)) {
+                if (['LFP', 'Fluorescence', 'DFOverF', 'BehavioralTimeSeries', 'EyeTracking', 'Position'].includes(subgroup.attrs['neurodata_type'])) {
                     const gg = loadedGroups.loaded[subgroup.path]
                     if (gg) {
                         for (const subsubgroup of gg.subgroups) {

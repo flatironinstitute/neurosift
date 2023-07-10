@@ -3,13 +3,22 @@ import { Canceler, postRemoteH5WorkerRequest } from "./helpers"
 export type RemoteH5Group = {
   path: string
   subgroups: RemoteH5Subgroup[]
-  datasets: RemoteH5Dataset[]
+  datasets: RemoteH5Subdataset[]
   attrs: { [key: string]: any }
 }
 
 export type RemoteH5Subgroup = {
   name: string
   path: string
+  attrs: { [key: string]: any }
+}
+
+export type RemoteH5Subdataset = {
+  name: string
+  path: string
+  shape: number[]
+  dtype: string
+  attrs: { [key: string]: any }
 }
 
 export type RemoteH5Dataset = {

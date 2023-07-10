@@ -53,15 +53,27 @@ const getGroup = async (url, path) => {
         const subName = item[0]
         const x = item[1]
         if (x.type === 'Group') {
+            const subgroupAttrs = {}
+            for (let attributeKey in x.attrs) {
+                subgroupAttrs[attributeKey] = x.attrs[attributeKey].value
+            }
             subgroups.push({
                 name: subName,
-                path: x.path
+                path: x.path,
+                attrs: subgroupAttrs
             })
         }
         else if (x.type === 'Dataset') {
+            const datasetAttrs = {}
+            for (let attributeKey in x.attrs) {
+                datasetAttrs[attributeKey] = x.attrs[attributeKey].value
+            }
             datasets.push({
                 name: subName,
-                path: x.path
+                path: x.path,
+                shape: x.shape,
+                dtype: x.dtype,
+                attrs: datasetAttrs
             })
         }
     }
