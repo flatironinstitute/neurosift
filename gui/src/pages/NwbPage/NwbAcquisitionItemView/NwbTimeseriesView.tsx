@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { FunctionComponent, useContext, useEffect, useMemo, useState } from "react"
+import { QuestionMark } from "@mui/icons-material"
+import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react"
 import TimeScrollView2, { useTimeScrollView2 } from "../../../package/component-time-scroll-view-2/TimeScrollView2"
 import { useTimeRange, useTimeseriesSelectionInitialization } from "../../../package/context-timeseries-selection"
 import { NwbFileContext } from "../NwbFileContext"
@@ -9,6 +10,9 @@ import { useNwbTimeseriesDataClient } from "./NwbTimeseriesDataClient"
 import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient"
 import TimeseriesSelectionBar, { timeSelectionBarHeight } from "./TimeseriesSelectionBar"
 import { DataSeries, Opts } from "./WorkerTypes"
+import {ToolbarItem} from "../../../package/ViewToolbar/Toolbars"
+import { useModalDialog } from "../../../ApplicationBar"
+import ModalWindow from "../../../components/ModalWindow/ModalWindow"
 
 type Props = {
     width: number
@@ -103,6 +107,8 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
         return () => {canceled = true}
     }, [dataset, visibleStartTimeSec, visibleEndTimeSec, chunkSize, dataClient])
 
+    const [dataseriesMode, setDataseriesMode] = useState<'line' | 'marker'>('line')
+
     // Set dataSeries
     const [dataSeries, setDataSeries] = useState<DataSeries[] | undefined>(undefined)
     useEffect(() => {
@@ -128,7 +134,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
                     const dataSeries: DataSeries[] = []
                     for (let i = 0; i < concatenatedChunk.length; i ++) {
                         dataSeries.push({
-                            type: 'line',
+                            type: dataseriesMode,
                             title: `ch${i}`,
                             attributes: {color: 'black'},
                             t: Array.from(tt),
@@ -149,7 +155,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
             canceled = true
             if (canceler) canceler.onCancel.forEach(cb => cb())
         }
-    }, [chunkSize, datasetChunkingClient, dataset, startChunkIndex, endChunkIndex, dataClient, zoomInRequired])
+    }, [chunkSize, datasetChunkingClient, dataset, startChunkIndex, endChunkIndex, dataClient, zoomInRequired, dataseriesMode])
 
     // Set valueRange
     const [valueRange, setValueRange] = useState<{min: number, max: number} | undefined>(undefined)
@@ -228,6 +234,25 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
         })
     }, [worker, dataSeries])
 
+    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (e.key === 'm') {
+            setDataseriesMode(old => (old === 'line') ? 'marker' : 'line')
+        }
+    }, [])
+
+    const {visible: helpVisible, handleOpen: handleOpenHelp, handleClose: handleCloseHelp} = useModalDialog()
+
+    const additionalToolbarItems: ToolbarItem[] = useMemo(() => {
+        return [
+            {
+                type: 'button',
+                callback: () => {handleOpenHelp()},
+                title: 'Get help',
+                icon: <QuestionMark />
+            }
+        ]
+    }, [handleOpenHelp])
+
     return (
         <div style={{position: 'absolute', width, height}}>
             <div style={{position: 'absolute', width, height: timeSelectionBarHeight}}>
@@ -241,10 +266,38 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
                     gridlineOpts={gridlineOpts}
                     yAxisInfo={yAxisInfo}
                     hideToolbar={hideToolbar}
+                    onKeyDown={handleKeyDown}
+                    additionalToolbarItems={additionalToolbarItems}
                 />
             </div>
+            <ModalWindow
+                open={helpVisible}
+                onClose={handleCloseHelp}
+            >
+                <HelpWindow />
+            </ModalWindow>
         </div>
     )    
+}
+
+const HelpWindow: FunctionComponent = () => {
+    return (
+        <div>
+            <h3>Keyboard shortcuts (click to select the plot first)</h3>
+            <ul>
+                <li><b>m</b> - toggle between line and marker mode</li>
+                {/* Explain that left and right arrows can be used to pan */}
+                <li><b>left arrow</b> - pan left</li>
+                <li><b>right arrow</b> - pan right</li>
+                {/* Explain that mouse wheel can be used to zoom */}
+                <li><b>mouse wheel</b> - zoom in/out</li>
+                {/* Explain that mouse drag can be used to pan */}
+                <li><b>mouse drag</b> - pan</li>
+                {/* Explain that mouse click selects a time point */}
+                <li><b>mouse click</b> - select a time point</li>
+            </ul>
+        </div>
+    )
 }
 
 export default NwbTimeseriesView

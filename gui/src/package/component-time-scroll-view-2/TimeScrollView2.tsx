@@ -5,7 +5,7 @@ import useActionToolbar from '../component-time-scroll-view/TimeScrollViewAction
 import useTimeScrollEventHandlers, { suppressWheelScroll } from '../component-time-scroll-view/TimeScrollViewInteractions/TimeScrollViewEventHandlers';
 import { TickSet } from '../component-time-scroll-view/YAxisTicks';
 import { useTimeRange, useTimeseriesSelection } from '../context-timeseries-selection';
-import { ViewToolbar } from '../ViewToolbar';
+import { ToolbarItem, ViewToolbar } from '../ViewToolbar';
 import { useTimeTicks } from './timeTicks';
 import TSV2AxesLayer from './TSV2AxesLayer';
 import TSV2CursorLayer from './TSV2CursorLayer';
@@ -27,6 +27,7 @@ type Props = {
         yMin?: number
         yMax?: number
     }
+    additionalToolbarItems?: ToolbarItem[]
 }
 
 const defaultMargins = {
@@ -51,7 +52,7 @@ export const useTimeScrollView2 = ({width, height, hideToolbar}: {width: number,
     }
 }
 
-const TimeScrollView2: FunctionComponent<Props> = ({width, height, onCanvasElement, gridlineOpts, onKeyDown, onMouseDown, onMouseMove, onMouseOut, onMouseUp, hideToolbar, yAxisInfo, shiftZoom}) => {
+const TimeScrollView2: FunctionComponent<Props> = ({width, height, onCanvasElement, gridlineOpts, onKeyDown, onMouseDown, onMouseMove, onMouseOut, onMouseUp, hideToolbar, yAxisInfo, shiftZoom, additionalToolbarItems}) => {
     const { visibleStartTimeSec, visibleEndTimeSec, zoomTimeseriesSelection, panTimeseriesSelection } = useTimeRange()
     const {currentTime, currentTimeInterval } = useTimeseriesSelection()
     const timeRange = useMemo(() => (
@@ -222,7 +223,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({width, height, onCanvasEleme
         )
     }, [onCanvasElement, axesLayer, cursorLayer, canvasWidth, canvasHeight, handleKeyDown, handleWheel, handleMouseDown2, handleMouseUp2, handleMouseMove2, handleMouseOut2])
     
-    const timeControlActions = useActionToolbar()
+    const timeControlActions = useActionToolbar({belowDefault: additionalToolbarItems})
 
     if (hideToolbar) {
         return (
