@@ -8,6 +8,8 @@ export type Opts = {
     xMax: number
     yMin: number
     yMax: number
+    xAxisLabel: string
+    yAxisLabel: string
     zoomInRequired: boolean
 }
 

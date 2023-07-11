@@ -70,7 +70,7 @@ async function draw() {
     if (!opts) return
     if (!dataSeries) return
 
-    const {margins, canvasWidth, canvasHeight, visibleStartTimeSec, visibleEndTimeSec, xMin, xMax, yMin, yMax} = opts
+    const {margins, canvasWidth, canvasHeight, visibleStartTimeSec, visibleEndTimeSec, xMin, xMax, yMin, yMax, xAxisLabel, yAxisLabel} = opts
 
     // this is important because main thread no longer has control of canvas (it seems)
     canvas.width = canvasWidth
@@ -135,6 +135,13 @@ async function draw() {
             canvasContext.textBaseline = 'top'
             canvasContext.fillText(formatTickLabel(tick.value), p.x, p.y + 7)
         }
+
+        // draw the axis label
+        canvasContext.font = '12px sans-serif'
+        canvasContext.fillStyle = 'rgb(0,0,0)'
+        canvasContext.textAlign = 'center'
+        canvasContext.textBaseline = 'top'
+        canvasContext.fillText(xAxisLabel, (p1.x + p2.x) / 2, p1.y + 18)
     }
     drawXAxis()
 
@@ -163,6 +170,17 @@ async function draw() {
             canvasContext.textBaseline = 'middle'
             canvasContext.fillText(formatTickLabel(tick.value), p.x - 7, p.y)
         }
+
+        // draw the axis label as vertical text
+        canvasContext.font = '12px sans-serif'
+        canvasContext.fillStyle = 'rgb(0,0,0)'
+        canvasContext.textAlign = 'center'
+        canvasContext.textBaseline = 'top'
+        canvasContext.save()
+        canvasContext.translate(p1.x - 45, (p1.y + p2.y) / 2)
+        canvasContext.rotate(-Math.PI / 2)
+        canvasContext.fillText(yAxisLabel, 0, 0)
+        canvasContext.restore()
     }
     drawYAxis()
 

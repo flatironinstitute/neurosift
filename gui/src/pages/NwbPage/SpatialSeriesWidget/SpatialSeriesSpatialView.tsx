@@ -137,7 +137,7 @@ const SpatialSeriesSpatialView: FunctionComponent<Props> = ({ width, height, obj
 
     const canvasWidth = width
     const canvasHeight = height - timeSelectionBarHeight
-    const margins = useMemo(() => ({left: 50, right: 20, top: 20, bottom: 50}), [])
+    const margins = useMemo(() => ({left: 60, right: 20, top: 20, bottom: 30}), [])
 
     // Set valueRange
     const [valueRange, setValueRange] = useState<{xMin: number, xMax: number, yMin: number, yMax: number} | undefined>(undefined)
@@ -177,12 +177,14 @@ const SpatialSeriesSpatialView: FunctionComponent<Props> = ({ width, height, obj
             xMax: valueRange ? valueRange.xMax : 1,
             yMin: valueRange ? valueRange.yMin : 0,
             yMax: valueRange ? valueRange.yMax : 1,
+            xAxisLabel: dataset?.attrs['unit'] || '',
+            yAxisLabel: dataset?.attrs['unit'] || '',
             zoomInRequired
         }
         worker.postMessage({
             opts
         })
-    }, [canvasWidth, canvasHeight, margins, visibleStartTimeSec, visibleEndTimeSec, worker, valueRange, zoomInRequired])
+    }, [canvasWidth, canvasHeight, margins, visibleStartTimeSec, visibleEndTimeSec, worker, valueRange, zoomInRequired, dataset?.attrs])
 
     // Set worker
     useEffect(() => {
