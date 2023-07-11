@@ -18,8 +18,8 @@ class TimestampFinder {
             if (time < tLower) return iLower
             if (time > tUpper) return iUpper
             let estimatedIndex = iLower + Math.floor((iUpper - iLower) * (time - tLower) / (tUpper - tLower))
-            if (estimatedIndex <= iLower) estimatedIndex = iLower + 1
-            if (estimatedIndex >= iUpper) estimatedIndex = iUpper - 1
+            if (estimatedIndex <= iLower) estimatedIndex = Math.floor((iUpper + iLower) / 2)
+            if (estimatedIndex >= iUpper) estimatedIndex = Math.floor((iUpper + iLower) / 2)
             const estimatedT = await this._get(estimatedIndex)
             if (estimatedT === time) return estimatedIndex
             if (estimatedT < time) {
