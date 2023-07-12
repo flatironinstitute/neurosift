@@ -119,11 +119,13 @@ type TopLevelHeadingViewProps = {
 const TopLevelHeadingView: FunctionComponent<TopLevelHeadingViewProps> = ({nwbFile, heading}) => {
     const [expanded, setExpanded] = useState(false)
     const group = useGroup(nwbFile, heading.groupPath)
-    const titlePanelColor = expanded ? '#336' : '#669'
+    // const titlePanelColor = expanded ? '#336' : '#669'
+    const titlePanelColor = expanded ? '#a67c00' : '#feb'
+    const titleColor = expanded ? '#feb' : '#865c00'
     return (
         <div style={{marginLeft: 10}}>
             <div
-                style={{cursor: 'pointer', paddingTop: 10, paddingBottom: 10, marginTop: 10, background: titlePanelColor, color: 'white', border: 'solid 1px black'}}
+                style={{cursor: 'pointer', paddingTop: 10, paddingBottom: 10, marginTop: 10, background: titlePanelColor, color: titleColor, border: 'solid 1px black'}}
                 onClick={() => setExpanded(!expanded)}
             >
                 {expanded ? '▼' : '►'} {heading.label} <TopLevelTitlePanelText heading={heading} group={group} nwbFile={nwbFile} />
