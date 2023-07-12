@@ -68,10 +68,10 @@ export class RemoteH5File {
 
     const { slice, allowBigInt, canceler } = o
     const dummyCanceler = {onCancel: []}
-    // const chunkMode = slice ? (
-    //   product(slice.map(s => s[1] - s[0])) >= 1e5 ? 'large-chunks' : 'small-chunks'
-    // ) : 'small-chunks'
-    const chunkMode = 'small-chunks' // for now only do small chunks until we can figure out a better way
+    const chunkMode = slice ? (
+       product(slice.map(s => s[1] - s[0])) >= 1e5 ? 'large-chunks' : 'small-chunks'
+    ) : 'small-chunks'
+    // const chunkMode = 'small-chunks' // for now only do small chunks until we can figure out a better way
     const resp = await postRemoteH5WorkerRequest({
       type: 'getDatasetData',
       url: urlToUse,

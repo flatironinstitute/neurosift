@@ -26,7 +26,7 @@ const initializeIfNeeded = async (url, chunkMode) => {
     // compute hash of url + '|' + chunkMode
     const hash = (url + '|' + chunkMode).split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0)
     const fname = `${hash}.h5`
-    const chunkSize = chunkMode === 'small-chunks' ? 1024 * 20 : 1024 * 1024
+    const chunkSize = chunkMode === 'small-chunks' ? 1024 * 20 : 1024 * 100
     FS.createLazyFile('/', fname, url, true, false, headResponseHeaders, chunkSize);
 
     const file = new h5wasm.File(fname);

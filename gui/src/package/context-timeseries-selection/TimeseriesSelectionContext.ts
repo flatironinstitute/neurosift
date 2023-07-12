@@ -17,24 +17,38 @@ export const defaultTimeseriesSelection: TimeseriesSelection = {
 export const stubTimeseriesSelectionDispatch = (action: TimeseriesSelectionAction) => {}
 
 export const selectionIsValid = (r: TimeseriesSelection) => {
-    // If any of the required times are unset, the state is not valid.
-    if (r.timeseriesStartTimeSec === undefined
-        || r.timeseriesEndTimeSec === undefined
-        || r.visibleEndTimeSec === undefined
-        || r.visibleStartTimeSec === undefined) {
-            return false
-        }
-    // timeseries start and end times must be non-negative
-    if (r.timeseriesStartTimeSec < 0 || r.timeseriesEndTimeSec < 0) return false
+    // // If any of the required times are unset, the state is not valid.
+    // if (r.timeseriesStartTimeSec === undefined
+    //     || r.timeseriesEndTimeSec === undefined
+    //     || r.visibleEndTimeSec === undefined
+    //     || r.visibleStartTimeSec === undefined) {
+    //         return false
+    //     }
+    // // timeseries start and end times must be non-negative
+    // if (r.timeseriesStartTimeSec < 0 || r.timeseriesEndTimeSec < 0) return false
+
+    const {timeseriesStartTimeSec, timeseriesEndTimeSec, visibleStartTimeSec, visibleEndTimeSec} = r
+
     // timeseries end time must not precede timeseries start time
-    if (r.timeseriesEndTimeSec < r.timeseriesStartTimeSec) return false
+    if (timeseriesStartTimeSec !== undefined && timeseriesEndTimeSec !== undefined) {
+        if (timeseriesEndTimeSec < timeseriesStartTimeSec) return false
+    }
+
     // window end time must not precede window start time
-    if (r.visibleEndTimeSec < r.visibleStartTimeSec) return false
+    if (visibleStartTimeSec !== undefined && visibleEndTimeSec !== undefined) {
+        if (visibleEndTimeSec < visibleStartTimeSec) return false
+    }
+
     // window times must be within timeseries times.
     // Since we already know timeseries start < timeseries end and visible start < visible end,
     // we can get away with just comparing visible start to timeseries start and visible end to timeseries end.
     // (b/c if visEnd < recStart, then visStart < recStart; if visStart > recEnd, then visEnd > recEnd.)
-    if (r.visibleStartTimeSec < r.timeseriesStartTimeSec || r.timeseriesEndTimeSec < r.visibleEndTimeSec) return false
+    
+    if (timeseriesStartTimeSec !== undefined && visibleStartTimeSec !== undefined && timeseriesEndTimeSec !== undefined && visibleEndTimeSec !== undefined) {
+        if (visibleStartTimeSec < timeseriesStartTimeSec || timeseriesEndTimeSec < visibleEndTimeSec) return false
+    }
+    
+    
     // if (r.currentTimeSec) {
     //     // if set, current time must be within the visible window
     //     if (r.currentTimeSec < r.visibleStartTimeSec || r.currentTimeSec > r.visibleEndTimeSec) return false
@@ -95,7 +109,7 @@ export const useTimeRange = (timestampOffset=0) => {
             deltaT
         })
     }, [timeseriesSelectionDispatch])
-    const setVisibleTimeRange = useCallback((startTimeSec: number, endTimeSec: number) => {
+    const setVisibleTimeRange = useCallback((startTimeSec: number | undefined, endTimeSec: number | undefined) => {
         timeseriesSelectionDispatch({
             type: 'setVisibleTimeRange',
             startTimeSec,
@@ -195,8 +209,8 @@ type ZoomTimeseriesSelectionAction = {
 
 type SetVisibleTimeRangeAction = {
     type: 'setVisibleTimeRange',
-    startTimeSec: number,
-    endTimeSec: number
+    startTimeSec: number | undefined,
+    endTimeSec: number | undefined
 }
 
 type SetFocusTimeTimeseriesSelectionAction = {

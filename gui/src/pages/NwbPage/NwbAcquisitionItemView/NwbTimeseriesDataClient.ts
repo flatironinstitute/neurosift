@@ -15,13 +15,19 @@ class TimestampFinder {
         let tLower = await this._get(iLower)
         let tUpper = await this._get(iUpper)
         while (iUpper - iLower > 1) {
-            if (time < tLower) return iLower
-            if (time > tUpper) return iUpper
+            if (time < tLower) {
+                return iLower
+            }
+            if (time > tUpper) {
+                return iUpper
+            }
             let estimatedIndex = iLower + Math.floor((iUpper - iLower) * (time - tLower) / (tUpper - tLower))
             if (estimatedIndex <= iLower) estimatedIndex = Math.floor((iUpper + iLower) / 2)
             if (estimatedIndex >= iUpper) estimatedIndex = Math.floor((iUpper + iLower) / 2)
             const estimatedT = await this._get(estimatedIndex)
-            if (estimatedT === time) return estimatedIndex
+            if (estimatedT === time) {
+                return estimatedIndex
+            }
             if (estimatedT < time) {
                 iLower = estimatedIndex
                 tLower = estimatedT
@@ -31,7 +37,10 @@ class TimestampFinder {
                 tUpper = estimatedT
             }
         }
-        return iLower
+        const distToLower = Math.abs(time - tLower)
+        const distToUpper = Math.abs(time - tUpper)
+        if (distToLower < distToUpper) return iLower
+        else return iUpper
     }
     async _get(i: number) {
         const chunkIndex = Math.floor(i / this.#chunkSize)
@@ -103,7 +112,7 @@ class RegularTimeseriesDataClient {
     async getDataIndexForTime(time: number): Promise<number> {
         if (time < this.#startTime!) return 0
         if (time >= this.#endTime!) return this.#dataShape![0] - 1
-        return Math.floor((time - this.#startTime!) * this.#samplingFrequency!)
+        return Math.round((time - this.#startTime!) * this.#samplingFrequency!)
     }
     async getTimestampsForDataIndices(i1: number, i2: number): Promise<DatasetDataType> {
         const ret = new Float32Array(i2 - i1)

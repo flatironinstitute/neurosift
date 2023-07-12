@@ -5,6 +5,7 @@ import { useTimeRange, useTimeseriesSelection, TimeseriesSelectionContext } from
 type Props = {
     width: number
     height: number
+    hideVisibleTimeRange?: boolean
 }
 
 const a0 = 6
@@ -13,7 +14,7 @@ const b0 = 15
 
 export const timeSelectionBarHeight = 20
 
-const TimeseriesSelectionBar: FunctionComponent<Props> = ({width, height}) => {
+const TimeseriesSelectionBar: FunctionComponent<Props> = ({width, height, hideVisibleTimeRange}) => {
 
     const {visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange} = useTimeRange()
     const {setCurrentTime} = useTimeseriesSelection()
@@ -32,14 +33,16 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({width, height}) => {
         const t1 = timeseriesStartTimeSec ?? 0
         const t2 = timeseriesEndTimeSec ?? 1
         const x0 = currentTimeSec !== undefined ? fracToPixel((currentTimeSec - t1) / (t2 - t1)) : 0
-        const x1 = visibleStartTimeSec !== undefined ? fracToPixel((visibleStartTimeSec - t1) / (t2 - t1)) : 0
-        const x2 = visibleEndTimeSec !== undefined ? fracToPixel((visibleEndTimeSec - t1) / (t2 - t1)) : 0
+        const x1 = visibleStartTimeSec !== undefined ? fracToPixel((visibleStartTimeSec - t1) / (t2 - t1)) : undefined
+        const x2 = visibleEndTimeSec !== undefined ? fracToPixel((visibleEndTimeSec - t1) / (t2 - t1)) : undefined
         let y1 = x1
         let y2 = x2
-        if (x2 - x1 < b0) {
-            const center = (x1 + x2) / 2
-            y1 = center - b0 / 2
-            y2 = center + b0 / 2
+        if ((x1 !== undefined) && (x2 !== undefined)) {
+            if (x2 - x1 < b0) {
+                const center = (x1 + x2) / 2
+                y1 = center - b0 / 2
+                y2 = center + b0 / 2
+            }
         }
         return {x0, x1, x2, y1, y2}
     }, [timeseriesStartTimeSec, timeseriesEndTimeSec, currentTimeSec, visibleStartTimeSec, visibleEndTimeSec, fracToPixel])
@@ -55,9 +58,9 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({width, height}) => {
         const t2 = timeseriesEndTimeSec ?? 1
         const t = t1 + frac * (t2 - t1)
         setCurrentTime(t, {autoScrollVisibleTimeRange: true})
-        const diam = (visibleEndTimeSec ?? 1) - (visibleStartTimeSec ?? 0)
-        const v1 = Math.max(t - diam / 2, t1)
-        const v2 = v1 + diam
+        const diam = visibleStartTimeSec !== undefined && visibleEndTimeSec !== undefined ? visibleEndTimeSec - visibleStartTimeSec : undefined
+        const v1 = diam !== undefined ? Math.max(t - diam / 2, t1) : undefined
+        const v2 = diam !== undefined && v1 !== undefined ? v1 + diam : undefined
         setVisibleTimeRange(v1, v2)
     }, [isDragging, pixelToFrac, timeseriesStartTimeSec, timeseriesEndTimeSec, setCurrentTime, visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange])
 
@@ -92,16 +95,20 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({width, height}) => {
         >
             <div style={{position: 'absolute', left: 0, top: a0, width, height: height - a0 * 2, backgroundColor: 'lightgray'}} />
             <div style={{position: 'absolute', left: x0 - 1, top: 0, width: 3, height: height, backgroundColor: 'red'}} />
-            <Draggable
-                axis="x"
-                onDrag={(evt: DraggableEvent, ui: DraggableData) => handleDrag(evt, ui)}
-                onStop={(evt: DraggableEvent, ui: DraggableData) => handleDragStop(evt, ui)}
-                position={dragPosition}
-            >
-                <div style={{position: 'absolute', left: y1, top: a1, width: y2 - y1 + 1, height: height - a1 * 2, backgroundColor: 'black'}}>
-                    <div style={{position: 'absolute', left: x1 - y1, top: 0, width: x2 - x1 + 1, height: height - a1 * 2, backgroundColor: 'gray'}} />
-                </div>
-            </Draggable>
+            {
+                (x1 !== undefined) && (x2 !== undefined) && (y1 !== undefined) && (y2 !== undefined) && (!hideVisibleTimeRange) && (
+                    <Draggable
+                        axis="x"
+                        onDrag={(evt: DraggableEvent, ui: DraggableData) => handleDrag(evt, ui)}
+                        onStop={(evt: DraggableEvent, ui: DraggableData) => handleDragStop(evt, ui)}
+                        position={dragPosition}
+                    >
+                        <div style={{position: 'absolute', left: y1, top: a1, width: y2 - y1 + 1, height: height - a1 * 2, backgroundColor: 'black'}}>
+                            <div style={{position: 'absolute', left: x1 - y1, top: 0, width: x2 - x1 + 1, height: height - a1 * 2, backgroundColor: 'gray'}} />
+                        </div>
+                    </Draggable>
+                )
+            }
         </div>
     )
 }

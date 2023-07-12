@@ -50,6 +50,7 @@ class TimeseriesDatasetChunkingClient {
         const i1 = chunkIndex * this.chunkSize
         const i2 = Math.min(i1 + this.chunkSize, shape[0])
         const N1 = Math.min(shape[1] || 1, 5) // for now limit to 5 columns (until we can figure out why reading is so slow)
+        if (shape.length > 2) throw Error('TimeseriesDatasetChunkingClient not implemented implemented for shape.length > 2')
         const slice: [number, number][] = shape.length === 1 ? [[i1, i2]] : [[i1, i2], [0, N1]]
         const data = await this.nwbFile.getDatasetData(this.dataset.path, {slice, canceler})
         const chunk: number[][] = []

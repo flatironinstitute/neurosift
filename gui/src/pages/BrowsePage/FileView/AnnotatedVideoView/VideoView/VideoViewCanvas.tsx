@@ -51,7 +51,7 @@ const VideoViewCanvas: FunctionComponent<Props> = ({videoClient, currentTime, wi
             img.src = dataUrl;
         })()
         return () => {canceled = true}
-	}, [currentTime, videoClient, width, height, affineTransform])
+	}, [currentTime, videoClient, width, height, affineTransform, setUpToDate])
 
     return (
         <div style={{position: 'absolute', width, height}}>
