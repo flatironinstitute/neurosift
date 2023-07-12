@@ -11,6 +11,7 @@ import { NwbFileContext } from "../NwbFileContext"
 import { useDataset, useGroup } from "../NwbMainView/NwbMainView"
 import { Canceler } from "../RemoteH5File/helpers"
 import { DatasetDataType } from "../RemoteH5File/RemoteH5File"
+import MultiRangeSlider from './MultiRangeSlider/MultiRangeSlider'
 
 type Props = {
     width: number
@@ -76,8 +77,8 @@ const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({width, height, 
     }, [timeseriesDataClient, setCurrentTime, setVisibleTimeRange])
 
     const [currentPlane, setCurrentPlane] = useState<number>(0)
-    const [currentBrightness, setCurrentBrightness] = useState<number>(50)
-    const [currentContrast, setCurrentContrast] = useState<number>(50)
+    const [currentMinValue, setCurrentMinValue] = useState<number>(0)
+    const [currentMaxValue, setCurrentMaxValue] = useState<number>(100)
 
     useEffect(() => {
         setCurrentPlane(Math.floor((dataDataset?.shape[3] || 1) / 2))
@@ -139,7 +140,7 @@ const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({width, height, 
         setMaxValue(v => (Math.max(v || 0, max)))
     }, [currentImage])
 
-    const bottomBarHeight = 40
+    const bottomBarHeight = 30
     
     const incrementFrame = useMemo(() => ((inc: number) => {
         (async () => {
@@ -162,20 +163,19 @@ const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({width, height, 
                     width={width}
                     height={height - timeSelectionBarHeight - bottomBarHeight}
                     imageData={currentImage}
-                    maxValue={maxValue}
-                    brightness={currentBrightness}
-                    contrast={currentContrast}
+                    minValue={currentMinValue}
+                    maxValue={currentMaxValue}
                 /> : <div>loading...</div>}
             </div>
-            <div style={{position: 'absolute', top: height - bottomBarHeight, width, height: bottomBarHeight}}>
-                <SmallIconButton disabled={(currentTime || 0) <= (timeseriesDataClient?.startTime || 0)} onClick={() => incrementFrame(-1)} icon={<ArrowLeft />} />
-                <SmallIconButton disabled={(currentTime || 0) >= (timeseriesDataClient?.endTime || 0)} onClick={() => incrementFrame(1)} icon={<ArrowRight />} />
+            <div style={{position: 'absolute', top: height - bottomBarHeight, width, height: bottomBarHeight, display: 'flex', overflow: 'hidden'}}>
+                <div style={{position: 'relative', top: 3}}>
+                    <SmallIconButton disabled={(currentTime || 0) <= (timeseriesDataClient?.startTime || 0)} onClick={() => incrementFrame(-1)} icon={<ArrowLeft />} />
+                    <SmallIconButton disabled={(currentTime || 0) >= (timeseriesDataClient?.endTime || 0)} onClick={() => incrementFrame(1)} icon={<ArrowRight />} />
+                </div>
                 &nbsp;&nbsp;
                 <PlaneSelector currentPlane={currentPlane} setCurrentPlane={setCurrentPlane} numPlanes={dataDataset?.shape[3] || 1} />
                 &nbsp;&nbsp;
-                <BrightnessSelector currentBrightness={currentBrightness} setCurrentBrightness={setCurrentBrightness} />
-                &nbsp;&nbsp;
-                <ContrastSelector currentContrast={currentContrast} setCurrentContrast={setCurrentContrast} />
+                <ValueRangeSelector currentMinValue={currentMinValue} currentMaxValue={currentMaxValue} setCurrentMinValue={setCurrentMinValue} setCurrentMaxValue={setCurrentMaxValue} />
                 {
                     loading && <span>&nbsp;&nbsp;(Loading...)</span>
                 }
@@ -188,14 +188,13 @@ type ImageDataViewProps = {
     width: number
     height: number
     imageData: ImageData
-    maxValue?: number
-    brightness: number
-    contrast: number
+    minValue: number
+    maxValue: number
 }
 
 const margins = {left: 10, right: 10, top: 10, bottom: 10}
 
-const ImageDataView: FunctionComponent<ImageDataViewProps> = ({width, height, imageData, maxValue, brightness, contrast}) => {
+const ImageDataView: FunctionComponent<ImageDataViewProps> = ({width, height, imageData, minValue, maxValue}) => {
     const {width: W, height: H, data} = imageData
     const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | undefined>(undefined)
     useEffect(() => {
@@ -204,9 +203,7 @@ const ImageDataView: FunctionComponent<ImageDataViewProps> = ({width, height, im
         if (!ctx) return
 
         const transformValue = (v: number) => {
-            const v2 = v / (maxValue || 1) * Math.exp((brightness - 50) / 50 * 1.5)
-            const v3 = (v2 - 0.5) * Math.exp((contrast - 50) / 50 * 3) + 0.5
-            return v3
+            return Math.max(0, Math.min(1, (v - minValue) / (maxValue - minValue)))
         }
 
         const scale = Math.min((width - margins.left - margins.right) / (W), (height - margins.top - margins.bottom) / (H))
@@ -231,7 +228,7 @@ const ImageDataView: FunctionComponent<ImageDataViewProps> = ({width, height, im
 
         ctx.clearRect(0, 0, width, height)
         ctx.drawImage(offscreenCanvas, offsetX, offsetY, W * scale, H * scale)
-    }, [W, H, data, canvasElement, width, height, maxValue, brightness, contrast])
+    }, [W, H, data, canvasElement, width, height, minValue, maxValue])
     return (
         <canvas
             ref={elmt => elmt && setCanvasElement(elmt)}
@@ -258,33 +255,20 @@ const PlaneSelector: FunctionComponent<PlaneSelectorProps> = ({currentPlane, set
     )
 }
 
-type BrightnessSelectorProps = {
-    currentBrightness: number
-    setCurrentBrightness: (brightness: number) => void
+type ValueRangeSelectorProps = {
+    currentMinValue: number
+    currentMaxValue: number
+    setCurrentMinValue: (minValue: number) => void
+    setCurrentMaxValue: (maxValue: number) => void
 }
 
-const BrightnessSelector: FunctionComponent<BrightnessSelectorProps> = ({currentBrightness, setCurrentBrightness}) => {
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setCurrentBrightness(Number(e.target.value))
+const ValueRangeSelector: FunctionComponent<ValueRangeSelectorProps> = ({currentMinValue, currentMaxValue, setCurrentMinValue, setCurrentMaxValue}) => {
+    const handleChange = (newMinValue: number, newMaxValue: number) => {
+        setCurrentMinValue(newMinValue)
+        setCurrentMaxValue(newMaxValue)
     }
-    if (currentBrightness === undefined) return (<span />)
     return (
-        <RangeInput label="Brightness" min={0} max={100} value={currentBrightness} showValue={false} onChange={handleChange} />
-    )
-}
-
-type ContrastSelectorProps = {
-    currentContrast: number
-    setCurrentContrast: (contrast: number) => void
-}
-
-const ContrastSelector: FunctionComponent<ContrastSelectorProps> = ({currentContrast, setCurrentContrast}) => {
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setCurrentContrast(Number(e.target.value))
-    }
-    if (currentContrast === undefined) return (<span />)
-    return (
-        <RangeInput label="Contrast" min={0} max={100} value={currentContrast} showValue={false} onChange={handleChange} />
+        <DualRangeInput label="Range" min={0} max={100} minValue={currentMinValue} maxValue={currentMaxValue} onChange={handleChange} />
     )
 }
 
@@ -293,6 +277,31 @@ const RangeInput: FunctionComponent<{label: string, min: number, max: number, va
         <span style={{fontSize: 12}}>
             {label}{showValue && ` ${value}`}: <input style={{width: 70, position: 'relative', top: 4}} type="range" min={min} max={max} value={value} onChange={onChange} />
         </span>
+    )
+}
+
+const DualRangeInput: FunctionComponent<{label: string, min: number, max: number, minValue: number, maxValue: number, onChange: (minValue: number, maxValue: number) => void}> = ({min, max, minValue, maxValue, onChange}) => {
+    return (
+        <div style={{display: 'flex'}}>
+            <div style={{position: 'relative', top: 5, width: 20}}>
+                {minValue}
+            </div>
+            &nbsp;
+            <div style={{position: 'relative', top: 11}}>
+                <MultiRangeSlider
+                    min={min}
+                    max={max}
+                    currentMin={minValue}
+                    currentMax={maxValue}
+                    setCurrentMin={minValue => onChange(minValue, maxValue)}
+                    setCurrentMax={maxValue => onChange(minValue, maxValue)}
+                />
+            </div>
+            &nbsp;
+            <div style={{position: 'relative', top: 5, width: 20}}>
+                {maxValue}
+            </div>
+        </div>
     )
 }
 
