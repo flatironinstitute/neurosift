@@ -1,4 +1,4 @@
-const neurodataTypeInheritanceRaw: { [key: string]: string } = {
+export const neurodataTypeInheritanceRaw: { [key: string]: string } = {
     "NWBData": "Data",
     "Image": "NWBData",
     "NWBContainer": "Container",

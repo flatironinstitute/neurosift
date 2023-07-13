@@ -1,6 +1,5 @@
 import { FunctionComponent } from "react"
-import { neurodataTypeParentType } from "../neurodataSpec"
-import viewPlugins from "./viewPlugins"
+import { findViewPluginForType } from "./viewPlugins"
 
 type Props = {
     width: number
@@ -11,22 +10,17 @@ type Props = {
 }
 
 const NeurodataItemView: FunctionComponent<Props> = ({width, height, path, neurodataType, condensed}) => {
-    let nt: string | undefined = neurodataType
-    while (nt) {
-        const viewPlugin = viewPlugins.find(a => (a.neurodataType === nt))
-        if (viewPlugin) {
-            return (
-                <viewPlugin.component
-                    width={width}
-                    height={height}
-                    path={path}
-                    condensed={condensed}
-                />
-            )
-        }
-        nt = neurodataTypeParentType(nt)
+    const viewPlugin = findViewPluginForType(neurodataType)
+    if (viewPlugin) {
+        return (
+            <viewPlugin.component
+                width={width}
+                height={height}
+                path={path}
+                condensed={condensed}
+            />
+        )
     }
-    
     return <div>Unsupported neurodata type: {neurodataType}</div>
 }
 

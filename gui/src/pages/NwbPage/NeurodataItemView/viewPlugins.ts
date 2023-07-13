@@ -1,5 +1,6 @@
 import { FunctionComponent } from "react"
 import ImageSegmentationItemView from "../ImageSegmentationItemView/ImageSegmentationItemView"
+import { neurodataTypeInheritance, neurodataTypeInheritanceRaw } from "../neurodataSpec"
 import TwoPhotonSeriesItemView from "../TwoPhotonSeries/TwoPhotonSeriesItemView"
 import NeurodataSpatialSeriesItemView from "./NeurodataSpatialSeriesItemView"
 import NeurodataTimeIntervalsItemView from "./NeurodataTimeIntervalsItemView"
@@ -51,5 +52,15 @@ viewPlugins.push({
 })
 
 ///////////////////////////////////////////////////////////////////////////////////////
+
+export const findViewPluginForType = (neurodataType: string) => {
+    let nt: string | undefined = neurodataType
+    while (nt) {
+        const plugin = viewPlugins.find(p => (p.neurodataType === nt))
+        if (plugin) return plugin
+        nt = neurodataTypeInheritanceRaw[nt]
+    }
+    return undefined
+}
 
 export default viewPlugins

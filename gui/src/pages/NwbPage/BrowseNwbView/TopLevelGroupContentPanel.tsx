@@ -1,4 +1,7 @@
 import { FunctionComponent, useEffect, useMemo, useReducer } from "react"
+import Hyperlink from "../../../components/Hyperlink"
+import { findViewPluginForType } from "../NeurodataItemView/viewPlugins"
+import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 import { RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import { valueToString } from "./BrowseNwbView"
 import './nwb-attributes-table.css'
@@ -92,6 +95,7 @@ type TableItem = {
     type: 'group'
     name: string
     path: string
+    attrs: {[key: string]: any}
     expanded: boolean
     indent: number
 } | {
@@ -163,7 +167,7 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({group, nwbFile, ex
             if (!excludeGroups || (path !== group.path)) {
                 for (const sg of g.subgroups) {
                     const expanded = groupsDatasetsState.expandedGroupPaths.includes(sg.path)
-                    ret.push({type: 'group', name: sg.name, path: sg.path, expanded, indent, key: `group:${sg.path}`})
+                    ret.push({type: 'group', name: sg.name, path: sg.path, expanded, indent, key: `group:${sg.path}`, attrs: sg.attrs})
                     if (expanded) processExpandedGroup(sg.path, indent + 1)
                 }
             }
@@ -195,7 +199,7 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({group, nwbFile, ex
             <table>
                 <tbody>
                     {
-                        tableItems.map((item, i) => (
+                        tableItems.map((item) => (
                             <TableRow key={item.key} tableItem={item} groupsDatasetsDispatch={groupsDatasetsDispatch} />
                         ))
                     }
@@ -226,18 +230,33 @@ const expanderStyle = {color: '#222', cursor: 'pointer'}
 const TableRow: FunctionComponent<TableRowProps> = ({tableItem, groupsDatasetsDispatch}) => {
     const {type, indent} = tableItem
     const indentStyle = useMemo(() => ({paddingLeft: `${indent * 10}px`}), [indent])
+    let neurodataType: string
     switch (type) {
         case 'group':
+            neurodataType = tableItem.attrs['neurodata_type']
             return (
                 <tr style={{cursor: 'pointer'}}>
                     <td style={indentStyle}>
-                        <div
-                            onClick={() => {
-                                groupsDatasetsDispatch({type: tableItem.expanded ? 'collapseGroup' : 'expandGroup', path: tableItem.path})
-                            }}
-                        >
-                            <span style={expanderStyle}>{tableItem.expanded ? '▼' : '►'}</span>&nbsp;
-                            <span style={groupStyle}>{tableItem.name}</span>
+                        <div>
+                            <span
+                                onClick={() => {
+                                    groupsDatasetsDispatch({type: tableItem.expanded ? 'collapseGroup' : 'expandGroup', path: tableItem.path})
+                                }}
+                                style={expanderStyle}
+                            >
+                                {tableItem.expanded ? '▼' : '►'}
+                            </span>&nbsp;
+                            <span
+                                onClick={() => {
+                                    groupsDatasetsDispatch({type: tableItem.expanded ? 'collapseGroup' : 'expandGroup', path: tableItem.path})
+                                }}
+                                style={groupStyle}
+                            >{tableItem.name}</span>
+                            {
+                                neurodataType && (
+                                    <span> | <NeurodataTypeLink neurodataType={neurodataType} tableItem={tableItem} /></span>
+                                )
+                            }
                         </div>
                     </td>
                 </tr>
@@ -284,6 +303,31 @@ const TableRow: FunctionComponent<TableRowProps> = ({tableItem, groupsDatasetsDi
                     </td>
                 </tr>
             )
+    }
+}
+
+type NeurodataTypeLinkProps = {
+    neurodataType: string
+    tableItem: TableItem
+}
+
+const NeurodataTypeLink: FunctionComponent<NeurodataTypeLinkProps> = ({neurodataType, tableItem}) => {
+    if (tableItem.type !== 'group') throw Error('Unexpected table item type')
+    const viewPlugin = useMemo(() => (neurodataType ? findViewPluginForType(neurodataType) : undefined), [neurodataType])
+    const {openTab} = useNwbOpenTabs()
+    if (viewPlugin) {
+        return (
+            <Hyperlink
+                onClick={() => {
+                    openTab(`neurodata-item:${tableItem.path}|${neurodataType}`)
+                }}
+            >
+                {neurodataType}
+            </Hyperlink>
+        )
+    }
+    else {
+        return <span>{neurodataType}</span>
     }
 }
 
