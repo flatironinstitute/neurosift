@@ -7,16 +7,16 @@ import "./MultiRangeSlider.css";
 type Props = {
   min: number;
   max: number;
-  currentMin: number;
-  currentMax: number;
-  setCurrentMin: (value: number) => void;
-  setCurrentMax: (value: number) => void;
+  value1: number;
+  value2: number;
+  setValue1: (value: number) => void;
+  setValue2: (value: number) => void;
 }
 
-const MultiRangeSlider = ({ min, max, currentMin, currentMax, setCurrentMin, setCurrentMax }: Props) => {
+const MultiRangeSlider = ({ min, max, value1, value2, setValue1, setValue2 }: Props) => {
   // Convert to percentage
   const getPercent = useCallback(
-    (value: number) => Math.round(((value - min) / (max - min)) * 100),
+    (value: number) => Math.round(((value - min) / (max - min)) * 1000) / 10,
     [min, max]
   );
 
@@ -26,30 +26,30 @@ const MultiRangeSlider = ({ min, max, currentMin, currentMax, setCurrentMin, set
         type="range"
         min={min}
         max={max}
-        value={currentMin}
+        value={value1}
         onChange={(event) => {
-          const value = Math.min(Number(event.target.value), currentMax - 1);
-          setCurrentMin(value);
+          const value = Math.min(Number(event.target.value), value2 - 1);
+          setValue1(value);
         }}
         className="thumb thumb--left"
-        style={{ zIndex: currentMin > (min + max) / 2 ? 5: undefined}} // deal with the case where the left and right thumbs overlap
+        style={{ zIndex: value1 > (min + max) / 2 ? 5: undefined}} // deal with the case where the left and right thumbs overlap
       />
       <input
         type="range"
         min={min}
         max={max}
-        value={currentMax}
+        value={value2}
         onChange={(event) => {
-          const value = Math.max(Number(event.target.value), currentMin + 1);
-          setCurrentMax(value);
+          const value = Math.max(Number(event.target.value), value1 + 1);
+          setValue2(value);
         }}
         className="thumb thumb--right"
-        style={{ zIndex: currentMax < (min + max) / 2 ? 5: undefined}} // deal with the case where the left and right thumbs overlap
+        style={{ zIndex: value2 < (min + max) / 2 ? 5: undefined}} // deal with the case where the left and right thumbs overlap
       />
 
       <div className="slider">
         <div className="slider__track" />
-        <div style={{left: `${getPercent(currentMin)}%`, width: `${getPercent(currentMax) - getPercent(currentMin)}%`}} className="slider__range" />
+        <div style={{left: `${getPercent(value1)}%`, width: `${getPercent(value2) - getPercent(value1)}%`}} className="slider__range" />
         {/* <div className="slider__left-value">{minVal}</div>
         <div className="slider__right-value">{maxVal}</div> */}
       </div>

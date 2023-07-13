@@ -77,8 +77,8 @@ const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({width, height, 
     }, [timeseriesDataClient, setCurrentTime, setVisibleTimeRange])
 
     const [currentPlane, setCurrentPlane] = useState<number>(0)
-    const [currentMinValue, setCurrentMinValue] = useState<number>(0)
-    const [currentMaxValue, setCurrentMaxValue] = useState<number>(100)
+    const [currentMinValue, setCurrentMinValue] = useState<number | undefined>(undefined)
+    const [currentMaxValue, setCurrentMaxValue] = useState<number | undefined>(undefined)
 
     useEffect(() => {
         setCurrentPlane(Math.floor((dataDataset?.shape[3] || 1) / 2))
@@ -133,11 +133,11 @@ const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({width, height, 
         }
     }, [dataDataset, nwbFile, frameIndex, timeseriesDataClient, currentPlane])
 
-    const [maxValue, setMaxValue] = useState<number | undefined>(undefined)
+    const [maxDataValue, setMaxDataValue] = useState<number | undefined>(undefined)
     useEffect(() => {
         if (!currentImage) return
         const max = maximum(currentImage.data)
-        setMaxValue(v => (Math.max(v || 0, max)))
+        setMaxDataValue(v => (Math.max(v || 0, max)))
     }, [currentImage])
 
     const bottomBarHeight = 30
@@ -153,6 +153,13 @@ const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({width, height, 
         })()
     }), [timeseriesDataClient, frameIndex, setCurrentTime])
 
+    useEffect(() => {
+        if (currentMaxValue !== undefined) return
+        if (maxDataValue === undefined) return
+        setCurrentMinValue(0)
+        setCurrentMaxValue(maxDataValue)
+    }, [currentMaxValue, maxDataValue])
+
     return (
         <div style={{position: 'absolute', width, height}}>
             <div style={{position: 'absolute', width, height: timeSelectionBarHeight}}>
@@ -163,8 +170,8 @@ const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({width, height, 
                     width={width}
                     height={height - timeSelectionBarHeight - bottomBarHeight}
                     imageData={currentImage}
-                    minValue={currentMinValue}
-                    maxValue={currentMaxValue}
+                    minValue={currentMinValue || 0}
+                    maxValue={currentMaxValue || 1}
                 /> : <div>loading...</div>}
             </div>
             <div style={{position: 'absolute', top: height - bottomBarHeight, width, height: bottomBarHeight, display: 'flex', overflow: 'hidden'}}>
@@ -175,7 +182,7 @@ const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({width, height, 
                 &nbsp;&nbsp;
                 <PlaneSelector currentPlane={currentPlane} setCurrentPlane={setCurrentPlane} numPlanes={dataDataset?.shape[3] || 1} />
                 &nbsp;&nbsp;
-                <ValueRangeSelector currentMinValue={currentMinValue} currentMaxValue={currentMaxValue} setCurrentMinValue={setCurrentMinValue} setCurrentMaxValue={setCurrentMaxValue} />
+                <ValueRangeSelector min={0} max={maxDataValue || 1} currentMinValue={currentMinValue} currentMaxValue={currentMaxValue} setCurrentMinValue={setCurrentMinValue} setCurrentMaxValue={setCurrentMaxValue} />
                 {
                     loading && <span>&nbsp;&nbsp;(Loading...)</span>
                 }
@@ -256,19 +263,21 @@ const PlaneSelector: FunctionComponent<PlaneSelectorProps> = ({currentPlane, set
 }
 
 type ValueRangeSelectorProps = {
-    currentMinValue: number
-    currentMaxValue: number
+    min: number
+    max: number
+    currentMinValue?: number
+    currentMaxValue?: number
     setCurrentMinValue: (minValue: number) => void
     setCurrentMaxValue: (maxValue: number) => void
 }
 
-const ValueRangeSelector: FunctionComponent<ValueRangeSelectorProps> = ({currentMinValue, currentMaxValue, setCurrentMinValue, setCurrentMaxValue}) => {
+const ValueRangeSelector: FunctionComponent<ValueRangeSelectorProps> = ({currentMinValue, currentMaxValue, setCurrentMinValue, setCurrentMaxValue, min, max}) => {
     const handleChange = (newMinValue: number, newMaxValue: number) => {
         setCurrentMinValue(newMinValue)
         setCurrentMaxValue(newMaxValue)
     }
     return (
-        <DualRangeInput label="Range" min={0} max={100} minValue={currentMinValue} maxValue={currentMaxValue} onChange={handleChange} />
+        <DualRangeInput label="range:" min={min} max={max} value1={currentMinValue || 0} value2={currentMaxValue || 0} onChange={handleChange} />
     )
 }
 
@@ -280,26 +289,25 @@ const RangeInput: FunctionComponent<{label: string, min: number, max: number, va
     )
 }
 
-const DualRangeInput: FunctionComponent<{label: string, min: number, max: number, minValue: number, maxValue: number, onChange: (minValue: number, maxValue: number) => void}> = ({min, max, minValue, maxValue, onChange}) => {
+const DualRangeInput: FunctionComponent<{label: string, min: number, max: number, value1: number, value2: number, onChange: (minValue: number, maxValue: number) => void}> = ({label, min, max, value1, value2, onChange}) => {
     return (
         <div style={{display: 'flex'}}>
-            <div style={{position: 'relative', top: 5, width: 20}}>
-                {minValue}
+            <div style={{position: 'relative', top: 5}}>
+                {label}&nbsp;
             </div>
-            &nbsp;
             <div style={{position: 'relative', top: 11}}>
                 <MultiRangeSlider
                     min={min}
                     max={max}
-                    currentMin={minValue}
-                    currentMax={maxValue}
-                    setCurrentMin={minValue => onChange(minValue, maxValue)}
-                    setCurrentMax={maxValue => onChange(minValue, maxValue)}
+                    value1={value1}
+                    value2={value2}
+                    setValue1={x => onChange(x, value2)}
+                    setValue2={x => onChange(value1, x)}
                 />
             </div>
             &nbsp;
-            <div style={{position: 'relative', top: 5, width: 20}}>
-                {maxValue}
+            <div style={{position: 'relative', top: 5}}>
+                {value1}-{value2}
             </div>
         </div>
     )
