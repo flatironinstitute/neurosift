@@ -13,6 +13,7 @@ type Props = {
 export type ElectricalSeriesOpts = {
     numVisibleChannels: number
     visibleStartChannel: number
+    autoChannelSeparation: number | undefined
 }
 
 const ElectricalSeriesToolbar: FunctionComponent<Props> = ({width, height, objectPath, electricalSeriesOpts, setElectricalSeriesOpts}) => {
@@ -25,6 +26,8 @@ const ElectricalSeriesToolbar: FunctionComponent<Props> = ({width, height, objec
             <NumVisibleChannelsSelector totalNumChannels={numChannels} value={electricalSeriesOpts.numVisibleChannels} setValue={numVisibleChannels => setElectricalSeriesOpts({...electricalSeriesOpts, numVisibleChannels})} />
             &nbsp;&nbsp;&nbsp;&nbsp;
             <VisibleStartChannelSelector totalNumChannels={numChannels} value={electricalSeriesOpts.visibleStartChannel} setValue={visibleStartChannel => setElectricalSeriesOpts({...electricalSeriesOpts, visibleStartChannel})} numVisibleChannels={electricalSeriesOpts.numVisibleChannels} />
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <AutoChannelSeparationSelector value={electricalSeriesOpts.autoChannelSeparation} setValue={autoChannelSeparation => setElectricalSeriesOpts({...electricalSeriesOpts, autoChannelSeparation})} />
         </div>
     )
 }
@@ -36,7 +39,7 @@ type NumVisibleChannelsSelectorProps = {
 }
 
 const NumVisibleChannelsSelector: FunctionComponent<NumVisibleChannelsSelectorProps> = ({totalNumChannels, value, setValue}) => {
-    const opts = [1, 2, 5, 10, 20, 30, 40, 50].filter(x => (!totalNumChannels) || (x <= totalNumChannels))
+    const opts = [1, 2, 5, 10, 20, 30, 40, 50, 60, 70, 80, 100].filter(x => (!totalNumChannels) || (x <= totalNumChannels))
     
     if (!totalNumChannels) return <span />
 
@@ -107,6 +110,34 @@ const VisibleStartChannelSelector: FunctionComponent<VisibleStartChannelSelector
             &nbsp;
             Viewing channels:
             {range[0]}-{range[1]}
+        </div>
+    )
+}
+
+type AutoChannelSeparationSelectorProps = {
+    value: number | undefined
+    setValue: (value: number | undefined) => void
+}
+
+const AutoChannelSeparationSelector: FunctionComponent<AutoChannelSeparationSelectorProps> = ({value, setValue}) => {
+    const opts = [1, 2, 4, 8]
+    return (
+        <div>
+            <span>Channel separation (a.u.):</span>&nbsp;
+            <select
+                value={value || ''}
+                onChange={e => {
+                    const val = Number(e.target.value)
+                    setValue(val || undefined)
+                }}
+            >
+                <option value={''}>None</option>
+                {
+                    opts.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                    ))
+                }
+            </select>
         </div>
     )
 }

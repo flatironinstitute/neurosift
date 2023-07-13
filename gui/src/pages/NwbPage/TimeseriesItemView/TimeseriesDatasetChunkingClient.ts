@@ -3,9 +3,13 @@ import { RemoteH5Dataset, RemoteH5File } from "../RemoteH5File/RemoteH5File";
 
 class TimeseriesDatasetChunkingClient {
     #chunks: {[k: number]: number[][]} = {}
-    constructor(private nwbFile: RemoteH5File, private dataset: RemoteH5Dataset, private chunkSize: number, private visibleChannelsRange?: [number, number]) {
+    #noiseLevelForAutoSeparation: number | undefined
+    constructor(private nwbFile: RemoteH5File, private dataset: RemoteH5Dataset, private chunkSize: number, private o: {visibleChannelsRange?: [number, number], autoChannelSeparation?: number}={}) {
     }
     async getConcatenatedChunk(startChunkIndex: number, endChunkIndex: number, canceler: Canceler): Promise<{concatenatedChunk: number[][], completed: boolean}> {
+        if ((this.o.autoChannelSeparation) && (this.#noiseLevelForAutoSeparation === undefined)) {
+            await this.#computeNoiseLevelForAutoSeparation()
+        }
         const timer = Date.now()
         const chunks: (number[][])[] = []
         let completed = true
@@ -36,8 +40,9 @@ class TimeseriesDatasetChunkingClient {
             const chunk = this.#chunks[ii]
             if (chunk) {
                 for (let i = 0; i < chunk.length; i ++) {
+                    const separationOffset = this.o.autoChannelSeparation ? (i * this.o.autoChannelSeparation * (this.#noiseLevelForAutoSeparation || 0)) : 0
                     for (let j = 0; j < chunk[i].length; j ++) {
-                        concatenatedChunk[i][i1 + j] = chunk[i][j]
+                        concatenatedChunk[i][i1 + j] = chunk[i][j] + separationOffset
                     }
                 }
                 i1 += (chunk[0] || []).length
@@ -52,8 +57,8 @@ class TimeseriesDatasetChunkingClient {
         const i1 = chunkIndex * this.chunkSize
         const i2 = Math.min(i1 + this.chunkSize, shape[0])
         let channelSlice: [number, number] = [0, Math.min(shape[1] || 1, 15)] // for now limit to 15 columns when no channel slice is specified
-        if (this.visibleChannelsRange) {
-            channelSlice = this.visibleChannelsRange
+        if (this.o.visibleChannelsRange) {
+            channelSlice = this.o.visibleChannelsRange
         }
         const N1 = channelSlice[1] - channelSlice[0]
         if (shape.length > 2) throw Error('TimeseriesDatasetChunkingClient not implemented implemented for shape.length > 2')
@@ -68,6 +73,32 @@ class TimeseriesDatasetChunkingClient {
             chunk.push(x)
         }
         this.#chunks[chunkIndex] = chunk
+    }
+    async #computeNoiseLevelForAutoSeparation() {
+        await this._loadChunk(0, {onCancel: []})
+        const chunk = this.#chunks[0]
+        if (!chunk) return
+        const stdevs: number[] = []
+        const step = 100
+        for (let i = 0; i < chunk.length; i ++) {
+            for (let j = 0; j + step < Math.min(chunk[i].length, step * 50); j += step) {
+                const section = chunk[i].slice(j, j + step)
+                stdevs.push(Math.sqrt(sum(section.map(x => (x * x))) / section.length))
+            }
+        }
+        const medianStdev = median(stdevs)
+        this.#noiseLevelForAutoSeparation = medianStdev * 3
+    }
+}
+
+const median = (x: number[]) => {
+    const y = [...x]
+    y.sort()
+    if (y.length % 2 === 0) {
+        return (y[y.length / 2 - 1] + y[y.length / 2]) / 2
+    }
+    else {
+        return y[Math.floor(y.length / 2)]
     }
 }
 

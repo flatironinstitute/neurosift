@@ -10,7 +10,7 @@ type Props = {
 
 const ElectricalSeriesWidget: FunctionComponent<Props> = ({width, height, objectPath}) => {
     const bottomToolBarHeight = 30
-    const [electricalSeriesOpts, setElectricalSeriesOpts] = useState<ElectricalSeriesOpts>({numVisibleChannels: 5, visibleStartChannel: 0})
+    const [electricalSeriesOpts, setElectricalSeriesOpts] = useState<ElectricalSeriesOpts>({numVisibleChannels: 5, visibleStartChannel: 0, autoChannelSeparation: 2})
     const visibleChannelsRange = useMemo(() => {
         const {numVisibleChannels, visibleStartChannel} = electricalSeriesOpts
         return [visibleStartChannel, visibleStartChannel + numVisibleChannels] as [number, number]
@@ -23,6 +23,7 @@ const ElectricalSeriesWidget: FunctionComponent<Props> = ({width, height, object
                     height={height - bottomToolBarHeight}
                     objectPath={objectPath}
                     visibleChannelsRange={visibleChannelsRange}
+                    autoChannelSeparation={electricalSeriesOpts.autoChannelSeparation}
                 />
             </div>
             <div style={{position: 'absolute', width, height: bottomToolBarHeight, top: height - bottomToolBarHeight}}>

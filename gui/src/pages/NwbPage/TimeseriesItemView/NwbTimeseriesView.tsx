@@ -19,6 +19,7 @@ type Props = {
     height: number
     objectPath: string
     visibleChannelsRange?: [number, number]
+    autoChannelSeparation?: number
 }
 
 const gridlineOpts = {
@@ -34,7 +35,7 @@ const yAxisInfo = {
 
 const hideToolbar = false
 
-const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath, visibleChannelsRange }) => {
+const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath, visibleChannelsRange, autoChannelSeparation }) => {
     const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | undefined>()
     const [worker, setWorker] = useState<Worker | null>(null)
     const nwbFile = useContext(NwbFileContext)
@@ -69,9 +70,9 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
     useEffect(() => {
         if (!nwbFile) return
         if (!dataset) return
-        const client = new TimeseriesDatasetChunkingClient(nwbFile, dataset, chunkSize, visibleChannelsRange)
+        const client = new TimeseriesDatasetChunkingClient(nwbFile, dataset, chunkSize, {visibleChannelsRange, autoChannelSeparation})
         setDatasetChunkingClient(client)
-    }, [dataset, nwbFile, chunkSize, visibleChannelsRange])
+    }, [dataset, nwbFile, chunkSize, visibleChannelsRange, autoChannelSeparation])
 
     // Set startChunkIndex and endChunkIndex
     const [startChunkIndex, setStartChunkIndex] = useState<number | undefined>(undefined)
@@ -183,6 +184,11 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
             return {min: min2, max: max2}
         })
     }, [dataSeries])
+
+    useEffect(() => {
+        // reset the value range
+        setValueRange(undefined)
+    }, [autoChannelSeparation])
 
     // set opts
     useEffect(() => {
