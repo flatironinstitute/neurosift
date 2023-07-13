@@ -88,6 +88,8 @@ const SpatialSeriesSpatialView: FunctionComponent<Props> = ({ width, height, obj
         return () => {canceled = true}
     }, [dataset, visibleStartTimeSec, visibleEndTimeSec, chunkSize, dataClient])
 
+    const [loading, setLoading] = useState<boolean>(false)
+
     // Set dataSeries
     const [dataSeries, setDataSeries] = useState<DataSeries | undefined>(undefined)
     useEffect(() => {
@@ -103,6 +105,7 @@ const SpatialSeriesSpatialView: FunctionComponent<Props> = ({ width, height, obj
         const load = async () => {
             let finished = false
             const tt = await dataClient.getTimestampsForDataIndices(startChunkIndex * chunkSize, endChunkIndex * chunkSize)
+            setLoading(true)
             while (!finished) {
                 try {
                     canceler = {onCancel: []}
@@ -127,6 +130,7 @@ const SpatialSeriesSpatialView: FunctionComponent<Props> = ({ width, height, obj
                     }
                 }
             }
+            setLoading(false)
         }
         load()
         return () => {
@@ -281,6 +285,11 @@ const SpatialSeriesSpatialView: FunctionComponent<Props> = ({ width, height, obj
                     height={canvasHeight}
                 />
             </div>
+            {loading && (
+                <div style={{position: 'absolute', top: timeSelectionBarHeight + margins.top, left: margins.left, userSelect: 'none'}}>
+                    <div style={{fontSize: 20, color: 'gray'}}>Loading...</div>
+                </div>
+            )}
         </div>
     )
 }

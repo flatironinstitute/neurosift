@@ -109,6 +109,8 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
 
     const [dataseriesMode, setDataseriesMode] = useState<'line' | 'marker'>('line')
 
+    const [loading, setLoading] = useState<boolean>(false)
+
     // Set dataSeries
     const [dataSeries, setDataSeries] = useState<DataSeries[] | undefined>(undefined)
     useEffect(() => {
@@ -124,6 +126,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
         const load = async () => {
             let finished = false
             const tt = await dataClient.getTimestampsForDataIndices(startChunkIndex * chunkSize, endChunkIndex * chunkSize)
+            setLoading(true)
             while (!finished) {
                 try {
                     canceler = {onCancel: []}
@@ -149,6 +152,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
                     }
                 }
             }
+            setLoading(false)
         }
         load()
         return () => {
@@ -270,6 +274,13 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
                     additionalToolbarItems={additionalToolbarItems}
                 />
             </div>
+            {
+                loading && (
+                    <div style={{position: 'absolute', top: timeSelectionBarHeight + margins.top, left: margins.left, userSelect: 'none'}}>
+                        <div style={{fontSize: 20, color: 'gray'}}>Loading...</div>
+                    </div>
+                )
+            }
             <ModalWindow
                 open={helpVisible}
                 onClose={handleCloseHelp}
