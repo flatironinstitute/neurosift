@@ -84,3 +84,9 @@ export const neurodataTypeInheritsFrom = (type: string, baseType: string) => {
     if (type === baseType) return true
     return neurodataTypeInheritance[type].includes(baseType)
 }
+
+export const neurodataTypeParentType = (type: string) => {
+    const parent = neurodataTypeInheritanceRaw[type]
+    if (!parent) return undefined
+    return parent
+}

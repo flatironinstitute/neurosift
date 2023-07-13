@@ -1,10 +1,6 @@
 import { FunctionComponent } from "react"
-import ImageSegmentationItemView from "../ImageSegmentationItemView/ImageSegmentationItemView"
-import { neurodataTypeInheritsFrom } from "../neurodataSpec"
-import TwoPhotonSeriesItemView from "../TwoPhotonSeries/TwoPhotonSeriesItemView"
-import NeurodataSpatialSeriesItemView from "./NeurodataSpatialSeriesItemView"
-import NeurodataTimeIntervalsItemView from "./NeurodataTimeIntervalsItemView"
-import NeurodataTimeSeriesItemView from "./NeurodataTimeSeriesItemView"
+import { neurodataTypeParentType } from "../neurodataSpec"
+import viewPlugins from "./viewPlugins"
 
 type Props = {
     width: number
@@ -15,25 +11,23 @@ type Props = {
 }
 
 const NeurodataItemView: FunctionComponent<Props> = ({width, height, path, neurodataType, condensed}) => {
-    // start with most specific types
-    if (neurodataTypeInheritsFrom(neurodataType, 'ImageSegmentation')) {
-        return <ImageSegmentationItemView width={width} height={height} path={path} condensed={condensed} />
+    let nt: string | undefined = neurodataType
+    while (nt) {
+        const viewPlugin = viewPlugins.find(a => (a.neurodataType === nt))
+        if (viewPlugin) {
+            return (
+                <viewPlugin.component
+                    width={width}
+                    height={height}
+                    path={path}
+                    condensed={condensed}
+                />
+            )
+        }
+        nt = neurodataTypeParentType(nt)
     }
-    else if (neurodataTypeInheritsFrom(neurodataType, 'SpatialSeries')) {
-        return <NeurodataSpatialSeriesItemView width={width} height={height} path={path} condensed={condensed} />
-    }
-    else if (neurodataTypeInheritsFrom(neurodataType, 'TwoPhotonSeries')) {
-        return <TwoPhotonSeriesItemView width={width} height={height} path={path} condensed={condensed} />
-    }
-    else if (neurodataTypeInheritsFrom(neurodataType, 'TimeSeries')) {
-        return <NeurodataTimeSeriesItemView width={width} height={height} path={path} condensed={condensed} />
-    }
-    else if (neurodataTypeInheritsFrom(neurodataType, 'TimeIntervals')) {
-        return <NeurodataTimeIntervalsItemView width={width} height={height} path={path} condensed={condensed} />
-    }
-    else {
-        return <div>Unsupported neurodata type: {neurodataType}</div>
-    }
+    
+    return <div>Unsupported neurodata type: {neurodataType}</div>
 }
 
 export default NeurodataItemView
