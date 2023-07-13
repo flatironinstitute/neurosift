@@ -229,7 +229,7 @@ const TableRow: FunctionComponent<TableRowProps> = ({tableItem, groupsDatasetsDi
     switch (type) {
         case 'group':
             return (
-                <tr>
+                <tr style={{cursor: 'pointer'}}>
                     <td style={indentStyle}>
                         <div
                             onClick={() => {
@@ -244,7 +244,7 @@ const TableRow: FunctionComponent<TableRowProps> = ({tableItem, groupsDatasetsDi
             )
         case 'dataset':
             return (
-                <tr>
+                <tr style={{cursor: 'pointer'}}>
                     <td style={indentStyle}>
                         <div
                             onClick={() => {
@@ -259,7 +259,7 @@ const TableRow: FunctionComponent<TableRowProps> = ({tableItem, groupsDatasetsDi
             )
         case 'attribute':
             return (
-                <tr>
+                <tr style={{cursor: 'pointer'}}>
                     <td style={indentStyle}>
                         <div>
                             <span>&nbsp;</span>&nbsp;
@@ -270,7 +270,7 @@ const TableRow: FunctionComponent<TableRowProps> = ({tableItem, groupsDatasetsDi
             )
         case 'dataset-info':
             return (
-                <tr>
+                <tr style={{cursor: 'pointer'}}>
                     <td style={indentStyle}>
                         <div>
                             <span>&nbsp;</span>&nbsp;

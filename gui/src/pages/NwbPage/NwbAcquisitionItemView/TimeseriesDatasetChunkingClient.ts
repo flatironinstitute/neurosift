@@ -47,6 +47,8 @@ class TimeseriesDatasetChunkingClient {
     }
     private async _loadChunk(chunkIndex: number, canceler: Canceler) {
         const shape = this.dataset.shape
+        const conversion = this.dataset.attrs['conversion'] || 1
+        const offset = this.dataset.attrs['offset'] || 0
         const i1 = chunkIndex * this.chunkSize
         const i2 = Math.min(i1 + this.chunkSize, shape[0])
         const N1 = Math.min(shape[1] || 1, 5) // for now limit to 5 columns (until we can figure out why reading is so slow)
@@ -57,7 +59,7 @@ class TimeseriesDatasetChunkingClient {
         for (let i = 0; i < N1; i ++) {
             const x: number[] = []
             for (let j = 0; j < i2 - i1; j ++) {
-                x.push(data[i + j * N1])
+                x.push(data[i + j * N1] * conversion + offset)
             }
             chunk.push(x)
         }
