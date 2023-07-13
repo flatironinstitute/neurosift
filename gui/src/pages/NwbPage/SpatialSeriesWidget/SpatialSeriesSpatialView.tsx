@@ -285,7 +285,7 @@ const SpatialSeriesSpatialView: FunctionComponent<Props> = ({ width, height, obj
                     height={canvasHeight}
                 />
             </div>
-            {loading && (
+            {loading && !zoomInRequired && (
                 <div style={{position: 'absolute', top: timeSelectionBarHeight + margins.top, left: margins.left, userSelect: 'none'}}>
                     <div style={{fontSize: 20, color: 'gray'}}>Loading...</div>
                 </div>
