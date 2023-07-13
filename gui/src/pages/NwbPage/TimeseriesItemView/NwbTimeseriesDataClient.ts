@@ -95,7 +95,7 @@ class RegularTimeseriesDataClient {
     async initialize() {
         const startingTimeDataset = await this.nwbFile.getDataset(`${this.objectPath}/starting_time`)
         const dataDataset = await this.nwbFile.getDataset(`${this.objectPath}/data`)
-        this.#samplingFrequency = startingTimeDataset.attrs['rate'] as number
+        this.#samplingFrequency = (startingTimeDataset.attrs['rate'] as number) || 1 // set to 1 in case of rate=0 to avoid division by zero
         this.#startTime = 0 // todo: get starting time from startingTimeDataset
         this.#endTime = this.#startTime + dataDataset.shape[0] / this.#samplingFrequency
         this.#dataShape = dataDataset.shape

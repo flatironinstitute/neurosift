@@ -6,6 +6,7 @@ import NeurodataTimeIntervalsItemView from "./TimeIntervals/NeurodataTimeInterva
 import NeurodataTimeSeriesItemView from "./TimeSeries/NeurodataTimeSeriesItemView"
 import { neurodataTypeInheritanceRaw } from "../neurodataSpec"
 import TwoPhotonSeriesItemView from "./TwoPhotonSeries/TwoPhotonSeriesItemView"
+import HelloWorldView from "./HelloWorld/HelloWorldView"
 
 type Props = {
     width: number,
@@ -57,6 +58,14 @@ viewPlugins.push({
     neurodataType: 'ElectricalSeries',
     component: NeurodataElectricalSeriesItemView
 })
+
+// HelloWorld
+viewPlugins.push({
+    neurodataType: 'LabeledEvents', // hi-jacking this type for now
+    component: HelloWorldView // see ./HelloWorld/HelloWorldView.tsx
+})
+// See https://flatironinstitute.github.io/neurosift/#/nwb?url=https://dandiarchive.s3.amazonaws.com/blobs/8cf/38e/8cf38e36-6cd8-4c10-9d74-c2e6be70f019
+// for an example that has a LabeledEvents object inside processing/behavior
 
 ///////////////////////////////////////////////////////////////////////////////////////
 

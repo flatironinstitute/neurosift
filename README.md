@@ -84,6 +84,10 @@ Make a note of the remote URL corresponding to this shared directory. From the n
 
 We welcome feedback and code contributions. Please submit a pull request or open an issue.
 
+## Developers
+
+[Setting up a development environment](./doc/development.md)
+
 ## License
 
 Neurosift is licensed under the terms of the Apache License 2.0.
