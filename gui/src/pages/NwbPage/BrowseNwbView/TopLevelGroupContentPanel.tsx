@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useMemo, useReducer } from "react"
 import Hyperlink from "../../../components/Hyperlink"
-import { findViewPluginForType } from "../NeurodataItemView/viewPlugins"
+import { findViewPluginForType } from "../viewPlugins/viewPlugins"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 import { RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import { valueToString } from "./BrowseNwbView"

@@ -1,6 +1,6 @@
 import { FunctionComponent, useContext } from "react"
-import { NwbFileContext } from "../NwbFileContext"
-import { useDataset } from "../NwbMainView/NwbMainView"
+import { NwbFileContext } from "../../NwbFileContext"
+import { useDataset } from "../../NwbMainView/NwbMainView"
 
 type Props = {
     width: number

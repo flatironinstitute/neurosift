@@ -1,9 +1,9 @@
 import { Groups } from "@mui/icons-material"
 import { FunctionComponent, useContext, useEffect, useState } from "react"
-import Splitter from "../../../components/Splitter"
-import { NwbFileContext } from "../NwbFileContext"
-import { useGroup } from "../NwbMainView/NwbMainView"
-import { RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import Splitter from "../../../../components/Splitter"
+import { NwbFileContext } from "../../NwbFileContext"
+import { useGroup } from "../../NwbMainView/NwbMainView"
+import { RemoteH5File, RemoteH5Group } from "../../RemoteH5File/RemoteH5File"
 
 type Props = {
     width: number

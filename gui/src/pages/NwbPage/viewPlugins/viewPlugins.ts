@@ -1,11 +1,11 @@
 import { FunctionComponent } from "react"
-import ImageSegmentationItemView from "../ImageSegmentationItemView/ImageSegmentationItemView"
-import NeurodataElectricalSeriesItemView from "../NeurodataElectricalSeriesItemView/NeurodataElectricalSeriesItemView"
-import { neurodataTypeInheritance, neurodataTypeInheritanceRaw } from "../neurodataSpec"
-import TwoPhotonSeriesItemView from "../TwoPhotonSeries/TwoPhotonSeriesItemView"
-import NeurodataSpatialSeriesItemView from "./NeurodataSpatialSeriesItemView"
-import NeurodataTimeIntervalsItemView from "./NeurodataTimeIntervalsItemView"
-import NeurodataTimeSeriesItemView from "./NeurodataTimeSeriesItemView"
+import ImageSegmentationItemView from "./ImageSegmentation/ImageSegmentationItemView"
+import NeurodataElectricalSeriesItemView from "./ElectricalSeries/NeurodataElectricalSeriesItemView"
+import NeurodataSpatialSeriesItemView from "./SpatialSeries/NeurodataSpatialSeriesItemView"
+import NeurodataTimeIntervalsItemView from "./TimeIntervals/NeurodataTimeIntervalsItemView"
+import NeurodataTimeSeriesItemView from "./TimeSeries/NeurodataTimeSeriesItemView"
+import { neurodataTypeInheritanceRaw } from "../neurodataSpec"
+import TwoPhotonSeriesItemView from "./TwoPhotonSeries/TwoPhotonSeriesItemView"
 
 type Props = {
     width: number,

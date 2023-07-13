@@ -1,9 +1,9 @@
 import { FunctionComponent, useContext } from "react"
-import Splitter from "../../../components/Splitter"
-import { NwbFileContext } from "../NwbFileContext"
-import { useGroup } from "../NwbMainView/NwbMainView"
-import NwbTimeseriesView from "../TimeseriesItemView/NwbTimeseriesView"
-import NeurodataItemViewLeftPanel from "./NeurodataItemViewLeftPanel"
+import Splitter from "../../../../components/Splitter"
+import NeurodataItemViewLeftPanel from "../../NeurodataItemView/NeurodataItemViewLeftPanel"
+import { NwbFileContext } from "../../NwbFileContext"
+import { useGroup } from "../../NwbMainView/NwbMainView"
+import ElectricalSeriesWidget from "./ElectricalSeriesWidget"
 
 type Props = {
     width: number
@@ -12,13 +12,13 @@ type Props = {
     condensed?: boolean
 }
 
-const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({width, height, path, condensed}) => {
+const NeurodataElectricalSeriesItemView: FunctionComponent<Props> = ({width, height, path, condensed}) => {
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is undefined (no context provider)')
     const group = useGroup(nwbFile, path)
 
     const content = (
-        <NwbTimeseriesView
+        <ElectricalSeriesWidget
             width={width}
             height={height}
             objectPath={path}
@@ -39,11 +39,11 @@ const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({width, height, p
                 height={0}
                 path={path}
                 group={group}
-                viewName="TimeSeries"
+                viewName="SpatialSeries"
             />
-            {content}  
+            {content}
         </Splitter>
     )
 }
 
-export default NeurodataTimeSeriesItemView
+export default NeurodataElectricalSeriesItemView

@@ -1,6 +1,6 @@
 import { FunctionComponent } from "react"
-import Splitter from "../../../components/Splitter"
-import NwbTimeseriesView from "../TimeseriesItemView/NwbTimeseriesView"
+import Splitter from "../../../../../components/Splitter"
+import NwbTimeseriesView from "../../../TimeseriesItemView/NwbTimeseriesView"
 import SpatialSeriesSpatialView from "./SpatialSeriesSpatialView"
 
 type Props = {

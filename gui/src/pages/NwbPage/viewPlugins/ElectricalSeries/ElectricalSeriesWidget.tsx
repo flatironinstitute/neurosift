@@ -1,5 +1,5 @@
 import { FunctionComponent, useMemo, useState } from "react"
-import NwbTimeseriesView from "../TimeseriesItemView/NwbTimeseriesView"
+import NwbTimeseriesView from "../../TimeseriesItemView/NwbTimeseriesView"
 import ElectricalSeriesToolbar, { ElectricalSeriesOpts } from "./ElectricalSeriesToolbar"
 
 type Props = {

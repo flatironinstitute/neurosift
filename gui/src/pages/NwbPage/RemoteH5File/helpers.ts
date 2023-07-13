@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { RemoteH5File } from "./RemoteH5File"
 
 type RRequest = {
   requestId: string

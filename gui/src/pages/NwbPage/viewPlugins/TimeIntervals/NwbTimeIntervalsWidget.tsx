@@ -1,7 +1,7 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react"
-import TimeScrollView2, { useTimeScrollView2 } from "../../../package/component-time-scroll-view-2/TimeScrollView2"
-import { useTimeRange, useTimeseriesSelectionInitialization } from "../../../package/context-timeseries-selection"
-import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../TimeseriesItemView/TimeseriesSelectionBar"
+import TimeScrollView2, { useTimeScrollView2 } from "../../../../package/component-time-scroll-view-2/TimeScrollView2"
+import { useTimeRange, useTimeseriesSelectionInitialization } from "../../../../package/context-timeseries-selection"
+import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../../TimeseriesItemView/TimeseriesSelectionBar"
 
 type Props = {
     width: number

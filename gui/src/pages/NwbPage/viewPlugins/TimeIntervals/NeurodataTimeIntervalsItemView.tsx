@@ -1,9 +1,9 @@
 import { FunctionComponent, useContext } from "react"
-import Splitter from "../../../components/Splitter"
-import { NwbFileContext } from "../NwbFileContext"
-import { useGroup } from "../NwbMainView/NwbMainView"
-import NwbTimeIntervalsView from "../NwbProcessingBehaviorItemView/NwbTimeIntervalsView"
-import NeurodataItemViewLeftPanel from "./NeurodataItemViewLeftPanel"
+import Splitter from "../../../../components/Splitter"
+import { NwbFileContext } from "../../NwbFileContext"
+import { useGroup } from "../../NwbMainView/NwbMainView"
+import NwbTimeIntervalsView from "./NwbTimeIntervalsView"
+import NeurodataItemViewLeftPanel from "../../NeurodataItemView/NeurodataItemViewLeftPanel"
 
 type Props = {
     width: number

@@ -1,17 +1,17 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { ArrowLeft, ArrowRight } from "@mui/icons-material"
 import { FunctionComponent, useContext, useEffect, useMemo, useState } from "react"
-import SmallIconButton from "../../../components/SmallIconButton"
-import Splitter from "../../../components/Splitter"
-import { useTimeRange, useTimeseriesSelection, useTimeseriesSelectionInitialization } from "../../../package/context-timeseries-selection"
-import NeurodataItemViewLeftPanel from "../NeurodataItemView/NeurodataItemViewLeftPanel"
-import { useNwbTimeseriesDataClient } from "../TimeseriesItemView/NwbTimeseriesDataClient"
-import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../TimeseriesItemView/TimeseriesSelectionBar"
-import { NwbFileContext } from "../NwbFileContext"
-import { useDataset, useGroup } from "../NwbMainView/NwbMainView"
-import { Canceler } from "../RemoteH5File/helpers"
-import { DatasetDataType } from "../RemoteH5File/RemoteH5File"
-import MultiRangeSlider from './MultiRangeSlider/MultiRangeSlider'
+import SmallIconButton from "../../../../components/SmallIconButton"
+import Splitter from "../../../../components/Splitter"
+import { useTimeRange, useTimeseriesSelection, useTimeseriesSelectionInitialization } from "../../../../package/context-timeseries-selection"
+import NeurodataItemViewLeftPanel from "../../NeurodataItemView/NeurodataItemViewLeftPanel"
+import { NwbFileContext } from "../../NwbFileContext"
+import { useDataset, useGroup } from "../../NwbMainView/NwbMainView"
+import { Canceler } from "../../RemoteH5File/helpers"
+import { DatasetDataType } from "../../RemoteH5File/RemoteH5File"
+import { useNwbTimeseriesDataClient } from "../../TimeseriesItemView/NwbTimeseriesDataClient"
+import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../../TimeseriesItemView/TimeseriesSelectionBar"
+import MultiRangeSlider from "./MultiRangeSlider/MultiRangeSlider"
 
 type Props = {
     width: number

@@ -1,5 +1,5 @@
 import { FunctionComponent } from "react"
-import { findViewPluginForType } from "./viewPlugins"
+import { findViewPluginForType } from "../viewPlugins/viewPlugins"
 
 type Props = {
     width: number

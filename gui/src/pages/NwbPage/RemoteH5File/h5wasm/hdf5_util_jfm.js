@@ -1,5 +1,5 @@
 // jfm - import this from a separate file
-import wasmBinaryFile from "./wasmBinaryFile";
+const wasmBinaryFile = require("./wasmBinaryFile")
 
 var Module = (()=>{
     var _scriptDir = import.meta.url;
