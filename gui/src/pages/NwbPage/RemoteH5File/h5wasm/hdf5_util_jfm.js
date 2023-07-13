@@ -1,5 +1,5 @@
 // jfm - import this from a separate file
-const wasmBinaryFile = require("./wasmBinaryFile")
+import wasmBinaryFile from "./wasmBinaryFile.js";
 
 var Module = (()=>{
     var _scriptDir = import.meta.url;
@@ -357,9 +357,9 @@ var Module = (()=>{
         // jfm moved wasmBinaryFile to a separate file
         // var wasmBinaryFile;
         // wasmBinaryFile = ...;
-        if (!isDataURI(wasmBinaryFile)) {
-            wasmBinaryFile = locateFile(wasmBinaryFile)
-        }
+        // if (!isDataURI(wasmBinaryFile)) {
+        //     wasmBinaryFile = locateFile(wasmBinaryFile)
+        // }
         function getBinary(file) {
             try {
                 if (file == wasmBinaryFile && wasmBinary) {
