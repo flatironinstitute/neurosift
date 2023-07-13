@@ -42,8 +42,6 @@ const TabChild: FunctionComponent<{tabName: string, width: number, height: numbe
                 {
                     tabName === 'main' ? (
                         <NwbMainView key={tabName} width={width} height={height} />
-                    ) : tabName === 'browse-nwb' ? (
-                        <BrowseNwbView key={tabName} width={width} height={height} />
                     ) : tabName.startsWith('neurodata-item:') ? (
                         (() => {
                             const a = tabName.slice(`neurodata-item:`.length).split('|')

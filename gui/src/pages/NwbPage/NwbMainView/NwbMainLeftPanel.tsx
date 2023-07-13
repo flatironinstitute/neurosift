@@ -81,14 +81,6 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({width, height, nwbFile}) =>
                 <hr />
                 <SelectedNeurodataItemsWidget />
             </div>
-            <div className="bottomBar" style={{position: 'absolute', width, top: height - bottomBarHeight, height: bottomBarHeight, backgroundColor: '#ddd'}}>
-                <button
-                    style={{marginTop: 3}}
-                    onClick={() => openTab('browse-nwb')}
-                >
-                    Browse NWB File
-                </button>
-            </div>
         </div>
     )
 }
