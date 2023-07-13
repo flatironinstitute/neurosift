@@ -39,7 +39,7 @@ const NeurodataElectricalSeriesItemView: FunctionComponent<Props> = ({width, hei
                 height={0}
                 path={path}
                 group={group}
-                viewName="SpatialSeries"
+                viewName="ElectricalSeries"
             />
             {content}
         </Splitter>

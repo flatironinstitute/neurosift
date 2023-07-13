@@ -50,7 +50,7 @@ const HelloWorldView: FunctionComponent<Props> = ({width, height, path, condense
                 height={0}
                 path={path}
                 group={group}
-                viewName="SpatialSeries"
+                viewName="HelloWorld"
             />
             {content}
         </Splitter>
