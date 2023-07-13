@@ -1,6 +1,5 @@
 import { FunctionComponent, useContext } from "react"
 import Splitter from "../../../components/Splitter"
-import AcquisitionItemTimeseriesView from "../NwbAcquisitionItemView/AcquisitionItemTimeseriesView"
 import { NwbFileContext } from "../NwbFileContext"
 import { useGroup } from "../NwbMainView/NwbMainView"
 import NwbTimeIntervalsView from "../NwbProcessingBehaviorItemView/NwbTimeIntervalsView"

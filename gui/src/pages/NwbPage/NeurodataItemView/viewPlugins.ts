@@ -1,5 +1,6 @@
 import { FunctionComponent } from "react"
 import ImageSegmentationItemView from "../ImageSegmentationItemView/ImageSegmentationItemView"
+import NeurodataElectricalSeriesItemView from "../NeurodataElectricalSeriesItemView/NeurodataElectricalSeriesItemView"
 import { neurodataTypeInheritance, neurodataTypeInheritanceRaw } from "../neurodataSpec"
 import TwoPhotonSeriesItemView from "../TwoPhotonSeries/TwoPhotonSeriesItemView"
 import NeurodataSpatialSeriesItemView from "./NeurodataSpatialSeriesItemView"
@@ -49,6 +50,12 @@ viewPlugins.push({
 viewPlugins.push({
     neurodataType: 'TimeIntervals',
     component: NeurodataTimeIntervalsItemView
+})
+
+// ElectricalSeries
+viewPlugins.push({
+    neurodataType: 'ElectricalSeries',
+    component: NeurodataElectricalSeriesItemView
 })
 
 ///////////////////////////////////////////////////////////////////////////////////////

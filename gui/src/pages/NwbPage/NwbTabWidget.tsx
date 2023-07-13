@@ -2,7 +2,6 @@ import { FunctionComponent, useReducer } from "react";
 import { SetupTimeseriesSelection } from "../../package/context-timeseries-selection";
 import { defaultUnitSelection, UnitSelectionContext, unitSelectionReducer } from "../../package/context-unit-selection";
 import TabWidget from "../../TabWidget/TabWidget";
-import BrowseNwbView from "./BrowseNwbView/BrowseNwbView";
 import NeurodataItemsView from "./NeurodataItemView/NeurodataItemsView";
 import NeurodataItemView from "./NeurodataItemView/NeurodataItemView";
 import NwbMainView from "./NwbMainView/NwbMainView";

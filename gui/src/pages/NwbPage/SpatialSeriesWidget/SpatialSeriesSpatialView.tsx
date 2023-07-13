@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTimeRange, useTimeseriesSelection, useTimeseriesSelectionInitialization } from "../../../package/context-timeseries-selection";
-import { useNwbTimeseriesDataClient } from "../NwbAcquisitionItemView/NwbTimeseriesDataClient";
-import TimeseriesDatasetChunkingClient from "../NwbAcquisitionItemView/TimeseriesDatasetChunkingClient";
-import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../NwbAcquisitionItemView/TimeseriesSelectionBar";
+import { useNwbTimeseriesDataClient } from "../TimeseriesItemView/NwbTimeseriesDataClient";
+import TimeseriesDatasetChunkingClient from "../TimeseriesItemView/TimeseriesDatasetChunkingClient";
+import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../TimeseriesItemView/TimeseriesSelectionBar";
 import { NwbFileContext } from "../NwbFileContext";
 import { useDataset } from "../NwbMainView/NwbMainView";
 import { Canceler } from "../RemoteH5File/helpers";

@@ -3,7 +3,7 @@ import { RemoteH5Dataset, RemoteH5File } from "../RemoteH5File/RemoteH5File";
 
 class TimeseriesDatasetChunkingClient {
     #chunks: {[k: number]: number[][]} = {}
-    constructor(private nwbFile: RemoteH5File, private dataset: RemoteH5Dataset, private chunkSize: number) {
+    constructor(private nwbFile: RemoteH5File, private dataset: RemoteH5Dataset, private chunkSize: number, private visibleChannelsRange?: [number, number]) {
     }
     async getConcatenatedChunk(startChunkIndex: number, endChunkIndex: number, canceler: Canceler): Promise<{concatenatedChunk: number[][], completed: boolean}> {
         const timer = Date.now()
@@ -51,9 +51,13 @@ class TimeseriesDatasetChunkingClient {
         const offset = this.dataset.attrs['offset'] || 0
         const i1 = chunkIndex * this.chunkSize
         const i2 = Math.min(i1 + this.chunkSize, shape[0])
-        const N1 = Math.min(shape[1] || 1, 5) // for now limit to 5 columns (until we can figure out why reading is so slow)
+        let channelSlice: [number, number] = [0, Math.min(shape[1] || 1, 15)] // for now limit to 15 columns when no channel slice is specified
+        if (this.visibleChannelsRange) {
+            channelSlice = this.visibleChannelsRange
+        }
+        const N1 = Math.min(shape[1] || 1, 5) 
         if (shape.length > 2) throw Error('TimeseriesDatasetChunkingClient not implemented implemented for shape.length > 2')
-        const slice: [number, number][] = shape.length === 1 ? [[i1, i2]] : [[i1, i2], [0, N1]]
+        const slice: [number, number][] = shape.length === 1 ? [[i1, i2]] : [[i1, i2], channelSlice]
         const data = await this.nwbFile.getDatasetData(this.dataset.path, {slice, canceler})
         const chunk: number[][] = []
         for (let i = 0; i < N1; i ++) {

@@ -1,6 +1,6 @@
 import { FunctionComponent } from "react"
 import Splitter from "../../../components/Splitter"
-import AcquisitionItemTimeseriesView from "../NwbAcquisitionItemView/AcquisitionItemTimeseriesView"
+import NwbTimeseriesView from "../TimeseriesItemView/NwbTimeseriesView"
 import SpatialSeriesSpatialView from "./SpatialSeriesSpatialView"
 
 type Props = {
@@ -12,7 +12,7 @@ type Props = {
 
 const SpatialSeriesWidget: FunctionComponent<Props> = ({width, height, objectPath, condensed}) => {
     const timeseriesContent = (
-        <AcquisitionItemTimeseriesView
+        <NwbTimeseriesView
             width={width}
             height={height}
             objectPath={objectPath}
@@ -35,7 +35,6 @@ const SpatialSeriesWidget: FunctionComponent<Props> = ({width, height, objectPat
                 objectPath={objectPath}
             />
         </Splitter>
-
     )
 }
 

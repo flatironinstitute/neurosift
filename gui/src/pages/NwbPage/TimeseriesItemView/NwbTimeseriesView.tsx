@@ -18,6 +18,7 @@ type Props = {
     width: number
     height: number
     objectPath: string
+    visibleChannelsRange?: [number, number]
 }
 
 const gridlineOpts = {
@@ -33,7 +34,7 @@ const yAxisInfo = {
 
 const hideToolbar = false
 
-const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath }) => {
+const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath, visibleChannelsRange }) => {
     const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | undefined>()
     const [worker, setWorker] = useState<Worker | null>(null)
     const nwbFile = useContext(NwbFileContext)
@@ -68,9 +69,9 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
     useEffect(() => {
         if (!nwbFile) return
         if (!dataset) return
-        const client = new TimeseriesDatasetChunkingClient(nwbFile, dataset, chunkSize)
+        const client = new TimeseriesDatasetChunkingClient(nwbFile, dataset, chunkSize, visibleChannelsRange)
         setDatasetChunkingClient(client)
-    }, [dataset, nwbFile, chunkSize])
+    }, [dataset, nwbFile, chunkSize, visibleChannelsRange])
 
     // Set startChunkIndex and endChunkIndex
     const [startChunkIndex, setStartChunkIndex] = useState<number | undefined>(undefined)

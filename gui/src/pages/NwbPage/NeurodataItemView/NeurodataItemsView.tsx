@@ -1,6 +1,6 @@
 import { FunctionComponent, useContext, useMemo } from "react"
 import Splitter from "../../../components/Splitter"
-import TimeseriesSelectionWidget from "../NwbAcquisitionItemView/TimeseriesSelectionWidget"
+import TimeseriesSelectionWidget from "../TimeseriesItemView/TimeseriesSelectionWidget"
 import { NwbFileContext } from "../NwbFileContext"
 import NeurodataItemView from "./NeurodataItemView"
 
