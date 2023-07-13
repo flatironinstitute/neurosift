@@ -20,8 +20,9 @@ export type Route = {
 const useRoute = () => {
     const location = useLocation()
     const navigate = useNavigate()
-    const p = location.pathname
     const search = location.search
+    const query = useMemo(() => (parseSearchString(search)), [search])
+    const p = query.p || '/'
     const route: Route = useMemo(() => {
         if (p === '/about') {
             return {
@@ -47,7 +48,6 @@ const useRoute = () => {
             }
         }
         else if (p === '/nwb') {
-            const query = parseSearchString(location.search)
             return {
                 page: 'nwb',
                 url: query.url
@@ -58,28 +58,29 @@ const useRoute = () => {
                 page: 'home'
             }
         }
-    }, [p])
+    }, [p, query])
 
     const setRoute = useCallback((r: Route) => {
+        let newQuery = {...query}
         if (r.page === 'home') {
-            navigate('/' + location.search)
+            newQuery = {p: '/'}    
         }
         else if (r.page === 'about') {
-            navigate('/about' + location.search)
+            newQuery = {p: '/about'}
         }
         else if (r.page === 'browse') {
-            navigate(`/b/${r.folder}` + location.search)
-        }
-        else if (r.page === 'github-auth') {
-            navigate('/github/auth' + location.search)
+            newQuery.p = '/b/' + r.folder
         }
         else if (r.page === 'test') {
-            navigate('/test' + location.search)
+            newQuery.p = '/test'
         }
         else if (r.page === 'nwb') {
-            navigate(`/nwb?url=` + r.url)
+            newQuery.p = '/nwb'
+            newQuery.url = r.url
         }
-    }, [navigate, location.search])
+        const newSearch = queryToQueryString(newQuery)
+        navigate(location.pathname + newSearch)
+    }, [navigate, location.pathname, query])
 
     return {
         route,
@@ -95,6 +96,14 @@ const parseSearchString = (search: string) => {
         query[b[0]] = b[1]
     }
     return query
+}
+
+const queryToQueryString = (query: { [key: string]: string }) => {
+    const a: string[] = []
+    for (const key in query) {
+        a.push(`${key}=${query[key]}`)
+    }
+    return '?' + a.join('&')
 }
 
 export default useRoute
