@@ -14,6 +14,9 @@ export type Route = {
     page: 'nwb'
     url: string
 } | {
+    page: 'avi'
+    url: string
+} | {
     page: 'github-auth'
 }
 
@@ -53,6 +56,12 @@ const useRoute = () => {
                 url: query.url
             }
         }
+        else if (p === '/avi') {
+            return {
+                page: 'avi',
+                url: query.url
+            }
+        }
         else {
             return {
                 page: 'home'
@@ -76,6 +85,10 @@ const useRoute = () => {
         }
         else if (r.page === 'nwb') {
             newQuery.p = '/nwb'
+            newQuery.url = r.url
+        }
+        else if (r.page === 'avi') {
+            newQuery.p = '/avi'
             newQuery.url = r.url
         }
         const newSearch = queryToQueryString(newQuery)

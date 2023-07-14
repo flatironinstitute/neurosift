@@ -69,16 +69,20 @@ const headRequest = async (url: string) => {
     return response
 }
 
-const getMetaUrl = async (url: string) => {
+export const getEtage = async (url: string) => {
     const headResponse = await headRequest(url)
     if (!headResponse) return undefined
-    
-    let etag = headResponse.headers.get('ETag')
+    const etag = headResponse.headers.get('ETag')
     if (!etag) {
         return undefined
     }
     // remove quotes
-    etag = etag.slice(1, etag.length - 1)
+    return etag.slice(1, etag.length - 1)
+}
+
+const getMetaUrl = async (url: string) => {
+    const etag = await getEtage(url)
+    if (!etag) return undefined
     const computedAssetBaseUrl = `https://neurosift.org/computed/nwb/ETag/${etag.slice(0, 2)}/${etag.slice(2, 4)}/${etag.slice(4, 6)}/${etag}`
     const metaNwbUrl = `${computedAssetBaseUrl}/meta.1.nwb`
     let headResponse2

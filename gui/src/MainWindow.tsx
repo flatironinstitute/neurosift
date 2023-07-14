@@ -2,6 +2,7 @@ import { FunctionComponent } from "react";
 import ApplicationBar, { applicationBarHeight } from "./ApplicationBar";
 import GitHubAuthPage from "./GitHub/GitHubAuthPage";
 import AboutPage from "./pages/AboutPage/AboutPage";
+import AviPage from "./pages/AviPage/AviPage";
 import BrowsePage from "./pages/BrowsePage/BrowsePage";
 import { SetupOpenTabs } from "./pages/BrowsePage/OpenTabsContext";
 import HomePage from "./pages/HomePage/HomePage";
@@ -42,6 +43,12 @@ const MainWindow: FunctionComponent<Props> = () => {
                         />
                     ) : route.page === 'nwb' ? (
                         <NwbPage
+                            width={width}
+                            height={H}
+                            url={route.url}
+                        />
+                    ) : route.page === 'avi' ? (
+                        <AviPage
                             width={width}
                             height={H}
                             url={route.url}
