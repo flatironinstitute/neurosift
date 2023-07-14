@@ -31,6 +31,10 @@ export type RemoteH5Dataset = {
 
 export type DatasetDataType = Float32Array | Float64Array | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array
 
+const chunkSizeForMetaFile = 1024 * 1024 * 4
+const defaultChunkSize = 1024 * 20
+
+
 export class RemoteH5File {
   #groupCache: { [path: string]: RemoteH5Group } = {}
   #datasetCache: { [path: string]: RemoteH5Dataset } = {}
@@ -44,6 +48,7 @@ export class RemoteH5File {
       type: 'getGroup',
       url: this.metaUrl || this.url,
       path,
+      chunkSize: this.metaUrl ? chunkSizeForMetaFile : defaultChunkSize
     }, dummyCanceler)
     this.#groupCache[path] = resp.group
     return this.#groupCache[path]
@@ -55,6 +60,7 @@ export class RemoteH5File {
       type: 'getDataset',
       url: this.metaUrl || this.url,
       path,
+      chunkSize: this.metaUrl ? chunkSizeForMetaFile : defaultChunkSize
     }, dummyCanceler)
     this.#datasetCache[path] = resp.dataset
     return this.#datasetCache[path]
@@ -68,16 +74,12 @@ export class RemoteH5File {
 
     const { slice, allowBigInt, canceler } = o
     const dummyCanceler = {onCancel: []}
-    const chunkMode = slice ? (
-       product(slice.map(s => s[1] - s[0])) >= 1e5 ? 'large-chunks' : 'small-chunks'
-    ) : 'small-chunks'
-    // const chunkMode = 'small-chunks' // for now only do small chunks until we can figure out a better way
     const resp = await postRemoteH5WorkerRequest({
       type: 'getDatasetData',
       url: urlToUse,
       path,
       slice,
-      chunkMode
+      chunkSize: urlToUse === this.metaUrl ? chunkSizeForMetaFile : defaultChunkSize,
     }, canceler || dummyCanceler)
     const { data } = resp
     let x = data

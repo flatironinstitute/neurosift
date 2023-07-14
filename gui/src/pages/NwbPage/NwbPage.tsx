@@ -46,22 +46,68 @@ const NwbPage: FunctionComponent<Props> = ({width, height, url}) => {
     )
 }
 
+const headRequest = async (url: string) => {
+    // Cannot use HEAD, because it is not allowed by CORS on DANDI AWS bucket
+    // let headResponse
+    // try {
+    //     headResponse = await fetch(url, {method: 'HEAD'})
+    //     if (headResponse.status !== 200) {
+    //         return undefined
+    //     }
+    // }
+    // catch(err: any) {
+    //     console.warn(`Unable to HEAD ${url}: ${err.message}`)
+    //     return undefined
+    // }
+    // return headResponse
+
+    // Instead, use aborted GET.
+    const controller = new AbortController();
+    const signal = controller.signal;
+    const response = await fetch(url, { signal })
+    controller.abort();
+    return response
+}
+
 const getMetaUrl = async (url: string) => {
-    const aa = 'https://dandiarchive.s3.amazonaws.com/'
-    if (!url.startsWith(aa)) {
+    const headResponse = await headRequest(url)
+    if (!headResponse) return undefined
+    
+    let etag = headResponse.headers.get('ETag')
+    if (!etag) {
         return undefined
     }
-    const pp = url.slice(aa.length)
-    const candidateMetaUrl = `https://neurosift.org/nwb-meta/dandiarchive/${pp}`
+    // remove quotes
+    etag = etag.slice(1, etag.length - 1)
+    const computedAssetBaseUrl = `https://neurosift.org/computed/nwb/ETag/${etag.slice(0, 2)}/${etag.slice(2, 4)}/${etag.slice(4, 6)}/${etag}`
+    const metaNwbUrl = `${computedAssetBaseUrl}/meta.1.nwb`
+    let headResponse2
     try {
-        const resp = await fetch(candidateMetaUrl, {method: 'HEAD'})
-        if (resp.status === 200) return candidateMetaUrl
-        // status of 404 means it wasn't found
+        headResponse2 = await fetch(metaNwbUrl, {method: 'HEAD'})
+        if (headResponse2.status === 200) {
+            return metaNwbUrl
+        }
     }
     catch(err: any) {
-        console.warn(`Unable to HEAD ${candidateMetaUrl}: ${err.message}`)
+        console.warn(`Unable to HEAD ${metaNwbUrl}: ${err.message}`)
     }
     return undefined
+
+    // const aa = 'https://dandiarchive.s3.amazonaws.com/'
+    // if (!url.startsWith(aa)) {
+    //     return undefined
+    // }
+    // const pp = url.slice(aa.length)
+    // const candidateMetaUrl = `https://neurosift.org/nwb-meta/dandiarchive/${pp}`
+    // try {
+    //     const resp = await fetch(candidateMetaUrl, {method: 'HEAD'})
+    //     if (resp.status === 200) return candidateMetaUrl
+    //     // status of 404 means it wasn't found
+    // }
+    // catch(err: any) {
+    //     console.warn(`Unable to HEAD ${candidateMetaUrl}: ${err.message}`)
+    // }
+    // return undefined
 }
 
 export default NwbPage

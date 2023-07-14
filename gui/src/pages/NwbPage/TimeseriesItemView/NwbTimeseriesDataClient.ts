@@ -115,7 +115,7 @@ class RegularTimeseriesDataClient {
         return Math.round((time - this.#startTime!) * this.#samplingFrequency!)
     }
     async getTimestampsForDataIndices(i1: number, i2: number): Promise<DatasetDataType> {
-        const ret = new Float32Array(i2 - i1)
+        const ret = new Float64Array(i2 - i1) // it's important that this is 64-bit float because for 32-bit we have insufficient precision for large values of i1/i2
         for (let i = i1; i < i2; i++) {
             ret[i - i1] = this.#startTime! + i / this.#samplingFrequency!
         }

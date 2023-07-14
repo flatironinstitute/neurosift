@@ -4,10 +4,8 @@ const globalFiles = {}
 const globalGroupCache = {}
 const globalDatasetCache = {}
 
-// type ChunkMode = 'small-chunks' | 'large-chunks'
-
-const initializeIfNeeded = async (url, chunkMode) => {
-    if (globalFiles[url + '|' + chunkMode]) {
+const initializeIfNeeded = async (url, chunkSize) => {
+    if (globalFiles[url + '|' + chunkSize]) {
         return
     }
     const {FS} = await h5wasm.ready
@@ -23,23 +21,24 @@ const initializeIfNeeded = async (url, chunkMode) => {
     }
     controller.abort();
 
-    // compute hash of url + '|' + chunkMode
-    const hash = (url + '|' + chunkMode).split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0)
+    // compute hash of url + '|' + chunkSize
+    const hash = (url + '|' + chunkSize).split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0)
     const fname = `${hash}.h5`
-    const chunkSize = chunkMode === 'small-chunks' ? 1024 * 20 : 1024 * 100
     FS.createLazyFile('/', fname, url, true, false, headResponseHeaders, chunkSize);
 
     const file = new h5wasm.File(fname);
-    globalFiles[url + '|' + chunkMode] = file
+    globalFiles[url + '|' + chunkSize] = file
 }
 
-const getGroup = async (url, path) => {
+const smallChunkSize = 1024 * 20
+
+const getGroup = async (url, path, chunkSize) => {
     const kk = `${url}|${path}`
     if (globalGroupCache[kk]) {
         return globalGroupCache[kk]
     }
-    await initializeIfNeeded(url, 'small-chunks')
-    const file = globalFiles[url + '|small-chunks']
+    await initializeIfNeeded(url, chunkSize)
+    const file = globalFiles[url + '|' + chunkSize]
     if (!file) {
         throw new Error('unexpected: file not initialized')
     }
@@ -91,13 +90,13 @@ const getGroup = async (url, path) => {
     return group0
 }
 
-const getDataset = async (url, path, chunkMode) => {
-    const kk = `${url}|${path}|${chunkMode}`
+const getDataset = async (url, path, chunkSize) => {
+    const kk = `${url}|${path}|${chunkSize}`
     if (globalDatasetCache[kk]) {
         return globalDatasetCache[kk]
     }
-    await initializeIfNeeded(url, chunkMode)
-    const file = globalFiles[url + '|' + chunkMode]
+    await initializeIfNeeded(url, chunkSize)
+    const file = globalFiles[url + '|' + chunkSize]
     if (!file) {
         throw new Error('unexpected: file not initialized')
     }
@@ -124,7 +123,7 @@ self.onmessage = function (e) {
         if (req.type === 'getGroup') {
             let group
             try {
-                group = await getGroup(req.url, req.path)
+                group = await getGroup(req.url, req.path, req.chunkSize || smallChunkSize)
             }
             catch (e) {
                 sendResponse({
@@ -141,7 +140,7 @@ self.onmessage = function (e) {
         else if (req.type === 'getDataset') {
             let dataset
             try {
-                dataset = await getDataset(req.url, req.path, 'small-chunks')
+                dataset = await getDataset(req.url, req.path, req.chunkSize || smallChunkSize)
             }
             catch (e) {
                 sendResponse({
@@ -168,7 +167,7 @@ self.onmessage = function (e) {
         else if (req.type === 'getDatasetData') {
             let data
             try {
-                const dataset = await getDataset(req.url, req.path, req.chunkMode)
+                const dataset = await getDataset(req.url, req.path, req.chunkSize || smallChunkSize)
                 if (req.slice) {
                     // if (req.slice.length === 2) {
                     //     data = read_slice_one_column_at_a_time(dataset, req.slice)

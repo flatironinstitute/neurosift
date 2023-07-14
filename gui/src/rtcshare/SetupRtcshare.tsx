@@ -86,7 +86,6 @@ const SetupRtcshare: FunctionComponent<PropsWithChildren> = ({children}) => {
                     dataDispatch({type: 'setConnectedToService', connected: true})
                 }
                 catch(err) {
-                    console.warn(err)
                     dataDispatch({type: 'setConnectedToService', connected: false})
                 }
             })()
