@@ -8,10 +8,11 @@ import os
 import h5py
 from fsspec.implementations.cached import CachingFileSystem
 
-fs = CachingFileSystem(
-    fs=fsspec.filesystem("http"),
-    cache_storage="nwb-cache",  # Local folder for the cache
-)
+# fs = CachingFileSystem(
+#     fs=fsspec.filesystem("http", block_size=100),
+#     cache_storage="nwb-cache",  # Local folder for the cache
+# )
+fs = fsspec.filesystem("http", block_size=1024 * 20) # not sure what is the best block size to use here
 client = da.DandiAPIClient()
 dandisets = [dandiset for dandiset in client.get_dandisets()]
 
@@ -45,7 +46,15 @@ def object_exists(bucket, key: str):
 
 # go backward through the dandisets
 for dandiset in dandisets[::-1]:
+    if dandiset.identifier == '000467': # skip this one
+        continue
+    if dandiset.identifier in ['000409', '000402', '000233']: # skip these because there are too many large .nwb files: https://dandiarchive.org/dandiset/000409
+        continue
     print('')
+    print('')
+    print('')
+    print('=======================================')
+    print('=======================================')
     print('=======================================')
     print(f'DANDI: {dandiset.identifier} ({dandiset.version_id})')
     for asset in dandiset.get_assets():
@@ -54,6 +63,7 @@ for dandiset in dandisets[::-1]:
         if asset.size < 1024 * 1024 * 1024 * 20:
             continue
         print('=======================================')
+        print(f'DANDI: {dandiset.identifier} ({dandiset.version_id})')
         print(asset.path)
         blob = asset.blob
         s3_url = f'https://dandiarchive.s3.amazonaws.com/blobs/{blob[:3]}/{blob[3:6]}/{blob}'
