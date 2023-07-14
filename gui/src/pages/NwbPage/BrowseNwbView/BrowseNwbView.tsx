@@ -203,7 +203,7 @@ export const valueToString = (val: any): string => {
             return `[${val.map(x => valueToString(x)).join(', ')}]`
         }
         else {
-            return JSON.stringify(val)
+            return JSON.stringify(serializeBigInt(val))
         }
     }
     else {
@@ -217,6 +217,28 @@ const product = (arr: number[]) => {
         ret = ret * val
     }
     return ret
+}
+
+const serializeBigInt = (val: any): any => {
+    if (typeof(val) === 'bigint') {
+        // convert to number
+        return Number(val)
+    }
+    else if (typeof(val) === 'object') {
+        if (Array.isArray(val)) {
+            return val.map(x => serializeBigInt(x))
+        }
+        else {
+            const ret: {[key: string]: any} = {}
+            for (const key in val) {
+                ret[key] = serializeBigInt(val[key])
+            }
+            return ret
+        }
+    }
+    else {
+        return val
+    }
 }
 
 export default BrowseNwbView

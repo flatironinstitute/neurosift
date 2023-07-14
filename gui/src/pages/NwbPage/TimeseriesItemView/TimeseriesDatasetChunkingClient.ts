@@ -57,6 +57,7 @@ class TimeseriesDatasetChunkingClient {
         const i1 = chunkIndex * this.chunkSize
         const i2 = Math.min(i1 + this.chunkSize, shape[0])
         let channelSlice: [number, number] = [0, Math.min(shape[1] || 1, 15)] // for now limit to 15 columns when no channel slice is specified
+        // let channelSlice: [number, number] = [0, shape[1] || 1]
         if (this.o.visibleChannelsRange) {
             channelSlice = this.o.visibleChannelsRange
         }
