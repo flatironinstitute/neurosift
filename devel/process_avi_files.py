@@ -37,6 +37,10 @@ def object_exists(bucket, key: str):
 # go backward through the dandisets
 for dandiset in dandisets[::-1]:
     print('')
+    print('')
+    print('')
+    print('=======================================')
+    print('=======================================')
     print('=======================================')
     print(f'DANDI: {dandiset.identifier} ({dandiset.version_id})')
     for asset in dandiset.get_assets():
@@ -44,6 +48,7 @@ for dandiset in dandisets[::-1]:
             continue
         
         print('=======================================')
+        print(f'DANDI: {dandiset.identifier} ({dandiset.version_id})')
         print(asset.path)
         print(f'Size: {asset.size / 1024 / 1024 :.2f} MB')
         if asset.size > 1024 * 1024 * 500:
