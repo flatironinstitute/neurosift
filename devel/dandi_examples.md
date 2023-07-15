@@ -1,10 +1,10 @@
 https://dandiarchive.org/dandiset/000568
 Probing subthreshold dynamics of hippocampal neurons by pulsed optogenetics
 Has .avi files. For example:
-http://localhost:3000/neurosift/?p=/avi&url=https://dandiarchive.s3.amazonaws.com/blobs/79f/50f/79f50f6d-501a-4bb4-ad07-ff5abb545f48
+https://flatironinstitute.github.io/neurosift/?p=/avi&url=https://dandiarchive.s3.amazonaws.com/blobs/79f/50f/79f50f6d-501a-4bb4-ad07-ff5abb545f48
 Here's an NWB file that has ImageSeries that points to an external .avi file
 And also has: OptogeneticStimulusSite, TimeIntervals, LabeledEvents, units, OptogeneticSeries
-http://localhost:3000/neurosift/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/8cf/38e/8cf38e36-6cd8-4c10-9d74-c2e6be70f019
+https://flatironinstitute.github.io/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/8cf/38e/8cf38e36-6cd8-4c10-9d74-c2e6be70f019&dandi-asset=https://api.dandiarchive.org/api/dandisets/000568/versions/0.230705.1633/assets/9fc5a60e-af09-4099-ac22-ee54211f55e4/
 
 
 ### ElectricalSeries

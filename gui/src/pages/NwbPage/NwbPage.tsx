@@ -1,14 +1,15 @@
 import { FunctionComponent, useEffect, useReducer, useState } from "react"
+import useRoute from "../../useRoute"
 import { NwbFileContext } from "./NwbFileContext"
 import { SetupNwbOpenTabs } from "./NwbOpenTabsContext"
 import NwbTabWidget from "./NwbTabWidget"
 import { getRemoteH5File, RemoteH5File } from "./RemoteH5File/RemoteH5File"
 import { SelectedNwbItemsContext, selectedNwbItemsReducer } from "./SelectedNwbItemsContext"
+import { fetchJson } from "./viewPlugins/ImageSeries/ImageSeriesItemView"
 
 type Props = {
     width: number
     height: number
-    url?: string
 }
 
 // const url = 'https://api.dandiarchive.org/api/assets/29ba1aaf-9091-469a-b331-6b8ab818b5a6/download/'
@@ -16,7 +17,42 @@ type Props = {
 const defaultId = 'c86cdfba-e1af-45a7-8dfd-d243adc20ced'
 const defaultUrl = `https://dandiarchive.s3.amazonaws.com/blobs/${defaultId.slice(0, 3)}/${defaultId.slice(3, 6)}/${defaultId}`
 
-const NwbPage: FunctionComponent<Props> = ({width, height, url}) => {
+const NwbPage: FunctionComponent<Props> = ({width, height}) => {
+    const {route, setRoute} = useRoute()
+
+    useEffect(() => {
+        let canceled = false
+        ; (async () => {
+            if ((route.page === 'nwb') && (!route.url) && (route.dandiAssetUrl)) {
+                const info = await fetchJson(route.dandiAssetUrl)
+                if (canceled) return
+                const blobUrl = info['contentUrl'].find((x: any) => (x.startsWith('https://dandiarchive.s3.amazonaws.com/blobs')))
+                setRoute({
+                    ...route,
+                    url: blobUrl
+                })
+            }
+        })()
+        return () => {canceled = true}
+    }, [route.page, route, setRoute])
+
+    if ((route.page === 'nwb') && (!route.url)) {
+        if (route.dandiAssetUrl) {
+            return <div style={{paddingLeft: 20}}>Obtaining asset blob URL from {route.dandiAssetUrl}</div>
+        }
+        return <div style={{paddingLeft: 20}}>No url query parameter</div>
+    }
+    return (
+        <NwbPageChild
+            width={width}
+            height={height}
+        />
+    )
+}
+
+const NwbPageChild: FunctionComponent<Props> = ({width, height}) => {
+    const {route} = useRoute()
+    const url = route.page === 'nwb' ? route.url : route.page === 'test' ? defaultUrl : undefined
     const [nwbFile, setNwbFile] = useState<RemoteH5File | undefined>(undefined)
     const [selectedNwbItemsState, selectedNwbItemsDispatch] = useReducer(selectedNwbItemsReducer, {selectedNwbItems: []})
 

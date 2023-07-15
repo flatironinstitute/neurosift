@@ -13,6 +13,7 @@ export type Route = {
 } | {
     page: 'nwb'
     url: string
+    dandiAssetUrl?: string
 } | {
     page: 'avi'
     url: string
@@ -53,7 +54,8 @@ const useRoute = () => {
         else if (p === '/nwb') {
             return {
                 page: 'nwb',
-                url: query.url
+                url: query.url,
+                dandiAssetUrl: query['dandi-asset'] || undefined
             }
         }
         else if (p === '/avi') {
@@ -86,6 +88,9 @@ const useRoute = () => {
         else if (r.page === 'nwb') {
             newQuery.p = '/nwb'
             newQuery.url = r.url
+            if (r.dandiAssetUrl) {
+                newQuery['dandi-asset'] = r.dandiAssetUrl
+            }
         }
         else if (r.page === 'avi') {
             newQuery.p = '/avi'

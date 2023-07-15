@@ -1,4 +1,5 @@
 import { FunctionComponent, useContext, useEffect, useState } from "react"
+import useRoute from "../../../../useRoute"
 import AviPage from "../../../AviPage/AviPage"
 import { NwbFileContext } from "../../NwbFileContext"
 import { useDatasetData } from "../../NwbMainView/NwbMainView"
@@ -10,14 +11,12 @@ type Props = {
     condensed?: boolean
 }
 
-const locationUrl = window.location.href
-const locationQueryString = locationUrl.split('?')[1] || ''
-const locationQuery = new URLSearchParams(locationQueryString)
-const dandiAssetUrl = locationQuery.get('dandi-asset') || ''
-
 const ImageSeriesItemView: FunctionComponent<Props> = ({width, height, path}) => {
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is undefined (no context provider)')
+
+    const {route} = useRoute()
+    const dandiAssetUrl = route.page === 'nwb' ? route.dandiAssetUrl : undefined
 
     const {data: externalFileData} = useDatasetData(nwbFile, `${path}/external_file`)
     const [videoUrl, setVideoUrl] = useState<string | undefined | null>(undefined)
@@ -31,12 +30,12 @@ const ImageSeriesItemView: FunctionComponent<Props> = ({width, height, path}) =>
             const assetPath = assetInfo['path']
             if (!assetPath) throw Error(`Unexpected: no path in asset info`)
             const videoPath = constructPath(assetPath, externalFileRelativePath)
-            const allAssetsUrl = dandiAssetUrl.split('/').slice(0, -2).join('/')
-            const allAssets = await fetchJson(allAssetsUrl)
-            const videoAsset = allAssets['results'].find((a: any) => (a.path === videoPath))
+            const dandisetAssetsUrl = dandiAssetUrl.split('/').slice(0, -2).join('/')
+            const dandisetAssets = await fetchJson(dandisetAssetsUrl)
+            const videoAsset = dandisetAssets['results'].find((a: any) => (a.path === videoPath))
             if (!videoAsset) throw Error(`Unexpected: video asset not found`)
             const videoAssetId = videoAsset['asset_id']
-            const videoAssetUrl = allAssetsUrl + '/' + videoAssetId
+            const videoAssetUrl = dandisetAssetsUrl + '/' + videoAssetId
             const videoAssetInfo = await fetchJson(videoAssetUrl)
             const videoBlobUrl = videoAssetInfo['contentUrl'].find((x: any) => (x.startsWith('https://dandiarchive.s3.amazonaws.com/blobs')))
             if (!videoBlobUrl) throw Error(`Unexpected: no video blob url`)
@@ -45,7 +44,7 @@ const ImageSeriesItemView: FunctionComponent<Props> = ({width, height, path}) =>
         }
         load()
         return () => {canceled = true}
-    }, [externalFileData])
+    }, [externalFileData, dandiAssetUrl])
 
     if (!dandiAssetUrl) {
         return (
@@ -68,7 +67,7 @@ const ImageSeriesItemView: FunctionComponent<Props> = ({width, height, path}) =>
     )
 }
 
-const fetchJson = async (url: string) => {
+export const fetchJson = async (url: string) => {
     const response = await fetch(url)
     if (!response.ok) {
         throw Error(`Unexpected response from ${url}: ${response.status} ${response.statusText}`)

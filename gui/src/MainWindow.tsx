@@ -45,7 +45,6 @@ const MainWindow: FunctionComponent<Props> = () => {
                         <NwbPage
                             width={width}
                             height={H}
-                            url={route.url}
                         />
                     ) : route.page === 'avi' ? (
                         <AviPage
