@@ -6,16 +6,16 @@ import SpatialSeriesSpatialView from "./SpatialSeriesSpatialView"
 type Props = {
     width: number
     height: number
-    objectPath: string
+    path: string
     condensed?: boolean
 }
 
-const SpatialSeriesWidget: FunctionComponent<Props> = ({width, height, objectPath, condensed}) => {
+const NeurodataSpatialSeriesItemView: FunctionComponent<Props> = ({width, height, path, condensed}) => {
     const timeseriesContent = (
         <NwbTimeseriesView
             width={width}
             height={height}
-            objectPath={objectPath}
+            objectPath={path}
         />
     )
 
@@ -32,10 +32,10 @@ const SpatialSeriesWidget: FunctionComponent<Props> = ({width, height, objectPat
             <SpatialSeriesSpatialView
                 width={width}
                 height={height}
-                objectPath={objectPath}
+                objectPath={path}
             />
         </Splitter>
     )
 }
 
-export default SpatialSeriesWidget
+export default NeurodataSpatialSeriesItemView

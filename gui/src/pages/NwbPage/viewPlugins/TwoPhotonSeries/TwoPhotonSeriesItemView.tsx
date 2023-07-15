@@ -2,11 +2,9 @@
 import { ArrowLeft, ArrowRight } from "@mui/icons-material"
 import { FunctionComponent, useContext, useEffect, useMemo, useState } from "react"
 import SmallIconButton from "../../../../components/SmallIconButton"
-import Splitter from "../../../../components/Splitter"
 import { useTimeRange, useTimeseriesSelection, useTimeseriesSelectionInitialization } from "../../../../package/context-timeseries-selection"
-import NeurodataItemViewLeftPanel from "../../NeurodataItemView/NeurodataItemViewLeftPanel"
 import { NwbFileContext } from "../../NwbFileContext"
-import { useDataset, useGroup } from "../../NwbMainView/NwbMainView"
+import { useDataset } from "../../NwbMainView/NwbMainView"
 import { Canceler } from "../../RemoteH5File/helpers"
 import { DatasetDataType } from "../../RemoteH5File/RemoteH5File"
 import { useNwbTimeseriesDataClient } from "../../TimeseriesItemView/NwbTimeseriesDataClient"
@@ -26,41 +24,7 @@ type ImageData = {
     data: DatasetDataType
 }
 
-const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path, condensed}) => {
-    const nwbFile = useContext(NwbFileContext)
-    if (!nwbFile) throw Error('Unexpected: nwbFile is null')
-    const group = useGroup(nwbFile, path)
-
-    const content = (
-        <TwoPhotonSeriesItemViewChild
-            width={width}
-            height={height}
-            path={path}
-            condensed={condensed}
-        />
-    )
-    if (condensed) return content
-
-    return (
-        <Splitter
-            direction="horizontal"
-            initialPosition={300}
-            width={width}
-            height={height}
-        >
-            <NeurodataItemViewLeftPanel
-                width={0}
-                height={0}
-                path={path}
-                group={group}
-                viewName="TwoPhotonSeries"
-            />
-            {content}
-        </Splitter>
-    )
-}
-
-const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({width, height, path}) => {
+const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}) => {
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is null')
     const dataDataset = useDataset(nwbFile, path + '/data')
