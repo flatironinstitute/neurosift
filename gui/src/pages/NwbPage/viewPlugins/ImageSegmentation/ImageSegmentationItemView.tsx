@@ -4,6 +4,7 @@ import Splitter from "../../../../components/Splitter"
 import { NwbFileContext } from "../../NwbFileContext"
 import { useGroup } from "../../NwbMainView/NwbMainView"
 import { RemoteH5File, RemoteH5Group } from "../../RemoteH5File/RemoteH5File"
+import PlaneSegmentationView from "./PlaneSegmentationView"
 
 type Props = {
     width: number
@@ -39,10 +40,10 @@ const ImageSegmentationItemView: FunctionComponent<Props> = ({width, height, pat
                 selectedSegmentationName={selectedSegmentationName}
                 setSelectedSegmentationName={setSelectedSegmentationName}
             />
-            {selectedSegmentationName ? <MainPanel
+            {selectedSegmentationName ? <PlaneSegmentationView
                 width={0}
                 height={0}
-                group={group}
+                imageSegmentationGroup={group}
                 nwbFile={nwbFile}
                 selectedSegmentationName={selectedSegmentationName}
             /> : <div />}
@@ -78,20 +79,6 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({width, height, group, nwb
             </tbody>
         </table>
     )
-}
-
-type MainPanelProps = {
-    width: number
-    height: number
-    group: RemoteH5Group
-    nwbFile: RemoteH5File
-    selectedSegmentationName: string
-}
-
-const MainPanel: FunctionComponent<MainPanelProps> = ({width, height, group, nwbFile, selectedSegmentationName}) => {
-    const segGroup = useGroup(nwbFile, `${group.path}/${selectedSegmentationName}`)
-    console.log('segGroup', segGroup)
-    return <div>Main</div>
 }
 
 export default ImageSegmentationItemView

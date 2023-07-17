@@ -84,8 +84,13 @@ type Props = {
     // none
 }
 
+const locationUrl = window.location.href
+const queryParamsString = locationUrl.split('?')[1]
+const queryParams = new URLSearchParams(queryParamsString)
+const test1Mode = queryParams.get('test1') === '1'
+
 const defaultNwbOpenTabsState: NwbOpenTabsState = {
-    openTabs: [{tabName: 'main'}],
+    openTabs: test1Mode ? [{tabName: 'main'}, {tabName: `neurodata-item:/processing/ophys/ImageSegmentation|ImageSegmentation`}] : [{tabName: 'main'}],
     currentTabName: 'main'
 }
 
