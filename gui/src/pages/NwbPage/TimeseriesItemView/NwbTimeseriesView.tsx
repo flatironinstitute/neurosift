@@ -116,6 +116,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
     // Set dataSeries
     const [dataSeries, setDataSeries] = useState<DataSeries[] | undefined>(undefined)
     useEffect(() => {
+        setLoading(true)
         if (!datasetChunkingClient) return
         if (dataset === undefined) return
         if (startChunkIndex === undefined) return
@@ -128,7 +129,6 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
         const load = async () => {
             let finished = false
             const tt = await dataClient.getTimestampsForDataIndices(startChunkIndex * chunkSize, endChunkIndex * chunkSize)
-            setLoading(true)
             while (!finished) {
                 try {
                     canceler = {onCancel: []}

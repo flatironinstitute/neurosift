@@ -11,7 +11,8 @@ type Props = {
 
 const NeurodataElectricalSeriesItemView: FunctionComponent<Props> = ({width, height, path}) => {
     const bottomToolBarHeight = 30
-    const [electricalSeriesOpts, setElectricalSeriesOpts] = useState<ElectricalSeriesOpts>({numVisibleChannels: 5, visibleStartChannel: 0, autoChannelSeparation: 2})
+    // important to start with only 1 visible channel --- if we want to default to more, do it in a useEffect after we figure out the number of channels in the dataset
+    const [electricalSeriesOpts, setElectricalSeriesOpts] = useState<ElectricalSeriesOpts>({numVisibleChannels: 1, visibleStartChannel: 0, autoChannelSeparation: 2})
     const visibleChannelsRange = useMemo(() => {
         const {numVisibleChannels, visibleStartChannel} = electricalSeriesOpts
         return [visibleStartChannel, visibleStartChannel + numVisibleChannels] as [number, number]
