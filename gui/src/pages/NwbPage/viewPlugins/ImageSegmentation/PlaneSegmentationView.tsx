@@ -138,12 +138,13 @@ const Test1: FunctionComponent<{client: PlaneSegmentationClient, width: number, 
             for (let j = 0; j < N0; j++) {
                 const color = distinctColors[j % distinctColors.length]
                 const aa = await client.getImageMask(j)
-                const {x0, y0, w0, h0, data} = aa
                 if (canceled) return
+                const {x0, y0, w0, h0, data} = aa
+                const maxval = computeMaxVal(data)
                 const imageData = ctx.createImageData(w0, h0)
                 for (let i = 0; i < w0; i++) {
                     for (let j = 0; j < h0; j++) {
-                        const v = data[i][j]
+                        const v = data[i][j] / (maxval || 1)
                         const index = (j * w0 + i) * 4
                         imageData.data[index + 0] = color[0] * v
                         imageData.data[index + 1] = color[1] * v
@@ -200,6 +201,18 @@ const getBoundingRect = (data: number[][]) => {
     }
     if ((x0 === undefined) || (y0 === undefined) || (x1 === undefined) || (y1 === undefined)) return {x0: 0, y0: 0, w0: 0, h0: 0}
     return {x0, y0, w0: x1 - x0 + 1, h0: y1 - y0 + 1}
+}
+
+const computeMaxVal = (data: number[][]) => {
+    let maxval = 0
+    for (let i = 0; i < data.length; i++) {
+        const row = data[i]
+        for (let j = 0; j < row.length; j++) {
+            const v = row[j]
+            maxval = Math.max(maxval, v)
+        }
+    }
+    return maxval
 }
 
 export default PlaneSegmentationView
