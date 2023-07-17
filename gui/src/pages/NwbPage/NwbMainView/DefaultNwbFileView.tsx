@@ -1,10 +1,10 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react"
+import TopLevelGroupContentPanel from "../BrowseNwbView/TopLevelGroupContentPanel"
 import { RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import UnitsContentPanel from "../UnitsContentPanel"
 import AcquisitionContentPanel from "./AcquisitionContentPanel"
 import { useGroup } from "./NwbMainView"
 import ProcessingGroupContentPanel from "./ProcessingGroupContentPanel"
-import SpecificationsContentPanel from "./SpecificationsContentPanel"
 
 type Props = {
     width: number
@@ -19,6 +19,7 @@ type Heading = {
 }
 
 const DefaultNwbFileView: FunctionComponent<Props> = ({width, height, nwbFile}) => {
+    const rootGroup = useGroup(nwbFile, '/')
     const processingGroup = useGroup(nwbFile, '/processing')
     const headings = useMemo(() => {
         const hh: Heading[] = []
@@ -27,17 +28,6 @@ const DefaultNwbFileView: FunctionComponent<Props> = ({width, height, nwbFile}) 
             label: 'acquisition',
             groupPath: '/acquisition'
         })
-        hh.push({
-            name: 'analysis',
-            label: 'analysis',
-            groupPath: '/analysis'
-        })
-        hh.push({
-            name: 'general',
-            label: 'general',
-            groupPath: '/general'
-        })
-
         if (processingGroup) {
             processingGroup.subgroups.forEach(sg => {
                 hh.push({
@@ -47,24 +37,39 @@ const DefaultNwbFileView: FunctionComponent<Props> = ({width, height, nwbFile}) 
                 })
             })
         }
-
-        hh.push({
-            name: 'specifications',
-            label: 'specifications',
-            groupPath: '/specifications'
-        })
-        hh.push({
-            name: 'stimulus',
-            label: 'stimulus',
-            groupPath: '/stimulus'
-        })
+        else {
+            hh.push({
+                name: 'loading-processing',
+                label: 'loading processing...',
+                groupPath: ''
+            })
+        }
         hh.push({
             name: 'units',
             label: 'units',
             groupPath: '/units'
         })
+        if (rootGroup) {
+            for (const sg of rootGroup.subgroups) {
+                if (sg.name === 'processing') {
+                    continue
+                }
+                if (!hh.find(h => (h.groupPath === sg.path))) {
+                    hh.push({
+                        name: sg.name,
+                        label: sg.name,
+                        groupPath: sg.path
+                    })
+                }
+            }
+        }
+        hh.sort((a, b) => {
+            if (a.name < b.name) return -1
+            if (a.name > b.name) return 1
+            return 0
+        })
         return hh
-    }, [processingGroup])
+    }, [processingGroup, rootGroup])
     return (
         <div style={{position: 'absolute', width, height, overflowY: 'auto'}}>
             {
@@ -91,13 +96,14 @@ const TopLevelHeadingView: FunctionComponent<TopLevelHeadingViewProps> = ({nwbFi
     // const titlePanelColor = expanded ? '#336' : '#669'
     const titlePanelColor = expanded ? '#a67c00' : '#feb'
     const titleColor = expanded ? '#feb' : '#865c00'
+    const expandable = !!heading.groupPath
     return (
         <div style={{marginLeft: 10}}>
             <div
                 style={{cursor: 'pointer', paddingTop: 10, paddingBottom: 10, marginTop: 10, background: titlePanelColor, color: titleColor, border: 'solid 1px black'}}
                 onClick={() => setExpanded(!expanded)}
             >
-                {expanded ? '▼' : '►'} {heading.label} <TopLevelTitlePanelText heading={heading} group={group} nwbFile={nwbFile} />
+                {expandable ? (expanded ? '▼' : '►') : <span>&nbsp;</span>} {heading.label} <TopLevelTitlePanelText heading={heading} group={group} nwbFile={nwbFile} />
             </div>
             {
                 expanded && group && (
@@ -159,26 +165,12 @@ const TopLevelContentPanel: FunctionComponent<TopLevelContentPanelProps> = ({hea
     else if (name.startsWith('processing/')) {
         return <ProcessingGroupContentPanel nwbFile={nwbFile} groupPath={heading.groupPath} />
     }
-    else if (name === 'specifications') {
-        return <SpecificationsContentPanel nwbFile={nwbFile} />
-    }
     return (
-        <div style={{marginLeft: 10}}>
-            {
-                group.subgroups.map((sg) => (
-                    <div key={sg.name}>
-                        {sg.name}
-                    </div>
-                ))
-            }
-            {
-                group.datasets.map((d) => (
-                    <div key={d.name}>
-                        DS: {d.name}
-                    </div>
-                ))
-            }
-        </div>
+        <TopLevelGroupContentPanel
+            name={name}
+            group={group}
+            nwbFile={nwbFile}
+        />
     )
 }
 

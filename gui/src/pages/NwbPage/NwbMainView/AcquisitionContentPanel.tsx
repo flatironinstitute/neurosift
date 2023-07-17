@@ -52,18 +52,18 @@ type GroupTableRowProps = {
 }
 
 const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, subgroup, selected, onToggleSelect}) => {
-    const [group, setGroup] = useState<RemoteH5Group | undefined>(undefined)
+    // const [group, setGroup] = useState<RemoteH5Group | undefined>(undefined)
     const [data, setData] = useState<RemoteH5Dataset | undefined>(undefined)
-    useEffect(() => {
-        let canceled = false
-        const load = async () => {
-            const g = await nwbFile.getGroup(subgroup.path)
-            if (canceled) return
-            setGroup(g)
-        }
-        load()
-        return () => {canceled = true}
-    }, [nwbFile, subgroup.path])
+    // useEffect(() => {
+    //     let canceled = false
+    //     const load = async () => {
+    //         const g = await nwbFile.getGroup(subgroup.path)
+    //         if (canceled) return
+    //         setGroup(g)
+    //     }
+    //     load()
+    //     return () => {canceled = true}
+    // }, [nwbFile, subgroup.path])
     useEffect(() => {
         let canceled = false
         const load = async () => {
@@ -75,7 +75,7 @@ const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, subgroup
         return () => {canceled = true}
     }, [nwbFile, subgroup.path])
     const {openTab} = useNwbOpenTabs()
-    const neurodataType = group ? group.attrs['neurodata_type'] : ''
+    const neurodataType = subgroup.attrs['neurodata_type']
     return (
         <tr>
             <td>
@@ -85,8 +85,8 @@ const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, subgroup
                 <Hyperlink disabled={!neurodataType} onClick={() => openTab(`neurodata-item:${subgroup.path}|${neurodataType}`)}>{subgroup.name}</Hyperlink>
             </td>
             <td>{neurodataType}</td>
-            <td>{group ? group.attrs['description'] : ''}</td>
-            <td>{group ? <Abbreviate>{group.attrs['comments']}</Abbreviate> : ''}</td>
+            <td>{subgroup.attrs['description']}</td>
+            <td>{<Abbreviate>{subgroup.attrs['comments']}</Abbreviate>}</td>
             <td>{data ? `${data.dtype} ${formatShape(data.shape)}` : ''}</td>
         </tr>
     )

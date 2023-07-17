@@ -12,6 +12,11 @@ ImageSegmentation
 processing/ophys -> ImageSegmentation
 https://flatironinstitute.github.io/neurosift/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/368/fa7/368fa71e-4c93-4f7e-af15-06776ca07f34&test1=1
 
+ImageSegmentation
+https://dandiarchive.org/dandiset/000054/0.210819.1547/files?location=sub-F1
+https://flatironinstitute.github.io/neurosift/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/cb2/fc5/cb2fc5d3-3a37-4e1c-bc03-c35cf83db68c
+
+
 ### ElectricalSeries
 
 **Slow loading**
