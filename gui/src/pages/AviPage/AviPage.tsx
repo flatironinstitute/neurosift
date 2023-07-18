@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useState } from "react"
 import useWheelZoom from "../BrowsePage/FileView/AnnotatedVideoView/useWheelZoom"
-import { getEtage } from "../NwbPage/NwbPage"
+import { getEtag } from "../NwbPage/NwbPage"
 import VideoFrameView from "./VideoFrameView"
 
 type Props = {
@@ -22,7 +22,7 @@ const AviPage: FunctionComponent<Props> = ({width, height, url}) => {
     useEffect(() => {
         let canceled = false
         ;(async () => {
-            const etag = await getEtage(url)
+            const etag = await getEtag(url)
             if (!etag) {
                 setMp4Url(null)
                 return

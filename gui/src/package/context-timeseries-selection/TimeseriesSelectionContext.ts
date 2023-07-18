@@ -44,9 +44,11 @@ export const selectionIsValid = (r: TimeseriesSelection) => {
     // we can get away with just comparing visible start to timeseries start and visible end to timeseries end.
     // (b/c if visEnd < recStart, then visStart < recStart; if visStart > recEnd, then visEnd > recEnd.)
     
-    if (timeseriesStartTimeSec !== undefined && visibleStartTimeSec !== undefined && timeseriesEndTimeSec !== undefined && visibleEndTimeSec !== undefined) {
-        if (visibleStartTimeSec < timeseriesStartTimeSec || timeseriesEndTimeSec < visibleEndTimeSec) return false
-    }
+    // if (timeseriesStartTimeSec !== undefined && visibleStartTimeSec !== undefined && timeseriesEndTimeSec !== undefined && visibleEndTimeSec !== undefined) {
+    //     if (visibleStartTimeSec < timeseriesStartTimeSec || timeseriesEndTimeSec < visibleEndTimeSec) {
+    //         return false
+    //     }
+    // }
     
     
     // if (r.currentTimeSec) {

@@ -5,8 +5,9 @@ import SmallIconButton from "../../../../components/SmallIconButton"
 import { useTimeRange, useTimeseriesSelection, useTimeseriesSelectionInitialization } from "../../../../package/context-timeseries-selection"
 import { NwbFileContext } from "../../NwbFileContext"
 import { useDataset } from "../../NwbMainView/NwbMainView"
+import { getEtag, headRequest } from "../../NwbPage"
 import { Canceler } from "../../RemoteH5File/helpers"
-import { DatasetDataType } from "../../RemoteH5File/RemoteH5File"
+import { DatasetDataType, RemoteH5File } from "../../RemoteH5File/RemoteH5File"
 import { useNwbTimeseriesDataClient } from "../TimeSeries/TimeseriesItemView/NwbTimeseriesDataClient"
 import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../TimeSeries/TimeseriesItemView/TimeseriesSelectionBar"
 import MultiRangeSlider from "./MultiRangeSlider/MultiRangeSlider"
@@ -22,6 +23,28 @@ type ImageData = {
     width: number
     height: number
     data: DatasetDataType
+}
+
+const useComputedDataDatUrl = (nwbFile: RemoteH5File, path: string | undefined) => {
+    const [computedDataDatUrl, setComputedDataDatUrl] = useState<string | undefined>(undefined)
+    useEffect(() => {
+        let canceled = false
+        const load = async () => {
+            if (!path) return
+            const etag = await getEtag(nwbFile.url)
+            if (canceled) return
+            if (!etag) return
+            const nwbUrl = `https://neurosift.org/computed/nwb/ETag/${etag.slice(0, 2)}/${etag.slice(2, 4)}/${etag.slice(4, 6)}/${etag}`
+            const datUrl = `${nwbUrl}/${path.slice(1)}.dat`
+            const headResponse = await headRequest(datUrl)
+            if (canceled) return
+            if (!headResponse) return
+            setComputedDataDatUrl(datUrl)
+        }
+        load()
+        return () => {canceled = true}
+    }, [nwbFile, path])
+    return computedDataDatUrl
 }
 
 const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}) => {
@@ -63,6 +86,8 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}
         return () => {canceled = true}
     }, [currentTime, timeseriesDataClient])
 
+    const computedDataDatUrl = useComputedDataDatUrl(nwbFile, dataDataset?.path)
+
     useEffect(() => {
         if (!dataDataset) return
         if ((dataDataset.shape.length !== 3) && (dataDataset.shape.length !== 4)) {
@@ -77,11 +102,18 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}
         const load = async () => {
             if (frameIndex === undefined) return
             setLoading(true)
-            const slice = [[frameIndex, frameIndex + 1], [0, N2], [0, N3]] as [number, number][]
-            if (dataDataset.shape.length === 4) {
-                slice.push([currentPlane, currentPlane + 1])
-            }
-            const x = await nwbFile.getDatasetData(dataDataset.path, {slice, canceler})
+
+            // read from nwb file
+            // const slice = [[frameIndex, frameIndex + 1], [0, N2], [0, N3]] as [number, number][]
+            // if (dataDataset.shape.length === 4) {
+            //     slice.push([currentPlane, currentPlane + 1])
+            // }
+            // const x = await nwbFile.getDatasetData(dataDataset.path, {slice, canceler})
+
+            // read from computed data.dat
+            if (!computedDataDatUrl) return
+            const x = await readDataFromDat(computedDataDatUrl, frameIndex * N2 * N3, N2 * N3, dataDataset.dtype)
+
             if (canceled) return
             setCurrentImage({
                 width: N3,
@@ -95,7 +127,7 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}
             canceler.onCancel.forEach((f) => f())
             canceled = true
         }
-    }, [dataDataset, nwbFile, frameIndex, timeseriesDataClient, currentPlane])
+    }, [dataDataset, computedDataDatUrl, frameIndex, timeseriesDataClient, currentPlane])
 
     const [maxDataValue, setMaxDataValue] = useState<number | undefined>(undefined)
     useEffect(() => {
@@ -283,6 +315,48 @@ const maximum = (x: DatasetDataType): number => {
         max = Math.max(max, x[i])
     }
     return max
+}
+
+const readDataFromDat = async (url: string, offset: number, length: number, dtype: string): Promise<DatasetDataType> => {
+    let dt = ''
+    if (dtype === '<h') dt = 'int16'
+    else if (dtype === '<i') dt = 'int32'
+    else if (dtype === '<f') dt = 'float32'
+    else if (dtype === '<d') dt = 'float64'
+    else dt = dtype
+    
+    let numBytesPerElement = 0
+    if (dt === 'int16') numBytesPerElement = 2
+    else if (dt === 'int32') numBytesPerElement = 4
+    else if (dt === 'float32') numBytesPerElement = 4
+    else if (dt === 'float64') numBytesPerElement = 8
+    else throw Error(`Unexpected dtype: ${dtype}`)
+
+    const startByte = offset * numBytesPerElement
+    const endByte = (offset + length) * numBytesPerElement
+
+    const response = await fetch(url, {
+        headers: {
+            'Range': `bytes=${startByte}-${endByte - 1}`
+        }
+    })
+
+    const buf = await response.arrayBuffer()
+    if (dt === 'int16') {
+        return new Int16Array(buf)
+    }
+    else if (dt === 'int32') {
+        return new Int32Array(buf)
+    }
+    else if (dt === 'float32') {
+        return new Float32Array(buf)
+    }
+    else if (dt === 'float64') {
+        return new Float64Array(buf)
+    }
+    else {
+        throw Error(`Unexpected dtype: ${dtype}`)
+    }
 }
 
 export default TwoPhotonSeriesItemView

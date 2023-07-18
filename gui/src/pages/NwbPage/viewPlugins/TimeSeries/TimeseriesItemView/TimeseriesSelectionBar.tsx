@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useCallback, useContext, useMemo, useState } from "react"
 import Draggable, { DraggableData, DraggableEvent } from "react-draggable"
-import { useTimeRange, useTimeseriesSelection, TimeseriesSelectionContext } from "../../../../../package/context-timeseries-selection"
+import { TimeseriesSelectionContext, useTimeRange, useTimeseriesSelection } from "../../../../../package/context-timeseries-selection"
 
 type Props = {
     width: number
@@ -20,6 +20,7 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({width, height, hideVi
     const {setCurrentTime} = useTimeseriesSelection()
     const {timeseriesSelection} = useContext(TimeseriesSelectionContext)
     const {timeseriesStartTimeSec, timeseriesEndTimeSec, currentTimeSec} = timeseriesSelection
+
 
     const fracToPixel = useMemo(() => (frac: number) => {
         return frac * width

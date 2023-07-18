@@ -82,7 +82,7 @@ const NwbPageChild: FunctionComponent<Props> = ({width, height}) => {
     )
 }
 
-const headRequest = async (url: string) => {
+export const headRequest = async (url: string) => {
     // Cannot use HEAD, because it is not allowed by CORS on DANDI AWS bucket
     // let headResponse
     // try {
@@ -105,7 +105,10 @@ const headRequest = async (url: string) => {
     return response
 }
 
-export const getEtage = async (url: string) => {
+const etagCache: {[key: string]: string | undefined} = {}
+
+export const getEtag = async (url: string) => {
+    if (etagCache[url]) return etagCache[url]
     const headResponse = await headRequest(url)
     if (!headResponse) return undefined
     const etag = headResponse.headers.get('ETag')
@@ -113,11 +116,13 @@ export const getEtage = async (url: string) => {
         return undefined
     }
     // remove quotes
-    return etag.slice(1, etag.length - 1)
+    const ret = etag.slice(1, etag.length - 1)
+    etagCache[url] = ret
+    return ret
 }
 
 const getMetaUrl = async (url: string) => {
-    const etag = await getEtage(url)
+    const etag = await getEtag(url)
     if (!etag) return undefined
     const computedAssetBaseUrl = `https://neurosift.org/computed/nwb/ETag/${etag.slice(0, 2)}/${etag.slice(2, 4)}/${etag.slice(4, 6)}/${etag}`
     const metaNwbUrl = `${computedAssetBaseUrl}/meta.1.nwb`

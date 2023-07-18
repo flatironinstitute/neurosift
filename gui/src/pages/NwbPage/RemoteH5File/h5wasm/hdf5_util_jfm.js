@@ -3759,15 +3759,18 @@ var Module = (()=>{
                     ;
                     var lazyArray = this;
                     lazyArray.setDataGetter(chunkNum=>{
-                        var start = chunkNum * chunkSize;
-                        var end = (chunkNum + 1) * chunkSize - 1;
-                        end = Math.min(end, datalength - 1);
+                        ///////////////////////////////////////////////////////////////////////////
+                        // jfm reorganized this a bit to make it more efficient
                         if (typeof lazyArray.chunks[chunkNum] == "undefined") {
+                            var start = chunkNum * chunkSize;
+                            var end = (chunkNum + 1) * chunkSize - 1;
+                            end = Math.min(end, datalength - 1);
                             lazyArray.chunks[chunkNum] = doXHR(start, end)
                         }
                         if (typeof lazyArray.chunks[chunkNum] == "undefined")
                             throw new Error("doXHR failed!");
                         return lazyArray.chunks[chunkNum]
+                        ///////////////////////////////////////////////////////////////////////////
                     }
                     );
                     if (usesGzip || !datalength) {

@@ -38,7 +38,7 @@ const defaultChunkSize = 1024 * 20
 export class RemoteH5File {
   #groupCache: { [path: string]: RemoteH5Group } = {}
   #datasetCache: { [path: string]: RemoteH5Dataset } = {}
-  constructor(private url: string, private metaUrl: string | undefined) {
+  constructor(public url: string, private metaUrl: string | undefined) {
 
   }
   async getGroup(path: string): Promise<RemoteH5Group> {
