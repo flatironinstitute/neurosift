@@ -1,5 +1,5 @@
 import { FunctionComponent } from "react"
-import { useTimeRange, useTimeseriesSelection } from "../../../package/context-timeseries-selection"
+import { useTimeRange, useTimeseriesSelection } from "../../../../../package/context-timeseries-selection"
 import PlayControl from "./PlayControl"
 
 type Props = {

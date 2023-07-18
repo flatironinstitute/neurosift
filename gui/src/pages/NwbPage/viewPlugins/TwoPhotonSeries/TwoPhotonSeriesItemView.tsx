@@ -7,8 +7,8 @@ import { NwbFileContext } from "../../NwbFileContext"
 import { useDataset } from "../../NwbMainView/NwbMainView"
 import { Canceler } from "../../RemoteH5File/helpers"
 import { DatasetDataType } from "../../RemoteH5File/RemoteH5File"
-import { useNwbTimeseriesDataClient } from "../../TimeseriesItemView/NwbTimeseriesDataClient"
-import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../../TimeseriesItemView/TimeseriesSelectionBar"
+import { useNwbTimeseriesDataClient } from "../TimeSeries/TimeseriesItemView/NwbTimeseriesDataClient"
+import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../TimeSeries/TimeseriesItemView/TimeseriesSelectionBar"
 import MultiRangeSlider from "./MultiRangeSlider/MultiRangeSlider"
 
 type Props = {

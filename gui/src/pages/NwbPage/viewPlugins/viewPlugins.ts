@@ -8,6 +8,7 @@ import { neurodataTypeInheritanceRaw } from "../neurodataSpec"
 import TwoPhotonSeriesItemView from "./TwoPhotonSeries/TwoPhotonSeriesItemView"
 import HelloWorldView from "./HelloWorld/HelloWorldView"
 import ImageSeriesItemView from "./ImageSeries/ImageSeriesItemView"
+import DynamicTableView from "./DynamicTable/DynamicTableView"
 
 type Props = {
     width: number,
@@ -51,6 +52,13 @@ viewPlugins.push({
     name: 'TimeSeries',
     neurodataType: 'TimeSeries',
     component: NeurodataTimeSeriesItemView
+})
+
+// DynamicTable
+viewPlugins.push({
+    name: 'DynamicTable',
+    neurodataType: 'DynamicTable',
+    component: DynamicTableView
 })
 
 // TimeIntervals

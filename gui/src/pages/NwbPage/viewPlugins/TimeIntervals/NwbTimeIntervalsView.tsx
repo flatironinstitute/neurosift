@@ -1,4 +1,5 @@
-import { FunctionComponent } from "react"
+import { FunctionComponent, useContext } from "react"
+import { NwbFileContext } from "../../NwbFileContext"
 import { useDatasetData } from "../../NwbMainView/NwbMainView"
 import { RemoteH5File, RemoteH5Group } from "../../RemoteH5File/RemoteH5File"
 import NwbTimeIntervalsWidget from "./NwbTimeIntervalsWidget"
@@ -6,16 +7,17 @@ import NwbTimeIntervalsWidget from "./NwbTimeIntervalsWidget"
 type Props = {
     width: number
     height: number
-    group: RemoteH5Group
-    nwbFile: RemoteH5File
+    path: string
 }
 
-const NwbTimeIntervalsView: FunctionComponent<Props> = ({width, height, group, nwbFile}) => {
-    const {data: labelData} = useDatasetData(nwbFile, `${group.path}/label`)
-    const {data: startTimeData} = useDatasetData(nwbFile, `${group.path}/start_time`)
-    const {data: stopTimeData} = useDatasetData(nwbFile, `${group.path}/stop_time`)
+const NwbTimeIntervalsView: FunctionComponent<Props> = ({width, height, path}) => {
+    const nwbFile = useContext(NwbFileContext)
+    if (!nwbFile) throw Error('Unexpected: nwbFile is null')
+    const {data: labelData} = useDatasetData(nwbFile, `${path}/label`)
+    const {data: startTimeData} = useDatasetData(nwbFile, `${path}/start_time`)
+    const {data: stopTimeData} = useDatasetData(nwbFile, `${path}/stop_time`)
 
-    if ((!labelData) || (!startTimeData) || (!stopTimeData)) {
+    if ((!startTimeData) || (!stopTimeData)) {
         return <div>loading data...</div>
     }
 

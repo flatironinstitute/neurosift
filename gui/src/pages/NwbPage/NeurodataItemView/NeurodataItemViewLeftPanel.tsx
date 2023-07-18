@@ -1,5 +1,5 @@
 import { FunctionComponent, PropsWithChildren } from "react"
-import TimeseriesSelectionWidget from "../TimeseriesItemView/TimeseriesSelectionWidget"
+import TimeseriesSelectionWidget from "../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget"
 import { RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 
 type Props = {

@@ -1,7 +1,7 @@
 import { PlayArrow, Stop } from "@mui/icons-material"
 import { FormControl, IconButton, MenuItem, Select, SelectChangeEvent } from "@mui/material"
 import { FunctionComponent, useCallback, useEffect, useRef, useState } from "react"
-import { useTimeseriesSelection } from "../../../package/context-timeseries-selection"
+import { useTimeseriesSelection } from "../../../../../package/context-timeseries-selection"
 
 type Props = {
     // none

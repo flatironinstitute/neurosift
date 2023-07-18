@@ -4,9 +4,9 @@ import { useTimeRange, useTimeseriesSelection, useTimeseriesSelectionInitializat
 import { NwbFileContext } from "../../../NwbFileContext";
 import { useDataset } from "../../../NwbMainView/NwbMainView";
 import { Canceler } from "../../../RemoteH5File/helpers";
-import { useNwbTimeseriesDataClient } from "../../../TimeseriesItemView/NwbTimeseriesDataClient";
-import TimeseriesDatasetChunkingClient from "../../../TimeseriesItemView/TimeseriesDatasetChunkingClient";
-import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../../../TimeseriesItemView/TimeseriesSelectionBar";
+import { useNwbTimeseriesDataClient } from "../../../viewPlugins/TimeSeries/TimeseriesItemView/NwbTimeseriesDataClient";
+import TimeseriesDatasetChunkingClient from "../../../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesDatasetChunkingClient";
+import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../../../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionBar";
 import { DataSeries, Opts } from "./SpatialWorkerTypes";
 
 type Props = {

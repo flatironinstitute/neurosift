@@ -1,6 +1,6 @@
 import { FunctionComponent, useContext } from "react"
 import { NwbFileContext } from "../../NwbFileContext"
-import NwbTimeseriesView from "../../TimeseriesItemView/NwbTimeseriesView"
+import NwbTimeseriesView from "./TimeseriesItemView/NwbTimeseriesView"
 
 type Props = {
     width: number

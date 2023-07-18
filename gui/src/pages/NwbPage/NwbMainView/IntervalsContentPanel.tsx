@@ -1,17 +1,17 @@
-import { FunctionComponent, useEffect, useState } from "react"
+import { FunctionComponent, useMemo } from "react"
 import Hyperlink from "../../../components/Hyperlink"
 import '../nwb-table.css'
-import Abbreviate from "../viewPlugins/TimeSeries/TimeseriesItemView/Abbreviate"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
-import { RemoteH5Dataset, RemoteH5File, RemoteH5Group, RemoteH5Subgroup } from "../RemoteH5File/RemoteH5File"
+import { RemoteH5File, RemoteH5Group, RemoteH5Subgroup } from "../RemoteH5File/RemoteH5File"
 import { useSelectedNwbItems } from "../SelectedNwbItemsContext"
+import { useGroup } from "./NwbMainView"
 
 type Props = {
     nwbFile: RemoteH5File
     group: RemoteH5Group
 }
 
-const AcquisitionContentPanel: FunctionComponent<Props> = ({nwbFile, group}) => {
+const IntervalsContentPanel: FunctionComponent<Props> = ({nwbFile, group}) => {
     const {selectedNwbItemPaths, toggleSelectedNwbItem} = useSelectedNwbItems()
     return (
         <div>
@@ -22,8 +22,8 @@ const AcquisitionContentPanel: FunctionComponent<Props> = ({nwbFile, group}) => 
                         <th>Item</th>
                         <th>Neurodata type</th>
                         <th>Description</th>
-                        <th>Comments</th>
-                        <th>Data</th>
+                        <th>Columns</th>
+                        <th># Rows</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -52,30 +52,18 @@ type GroupTableRowProps = {
 }
 
 const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, subgroup, selected, onToggleSelect}) => {
-    // const [group, setGroup] = useState<RemoteH5Group | undefined>(undefined)
-    const [data, setData] = useState<RemoteH5Dataset | undefined>(undefined)
-    // useEffect(() => {
-    //     let canceled = false
-    //     const load = async () => {
-    //         const g = await nwbFile.getGroup(subgroup.path)
-    //         if (canceled) return
-    //         setGroup(g)
-    //     }
-    //     load()
-    //     return () => {canceled = true}
-    // }, [nwbFile, subgroup.path])
-    useEffect(() => {
-        let canceled = false
-        const load = async () => {
-            const d = await nwbFile.getDataset(`${subgroup.path}/data`)
-            if (canceled) return
-            setData(d)
-        }
-        load()
-        return () => {canceled = true}
-    }, [nwbFile, subgroup.path])
+    const group = useGroup(nwbFile, subgroup.path)
     const {openTab} = useNwbOpenTabs()
     const neurodataType = subgroup.attrs['neurodata_type']
+    const colnames = useMemo(() => ((subgroup.attrs['colnames'] || []) as string[]), [subgroup])
+    const numRows = useMemo(() => {
+        if (!group) return undefined
+        if (!colnames) return undefined
+        if (colnames.length === 0) return undefined
+        const d = group.datasets.find(ds => (ds.name === colnames[0]))
+        if (!d) return undefined
+        return d.shape[0]
+    }, [group, colnames])
     return (
         <tr>
             <td>
@@ -86,35 +74,10 @@ const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, subgroup
             </td>
             <td>{neurodataType}</td>
             <td>{subgroup.attrs['description']}</td>
-            <td>{<Abbreviate>{subgroup.attrs['comments']}</Abbreviate>}</td>
-            <td>{data ? `${data.dtype} ${formatShape(data.shape)}` : ''}</td>
+            <td>{colnames.join(', ')}</td>
+            <td>{numRows}</td>
         </tr>
     )
 }
 
-const formatShape = (shape: number[]) => {
-    return `[${shape.join(', ')}]`
-}
-
-// const serializeBigInt = (x: any): any => {
-//     if (typeof(x) === 'bigint') {
-//         return x.toString()
-//     }
-//     else if (typeof(x) === 'object') {
-//         if (Array.isArray(x)) {
-//             return x.map(serializeBigInt)
-//         }
-//         else {
-//             const ret: {[key: string]: any} = {}
-//             for (const key in x) {
-//                 ret[key] = serializeBigInt(x[key])
-//             }
-//             return ret
-//         }
-//     }
-//     else {
-//         return x
-//     }
-// }
-
-export default AcquisitionContentPanel
+export default IntervalsContentPanel

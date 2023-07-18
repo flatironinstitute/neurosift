@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { useEffect, useState } from "react"
-import { useGroup } from "../NwbMainView/NwbMainView"
-import { DatasetDataType, RemoteH5Dataset, RemoteH5File } from "../RemoteH5File/RemoteH5File"
+import { useGroup } from "../../../NwbMainView/NwbMainView"
+import { DatasetDataType, RemoteH5Dataset, RemoteH5File } from "../../../RemoteH5File/RemoteH5File"
 
 class TimestampFinder {
     #chunkSize = 100000

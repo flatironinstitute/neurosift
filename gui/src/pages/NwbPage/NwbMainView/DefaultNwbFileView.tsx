@@ -3,6 +3,7 @@ import TopLevelGroupContentPanel from "../BrowseNwbView/TopLevelGroupContentPane
 import { RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import UnitsContentPanel from "../UnitsContentPanel"
 import AcquisitionContentPanel from "./AcquisitionContentPanel"
+import IntervalsContentPanel from "./IntervalsContentPanel"
 import { useGroup } from "./NwbMainView"
 import ProcessingGroupContentPanel from "./ProcessingGroupContentPanel"
 
@@ -164,6 +165,9 @@ const TopLevelContentPanel: FunctionComponent<TopLevelContentPanelProps> = ({hea
     }
     else if (name.startsWith('processing/')) {
         return <ProcessingGroupContentPanel nwbFile={nwbFile} groupPath={heading.groupPath} />
+    }
+    else if (name === 'intervals') {
+        return <IntervalsContentPanel nwbFile={nwbFile} group={group} />
     }
     return (
         <TopLevelGroupContentPanel

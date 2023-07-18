@@ -1,12 +1,12 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react"
 import TimeScrollView2, { useTimeScrollView2 } from "../../../../package/component-time-scroll-view-2/TimeScrollView2"
 import { useTimeRange, useTimeseriesSelectionInitialization } from "../../../../package/context-timeseries-selection"
-import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../../TimeseriesItemView/TimeseriesSelectionBar"
+import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../TimeSeries/TimeseriesItemView/TimeseriesSelectionBar"
 
 type Props = {
     width: number
     height: number
-    labels: string[]
+    labels: string[] | undefined
     startTimes: number[]
     stopTimes: number[]
 }
@@ -49,6 +49,7 @@ const NwbTimeIntervalsWidget: FunctionComponent<Props> = ({width, height, labels
     }, [visibleStartTimeSec, visibleEndTimeSec, canvasWidth, margins.left, margins.right])
 
     const distinctLabels = useMemo(() => {
+        if (!labels) return []
         const ret: string[] = []
         for (let i = 0; i < labels.length; i++) {
             if (!ret.includes(labels[i])) ret.push(labels[i])
@@ -85,11 +86,11 @@ const NwbTimeIntervalsWidget: FunctionComponent<Props> = ({width, height, labels
                 const rect = [x1, y1, x2 - x1, y2 - y1]
 
                 if (pass === 1) {
-                    ctx.fillStyle = colorForLabel(labels[i])
+                    ctx.fillStyle = labels ? colorForLabel(labels[i]) : 'gray'
                     ctx.fillRect(rect[0], rect[1], rect[2], rect[3])
                 }
                 
-                if (pass === 2) {
+                if ((pass === 2) && (labels)) {
                     // draw text in the center mid of the rect
                     const text = labels[i]
                     ctx.textBaseline = 'middle'

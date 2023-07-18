@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useCallback, useContext, useMemo, useState } from "react"
 import Draggable, { DraggableData, DraggableEvent } from "react-draggable"
-import { useTimeRange, useTimeseriesSelection, TimeseriesSelectionContext } from "../../../package/context-timeseries-selection"
+import { useTimeRange, useTimeseriesSelection, TimeseriesSelectionContext } from "../../../../../package/context-timeseries-selection"
 
 type Props = {
     width: number

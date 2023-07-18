@@ -1,5 +1,5 @@
-import { Canceler } from "../RemoteH5File/helpers";
-import { RemoteH5Dataset, RemoteH5File } from "../RemoteH5File/RemoteH5File";
+import { Canceler } from "../../../RemoteH5File/helpers";
+import { RemoteH5Dataset, RemoteH5File } from "../../../RemoteH5File/RemoteH5File";
 
 class TimeseriesDatasetChunkingClient {
     #chunks: {[k: number]: number[][]} = {}

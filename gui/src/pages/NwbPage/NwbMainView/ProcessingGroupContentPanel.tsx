@@ -1,7 +1,7 @@
 import { FunctionComponent, useEffect, useMemo, useReducer, useState } from "react"
 import Hyperlink from "../../../components/Hyperlink"
 import '../nwb-table.css'
-import Abbreviate from "../TimeseriesItemView/Abbreviate"
+import Abbreviate from "../viewPlugins/TimeSeries/TimeseriesItemView/Abbreviate"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 import { RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import { useSelectedNwbItems } from "../SelectedNwbItemsContext"
@@ -69,7 +69,7 @@ const ProcessingGroupContentPanel: FunctionComponent<Props> = ({nwbFile, groupPa
                 // BehavioralTimeSeries holds TimeSeries
                 // EyeTracking holds SpatialSeries
                 // Position holds SpatialSeries
-                if (['LFP', 'Fluorescence', 'DfOverF', 'BehavioralTimeSeries', 'EyeTracking', 'Position', 'PupilTracking'].includes(subgroup.attrs['neurodata_type'])) {
+                if (['LFP', 'Fluorescence', 'DfOverF', 'BehavioralTimeSeries', 'EyeTracking', 'Position', 'PupilTracking', 'CompassDirection'].includes(subgroup.attrs['neurodata_type'])) {
                     const gg = loadedGroups.loaded[subgroup.path]
                     if (gg) {
                         for (const subsubgroup of gg.subgroups) {

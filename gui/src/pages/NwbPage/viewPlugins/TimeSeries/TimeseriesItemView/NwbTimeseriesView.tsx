@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { QuestionMark } from "@mui/icons-material"
 import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react"
-import TimeScrollView2, { useTimeScrollView2 } from "../../../package/component-time-scroll-view-2/TimeScrollView2"
-import { useTimeRange, useTimeseriesSelectionInitialization } from "../../../package/context-timeseries-selection"
-import { NwbFileContext } from "../NwbFileContext"
-import { useDataset } from "../NwbMainView/NwbMainView"
-import { Canceler } from "../RemoteH5File/helpers"
+import TimeScrollView2, { useTimeScrollView2 } from "../../../../../package/component-time-scroll-view-2/TimeScrollView2"
+import { useTimeRange, useTimeseriesSelectionInitialization } from "../../../../../package/context-timeseries-selection"
+import { NwbFileContext } from "../../../NwbFileContext"
+import { useDataset } from "../../../NwbMainView/NwbMainView"
+import { Canceler } from "../../../RemoteH5File/helpers"
 import { useNwbTimeseriesDataClient } from "./NwbTimeseriesDataClient"
 import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient"
 import TimeseriesSelectionBar, { timeSelectionBarHeight } from "./TimeseriesSelectionBar"
 import { DataSeries, Opts } from "./WorkerTypes"
-import {ToolbarItem} from "../../../package/ViewToolbar/Toolbars"
-import { useModalDialog } from "../../../ApplicationBar"
-import ModalWindow from "../../../components/ModalWindow/ModalWindow"
+import {ToolbarItem} from "../../../../../package/ViewToolbar/Toolbars"
+import { useModalDialog } from "../../../../../ApplicationBar"
+import ModalWindow from "../../../../../components/ModalWindow/ModalWindow"
 
 type Props = {
     width: number

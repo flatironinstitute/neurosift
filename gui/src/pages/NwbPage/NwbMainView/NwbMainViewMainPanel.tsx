@@ -22,14 +22,15 @@ const NwbMainViewMainPanel: FunctionComponent<Props> = ({ width, height, nwbFile
             <div style={{ position: 'absolute', width, height: topBarHeight, paddingLeft: 10}}>
                 <ViewModeToggleButton viewMode={viewMode} setViewMode={setViewMode} />
             </div>
-            <div style={{ position: 'absolute', width, height: height - topBarHeight, top: topBarHeight, visibility: viewMode === 'default' ? 'visible' : 'hidden' }}>
+            {/* Important to use undefined rather than visible so that the hidden value is respected for parent components */}
+            <div style={{ position: 'absolute', width, height: height - topBarHeight, top: topBarHeight, visibility: viewMode === 'default' ? undefined : 'hidden' }}>
                 <DefaultNwbFileView
                     width={width}
                     height={height - topBarHeight}
                     nwbFile={nwbFile}
                 />
             </div>
-            <div style={{ position: 'absolute', width, height: height - topBarHeight, top: topBarHeight, visibility: viewMode === 'raw' ? 'visible' : 'hidden' }}>
+            <div style={{ position: 'absolute', width, height: height - topBarHeight, top: topBarHeight, visibility: viewMode === 'raw' ? undefined : 'hidden' }}>
                 <BrowseNwbView
                     width={width}
                     height={height - topBarHeight}
