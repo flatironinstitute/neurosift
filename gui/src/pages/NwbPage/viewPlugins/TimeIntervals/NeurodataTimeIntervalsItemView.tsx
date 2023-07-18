@@ -10,12 +10,12 @@ type Props = {
     condensed?: boolean
 }
 
-type ViewMode = 'timeseries' | 'table'
+type ViewMode = 'timeplot' | 'table'
 
 const NeurodataTimeIntervalsItemView: FunctionComponent<Props> = ({ width, height, path }) => {
     const topBarHeight = 50
 
-    const [viewMode, setViewMode] = useState<ViewMode>('timeseries')
+    const [viewMode, setViewMode] = useState<ViewMode>('timeplot')
 
     return (
         <div style={{ position: 'absolute', width, height }}>
@@ -30,7 +30,7 @@ const NeurodataTimeIntervalsItemView: FunctionComponent<Props> = ({ width, heigh
                     path={path}
                 />
             </div>
-            <div style={{ position: 'absolute', width, height: height - topBarHeight, top: topBarHeight, visibility: viewMode === 'timeseries' ? undefined : 'hidden' }}>
+            <div style={{ position: 'absolute', width, height: height - topBarHeight, top: topBarHeight, visibility: viewMode === 'timeplot' ? undefined : 'hidden' }}>
               <NwbTimeIntervalsView
                     width={width}
                     height={height - topBarHeight}
@@ -61,7 +61,7 @@ const ViewModeToggleButton: FunctionComponent<ViewModeToggleButtonProps> = ({ vi
             onChange={handleChange}
             aria-label="Platform"
         >
-            <ToggleButton value="timeseries">Timeseries</ToggleButton>
+            <ToggleButton value="timeplot">Time plot</ToggleButton>
             <ToggleButton value="table">Table</ToggleButton>
         </ToggleButtonGroup>
     )
