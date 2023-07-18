@@ -39,6 +39,7 @@ const useComputedDataDatUrl = (nwbFile: RemoteH5File, path: string | undefined) 
             const headResponse = await headRequest(datUrl)
             if (canceled) return
             if (!headResponse) return
+            if (headResponse.status !== 200) return
             setComputedDataDatUrl(datUrl)
         }
         load()
@@ -89,6 +90,7 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}
     const computedDataDatUrl = useComputedDataDatUrl(nwbFile, dataDataset?.path)
 
     useEffect(() => {
+        setLoading(true)
         if (!dataDataset) return
         if ((dataDataset.shape.length !== 3) && (dataDataset.shape.length !== 4)) {
             console.warn('Unsupported shape for data dataset: ' + dataDataset.shape.join(', '))
@@ -101,7 +103,6 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}
         let canceled = false
         const load = async () => {
             if (frameIndex === undefined) return
-            setLoading(true)
 
             // read from nwb file
             // const slice = [[frameIndex, frameIndex + 1], [0, N2], [0, N3]] as [number, number][]
@@ -162,13 +163,15 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}
                 <TimeseriesSelectionBar width={width} height={timeSelectionBarHeight - 5} hideVisibleTimeRange={true} />
             </div>
             <div style={{position: 'absolute', top: timeSelectionBarHeight, width, height: height - timeSelectionBarHeight - bottomBarHeight}}>
-                {currentImage ? <ImageDataView
+                {currentImage && !loading ? <ImageDataView
                     width={width}
                     height={height - timeSelectionBarHeight - bottomBarHeight}
                     imageData={currentImage}
                     minValue={currentMinValue || 0}
                     maxValue={currentMaxValue || 1}
-                /> : <div>loading...</div>}
+                /> : (
+                    computedDataDatUrl ? <div>loading...</div> : <div>Unable to find pre-computed dataset</div>
+                )}
             </div>
             <div style={{position: 'absolute', top: height - bottomBarHeight, width, height: bottomBarHeight, display: 'flex', overflow: 'hidden'}}>
                 <div style={{position: 'relative', top: 3}}>
