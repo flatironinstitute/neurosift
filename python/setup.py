@@ -8,6 +8,7 @@ setup(
     install_requires=[
         'rtcshare>=0.1.5',
         'kachery_cloud',
-        'zarr'
+        'zarr',
+        'filelock'
     ]
 )

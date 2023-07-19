@@ -3,7 +3,9 @@ import WebrtcConnectionToService from "./WebrtcConnectionToService"
 const urlSearchParams = new URLSearchParams(window.location.search)
 const queryParams = Object.fromEntries(urlSearchParams.entries())
 
-export const defaultServiceBaseUrl = 'http://localhost:61752'
+const nwbRtcshareBaseUrl = 'https://rtcshare-proxy.herokuapp.com/s/8c76b6e9b343f68f5494'
+
+export const defaultServiceBaseUrl = queryParams.p === '/nwb' ? nwbRtcshareBaseUrl : 'http://localhost:61752'
 
 export const serviceBaseUrl = queryParams.sh ? (
     queryParams.sh

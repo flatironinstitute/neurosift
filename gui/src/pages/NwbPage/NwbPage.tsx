@@ -1,4 +1,5 @@
 import { FunctionComponent, useEffect, useReducer, useState } from "react"
+import { useRtcshare } from "../../rtcshare/useRtcshare"
 import useRoute from "../../useRoute"
 import { NwbFileContext } from "./NwbFileContext"
 import { SetupNwbOpenTabs } from "./NwbOpenTabsContext"
@@ -55,18 +56,27 @@ const NwbPageChild: FunctionComponent<Props> = ({width, height}) => {
     const url = route.page === 'nwb' ? route.url : route.page === 'test' ? defaultUrl : undefined
     const [nwbFile, setNwbFile] = useState<RemoteH5File | undefined>(undefined)
     const [selectedNwbItemsState, selectedNwbItemsDispatch] = useReducer(selectedNwbItemsReducer, {selectedNwbItems: []})
+    const {client: rtcshareClient} = useRtcshare()
 
     useEffect(() => {
         let canceled = false
         const load = async () => {
             const metaUrl = await getMetaUrl(url || defaultUrl)
+            if (canceled) return
+            if ((!metaUrl) && (url) && (rtcshareClient)) {
+                console.info(`Requesting meta for ${url}`)
+                rtcshareClient.serviceQuery('neurosift-nwb-request', {
+                    type: 'request-meta-nwb',
+                    nwbUrl: url
+                })
+            }
             const f = await getRemoteH5File(url || defaultUrl, metaUrl)
             if (canceled) return
             setNwbFile(f)
         }
         load()
         return () => {canceled = true}
-    }, [url])
+    }, [url, rtcshareClient])
     if (!nwbFile) return <div>Loading {url}</div>
     return (
         <NwbFileContext.Provider value={nwbFile}>

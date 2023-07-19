@@ -4,6 +4,7 @@ import neurosift.views as nv
 import json
 from .views._serialize import _serialize
 import os
+import json
 
 
 class RtcsharePlugin:
@@ -11,6 +12,40 @@ class RtcsharePlugin:
         context.register_service('pynapple', PynappleService)
         context.register_service('neurosift.sleap', SleapService)
         context.register_service('sleap', SleapService) # temporary alias
+        context.register_service('neurosift-nwb-request', NeurosiftNwbRequestService)
+
+class NeurosiftNwbRequestService:
+    def handle_query(query: dict, *, dir: str, user_id: Union[str, None]=None) -> Tuple[dict, bytes]:
+        from filelock import FileLock
+        neurosift_nwb_dir = os.environ['RTCSHARE_DIR'] + '/.neurosift-nwb'
+        os.makedirs(neurosift_nwb_dir, exist_ok=True)
+        req_fname = f'{neurosift_nwb_dir}/pending-requests.jsonl'
+        lock_fname = f'{req_fname}.lock'
+        lock = FileLock(lock_fname)
+        with lock:
+            type0 = query['type']
+            if type0 == 'request-meta-nwb':
+                nwb_url = query['nwbUrl']
+                if not _is_valid_nwb_url(nwb_url):
+                    raise Exception(f'Invalid nwbUrl: {nwb_url}')
+                with open(req_fname, 'a') as f:
+                    f.write(json.dumps({
+                        'type': type0,
+                        'nwbUrl': nwb_url
+                    }) + '\n')
+                return {
+                    'success': True
+                }, b''
+            else:
+                raise Exception(f'Unexpected type: {type0}')
+
+def _is_valid_nwb_url(nwb_url: str) -> bool:
+    if not nwb_url.startswith('https://') and not nwb_url.startswith('http://'):
+        return False
+    if len(nwb_url) > 10000:
+        return False
+    return True
+
 
 class PynappleService:
     def handle_query(query: dict, *, dir: str, user_id: Union[str, None]=None) -> Tuple[dict, bytes]:
