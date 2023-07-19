@@ -36,6 +36,38 @@ class NeurosiftNwbRequestService:
                 return {
                     'success': True
                 }, b''
+            elif type0 == 'request-raster-plot':
+                nwb_url = query['nwbUrl']
+                path = query['path']
+                if not _is_valid_nwb_url(nwb_url):
+                    raise Exception(f'Invalid nwbUrl: {nwb_url}')
+                if not _is_valid_path(path):
+                    raise Exception(f'Invalid path: {path}')
+                with open(req_fname, 'a') as f:
+                    f.write(json.dumps({
+                        'type': type0,
+                        'nwbUrl': nwb_url,
+                        'path': path
+                    }) + '\n')
+                return {
+                    'success': True
+                }, b''
+            elif type0 == 'request-autocorrelograms':
+                nwb_url = query['nwbUrl']
+                path = query['path']
+                if not _is_valid_nwb_url(nwb_url):
+                    raise Exception(f'Invalid nwbUrl: {nwb_url}')
+                if not _is_valid_path(path):
+                    raise Exception(f'Invalid path: {path}')
+                with open(req_fname, 'a') as f:
+                    f.write(json.dumps({
+                        'type': type0,
+                        'nwbUrl': nwb_url,
+                        'path': path
+                    }) + '\n')
+                return {
+                    'success': True
+                }, b''
             else:
                 raise Exception(f'Unexpected type: {type0}')
 
@@ -184,3 +216,10 @@ def _full_path_from_uri(uri: str, *, dir: str) -> str:
     relpath = uri[len('rtcshare://'):]
     fullpath = os.path.join(os.environ['RTCSHARE_DIR'], relpath)
     return fullpath
+
+def _is_valid_path(path: str) -> bool:
+    if not path.startswith('/'):
+        return False
+    if len(path) > 10000:
+        return False
+    return True

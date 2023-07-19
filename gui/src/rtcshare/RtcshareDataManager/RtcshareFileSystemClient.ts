@@ -34,6 +34,10 @@ class RtcshareFileSystemClient {
         }
     }
     async readFile(path: string, start?: number, end?: number, opts: {forceReload?: boolean}={}): Promise<ArrayBuffer> {
+        if ((path.startsWith('http://')) || (path.startsWith('https://'))) {
+            return await readFileFromUrl(path, start, end)
+        }
+
         if (!path) throw Error('Path is empty')
         const aa = path.split('/')
         const parentPath = aa.slice(0, aa.length - 1).join('/')
@@ -104,6 +108,21 @@ class RtcshareFileSystemClient {
 
 function hasDirsAndFiles(dir: RtcshareDir): dir is RtcshareDir & {dirs: RtcshareDir[], files: RtcshareFile[]} {
     return dir.dirs !== undefined && dir.files !== undefined
+}
+
+const readFileFromUrl = async (url: string, start?: number, end?: number): Promise<ArrayBuffer> => {
+    const headers: {[key: string]: string} = {}
+    if ((start !== undefined) || (end !== undefined)) {
+        const range = `bytes=${start || 0}-${end || ''}`
+        headers['Range'] = range
+    }
+    const response = await fetch(url, {
+        headers
+    })
+    if (!response.ok) {
+        throw Error(`Error reading file from url: ${url}`)
+    }
+    return await response.arrayBuffer()
 }
 
 export default RtcshareFileSystemClient

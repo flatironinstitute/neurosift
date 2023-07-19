@@ -4,6 +4,7 @@ import { defaultUnitSelection, UnitSelectionContext, unitSelectionReducer } from
 import TabWidget from "../../TabWidget/TabWidget";
 import NeurodataItemsView from "./NeurodataItemView/NeurodataItemsView";
 import NeurodataItemView from "./NeurodataItemView/NeurodataItemView";
+import NeurosiftItemView from "./NeurosiftItemView/NeurosiftItemView";
 import NwbMainView from "./NwbMainView/NwbMainView";
 import { useNwbOpenTabs } from "./NwbOpenTabsContext";
 import TimeseriesAlignmentView from "./TimeseriesAlignmentView/TimeseriesAlignmentView";
@@ -63,6 +64,11 @@ const TabChild: FunctionComponent<{tabName: string, width: number, height: numbe
                         })()
                     ) : tabName === 'timeseries-alignment' ? (
                         <TimeseriesAlignmentView key={tabName} width={width} height={height} />
+                    ) : tabName.startsWith('ns:') ? (
+                        (() => {
+                            const url = tabName.slice(`ns:`.length)
+                            return <NeurosiftItemView key={tabName} width={width} height={height} url={url} />
+                        })()
                     ) : (
                         <div key={tabName}>Not implemented</div>
                     )
@@ -81,6 +87,12 @@ const labelFromTabName = (tabName: string) => {
     }
     else if (tabName.startsWith('neurodata-items:')) {
         return `${tabName.slice(`neurodata-items:`.length).split('@').length} items`
+    }
+    else if (tabName === 'timeseries-alignment') {
+        return 'timeseries alignment'
+    }
+    else if (tabName.startsWith('ns:')) {
+        return `${tabName.slice(`ns:`.length).split('/').slice(-1)[0]}`
     }
     return tabName
 }

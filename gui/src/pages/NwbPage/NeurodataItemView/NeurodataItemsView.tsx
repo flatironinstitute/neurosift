@@ -3,6 +3,7 @@ import Splitter from "../../../components/Splitter"
 import TimeseriesSelectionWidget from "../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget"
 import { NwbFileContext } from "../NwbFileContext"
 import NeurodataItemView from "./NeurodataItemView"
+import NeurosiftItemView from "../NeurosiftItemView/NeurosiftItemView"
 
 type Props = {
     width: number
@@ -80,13 +81,23 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({width, height, items}) =>
                             {item.path}
                         </div>
                         <div style={{position: 'absolute', width, height: H - titleBarHeight, top: titleBarHeight}}>
-                            <NeurodataItemView
-                                width={width}
-                                height={H - titleBarHeight}
-                                path={item.path}
-                                neurodataType={item.neurodataType}
-                                condensed={true}
-                            />
+                            {
+                                item.neurodataType ? (
+                                    <NeurodataItemView
+                                        width={width}
+                                        height={H - titleBarHeight}
+                                        path={item.path}
+                                        neurodataType={item.neurodataType}
+                                        condensed={true}
+                                    />
+                                ) : (
+                                    <NeurosiftItemView
+                                        width={width}
+                                        height={H - titleBarHeight}
+                                        url={item.path}
+                                    />
+                                )
+                            }
                         </div>
                     </div>
                 ))

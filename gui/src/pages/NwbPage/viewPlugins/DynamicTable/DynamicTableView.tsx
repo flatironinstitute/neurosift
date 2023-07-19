@@ -1,4 +1,5 @@
 import { FunctionComponent, useContext, useEffect, useMemo, useReducer } from "react"
+import { valueToString } from "../../BrowseNwbView/BrowseNwbView"
 import { NwbFileContext } from "../../NwbFileContext"
 import { useGroup } from "../../NwbMainView/NwbMainView"
 
@@ -32,14 +33,29 @@ const DynamicTableView: FunctionComponent<Props> = ({ width, height, path, conde
     if (!nwbFile) throw Error('Unexpected: nwbFile is null')
     const [data, dataDispatch] = useReducer(dataReducer, {})
     const group = useGroup(nwbFile, path)
-    const colnames = useMemo(() => (
-        group ? group.attrs['colnames'] as string[] : undefined
-    ), [group])
+    const colnames = useMemo(() => {
+        if (!group) return undefined
+        let c = group.attrs['colnames'] as string[]
+        if (!c) return undefined
+        const nt = group.attrs['neurodata_type']
+        if (nt === 'Units') {
+            c = c.filter(name => (name !== 'spike_times'))
+            if (!c.includes('id')) {
+                c = ['id', ...c]
+            }
+        }
+        return c
+    }, [group])
     useEffect(() => {
         let canceled = false
         const load = async () => {
             if (!colnames) return
             for (const colname of colnames) {
+                const ds0 = await nwbFile.getDataset(path + '/' + colname)
+                if (ds0.shape.length !== 1) {
+                    console.warn(`In DynamicTableView, unexpected shape for ${path}/${colname}`, ds0.shape)
+                    continue
+                }
                 const d = await nwbFile.getDatasetData(path + '/' + colname, {})
                 if (canceled) return
                 dataDispatch({type: 'set', key: colname, data: Array.from(d)})
@@ -94,7 +110,7 @@ const DynamicTableView: FunctionComponent<Props> = ({ width, height, path, conde
                             <tr key={i}>
                                 {
                                     rowItem.columnValues.map((val, j) => (
-                                        <td key={j}>{val}</td>
+                                        <td key={j}>{valueToString(val)}</td>
                                     ))
                                 }
                             </tr>

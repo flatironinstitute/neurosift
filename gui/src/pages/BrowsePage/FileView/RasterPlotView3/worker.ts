@@ -162,7 +162,7 @@ const paintPanel = (context: CanvasRenderingContext2D, pixelPlots: PixelPlot[]) 
 
     pixelPlots.forEach(pPlot => {
         context.strokeStyle = pPlot.color
-        context.lineWidth = 3
+        context.lineWidth = Math.max(3, Math.min(20, pixelsPerUnit / 2))
         context.beginPath()
         pPlot.x.forEach(x => {
             context.moveTo(x - 2, pPlot.y)

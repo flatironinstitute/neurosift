@@ -11,6 +11,9 @@ import os
 import boto3
 import botocore
 
+import neurosift.views as nv
+import spikeinterface as si
+
 CLOUDFLARE_ACCOUNT_ID = os.environ['CLOUDFLARE_ACCOUNT_ID']
 CLOUDFLARE_AWS_ACCESS_KEY_ID = os.environ['CLOUDFLARE_AWS_ACCESS_KEY_ID']
 CLOUDFLARE_AWS_SECRET_ACCESS_KEY = os.environ['CLOUDFLARE_AWS_SECRET_ACCESS_KEY']
@@ -81,8 +84,134 @@ def _handle_request(req):
     if type0 == 'request-meta-nwb':
         nwb_url = req['nwbUrl']
         _handle_request_meta_nwb(nwb_url)
+    elif type0 == 'request-raster-plot':
+        nwb_url = req['nwbUrl']
+        path = req['path']
+        _handle_request_raster_plot(nwb_url, path)
+    elif type0 == 'request-autocorrelograms':
+        nwb_url = req['nwbUrl']
+        path = req['path']
+        _handle_request_autocorrelograms(nwb_url, path)
 
-def _handle_request_meta_nwb(nwb_url):
+def _handle_request_raster_plot(nwb_url: str, path: str):
+    r = requests.head(nwb_url)
+    etag = r.headers['ETag']
+    # remove quotes
+    etag = etag[1:-1]
+    print(f'ETag: ' + etag)
+    neurosift_s3_base_key = f'computed/nwb/ETag/{etag[:2]}/{etag[2:4]}/{etag[4:6]}/{etag}{path}'
+
+    if object_exists('neurosift', f'{neurosift_s3_base_key}/raster_plot.1.ns-spt'):
+        print('Skipping because already exists')
+        return
+    
+    staging_folder = f'{neurosift_nwb_dir}/staging/{neurosift_s3_base_key}'
+    os.makedirs(staging_folder, exist_ok=True)
+    
+    print('Opening file for lazy reading...')
+    fs = fsspec.filesystem("http", block_size=1024 * 1024) # not sure what is the best block size to use here
+    f = fs.open(nwb_url, "rb")
+    file = h5py.File(f)
+
+    print('Loading unit IDs')
+    ids = file['units']['id'][:]
+    print('Loading spike times index')
+    spike_times_index = file['units']['spike_times_index'][:]
+    print('Loading spike times')
+    spike_times = file['units']['spike_times'][:]
+
+    print('Preparing spike trains')
+    start_time_sec = np.min(spike_times)
+    end_time_sec = np.max(spike_times)
+    print(f'Start time (sec): {start_time_sec}')
+    print(f'End time (sec): {end_time_sec}')
+    spike_trains: list[nv.SpikeTrain] = []
+    units_dict = {}
+    sampling_frequency = 30000 # TODO: get this from the NWB file
+    for i in range(len(ids)):
+        if i == 0:
+            s = spike_times[0:spike_times_index[0]]
+        else:
+            s = spike_times[spike_times_index[i - 1]:spike_times_index[i]]
+        item = nv.SpikeTrain(unit_id=ids[i], spike_times_sec=s.astype(np.float32))
+        spike_trains.append(item)
+        units_dict[ids[i]] = (s * sampling_frequency).astype(np.int32)
+    ST = nv.SpikeTrains(
+        start_time_sec=start_time_sec,
+        end_time_sec=end_time_sec,
+        spike_trains=spike_trains
+    )
+    sorting = si.NumpySorting.from_dict(
+        [units_dict], sampling_frequency=sampling_frequency
+    )
+    print('Saving spike trains')
+    ST.save(f'{staging_folder}/raster_plot.1.ns-spt')
+
+    print('Uploading to neurosift bucket...')
+    s3.upload_file(f'{staging_folder}/raster_plot.1.ns-spt', 'neurosift', f'{neurosift_s3_base_key}/raster_plot.1.ns-spt')
+
+def _handle_request_autocorrelograms(nwb_url: str, path: str):
+    r = requests.head(nwb_url)
+    etag = r.headers['ETag']
+    # remove quotes
+    etag = etag[1:-1]
+    print(f'ETag: ' + etag)
+    neurosift_s3_base_key = f'computed/nwb/ETag/{etag[:2]}/{etag[2:4]}/{etag[4:6]}/{etag}{path}'
+
+    if object_exists('neurosift', f'{neurosift_s3_base_key}/autocorrelograms.1.ns-acg'):
+        print('Skipping because already exists')
+        return
+    
+    staging_folder = f'{neurosift_nwb_dir}/staging/{neurosift_s3_base_key}'
+    os.makedirs(staging_folder, exist_ok=True)
+    
+    print('Opening file for lazy reading...')
+    fs = fsspec.filesystem("http", block_size=1024 * 1024) # not sure what is the best block size to use here
+    f = fs.open(nwb_url, "rb")
+    file = h5py.File(f)
+
+    print('Loading unit IDs')
+    ids = file['units']['id'][:]
+    print('Loading spike times index')
+    spike_times_index = file['units']['spike_times_index'][:]
+    print('Loading spike times')
+    spike_times = file['units']['spike_times'][:]
+
+    print('Preparing spike trains')
+    start_time_sec = np.min(spike_times)
+    end_time_sec = np.max(spike_times)
+    print(f'Start time (sec): {start_time_sec}')
+    print(f'End time (sec): {end_time_sec}')
+    spike_trains: list[nv.SpikeTrain] = []
+    units_dict = {}
+    sampling_frequency = 30000 # TODO: get this from the NWB file
+    for i in range(len(ids)):
+        if i == 0:
+            s = spike_times[0:spike_times_index[0]]
+        else:
+            s = spike_times[spike_times_index[i - 1]:spike_times_index[i]]
+        item = nv.SpikeTrain(unit_id=ids[i], spike_times_sec=s.astype(np.float32))
+        spike_trains.append(item)
+        units_dict[ids[i]] = (s * sampling_frequency).astype(np.int32)
+    ST = nv.SpikeTrains(
+        start_time_sec=start_time_sec,
+        end_time_sec=end_time_sec,
+        spike_trains=spike_trains
+    )
+    sorting = si.NumpySorting.from_dict(
+        [units_dict], sampling_frequency=sampling_frequency
+    )
+    print('Preparing autocorrelograms')
+    nv.create_autocorrelograms(
+        sorting=sorting,
+        output_path=f'{staging_folder}/autocorrelograms.1.ns-acg'
+    )
+
+    print('Uploading to neurosift bucket...')
+    s3.upload_file(f'{staging_folder}/autocorrelograms.1.ns-acg', 'neurosift', f'{neurosift_s3_base_key}/autocorrelograms.1.ns-acg')
+
+
+def _handle_request_meta_nwb(nwb_url: str):
     r = requests.head(nwb_url)
     etag = r.headers['ETag']
     # remove quotes

@@ -31,7 +31,8 @@ class SpikeTrainsClient {
     #initialized = false
     #initializing = false
     constructor(filePath: string, rtcshareClient: RtcshareFileSystemClient) {
-        this.#jsonlClient = new JsonlClient(`rtcshare://${filePath}`, rtcshareClient)
+        const uri = filePath.startsWith('http://') || filePath.startsWith('https://') ? filePath : `rtcshare://${filePath}`
+        this.#jsonlClient = new JsonlClient(uri, rtcshareClient)
     }
     async initialize() {
         if (this.#initialized) return

@@ -15,7 +15,12 @@ const SelectedNeurodataItemsWidget: FunctionComponent<Props> = () => {
     const handleOpenView = useCallback(() => {
         if (selectedNwbItems.length === 1) {
             const item = selectedNwbItems[0]
-            openTab(`neurodata-item:${item.path}|${item.neurodataType}`)
+            if (item.neurodataType) {
+                openTab(`neurodata-item:${item.path}|${item.neurodataType}`)
+            }
+            else {
+                openTab(`ns:${item.path}`)
+            }
         }
         else if (selectedNwbItems.length > 1) {
             openTab(`neurodata-items:${selectedNwbItems.map(item => `${item.path}|${item.neurodataType}`).join('@')}`)

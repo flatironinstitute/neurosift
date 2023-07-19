@@ -1,7 +1,7 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react"
 import TopLevelGroupContentPanel from "../BrowseNwbView/TopLevelGroupContentPanel"
 import { RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
-import UnitsContentPanel from "../UnitsContentPanel"
+import UnitsContentPanel from "./UnitsContentPanel"
 import AcquisitionContentPanel from "./AcquisitionContentPanel"
 import IntervalsContentPanel from "./IntervalsContentPanel"
 import { useGroup } from "./NwbMainView"
@@ -79,6 +79,7 @@ const DefaultNwbFileView: FunctionComponent<Props> = ({width, height, nwbFile}) 
                         key={heading.name}
                         nwbFile={nwbFile}
                         heading={heading}
+                        width={width}
                     />
                 ))
             }
@@ -89,9 +90,10 @@ const DefaultNwbFileView: FunctionComponent<Props> = ({width, height, nwbFile}) 
 type TopLevelHeadingViewProps = {
     nwbFile: RemoteH5File
     heading: Heading
+    width: number
 }
 
-const TopLevelHeadingView: FunctionComponent<TopLevelHeadingViewProps> = ({nwbFile, heading}) => {
+const TopLevelHeadingView: FunctionComponent<TopLevelHeadingViewProps> = ({nwbFile, heading, width}) => {
     const [expanded, setExpanded] = useState(false)
     const group = useGroup(nwbFile, heading.groupPath)
     // const titlePanelColor = expanded ? '#336' : '#669'
@@ -108,7 +110,7 @@ const TopLevelHeadingView: FunctionComponent<TopLevelHeadingViewProps> = ({nwbFi
             </div>
             {
                 expanded && group && (
-                    <TopLevelContentPanel heading={heading} group={group} nwbFile={nwbFile} />
+                    <TopLevelContentPanel heading={heading} group={group} nwbFile={nwbFile} width={width - 10} />
                 )
             }
         </div>
@@ -153,12 +155,13 @@ type TopLevelContentPanelProps = {
     heading: Heading
     group: RemoteH5Group
     nwbFile: RemoteH5File
+    width: number
 }
 
-const TopLevelContentPanel: FunctionComponent<TopLevelContentPanelProps> = ({heading, group, nwbFile}) => {
+const TopLevelContentPanel: FunctionComponent<TopLevelContentPanelProps> = ({heading, group, nwbFile, width}) => {
     const name = heading.name
     if (name === 'units') {
-        return <UnitsContentPanel nwbFile={nwbFile} group={group} />
+        return <UnitsContentPanel nwbFile={nwbFile} group={group} width={width} />
     }
     else if (name === 'acquisition') {
         return <AcquisitionContentPanel nwbFile={nwbFile} group={group} />

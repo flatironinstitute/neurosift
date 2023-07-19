@@ -123,7 +123,8 @@ class JsonlClient {
         try {
             const i1 = chunkSize * i
             const i2 = chunkSize * (i + 1)
-            const buf = await this.rtcshareClient.readFile(this.uri.slice('rtcshare://'.length), i1, i2)
+            const pp = this.uri.startsWith('http://') || this.uri.startsWith('https://') ? this.uri : this.uri.slice('rtcshare://'.length)
+            const buf = await this.rtcshareClient.readFile(pp, i1, i2)
             // decode array buffer to string
             const decoder = new TextDecoder()
             const txt = decoder.decode(buf)
