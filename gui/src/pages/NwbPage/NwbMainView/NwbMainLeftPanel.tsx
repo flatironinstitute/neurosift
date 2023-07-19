@@ -28,6 +28,8 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({width, height, nwbFile}) =>
     const rootGroup = useGroup(nwbFile, '/')
     const generalGroup = useGroup(nwbFile, '/general')
 
+    const {openTab} = useNwbOpenTabs()
+
     const items = useMemo(() => {
         const ret: {name: string, path: string}[] = []
         rootGroup?.datasets.forEach(ds => {
@@ -59,7 +61,7 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({width, height, nwbFile}) =>
         return ret
     }, [items])
 
-    const bottomBarHeight = 27
+    const bottomBarHeight = 23
     return (
         <div className="LeftPanel" style={{position: 'absolute', width, height}}>
             <div className="MainArea" style={{position: 'absolute', width, height: height - bottomBarHeight, overflowY: 'auto'}}>
@@ -83,6 +85,15 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({width, height, nwbFile}) =>
                 </table>
                 <hr />
                 <SelectedNeurodataItemsWidget />
+            </div>
+            <div style={{position: 'absolute', width, height: bottomBarHeight, top: height - bottomBarHeight, backgroundColor: 'lightgray'}}>
+                <button
+                    onClick={() => {
+                        openTab('timeseries-alignment')
+                    }}
+                >
+                    View timeseries alignment
+                </button>
             </div>
         </div>
     )

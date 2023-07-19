@@ -80,9 +80,10 @@ for (const key in neurodataTypeInheritanceRaw) {
     }
 }
 
-export const neurodataTypeInheritsFrom = (type: string, baseType: string) => {
+export const neurodataTypeInheritsFrom = (type: string | undefined, baseType: string) => {
+    if (!type) return false
     if (type === baseType) return true
-    return neurodataTypeInheritance[type].includes(baseType)
+    return neurodataTypeInheritance[type]?.includes(baseType)
 }
 
 export const neurodataTypeParentType = (type: string) => {

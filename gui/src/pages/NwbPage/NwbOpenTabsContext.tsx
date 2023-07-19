@@ -90,8 +90,8 @@ const queryParams = new URLSearchParams(queryParamsString)
 const test1Mode = queryParams.get('test1') === '1'
 
 const defaultNwbOpenTabsState: NwbOpenTabsState = {
-    openTabs: test1Mode ? [{tabName: 'main'}, {tabName: `neurodata-item:/processing/ophys/ImageSegmentation|ImageSegmentation`}] : [{tabName: 'main'}],
-    currentTabName: 'main'
+    openTabs: test1Mode ? [{tabName: 'main'}, {tabName: `timeseries-alignment`}] : [{tabName: 'main'}],
+    currentTabName: test1Mode ? 'timeseries-alignment' : 'main'
 }
 
 export const SetupNwbOpenTabs: FunctionComponent<PropsWithChildren<Props>> = ({children}) => {

@@ -6,6 +6,7 @@ import NeurodataItemsView from "./NeurodataItemView/NeurodataItemsView";
 import NeurodataItemView from "./NeurodataItemView/NeurodataItemView";
 import NwbMainView from "./NwbMainView/NwbMainView";
 import { useNwbOpenTabs } from "./NwbOpenTabsContext";
+import TimeseriesAlignmentView from "./TimeseriesAlignmentView/TimeseriesAlignmentView";
 
 const NwbTabWidget: FunctionComponent<{width: number, height: number}> = ({width, height}) => {
     const {openTabs, currentTabName, setCurrentTab, closeTab} = useNwbOpenTabs()
@@ -60,6 +61,8 @@ const TabChild: FunctionComponent<{tabName: string, width: number, height: numbe
                             })
                             return <NeurodataItemsView key={tabName} width={width} height={height} items={items} />
                         })()
+                    ) : tabName === 'timeseries-alignment' ? (
+                        <TimeseriesAlignmentView key={tabName} width={width} height={height} />
                     ) : (
                         <div key={tabName}>Not implemented</div>
                     )
