@@ -1,6 +1,9 @@
 import { FunctionComponent, useContext, useEffect, useMemo, useReducer, useState } from "react"
+import { FaEye } from "react-icons/fa"
+import SmallIconButton from "../../../components/SmallIconButton"
 import { neurodataTypeInheritsFrom } from "../neurodataSpec"
 import { NwbFileContext } from "../NwbFileContext"
+import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 
 type Props = {
     width: number
@@ -175,9 +178,16 @@ const TAItemView: FunctionComponent<TAItemViewProps> = ({item, startTime, endTim
     const p1 = (item.startTime - (startTime || 0)) / ((endTime || 1) - (startTime || 0)) * width
     const p2 = (item.endTime - (startTime || 0)) / ((endTime || 1) - (startTime || 0)) * width
     const color = getColorForNeurodataType(item.neurodataType)
+    const {openTab} = useNwbOpenTabs()
     return (
         <div style={{position: 'relative', width, height: h1 + h2 + h3}}>
             <div style={{position: 'absolute', width, height: h1, color, fontSize: 14}}>
+                <SmallIconButton
+                    icon={<FaEye />}
+                    onClick={() => {
+                        openTab(`neurodata-item:${item.path}|${item.neurodataType}`)
+                    }}
+                />&nbsp;
                 {item.path} ({item.neurodataType}) [{item.startTime.toFixed(1)} - {item.endTime.toFixed(1)} sec]
             </div>
             <div style={{position: 'absolute', left: p1, width: p2 - p1, height: h2, top: h1, background: color}} />

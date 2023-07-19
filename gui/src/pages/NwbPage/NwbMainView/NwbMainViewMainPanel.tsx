@@ -50,6 +50,7 @@ const ViewModeToggleButton: FunctionComponent<ViewModeToggleButtonProps> = ({ vi
         event: React.MouseEvent<HTMLElement>,
         newViewMode: string
     ) => {
+        if (!newViewMode) return
         setViewMode(newViewMode as ViewMode)
     }
     return (

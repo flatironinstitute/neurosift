@@ -5,6 +5,8 @@ import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 import { RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import { valueToString } from "./BrowseNwbView"
 import './nwb-attributes-table.css'
+import SmallIconButton from "../../../components/SmallIconButton"
+import { FaEye } from "react-icons/fa"
 
 type Props = {
     name: string
@@ -315,20 +317,23 @@ const NeurodataTypeLink: FunctionComponent<NeurodataTypeLinkProps> = ({neurodata
     if (tableItem.type !== 'group') throw Error('Unexpected table item type')
     const viewPlugin = useMemo(() => (neurodataType ? findViewPluginForType(neurodataType) : undefined), [neurodataType])
     const {openTab} = useNwbOpenTabs()
-    if (viewPlugin) {
-        return (
-            <Hyperlink
-                onClick={() => {
-                    openTab(`neurodata-item:${tableItem.path}|${neurodataType}`)
-                }}
-            >
-                {neurodataType}
-            </Hyperlink>
-        )
-    }
-    else {
-        return <span>{neurodataType}</span>
-    }
+    return (
+        <span>
+            {neurodataType}
+            &nbsp;
+            {
+                viewPlugin && (
+                    <SmallIconButton
+                        onClick={() => {
+                            openTab(`neurodata-item:${tableItem.path}|${neurodataType}`)
+                        }}
+                        title={`View ${neurodataType}`}
+                        icon={<FaEye />}
+                    />
+                )
+            }
+        </span>
+    )
 }
 
 const product = (arr: number[]) => {
