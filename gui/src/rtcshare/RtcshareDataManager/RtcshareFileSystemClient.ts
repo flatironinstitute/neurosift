@@ -112,8 +112,8 @@ function hasDirsAndFiles(dir: RtcshareDir): dir is RtcshareDir & {dirs: Rtcshare
 
 const readFileFromUrl = async (url: string, start?: number, end?: number): Promise<ArrayBuffer> => {
     const headers: {[key: string]: string} = {}
-    if ((start !== undefined) || (end !== undefined)) {
-        const range = `bytes=${start || 0}-${end || ''}`
+    if ((start !== undefined) && (end !== undefined)) {
+        const range = `bytes=${start}-${end - 1}`
         headers['Range'] = range
     }
     const response = await fetch(url, {
