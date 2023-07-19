@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { FunctionComponent, useEffect, useState } from "react"
-import { useGroup } from "../../NwbMainView/NwbMainView"
 import { RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../../RemoteH5File/RemoteH5File"
 
 type Props = {
@@ -76,7 +75,6 @@ class PlaneSegmentationClient {
 }
 
 const PlaneSegmentationView: FunctionComponent<Props> = ({width, height, imageSegmentationGroup, nwbFile, selectedSegmentationName}) => {
-    const segGroup = useGroup(nwbFile, `${imageSegmentationGroup.path}/${selectedSegmentationName}`)
     const [client, setClient] = useState<PlaneSegmentationClient | undefined>(undefined)
     useEffect(() => {
         let canceled = false
@@ -120,14 +118,19 @@ const distinctColors = [
 const Test1: FunctionComponent<{client: PlaneSegmentationClient, width: number, height: number}> = ({client, width, height}) => {
     const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | undefined>(undefined)
 
+    const statusBarHeight = 15
+
     const N0 = client.shape[0]
     const N1 = client.shape[1]
     const N2 = client.shape[2]
-    const scale = Math.min(width / N1, height / N2)
+    const scale = Math.min(width / N1, (height - statusBarHeight) / N2)
     const offsetX = (width - N1 * scale) / 2
-    const offsetY = (height - N2 * scale) / 2
+    const offsetY = ((height - statusBarHeight) - N2 * scale) / 2
+
+    const [loadingMessage, setLoadingMessage] = useState('')
 
     useEffect(() => {
+        setLoadingMessage('Loading...')
         let canceled = false
         if (!canvasElement) return
         const ctx = canvasElement.getContext('2d')
@@ -135,7 +138,13 @@ const Test1: FunctionComponent<{client: PlaneSegmentationClient, width: number, 
         ctx.fillStyle = 'black'
         ctx.fillRect(0, 0, canvasElement.width, canvasElement.height)
         const load = async () => {
+            let timer = Date.now()
             for (let j = 0; j < N0; j++) {
+                const elapsed = (Date.now() - timer) / 1000
+                if (elapsed > 1) {
+                    setLoadingMessage(`Loaded ${j} / ${N0}...`)
+                    timer = Date.now()
+                }
                 const color = distinctColors[j % distinctColors.length]
                 const aa = await client.getImageMask(j)
                 if (canceled) return
@@ -160,19 +169,23 @@ const Test1: FunctionComponent<{client: PlaneSegmentationClient, width: number, 
                 c.putImageData(imageData, 0, 0)
                 ctx.drawImage(offscreenCanvas, x0 * scale, y0 * scale, w0 * scale, h0 * scale)
             }
+            setLoadingMessage(`Loaded ${N0} units`)
         }
         load()
         return () => {canceled = true}
     }, [canvasElement, client, N0, N1, N2, scale])
 
     return (
-        <div style={{position: 'absolute', width, height}}>
+        <div style={{position: 'absolute', width, height, fontSize: 12}}>
             <div style={{position: 'absolute', width: N1 * scale, height: N2 * scale, left: offsetX, top: offsetY}}>
                 <canvas
                     ref={elmt => elmt && setCanvasElement(elmt)}
                     width={N1 * scale}
                     height={N2 * scale}
                 />
+            </div>
+            <div style={{position: 'absolute', width, height: statusBarHeight, top: height - statusBarHeight}}>
+                {loadingMessage}
             </div>
         </div>
     )
