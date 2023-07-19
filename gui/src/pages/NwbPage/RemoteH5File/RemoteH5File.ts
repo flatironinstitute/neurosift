@@ -32,7 +32,7 @@ export type RemoteH5Dataset = {
 export type DatasetDataType = Float32Array | Float64Array | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array
 
 const chunkSizeForMetaFile = 1024 * 1024 * 4
-const defaultChunkSize = 1024 * 20
+const defaultChunkSize = 1024 * 30
 
 
 export class RemoteH5File {

@@ -9,6 +9,7 @@ import TwoPhotonSeriesItemView from "./TwoPhotonSeries/TwoPhotonSeriesItemView"
 import HelloWorldView from "./HelloWorld/HelloWorldView"
 import ImageSeriesItemView from "./ImageSeries/ImageSeriesItemView"
 import DynamicTableView from "./DynamicTable/DynamicTableView"
+import ImagesItemView from "./Images/ImagesItemView"
 
 type Props = {
     width: number,
@@ -89,6 +90,13 @@ viewPlugins.push({
     name: 'ImageSeries',
     neurodataType: 'ImageSeries',
     component: ImageSeriesItemView
+})
+
+// Images
+viewPlugins.push({
+    name: 'Images',
+    neurodataType: 'Images',
+    component: ImagesItemView
 })
 
 ///////////////////////////////////////////////////////////////////////////////////////
