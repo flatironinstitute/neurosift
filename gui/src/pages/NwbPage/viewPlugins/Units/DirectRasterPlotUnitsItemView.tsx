@@ -35,7 +35,7 @@ const DirectRasterPlotUnitsItemView: FunctionComponent<Props> = ({width, height,
         const ids = spikeTrainsClient.unitIds
         let ct = 0
         const unitIdsToInclude: (number | string)[] = []
-        for (let id of ids) {
+        for (const id of ids) {
             const numSpikes = spikeTrainsClient.numSpikesForUnit(id)
             ct += numSpikes || 0
             if (ct > maxNumSpikes) break
