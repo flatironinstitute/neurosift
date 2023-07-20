@@ -8,9 +8,11 @@ Neurosift provides a platform for the visualization of neuroscience data in the 
 
 Neurosift is also integrated with [DANDI Archive](https://dandiarchive.org/). You can browse the contents of a dandiset directly in your browser, and visualize the items using Neurosift views. Here is an example:
 
-https://flatironinstitute.github.io/neurosift/#/nwb?url=https://dandiarchive.s3.amazonaws.com/blobs/c86/cdf/c86cdfba-e1af-45a7-8dfd-d243adc20ced
+https://flatironinstitute.github.io/neurosift/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/c86/cdf/c86cdfba-e1af-45a7-8dfd-d243adc20ced
 
 Replace the url query parameter with the appropriate URL for your dandiset. Or you can point it to any NWB file on the web.
+
+Or even simpler, Neurosift is now registered as an external service of DANDI archive, so you if you browse to an .nwb asset on DANDI, you can use the menu button to launch Neurosift directly.
 
 ## Installation and Setup for Local Mode
 
