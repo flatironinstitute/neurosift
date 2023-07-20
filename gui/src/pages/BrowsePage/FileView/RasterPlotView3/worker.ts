@@ -37,7 +37,7 @@ async function draw() {
     if (!canvas) return
     if (!opts) return
 
-    const {margins, canvasWidth, canvasHeight, visibleStartTimeSec, visibleEndTimeSec, hoveredUnitId, selectedUnitIds, zoomInRequired} = opts
+    const {margins, canvasWidth, canvasHeight, visibleStartTimeSec, visibleEndTimeSec, hoveredUnitId, selectedUnitIds, zoomInRequired, infoMessage} = opts
 
     // this is important because main thread no longer has control of canvas (it seems)
     canvas.width = canvasWidth
@@ -47,6 +47,16 @@ async function draw() {
     if (!canvasContext) return
 
     canvasContext.clearRect(0, 0, canvasWidth, canvasHeight)
+
+    if (infoMessage) {
+        // draw info message at the top center of the canvas
+        canvasContext.fillStyle = 'red'
+        canvasContext.textAlign = 'center'
+        canvasContext.textBaseline = 'top'
+        canvasContext.font = '20px Arial'
+        canvasContext.fillText(infoMessage, canvasWidth / 2, 0)
+    }
+
     if (zoomInRequired) {
         // draw text in the center of the canvas in pink: "Zoom in to view raster plot"
         canvasContext.fillStyle = 'pink'

@@ -17,4 +17,5 @@ export type Opts = {
     hoveredUnitId: string | number | undefined
     selectedUnitIds: (string | number)[]
     zoomInRequired: boolean
+    infoMessage: string | undefined
 }

@@ -8,6 +8,7 @@ import { Opts } from './WorkerTypes'
 
 type Props = {
     spikeTrainsClient: SpikeTrainsClientType
+    infoMessage?: string
     width: number
     height: number
 }
@@ -23,7 +24,7 @@ const yAxisInfo = {
     yMax: undefined
 }
 
-const RasterPlotView3: FunctionComponent<Props> = ({spikeTrainsClient, width, height}) => {
+const RasterPlotView3: FunctionComponent<Props> = ({spikeTrainsClient, width, height, infoMessage}) => {
     const startTimeSec = spikeTrainsClient.startTimeSec!
     const endTimeSec = spikeTrainsClient.endTimeSec!
     const hideToolbar = false
@@ -110,12 +111,13 @@ const RasterPlotView3: FunctionComponent<Props> = ({spikeTrainsClient, width, he
             visibleEndTimeSec,
             hoveredUnitId,
             selectedUnitIds: [...selectedUnitIds],
-            zoomInRequired
+            zoomInRequired,
+            infoMessage
         }
         worker.postMessage({
             opts
         })
-    }, [canvasWidth, canvasHeight, margins, visibleStartTimeSec, visibleEndTimeSec, worker, hoveredUnitId, selectedUnitIds, zoomInRequired])
+    }, [canvasWidth, canvasHeight, margins, visibleStartTimeSec, visibleEndTimeSec, worker, hoveredUnitId, selectedUnitIds, zoomInRequired, infoMessage])
 
     const unitIds = useMemo(() => (
         spikeTrainsClient.unitIds!

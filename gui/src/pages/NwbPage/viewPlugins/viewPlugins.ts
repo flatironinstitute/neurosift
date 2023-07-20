@@ -12,6 +12,7 @@ import DynamicTableView from "./DynamicTable/DynamicTableView"
 import ImagesItemView from "./Images/ImagesItemView"
 import RasterPlotUnitsItemView from "./Units/RasterPlotUnitsItemView"
 import AutocorrelogramsUnitsItemView from "./Units/AutocorrelogramsUnitsItemView"
+import DirectRasterPlotUnitsItemView from "./Units/DirectRasterPlotUnitsItemView"
 
 type Props = {
     width: number,
@@ -109,10 +110,17 @@ viewPlugins.push({
 
 // Units
 viewPlugins.push({
-    name: 'RasterPlot',
+    name: 'DirectRasterPlot',
     neurodataType: 'Units',
     defaultForNeurodataType: false,
     buttonLabel: 'raster plot',
+    component: DirectRasterPlotUnitsItemView
+})
+viewPlugins.push({
+    name: 'RasterPlot',
+    neurodataType: 'Units',
+    defaultForNeurodataType: false,
+    buttonLabel: 'precomputed raster plot',
     component: RasterPlotUnitsItemView
 })
 viewPlugins.push({
