@@ -41,11 +41,11 @@ stop_at_dandiset = None
 
 # go backward through the dandisets
 for dandiset in dandisets[::-1]:
-    if dandiset.identifier == '000467': # skip this one
-        continue
-    if dandiset.identifier in ['000409', '000402', '000233']: # skip these because there are too many large .nwb files: https://dandiarchive.org/dandiset/000409
-        continue
-    
+    # if dandiset.identifier == '000467': # skip this one
+    #     continue
+    # if dandiset.identifier in ['000409', '000402', '000233']: # skip these because there are too many large .nwb files: https://dandiarchive.org/dandiset/000409
+    #     continue
+
     print('')
     print('')
     print('')
@@ -53,9 +53,15 @@ for dandiset in dandisets[::-1]:
     print('=======================================')
     print('=======================================')
     print(f'DANDI: {dandiset.identifier} ({dandiset.version_id})')
+    asset_num = 0
     for asset in dandiset.get_assets():
         if not asset.path.endswith('.nwb'):
             continue
+
+        asset_num = asset_num + 1
+        if asset_num > 50:
+            print('Skipping because too many assets')
+            break
 
         if dandiset.identifier == stop_at_dandiset:
             print(f'Stopping at {stop_at_dandiset}')
