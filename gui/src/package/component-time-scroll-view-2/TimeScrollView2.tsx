@@ -33,7 +33,7 @@ type Props = {
 }
 
 const defaultMargins = {
-    left: 30,
+    left: 45,
     right: 20,
     top: 20,
     bottom: 40

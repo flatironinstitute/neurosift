@@ -27,12 +27,6 @@ const gridlineOpts = {
     hideY: true
 }
 
-const yAxisInfo = {
-    showTicks: false,
-    yMin: undefined,
-    yMax: undefined
-}
-
 const hideToolbar = false
 
 const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath, visibleChannelsRange, autoChannelSeparation }) => {
@@ -263,6 +257,12 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
             }
         ]
     }, [handleOpenHelp])
+
+    const yAxisInfo = {
+        showTicks: true,
+        yMin: valueRange?.min,
+        yMax: valueRange?.max
+    }
 
     return (
         <div style={{position: 'absolute', width, height}}>
