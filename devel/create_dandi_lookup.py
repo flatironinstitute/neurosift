@@ -36,7 +36,8 @@ def object_exists(bucket, key: str):
         return True
 
 overwrite = False
-stop_at_dandiset = '000579'
+# stop_at_dandiset = '000579'
+stop_at_dandiset = None
 
 # go backward through the dandisets
 for dandiset in dandisets[::-1]:
@@ -49,6 +50,11 @@ for dandiset in dandisets[::-1]:
     print(f'DANDI: {dandiset.identifier} ({dandiset.version_id})')
     for asset in dandiset.get_assets():
         if not asset.path.endswith('.nwb'):
+            continue
+
+        if dandiset.identifier == '000467': # skip this one
+            continue
+        if dandiset.identifier in ['000409', '000402', '000233']: # skip these because there are too many large .nwb files: https://dandiarchive.org/dandiset/000409
             continue
 
         if dandiset.identifier == stop_at_dandiset:
