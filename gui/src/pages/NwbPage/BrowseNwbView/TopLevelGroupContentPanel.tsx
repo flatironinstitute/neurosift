@@ -1,12 +1,11 @@
 import { FunctionComponent, useEffect, useMemo, useReducer } from "react"
-import Hyperlink from "../../../components/Hyperlink"
-import { findViewPluginForType } from "../viewPlugins/viewPlugins"
+import { FaEye } from "react-icons/fa"
+import SmallIconButton from "../../../components/SmallIconButton"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 import { RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { findViewPluginsForType } from "../viewPlugins/viewPlugins"
 import { valueToString } from "./BrowseNwbView"
 import './nwb-attributes-table.css'
-import SmallIconButton from "../../../components/SmallIconButton"
-import { FaEye } from "react-icons/fa"
 
 type Props = {
     name: string
@@ -315,14 +314,14 @@ type NeurodataTypeLinkProps = {
 
 const NeurodataTypeLink: FunctionComponent<NeurodataTypeLinkProps> = ({neurodataType, tableItem}) => {
     if (tableItem.type !== 'group') throw Error('Unexpected table item type')
-    const viewPlugin = useMemo(() => (neurodataType ? findViewPluginForType(neurodataType) : undefined), [neurodataType])
+    const viewPlugins = useMemo(() => (neurodataType ? findViewPluginsForType(neurodataType) : undefined), [neurodataType])
     const {openTab} = useNwbOpenTabs()
     return (
         <span>
             {neurodataType}
             &nbsp;
             {
-                viewPlugin && (
+                viewPlugins && viewPlugins.defaultViewPlugin && (
                     <SmallIconButton
                         onClick={() => {
                             openTab(`neurodata-item:${tableItem.path}|${neurodataType}`)

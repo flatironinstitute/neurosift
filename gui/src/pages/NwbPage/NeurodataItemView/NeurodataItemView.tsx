@@ -2,7 +2,7 @@ import { FunctionComponent, useContext } from "react"
 import Splitter from "../../../components/Splitter"
 import { NwbFileContext } from "../NwbFileContext"
 import { useGroup } from "../NwbMainView/NwbMainView"
-import { findViewPluginForType } from "../viewPlugins/viewPlugins"
+import { findViewPluginsForType } from "../viewPlugins/viewPlugins"
 import NeurodataItemViewLeftPanel from "./NeurodataItemViewLeftPanel"
 
 type Props = {
@@ -18,13 +18,13 @@ const NeurodataItemView: FunctionComponent<Props> = ({width, height, path, neuro
     if (!nwbFile) throw Error('Unexpected: nwbFile is undefined (no context provider)')
     const group = useGroup(nwbFile, path)
 
-    const viewPlugin = findViewPluginForType(neurodataType)
-    if (!viewPlugin) {
-        return <div>Unsupported neurodata type: {neurodataType}</div>
+    const {defaultViewPlugin} = findViewPluginsForType(neurodataType)
+    if (!defaultViewPlugin) {
+        return <div>No default view for type: {neurodataType}</div>
     }
 
     const content = (
-        <viewPlugin.component
+        <defaultViewPlugin.component
             width={width}
             height={height}
             path={path}
@@ -46,7 +46,7 @@ const NeurodataItemView: FunctionComponent<Props> = ({width, height, path, neuro
                 height={0}
                 path={path}
                 group={group}
-                viewName={viewPlugin.name}
+                viewName={defaultViewPlugin.name}
             />
             {content}
         </Splitter>

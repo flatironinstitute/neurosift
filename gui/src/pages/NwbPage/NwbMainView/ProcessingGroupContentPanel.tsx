@@ -3,7 +3,7 @@ import Hyperlink from "../../../components/Hyperlink"
 import '../nwb-table.css'
 import Abbreviate from "../viewPlugins/TimeSeries/TimeseriesItemView/Abbreviate"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
-import { RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import { useSelectedNwbItems } from "../SelectedNwbItemsContext"
 import { useGroup } from "./NwbMainView"
 
@@ -104,6 +104,7 @@ const ProcessingGroupContentPanel: FunctionComponent<Props> = ({nwbFile, groupPa
                         <th>Neurodata type</th>
                         <th>Description</th>
                         <th>Comments</th>
+                        <th>Data</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -134,17 +135,20 @@ type GroupTableRowProps = {
 }
 
 const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, name, path, selected, onToggleSelect}) => {
-    const [group, setGroup] = useState<RemoteH5Group | undefined>(undefined)
+    const group = useGroup(nwbFile, path)
+    const [data, setData] = useState<RemoteH5Dataset | undefined>(undefined)
     useEffect(() => {
         let canceled = false
         const load = async () => {
-            const g = await nwbFile.getGroup(path)
+            if (!group) return
+            if (!group.datasets.find(ds => (ds.name === 'data'))) return
+            const ds = await nwbFile.getDataset(path + '/data')
             if (canceled) return
-            setGroup(g)
+            setData(ds)
         }
         load()
         return () => {canceled = true}
-    }, [nwbFile, path])
+    }, [nwbFile, group, path])
     const {openTab} = useNwbOpenTabs()
     const neurodataType = group ? group.attrs['neurodata_type'] : ''
     return (
@@ -158,8 +162,13 @@ const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, name, pa
             <td>{group ? group.attrs['neurodata_type'] : ''}</td>
             <td>{group ? group.attrs['description'] : ''}</td>
             <td>{group ? <Abbreviate>{group.attrs['comments']}</Abbreviate> : ''}</td>
+            <td>{data ? `${data.dtype} ${formatShape(data.shape)}` : ''}</td>
         </tr>
     )
+}
+
+const formatShape = (shape: number[]) => {
+    return `[${shape.join(', ')}]`
 }
 
 export default ProcessingGroupContentPanel

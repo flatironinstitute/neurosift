@@ -164,7 +164,8 @@ const TopLevelContentPanel: FunctionComponent<TopLevelContentPanelProps> = ({hea
         return <UnitsContentPanel nwbFile={nwbFile} group={group} width={width} />
     }
     else if (name === 'acquisition') {
-        return <AcquisitionContentPanel nwbFile={nwbFile} group={group} />
+        // return <AcquisitionContentPanel nwbFile={nwbFile} group={group} />
+        return <ProcessingGroupContentPanel nwbFile={nwbFile} groupPath={heading.groupPath} />
     }
     else if (name.startsWith('processing/')) {
         return <ProcessingGroupContentPanel nwbFile={nwbFile} groupPath={heading.groupPath} />

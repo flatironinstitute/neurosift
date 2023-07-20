@@ -171,6 +171,7 @@ const RasterPlotView3: FunctionComponent<Props> = ({spikeTrainsClient, width, he
             onMouseOut={handleMouseOut}
             hideToolbar={hideToolbar}
             yAxisInfo={yAxisInfo}
+            showTimeSelectionBar={true}
         />
     )
 }

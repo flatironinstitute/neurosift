@@ -18,11 +18,14 @@ type Props = {
     condensed?: boolean
 }
 
-const viewPlugins: {
+export type ViewPlugin = {
     name: string
     neurodataType: string,
+    defaultForNeurodataType?: boolean,
     component: FunctionComponent<Props>
-}[] = []
+}
+
+const viewPlugins: ViewPlugin[] = []
 
 ///////////////////////////////////////////////////////////////////////////////////////
 // REGISTER VIEW PLUGINS HERE
@@ -31,6 +34,7 @@ const viewPlugins: {
 viewPlugins.push({
     name: 'ImageSegmentation',
     neurodataType: 'ImageSegmentation',
+    defaultForNeurodataType: true,
     component: ImageSegmentationItemView
 })
 
@@ -38,6 +42,7 @@ viewPlugins.push({
 viewPlugins.push({
     name: 'SpatialSeries',
     neurodataType: 'SpatialSeries',
+    defaultForNeurodataType: true,
     component: NeurodataSpatialSeriesItemView
 })
 
@@ -45,6 +50,7 @@ viewPlugins.push({
 viewPlugins.push({
     name: 'TwoPhotonSeries',
     neurodataType: 'TwoPhotonSeries',
+    defaultForNeurodataType: true,
     component: TwoPhotonSeriesItemView
 })
 
@@ -52,6 +58,7 @@ viewPlugins.push({
 viewPlugins.push({
     name: 'TimeSeries',
     neurodataType: 'TimeSeries',
+    defaultForNeurodataType: true,
     component: NeurodataTimeSeriesItemView
 })
 
@@ -59,6 +66,7 @@ viewPlugins.push({
 viewPlugins.push({
     name: 'DynamicTable',
     neurodataType: 'DynamicTable',
+    defaultForNeurodataType: true,
     component: DynamicTableView
 })
 
@@ -66,6 +74,7 @@ viewPlugins.push({
 viewPlugins.push({
     name: 'TimeIntervals',
     neurodataType: 'TimeIntervals',
+    defaultForNeurodataType: true,
     component: NeurodataTimeIntervalsItemView
 })
 
@@ -73,6 +82,7 @@ viewPlugins.push({
 viewPlugins.push({
     name: 'ElectricalSeries',
     neurodataType: 'ElectricalSeries',
+    defaultForNeurodataType: true,
     component: NeurodataElectricalSeriesItemView
 })
 
@@ -80,6 +90,7 @@ viewPlugins.push({
 viewPlugins.push({
     name: 'HelloWorld',
     neurodataType: 'LabeledEvents', // hi-jacking this type for now
+    defaultForNeurodataType: true,
     component: HelloWorldView // see ./HelloWorld/HelloWorldView.tsx
 })
 // See https://flatironinstitute.github.io/neurosift/#/nwb?url=https://dandiarchive.s3.amazonaws.com/blobs/8cf/38e/8cf38e36-6cd8-4c10-9d74-c2e6be70f019
@@ -89,6 +100,7 @@ viewPlugins.push({
 viewPlugins.push({
     name: 'ImageSeries',
     neurodataType: 'ImageSeries',
+    defaultForNeurodataType: true,
     component: ImageSeriesItemView
 })
 
@@ -96,19 +108,28 @@ viewPlugins.push({
 viewPlugins.push({
     name: 'Images',
     neurodataType: 'Images',
+    defaultForNeurodataType: true,
     component: ImagesItemView
 })
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-export const findViewPluginForType = (neurodataType: string) => {
+export const findViewPluginsForType = (neurodataType: string): {viewPlugins: ViewPlugin[], defaultViewPlugin: ViewPlugin | undefined} => {
+    const viewPluginsRet: ViewPlugin[] = []
+    let defaultViewPlugin: ViewPlugin | undefined
     let nt: string | undefined = neurodataType
     while (nt) {
-        const plugin = viewPlugins.find(p => (p.neurodataType === nt))
-        if (plugin) return plugin
+        const plugins = viewPlugins.filter(p => (p.neurodataType === nt))
+        console.log('--- plugins', nt, plugins)
+        viewPluginsRet.push(...plugins)
+        plugins.forEach(p => {
+            if (p.defaultForNeurodataType) {
+                if (!defaultViewPlugin) defaultViewPlugin = p
+            }
+        })
         nt = neurodataTypeInheritanceRaw[nt]
     }
-    return undefined
+    return {viewPlugins: viewPluginsRet, defaultViewPlugin}
 }
 
 export default viewPlugins
