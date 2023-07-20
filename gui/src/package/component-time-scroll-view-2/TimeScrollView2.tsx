@@ -1,5 +1,6 @@
 import React, { FunctionComponent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Splitter from '../../components/Splitter';
+import TimeseriesSelectionBar, { timeSelectionBarHeight } from '../../pages/NwbPage/viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionBar';
 import { DefaultToolbarWidth, useYAxisTicks } from '../component-time-scroll-view';
 import useActionToolbar from '../component-time-scroll-view/TimeScrollViewActionsToolbar';
 import useTimeScrollEventHandlers, { suppressWheelScroll } from '../component-time-scroll-view/TimeScrollViewInteractions/TimeScrollViewEventHandlers';
@@ -28,6 +29,7 @@ type Props = {
         yMax?: number
     }
     additionalToolbarItems?: ToolbarItem[]
+    showTimeSelectionBar?: boolean
 }
 
 const defaultMargins = {
@@ -52,14 +54,17 @@ export const useTimeScrollView2 = ({width, height, hideToolbar}: {width: number,
     }
 }
 
-const TimeScrollView2: FunctionComponent<Props> = ({width, height, onCanvasElement, gridlineOpts, onKeyDown, onMouseDown, onMouseMove, onMouseOut, onMouseUp, hideToolbar, yAxisInfo, shiftZoom, additionalToolbarItems}) => {
+const TimeScrollView2: FunctionComponent<Props> = ({width, height, onCanvasElement, gridlineOpts, onKeyDown, onMouseDown, onMouseMove, onMouseOut, onMouseUp, hideToolbar, yAxisInfo, shiftZoom, additionalToolbarItems, showTimeSelectionBar}) => {
     const { visibleStartTimeSec, visibleEndTimeSec, zoomTimeseriesSelection, panTimeseriesSelection } = useTimeRange()
     const {currentTime, currentTimeInterval } = useTimeseriesSelection()
     const timeRange = useMemo(() => (
         [visibleStartTimeSec, visibleEndTimeSec] as [number, number]
     ), [visibleStartTimeSec, visibleEndTimeSec])
 
-    const {margins, canvasWidth, canvasHeight, toolbarWidth} = useTimeScrollView2({width, height, hideToolbar})
+    const selectionBarHeight = showTimeSelectionBar ? timeSelectionBarHeight : 0
+    const height2 = height - selectionBarHeight
+
+    const {margins, canvasWidth, canvasHeight, toolbarWidth} = useTimeScrollView2({width, height: height2, hideToolbar})
 
     const timeToPixel = useMemo(() => {
         if ((visibleStartTimeSec === undefined) || (visibleEndTimeSec === undefined)) return () => (0)
@@ -225,10 +230,21 @@ const TimeScrollView2: FunctionComponent<Props> = ({width, height, onCanvasEleme
     
     const timeControlActions = useActionToolbar({belowDefault: additionalToolbarItems})
 
+    const content2 = showTimeSelectionBar ? (
+        <div style={{position: 'absolute', width: canvasWidth, height}}>
+            <div style={{position: 'absolute', width: canvasWidth, height: timeSelectionBarHeight}}>
+                <TimeseriesSelectionBar width={canvasWidth} height={timeSelectionBarHeight - 5} />
+            </div>
+            <div style={{position: 'absolute', top: timeSelectionBarHeight, width: canvasWidth, height: height - timeSelectionBarHeight}}>
+                {content}
+            </div>
+        </div>
+    ) : content
+
     if (hideToolbar) {
         return (
             <div ref={divRef} style={{position: 'absolute', width, height, background: 'white'}}>
-                {content}
+                {content2}
             </div>
         )
     }
@@ -244,9 +260,10 @@ const TimeScrollView2: FunctionComponent<Props> = ({width, height, onCanvasEleme
             <ViewToolbar
                 width={0}
                 height={0}
+                top={showTimeSelectionBar ? timeSelectionBarHeight : 0}
                 customActions={timeControlActions}
             />
-            {content}
+            {content2}
         </Splitter>
     )
 }

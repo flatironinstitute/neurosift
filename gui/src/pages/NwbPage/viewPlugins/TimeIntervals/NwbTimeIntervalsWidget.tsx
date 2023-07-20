@@ -1,7 +1,7 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react"
 import TimeScrollView2, { useTimeScrollView2 } from "../../../../package/component-time-scroll-view-2/TimeScrollView2"
 import { useTimeRange, useTimeseriesSelectionInitialization } from "../../../../package/context-timeseries-selection"
-import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../TimeSeries/TimeseriesItemView/TimeseriesSelectionBar"
+import { timeSelectionBarHeight } from "../TimeSeries/TimeseriesItemView/TimeseriesSelectionBar"
 
 type Props = {
     width: number
@@ -105,21 +105,15 @@ const NwbTimeIntervalsWidget: FunctionComponent<Props> = ({width, height, labels
     }, [canvasElement, canvasWidth, canvasHeight, visibleStartTimeSec, visibleEndTimeSec, startTimes, stopTimes, timeToPixel, margins, labels, colorForLabel, fracPositionForLabel])
 
     return (
-        <div style={{position: 'absolute', width, height}}>
-            <div style={{position: 'absolute', width, height: timeSelectionBarHeight}}>
-                <TimeseriesSelectionBar width={width} height={timeSelectionBarHeight - 5} />
-            </div>
-            <div style={{position: 'absolute', top: timeSelectionBarHeight, width, height: height - timeSelectionBarHeight}}>
-                <TimeScrollView2
-                    width={width}
-                    height={height - timeSelectionBarHeight}
-                    onCanvasElement={setCanvasElement}
-                    gridlineOpts={gridlineOpts}
-                    yAxisInfo={yAxisInfo}
-                    hideToolbar={hideToolbar}
-                />
-            </div>
-        </div>
+        <TimeScrollView2
+            width={width}
+            height={height}
+            onCanvasElement={setCanvasElement}
+            gridlineOpts={gridlineOpts}
+            yAxisInfo={yAxisInfo}
+            hideToolbar={hideToolbar}
+            showTimeSelectionBar={true}
+        />
     )
 }
 

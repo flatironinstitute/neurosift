@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { QuestionMark } from "@mui/icons-material"
 import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react"
+import { useModalDialog } from "../../../../../ApplicationBar"
+import ModalWindow from "../../../../../components/ModalWindow/ModalWindow"
 import TimeScrollView2, { useTimeScrollView2 } from "../../../../../package/component-time-scroll-view-2/TimeScrollView2"
 import { useTimeRange, useTimeseriesSelectionInitialization } from "../../../../../package/context-timeseries-selection"
+import { ToolbarItem } from "../../../../../package/ViewToolbar/Toolbars"
 import { NwbFileContext } from "../../../NwbFileContext"
 import { useDataset } from "../../../NwbMainView/NwbMainView"
 import { Canceler } from "../../../RemoteH5File/helpers"
 import { useNwbTimeseriesDataClient } from "./NwbTimeseriesDataClient"
 import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient"
-import TimeseriesSelectionBar, { timeSelectionBarHeight } from "./TimeseriesSelectionBar"
+import { timeSelectionBarHeight } from "./TimeseriesSelectionBar"
 import { DataSeries, Opts } from "./WorkerTypes"
-import {ToolbarItem} from "../../../../../package/ViewToolbar/Toolbars"
-import { useModalDialog } from "../../../../../ApplicationBar"
-import ModalWindow from "../../../../../components/ModalWindow/ModalWindow"
 
 type Props = {
     width: number
@@ -266,10 +266,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
 
     return (
         <div style={{position: 'absolute', width, height}}>
-            <div style={{position: 'absolute', width, height: timeSelectionBarHeight}}>
-                <TimeseriesSelectionBar width={width} height={timeSelectionBarHeight - 5} />
-            </div>
-            <div style={{position: 'absolute', top: timeSelectionBarHeight, width, height: height - timeSelectionBarHeight}}>
+            <div style={{position: 'absolute', width, height}}>
                 <TimeScrollView2
                     width={width}
                     height={height - timeSelectionBarHeight}
@@ -279,6 +276,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
                     hideToolbar={hideToolbar}
                     onKeyDown={handleKeyDown}
                     additionalToolbarItems={additionalToolbarItems}
+                    showTimeSelectionBar={true}
                 />
             </div>
             {

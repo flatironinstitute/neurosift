@@ -177,7 +177,7 @@ const ViewToolbar: FunctionComponent<Props> = (props) => {
     // for the requested layout (vertical or horizontal).
     const toolbarStyle = useMemo(() => ({
         width: props.width,
-        height: props.height,
+        height: props.height - (props.top || 0),
         top: props.top ?? 0,
         paddingTop: props.topPadding ?? 0
     }), [props.width, props.height, props.top, props.topPadding])
