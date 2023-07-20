@@ -1,5 +1,8 @@
-import { FunctionComponent, useMemo } from "react"
+import { FunctionComponent, useContext, useEffect, useMemo, useState } from "react"
+import Hyperlink from "../../../components/Hyperlink"
+import { NwbFileContext } from "../NwbFileContext"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
+import { getEtag } from "../NwbPage"
 import { RemoteH5File } from "../RemoteH5File/RemoteH5File"
 import { useDatasetData, useGroup } from "./NwbMainView"
 import SelectedNeurodataItemsWidget from "./SelectedNeurodataItemsWidget"
@@ -65,6 +68,7 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({width, height, nwbFile}) =>
     return (
         <div className="LeftPanel" style={{position: 'absolute', width, height}}>
             <div className="MainArea" style={{position: 'absolute', width, height: height - bottomBarHeight, overflowY: 'auto'}}>
+                <DandiTable />
                 <table
                     className="nwb-table"
                 >
@@ -108,6 +112,84 @@ const DatasetDataView: FunctionComponent<DatasetDataViewProps> = ({nwbFile, path
     const {data: datasetData} = useDatasetData(nwbFile, path)
     if (!datasetData) return <span>Loading...</span>
     return <span>{datasetData}</span>
+}
+
+type DandiAssetInfo = {
+    dandiset_id: string
+    dandiset_version_id: string
+    dandi_asset_id: string
+    dandi_asset_path: string
+    dandi_asset_size: number
+    dandi_asset_blob_id: string
+}
+
+type DandisetInfo = {
+    id: string,
+    doi: string,
+    url: string,
+    name: string
+    // others
+}
+
+const DandiTable = () => {
+    const nwbFile = useContext(NwbFileContext)
+    if (!nwbFile) throw Error('Unexpected: nwbFile is null')
+
+    const [dandiAssetInfo, setDandiAssetInfo] = useState<DandiAssetInfo | undefined>(undefined)
+    const [dandisetInfo, setDandisetInfo] = useState<DandisetInfo | undefined>(undefined)
+
+    useEffect(() => {
+        const getDandiAssetInfo = async () => {
+            const etag = await getEtag(nwbFile.url)
+            if (!etag) return
+            const assetInfoUrl = `https://neurosift.org/computed/nwb/ETag/${etag.slice(0, 2)}/${etag.slice(2, 4)}/${etag.slice(4, 6)}/${etag}/dandi_asset_info.1.json`
+            const resp = await fetch(assetInfoUrl)
+            if (!resp.ok) return
+            const obj = await resp.json() as DandiAssetInfo
+            setDandiAssetInfo(obj)
+            const dandiInfoUrl = `https://api.dandiarchive.org/api/dandisets/${obj.dandiset_id}/versions/${obj.dandiset_version_id}/`
+            const resp2 = await fetch(dandiInfoUrl)
+            if (!resp2.ok) return
+            const obj2 = await resp2.json() as DandisetInfo
+            setDandisetInfo(obj2)
+        }
+        getDandiAssetInfo()
+    }, [nwbFile])
+
+    if (!dandiAssetInfo) return <span />
+
+    const assetPathParentPath = dandiAssetInfo.dandi_asset_path.split('/').slice(0, -1).join('/')
+    const assetPathFileName = dandiAssetInfo.dandi_asset_path.split('/').slice(-1)[0]
+
+    return (
+        <div>
+            <p>
+                DANDISET:&nbsp;
+                <Hyperlink
+                    href={`https://gui.dandiarchive.org/#/dandiset/${dandiAssetInfo.dandiset_id}/${dandiAssetInfo.dandiset_version_id}`}
+                    target="_blank"
+                >
+                    {dandiAssetInfo.dandiset_id} {dandiAssetInfo.dandiset_version_id}
+                </Hyperlink>&nbsp;
+            </p>
+            <p>
+                <Hyperlink
+                    href={`https://gui.dandiarchive.org/#/dandiset/${dandiAssetInfo.dandiset_id}/${dandiAssetInfo.dandiset_version_id}/files?location=${assetPathParentPath}`}
+                    target="_blank"
+                >
+                    {assetPathParentPath}
+                </Hyperlink>/{assetPathFileName}
+            </p>
+            {
+                dandisetInfo && (
+                    <p>
+                        {dandisetInfo.name}
+                    </p>
+                )
+            }
+            <hr />
+        </div>
+    )
 }
 
 export default NwbMainLeftPanel

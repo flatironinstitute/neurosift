@@ -1,3 +1,7 @@
+Neuropixels - 758 units
+Raster plot, autocorrelograms
+https://flatironinstitute.github.io/neurosift/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/f5f/08d/f5f08d78-6b34-4586-85f2-6c7b58c98f11
+
 https://dandiarchive.org/dandiset/000568
 Probing subthreshold dynamics of hippocampal neurons by pulsed optogenetics
 Has .avi files. For example:
