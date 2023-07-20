@@ -34,6 +34,12 @@ export type DatasetDataType = Float32Array | Float64Array | Int8Array | Int16Arr
 const chunkSizeForMetaFile = 1024 * 1024 * 4
 const defaultChunkSize = 1024 * 30
 
+export const globalRemoteH5FileStats = {
+  getGroupCount: 0,
+  getDatasetCount: 0,
+  getDatasetDataCount: 0
+}
+
 
 export class RemoteH5File {
   #groupCache: { [path: string]: RemoteH5Group } = {}
@@ -51,6 +57,7 @@ export class RemoteH5File {
       chunkSize: this.metaUrl ? chunkSizeForMetaFile : defaultChunkSize
     }, dummyCanceler)
     this.#groupCache[path] = resp.group
+    globalRemoteH5FileStats.getGroupCount ++
     return this.#groupCache[path]
   }
   async getDataset(path: string): Promise<RemoteH5Dataset> {
@@ -63,6 +70,7 @@ export class RemoteH5File {
       chunkSize: this.metaUrl ? chunkSizeForMetaFile : defaultChunkSize
     }, dummyCanceler)
     this.#datasetCache[path] = resp.dataset
+    globalRemoteH5FileStats.getDatasetCount ++
     return this.#datasetCache[path]
   }
   async getDatasetData(path: string, o: { slice?: [number, number][], allowBigInt?: boolean, canceler?: Canceler}): Promise<DatasetDataType> {
@@ -103,6 +111,7 @@ export class RemoteH5File {
         x = y
       }
     }
+    globalRemoteH5FileStats.getDatasetDataCount ++
     return x
   }
 }

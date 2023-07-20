@@ -102,6 +102,9 @@ const labelFromTabName = (tabName: string) => {
     else if (tabName.startsWith('neurodata-items:')) {
         return `${tabName.slice(`neurodata-items:`.length).split('@').length} items`
     }
+    else if (tabName.startsWith('view:')) {
+        return tabName.slice(`view:`.length)
+    }
     else if (tabName === 'timeseries-alignment') {
         return 'timeseries alignment'
     }

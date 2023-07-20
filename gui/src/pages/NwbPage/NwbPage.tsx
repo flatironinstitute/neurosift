@@ -1,10 +1,11 @@
 import { FunctionComponent, useEffect, useReducer, useState } from "react"
 import { useRtcshare } from "../../rtcshare/useRtcshare"
+import { useCustomStatusBarStrings } from "../../StatusBar"
 import useRoute from "../../useRoute"
 import { NwbFileContext } from "./NwbFileContext"
 import { SetupNwbOpenTabs } from "./NwbOpenTabsContext"
 import NwbTabWidget from "./NwbTabWidget"
-import { getRemoteH5File, RemoteH5File } from "./RemoteH5File/RemoteH5File"
+import { getRemoteH5File, globalRemoteH5FileStats, RemoteH5File } from "./RemoteH5File/RemoteH5File"
 import { SelectedItemViewsContext, selectedItemViewsReducer } from "./SelectedItemViewsContext"
 import { fetchJson } from "./viewPlugins/ImageSeries/ImageSeriesItemView"
 
@@ -57,6 +58,18 @@ const NwbPageChild: FunctionComponent<Props> = ({width, height}) => {
     const [nwbFile, setNwbFile] = useState<RemoteH5File | undefined>(undefined)
     const [selectedItemViewsState, selectedItemViewsDispatch] = useReducer(selectedItemViewsReducer, {selectedItemViews: []})
     const {client: rtcshareClient} = useRtcshare()
+
+    // status bar text
+    const {setCustomStatusBarString} = useCustomStatusBarStrings()
+    useEffect(() => {
+        const timer = setInterval(() => {
+            if (!nwbFile) return
+            const x = globalRemoteH5FileStats
+            const s = `${x.getGroupCount} | ${x.getDatasetCount} | ${x.getDatasetDataCount}`
+            setCustomStatusBarString && setCustomStatusBarString('custom1', s)
+        }, 250)
+        return () => {clearInterval(timer)}
+    }, [nwbFile, setCustomStatusBarString])
 
     useEffect(() => {
         let canceled = false

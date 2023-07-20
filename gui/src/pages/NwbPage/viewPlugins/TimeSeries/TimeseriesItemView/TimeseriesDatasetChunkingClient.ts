@@ -82,9 +82,10 @@ class TimeseriesDatasetChunkingClient {
         const stdevs: number[] = []
         const step = 100
         for (let i = 0; i < chunk.length; i ++) {
-            for (let j = 0; j + step < Math.min(chunk[i].length, step * 50); j += step) {
+            for (let j = 0; j < Math.min(chunk[i].length, step * 50); j += step) {
                 const section = chunk[i].slice(j, j + step)
-                stdevs.push(Math.sqrt(sum(section.map(x => (x * x))) / section.length))
+                const v = Math.sqrt(sum(section.map(x => (x * x))) / section.length)
+                if (!isNaN(v)) stdevs.push(v)
             }
         }
         const medianStdev = median(stdevs)
