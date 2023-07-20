@@ -5,7 +5,7 @@ import { NwbFileContext } from "./NwbFileContext"
 import { SetupNwbOpenTabs } from "./NwbOpenTabsContext"
 import NwbTabWidget from "./NwbTabWidget"
 import { getRemoteH5File, RemoteH5File } from "./RemoteH5File/RemoteH5File"
-import { SelectedNwbItemsContext, selectedNwbItemsReducer } from "./SelectedNwbItemsContext"
+import { SelectedItemViewsContext, selectedItemViewsReducer } from "./SelectedItemViewsContext"
 import { fetchJson } from "./viewPlugins/ImageSeries/ImageSeriesItemView"
 
 type Props = {
@@ -55,7 +55,7 @@ const NwbPageChild: FunctionComponent<Props> = ({width, height}) => {
     const {route} = useRoute()
     const url = route.page === 'nwb' ? route.url : route.page === 'test' ? defaultUrl : undefined
     const [nwbFile, setNwbFile] = useState<RemoteH5File | undefined>(undefined)
-    const [selectedNwbItemsState, selectedNwbItemsDispatch] = useReducer(selectedNwbItemsReducer, {selectedNwbItems: []})
+    const [selectedItemViewsState, selectedItemViewsDispatch] = useReducer(selectedItemViewsReducer, {selectedItemViews: []})
     const {client: rtcshareClient} = useRtcshare()
 
     useEffect(() => {
@@ -80,14 +80,14 @@ const NwbPageChild: FunctionComponent<Props> = ({width, height}) => {
     if (!nwbFile) return <div>Loading {url}</div>
     return (
         <NwbFileContext.Provider value={nwbFile}>
-            <SelectedNwbItemsContext.Provider value={{selectedNwbItemsState, selectedNwbItemsDispatch}}>
+            <SelectedItemViewsContext.Provider value={{selectedItemViewsState, selectedItemViewsDispatch}}>
                 <SetupNwbOpenTabs>
                     <NwbTabWidget
                         width={width}
                         height={height}
                     />
                 </SetupNwbOpenTabs>
-            </SelectedNwbItemsContext.Provider>
+            </SelectedItemViewsContext.Provider>
         </NwbFileContext.Provider>
     )
 }

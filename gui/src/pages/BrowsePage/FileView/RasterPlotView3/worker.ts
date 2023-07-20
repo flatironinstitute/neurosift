@@ -46,8 +46,8 @@ async function draw() {
     const canvasContext = canvas.getContext("2d")
     if (!canvasContext) return
 
+    canvasContext.clearRect(0, 0, canvasWidth, canvasHeight)
     if (zoomInRequired) {
-        canvasContext.clearRect(0, 0, canvasWidth, canvasHeight)
         // draw text in the center of the canvas in pink: "Zoom in to view raster plot"
         canvasContext.fillStyle = 'pink'
         canvasContext.textAlign = 'center'
@@ -57,7 +57,15 @@ async function draw() {
         return
     }
 
-    if (!plotData) return
+    if (!plotData) {
+        // draw loading text in the center of the canvas
+        canvasContext.fillStyle = 'gray'
+        canvasContext.textAlign = 'center'
+        canvasContext.textBaseline = 'middle'
+        canvasContext.font = '20px Arial'
+        canvasContext.fillText('Loading...', canvasWidth / 2, canvasHeight / 2)
+        return
+    }
     drawCode += 1
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const thisDrawCode = drawCode

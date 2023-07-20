@@ -10,6 +10,8 @@ import HelloWorldView from "./HelloWorld/HelloWorldView"
 import ImageSeriesItemView from "./ImageSeries/ImageSeriesItemView"
 import DynamicTableView from "./DynamicTable/DynamicTableView"
 import ImagesItemView from "./Images/ImagesItemView"
+import RasterPlotUnitsItemView from "./Units/RasterPlotUnitsItemView"
+import AutocorrelogramsUnitsItemView from "./Units/AutocorrelogramsUnitsItemView"
 
 type Props = {
     width: number,
@@ -23,6 +25,7 @@ export type ViewPlugin = {
     neurodataType: string,
     defaultForNeurodataType?: boolean,
     component: FunctionComponent<Props>
+    buttonLabel?: string
 }
 
 const viewPlugins: ViewPlugin[] = []
@@ -104,6 +107,22 @@ viewPlugins.push({
     component: ImageSeriesItemView
 })
 
+// Units
+viewPlugins.push({
+    name: 'RasterPlot',
+    neurodataType: 'Units',
+    defaultForNeurodataType: false,
+    buttonLabel: 'raster plot',
+    component: RasterPlotUnitsItemView
+})
+viewPlugins.push({
+    name: 'Autocorrelograms',
+    neurodataType: 'Units',
+    defaultForNeurodataType: false,
+    buttonLabel: 'autocorrelograms',
+    component: AutocorrelogramsUnitsItemView
+})
+
 // Images
 viewPlugins.push({
     name: 'Images',
@@ -120,7 +139,6 @@ export const findViewPluginsForType = (neurodataType: string): {viewPlugins: Vie
     let nt: string | undefined = neurodataType
     while (nt) {
         const plugins = viewPlugins.filter(p => (p.neurodataType === nt))
-        console.log('--- plugins', nt, plugins)
         viewPluginsRet.push(...plugins)
         plugins.forEach(p => {
             if (p.defaultForNeurodataType) {

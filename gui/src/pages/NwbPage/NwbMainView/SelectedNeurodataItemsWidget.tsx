@@ -2,34 +2,28 @@ import { FunctionComponent, useCallback } from "react"
 import { FaEye } from "react-icons/fa"
 import Hyperlink from "../../../components/Hyperlink"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
-import { useSelectedNwbItems } from "../SelectedNwbItemsContext"
+import { useSelectedItemViews } from "../SelectedItemViewsContext"
 
 type Props = {
     // none
 }
 
 const SelectedNeurodataItemsWidget: FunctionComponent<Props> = () => {
-    const {selectedNwbItems} = useSelectedNwbItems()
+    const {selectedItemViews} = useSelectedItemViews()
     const {openTab} = useNwbOpenTabs()
-    const cc =  <span>View {selectedNwbItems.length} {selectedNwbItems.length === 1 ? 'item' : 'items'}</span>
+    const cc =  <span>View {selectedItemViews.length} {selectedItemViews.length === 1 ? 'item' : 'items'}</span>
     const handleOpenView = useCallback(() => {
-        if (selectedNwbItems.length === 1) {
-            const item = selectedNwbItems[0]
-            if (item.neurodataType) {
-                openTab(`neurodata-item:${item.path}|${item.neurodataType}`)
-            }
-            else {
-                openTab(`ns:${item.path}`)
-            }
+        if (selectedItemViews.length === 1) {
+            openTab(selectedItemViews[0])
         }
-        else if (selectedNwbItems.length > 1) {
-            openTab(`neurodata-items:${selectedNwbItems.map(item => `${item.path}|${item.neurodataType}`).join('@')}`)
+        else if (selectedItemViews.length > 1) {
+            openTab(`neurodata-items:${selectedItemViews.join('@')}`)
         }
-    }, [selectedNwbItems, openTab])
+    }, [selectedItemViews, openTab])
     return (
         <div>
            {
-                selectedNwbItems.length > 0 ? (
+                selectedItemViews.length > 0 ? (
                     <Hyperlink onClick={handleOpenView} title="Open view"><FaEye />&nbsp;{cc}</Hyperlink>
                 ) : (
                     <span>No views selected</span>

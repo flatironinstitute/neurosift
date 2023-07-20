@@ -4,7 +4,7 @@ import '../nwb-table.css'
 import Abbreviate from "../viewPlugins/TimeSeries/TimeseriesItemView/Abbreviate"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 import { RemoteH5Dataset, RemoteH5File, RemoteH5Group, RemoteH5Subgroup } from "../RemoteH5File/RemoteH5File"
-import { useSelectedNwbItems } from "../SelectedNwbItemsContext"
+import { useSelectedItemViews } from "../SelectedItemViewsContext"
 
 type Props = {
     nwbFile: RemoteH5File
@@ -12,7 +12,7 @@ type Props = {
 }
 
 const AcquisitionContentPanel: FunctionComponent<Props> = ({nwbFile, group}) => {
-    const {selectedNwbItemPaths, toggleSelectedNwbItem} = useSelectedNwbItems()
+    const {selectedItemViews, toggleSelectedItemView} = useSelectedItemViews()
     return (
         <div>
             <table className="nwb-table">
@@ -33,8 +33,8 @@ const AcquisitionContentPanel: FunctionComponent<Props> = ({nwbFile, group}) => 
                                 key={sg.name}
                                 nwbFile={nwbFile}
                                 subgroup={sg}
-                                selected={selectedNwbItemPaths.includes(sg.path)}
-                                onToggleSelect={(neurodataType) => toggleSelectedNwbItem(sg.path, neurodataType)}
+                                selected={!!selectedItemViews.find(a => a.startsWith(`neurodata-item:${sg.path}|`))}
+                                onToggleSelect={(neurodataType) => toggleSelectedItemView(`neurodata-item:${sg.path}|${neurodataType}`)}
                             />
                         ))
                     }

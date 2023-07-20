@@ -1,17 +1,13 @@
 import { FunctionComponent, useContext, useMemo } from "react"
 import Splitter from "../../../components/Splitter"
-import TimeseriesSelectionWidget from "../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget"
 import { NwbFileContext } from "../NwbFileContext"
-import NeurodataItemView from "./NeurodataItemView"
-import NeurosiftItemView from "../NeurosiftItemView/NeurosiftItemView"
+import TimeseriesSelectionWidget from "../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget"
+import viewPlugins, { findViewPluginsForType } from "../viewPlugins/viewPlugins"
 
 type Props = {
     width: number
     height: number
-    items: {
-        path: string
-        neurodataType: string
-    }[]
+    items: string[]
 }
 
 const NeurodataItemsView: FunctionComponent<Props> = ({width, height, items}) => {
@@ -19,7 +15,7 @@ const NeurodataItemsView: FunctionComponent<Props> = ({width, height, items}) =>
     if (!nwbFile) throw Error('Unexpected: nwbFile is undefined (no context provider)')
 
     const itemNames = useMemo(() => {
-        return items.map(item => item.path)
+        return items.map(item => getNameForItemView(item))
     }, [items])
 
     return (
@@ -43,6 +39,20 @@ const NeurodataItemsView: FunctionComponent<Props> = ({width, height, items}) =>
     )
 }
 
+const getNameForItemView = (item: string) => {
+    if (item.startsWith('neurodata-item:')) {
+        const itemPath = item.slice(`neurodata-item:`.length).split('|')[0]
+        const neurodataType = item.slice(`neurodata-item:`.length).split('|')[1]
+        return `${itemPath} (${neurodataType})`
+    }
+    else if (item.startsWith('view:')) {
+        const pName = item.slice(`view:`.length).split('|')[0]
+        const itemPath = item.slice(`view:`.length).split('|')[1]
+        return `${itemPath} (${pName})`
+    }
+    else return item
+}
+
 type LeftPanelProps = {
     width: number
     height: number
@@ -60,10 +70,7 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({width, height, itemNames}
 type MainPanelProps = {
     width: number
     height: number
-    items: {
-        path: string
-        neurodataType: string
-    }[]
+    items: string[]
 }
 
 const MainPanel: FunctionComponent<MainPanelProps> = ({width, height, items}) => {
@@ -75,35 +82,48 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({width, height, items}) =>
     return (
         <div style={{position: 'absolute', width, height}}>
             {
-                items.map((item, i) => (
-                    <div key={item.path} style={{position: 'absolute', width, height: H, top: positions[i]}}>
-                        <div style={{position: 'absolute', width, height: titleBarHeight - 5, backgroundColor: titleBarColor, color: 'white', fontSize: 12, paddingLeft: 10, paddingTop: 5}}>
-                            {item.path}
-                        </div>
-                        <div style={{position: 'absolute', width, height: H - titleBarHeight, top: titleBarHeight}}>
-                            {
-                                item.neurodataType ? (
-                                    <NeurodataItemView
+                items.map((item, i) => {
+                    const {viewPlugin, itemPath} = getViewPluginAndItemPath(item)
+                    if (!viewPlugin) return (
+                        <div>View plugin not found: {item}</div>
+                    )
+                    return (
+                        <div key={item} style={{position: 'absolute', width, height: H, top: positions[i]}}>
+                            <div style={{position: 'absolute', width, height: titleBarHeight - 5, backgroundColor: titleBarColor, color: 'white', fontSize: 12, paddingLeft: 10, paddingTop: 5}}>
+                                {getNameForItemView(item)}
+                            </div>
+                            <div style={{position: 'absolute', width, height: H - titleBarHeight, top: titleBarHeight}}>
+                                {
+                                    <viewPlugin.component
                                         width={width}
                                         height={H - titleBarHeight}
-                                        path={item.path}
-                                        neurodataType={item.neurodataType}
+                                        path={itemPath}
                                         condensed={true}
                                     />
-                                ) : (
-                                    <NeurosiftItemView
-                                        width={width}
-                                        height={H - titleBarHeight}
-                                        url={item.path}
-                                    />
-                                )
-                            }
+                                }
+                            </div>
                         </div>
-                    </div>
-                ))
+                    )
+                })
             }
         </div>
     )
+}
+
+const getViewPluginAndItemPath = (item: string) => {
+    if (item.startsWith('neurodata-item:')) {
+        const itemPath = item.slice(`neurodata-item:`.length).split('|')[0]
+        const neurodataType = item.slice(`neurodata-item:`.length).split('|')[1]
+        const {defaultViewPlugin} = findViewPluginsForType(neurodataType)
+        return {viewPlugin: defaultViewPlugin, itemPath}
+    }
+    else if (item.startsWith('view:')) {
+        const pName = item.slice(`view:`.length).split('|')[0]
+        const itemPath = item.slice(`view:`.length).split('|')[1]
+        const viewPlugin = viewPlugins.find(p => (p.name === pName))
+        return {viewPlugin, itemPath}
+    }
+    else return {viewPlugin: undefined, itemPath: undefined}
 }
 
 export default NeurodataItemsView

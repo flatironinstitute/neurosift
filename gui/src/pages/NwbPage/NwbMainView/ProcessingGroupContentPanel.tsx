@@ -4,7 +4,7 @@ import '../nwb-table.css'
 import Abbreviate from "../viewPlugins/TimeSeries/TimeseriesItemView/Abbreviate"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 import { RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
-import { useSelectedNwbItems } from "../SelectedNwbItemsContext"
+import { useSelectedItemViews } from "../SelectedItemViewsContext"
 import { useGroup } from "./NwbMainView"
 
 type Props = {
@@ -47,7 +47,7 @@ const loadedGroupsReducer = (state: LoadedGroups, action: LoadedGroupsAction) =>
 const ProcessingGroupContentPanel: FunctionComponent<Props> = ({nwbFile, groupPath}) => {
     const group = useGroup(nwbFile, groupPath)
     const [loadedGroups, dispatchLoadedGroups] = useReducer(loadedGroupsReducer, {loaded: {}, requestedPaths: []})
-    const {selectedNwbItemPaths, toggleSelectedNwbItem} = useSelectedNwbItems()
+    const {selectedItemViews, toggleSelectedItemView} = useSelectedItemViews()
     useEffect(() => {
         const load = async () => {
             for (const p of loadedGroups.requestedPaths) {
@@ -115,8 +115,8 @@ const ProcessingGroupContentPanel: FunctionComponent<Props> = ({nwbFile, groupPa
                                 name={tableItem.name}
                                 nwbFile={nwbFile}
                                 path={tableItem.path}
-                                selected={selectedNwbItemPaths.includes(tableItem.path)}
-                                onToggleSelect={(neurodataType) => toggleSelectedNwbItem(tableItem.path, neurodataType)}
+                                selected={!!selectedItemViews.find(a => a.startsWith(`neurodata-item:${tableItem.path}|`))}
+                                onToggleSelect={(neurodataType) => toggleSelectedItemView(`neurodata-item:${tableItem.path}|${neurodataType}`)}
                             />
                         ))
                     }
