@@ -12,6 +12,8 @@ https://flatironinstitute.github.io/neurosift/?p=/nwb&url=https://dandiarchive.s
 
 Replace the url query parameter with the appropriate URL for your dandiset. Or you can point it to any NWB file on the web.
 
+Or even simpler, Neurosift is now registered as an external service of DANDI archive, so you if you browse to an .nwb asset on DANDI, you can use the menu button to launch Neurosift directly.
+
 ## Installation and Setup for Local Mode
 
 You can view remote Neurosift visualizations in your web browser without installing anything. However, if you want to view data on your local machine, or if you want to host Neurosift data on a server, you'll need to install some software.
