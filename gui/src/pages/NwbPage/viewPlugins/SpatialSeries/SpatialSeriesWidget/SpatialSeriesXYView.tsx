@@ -30,6 +30,8 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({ width, height, path }) 
     const endTime = dataClient ? dataClient.endTime! : undefined
     useTimeseriesSelectionInitialization(startTime, endTime)
 
+    const {setCurrentTime} = useTimeseriesSelection()
+
     // Set chunkSize
     const chunkSize = useMemo(() => (
         dataset ? Math.floor(1e4 / (dataset.shape[1] || 1)) : 0
@@ -227,16 +229,22 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({ width, height, path }) 
         setCanvasElement(elmt)
     }, [])
 
-    const coordToPixel = useMemo(() => (valueRange ? (p: {x: number, y: number}) => {
+    const {coordToPixel, pixelToCoord} = useMemo(() => {
+        if (!valueRange) return {coordToPixel: undefined, pixelToCoord: undefined}
         const {xMin, xMax, yMin, yMax} = valueRange
         const scale = Math.min((canvasWidth - margins.left - margins.right) / (xMax - xMin), (canvasHeight - margins.top - margins.bottom) / (yMax - yMin))
         const offsetX = (canvasWidth - margins.left - margins.right - (xMax - xMin) * scale) / 2
         const offsetY = (canvasHeight - margins.top - margins.bottom - (yMax - yMin) * scale) / 2
-        return {
+        const coordToPixel = (p: {x: number, y: number}) => ({
             x: !isNaN(p.x) ? margins.left + offsetX + (p.x - xMin) * scale : NaN, 
             y: !isNaN(p.y) ? canvasHeight - margins.bottom - offsetY - (p.y - yMin) * scale : NaN
-        }
-    } : undefined), [valueRange, canvasWidth, canvasHeight, margins])
+        })
+        const pixelToCoord = (p: {x: number, y: number}) => ({
+            x: !isNaN(p.x) ? xMin + (p.x - margins.left - offsetX) / scale : NaN,
+            y: !isNaN(p.y) ? yMin + (canvasHeight - margins.bottom - offsetY - p.y) / scale : NaN
+        })
+        return {coordToPixel, pixelToCoord}
+    }, [canvasWidth, canvasHeight, margins, valueRange])
 
     const [cursorCanvasElement, setCursorCanvasElement] = useState<HTMLCanvasElement | undefined>()
     const {currentTime} = useTimeseriesSelection()
@@ -264,6 +272,35 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({ width, height, path }) 
         context.fill()
     }, [cursorCanvasElement, currentTime, dataSeries, coordToPixel, valueRange, canvasWidth, canvasHeight, margins])
 
+    const handleMouseUp = useCallback((e: React.MouseEvent) => {
+        if (!pixelToCoord) return
+        if (!dataSeries) return
+        if (visibleStartTimeSec === undefined) return
+        if (visibleEndTimeSec === undefined) return
+        const boundingRect = e.currentTarget.getBoundingClientRect()
+        const x = e.clientX - boundingRect.x
+        const y = e.clientY - boundingRect.y
+        const p = pixelToCoord({x, y})
+        if (isNaN(p.x)) return
+        if (isNaN(p.y)) return
+        let closestT: number | undefined = undefined
+        let closestDistance: number | undefined = undefined
+        for (let i = 0; i < dataSeries.t.length; i ++) {
+            const t = dataSeries.t[i]
+            if ((t < visibleStartTimeSec) || (t > visibleEndTimeSec)) continue
+            const dx = p.x - dataSeries.x[i]
+            const dy = p.y - dataSeries.y[i]
+            const dist = Math.sqrt(dx * dx + dy * dy)
+            if (isNaN(dist)) continue
+            if ((closestDistance === undefined) || (dist < closestDistance)) {
+                closestDistance = dist
+                closestT = t
+            }
+        }
+        if (closestT === undefined) return
+        setCurrentTime(closestT)
+    }, [pixelToCoord, dataSeries, setCurrentTime, visibleStartTimeSec, visibleEndTimeSec])
+
     return (
         <div style={{position: 'absolute', width, height}}>
             <div style={{position: 'absolute', width, height: timeSelectionBarHeight}}>
@@ -281,6 +318,7 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({ width, height, path }) 
                 <canvas
                     style={{position: 'absolute', width: canvasWidth, height: canvasHeight}}
                     ref={(elmt) => {elmt && setCursorCanvasElement(elmt)}}
+                    onMouseUp={handleMouseUp}
                     width={canvasWidth}
                     height={canvasHeight}
                 />
