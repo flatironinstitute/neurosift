@@ -2,7 +2,6 @@ import { FunctionComponent, useEffect, useMemo, useState } from "react"
 import TopLevelGroupContentPanel from "../BrowseNwbView/TopLevelGroupContentPanel"
 import { RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import UnitsContentPanel from "./UnitsContentPanel"
-import AcquisitionContentPanel from "./AcquisitionContentPanel"
 import IntervalsContentPanel from "./IntervalsContentPanel"
 import { useGroup } from "./NwbMainView"
 import ProcessingGroupContentPanel from "./ProcessingGroupContentPanel"
@@ -164,7 +163,6 @@ const TopLevelContentPanel: FunctionComponent<TopLevelContentPanelProps> = ({hea
         return <UnitsContentPanel nwbFile={nwbFile} group={group} width={width} />
     }
     else if (name === 'acquisition') {
-        // return <AcquisitionContentPanel nwbFile={nwbFile} group={group} />
         return <ProcessingGroupContentPanel nwbFile={nwbFile} groupPath={heading.groupPath} />
     }
     else if (name.startsWith('processing/')) {
