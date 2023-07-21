@@ -1,7 +1,7 @@
 import { FunctionComponent } from "react"
 import Splitter from "../../../../../components/Splitter"
 import NwbTimeseriesView from "../../../viewPlugins/TimeSeries/TimeseriesItemView/NwbTimeseriesView"
-import SpatialSeriesSpatialView from "./SpatialSeriesSpatialView"
+import SpatialSeriesXYView from "./SpatialSeriesXYView"
 
 type Props = {
     width: number
@@ -11,30 +11,13 @@ type Props = {
 }
 
 const NeurodataSpatialSeriesItemView: FunctionComponent<Props> = ({width, height, path, condensed}) => {
-    const timeseriesContent = (
+    // in the future, do something specific to the spatial series, like providing an X/Y legend
+    return (
         <NwbTimeseriesView
             width={width}
             height={height}
             objectPath={path}
         />
-    )
-
-    if (condensed) return timeseriesContent
-
-    return (
-        <Splitter
-            width={width}
-            height={height}
-            direction="vertical"
-            initialPosition={height / 2}
-        >
-            {timeseriesContent}
-            <SpatialSeriesSpatialView
-                width={width}
-                height={height}
-                objectPath={path}
-            />
-        </Splitter>
     )
 }
 

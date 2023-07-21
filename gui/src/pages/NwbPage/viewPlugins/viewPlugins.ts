@@ -13,6 +13,7 @@ import ImagesItemView from "./Images/ImagesItemView"
 import RasterPlotUnitsItemView from "./Units/RasterPlotUnitsItemView"
 import AutocorrelogramsUnitsItemView from "./Units/AutocorrelogramsUnitsItemView"
 import DirectRasterPlotUnitsItemView from "./Units/DirectRasterPlotUnitsItemView"
+import SpatialSeriesXYView from "./SpatialSeries/SpatialSeriesWidget/SpatialSeriesXYView"
 
 type Props = {
     width: number,
@@ -48,6 +49,13 @@ viewPlugins.push({
     neurodataType: 'SpatialSeries',
     defaultForNeurodataType: true,
     component: NeurodataSpatialSeriesItemView
+})
+viewPlugins.push({
+    name: 'X/Y',
+    neurodataType: 'SpatialSeries',
+    defaultForNeurodataType: false,
+    component: SpatialSeriesXYView,
+    buttonLabel: 'X/Y'
 })
 
 // TwoPhotonSeries

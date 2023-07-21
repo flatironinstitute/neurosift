@@ -6,6 +6,8 @@ import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 import { RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import { useSelectedItemViews } from "../SelectedItemViewsContext"
 import { useGroup } from "./NwbMainView"
+import { findViewPluginsForType } from "../viewPlugins/viewPlugins"
+import ViewPluginButton from "../viewPlugins/ViewPluginButton"
 
 type Props = {
     nwbFile: RemoteH5File
@@ -100,6 +102,7 @@ const ProcessingGroupContentPanel: FunctionComponent<Props> = ({nwbFile, groupPa
                 <thead>
                     <tr>
                         <th></th>
+                        <th></th>
                         <th>Item</th>
                         <th>Neurodata type</th>
                         <th>Description</th>
@@ -151,11 +154,27 @@ const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, name, pa
     }, [nwbFile, group, path])
     const {openTab} = useNwbOpenTabs()
     const neurodataType = group ? group.attrs['neurodata_type'] : ''
+    const {viewPlugins, defaultViewPlugin} = useMemo(() => (findViewPluginsForType(neurodataType)), [neurodataType])
     return (
         <tr>
             <td>
-            <input type="checkbox" checked={selected} disabled={!neurodataType} onClick={() => onToggleSelect(neurodataType)} onChange={() => {}} />
+                {
+                    defaultViewPlugin && (
+                        <input type="checkbox" checked={selected} disabled={!neurodataType} onClick={() => onToggleSelect(neurodataType)} onChange={() => {}} />
+                    )
+                }
             </td>
+            <td>{
+                <span>{
+                    viewPlugins.filter(vp => (!vp.defaultForNeurodataType)).map(vp => (
+                        <ViewPluginButton
+                            key={vp.name}
+                            viewPlugin={vp}
+                            path={path}
+                        />
+                    ))
+                }</span>
+            }</td>
             <td>
                 <Hyperlink disabled={!neurodataType} onClick={() => openTab(`neurodata-item:${path}|${neurodataType}`)}>{name}</Hyperlink>
             </td>

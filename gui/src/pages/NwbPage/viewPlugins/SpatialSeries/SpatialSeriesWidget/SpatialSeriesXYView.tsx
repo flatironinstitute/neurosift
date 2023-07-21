@@ -4,18 +4,18 @@ import { useTimeRange, useTimeseriesSelection, useTimeseriesSelectionInitializat
 import { NwbFileContext } from "../../../NwbFileContext";
 import { useDataset } from "../../../NwbMainView/NwbMainView";
 import { Canceler } from "../../../RemoteH5File/helpers";
-import { useNwbTimeseriesDataClient } from "../../../viewPlugins/TimeSeries/TimeseriesItemView/NwbTimeseriesDataClient";
-import TimeseriesDatasetChunkingClient from "../../../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesDatasetChunkingClient";
-import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../../../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionBar";
+import { useNwbTimeseriesDataClient } from "../../TimeSeries/TimeseriesItemView/NwbTimeseriesDataClient";
+import TimeseriesDatasetChunkingClient from "../../TimeSeries/TimeseriesItemView/TimeseriesDatasetChunkingClient";
+import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../../TimeSeries/TimeseriesItemView/TimeseriesSelectionBar";
 import { DataSeries, Opts } from "./SpatialWorkerTypes";
 
 type Props = {
     width: number
     height: number
-    objectPath: string
+    path: string
 }
 
-const SpatialSeriesSpatialView: FunctionComponent<Props> = ({ width, height, objectPath }) => {
+const SpatialSeriesXYView: FunctionComponent<Props> = ({ width, height, path }) => {
     const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | undefined>()
     const [worker, setWorker] = useState<Worker | null>(null)
     const nwbFile = useContext(NwbFileContext)
@@ -23,9 +23,9 @@ const SpatialSeriesSpatialView: FunctionComponent<Props> = ({ width, height, obj
     const [datasetChunkingClient, setDatasetChunkingClient] = useState<TimeseriesDatasetChunkingClient | undefined>(undefined)
     const {visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange } = useTimeRange()
 
-    const dataset = useDataset(nwbFile, `${objectPath}/data`)
+    const dataset = useDataset(nwbFile, `${path}/data`)
 
-    const dataClient = useNwbTimeseriesDataClient(nwbFile, objectPath)
+    const dataClient = useNwbTimeseriesDataClient(nwbFile, path)
     const startTime = dataClient ? dataClient.startTime! : undefined
     const endTime = dataClient ? dataClient.endTime! : undefined
     useTimeseriesSelectionInitialization(startTime, endTime)
@@ -310,4 +310,4 @@ const findIndexForTime = (time: number, t: number[]) => {
 }
 
 
-export default SpatialSeriesSpatialView
+export default SpatialSeriesXYView
