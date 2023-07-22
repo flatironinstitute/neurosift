@@ -19,12 +19,11 @@ def start_server(nwb_file, port):
     current_script_dir = os.path.dirname(os.path.realpath(__file__))
     desired_dir = os.path.join(current_script_dir, '../../experimental-local-file-access')
     absolute_desired_dir = os.path.abspath(desired_dir)
-    os.chdir(absolute_desired_dir)
 
     #process = subprocess.Popen(["npm", "install"])
 
     # Start the server
-    process = subprocess.Popen(["npm", "run", "start", os.environ["NWB_DIR"]])
+    process = subprocess.Popen(["npm", "run", "start", os.environ["NWB_DIR"]], cwd=absolute_desired_dir)
 
     url = f"https://flatironinstitute.github.io/neurosift/?p=/nwb&url=http://localhost:{port}/files/{nwb_file_name}"
     print(f"Server started. Access your file at: {url}")
