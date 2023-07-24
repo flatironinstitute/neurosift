@@ -10,5 +10,10 @@ setup(
         'kachery_cloud',
         'zarr',
         'filelock'
-    ]
+    ],
+    entry_points={
+        "console_scripts": [
+            "neurosift=neurosift.cli:neurosift",
+        ],
+    }
 )
