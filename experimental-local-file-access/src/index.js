@@ -14,9 +14,13 @@ app.use((req, resp, next) => {
     const allowedOrigin = allowedOrigins.includes(origin) ? origin : undefined
     if (allowedOrigin) {
         resp.header('Access-Control-Allow-Origin', allowedOrigin)
-        resp.header('Access-Control-Allow-Headers', "Origin, X-Requested-With, Content-Type, Accept")
+        resp.header('Access-Control-Allow-Headers', "Origin, X-Requested-With, Content-Type, Accept, Range")
     }
     next()
+})
+
+app.options('*', (req, resp) => {
+    resp.send(200)
 })
 
 // Serve files
@@ -36,6 +40,10 @@ app.get('/files/:fileName(*)', async (req, resp) => {
     resp.sendFile(fileName, options, function (err) {
         // I think it's important to have an error handler even if it's just this. (not sure though)
     })
+})
+
+app.options('/files/:fileName(*)', async (req, resp) => {
+    resp.send(200)
 })
 
 function isShareable(f) {
