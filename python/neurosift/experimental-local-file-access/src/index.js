@@ -20,7 +20,7 @@ app.use((req, resp, next) => {
 })
 
 app.options('*', (req, resp) => {
-    resp.send(200)
+    resp.sendStatus(200)
 })
 
 // Serve files

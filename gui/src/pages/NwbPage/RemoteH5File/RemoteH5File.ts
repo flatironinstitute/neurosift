@@ -42,13 +42,24 @@ export const globalRemoteH5FileStats = {
 
 
 export class RemoteH5File {
-  #groupCache: { [path: string]: RemoteH5Group } = {}
-  #datasetCache: { [path: string]: RemoteH5Dataset } = {}
+  #groupCache: { [path: string]: RemoteH5Group | null } = {} // null means in progress
+  #datasetCache: { [path: string]: RemoteH5Dataset | null } = {} // null means in progress
   constructor(public url: string, private metaUrl: string | undefined) {
 
   }
   async getGroup(path: string): Promise<RemoteH5Group> {
-    if (this.#groupCache[path]) return this.#groupCache[path]
+    const cc = this.#groupCache[path]
+    if (cc) return cc
+    if (cc === null) {
+      // in progress
+      while (this.#groupCache[path] === null) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+      const cc2 = this.#groupCache[path]
+      if (cc2) return cc2
+      else throw Error('Unexpected')
+    }
+    this.#groupCache[path] = null
     const dummyCanceler = {onCancel: []}
     const resp = await postRemoteH5WorkerRequest({
       type: 'getGroup',
@@ -58,10 +69,21 @@ export class RemoteH5File {
     }, dummyCanceler)
     this.#groupCache[path] = resp.group
     globalRemoteH5FileStats.getGroupCount ++
-    return this.#groupCache[path]
+    return resp.group
   }
   async getDataset(path: string): Promise<RemoteH5Dataset> {
-    if (this.#datasetCache[path]) return this.#datasetCache[path]
+    const cc = this.#datasetCache[path]
+    if (cc) return cc
+    if (cc === null) {
+      // in progress
+      while (this.#datasetCache[path] === null) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+      const cc2 = this.#datasetCache[path]
+      if (cc2) return cc2
+      else throw Error('Unexpected')
+    }
+    this.#datasetCache[path] = null
     const dummyCanceler = {onCancel: []}
     const resp = await postRemoteH5WorkerRequest({
       type: 'getDataset',
@@ -71,7 +93,7 @@ export class RemoteH5File {
     }, dummyCanceler)
     this.#datasetCache[path] = resp.dataset
     globalRemoteH5FileStats.getDatasetCount ++
-    return this.#datasetCache[path]
+    return resp.dataset
   }
   async getDatasetData(path: string, o: { slice?: [number, number][], allowBigInt?: boolean, canceler?: Canceler}): Promise<DatasetDataType> {
     const ds = await this.getDataset(path)
