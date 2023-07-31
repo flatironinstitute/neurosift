@@ -1,6 +1,7 @@
 import { FunctionComponent, PropsWithChildren } from "react"
 import TimeseriesSelectionWidget from "../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget"
 import { RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import ShareTabComponent from "./ShareTabComponent"
 
 type Props = {
     width: number
@@ -8,9 +9,10 @@ type Props = {
     path: string
     group: RemoteH5Group | undefined
     viewName: string
+    tabName?: string
 }
 
-const NeurodataItemViewLeftPanel: FunctionComponent<Props> = ({width, height, path, group, viewName}) => {
+const NeurodataItemViewLeftPanel: FunctionComponent<Props> = ({width, height, path, group, viewName, tabName}) => {
     return (
         <div>
             <table className="nwb-table">
@@ -38,6 +40,8 @@ const NeurodataItemViewLeftPanel: FunctionComponent<Props> = ({width, height, pa
                 </tbody>
             </table>
             <TimeseriesSelectionWidget />
+            <hr />
+            <ShareTabComponent tabName={tabName} />
         </div>
     )
 }

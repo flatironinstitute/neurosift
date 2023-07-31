@@ -3,14 +3,16 @@ import Splitter from "../../../components/Splitter"
 import { NwbFileContext } from "../NwbFileContext"
 import TimeseriesSelectionWidget from "../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget"
 import viewPlugins, { findViewPluginsForType } from "../viewPlugins/viewPlugins"
+import ShareTabComponent from "./ShareTabComponent"
 
 type Props = {
     width: number
     height: number
     items: string[]
+    tabName?: string
 }
 
-const NeurodataItemsView: FunctionComponent<Props> = ({width, height, items}) => {
+const NeurodataItemsView: FunctionComponent<Props> = ({width, height, items, tabName}) => {
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is undefined (no context provider)')
 
@@ -29,6 +31,7 @@ const NeurodataItemsView: FunctionComponent<Props> = ({width, height, items}) =>
                 width={0}
                 height={0}
                 itemNames={itemNames}
+                tabName={tabName}
             />
             <MainPanel
                 width={0}
@@ -57,12 +60,17 @@ type LeftPanelProps = {
     width: number
     height: number
     itemNames: string[]
+    tabName?: string
 }
 
-const LeftPanel: FunctionComponent<LeftPanelProps> = ({width, height, itemNames}) => {
+const LeftPanel: FunctionComponent<LeftPanelProps> = ({width, height, itemNames, tabName}) => {
     return (
         <div>
             <TimeseriesSelectionWidget />
+            <hr />
+            <ShareTabComponent
+                tabName={tabName}
+            />
         </div>
     )
 }

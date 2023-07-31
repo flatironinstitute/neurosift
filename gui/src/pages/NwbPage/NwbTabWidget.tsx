@@ -69,12 +69,21 @@ const TabChild: FunctionComponent<{tabName: string, width: number, height: numbe
                                 viewPlugin={viewPlugin}
                                 itemPath={itemPath}
                                 condensed={condensed}
+                                tabName={tabName}
                             />
                         ) : <div>View plugin not found: {tabName}</div>
                     ) : tabName.startsWith('neurodata-items:') ? (
                         (() => {
                             const items = tabName.slice(`neurodata-items:`.length).split('@')
-                            return <NeurodataItemsView key={tabName} width={width} height={height} items={items} />
+                            return (
+                                <NeurodataItemsView
+                                    key={tabName}
+                                    width={width}
+                                    height={height}
+                                    items={items}
+                                    tabName={tabName}
+                                />
+                            )
                         })()
                     ) : tabName === 'timeseries-alignment' ? (
                         <TimeseriesAlignmentView key={tabName} width={width} height={height} />

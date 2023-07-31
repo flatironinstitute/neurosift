@@ -94,6 +94,8 @@ const defaultNwbOpenTabsState: NwbOpenTabsState = {
     currentTabName: test1Mode ? 'timeseries-alignment' : 'main'
 }
 
+const urlQueryParams = new URLSearchParams(window.location.search)
+
 export const SetupNwbOpenTabs: FunctionComponent<PropsWithChildren<Props>> = ({children}) => {
     const [openTabs, openTabsDispatch] = React.useReducer(nwbOpenTabsReducer, defaultNwbOpenTabsState)
 
@@ -105,6 +107,13 @@ export const SetupNwbOpenTabs: FunctionComponent<PropsWithChildren<Props>> = ({c
         closeAllTabs: () => openTabsDispatch({type: 'closeAllTabs'}),
         setCurrentTab: (tabName: string) => openTabsDispatch({type: 'setCurrentTab', tabName}),
     }), [openTabs])
+
+    useEffect(() => {
+        const tab = urlQueryParams.get('tab')
+        if (tab) {
+            openTabsDispatch({type: 'openTab', tabName: tab})
+        }
+    }, [])
 
     return (
         <NwbOpenTabsContext.Provider value={value}>
