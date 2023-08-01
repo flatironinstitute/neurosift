@@ -1,9 +1,6 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import { useTimeRange } from "../../../package/context-timeseries-selection";
 import { useRtcshare } from "../../../rtcshare/useRtcshare";
-import RasterPlotView3 from "./RasterPlotView3/RasterPlotView3";
-import SpikeTrainsClient, { SpikeTrainsClientType } from "./RasterPlotView3/SpikeTrainsClient";
-import SpikeTrainsClientFromRemoteNwb from "./RasterPlotView3/SpikeTrainsClientFromRemoteNwb";
 import TimeseriesGraph2Client from "./TimeseriesGraph2View/TimeseriesGraph2Client";
 import TimeseriesGraph2View from "./TimeseriesGraph2View/TimeseriesGraph2View";
 
@@ -16,6 +13,7 @@ type Props = {
 const TimeseriesGraph2FileView: FunctionComponent<Props> = ({width, height, filePath}) => {
     const {client} = useRtcshare()
     const [timeseriesGraph2Client, setTimeseriesGraph2Client] = useState<TimeseriesGraph2Client>()
+    const {visibleStartTimeSec, visibleEndTimeSec} = useTimeRange()
 
     useEffect(() => {
         let canceled = false
@@ -36,8 +34,10 @@ const TimeseriesGraph2FileView: FunctionComponent<Props> = ({width, height, file
     useEffect(() => {
         if (startTimeSec === undefined) return
         if (endTimeSec === undefined) return
+        if (visibleStartTimeSec !== undefined) return
+        if (visibleEndTimeSec !== undefined) return
         setVisibleTimeRange(startTimeSec, Math.min(startTimeSec + 60 * 3, endTimeSec))
-    }, [startTimeSec, endTimeSec, setVisibleTimeRange])
+    }, [startTimeSec, endTimeSec, setVisibleTimeRange, visibleStartTimeSec, visibleEndTimeSec])
 
     if (!timeseriesGraph2Client) return <div>Loading...</div>
 

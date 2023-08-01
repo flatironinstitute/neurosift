@@ -98,8 +98,10 @@ const SpectrogramWidgetChild: FunctionComponent<ChildProps> = ({width, height, s
 	const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | undefined>()
 
 	useEffect(() => {
+        if (visibleStartTimeSec !== undefined) return
+        if (visibleEndTimeSec !== undefined) return
 		setVisibleTimeRange(0, Math.min(numTimepoints / samplingFrequency, 20))
-	}, [numTimepoints, samplingFrequency, setVisibleTimeRange])
+	}, [numTimepoints, samplingFrequency, setVisibleTimeRange, visibleStartTimeSec, visibleEndTimeSec])
 
 	useEffect(() => {
 		spectrogramClient.onDataRecieved(() => {

@@ -15,6 +15,8 @@ const SpikeTrainsFileView: FunctionComponent<Props> = ({width, height, filePath}
     const {client} = useRtcshare()
     const [spikeTrainsClient, setSpikeTrainsClient] = useState<SpikeTrainsClientType>()
 
+    const {visibleStartTimeSec, visibleEndTimeSec} = useTimeRange()
+
     useEffect(() => {
         let canceled = false
         if (!client) return
@@ -41,8 +43,10 @@ const SpikeTrainsFileView: FunctionComponent<Props> = ({width, height, filePath}
     useEffect(() => {
         if (startTimeSec === undefined) return
         if (endTimeSec === undefined) return
+        if (visibleStartTimeSec !== undefined) return
+        if (visibleEndTimeSec !== undefined) return
         setVisibleTimeRange(startTimeSec, Math.min(startTimeSec + 60 * 3, endTimeSec))
-    }, [startTimeSec, endTimeSec, setVisibleTimeRange])
+    }, [startTimeSec, endTimeSec, setVisibleTimeRange, visibleStartTimeSec, visibleEndTimeSec])
 
     if (!spikeTrainsClient) return <div>Loading...</div>
 

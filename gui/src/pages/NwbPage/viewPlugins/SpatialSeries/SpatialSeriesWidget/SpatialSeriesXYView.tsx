@@ -43,8 +43,10 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({ width, height, path }) 
         if (!dataClient) return
         if (startTime === undefined) return
         if (endTime === undefined) return
+        if (visibleStartTimeSec !== undefined) return
+        if (visibleEndTimeSec !== undefined) return
         setVisibleTimeRange(startTime, startTime + Math.min(chunkSize / dataClient.estimatedSamplingFrequency! * 3, endTime))
-    }, [chunkSize, dataClient, setVisibleTimeRange, startTime, endTime])
+    }, [chunkSize, dataClient, setVisibleTimeRange, startTime, endTime, visibleStartTimeSec, visibleEndTimeSec])
     
 
     // Set the datasetChunkingClient

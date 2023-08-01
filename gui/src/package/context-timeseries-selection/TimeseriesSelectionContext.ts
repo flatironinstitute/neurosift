@@ -263,6 +263,7 @@ const initializeTimeseriesSelectionTimes = (state: TimeseriesSelection, action: 
     const newStart = state.timeseriesStartTimeSec === undefined ? action.timeseriesStartSec : Math.min(state.timeseriesStartTimeSec, action.timeseriesStartSec)
     const newEnd = state.timeseriesEndTimeSec === undefined ? action.timeseriesEndSec : Math.max(state.timeseriesEndTimeSec, action.timeseriesEndSec)
     const newState: TimeseriesSelection = {
+        ...state,
         timeseriesStartTimeSec: newStart,
         timeseriesEndTimeSec: newEnd,
         visibleStartTimeSec: state.visibleStartTimeSec === undefined ? newStart : state.visibleStartTimeSec,
@@ -404,7 +405,8 @@ const setFocusTime = (state: TimeseriesSelection, action: SetFocusTimeTimeseries
             newState = {...newState, currentTimeSec: state.currentTimeSec, currentTimeIntervalSec: [t1, t2]}
         }
     }
-    return selectionIsValid(newState) ? newState : state
+    // return selectionIsValid(newState) ? newState : state
+    return newState
 }
 
 const setFocusTimeInterval = (state: TimeseriesSelection, action: SetFocusTimeIntervalTimeseriesSelectionAction): TimeseriesSelection => {

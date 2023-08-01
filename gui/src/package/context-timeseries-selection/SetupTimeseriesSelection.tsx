@@ -1,12 +1,30 @@
 // import { useUrlState } from '@figurl/interface'
 import React, { FunctionComponent, PropsWithChildren, useEffect, useMemo, useReducer, useRef } from 'react'
-import TimeseriesSelectionContext, { timeseriesSelectionReducer, defaultTimeseriesSelection } from './TimeseriesSelectionContext'
+import TimeseriesSelectionContext, { timeseriesSelectionReducer, defaultTimeseriesSelection, useTimeseriesSelection } from './TimeseriesSelectionContext'
 
-const SetupTimeseriesSelection: FunctionComponent<PropsWithChildren> = (props) => {
+type Props = {
+	initialTimeSelection?: {
+		t1?: number
+		t2?: number
+		t0?: number
+	}
+}
+
+const SetupTimeseriesSelection: FunctionComponent<PropsWithChildren<Props>> = ({children, initialTimeSelection}) => {
 	const [timeseriesSelection, timeseriesSelectionDispatch] = useReducer(timeseriesSelectionReducer, defaultTimeseriesSelection)
 	const value = useMemo(() => (
 		{timeseriesSelection, timeseriesSelectionDispatch}
 	), [timeseriesSelection, timeseriesSelectionDispatch])
+
+	useEffect(() => {
+		if (!initialTimeSelection) return
+		if ((initialTimeSelection.t1 !== undefined) && (initialTimeSelection.t2 !== undefined)) {
+			timeseriesSelectionDispatch({type: 'setVisibleTimeRange', startTimeSec: initialTimeSelection.t1, endTimeSec: initialTimeSelection.t2})
+		}
+		if (initialTimeSelection.t0 !== undefined) {
+			timeseriesSelectionDispatch({type: 'setFocusTime', currentTimeSec: initialTimeSelection.t0})
+		}
+	}, [initialTimeSelection])
 
 	// const {urlState} = useUrlState()
 	// const firstUrlState = useRef(true)
@@ -20,7 +38,7 @@ const SetupTimeseriesSelection: FunctionComponent<PropsWithChildren> = (props) =
 	// }, [urlState])
     return (
         <TimeseriesSelectionContext.Provider value={value}>
-            {props.children}
+            {children}
         </TimeseriesSelectionContext.Provider>
     )
 }

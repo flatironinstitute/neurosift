@@ -13,7 +13,7 @@ import TimeseriesAlignmentView from "./TimeseriesAlignmentView/TimeseriesAlignme
 import viewPlugins, { findViewPluginsForType } from "./viewPlugins/viewPlugins";
 
 const NwbTabWidget: FunctionComponent<{width: number, height: number}> = ({width, height}) => {
-    const {openTabs, currentTabName, setCurrentTab, closeTab} = useNwbOpenTabs()
+    const {openTabs, currentTabName, setCurrentTab, closeTab, initialTimeSelections} = useNwbOpenTabs()
     return (
         <TabWidget
             width={width}
@@ -32,13 +32,21 @@ const NwbTabWidget: FunctionComponent<{width: number, height: number}> = ({width
             onCloseTab={fileName => closeTab(fileName)}
         >
             {openTabs.map(({tabName}) => (
-                <TabChild key={tabName} tabName={tabName} width={0} height={0} />
+                <TabChild key={tabName} tabName={tabName} initialTimeSelection={initialTimeSelections[tabName]} width={0} height={0} />
             ))}
         </TabWidget>
     )
 }
 
-const TabChild: FunctionComponent<{tabName: string, width: number, height: number, condensed?: boolean}> = ({tabName, width, height, condensed}) => {
+type TabChildProps = {
+    tabName: string
+    width: number
+    height: number
+    initialTimeSelection?: {t1?: number, t2?: number, t0?: number}
+    condensed?: boolean
+}
+
+const TabChild: FunctionComponent<TabChildProps> = ({tabName, width, height, condensed, initialTimeSelection}) => {
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is undefined')
     const [unitSelection, unitSelectionDispatch] = useReducer(unitSelectionReducer, defaultUnitSelection)
@@ -58,7 +66,7 @@ const TabChild: FunctionComponent<{tabName: string, width: number, height: numbe
         else return {viewPlugin: undefined, itemPath: undefined}
     }, [tabName, nwbFile])
     return (
-        <SetupTimeseriesSelection>
+        <SetupTimeseriesSelection initialTimeSelection={initialTimeSelection}>
             <UnitSelectionContext.Provider value={{unitSelection, unitSelectionDispatch}}>
                 {
                     tabName === 'main' ? (

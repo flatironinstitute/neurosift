@@ -27,8 +27,10 @@ const SparseSpectrogramWidget: FunctionComponent<Props> = ({width, height, spars
 	const timeseriesLayoutOpts = useMemo(() => ({hideToolbar, hideTimeAxis: undefined}), [hideToolbar])
 
 	useEffect(() => {
+		if (visibleStartTimeSec !== undefined) return
+        if (visibleEndTimeSec !== undefined) return
 		setVisibleTimeRange(0, Math.min(numTimepoints / samplingFrequency, 120))
-	}, [numTimepoints, samplingFrequency, setVisibleTimeRange])
+	}, [numTimepoints, samplingFrequency, setVisibleTimeRange, visibleStartTimeSec, visibleEndTimeSec])
 
 	const margins = useTimeseriesMargins(timeseriesLayoutOpts)
 	const panelCount = 1
