@@ -1,5 +1,6 @@
 import { FunctionComponent, useContext, useEffect, useMemo, useState } from "react"
 import Hyperlink from "../../../components/Hyperlink"
+import { serializeBigInt, valueToString } from "../BrowseNwbView/BrowseNwbView"
 import { NwbFileContext } from "../NwbFileContext"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 import { getEtag } from "../NwbPage"
@@ -13,9 +14,9 @@ type Props = {
     nwbFile: RemoteH5File
 }
 
-const labelMap: {name: string, newName: string}[] = [
+const labelMap: {name: string, newName: string, renderer?: (val: any) => string}[] = [
     {name: 'session_id', newName: 'Session ID'},
-    {name: 'experimenter', newName: 'Experimenter'},
+    {name: 'experimenter', newName: 'Experimenter', renderer: (val: string[]) => (val.join('; '))},
     {name: 'lab', newName: 'Lab'},
     {name: 'institution', newName: 'Institution'},
     {name: 'related_publications', newName: 'Related publications'},
@@ -34,14 +35,16 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({width, height, nwbFile}) =>
     const {openTab} = useNwbOpenTabs()
 
     const items = useMemo(() => {
-        const ret: {name: string, path: string}[] = []
+        const ret: {name: string, path: string, renderer?: (val: any) => string}[] = []
         rootGroup?.datasets.forEach(ds => {
-            const newName = labelMap.find(x => (x.name === ds.name))?.newName || ds.name
-            ret.push({name: newName || ds.name, path: ds.path})
+            const mm = labelMap.find(x => (x.name === ds.name))
+            const newName = mm?.newName || ds.name
+            ret.push({name: newName || ds.name, path: ds.path, renderer: mm?.renderer})
         })
         generalGroup?.datasets.forEach(ds => {
-            const newName = labelMap.find(x => (x.name === ds.name))?.newName || ds.name
-            ret.push({name: newName || ds.name, path: ds.path})
+            const mm = labelMap.find(x => (x.name === ds.name))
+            const newName = mm?.newName || ds.name
+            ret.push({name: newName || ds.name, path: ds.path, renderer: mm?.renderer})
         })
         return ret
     }, [rootGroup, generalGroup])
@@ -77,7 +80,7 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({width, height, nwbFile}) =>
                             itemsSorted.map(item => (
                                 <tr key={item.name}>
                                     <td>{item.name}</td>
-                                    <td><DatasetDataView nwbFile={nwbFile} path={item.path} /></td>
+                                    <td><DatasetDataView nwbFile={nwbFile} path={item.path} renderer={item.renderer} /></td>
                                 </tr>
                             ))
                         }
@@ -106,12 +109,39 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({width, height, nwbFile}) =>
 type DatasetDataViewProps = {
     nwbFile: RemoteH5File
     path: string
+    renderer?: (val: any) => string
 }
 
-const DatasetDataView: FunctionComponent<DatasetDataViewProps> = ({nwbFile, path}) => {
+const DatasetDataView: FunctionComponent<DatasetDataViewProps> = ({nwbFile, path, renderer}) => {
     const {data: datasetData} = useDatasetData(nwbFile, path)
     if (!datasetData) return <span>Loading...</span>
-    return <span>{datasetData}</span>
+    return <span>{
+        renderer ? renderer(datasetData) : valueToString2(datasetData)
+    }</span>
+}
+
+const valueToString2 = (val: any): string => {
+    // same as valueToString, but don't include the brackets for arrays
+    if (typeof(val) === 'string') {
+        return val
+    }
+    else if (typeof(val) === 'number') {
+        return val + ''
+    }
+    else if (typeof(val) === 'boolean') {
+        return val ? 'true' : 'false'
+    }
+    else if (typeof(val) === 'object') {
+        if (Array.isArray(val)) {
+            return `${val.map(x => valueToString(x)).join(', ')}`
+        }
+        else {
+            return JSON.stringify(serializeBigInt(val))
+        }
+    }
+    else {
+        return '<>'
+    }
 }
 
 type DandiAssetInfo = {

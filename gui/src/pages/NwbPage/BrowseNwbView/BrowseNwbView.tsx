@@ -219,7 +219,7 @@ const product = (arr: number[]) => {
     return ret
 }
 
-const serializeBigInt = (val: any): any => {
+export const serializeBigInt = (val: any): any => {
     if (typeof(val) === 'bigint') {
         // convert to number
         return Number(val)
