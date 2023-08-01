@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect, useMemo, useReducer, useState } from "react"
+import { FunctionComponent, useContext, useEffect, useMemo, useReducer, useState } from "react"
 import Hyperlink from "../../../components/Hyperlink"
 import '../nwb-table.css'
 import Abbreviate from "../viewPlugins/TimeSeries/TimeseriesItemView/Abbreviate"
@@ -8,6 +8,7 @@ import { useSelectedItemViews } from "../SelectedItemViewsContext"
 import { useGroup } from "./NwbMainView"
 import { findViewPluginsForType } from "../viewPlugins/viewPlugins"
 import ViewPluginButton from "../viewPlugins/ViewPluginButton"
+import { NwbFileContext } from "../NwbFileContext"
 
 type Props = {
     nwbFile: RemoteH5File
@@ -154,7 +155,7 @@ const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, name, pa
     }, [nwbFile, group, path])
     const {openTab} = useNwbOpenTabs()
     const neurodataType = group ? group.attrs['neurodata_type'] : ''
-    const {viewPlugins, defaultViewPlugin} = useMemo(() => (findViewPluginsForType(neurodataType)), [neurodataType])
+    const {viewPlugins, defaultViewPlugin} = useMemo(() => (findViewPluginsForType(neurodataType, {nwbFile})), [neurodataType, nwbFile])
     return (
         <tr>
             <td>

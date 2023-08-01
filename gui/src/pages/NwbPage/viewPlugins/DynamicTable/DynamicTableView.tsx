@@ -89,18 +89,34 @@ const DynamicTableView: FunctionComponent<Props> = ({ width, height, path }) => 
     if (!nwbFile) throw Error('Unexpected: nwbFile is null')
     const [data, dataDispatch] = useReducer(dataReducer, {})
     const group = useGroup(nwbFile, path)
-    const [columnSortState, columnSortDispatch] = useReducer(columnSortReducer, {primary: {column: 'id', ascending: true}})
+    const [columnSortState, columnSortDispatch] = useReducer(columnSortReducer, {})
     const colnames = useMemo(() => {
         if (!group) return undefined
         let c = group.attrs['colnames'] as string[]
         if (!c) return undefined
-        const nt = group.attrs['neurodata_type']
-        if (nt === 'Units') {
-            c = c.filter(name => (name !== 'spike_times'))
-            if (!c.includes('id')) {
+        const idDataset = group.datasets.find(ds => (ds.name === 'id'))
+        if (idDataset) {
+            c = c.filter(name => {
+                const ds = group.datasets.find(ds => (ds.name === name))
+                if ((ds) && (ds.shape[0] !== idDataset.shape[0])) {
+                    // for example, event_times, event_amplitudes
+                    return false
+                }
+                return true
+            })
+        }
+        if (!c.includes('id')) {
+            if (group.datasets.find(ds => (ds.name === 'id'))) {
                 c = ['id', ...c]
             }
         }
+        // const nt = group.attrs['neurodata_type']
+        // if (nt === 'Units') {
+        //     c = c.filter(name => (name !== 'spike_times'))
+        //     if (!c.includes('id')) {
+        //         c = ['id', ...c]
+        //     }
+        // }
         return c
     }, [group])
     useEffect(() => {

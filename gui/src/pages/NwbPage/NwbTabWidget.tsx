@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { FunctionComponent, useMemo, useReducer } from "react";
+import { FunctionComponent, useContext, useMemo, useReducer } from "react";
 import { SetupTimeseriesSelection } from "../../package/context-timeseries-selection";
 import { defaultUnitSelection, UnitSelectionContext, unitSelectionReducer } from "../../package/context-unit-selection";
 import TabWidget from "../../TabWidget/TabWidget";
 import NeurodataItemsView from "./NeurodataItemView/NeurodataItemsView";
 import ViewItemWidget from "./NeurodataItemView/ViewItemWidget";
 import NeurosiftItemView from "./NeurosiftItemView/NeurosiftItemView";
+import { NwbFileContext } from "./NwbFileContext";
 import NwbMainView from "./NwbMainView/NwbMainView";
 import { useNwbOpenTabs } from "./NwbOpenTabsContext";
 import TimeseriesAlignmentView from "./TimeseriesAlignmentView/TimeseriesAlignmentView";
@@ -38,6 +39,8 @@ const NwbTabWidget: FunctionComponent<{width: number, height: number}> = ({width
 }
 
 const TabChild: FunctionComponent<{tabName: string, width: number, height: number, condensed?: boolean}> = ({tabName, width, height, condensed}) => {
+    const nwbFile = useContext(NwbFileContext)
+    if (!nwbFile) throw Error('Unexpected: nwbFile is undefined')
     const [unitSelection, unitSelectionDispatch] = useReducer(unitSelectionReducer, defaultUnitSelection)
     const {viewPlugin, itemPath} = useMemo(() => {
         if (tabName.startsWith('view:')) {
@@ -49,11 +52,11 @@ const TabChild: FunctionComponent<{tabName: string, width: number, height: numbe
         else if (tabName.startsWith('neurodata-item:')) {
             const itemPath = tabName.slice(`neurodata-item:`.length).split('|')[0]
             const neurodataType = tabName.slice(`neurodata-item:`.length).split('|')[1]
-            const {defaultViewPlugin} = findViewPluginsForType(neurodataType)
+            const {defaultViewPlugin} = findViewPluginsForType(neurodataType, {nwbFile})
             return {viewPlugin: defaultViewPlugin, itemPath}
         }
         else return {viewPlugin: undefined, itemPath: undefined}
-    }, [tabName])
+    }, [tabName, nwbFile])
     return (
         <SetupTimeseriesSelection>
             <UnitSelectionContext.Provider value={{unitSelection, unitSelectionDispatch}}>

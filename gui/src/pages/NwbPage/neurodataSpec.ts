@@ -62,7 +62,8 @@ export const neurodataTypeInheritanceRaw: { [key: string]: string } = {
     "OpticalChannel": "NWBContainer",
     "MotionCorrection": "NWBDataInterface",
     "CorrectedImageStack": "NWBDataInterface",
-    "ImagingRetinotopy": "NWBDataInterface"
+    "ImagingRetinotopy": "NWBDataInterface",
+    "AnnotatedEventsTable": "Units" // added manually. See https://github.com/flatironinstitute/neurosift/issues/89
 }
 
 export const neurodataTypeInheritance: { [key: string]: string[] } = {}

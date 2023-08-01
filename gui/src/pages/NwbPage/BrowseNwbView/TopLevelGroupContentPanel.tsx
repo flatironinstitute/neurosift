@@ -1,6 +1,7 @@
-import { FunctionComponent, useEffect, useMemo, useReducer } from "react"
+import { FunctionComponent, useContext, useEffect, useMemo, useReducer } from "react"
 import { FaEye } from "react-icons/fa"
 import SmallIconButton from "../../../components/SmallIconButton"
+import { NwbFileContext } from "../NwbFileContext"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 import { RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import { findViewPluginsForType } from "../viewPlugins/viewPlugins"
@@ -313,8 +314,10 @@ type NeurodataTypeLinkProps = {
 }
 
 const NeurodataTypeLink: FunctionComponent<NeurodataTypeLinkProps> = ({neurodataType, tableItem}) => {
+    const nwbFile = useContext(NwbFileContext)
+    if (!nwbFile) throw Error('Unexpected: nwbFile is undefined')
     if (tableItem.type !== 'group') throw Error('Unexpected table item type')
-    const viewPlugins = useMemo(() => (neurodataType ? findViewPluginsForType(neurodataType) : undefined), [neurodataType])
+    const viewPlugins = useMemo(() => (neurodataType ? findViewPluginsForType(neurodataType, {nwbFile}) : undefined), [neurodataType, nwbFile])
     const {openTab} = useNwbOpenTabs()
     return (
         <span>

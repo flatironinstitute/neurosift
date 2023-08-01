@@ -14,6 +14,7 @@ import RasterPlotUnitsItemView from "./Units/RasterPlotUnitsItemView"
 import AutocorrelogramsUnitsItemView from "./Units/AutocorrelogramsUnitsItemView"
 import DirectRasterPlotUnitsItemView from "./Units/DirectRasterPlotUnitsItemView"
 import SpatialSeriesXYView from "./SpatialSeries/SpatialSeriesWidget/SpatialSeriesXYView"
+import { RemoteH5File } from "../RemoteH5File/RemoteH5File"
 
 type Props = {
     width: number,
@@ -28,6 +29,7 @@ export type ViewPlugin = {
     defaultForNeurodataType?: boolean,
     component: FunctionComponent<Props>
     buttonLabel?: string
+    remoteDataOnly?: boolean
 }
 
 const viewPlugins: ViewPlugin[] = []
@@ -129,14 +131,16 @@ viewPlugins.push({
     neurodataType: 'Units',
     defaultForNeurodataType: false,
     buttonLabel: 'precomputed raster plot',
-    component: RasterPlotUnitsItemView
+    component: RasterPlotUnitsItemView,
+    remoteDataOnly: true
 })
 viewPlugins.push({
     name: 'Autocorrelograms',
     neurodataType: 'Units',
     defaultForNeurodataType: false,
     buttonLabel: 'autocorrelograms',
-    component: AutocorrelogramsUnitsItemView
+    component: AutocorrelogramsUnitsItemView,
+    remoteDataOnly: true
 })
 
 // Images
@@ -149,12 +153,12 @@ viewPlugins.push({
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-export const findViewPluginsForType = (neurodataType: string): {viewPlugins: ViewPlugin[], defaultViewPlugin: ViewPlugin | undefined} => {
+export const findViewPluginsForType = (neurodataType: string, o: {nwbFile: RemoteH5File}): {viewPlugins: ViewPlugin[], defaultViewPlugin: ViewPlugin | undefined} => {
     const viewPluginsRet: ViewPlugin[] = []
     let defaultViewPlugin: ViewPlugin | undefined
     let nt: string | undefined = neurodataType
     while (nt) {
-        const plugins = viewPlugins.filter(p => (p.neurodataType === nt))
+        const plugins = viewPlugins.filter(p => (p.neurodataType === nt)).filter(p => (!p.remoteDataOnly || o.nwbFile.dataIsRemote))
         viewPluginsRet.push(...plugins)
         plugins.forEach(p => {
             if (p.defaultForNeurodataType) {

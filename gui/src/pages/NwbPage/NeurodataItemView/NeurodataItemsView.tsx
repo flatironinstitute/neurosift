@@ -1,6 +1,7 @@
 import { FunctionComponent, useContext, useMemo } from "react"
 import Splitter from "../../../components/Splitter"
 import { NwbFileContext } from "../NwbFileContext"
+import { RemoteH5File } from "../RemoteH5File/RemoteH5File"
 import TimeseriesSelectionWidget from "../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget"
 import viewPlugins, { findViewPluginsForType } from "../viewPlugins/viewPlugins"
 import ShareTabComponent from "./ShareTabComponent"
@@ -82,6 +83,8 @@ type MainPanelProps = {
 }
 
 const MainPanel: FunctionComponent<MainPanelProps> = ({width, height, items}) => {
+    const nwbFile = useContext(NwbFileContext)
+    if (!nwbFile) throw Error('Unexpected: nwbFile is undefined (no context provider)')
     const H = height / items.length
     const positions = items.map((_, i) => i * H)
     const titleBarHeight = 25
@@ -91,7 +94,7 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({width, height, items}) =>
         <div style={{position: 'absolute', width, height}}>
             {
                 items.map((item, i) => {
-                    const {viewPlugin, itemPath} = getViewPluginAndItemPath(item)
+                    const {viewPlugin, itemPath} = getViewPluginAndItemPath(item, nwbFile)
                     if (!viewPlugin) return (
                         <div>View plugin not found: {item}</div>
                     )
@@ -118,11 +121,11 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({width, height, items}) =>
     )
 }
 
-const getViewPluginAndItemPath = (item: string) => {
+const getViewPluginAndItemPath = (item: string, nwbFile: RemoteH5File) => {
     if (item.startsWith('neurodata-item:')) {
         const itemPath = item.slice(`neurodata-item:`.length).split('|')[0]
         const neurodataType = item.slice(`neurodata-item:`.length).split('|')[1]
-        const {defaultViewPlugin} = findViewPluginsForType(neurodataType)
+        const {defaultViewPlugin} = findViewPluginsForType(neurodataType, {nwbFile})
         return {viewPlugin: defaultViewPlugin, itemPath}
     }
     else if (item.startsWith('view:')) {

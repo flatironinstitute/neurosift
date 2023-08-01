@@ -47,6 +47,9 @@ export class RemoteH5File {
   constructor(public url: string, private metaUrl: string | undefined) {
 
   }
+  get dataIsRemote() {
+    return !this.url.startsWith('http://localhost')
+  }
   async getGroup(path: string): Promise<RemoteH5Group> {
     const cc = this.#groupCache[path]
     if (cc) return cc
