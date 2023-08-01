@@ -928,29 +928,33 @@ var Module = (()=>{
                     if (!flags.allowUndefined) {
                         reportUndefinedSymbols()
                     }
-                    function addEmAsm(addr, body) {
-                        var args = [];
-                        var arity = 0;
-                        for (; arity < 16; arity++) {
-                            if (body.indexOf("$" + arity) != -1) {
-                                args.push("$" + arity)
-                            } else {
-                                break
-                            }
-                        }
-                        args = args.join(",");
-                        var func = "(" + args + " ) => { " + body + "};";
-                        ASM_CONSTS[start] = eval(func)
-                    }
-                    if ("__start_em_asm"in moduleExports) {
-                        var start = moduleExports["__start_em_asm"];
-                        var stop = moduleExports["__stop_em_asm"];
-                        while (start < stop) {
-                            var jsString = UTF8ToString(start);
-                            addEmAsm(start, jsString);
-                            start = HEAPU8.indexOf(0, start) + 1
-                        }
-                    }
+                    //////////////////////////
+                    // jfm
+                    // remove this because it has "eval" in it -- maybe it's not needed
+                    // function addEmAsm(addr, body) {
+                    //     var args = [];
+                    //     var arity = 0;
+                    //     for (; arity < 16; arity++) {
+                    //         if (body.indexOf("$" + arity) != -1) {
+                    //             args.push("$" + arity)
+                    //         } else {
+                    //             break
+                    //         }
+                    //     }
+                    //     args = args.join(",");
+                    //     var func = "(" + args + " ) => { " + body + "};";
+                    //     ASM_CONSTS[start] = eval(func)
+                    // }
+                    // if ("__start_em_asm"in moduleExports) {
+                    //     var start = moduleExports["__start_em_asm"];
+                    //     var stop = moduleExports["__stop_em_asm"];
+                    //     while (start < stop) {
+                    //         var jsString = UTF8ToString(start);
+                    //         addEmAsm(start, jsString);
+                    //         start = HEAPU8.indexOf(0, start) + 1
+                    //     }
+                    // }
+                    //////////////////////////
                     var applyRelocs = moduleExports["__wasm_apply_data_relocs"];
                     if (applyRelocs) {
                         if (runtimeInitialized) {
