@@ -46,6 +46,13 @@ class SpikeTrainsClientFromSpikeTrainsData {
             spikeTimesSec: u.spikeTimesSec.filter(t => (t >= t1) && (t < t2))
         }))
     }
+    get totalNumSpikes() {
+        let ret = 0
+        for (const u of this.spikeTrainsData.units) {
+            ret += u.spikeTimesSec.length
+        }
+        return ret
+    }
 }
 
 const TsGroupView: FunctionComponent<Props> = ({width, height, sessionPath, objectName}) => {

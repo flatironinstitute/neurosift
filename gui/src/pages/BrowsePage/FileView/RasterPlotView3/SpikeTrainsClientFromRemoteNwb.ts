@@ -61,6 +61,10 @@ class SpikeTrainsClientFromRemoteNwb {
         }
         return ret
     }
+    get totalNumSpikes() {
+        if (!this.#spikeTimesIndices) return undefined
+        return this.#spikeTimesIndices[this.#spikeTimesIndices.length - 1]
+    }
 }
 
 const minOfArray = (x: DatasetDataType) => {
