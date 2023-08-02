@@ -33,6 +33,9 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({width, height, hideVi
     const {x0, x1, x2, y1, y2} = useMemo(() => {
         const t1 = timeseriesStartTimeSec ?? 0
         const t2 = timeseriesEndTimeSec ?? 1
+        if (t2 <= t1) {
+            return {x0: 0, x1: undefined, x2: undefined, y1: undefined, y2: undefined}
+        }
         const x0 = currentTimeSec !== undefined ? fracToPixel((currentTimeSec - t1) / (t2 - t1)) : 0
         const x1 = visibleStartTimeSec !== undefined ? fracToPixel((visibleStartTimeSec - t1) / (t2 - t1)) : undefined
         const x2 = visibleEndTimeSec !== undefined ? fracToPixel((visibleEndTimeSec - t1) / (t2 - t1)) : undefined

@@ -47,7 +47,7 @@ viewPlugins.push({
     neurodataType: 'ImageSegmentation',
     defaultForNeurodataType: true,
     component: ImageSegmentationItemView,
-    isTimeView: true
+    isTimeView: false
 })
 
 // SpatialSeries
@@ -123,7 +123,7 @@ viewPlugins.push({
     isTimeView: true
 })
 
-// HelloWorld
+// LabeledEvents
 viewPlugins.push({
     name: 'LabeledEvents',
     neurodataType: 'LabeledEvents',

@@ -99,6 +99,14 @@ export class RemoteH5File {
     return resp.dataset
   }
   async getDatasetData(path: string, o: { slice?: [number, number][], allowBigInt?: boolean, canceler?: Canceler}): Promise<DatasetDataType> {
+    if (o.slice) {
+      for (const ss of o.slice) {
+        if (isNaN(ss[0]) || isNaN(ss[1])) {
+          console.warn('Invalid slice', path, o.slice)
+          throw Error('Invalid slice')
+        }
+      }
+    }
     const ds = await this.getDataset(path)
     let urlToUse: string = this.metaUrl || this.url
     if (product(ds.shape) > 100) {

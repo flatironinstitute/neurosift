@@ -14,6 +14,12 @@ class TimestampFinder {
         if (iUpper === iLower) return iLower
         let tLower = await this._get(iLower)
         let tUpper = await this._get(iUpper)
+        if (isNaN(tUpper)) {
+            // sometimes the final timestamp is NaN, in that case use the second-to-last timestamp
+            // this happens in a Frank Lab dataset: http://localhost:3000/neurosift/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/645/10d/64510d67-fab1-45ab-abc3-b18c9738412c
+            tUpper = await this._get(iUpper - 1)
+            iUpper = iUpper - 1
+        }
         while (iUpper - iLower > 1) {
             if (time < tLower) {
                 return iLower
@@ -62,10 +68,16 @@ class IrregularTimeseriesDataClient {
         const timestampsDataset = await this.nwbFile.getDataset(`${this.objectPath}/timestamps`)
         const numInitialTimestamps = Math.min(10000, timestampsDataset.shape[0])
         const initialTimestamps = await this.getTimestampsForDataIndices(0, numInitialTimestamps)
-        const finalTimestamps = await this.getTimestampsForDataIndices(timestampsDataset.shape[0] - 1, timestampsDataset.shape[0])
+        const finalTimestamps = await this.getTimestampsForDataIndices(timestampsDataset.shape[0] - 10, timestampsDataset.shape[0])
         this.#estimatedSamplingFrequency = getEstimatedSamplingFrequencyFromTimestamps(initialTimestamps)
         this.#startTime = initialTimestamps[0]
-        this.#endTime = finalTimestamps[finalTimestamps.length - 1]
+        let endTime = finalTimestamps[finalTimestamps.length - 1]
+        if (isNaN(endTime)) {
+            // sometimes the final timestamp is NaN, in that case use the second-to-last timestamp
+            // this happens in a Frank Lab dataset: http://localhost:3000/neurosift/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/645/10d/64510d67-fab1-45ab-abc3-b18c9738412c
+            endTime = finalTimestamps[finalTimestamps.length - 2]
+        }
+        this.#endTime = endTime
         this.#timestampFinder = new TimestampFinder(this.nwbFile, timestampsDataset, this.#estimatedSamplingFrequency!)
     }
     get startTime(): number | undefined {

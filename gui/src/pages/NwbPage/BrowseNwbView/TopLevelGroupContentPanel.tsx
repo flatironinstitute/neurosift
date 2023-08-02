@@ -1,7 +1,7 @@
-import { FunctionComponent, useContext, useEffect, useMemo, useReducer } from "react"
-import { FaEye } from "react-icons/fa"
+import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useReducer } from "react"
+import { FaBolt, FaCircle, FaCircleNotch, FaDashcube, FaDatabase, FaEye, FaQuestion, FaRegCircle, FaSass, FaSquare, FaSquareFull, FaSquarespace, FaTag, FaTextWidth, FaTrain } from "react-icons/fa"
 import SmallIconButton from "../../../components/SmallIconButton"
-import { NwbFileContext } from "../NwbFileContext"
+import { NwbFileContext, useNwbFile } from "../NwbFileContext"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 import { RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import { findViewPluginsForType } from "../viewPlugins/viewPlugins"
@@ -107,6 +107,7 @@ type TableItem = {
     path: string
     expanded: boolean
     indent: number
+    data?: any
 } | {
     key: string
     type: 'attribute'
@@ -129,13 +130,29 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({group, nwbFile, ex
     }, [group])
     useEffect(() => {
         const process = async () => {
+            const checkLoadDataForSubdatasets = async (g: RemoteH5Group) => {
+                // handle the case where sub-datasets are not expanded, but we still want to retrieve the data for display
+                for (const sds of g.datasets) {
+                    if (product(sds.shape) <= 10) {
+                        if (!groupsDatasetsState.expandedDatasetPaths.includes(sds.path)) {
+                            if (!(sds.path in groupsDatasetsState.datasetDatas)) {
+                                const data = await nwbFile.getDatasetData(sds.path, {})
+                                groupsDatasetsDispatch({type: 'setDatasetData', path: sds.path, data})
+                                return // return after loading one, because then the state will change and this will be called again
+                            }
+                        }
+                    }
+                }
+            }
+            checkLoadDataForSubdatasets(group)
             for (const path of groupsDatasetsState.expandedGroupPaths) {
                 const g = groupsDatasetsState.groups.find(g => (g.path === path))
                 if (!g) {
                     const newGroup = await nwbFile.getGroup(path)
                     groupsDatasetsDispatch({type: 'addGroup', group: newGroup})
                     return // return after loading one, because then the state will change and this will be called again
-                }       
+                }
+                await checkLoadDataForSubdatasets(g)
             }
             for (const path of groupsDatasetsState.expandedDatasetPaths) {
                 const d = groupsDatasetsState.datasets.find(d => (d.path === path))
@@ -159,7 +176,7 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({group, nwbFile, ex
             }
         }
         process()
-    }, [groupsDatasetsState.expandedGroupPaths, groupsDatasetsState.expandedDatasetPaths, groupsDatasetsState.groups, groupsDatasetsState.datasets, nwbFile, groupsDatasetsState.datasetDatas])
+    }, [groupsDatasetsState.expandedGroupPaths, groupsDatasetsState.expandedDatasetPaths, groupsDatasetsState.groups, groupsDatasetsState.datasets, nwbFile, groupsDatasetsState.datasetDatas, group])
 
     const tableItems = useMemo(() => {
         const ret: TableItem[] = []
@@ -175,7 +192,11 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({group, nwbFile, ex
             }
             for (const ds of g.datasets) {
                 const expanded = groupsDatasetsState.expandedDatasetPaths.includes(ds.path)
-                ret.push({type: 'dataset', name: ds.name, path: ds.path, expanded, indent, key: `dataset:${ds.path}`})
+                let data: any = undefined
+                if (product(ds.shape) <= 10) {
+                    data = groupsDatasetsState.datasetDatas[ds.path]
+                }
+                ret.push({type: 'dataset', name: ds.name, path: ds.path, expanded, indent, key: `dataset:${ds.path}`, data})
                 if (expanded) processExpandedDataset(ds.path, indent + 1)
             }
             for (const attrName of Object.keys(g.attrs).sort()) {
@@ -230,9 +251,19 @@ const attributeStyle = {color: attributeColor}
 const expanderStyle = {color: '#222', cursor: 'pointer'}
 
 const TableRow: FunctionComponent<TableRowProps> = ({tableItem, groupsDatasetsDispatch}) => {
+    const nwbFile = useNwbFile()
+
     const {type, indent} = tableItem
     const indentStyle = useMemo(() => ({paddingLeft: `${indent * 10}px`}), [indent])
     let neurodataType: string
+
+    const viewDatasetInDebugConsole = useCallback(async (path: string) => {
+        console.info('Loading dataset data for ' + path)
+        const data = await nwbFile.getDatasetData(path, {})
+        console.info(`Dataset data for ${path}:`)
+        console.info(data)
+    }, [nwbFile])
+
     switch (type) {
         case 'group':
             neurodataType = tableItem.attrs['neurodata_type']
@@ -274,6 +305,11 @@ const TableRow: FunctionComponent<TableRowProps> = ({tableItem, groupsDatasetsDi
                         >
                             <span style={expanderStyle}>{tableItem.expanded ? '▼' : '►'}</span>&nbsp;
                             <span style={datasetStyle}>{tableItem.name}</span>
+                            {
+                                tableItem.data && (
+                                    <span>&nbsp;{valueToString(tableItem.data)}</span>
+                                )
+                            }
                         </div>
                     </td>
                 </tr>
@@ -297,8 +333,19 @@ const TableRow: FunctionComponent<TableRowProps> = ({tableItem, groupsDatasetsDi
                             <span>&nbsp;</span>&nbsp;
                             <span style={datasetStyle}>{`${tableItem.dataset.dtype} ${valueToString(tableItem.dataset.shape)}`}</span>
                             {
-                                tableItem.data && (
+                                tableItem.data ? (
                                     <span>&nbsp;{valueToString(tableItem.data)}</span>
+                                ) : (
+                                    <span>
+                                        &nbsp;&nbsp;
+                                        <SmallIconButton
+                                            onClick={() => {
+                                                viewDatasetInDebugConsole(tableItem.path)
+                                            }}
+                                            title={`View this dataset in debug console`}
+                                            icon={<FaRegCircle />}
+                                        />
+                                    </span>
                                 )
                             }
                         </div>
