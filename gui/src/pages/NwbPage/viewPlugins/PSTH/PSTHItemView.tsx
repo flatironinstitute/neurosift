@@ -26,13 +26,17 @@ const PSTHItemView: FunctionComponent<Props> = ({width, height, path}) => {
 export type PSTHPrefs = {
     showRaster: boolean
     showHist: boolean
+    smoothedHist: boolean
     height: 'small' | 'medium' | 'large'
+    numBins: number
 }
 
 export const defaultPSTHPrefs: PSTHPrefs = {
     showRaster: true,
     showHist: true,
-    height: 'medium'
+    smoothedHist: false,
+    height: 'medium',
+    numBins: 30
 }
 
 const PSTHItemViewChild: FunctionComponent<Props> = ({width, height, path}) => {
@@ -101,10 +105,10 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({width, height, path}) => {
     )
 
     const unitsTableWidth = 200
-    const unitsTableHeight = height / 2
+    const unitsTableHeight = height * 2 / 5
     const groupByHeight = 50
-    const windowRangeHeight = 50
-    const prefsHeight = 70
+    const windowRangeHeight = 70
+    const prefsHeight = 150
     const alignToSelectionComponentHeight = height - unitsTableHeight - groupByHeight - windowRangeHeight - prefsHeight
 
     const unitWidgetHeight = Math.min(height, prefs.height === 'small' ? 300 : (prefs.height === 'medium' ? 600 : 900))
@@ -130,6 +134,7 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({width, height, path}) => {
                 {alignToSelectionComponent}
             </div>
             <div style={{position: 'absolute', width: unitsTableWidth, top: unitsTableHeight + alignToSelectionComponentHeight, height: windowRangeHeight, overflowY: 'hidden'}}>
+                <hr />
                 {windowRangeSelectionComponent}
             </div>
             <div style={{position: 'absolute', width: unitsTableWidth, height: groupByHeight, top: unitsTableHeight + alignToSelectionComponentHeight + windowRangeHeight, overflowY: 'hidden'}}>
@@ -137,6 +142,7 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({width, height, path}) => {
             </div>
             <div style={{position: 'absolute', width: unitsTableWidth, height: prefsHeight, top: unitsTableHeight + alignToSelectionComponentHeight + windowRangeHeight + groupByHeight, overflowY: 'hidden'}}>
                 {prefsComponent}
+                <hr />
             </div>
             <div style={{position: 'absolute', left: unitsTableWidth, width: width - unitsTableWidth, height, overflowY: 'auto'}}>
                 {
@@ -292,8 +298,14 @@ const PrefsComponent: FunctionComponent<{prefs: PSTHPrefs, setPrefs: (x: PSTHPre
         <div>
             <input type="checkbox" checked={prefs.showRaster} onChange={() => {}} onClick={() => {setPrefs({...prefs, showRaster: !prefs.showRaster})}} /> Show raster
             <br />
+            <hr />
             <input type="checkbox" checked={prefs.showHist} onChange={() => {}} onClick={() => {setPrefs({...prefs, showHist: !prefs.showHist})}} /> Show histogram
             <br />
+            <NumBinsComponent numBins={prefs.numBins} setNumBins={(x) => {setPrefs({...prefs, numBins: x})}} />
+            <br />
+            <input type="checkbox" checked={prefs.smoothedHist} onChange={() => {}} onClick={() => {setPrefs({...prefs, smoothedHist: !prefs.smoothedHist})}} /> Smoothed
+            <br />
+            <hr />
             Height:&nbsp;
             <select
                 value={prefs.height}
@@ -306,6 +318,35 @@ const PrefsComponent: FunctionComponent<{prefs: PSTHPrefs, setPrefs: (x: PSTHPre
                 <option value="large">Large</option>
             </select>
         </div>
+    )
+}
+
+type NumBinsComponentProps = {
+    numBins: number
+    setNumBins: (x: number) => void
+}
+
+const NumBinsComponent: FunctionComponent<NumBinsComponentProps> = ({numBins, setNumBins}) => {
+    const [numBinsText, setNumBinsText] = useState<string | undefined>(undefined)
+    useEffect(() => {
+        if (numBins) {
+            setNumBinsText(`${numBins}`)
+        }
+    }, [numBins])
+    useEffect(() => {
+        if (!numBinsText) return
+        const val = parseInt(numBinsText)
+        if (!isNaN(val)) {
+            if ((1 <= val) && (val <= 1000)) {
+                setNumBins(val)
+            }
+        }
+    }, [numBinsText, setNumBins])
+    return (
+        <span>
+            Num. bins:&nbsp;
+            <input style={{width: 30}} type="text" value={numBinsText} onChange={(evt) => {setNumBinsText(evt.target.value)}} />
+        </span>
     )
 }
 

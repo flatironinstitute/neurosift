@@ -219,6 +219,7 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({w
                     groups={groups}
                     windowRange={windowRange}
                     alignmentVariableName={alignToVariable}
+                    prefs={prefs}
                 />}
             </div>
         </div>

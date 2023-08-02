@@ -1,5 +1,6 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react"
 import { getTicks } from "./getTicks"
+import { PSTHPrefs } from "./PSTHItemView"
 
 type PSTHWidgetProps = {
     width: number
@@ -8,15 +9,19 @@ type PSTHWidgetProps = {
     groups: {group: any, color: string}[]
     windowRange: {start: number, end: number}
     alignmentVariableName: string
+    prefs: PSTHPrefs
 }
 
-const PSTHHistWidget: FunctionComponent<PSTHWidgetProps> = ({width, height, trials, groups, windowRange, alignmentVariableName}) => {
+const smoothingUpsamplingFactor = 30
+
+const PSTHHistWidget: FunctionComponent<PSTHWidgetProps> = ({width, height, trials, groups, windowRange, alignmentVariableName, prefs}) => {
     const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(null)
 
     const margins = useMemo(() => ({left: 50, right: 20, top: 40, bottom: 40}), [])
 
+    const numBins = prefs.numBins * (prefs.smoothedHist ? smoothingUpsamplingFactor : 1)
+
     const groupPlots = useMemo(() => {
-        const numBins = 30
         const t1 = windowRange.start
         const t2 = windowRange.end
         const binSize = (t2 - t1) / numBins
@@ -38,8 +43,13 @@ const PSTHHistWidget: FunctionComponent<PSTHWidgetProps> = ({width, height, tria
                 firingRates: binCounts.map(c => c / trials2.length / binSize)
             })
         })
+        if (prefs.smoothedHist) {
+            ret.forEach(g => {
+                g.firingRates = applySmoothing(g.firingRates, smoothingUpsamplingFactor)
+            })
+        }
         return ret
-    }, [trials, groups, windowRange])
+    }, [trials, groups, windowRange, numBins, prefs.smoothedHist])
 
     const maxFiringRate = useMemo(() => {
         let ret = 0
@@ -159,6 +169,27 @@ const PSTHHistWidget: FunctionComponent<PSTHWidgetProps> = ({width, height, tria
             height={height}
         />
     )
+}
+
+const applySmoothing = (x: number[], upsamplingFactor: number) => {
+    const numer = new Array(x.length).fill(0)
+    const denom = new Array(x.length).fill(0)
+    const sigma = upsamplingFactor / 2
+    for (let i = 0; i < x.length; i++) {
+        for (let j = -upsamplingFactor * 3; j <= upsamplingFactor * 3; j++) {
+            const ii = i + j
+            if ((ii >= 0) && (ii < x.length)) {
+                const w = Math.exp(-j * j / (2 * sigma * sigma))
+                numer[ii] += w * x[i]
+                denom[ii] += w
+            }
+        }
+    }
+    const ret = new Array(x.length).fill(0)
+    for (let i = 0; i < x.length; i++) {
+        ret[i] = numer[i] / denom[i]
+    }
+    return ret
 }
 
 export default PSTHHistWidget
