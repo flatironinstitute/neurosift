@@ -1,4 +1,5 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react"
+import { getTicks } from "./getTicks"
 
 type PSTHWidgetProps = {
     width: number
@@ -56,6 +57,10 @@ const PSTHHistWidget: FunctionComponent<PSTHWidgetProps> = ({width, height, tria
         return {x, y}
     }), [windowRange, width, height, maxFiringRate, margins])
 
+    const ticks = useMemo(() => (
+        getTicks(0, maxFiringRate, height - margins.top - margins.bottom, 80)
+    ), [maxFiringRate, height, margins])
+
     useEffect(() => {
         if (!canvasElement) return
         const ctx = canvasElement.getContext('2d')
@@ -89,12 +94,26 @@ const PSTHHistWidget: FunctionComponent<PSTHWidgetProps> = ({width, height, tria
         ctx.textAlign = 'center'
         ctx.textBaseline = 'bottom'
         ctx.save()
-        const x0 = margins.left - 6
+        const x0 = margins.left - 25
         const y0 = margins.top + (height - margins.top - margins.bottom) / 2
         ctx.translate(x0, y0)
         ctx.rotate(-Math.PI / 2)
         ctx.fillText(yAxisLabel, 0, 0)
         ctx.restore()
+
+        // draw y axis ticks
+        ctx.strokeStyle = 'gray'
+        ctx.lineWidth = 1
+        ticks.forEach(tick => {
+            const p0 = coordToPixel(windowRange.start, tick.value)
+            ctx.beginPath()
+            ctx.moveTo(p0.x, p0.y)
+            ctx.lineTo(p0.x - 5, p0.y)
+            ctx.stroke()
+            ctx.textAlign = 'right'
+            ctx.textBaseline = 'middle'
+            ctx.fillText(tick.value + '', p0.x - 6, p0.y)
+        })
 
         // x axis labels
         ctx.fillStyle = 'black'
@@ -131,7 +150,7 @@ const PSTHHistWidget: FunctionComponent<PSTHWidgetProps> = ({width, height, tria
             })
             ctx.stroke()
         })
-    }, [canvasElement, width, height, trials, groups, windowRange, alignmentVariableName, groupPlots, coordToPixel, margins])
+    }, [canvasElement, width, height, trials, groups, windowRange, alignmentVariableName, groupPlots, coordToPixel, margins, ticks])
 
     return (
         <canvas
