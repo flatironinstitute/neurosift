@@ -16,6 +16,7 @@ import DirectRasterPlotUnitsItemView from "./Units/DirectRasterPlotUnitsItemView
 import SpatialSeriesXYView from "./SpatialSeries/SpatialSeriesWidget/SpatialSeriesXYView"
 import { RemoteH5File } from "../RemoteH5File/RemoteH5File"
 import PSTHItemView from "./PSTH/PSTHItemView"
+import LabeledEventsItemView from "./LabeledEvents/LabeledEventsItemView"
 
 type Props = {
     width: number,
@@ -124,9 +125,16 @@ viewPlugins.push({
 
 // HelloWorld
 viewPlugins.push({
+    name: 'LabeledEvents',
+    neurodataType: 'LabeledEvents',
+    defaultForNeurodataType: true,
+    component: LabeledEventsItemView,
+    isTimeView: true
+})
+viewPlugins.push({
     name: 'HelloWorld',
     neurodataType: 'LabeledEvents', // hi-jacking this type for now
-    defaultForNeurodataType: true,
+    defaultForNeurodataType: false,
     component: HelloWorldView, // see ./HelloWorld/HelloWorldView.tsx
     isTimeView: true
 })

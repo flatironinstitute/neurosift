@@ -95,6 +95,15 @@ class DirectSpikeTrainsClientUnitSlice {
     async getData(blockStartIndex: number, blockEndIndex: number) {
         return this.client.getData(blockStartIndex, blockEndIndex, {unitIds: this.#unitIds})
     }
+    get totalNumSpikes() {
+        let ret = 0
+        for (const id of this.#unitIds) {
+            const n = this.client.numSpikesForUnit(id)
+            if (n === undefined) return undefined
+            ret += n
+        }
+        return ret
+    }
 }
 
 export class DirectSpikeTrainsClient {

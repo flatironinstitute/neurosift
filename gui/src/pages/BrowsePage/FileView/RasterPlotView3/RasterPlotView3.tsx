@@ -62,13 +62,16 @@ const RasterPlotView3: FunctionComponent<Props> = ({spikeTrainsClient, width, he
             return {blockStartIndex: undefined, blockEndIndex: undefined, zoomInRequired: false}
         }
 
-        const maxVisibleRange = 60 * 15 * (20 / spikeTrainsClient.unitIds!.length)
+        const startTimeSec = spikeTrainsClient.startTimeSec!
+        const blockSizeSec = spikeTrainsClient.blockSizeSec!
+
+        const averageTotalFiringRate = spikeTrainsClient.totalNumSpikes! / (endTimeSec - startTimeSec)
+        const maxVisibleRange = 60 * 10 * 10 * 100 / averageTotalFiringRate // 60 seconds * 10 minutes * 10 Hz * 100 units
+        // const maxVisibleRange = 60 * 15 * (20 / spikeTrainsClient.unitIds!.length)
 
         if (visibleEndTimeSec - visibleStartTimeSec > maxVisibleRange) {
             return {blockStartIndex: undefined, blockEndIndex: undefined, zoomInRequired: true}
         }
-        const startTimeSec = spikeTrainsClient.startTimeSec!
-        const blockSizeSec = spikeTrainsClient.blockSizeSec!
         const blockStartIndex = Math.floor((visibleStartTimeSec - startTimeSec) / blockSizeSec)
         const blockEndIndex = Math.floor((visibleEndTimeSec - startTimeSec) / blockSizeSec) + 1
         return {blockStartIndex, blockEndIndex, zoomInRequired: false}

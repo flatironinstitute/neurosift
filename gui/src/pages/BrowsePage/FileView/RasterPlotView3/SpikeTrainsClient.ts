@@ -12,6 +12,7 @@ export interface SpikeTrainsClientType {
         unitId: number | string
         spikeTimesSec: number[]
     }[]>
+    totalNumSpikes: number | undefined
 }
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -90,6 +91,9 @@ class SpikeTrainsClient {
         }
 
         return ret
+    }
+    get totalNumSpikes() {
+        return this.#headerRecord?.units.reduce((sum, u) => (sum + u.numSpikes), 0)
     }
 }
 
