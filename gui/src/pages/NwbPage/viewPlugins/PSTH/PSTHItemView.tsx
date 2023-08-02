@@ -1,6 +1,7 @@
 import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react"
-import { defaultUnitSelection, UnitSelectionContext, unitSelectionReducer } from "../../../../package/context-unit-selection"
+import { defaultUnitSelection, sortIds, UnitSelectionContext, unitSelectionReducer } from "../../../../package/context-unit-selection"
 import { useSelectedUnitIds } from "../../../../package/context-unit-selection/UnitSelectionContext"
+import IfHasBeenVisible from "../../../BrowsePage/FileView/SpikeSortingDigestView/IfHasBeenVisible"
 import { NwbFileContext } from "../../NwbFileContext"
 import { useGroup } from "../../NwbMainView/NwbMainView"
 import { DirectSpikeTrainsClient } from "../Units/DirectRasterPlotUnitsItemView"
@@ -43,7 +44,7 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({width, height, path}) => {
         unitIdSelectionDispatch({type: 'SET_SELECTION', incomingSelectedUnitIds: selectedUnitIds})
     }, [unitIdSelectionDispatch])
     const selectedUnitIds = useMemo(() => {
-        return Array.from(selectedUnitIdsSet)
+        return sortIds([...selectedUnitIdsSet])
     }, [selectedUnitIdsSet])
 
     const [spikeTrainsClient, setSpikeTrainsClient] = useState<DirectSpikeTrainsClient | undefined>(undefined)
@@ -141,17 +142,22 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({width, height, path}) => {
                 {
                     spikeTrainsClient && selectedUnitIds.map((unitId, i) => (
                         <div key={unitId} style={{position: 'absolute', top: i * unitWidgetHeight, width: width - unitsTableWidth, height: unitWidgetHeight}}>
-                            <PSTHUnitWidget
+                            <IfHasBeenVisible
                                 width={width - unitsTableWidth}
                                 height={unitWidgetHeight}
-                                path={path}
-                                spikeTrainsClient={spikeTrainsClient}
-                                unitId={unitId}
-                                alignToVariables={alignToVariables}
-                                groupByVariable={groupByVariable}
-                                windowRange={windowRange}
-                                prefs={prefs}
-                            />
+                            >
+                                <PSTHUnitWidget
+                                    width={width - unitsTableWidth}
+                                    height={unitWidgetHeight}
+                                    path={path}
+                                    spikeTrainsClient={spikeTrainsClient}
+                                    unitId={unitId}
+                                    alignToVariables={alignToVariables}
+                                    groupByVariable={groupByVariable}
+                                    windowRange={windowRange}
+                                    prefs={prefs}
+                                />
+                            </IfHasBeenVisible>
                         </div>
                     ))
                 }
@@ -208,7 +214,16 @@ const UnitSelectionComponent: FunctionComponent<{unitIds: (number | string)[], s
         <table className="nwb-table">
             <thead>
                 <tr>
-                    <th></th>
+                    <th>
+                        <input type="checkbox" checked={unitIds.length > 0 && (selectedUnitIds.length === unitIds.length)} onChange={() => {}} onClick={() => {
+                            if (selectedUnitIds.length > 0) {
+                                setSelectedUnitIds([])
+                            }
+                            else {
+                                setSelectedUnitIds(unitIds)
+                            }
+                        }} />
+                    </th>
                     <th>Unit ID</th>
                 </tr>
             </thead>
