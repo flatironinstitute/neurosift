@@ -4,6 +4,8 @@ import '../nwb-table.css'
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 import { RemoteH5File, RemoteH5Group, RemoteH5Subgroup } from "../RemoteH5File/RemoteH5File"
 import { useSelectedItemViews } from "../SelectedItemViewsContext"
+import ViewPluginButton from "../viewPlugins/ViewPluginButton"
+import { findViewPluginsForType } from "../viewPlugins/viewPlugins"
 import { useGroup } from "./NwbMainView"
 
 type Props = {
@@ -18,6 +20,7 @@ const IntervalsContentPanel: FunctionComponent<Props> = ({nwbFile, group}) => {
             <table className="nwb-table">
                 <thead>
                     <tr>
+                        <th></th>
                         <th></th>
                         <th>Item</th>
                         <th>Neurodata type</th>
@@ -64,11 +67,23 @@ const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({nwbFile, subgroup
         if (!d) return undefined
         return d.shape[0]
     }, [group, colnames])
+    const {viewPlugins, defaultViewPlugin} = useMemo(() => (findViewPluginsForType(neurodataType, {nwbFile})), [neurodataType, nwbFile])
     return (
         <tr>
             <td>
                 <input type="checkbox" checked={selected} disabled={!neurodataType} onClick={() => onToggleSelect(neurodataType)} onChange={() => {}} />
             </td>
+            <td>{
+                <span>{
+                    viewPlugins.filter(vp => (!vp.defaultForNeurodataType)).map(vp => (
+                        <ViewPluginButton
+                            key={vp.name}
+                            viewPlugin={vp}
+                            path={subgroup.path}
+                        />
+                    ))
+                }</span>
+            }</td>
             <td>
                 <Hyperlink disabled={!neurodataType} onClick={() => openTab(`neurodata-item:${subgroup.path}|${neurodataType}`)}>{subgroup.name}</Hyperlink>
             </td>

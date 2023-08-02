@@ -97,7 +97,7 @@ class DirectSpikeTrainsClientUnitSlice {
     }
 }
 
-class DirectSpikeTrainsClient {
+export class DirectSpikeTrainsClient {
     #unitIds: any[] | undefined
     #spikeTimesIndices: DatasetDataType | undefined
     // #spikeTimes: DatasetDataType | undefined
@@ -182,6 +182,18 @@ class DirectSpikeTrainsClient {
             })
         }
         return ret
+    }
+    async getUnitSpikeTrain(unitId: number | string) {
+        await this.initialize()
+        if (!this.#unitIds) throw Error('Unexpected: unitIds not initialized')
+        if (!this.#spikeTimesIndices) throw Error('Unexpected: spikeTimesIndices not initialized')
+        const ii = this.#unitIds.indexOf(unitId)
+        if (ii < 0) throw Error(`Unexpected: unitId not found: ${unitId}`)
+        const i1 = ii === 0 ? 0 : this.#spikeTimesIndices[ii - 1]
+        const i2 = this.#spikeTimesIndices[ii]
+        const path = this.path
+        const tt0 = await this.nwbFile.getDatasetData(`${path}/${this.#spike_or_event}_times`, {slice: [[i1, i2]]})
+        return Array.from(tt0)
     }
 }
 

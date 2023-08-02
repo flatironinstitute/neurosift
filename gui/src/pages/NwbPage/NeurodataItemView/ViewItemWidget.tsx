@@ -44,6 +44,7 @@ const ViewItemWidget: FunctionComponent<Props> = ({width, height, viewPlugin, it
                 group={group}
                 viewName={viewPlugin.name}
                 tabName={tabName}
+                viewPlugin={viewPlugin}
             />
             {content}
         </Splitter>
