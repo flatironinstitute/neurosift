@@ -14,6 +14,8 @@ Replace the url query parameter with the appropriate URL for your dandiset. Or y
 
 Or even simpler, Neurosift is now registered as an external service of DANDI archive, so you if you browse to an .nwb asset on DANDI, you can use the menu button to launch Neurosift directly.
 
+[Here is a collection of DANDI examples highlighting the various view plugins](https://github.com/flatironinstitute/neurosift/wiki/Neurosift-DANDI-Examples)
+
 ## Quick instructions for viewing a local .nwb file
 
 * Prerequisite: [NodeJS v16 or higher](https://nodejs.org/en/download)
