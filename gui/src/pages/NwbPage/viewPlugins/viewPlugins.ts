@@ -17,6 +17,7 @@ import SpatialSeriesXYView from "./SpatialSeries/SpatialSeriesWidget/SpatialSeri
 import { RemoteH5File } from "../RemoteH5File/RemoteH5File"
 import PSTHItemView from "./PSTH/PSTHItemView"
 import LabeledEventsItemView from "./LabeledEvents/LabeledEventsItemView"
+import BehavioralEventsItemView from "./BehavioralEvents/BehavioralEventsItemView"
 
 type Props = {
     width: number,
@@ -185,6 +186,15 @@ viewPlugins.push({
     defaultForNeurodataType: true,
     component: ImagesItemView,
     isTimeView: false
+})
+
+// BehavioralEvents
+viewPlugins.push({
+    name: 'BehavioralEvents',
+    neurodataType: 'BehavioralEvents',
+    defaultForNeurodataType: true,
+    component: BehavioralEventsItemView,
+    isTimeView: true
 })
 
 ///////////////////////////////////////////////////////////////////////////////////////

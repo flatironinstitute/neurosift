@@ -30,6 +30,7 @@ type Props = {
     }
     additionalToolbarItems?: ToolbarItem[]
     showTimeSelectionBar?: boolean
+    leftMargin?: number
 }
 
 const defaultMargins = {
@@ -39,10 +40,11 @@ const defaultMargins = {
     bottom: 40
 }
 
-export const useTimeScrollView2 = ({width, height, hideToolbar}: {width: number, height: number, hideToolbar?: boolean}) => {
-    const margins = useMemo(() => (
-        defaultMargins
-    ), [])
+export const useTimeScrollView2 = ({width, height, hideToolbar, leftMargin}: {width: number, height: number, hideToolbar?: boolean, leftMargin?: number}) => {
+    const margins = useMemo(() => ({
+        ...defaultMargins,
+        left: leftMargin || defaultMargins.left
+    }), [leftMargin])
     const toolbarWidth = hideToolbar ? 0 : DefaultToolbarWidth
     const canvasWidth = width - toolbarWidth
     const canvasHeight = height
@@ -54,7 +56,7 @@ export const useTimeScrollView2 = ({width, height, hideToolbar}: {width: number,
     }
 }
 
-const TimeScrollView2: FunctionComponent<Props> = ({width, height, onCanvasElement, gridlineOpts, onKeyDown, onMouseDown, onMouseMove, onMouseOut, onMouseUp, hideToolbar, yAxisInfo, shiftZoom, additionalToolbarItems, showTimeSelectionBar}) => {
+const TimeScrollView2: FunctionComponent<Props> = ({width, height, onCanvasElement, gridlineOpts, onKeyDown, onMouseDown, onMouseMove, onMouseOut, onMouseUp, hideToolbar, yAxisInfo, shiftZoom, additionalToolbarItems, showTimeSelectionBar, leftMargin}) => {
     const { visibleStartTimeSec, visibleEndTimeSec, zoomTimeseriesSelection, panTimeseriesSelection } = useTimeRange()
     const {currentTime, currentTimeInterval } = useTimeseriesSelection()
     const timeRange = useMemo(() => (
@@ -64,7 +66,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({width, height, onCanvasEleme
     const selectionBarHeight = showTimeSelectionBar ? timeSelectionBarHeight : 0
     const height2 = height - selectionBarHeight
 
-    const {margins, canvasWidth, canvasHeight, toolbarWidth} = useTimeScrollView2({width, height: height2, hideToolbar})
+    const {margins, canvasWidth, canvasHeight, toolbarWidth} = useTimeScrollView2({width, height: height2, hideToolbar, leftMargin})
 
     const timeToPixel = useMemo(() => {
         if ((visibleStartTimeSec === undefined) || (visibleEndTimeSec === undefined)) return () => (0)
