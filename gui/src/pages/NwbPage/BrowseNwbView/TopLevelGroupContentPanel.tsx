@@ -307,7 +307,7 @@ const TableRow: FunctionComponent<TableRowProps> = ({tableItem, groupsDatasetsDi
                             <span style={datasetStyle}>{tableItem.name}</span>
                             {
                                 tableItem.data && (
-                                    <span>&nbsp;{valueToString(tableItem.data)}</span>
+                                    <span>&nbsp;{abbreviateString(valueToString(tableItem.data), 300)}</span>
                                 )
                             }
                         </div>
@@ -391,6 +391,11 @@ const product = (arr: number[]) => {
         ret = ret * val
     }
     return ret
+}
+
+const abbreviateString = (str: string, maxLen: number) => {
+    if (str.length <= maxLen) return str
+    return str.slice(0, maxLen) + '...'
 }
 
 export default TopLevelGroupContentPanel
