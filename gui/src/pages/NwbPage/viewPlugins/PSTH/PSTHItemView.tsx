@@ -31,6 +31,26 @@ export type PSTHPrefs = {
     numBins: number
 }
 
+type PSTHPrefsAction = {
+    type: 'SET_PREF'
+    key: keyof PSTHPrefs
+    value: any
+} | {
+    type: 'TOGGLE_PREF'
+    key: keyof PSTHPrefs
+}
+
+const psthPrefsReducer = (state: PSTHPrefs, action: PSTHPrefsAction): PSTHPrefs => {
+    switch (action.type) {
+        case 'SET_PREF':
+            return {...state, [action.key]: action.value}
+        case 'TOGGLE_PREF':
+            return {...state, [action.key]: !state[action.key]}
+        default:
+            return state
+    }
+}
+
 export const defaultPSTHPrefs: PSTHPrefs = {
     showRaster: true,
     showHist: true,
@@ -77,14 +97,14 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({width, height, path}) => {
         const t2 = parseFloat(windowRangeStr.end)
         if (isNaN(t1) || isNaN(t2)) return {start: 0, end: 1}
         if (t1 >= t2) return {start: 0, end: 1}
-        if (t2 - t1 > 10) return {start: 0, end: 1}
+        if (t2 - t1 > 20) return {start: 0, end: 1}
         return {
             start: t1,
             end: t2
         }
     }, [windowRangeStr])
 
-    const [prefs, setPrefs] = useState<PSTHPrefs>(defaultPSTHPrefs)
+    const [prefs, prefsDispatch] = useReducer(psthPrefsReducer, defaultPSTHPrefs)
 
     const unitsTable = <UnitSelectionComponent unitIds={unitIds} selectedUnitIds={selectedUnitIds} setSelectedUnitIds={setSelectedUnitIds} />
 
@@ -101,7 +121,7 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({width, height, path}) => {
     )
 
     const prefsComponent = (
-        <PrefsComponent prefs={prefs} setPrefs={setPrefs} />
+        <PrefsComponent prefs={prefs} prefsDispatch={prefsDispatch} />
     )
 
     const unitsTableWidth = 200
@@ -293,24 +313,41 @@ const WindowRangeSelectionComponent: FunctionComponent<{windowRangeStr: {start: 
     )
 }
 
-const PrefsComponent: FunctionComponent<{prefs: PSTHPrefs, setPrefs: (x: PSTHPrefs) => void}> = ({prefs, setPrefs}) => {
+type PrefsComponentProps = {
+    prefs: PSTHPrefs
+    prefsDispatch: (x: PSTHPrefsAction) => void
+}
+
+const PrefsComponent: FunctionComponent<PrefsComponentProps> = ({prefs, prefsDispatch}) => {
+    const handleSetNumBins = useCallback((numBins: number) => {
+        prefsDispatch({type: 'SET_PREF', key: 'numBins', value: numBins})
+    }, [prefsDispatch])
+    const handleToggleShowRaster = useCallback(() => {
+        prefsDispatch({type: 'TOGGLE_PREF', key: 'showRaster'})
+    }, [prefsDispatch])
+    const handleToggleShowHist = useCallback(() => {
+        prefsDispatch({type: 'TOGGLE_PREF', key: 'showHist'})
+    }, [prefsDispatch])
+    const handleToggleSmoothedHist = useCallback(() => {
+        prefsDispatch({type: 'TOGGLE_PREF', key: 'smoothedHist'})
+    }, [prefsDispatch])
     return (
         <div>
-            <input type="checkbox" checked={prefs.showRaster} onChange={() => {}} onClick={() => {setPrefs({...prefs, showRaster: !prefs.showRaster})}} /> Show raster
+            <input type="checkbox" checked={prefs.showRaster} onChange={() => {}} onClick={handleToggleShowRaster} /> Show raster
             <br />
             <hr />
-            <input type="checkbox" checked={prefs.showHist} onChange={() => {}} onClick={() => {setPrefs({...prefs, showHist: !prefs.showHist})}} /> Show histogram
+            <input type="checkbox" checked={prefs.showHist} onChange={() => {}} onClick={handleToggleShowHist} /> Show histogram
             <br />
-            <NumBinsComponent numBins={prefs.numBins} setNumBins={(x) => {setPrefs({...prefs, numBins: x})}} />
+            <NumBinsComponent numBins={prefs.numBins} setNumBins={handleSetNumBins} />
             <br />
-            <input type="checkbox" checked={prefs.smoothedHist} onChange={() => {}} onClick={() => {setPrefs({...prefs, smoothedHist: !prefs.smoothedHist})}} /> Smoothed
+            <input type="checkbox" checked={prefs.smoothedHist} onChange={() => {}} onClick={handleToggleSmoothedHist} /> Smoothed
             <br />
             <hr />
             Height:&nbsp;
             <select
                 value={prefs.height}
                 onChange={(evt) => {
-                    setPrefs({...prefs, height: evt.target.value as any})
+                    prefsDispatch({type: 'SET_PREF', key: 'height', value: evt.target.value})
                 }}
             >
                 <option value="small">Small</option>
@@ -345,7 +382,7 @@ const NumBinsComponent: FunctionComponent<NumBinsComponentProps> = ({numBins, se
     return (
         <span>
             Num. bins:&nbsp;
-            <input style={{width: 30}} type="text" value={numBinsText} onChange={(evt) => {setNumBinsText(evt.target.value)}} />
+            <input style={{width: 30}} type="text" value={numBinsText || ''} onChange={(evt) => {setNumBinsText(evt.target.value)}} />
         </span>
     )
 }
