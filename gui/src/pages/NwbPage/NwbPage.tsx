@@ -144,7 +144,12 @@ export const getEtag = async (url: string) => {
     return ret
 }
 
+const urlQueryString = window.location.search
+const urlQueryParams = new URLSearchParams(urlQueryString)
+
 const getMetaUrl = async (url: string) => {
+    if (urlQueryParams.get('no-meta') === '1') return undefined
+
     const etag = await getEtag(url)
     if (!etag) return undefined
     const computedAssetBaseUrl = `https://neurosift.org/computed/nwb/ETag/${etag.slice(0, 2)}/${etag.slice(2, 4)}/${etag.slice(4, 6)}/${etag}`
