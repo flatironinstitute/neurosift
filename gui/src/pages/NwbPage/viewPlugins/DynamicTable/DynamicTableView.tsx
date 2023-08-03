@@ -84,6 +84,26 @@ const columnSortReducer = (state: ColumnSortState, action: ColumnSortAction): Co
     else return state
 }
 
+type ColumnDescriptions = {
+    [colname: string]: string
+}
+
+type ColumnDescriptionAction = {
+    type: 'set'
+    column: string
+    description: string
+}
+
+const columnDescriptionReducer = (state: ColumnDescriptions, action: ColumnDescriptionAction): ColumnDescriptions => {
+    if (action.type === 'set') {
+        return {
+            ...state,
+            [action.column]: action.description
+        }
+    }
+    else return state
+}
+
 const DynamicTableView: FunctionComponent<Props> = ({ width, height, path }) => {
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is null')
@@ -193,6 +213,17 @@ const DynamicTableView: FunctionComponent<Props> = ({ width, height, path }) => 
         return ret
     }, [colnames, rowItems, columnSortState])
 
+    const [columnDescriptions, columnDescriptionDispatch] = useReducer(columnDescriptionReducer, {})
+    useEffect(() => {
+        if (!group) return
+        for (const colname of colnames || []) {
+            const ds = group.datasets.find(ds => (ds.name === colname))
+            if (ds) {
+                columnDescriptionDispatch({type: 'set', column: colname, description: ds.attrs.description || ''})
+            }
+        }
+    }, [colnames, group])
+
     if (!colnames) return <div>Loading...</div>
     return (
         <div style={{position: 'absolute', width, height, overflowY: 'auto'}}>
@@ -205,6 +236,7 @@ const DynamicTableView: FunctionComponent<Props> = ({ width, height, path }) => 
                                     <span
                                         onClick={() => {columnSortDispatch({type: 'click', column: colname})}}
                                         style={{cursor: 'pointer'}}
+                                        title={columnDescriptions[colname] || ''}
                                     >
                                         {
                                             (columnSortState.primary) && (columnSortState.primary.column === colname) && (
