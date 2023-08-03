@@ -88,7 +88,7 @@ class RemoteH5WorkerWrapper {
 // While it sounds like a good idea to have a lot of workers (for concurrent http requests), there is a problem
 // in that each worker needs to load the meta information for the hdf5 file... which takes some time
 // therefore too many workers => initial slowdown
-const numWorkers = 2
+const numWorkers = 1
 class RemoteH5WorkerManager {
   #workers: RemoteH5WorkerWrapper[] = []
   constructor() {

@@ -32,7 +32,8 @@ export type RemoteH5Dataset = {
 export type DatasetDataType = Float32Array | Float64Array | Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array
 
 const chunkSizeForMetaFile = 1024 * 1024 * 4
-const defaultChunkSize = 1024 * 30
+const defaultChunkSize = 1024 * 100
+// const defaultChunkSize = 1024 * 1024 * 2
 
 export const globalRemoteH5FileStats = {
   getGroupCount: 0,
