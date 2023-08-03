@@ -82,34 +82,37 @@ const VisibleStartChannelSelector: FunctionComponent<VisibleStartChannelSelector
         return Math.floor(x / numVisibleChannels) * numVisibleChannels
     }
 
-    const leftArrow = (
+    const upArrow = (
         <span>
             <button
                 disabled={range[0] <= 0}
                 onClick={() => setValue(snap(value - numVisibleChannels))}
             >
-                &lt;
+                &#x25B2;
             </button>
         </span>
     )
-    const rightArrow = (
+    const downArrow = (
         <span>
             <button
                 disabled={range[1] >= totalNumChannels - 1}
                 onClick={() => setValue(snap(value + numVisibleChannels))}
             >
-                &gt;
+                &#x25BC;
             </button>
         </span>
     )
 
     return (
         <div>
-            {leftArrow}
-            {rightArrow}
+            {upArrow}
+            {downArrow}
             &nbsp;
-            Viewing channels:
-            {range[0]}-{range[1]}
+            Viewing chans:
+            &nbsp;
+            {range[0]} - {range[1]}
+            &nbsp;
+            / {totalNumChannels}
         </div>
     )
 }
@@ -120,10 +123,10 @@ type AutoChannelSeparationSelectorProps = {
 }
 
 const AutoChannelSeparationSelector: FunctionComponent<AutoChannelSeparationSelectorProps> = ({value, setValue}) => {
-    const opts = [1, 2, 4, 8]
+    const opts = [0.1, 0.2, 0.5, 1, 2, 4, 8]
     return (
         <div>
-            <span>Channel separation (a.u.):</span>&nbsp;
+            <span>Chan. separation (a.u.):</span>&nbsp;
             <select
                 value={value || ''}
                 onChange={e => {
