@@ -3693,6 +3693,24 @@ var Module = (()=>{
             //////////////////////////////////////////////////////////////////////////////////////////////
             // jfm
             createLazyFile: (parent,name,url,canRead,canWrite,headResponseHeaders,chunkSize)=>{
+                let smartLastChunkNum = -99; // the last chunk we read
+                let smartNumChunksInString = 1; // the number of contiguous chunks to read all at once
+                const smartDetermineChunkRangeToLoad = (chunkNum, datalength) => {
+                    if (chunkNum === smartLastChunkNum + 1) {
+                        // we are loading the next chunk, so we assume we are going to be loading a bunch more contiguous chunks, let's increase the string size
+                        smartNumChunksInString = Math.ceil(smartNumChunksInString * 1.5);
+                        // enforce a maximum
+                        smartNumChunksInString = Math.min(smartNumChunksInString, Math.ceil(15 * 1024 * 1024 / chunkSize));
+                    }
+                    else {
+                        // we are not loading the next chunk, so let's reset the string size to 1
+                        smartNumChunksInString = 1;
+                    }
+                    const ret = [chunkNum, chunkNum + smartNumChunksInString];
+                    ret[1] = Math.min(ret[1], Math.floor(datalength / chunkSize) + 1);
+                    smartLastChunkNum = ret[1] - 1;
+                    return ret;
+                }
             //////////////////////////////////////////////////////////////////////////////////////////////
                 function LazyUint8Array() {
                     this.lengthKnown = false;
@@ -3764,12 +3782,21 @@ var Module = (()=>{
                     var lazyArray = this;
                     lazyArray.setDataGetter(chunkNum=>{
                         ///////////////////////////////////////////////////////////////////////////
-                        // jfm reorganized this a bit to make it more efficient
                         if (typeof lazyArray.chunks[chunkNum] == "undefined") {
-                            var start = chunkNum * chunkSize;
-                            var end = (chunkNum + 1) * chunkSize - 1;
+                            const chunkRangeToLoad = smartDetermineChunkRangeToLoad(chunkNum, datalength);
+                            var start = chunkRangeToLoad[0] * chunkSize;
+                            var end = chunkRangeToLoad[1] * chunkSize - 1;
                             end = Math.min(end, datalength - 1);
-                            lazyArray.chunks[chunkNum] = doXHR(start, end)
+                            const concatenatedData = doXHR(start, end);
+                            if (chunkRangeToLoad[1] - chunkRangeToLoad[0] === 1) {
+                                lazyArray.chunks[chunkRangeToLoad[0]] = concatenatedData;
+                            }
+                            else {
+                                for (let num = chunkRangeToLoad[0]; num < chunkRangeToLoad[1]; num++) {
+                                    lazyArray.chunks[num] = concatenatedData.subarray((num - chunkRangeToLoad[0]) * chunkSize, (num - chunkRangeToLoad[0] + 1) * chunkSize);
+                                }
+                            }
+                            // lazyArray.chunks[chunkNum] = doXHR(start, end)
                         }
                         if (typeof lazyArray.chunks[chunkNum] == "undefined")
                             throw new Error("doXHR failed!");
