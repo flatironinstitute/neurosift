@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+import { globalRemoteH5FileStats } from "./RemoteH5File"
+
 type RRequest = {
   requestId: string
   request: any
@@ -104,5 +106,12 @@ class RemoteH5WorkerManager {
 const workerManager = new RemoteH5WorkerManager()
 
 export const postRemoteH5WorkerRequest = async (req: any, canceler: Canceler) => {
-  return await workerManager.postRequest(req, canceler)
+  globalRemoteH5FileStats.numPendingRequests ++
+  try {
+    const ret = await workerManager.postRequest(req, canceler)
+    return ret
+  }
+  finally {
+    globalRemoteH5FileStats.numPendingRequests --
+  }
 }

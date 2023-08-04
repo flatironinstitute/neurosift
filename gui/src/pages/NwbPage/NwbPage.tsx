@@ -65,7 +65,7 @@ const NwbPageChild: FunctionComponent<Props> = ({width, height}) => {
         const timer = setInterval(() => {
             if (!nwbFile) return
             const x = globalRemoteH5FileStats
-            const s = `${x.getGroupCount} | ${x.getDatasetCount} | ${x.getDatasetDataCount}`
+            const s = `${x.numPendingRequests > 0 ? 'Loading... ' : ''}${x.getGroupCount} | ${x.getDatasetCount} | ${x.getDatasetDataCount} | ${x.numPendingRequests}`
             setCustomStatusBarString && setCustomStatusBarString('custom1', s)
         }, 250)
         return () => {clearInterval(timer)}

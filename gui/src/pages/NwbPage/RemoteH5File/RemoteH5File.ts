@@ -38,7 +38,8 @@ const defaultChunkSize = 1024 * 100
 export const globalRemoteH5FileStats = {
   getGroupCount: 0,
   getDatasetCount: 0,
-  getDatasetDataCount: 0
+  getDatasetDataCount: 0,
+  numPendingRequests: 0
 }
 
 
