@@ -16,7 +16,13 @@ type Props = {
 
 const labelMap: {name: string, newName: string, renderer?: (val: any) => string}[] = [
     {name: 'session_id', newName: 'Session ID'},
-    {name: 'experimenter', newName: 'Experimenter', renderer: (val: string[]) => (val.join('; '))},
+    {name: 'experimenter', newName: 'Experimenter', renderer: (val: any) => {
+        if (!val) return ''
+        if (Array.isArray(val)) {
+            return val.join('; ')
+        }
+        else return val + ''
+    }},
     {name: 'lab', newName: 'Lab'},
     {name: 'institution', newName: 'Institution'},
     {name: 'related_publications', newName: 'Related publications'},

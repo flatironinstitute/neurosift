@@ -44,7 +44,7 @@ const getGroup = async (url, path, chunkSize) => {
     }
     const group = file.get(path)
     if (!group) {
-        throw new Error(`group not found: ${path}`)
+        return undefined
     }
     const subgroups = []
     const datasets = []
@@ -129,6 +129,13 @@ self.onmessage = function (e) {
                 sendResponse({
                     success: false,
                     error: e.message
+                })
+                return
+            }
+            if (!group) {
+                sendResponse({
+                    success: false,
+                    error: `Group not found: ${req.path || '<undefined>'}`
                 })
                 return
             }
