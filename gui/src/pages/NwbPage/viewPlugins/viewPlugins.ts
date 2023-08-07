@@ -68,7 +68,15 @@ viewPlugins.push({
     defaultForNeurodataType: false,
     component: SpatialSeriesXYView,
     buttonLabel: 'X/Y',
-    isTimeView: true
+    isTimeView: true,
+    checkEnabled: async (nwbFile: RemoteH5File, path: string) => {
+        const grp = await nwbFile.getGroup(path)
+        const ds = grp.datasets.find(ds => (ds.name === 'data'))
+        if (!ds) return false
+        if (ds.shape.length !== 2) return false
+        if (ds.shape[1] < 2) return false
+        return true
+    },
 })
 
 // TwoPhotonSeries
