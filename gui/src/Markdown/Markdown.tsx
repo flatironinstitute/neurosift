@@ -71,7 +71,7 @@ const Markdown: FunctionComponent<Props> = ({source}) => {
 		}
 	), [])
 	return (
-		<div className="markdown-body">
+		<div className="markdown-body" style={{fontSize: 13}}>
 			<ReactMarkdown
 				// eslint-disable-next-line react/no-children-prop
 				children={source}

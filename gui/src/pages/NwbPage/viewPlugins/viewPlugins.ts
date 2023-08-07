@@ -14,10 +14,11 @@ import RasterPlotUnitsItemView from "./Units/RasterPlotUnitsItemView"
 import AutocorrelogramsUnitsItemView from "./Units/AutocorrelogramsUnitsItemView"
 import DirectRasterPlotUnitsItemView from "./Units/DirectRasterPlotUnitsItemView"
 import SpatialSeriesXYView from "./SpatialSeries/SpatialSeriesWidget/SpatialSeriesXYView"
-import { RemoteH5File } from "../RemoteH5File/RemoteH5File"
+import { RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import PSTHItemView from "./PSTH/PSTHItemView"
 import LabeledEventsItemView from "./LabeledEvents/LabeledEventsItemView"
 import BehavioralEventsItemView from "./BehavioralEvents/BehavioralEventsItemView"
+import { getCustomPythonCodeForTimeIntervals, getCustomPythonCodeForTimeSeries } from "./customPythonCode"
 
 type Props = {
     width: number,
@@ -35,6 +36,7 @@ export type ViewPlugin = {
     remoteDataOnly?: boolean
     checkEnabled?: (nwbFile: RemoteH5File, path: string) => Promise<boolean>
     isTimeView?: boolean
+    getCustomPythonCode?: (group: RemoteH5Group) => string
 }
 
 const viewPlugins: ViewPlugin[] = []
@@ -57,7 +59,8 @@ viewPlugins.push({
     neurodataType: 'SpatialSeries',
     defaultForNeurodataType: true,
     component: NeurodataSpatialSeriesItemView,
-    isTimeView: true
+    isTimeView: true,
+    getCustomPythonCode: getCustomPythonCodeForTimeSeries
 })
 viewPlugins.push({
     name: 'X/Y',
@@ -83,7 +86,8 @@ viewPlugins.push({
     neurodataType: 'TimeSeries',
     defaultForNeurodataType: true,
     component: NeurodataTimeSeriesItemView,
-    isTimeView: true
+    isTimeView: true,
+    getCustomPythonCode: getCustomPythonCodeForTimeSeries
 })
 
 // DynamicTable
@@ -101,7 +105,8 @@ viewPlugins.push({
     neurodataType: 'TimeIntervals',
     defaultForNeurodataType: true,
     component: NeurodataTimeIntervalsItemView,
-    isTimeView: true
+    isTimeView: true,
+    getCustomPythonCode: getCustomPythonCodeForTimeIntervals
 })
 viewPlugins.push({
     name: 'PSTH',
@@ -121,7 +126,8 @@ viewPlugins.push({
     neurodataType: 'ElectricalSeries',
     defaultForNeurodataType: true,
     component: NeurodataElectricalSeriesItemView,
-    isTimeView: true
+    isTimeView: true,
+    getCustomPythonCode: getCustomPythonCodeForTimeSeries
 })
 
 // LabeledEvents

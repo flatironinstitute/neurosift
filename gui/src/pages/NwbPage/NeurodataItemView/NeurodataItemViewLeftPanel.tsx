@@ -3,6 +3,7 @@ import TimeseriesSelectionWidget from "../viewPlugins/TimeSeries/TimeseriesItemV
 import { RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import ShareTabComponent from "./ShareTabComponent"
 import { ViewPlugin } from "../viewPlugins/viewPlugins"
+import LoadInPythonComponent from "./LoadInPythonComponent"
 
 type Props = {
     width: number
@@ -46,6 +47,8 @@ const NeurodataItemViewLeftPanel: FunctionComponent<Props> = ({width, height, pa
             }
             <hr />
             <ShareTabComponent tabName={tabName} />
+            <hr />
+            {group && <LoadInPythonComponent path={path} group={group} viewName={viewName} />}
         </div>
     )
 }
