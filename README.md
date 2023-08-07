@@ -114,8 +114,10 @@ Neurosift is licensed under the terms of the Apache License 2.0.
 
 Jeremy Magland - main developer
 
+Ben Dichter and Cody Baker from CatalystNeuro have helped with the NWB and DANDI integration. 
+
 Jeff Soules developed many of the visualizations that have been ported from SortingView.
 
-Thank you to Ralph Peterson, Alessio Buccino, and Ben Dichter for providing crucial feedback.
+Thank you to Ralph Peterson and Alessio Buccino for valuable feedback.
 
-Jeremy and Jeff are members of the [Center for Computational Mathematics at the Flatiron Institute](https://www.simonsfoundation.org/flatiron/center-for-computational-mathematics/)
+Jeremy is a member of the [Center for Computational Mathematics at the Flatiron Institute](https://www.simonsfoundation.org/flatiron/center-for-computational-mathematics/)
