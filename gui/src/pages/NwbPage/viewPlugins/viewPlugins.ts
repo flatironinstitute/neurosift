@@ -18,7 +18,8 @@ import { RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import PSTHItemView from "./PSTH/PSTHItemView"
 import LabeledEventsItemView from "./LabeledEvents/LabeledEventsItemView"
 import BehavioralEventsItemView from "./BehavioralEvents/BehavioralEventsItemView"
-import { getCustomPythonCodeForTimeIntervals, getCustomPythonCodeForTimeSeries } from "./customPythonCode"
+import { getCustomPythonCodeForTimeIntervals, getCustomPythonCodeForTimeSeries, getCustomPythonCodeForUnits } from "./customPythonCode"
+import UnitsItemView from "./Units/UnitsItemView"
 
 type Props = {
     width: number,
@@ -167,12 +168,21 @@ viewPlugins.push({
 
 // Units
 viewPlugins.push({
+    name: 'Units',
+    neurodataType: 'Units',
+    defaultForNeurodataType: true,
+    component: UnitsItemView,
+    isTimeView: false,
+    getCustomPythonCode: getCustomPythonCodeForUnits
+})
+viewPlugins.push({
     name: 'DirectRasterPlot',
     neurodataType: 'Units',
     defaultForNeurodataType: false,
     buttonLabel: 'raster plot',
     component: DirectRasterPlotUnitsItemView,
-    isTimeView: true
+    isTimeView: true,
+    getCustomPythonCode: getCustomPythonCodeForUnits
 })
 viewPlugins.push({
     name: 'RasterPlot',
@@ -181,7 +191,8 @@ viewPlugins.push({
     buttonLabel: 'precomputed raster plot',
     component: RasterPlotUnitsItemView,
     remoteDataOnly: true,
-    isTimeView: true
+    isTimeView: true,
+    getCustomPythonCode: getCustomPythonCodeForUnits
 })
 viewPlugins.push({
     name: 'Autocorrelograms',

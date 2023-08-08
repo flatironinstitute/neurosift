@@ -8,6 +8,7 @@ type Props = {
     height: number
     path: string
     condensed?: boolean
+    referenceColumnName?: string // for example, 'id'
 }
 
 type DataState = {
@@ -104,7 +105,7 @@ const columnDescriptionReducer = (state: ColumnDescriptions, action: ColumnDescr
     else return state
 }
 
-const DynamicTableView: FunctionComponent<Props> = ({ width, height, path }) => {
+const DynamicTableView: FunctionComponent<Props> = ({ width, height, path, referenceColumnName }) => {
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is null')
     const [data, dataDispatch] = useReducer(dataReducer, {})
@@ -158,10 +159,27 @@ const DynamicTableView: FunctionComponent<Props> = ({ width, height, path }) => 
         return () => {canceled = true}
     }, [colnames, nwbFile, path])
 
-    const rowItems: {columnValues: any[]}[] = useMemo(() => {
-        if (!colnames) return []
-        let numRows = 0
+    const validColumnNames = useMemo(() => {
+        if (!colnames) return undefined
+        const referenceColumnData = referenceColumnName ? data[referenceColumnName] : undefined
+        const ret: string[] = []
         for (const colname of colnames) {
+            const d = data[colname]
+            if (d) {
+                if ((referenceColumnData) && (d.length !== referenceColumnData.length)) {
+                    console.warn(`In DynamicTableView, unexpected length for ${path}/${colname}`, d.length, referenceColumnData.length)
+                    continue
+                }
+                ret.push(colname)
+            }
+        }
+        return ret
+    }, [colnames, data, path, referenceColumnName])
+
+    const rowItems: {columnValues: any[]}[] = useMemo(() => {
+        if (!validColumnNames) return []
+        let numRows = 0
+        for (const colname of validColumnNames) {
             const d = data[colname]
             if (d) {
                 numRows = Math.max(numRows, d.length)
@@ -170,7 +188,7 @@ const DynamicTableView: FunctionComponent<Props> = ({ width, height, path }) => 
         const ret: {columnValues: any[]}[] = []
         for (let i = 0; i < numRows; i++) {
             const row: {columnValues: any[]} = {columnValues: []}
-            for (const colname of colnames) {
+            for (const colname of validColumnNames) {
                 const d = data[colname]
                 if (d) {
                     row.columnValues.push(d[i])
@@ -182,16 +200,16 @@ const DynamicTableView: FunctionComponent<Props> = ({ width, height, path }) => 
             ret.push(row)
         }
         return ret
-    }, [colnames, data])
+    }, [validColumnNames, data])
 
     const sortedRowItems = useMemo(() => {
-        if (!colnames) return rowItems
+        if (!validColumnNames) return rowItems
         const primary = columnSortState.primary
         const secondary = columnSortState.secondary
         if (!primary) return rowItems
-        const primaryColIndex = colnames.indexOf(primary.column)
+        const primaryColIndex = validColumnNames.indexOf(primary.column)
         if (primaryColIndex < 0) return rowItems
-        const secondaryColIndex = secondary ? colnames.indexOf(secondary.column) : -1
+        const secondaryColIndex = secondary ? validColumnNames.indexOf(secondary.column) : -1
         const ret = [...rowItems]
         ret.sort((a, b) => {
             const valA = a.columnValues[primaryColIndex]
@@ -211,27 +229,27 @@ const DynamicTableView: FunctionComponent<Props> = ({ width, height, path }) => 
             return 0
         })
         return ret
-    }, [colnames, rowItems, columnSortState])
+    }, [validColumnNames, rowItems, columnSortState])
 
     const [columnDescriptions, columnDescriptionDispatch] = useReducer(columnDescriptionReducer, {})
     useEffect(() => {
         if (!group) return
-        for (const colname of colnames || []) {
+        for (const colname of validColumnNames || []) {
             const ds = group.datasets.find(ds => (ds.name === colname))
             if (ds) {
                 columnDescriptionDispatch({type: 'set', column: colname, description: ds.attrs.description || ''})
             }
         }
-    }, [colnames, group])
+    }, [validColumnNames, group])
 
-    if (!colnames) return <div>Loading...</div>
+    if (!validColumnNames) return <div>Loading...</div>
     return (
         <div style={{position: 'absolute', width, height, overflowY: 'auto'}}>
             <table className="nwb-table">
                 <thead>
                     <tr>
                         {
-                            colnames.map((colname) => (
+                            validColumnNames.map((colname) => (
                                 <th key={colname}>
                                     <span
                                         onClick={() => {columnSortDispatch({type: 'click', column: colname})}}

@@ -32,6 +32,7 @@ const UnitsContentPanel: FunctionComponent<Props> = ({nwbFile, group, width}) =>
                 width={width}
                 height={300}
                 path={group.path}
+                referenceColumnName={'id'}
             />
         </div>
     )

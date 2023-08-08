@@ -42,3 +42,21 @@ export const getCustomPythonCodeForTimeIntervals = (group: RemoteH5Group) => {
     }
     return customCode
 }
+
+export const getCustomPythonCodeForUnits = (group: RemoteH5Group) => {
+    let customCode = '\n'
+    group.datasets.forEach(ds => {
+        customCode += `${ds.name} = X['${ds.name}']\n`
+    })
+    customCode += '\n'
+    if (group.datasets.find(ds => (ds.name === 'id'))) {
+        customCode += `print(f'Shape of id: {id.shape}')\n`
+    }
+    if (group.datasets.find(ds => (ds.name === 'spike_times'))) {
+        customCode += `print(f'Shape of spike_times: {spike_times.shape}')\n`
+    }
+    if (group.datasets.find(ds => (ds.name === 'spike_times_index'))) {
+        customCode += `print(f'Shape of spike_times_index: {spike_times_index.shape}')\n`
+    }
+    return customCode
+}
