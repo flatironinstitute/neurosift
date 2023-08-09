@@ -46,10 +46,18 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
 
     const {canvasWidth, canvasHeight, margins} = useTimeScrollView2({width, height: height - timeSelectionBarHeight, hideToolbar})
 
+    const numVisibleChannels = useMemo(() => (
+        visibleChannelsRange ? (visibleChannelsRange[1] - visibleChannelsRange[0]) : dataset ? dataset.shape[1] : 0
+    ), [visibleChannelsRange, dataset])
+
+    const maxVisibleDuration = useMemo(() => (
+        dataClient ? Math.max(1e4 / (numVisibleChannels || 1) / (dataClient.estimatedSamplingFrequency || 1), 0.05) : 0
+    ), [numVisibleChannels, dataClient])
+
     // Set chunkSize
     const chunkSize = useMemo(() => (
-        dataset ? Math.floor(1e4 / (dataset.shape[1] || 1)) : 0
-    ), [dataset])
+        dataset ? Math.floor(1e4 / (numVisibleChannels || 1)) : 0
+    ), [dataset, numVisibleChannels])
 
     // set visible time range
     useEffect(() => {
@@ -83,7 +91,6 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
         }
         let canceled = false
         const load = async () => {
-            const maxVisibleDuration = 1e6 / (dataset.shape[1] || 1) / dataClient.estimatedSamplingFrequency!
             const zoomInRequired = (visibleEndTimeSec - visibleStartTimeSec > maxVisibleDuration)
             if (zoomInRequired) {
                 setStartChunkIndex(undefined)
@@ -103,7 +110,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
         }
         load()
         return () => {canceled = true}
-    }, [dataset, visibleStartTimeSec, visibleEndTimeSec, chunkSize, dataClient])
+    }, [dataset, visibleStartTimeSec, visibleEndTimeSec, chunkSize, dataClient, numVisibleChannels, maxVisibleDuration])
 
     const [dataseriesMode, setDataseriesMode] = useState<'line' | 'marker'>('line')
 

@@ -83,7 +83,7 @@ class RemoteH5WorkerWrapper {
     })
     setTimeout(() => {
       doReject(new Error('timeout'))
-    }, 60000)
+    }, 60000 * 3)
   }
 }
 
