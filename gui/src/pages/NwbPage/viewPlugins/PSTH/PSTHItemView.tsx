@@ -282,6 +282,34 @@ const GroupBySelectionComponent: FunctionComponent<{groupByVariable: string, set
 
     const group = useGroup(nwbFile, path)
     const options = (group?.datasets || []).map(ds => ds.name).filter(name => (!name.endsWith('_time') && !name.endsWith('_times')))
+
+    // determine which columns are categorical -- but don't let this slow down the UI
+    // while it is calculating, we can use the full list of options
+    const [categoricalOptions, setCategoricalOptions] = useState<string[] | undefined>(undefined)
+    useEffect(() => {
+        if (!group) return
+        let canceled = false
+        const load = async () => {
+            const categoricalOptions: string[] = []
+            for (const option of options) {
+                const ds = group.datasets.find(ds => (ds.name === option))
+                if (!ds) continue
+                if (ds.shape.length !== 1) continue
+                const slice = ds.shape[0] < 1000 ? undefined : [[0, 1000]] as [number, number][] // just check the first 1000 values
+                const dd = await nwbFile.getDatasetData(path + '/' + option, {slice})
+                if (canceled) return
+                const uniqueValues = [...new Set(dd)]
+                if (uniqueValues.length <= dd.length / 2) {
+                    categoricalOptions.push(option)
+                }
+            }
+            if (canceled) return
+            setCategoricalOptions(categoricalOptions)
+        }
+        load()
+        return () => {canceled = true}
+    }, [options, group, nwbFile, path])
+
     return (
         <div>
             Group by:<br />
@@ -293,7 +321,7 @@ const GroupBySelectionComponent: FunctionComponent<{groupByVariable: string, set
             >
                 <option value="">(none)</option>
                 {
-                    options.map((option) => (
+                    (categoricalOptions || options).map((option) => (
                         <option key={option} value={option}>{option}</option>
                     ))
                 }
