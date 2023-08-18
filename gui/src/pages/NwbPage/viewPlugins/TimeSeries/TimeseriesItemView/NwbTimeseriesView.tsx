@@ -50,9 +50,13 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
         visibleChannelsRange ? (visibleChannelsRange[1] - visibleChannelsRange[0]) : dataset ? dataset.shape[1] : 0
     ), [visibleChannelsRange, dataset])
 
+    const [overrideMaxVisibleDuration, setOverrideMaxVisibleDuration] = useState<number | undefined>(undefined)
+
     const maxVisibleDuration = useMemo(() => (
-        dataClient ? Math.max(1e4 / (numVisibleChannels || 1) / (dataClient.estimatedSamplingFrequency || 1), 0.05) : 0
-    ), [numVisibleChannels, dataClient])
+        overrideMaxVisibleDuration || (
+            dataClient ? Math.max(1e5 / (numVisibleChannels || 1) / (dataClient.estimatedSamplingFrequency || 1), 0.5) : 0
+        )
+    ), [numVisibleChannels, dataClient, overrideMaxVisibleDuration])
 
     // Set chunkSize
     const chunkSize = useMemo(() => (
@@ -273,8 +277,19 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
         yMax: valueRange?.max
     }
 
+    const handleKeyDown2 = useCallback((e: React.KeyboardEvent) => {
+        if ((e.shiftKey) && (e.key === 'o')) {
+            if ((visibleStartTimeSec !== undefined) && (visibleEndTimeSec !== undefined)) {
+                setOverrideMaxVisibleDuration((visibleEndTimeSec - visibleStartTimeSec) * 1.2)
+            }
+        }
+    }, [visibleStartTimeSec, visibleEndTimeSec])
+
     return (
-        <div style={{position: 'absolute', width, height}}>
+        <div
+            style={{position: 'absolute', width, height}}
+            onKeyDown={handleKeyDown2}
+        >
             <div style={{position: 'absolute', width, height}}>
                 <TimeScrollView2
                     width={width}
@@ -320,6 +335,7 @@ const HelpWindow: FunctionComponent = () => {
                 <li><b>mouse drag</b> - pan</li>
                 {/* Explain that mouse click selects a time point */}
                 <li><b>mouse click</b> - select a time point</li>
+                <li><b>shift + o</b> - override the zoom restriction</li>
             </ul>
         </div>
     )
