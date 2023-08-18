@@ -278,7 +278,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
     }
 
     const handleKeyDown2 = useCallback((e: React.KeyboardEvent) => {
-        if ((e.shiftKey) && (e.key === 'o')) {
+        if ((e.shiftKey) && (e.key === 'O')) {
             if ((visibleStartTimeSec !== undefined) && (visibleEndTimeSec !== undefined)) {
                 setOverrideMaxVisibleDuration((visibleEndTimeSec - visibleStartTimeSec) * 1.2)
             }
@@ -335,7 +335,7 @@ const HelpWindow: FunctionComponent = () => {
                 <li><b>mouse drag</b> - pan</li>
                 {/* Explain that mouse click selects a time point */}
                 <li><b>mouse click</b> - select a time point</li>
-                <li><b>shift + o</b> - override the zoom restriction</li>
+                <li><b>shift + O</b> - override the zoom restriction</li>
             </ul>
         </div>
     )
