@@ -1,4 +1,4 @@
-import { Login, Logout } from "@mui/icons-material";
+import { Key, Login, Logout } from "@mui/icons-material";
 import { AppBar, Toolbar } from "@mui/material";
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import Hyperlink from "./components/Hyperlink";
@@ -7,6 +7,8 @@ import GitHubLoginWindow from "./GitHub/GitHubLoginWindow";
 import { useGithubAuth } from "./GithubAuth/useGithubAuth";
 import UserIdComponent from "./UserIdComponent";
 import useRoute from "./useRoute";
+import SmallIconButton from "./components/SmallIconButton";
+import ApiKeysWindow from "./ApiKeysWindow/ApiKeysWindow";
 
 type Props = {
     // none
@@ -30,6 +32,7 @@ const ApplicationBar: FunctionComponent<Props> = () => {
     }, [setRoute])
 
     const {visible: githubAccessWindowVisible, handleOpen: openGitHubAccessWindow, handleClose: closeGitHubAccessWindow} = useModalDialog()
+    const {visible: apiKeysWindowVisible, handleOpen: openApiKeysWindow, handleClose: closeApiKeysWindow} = useModalDialog()
 
     // light greenish background color for app bar
     // const barColor = '#e0ffe0'
@@ -50,6 +53,14 @@ const ApplicationBar: FunctionComponent<Props> = () => {
                     <div onClick={onHome} style={{cursor: 'pointer', color: titleColor}}>&nbsp;&nbsp;&nbsp;Neurosift</div>
                     <div style={{color: bannerColor, position: 'relative', top: -2}}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{star} This viewer is in alpha and is under <Hyperlink color={bannerColor} href="https://github.com/flatironinstitute/neurosift" target="_blank">active development</Hyperlink> {star}</div>
                     <span style={{marginLeft: 'auto'}} />
+                    <span style={{color: 'yellow'}}>
+                        <SmallIconButton
+                            icon={<Key />}
+                            onClick={openApiKeysWindow}
+                            title={`Set DANDI API key`}
+                        />
+                    </span>
+                    &nbsp;&nbsp;
                     {
                         signedIn && (
                             <span style={{fontFamily: 'courier', color: 'lightgray', cursor: 'pointer'}} title={`Signed in as ${userId}`} onClick={openGitHubAccessWindow}><UserIdComponent userId={userId} />&nbsp;&nbsp;</span>
@@ -78,6 +89,14 @@ const ApplicationBar: FunctionComponent<Props> = () => {
             >
                 <GitHubLoginWindow
                     onClose={() => closeGitHubAccessWindow()}
+                />
+            </ModalWindow>
+            <ModalWindow
+                open={apiKeysWindowVisible}
+                // onClose={closeApiKeysWindow}
+            >
+                <ApiKeysWindow
+                    onClose={() => closeApiKeysWindow()}
                 />
             </ModalWindow>
         </span>

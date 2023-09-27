@@ -8,6 +8,7 @@ import NwbTabWidget from "./NwbTabWidget"
 import { getRemoteH5File, globalRemoteH5FileStats, RemoteH5File } from "./RemoteH5File/RemoteH5File"
 import { SelectedItemViewsContext, selectedItemViewsReducer } from "./SelectedItemViewsContext"
 import { fetchJson } from "./viewPlugins/ImageSeries/ImageSeriesItemView"
+import getAuthorizationHeaderForUrl from "./getAuthorizationHeaderForUrl"
 
 type Props = {
     width: number
@@ -74,16 +75,17 @@ const NwbPageChild: FunctionComponent<Props> = ({width, height}) => {
     useEffect(() => {
         let canceled = false
         const load = async () => {
-            const metaUrl = await getMetaUrl(url || defaultUrl)
+            const urlResolved = await getResolvedUrl(url || defaultUrl)
+            const metaUrl = await getMetaUrl(urlResolved)
             if (canceled) return
-            if ((!metaUrl) && (url) && (rtcshareClient)) {
-                console.info(`Requesting meta for ${url}`)
+            if ((!metaUrl) && (urlResolved) && (rtcshareClient)) {
+                console.info(`Requesting meta for ${urlResolved}`)
                 rtcshareClient.serviceQuery('neurosift-nwb-request', {
                     type: 'request-meta-nwb',
-                    nwbUrl: url
+                    nwbUrl: urlResolved
                 })
             }
-            const f = await getRemoteH5File(url || defaultUrl, metaUrl)
+            const f = await getRemoteH5File(urlResolved, metaUrl)
             if (canceled) return
             setNwbFile(f)
         }
@@ -105,7 +107,7 @@ const NwbPageChild: FunctionComponent<Props> = ({width, height}) => {
     )
 }
 
-export const headRequest = async (url: string) => {
+export const headRequest = async (url: string, headers?: any) => {
     // Cannot use HEAD, because it is not allowed by CORS on DANDI AWS bucket
     // let headResponse
     // try {
@@ -123,7 +125,10 @@ export const headRequest = async (url: string) => {
     // Instead, use aborted GET.
     const controller = new AbortController();
     const signal = controller.signal;
-    const response = await fetch(url, { signal })
+    const response = await fetch(url, {
+        signal,
+        headers
+    })
     controller.abort();
     return response
 }
@@ -181,6 +186,42 @@ const getMetaUrl = async (url: string) => {
     //     console.warn(`Unable to HEAD ${candidateMetaUrl}: ${err.message}`)
     // }
     // return undefined
+}
+
+const getResolvedUrl = async (url: string) => {
+    if (isDandiAssetUrl(url)) {
+        const authorizationHeader = getAuthorizationHeaderForUrl(url)
+        const headers = authorizationHeader ? {Authorization: authorizationHeader} : undefined
+        const redirectUrl = await getRedirectUrl(url, headers)
+        if (redirectUrl) {
+            return redirectUrl
+        }
+    }
+    return url
+}
+
+const getRedirectUrl = async (url: string, headers: any) => {
+    // This is tricky. Normally we would do a HEAD request with a redirect: 'manual' option.
+    // and then look at the Location response header.
+    // However, we run into mysterious cors problems
+    // So instead, we do a HEAD request with no redirect option, and then look at the response.url
+    const response = await headRequest(url, headers)
+    if (response.url) return response.url
+  
+    // if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
+    //     return response.headers.get('Location')
+    // }
+
+    return null // No redirect
+  }
+
+const isDandiAssetUrl = (url: string) => {
+    if (url.startsWith('https://api-staging.dandiarchive.org/')) {
+      return true
+    }
+    if (url.startsWith('https://api.dandiarchive.org/')) {
+      return true
+    }
 }
 
 export default NwbPage
