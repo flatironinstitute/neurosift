@@ -46,7 +46,7 @@ export const JSONStringifyDeterministic = ( obj: any, space: string | number | u
 
 const urlForSiftlog = window.location.href
 
-if (urlForSiftlog.startsWith('http://')) {
+if (urlForSiftlog.includes('url=http://')) {
   // Not sending siftlog message for privacy reasonce because this is likely a local environment. The purpose of siftlog is to see which dandi datasets are being viewed.
 }
 else {
