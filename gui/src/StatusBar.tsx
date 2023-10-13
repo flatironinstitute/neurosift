@@ -9,7 +9,8 @@ type Props = {
 export const connectedColor = '#050'
 export const notConnectedColor = '#888'
 
-export const statusBarHeight = 18
+// export const statusBarHeight = 18
+export const statusBarHeight = 0
 
 type CustomStatusBarStrings = {
     [key: string]: string

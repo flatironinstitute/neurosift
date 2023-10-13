@@ -57,12 +57,16 @@ const MainWindow: FunctionComponent<Props> = () => {
                     )
                 }
             </div>
-            <div className="MainWindowStatusBar" style={{position: 'absolute', bottom: 0, width, height: statusBarHeight, backgroundColor: '#eee', overflow: 'hidden'}}>
-                <StatusBar
-                    width={width}
-                    height={statusBarHeight}
-                />
-            </div>
+            {
+                statusBarHeight && (
+                    <div className="MainWindowStatusBar" style={{position: 'absolute', bottom: 0, width, height: statusBarHeight, backgroundColor: '#eee', overflow: 'hidden'}}>
+                        <StatusBar
+                            width={width}
+                            height={statusBarHeight}
+                        />
+                    </div>
+                )
+            }
         </div>
     )
 }
