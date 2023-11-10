@@ -3703,8 +3703,10 @@ var Module = (()=>{
                         smartNumChunksInString = Math.min(smartNumChunksInString, Math.ceil(15 * 1024 * 1024 / chunkSize));
                     }
                     else {
-                        // we are not loading the next chunk, so let's reset the string size to 1
-                        smartNumChunksInString = 1;
+                        // we are not loading the next chunk, so let's reduce the string size
+                        smartNumChunksInString = Math.floor(smartNumChunksInString / 1.5);
+                        // enforce a minimum
+                        smartNumChunksInString = Math.max(smartNumChunksInString, 1);
                     }
                     const ret = [chunkNum, chunkNum + smartNumChunksInString];
                     ret[1] = Math.min(ret[1], Math.floor(datalength / chunkSize) + 1);
