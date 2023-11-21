@@ -12,6 +12,8 @@ import { useNwbTimeseriesDataClient } from "../TimeSeries/TimeseriesItemView/Nwb
 import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../TimeSeries/TimeseriesItemView/TimeseriesSelectionBar"
 import MultiRangeSlider from "./MultiRangeSlider/MultiRangeSlider"
 
+const queryParams = parseQuery(window.location.href)
+
 type Props = {
     width: number
     height: number
@@ -89,6 +91,21 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}
 
     const computedDataDatUrl = useComputedDataDatUrl(nwbFile, dataDataset?.path)
 
+    // determine whether to use precomputed data.dat or read from nwb file
+    let usePrecomputed: boolean
+    const isProbablyLocalDataset = nwbFile.url.startsWith('http://')
+    if (isProbablyLocalDataset) {
+        usePrecomputed = false
+    }
+    else {
+        if (queryParams.dev1 === '1') {
+            usePrecomputed = false
+        }
+        else {
+            usePrecomputed = true
+        }
+    }
+
     useEffect(() => {
         setLoading(true)
         if (!dataDataset) return
@@ -103,17 +120,20 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}
         let canceled = false
         const load = async () => {
             if (frameIndex === undefined) return
-
-            // read from nwb file
-            // const slice = [[frameIndex, frameIndex + 1], [0, N2], [0, N3]] as [number, number][]
-            // if (dataDataset.shape.length === 4) {
-            //     slice.push([currentPlane, currentPlane + 1])
-            // }
-            // const x = await nwbFile.getDatasetData(dataDataset.path, {slice, canceler})
-
-            // read from computed data.dat
-            if (!computedDataDatUrl) return
-            const x = await readDataFromDat(computedDataDatUrl, frameIndex * N2 * N3, N2 * N3, dataDataset.dtype)
+            let x
+            if (usePrecomputed) {
+                // read from computed data.dat
+                if (!computedDataDatUrl) return
+                x = await readDataFromDat(computedDataDatUrl, frameIndex * N2 * N3, N2 * N3, dataDataset.dtype)
+            }
+            else {
+                // read from nwb file
+                const slice = [[frameIndex, frameIndex + 1], [0, N2], [0, N3]] as [number, number][]
+                if (dataDataset.shape.length === 4) {
+                    slice.push([currentPlane, currentPlane + 1])
+                }
+                x = await nwbFile.getDatasetData(dataDataset.path, {slice, canceler})
+            }
 
             if (canceled) return
             setCurrentImage({
@@ -128,7 +148,7 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}
             canceler.onCancel.forEach((f) => f())
             canceled = true
         }
-    }, [dataDataset, computedDataDatUrl, frameIndex, timeseriesDataClient, currentPlane])
+    }, [dataDataset, usePrecomputed, nwbFile, computedDataDatUrl, frameIndex, timeseriesDataClient, currentPlane])
 
     const [maxDataValue, setMaxDataValue] = useState<number | undefined>(undefined)
     useEffect(() => {
@@ -170,7 +190,7 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}
                     minValue={currentMinValue || 0}
                     maxValue={currentMaxValue || 1}
                 /> : (
-                    computedDataDatUrl ? <div>loading...</div> : <div>Unable to find pre-computed dataset</div>
+                    usePrecomputed ? (computedDataDatUrl ? <div>loading...</div> : <div>Unable to find pre-computed dataset</div>) : <span>loading...</span>
                 )}
             </div>
             <div style={{position: 'absolute', top: height - bottomBarHeight, width, height: bottomBarHeight, display: 'flex', overflow: 'hidden'}}>
@@ -360,6 +380,18 @@ const readDataFromDat = async (url: string, offset: number, length: number, dtyp
     else {
         throw Error(`Unexpected dtype: ${dtype}`)
     }
+}
+
+function parseQuery(queryString: string) {
+    const ind = queryString.indexOf('?')
+    if (ind <0) return {}
+    const query: {[k: string]: string} = {};
+    const pairs = queryString.slice(ind + 1).split('&');
+    for (let i = 0; i < pairs.length; i++) {
+        const pair = pairs[i].split('=');
+        query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+    }
+    return query;
 }
 
 export default TwoPhotonSeriesItemView

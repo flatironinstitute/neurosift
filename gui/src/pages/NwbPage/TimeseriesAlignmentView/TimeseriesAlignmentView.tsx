@@ -146,6 +146,8 @@ const getColorForNeurodataType = (nt: string) => {
             return 'blue'
         case 'TwoPhotonSeries':
             return 'green'
+        case 'OnePhotonSeries':
+            return 'green'
         case 'SpatialSeries':
             return 'red'
         case 'ImageSeries':

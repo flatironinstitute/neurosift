@@ -53,6 +53,7 @@ export const neurodataTypeInheritanceRaw: { [key: string]: string } = {
     "OptogeneticSeries": "TimeSeries",
     "OptogeneticStimulusSite": "NWBContainer",
     "TwoPhotonSeries": "ImageSeries",
+    "OnePhotonSeries": "ImageSeries",
     "RoiResponseSeries": "TimeSeries",
     "DfOverF": "NWBDataInterface",
     "Fluorescence": "NWBDataInterface",

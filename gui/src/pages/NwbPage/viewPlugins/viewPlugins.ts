@@ -89,6 +89,15 @@ viewPlugins.push({
     isTimeView: true
 })
 
+// TwoPhotonSeries
+viewPlugins.push({
+    name: 'OnePhotonSeries',
+    neurodataType: 'OnePhotonSeries',
+    defaultForNeurodataType: true,
+    component: TwoPhotonSeriesItemView, // same as TwoPhotonSeries
+    isTimeView: true
+})
+
 // TimeSeries
 viewPlugins.push({
     name: 'TimeSeries',
