@@ -1,9 +1,9 @@
 import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useReducer } from "react"
-import { FaBolt, FaCircle, FaCircleNotch, FaDashcube, FaDatabase, FaEye, FaQuestion, FaRegCircle, FaSass, FaSquare, FaSquareFull, FaSquarespace, FaTag, FaTextWidth, FaTrain } from "react-icons/fa"
+import { FaEye, FaRegCircle } from "react-icons/fa"
 import SmallIconButton from "../../../components/SmallIconButton"
 import { NwbFileContext, useNwbFile } from "../NwbFileContext"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
-import { RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import { findViewPluginsForType } from "../viewPlugins/viewPlugins"
 import { valueToString } from "./BrowseNwbView"
 import './nwb-attributes-table.css'
@@ -11,7 +11,7 @@ import './nwb-attributes-table.css'
 type Props = {
     name: string
     group: RemoteH5Group
-    nwbFile: RemoteH5File
+    nwbFile: RemoteH5File | MergedRemoteH5File
     excludeGroups?: boolean
 }
 
@@ -149,17 +149,23 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({group, nwbFile, ex
                 const g = groupsDatasetsState.groups.find(g => (g.path === path))
                 if (!g) {
                     const newGroup = await nwbFile.getGroup(path)
-                    groupsDatasetsDispatch({type: 'addGroup', group: newGroup})
-                    return // return after loading one, because then the state will change and this will be called again
+                    if (newGroup) {
+                        groupsDatasetsDispatch({type: 'addGroup', group: newGroup})
+                        return // return after loading one, because then the state will change and this will be called again
+                    }
                 }
-                await checkLoadDataForSubdatasets(g)
+                if (g) {
+                    await checkLoadDataForSubdatasets(g)
+                }
             }
             for (const path of groupsDatasetsState.expandedDatasetPaths) {
                 const d = groupsDatasetsState.datasets.find(d => (d.path === path))
                 if (!d) {
                     const newDataset = await nwbFile.getDataset(path)
-                    groupsDatasetsDispatch({type: 'addDataset', dataset: newDataset})
-                    return // return after loading one, because then the state will change and this will be called again
+                    if (newDataset) {
+                        groupsDatasetsDispatch({type: 'addDataset', dataset: newDataset})
+                        return // return after loading one, because then the state will change and this will be called again
+                    }
                 }
             }
             for (const path of groupsDatasetsState.expandedDatasetPaths) {

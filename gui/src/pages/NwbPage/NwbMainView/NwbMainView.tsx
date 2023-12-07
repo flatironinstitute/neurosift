@@ -1,7 +1,7 @@
 import { FunctionComponent, useContext, useEffect, useState } from "react"
 import Splitter from "../../../components/Splitter"
 import { NwbFileContext } from "../NwbFileContext"
-import { RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import NwbMainLeftPanel from "./NwbMainLeftPanel"
 import NwbMainViewMainPanel from "./NwbMainViewMainPanel"
 
@@ -34,7 +34,7 @@ const NwbMainView: FunctionComponent<Props> = ({width, height}) => {
     )
 }
 
-export const useGroup = (nwbFile: RemoteH5File, path: string) => {
+export const useGroup = (nwbFile: RemoteH5File | MergedRemoteH5File, path: string) => {
     const [group, setGroup] = useState<RemoteH5Group | undefined>(undefined)
     useEffect(() => {
         let canceled = false
@@ -49,7 +49,7 @@ export const useGroup = (nwbFile: RemoteH5File, path: string) => {
     return group
 }
 
-export const useDataset = (nwbFile: RemoteH5File, path: string) => {
+export const useDataset = (nwbFile: RemoteH5File | MergedRemoteH5File, path: string) => {
     const [dataset, setDataset] = useState<RemoteH5Dataset | undefined>(undefined)
     useEffect(() => {
         let canceled = false
@@ -64,7 +64,7 @@ export const useDataset = (nwbFile: RemoteH5File, path: string) => {
     return dataset
 }
 
-export const useDatasetData = (nwbFile: RemoteH5File, path: string | undefined) => {
+export const useDatasetData = (nwbFile: RemoteH5File | MergedRemoteH5File, path: string | undefined) => {
     const [data, setData] = useState<any | undefined>(undefined)
     const [dataset, setDataset] = useState<RemoteH5Dataset | undefined>(undefined)
     useEffect(() => {

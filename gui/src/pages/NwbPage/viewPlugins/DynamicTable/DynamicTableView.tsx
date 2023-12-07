@@ -146,12 +146,20 @@ const DynamicTableView: FunctionComponent<Props> = ({ width, height, path, refer
             if (!colnames) return
             for (const colname of colnames) {
                 const ds0 = await nwbFile.getDataset(path + '/' + colname)
+                if (!ds0) {
+                    console.warn(`In DynamicTableView, dataset not found: ${path}/${colname}`)
+                    continue
+                }
                 if (ds0.shape.length !== 1) {
                     console.warn(`In DynamicTableView, unexpected shape for ${path}/${colname}`, ds0.shape)
                     continue
                 }
                 const d = await nwbFile.getDatasetData(path + '/' + colname, {})
                 if (canceled) return
+                if (!d) {
+                    console.warn(`In DynamicTableView, dataset data not found: ${path}/${colname}`)
+                    continue
+                }
                 dataDispatch({type: 'set', key: colname, data: Array.from(d)})
             }
         }

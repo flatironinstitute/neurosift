@@ -4,14 +4,14 @@ import { serializeBigInt, valueToString } from "../BrowseNwbView/BrowseNwbView"
 import { NwbFileContext } from "../NwbFileContext"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 import { getEtag } from "../NwbPage"
-import { RemoteH5File } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5File } from "../RemoteH5File/RemoteH5File"
 import { useDatasetData, useGroup } from "./NwbMainView"
 import SelectedNeurodataItemsWidget from "./SelectedNeurodataItemsWidget"
 
 type Props = {
     width: number
     height: number
-    nwbFile: RemoteH5File
+    nwbFile: RemoteH5File | MergedRemoteH5File
 }
 
 const labelMap: {name: string, newName: string, renderer?: (val: any) => string}[] = [
@@ -113,7 +113,7 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({width, height, nwbFile}) =>
 }
 
 type DatasetDataViewProps = {
-    nwbFile: RemoteH5File
+    nwbFile: RemoteH5File | MergedRemoteH5File
     path: string
     renderer?: (val: any) => string
 }
@@ -181,9 +181,17 @@ const DandiTable = () => {
     const [dandiAssetInfo, setDandiAssetInfo] = useState<DandiAssetInfo | undefined>(undefined)
     const [dandisetInfo, setDandisetInfo] = useState<DandisetInfo | undefined>(undefined)
 
+    let nwbFileUrl: string
+    if (nwbFile instanceof MergedRemoteH5File) {
+        nwbFileUrl = nwbFile.getFiles()[0].url
+    }
+    else {
+        nwbFileUrl = nwbFile.url
+    }
+
     useEffect(() => {
         const getDandiAssetInfo = async () => {
-            const etag = await getEtag(nwbFile.url)
+            const etag = await getEtag(nwbFileUrl)
             if (!etag) return
             const assetInfoUrl = `https://neurosift.org/computed/nwb/ETag/${etag.slice(0, 2)}/${etag.slice(2, 4)}/${etag.slice(4, 6)}/${etag}/dandi_asset_info.1.json`
             const resp = await fetch(assetInfoUrl)
@@ -197,7 +205,7 @@ const DandiTable = () => {
             setDandisetInfo(obj2)
         }
         getDandiAssetInfo()
-    }, [nwbFile])
+    }, [nwbFileUrl])
 
     if (!dandiAssetInfo) return <span />
 

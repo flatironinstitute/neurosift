@@ -2,7 +2,7 @@
 import { FunctionComponent, useContext, useEffect, useState } from "react"
 import RasterPlotView3 from "../../../BrowsePage/FileView/RasterPlotView3/RasterPlotView3"
 import { NwbFileContext } from "../../NwbFileContext"
-import { DatasetDataType, RemoteH5File, RemoteH5Group } from "../../RemoteH5File/RemoteH5File"
+import { DatasetDataType, MergedRemoteH5File, RemoteH5File, RemoteH5Group } from "../../RemoteH5File/RemoteH5File"
 
 type Props = {
     width: number
@@ -115,15 +115,15 @@ export class DirectSpikeTrainsClient {
     #blockSizeSec = 60 * 5
     #group: RemoteH5Group | undefined
     #spike_or_event: 'spike' | 'event' | undefined = undefined
-    constructor(private nwbFile: RemoteH5File, private path: string) {
+    constructor(private nwbFile: RemoteH5File | MergedRemoteH5File, private path: string) {
     }
     async initialize() {
         const path = this.path
         this.#group = await this.nwbFile.getGroup(path)
-        if (this.#group.datasets.find(ds => (ds.name === 'spike_times'))) {
+        if ((this.#group) && (this.#group.datasets.find(ds => (ds.name === 'spike_times')))) {
             this.#spike_or_event = 'spike'
         }
-        else if (this.#group.datasets.find(ds => (ds.name === 'event_times'))) {
+        else if ((this.#group) && (this.#group.datasets.find(ds => (ds.name === 'event_times')))) {
             this.#spike_or_event = 'event'
         }
         else {
@@ -132,10 +132,10 @@ export class DirectSpikeTrainsClient {
         this.#unitIds = (await this.nwbFile.getDatasetData(`${path}/id`, {})) as any as (any[] | undefined)
         this.#spikeTimesIndices = await this.nwbFile.getDatasetData(`${path}/${this.#spike_or_event}_times_index`, {})
         const v1 = await this.nwbFile.getDatasetData(`${path}/${this.#spike_or_event}_times`, {slice: [[0, 1]]})
-        const n = this.#spikeTimesIndices[this.#spikeTimesIndices.length - 1]
+        const n = this.#spikeTimesIndices ? this.#spikeTimesIndices[this.#spikeTimesIndices.length - 1] : 0
         const v2 = await this.nwbFile.getDatasetData(`${path}/${this.#spike_or_event}_times`, {slice: [[n - 1, n]]})
-        this.#startTimeSec = v1[0]
-        this.#endTimeSec = v2[0]
+        this.#startTimeSec = v1 ? v1[0] : 0
+        this.#endTimeSec = v2 ? v2[0] : 1
     }
     get startTimeSec() {
         return this.#startTimeSec
@@ -184,11 +184,13 @@ export class DirectSpikeTrainsClient {
             const path = this.path
             const tt0 = await this.nwbFile.getDatasetData(`${path}/${this.#spike_or_event}_times`, {slice: [[i1, i2]]})
 
-            const tt = Array.from(tt0.filter((t: number) => (t >= t1 && t < t2)))
-            ret.push({
-                unitId: this.#unitIds[ii],
-                spikeTimesSec: tt
-            })
+            if (tt0) {
+                const tt = Array.from(tt0.filter((t: number) => (t >= t1 && t < t2)))
+                ret.push({
+                    unitId: this.#unitIds[ii],
+                    spikeTimesSec: tt
+                })
+            }
         }
         return ret
     }
@@ -202,7 +204,12 @@ export class DirectSpikeTrainsClient {
         const i2 = this.#spikeTimesIndices[ii]
         const path = this.path
         const tt0 = await this.nwbFile.getDatasetData(`${path}/${this.#spike_or_event}_times`, {slice: [[i1, i2]]})
-        return Array.from(tt0)
+        if (tt0) {
+            return Array.from(tt0)
+        }
+        else {
+            return []
+        }
     }
 }
 

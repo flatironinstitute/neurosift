@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react"
 import TopLevelGroupContentPanel from "../BrowseNwbView/TopLevelGroupContentPanel"
-import { RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import UnitsContentPanel from "./UnitsContentPanel"
 import IntervalsContentPanel from "./IntervalsContentPanel"
 import { useGroup } from "./NwbMainView"
@@ -9,7 +9,7 @@ import ProcessingGroupContentPanel from "./ProcessingGroupContentPanel"
 type Props = {
     width: number
     height: number
-    nwbFile: RemoteH5File
+    nwbFile: RemoteH5File | MergedRemoteH5File
 }
 
 type Heading = {
@@ -87,7 +87,7 @@ const DefaultNwbFileView: FunctionComponent<Props> = ({width, height, nwbFile}) 
 }
 
 type TopLevelHeadingViewProps = {
-    nwbFile: RemoteH5File
+    nwbFile: RemoteH5File | MergedRemoteH5File
     heading: Heading
     width: number
 }
@@ -119,7 +119,7 @@ const TopLevelHeadingView: FunctionComponent<TopLevelHeadingViewProps> = ({nwbFi
 type TopLevelTitlePanelTextProps = {
     heading: Heading
     group: RemoteH5Group | undefined
-    nwbFile: RemoteH5File
+    nwbFile: RemoteH5File | MergedRemoteH5File
 }
 
 const TopLevelTitlePanelText: FunctionComponent<TopLevelTitlePanelTextProps> = ({heading, group, nwbFile}) => {
@@ -141,6 +141,7 @@ const UnitsTitlePanelText: FunctionComponent<TopLevelTitlePanelTextProps> = ({gr
         const load = async () => {
             const ids = await nwbFile.getDatasetData(`${group.path}/id`, {})
             if (canceled) return
+            if (!ids) return
             setNumUnits(ids.length)
         }
         load()
@@ -153,7 +154,7 @@ const UnitsTitlePanelText: FunctionComponent<TopLevelTitlePanelTextProps> = ({gr
 type TopLevelContentPanelProps = {
     heading: Heading
     group: RemoteH5Group
-    nwbFile: RemoteH5File
+    nwbFile: RemoteH5File | MergedRemoteH5File
     width: number
 }
 

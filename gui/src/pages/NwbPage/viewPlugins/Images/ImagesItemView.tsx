@@ -1,7 +1,7 @@
 import { FunctionComponent, useContext, useEffect, useMemo, useState } from "react"
 import { NwbFileContext } from "../../NwbFileContext"
 import { useDatasetData, useGroup } from "../../NwbMainView/NwbMainView"
-import { DatasetDataType, RemoteH5Dataset, RemoteH5File } from "../../RemoteH5File/RemoteH5File"
+import { DatasetDataType, MergedRemoteH5File, RemoteH5Dataset, RemoteH5File } from "../../RemoteH5File/RemoteH5File"
 
 type Props = {
     width: number
@@ -35,7 +35,7 @@ const ImagesItemView: FunctionComponent<Props> = ({ width, height, path }) => {
 }
 
 type ImageItemProps = {
-    nwbFile: RemoteH5File
+    nwbFile: RemoteH5File | MergedRemoteH5File
     path: string
     neurodataType: string
 }

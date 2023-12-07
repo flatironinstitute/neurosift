@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { useEffect, useState } from "react"
 import { useGroup } from "../../../NwbMainView/NwbMainView"
-import { DatasetDataType, RemoteH5Dataset, RemoteH5File } from "../../../RemoteH5File/RemoteH5File"
+import { DatasetDataType, MergedRemoteH5File, RemoteH5Dataset, RemoteH5File } from "../../../RemoteH5File/RemoteH5File"
 
 class TimestampFinder {
     #chunkSize = 100000
     #chunks: {[key: number]: DatasetDataType} = {}
-    constructor (private nwbFile: RemoteH5File, private timestampsDataset: RemoteH5Dataset, private estimatedSamplingFrequency: number) {
+    constructor (private nwbFile: RemoteH5File | MergedRemoteH5File, private timestampsDataset: RemoteH5Dataset, private estimatedSamplingFrequency: number) {
     }
     async getDataIndexForTime(time: number): Promise<number> {
         let iLower = 0
@@ -51,7 +51,13 @@ class TimestampFinder {
     async _get(i: number) {
         const chunkIndex = Math.floor(i / this.#chunkSize)
         if (!(chunkIndex in this.#chunks)) {
-            this.#chunks[chunkIndex] = await this.nwbFile.getDatasetData(this.timestampsDataset.path, {slice: [[chunkIndex * this.#chunkSize, (chunkIndex + 1) * this.#chunkSize]]})
+            const chunk = await this.nwbFile.getDatasetData(this.timestampsDataset.path, {slice: [[chunkIndex * this.#chunkSize, (chunkIndex + 1) * this.#chunkSize]]})
+            if (chunk) {
+                this.#chunks[chunkIndex] = chunk
+            }
+            else {
+                console.warn('Unable to get chunk', chunkIndex)
+            }
         }
         return this.#chunks[chunkIndex][i - chunkIndex * this.#chunkSize]
     }
@@ -62,13 +68,16 @@ class IrregularTimeseriesDataClient {
     #startTime: number | undefined = undefined
     #endTime: number | undefined = undefined
     #timestampFinder: TimestampFinder | undefined = undefined
-    constructor(private nwbFile: RemoteH5File, private objectPath: string) {
+    constructor(private nwbFile: RemoteH5File | MergedRemoteH5File, private objectPath: string) {
     }
     async initialize() {
         const timestampsDataset = await this.nwbFile.getDataset(`${this.objectPath}/timestamps`)
+        if (!timestampsDataset) throw Error(`Unable to get timestamps dataset: ${this.objectPath}/timestamps`)
         const numInitialTimestamps = Math.min(10000, timestampsDataset.shape[0])
         const initialTimestamps = await this.getTimestampsForDataIndices(0, numInitialTimestamps)
         const finalTimestamps = await this.getTimestampsForDataIndices(timestampsDataset.shape[0] - 10, timestampsDataset.shape[0])
+        if (!initialTimestamps) throw Error(`Unable to get initial timestamps: ${this.objectPath}/timestamps`)
+        if (!finalTimestamps) throw Error(`Unable to get final timestamps: ${this.objectPath}/timestamps`)
         this.#estimatedSamplingFrequency = getEstimatedSamplingFrequencyFromTimestamps(initialTimestamps)
         this.#startTime = initialTimestamps[0]
         let endTime = finalTimestamps[finalTimestamps.length - 1]
@@ -92,8 +101,10 @@ class IrregularTimeseriesDataClient {
     async getDataIndexForTime(time: number): Promise<number> {
         return await this.#timestampFinder!.getDataIndexForTime(time)
     }
-    async getTimestampsForDataIndices(i1: number, i2: number): Promise<DatasetDataType> {
-        return await this.nwbFile.getDatasetData(`${this.objectPath}/timestamps`, {slice: [[i1, i2]]})
+    async getTimestampsForDataIndices(i1: number, i2: number): Promise<DatasetDataType | undefined> {
+        const ret = await this.nwbFile.getDatasetData(`${this.objectPath}/timestamps`, {slice: [[i1, i2]]})
+        if (!ret) throw Error(`Unable to get timestamps: ${this.objectPath}/timestamps`)
+        return ret
     }
 }
 
@@ -102,12 +113,14 @@ class RegularTimeseriesDataClient {
     #startTime: number | undefined = undefined
     #endTime: number | undefined = undefined
     #dataShape: number[] | undefined = undefined
-    constructor(private nwbFile: RemoteH5File, private objectPath: string) {
+    constructor(private nwbFile: RemoteH5File | MergedRemoteH5File, private objectPath: string) {
     }
     async initialize() {
         const startingTimeDataset = await this.nwbFile.getDataset(`${this.objectPath}/starting_time`)
         const startingTime = (await this.nwbFile.getDatasetData(`${this.objectPath}/starting_time`, {})) as any as number
         const dataDataset = await this.nwbFile.getDataset(`${this.objectPath}/data`)
+        if (!startingTimeDataset) throw Error(`Unable to get starting_time dataset: ${this.objectPath}/starting_time`)
+        if (!dataDataset) throw Error(`Unable to get data dataset: ${this.objectPath}/data`)
         this.#samplingFrequency = (startingTimeDataset.attrs['rate'] as number) || 1 // set to 1 in case of rate=0 to avoid division by zero
         this.#startTime = startingTime
         this.#endTime = this.#startTime + dataDataset.shape[0] / this.#samplingFrequency
@@ -142,12 +155,12 @@ interface NwbTimeseriesDataClient {
     endTime: number | undefined
     estimatedSamplingFrequency: number | undefined
     getDataIndexForTime: (time: number) => Promise<number>
-    getTimestampsForDataIndices: (i1: number, i2: number) => Promise<DatasetDataType>
+    getTimestampsForDataIndices: (i1: number, i2: number) => Promise<DatasetDataType | undefined>
 }
 
-export const useNwbTimeseriesDataClient = (nwbFile: RemoteH5File, objectPath: string) => {
+export const useNwbTimeseriesDataClient = (nwbFile: RemoteH5File | MergedRemoteH5File, objectPath: string) => {
     const group = useGroup(nwbFile, objectPath)
-    const [dataClient, setDataClient] = useState<NwbTimeseriesDataClient | undefined>(undefined)
+    const [dataClient, setDataClient] = useState<NwbTimeseriesDataClient>()
     useEffect(() => {
         if (!nwbFile) return
         if (!group) return

@@ -12,11 +12,7 @@ export type Route = {
     page: 'test'
 } | {
     page: 'nwb'
-    url: string
-    dandiAssetUrl?: string
-} | {
-    page: 'avi'
-    url: string
+    url: string[]
 } | {
     page: 'github-auth'
 }
@@ -28,6 +24,12 @@ const useRoute = () => {
     const query = useMemo(() => (parseSearchString(search)), [search])
     const p = query.p || '/'
     const route: Route = useMemo(() => {
+        if (typeof p !== 'string') {
+            console.warn('Unexpected type for p', typeof p)
+            return {
+                page: 'home'
+            }
+        }
         if (p === '/about') {
             return {
                 page: 'about'
@@ -54,16 +56,16 @@ const useRoute = () => {
         else if (p === '/nwb') {
             return {
                 page: 'nwb',
-                url: query.url,
-                dandiAssetUrl: query['dandi-asset'] || undefined
+                url: typeof query.url === 'string' ? [query.url] : query.url
             }
         }
-        else if (p === '/avi') {
-            return {
-                page: 'avi',
-                url: query.url
-            }
-        }
+        // no longer supported
+        // else if (p === '/avi') {
+        //     return {
+        //         page: 'avi',
+        //         url: query.url
+        //     }
+        // }
         else {
             return {
                 page: 'home'
@@ -88,14 +90,12 @@ const useRoute = () => {
         else if (r.page === 'nwb') {
             newQuery.p = '/nwb'
             newQuery.url = r.url
-            if (r.dandiAssetUrl) {
-                newQuery['dandi-asset'] = r.dandiAssetUrl
-            }
         }
-        else if (r.page === 'avi') {
-            newQuery.p = '/avi'
-            newQuery.url = r.url
-        }
+        // no longer supported
+        // else if (r.page === 'avi') {
+        //     newQuery.p = '/avi'
+        //     newQuery.url = r.url
+        // }
         const newSearch = queryToQueryString(newQuery)
         navigate(location.pathname + newSearch)
     }, [navigate, location.pathname, query])
@@ -107,19 +107,46 @@ const useRoute = () => {
 }
 
 const parseSearchString = (search: string) => {
-    const query: { [key: string]: string } = {}
+    const query: { [key: string]: string | string[] } = {}
     const a = search.slice(1).split('&')
     for (const s of a) {
         const b = s.split('=')
-        query[b[0]] = b[1]
+        const key = b[0]
+        const value = b[1]
+        if ((key in query) && (query[key])) {
+            if (Array.isArray(query[key])) {
+                (query[key] as string[]).push(value)
+            }
+            else if (typeof query[key] === 'string') {
+                query[key] = [query[key] as string, value]
+            }
+            else {
+                console.warn('Unexpected query[key] type in parseSearchString', typeof query[key])
+            }
+        }
+        else {
+            query[key] = value
+        }
     }
     return query
 }
 
-const queryToQueryString = (query: { [key: string]: string }) => {
+const queryToQueryString = (query: { [key: string]: string | string[] }) => {
     const a: string[] = []
     for (const key in query) {
-        a.push(`${key}=${query[key]}`)
+        if (query[key]) {
+            if (Array.isArray(query[key])) {
+                for (const value of (query[key] as string[])) {
+                    a.push(`${key}=${value}`)
+                }
+            }
+            else if (typeof query[key] === 'string') {
+                a.push(`${key}=${query[key]}`)
+            }
+            else {
+                console.warn('Unexpected query[key] type in queryToQueryString', typeof query[key])
+            }
+        }
     }
     return '?' + a.join('&')
 }

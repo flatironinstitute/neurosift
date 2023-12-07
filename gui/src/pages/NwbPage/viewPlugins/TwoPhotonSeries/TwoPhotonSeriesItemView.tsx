@@ -7,7 +7,7 @@ import { NwbFileContext } from "../../NwbFileContext"
 import { useDataset } from "../../NwbMainView/NwbMainView"
 import { getEtag, headRequest } from "../../NwbPage"
 import { Canceler } from "../../RemoteH5File/helpers"
-import { DatasetDataType, RemoteH5File } from "../../RemoteH5File/RemoteH5File"
+import { DatasetDataType, MergedRemoteH5File, RemoteH5File } from "../../RemoteH5File/RemoteH5File"
 import { useNwbTimeseriesDataClient } from "../TimeSeries/TimeseriesItemView/NwbTimeseriesDataClient"
 import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../TimeSeries/TimeseriesItemView/TimeseriesSelectionBar"
 import MultiRangeSlider from "./MultiRangeSlider/MultiRangeSlider"
@@ -27,7 +27,9 @@ type ImageData = {
     data: DatasetDataType
 }
 
-const useComputedDataDatUrl = (nwbFile: RemoteH5File, path: string | undefined) => {
+const useComputedDataDatUrl = (nwbFile: RemoteH5File | MergedRemoteH5File, path: string | undefined) => {
+    return undefined // no longer used
+    /*
     const [computedDataDatUrl, setComputedDataDatUrl] = useState<string | undefined>(undefined)
     useEffect(() => {
         let canceled = false
@@ -48,6 +50,7 @@ const useComputedDataDatUrl = (nwbFile: RemoteH5File, path: string | undefined) 
         return () => {canceled = true}
     }, [nwbFile, path])
     return computedDataDatUrl
+    */
 }
 
 const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}) => {
@@ -91,20 +94,21 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}
 
     const computedDataDatUrl = useComputedDataDatUrl(nwbFile, dataDataset?.path)
 
-    // determine whether to use precomputed data.dat or read from nwb file
-    let usePrecomputed: boolean
-    const isProbablyLocalDataset = nwbFile.url.startsWith('http://')
-    if (isProbablyLocalDataset) {
-        usePrecomputed = false
-    }
-    else {
-        if (queryParams.dev1 === '1') {
-            usePrecomputed = false
-        }
-        else {
-            usePrecomputed = true
-        }
-    }
+    // // determine whether to use precomputed data.dat or read from nwb file
+    // let usePrecomputed: boolean
+    // const isProbablyLocalDataset = nwbFile.url.startsWith('http://')
+    // if (isProbablyLocalDataset) {
+    //     usePrecomputed = false
+    // }
+    // else {
+    //     if (queryParams.dev1 === '1') {
+    //         usePrecomputed = false
+    //     }
+    //     else {
+    //         usePrecomputed = true
+    //     }
+    // }
+    const usePrecomputed = false
 
     useEffect(() => {
         setLoading(true)
@@ -133,6 +137,7 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}
                     slice.push([currentPlane, currentPlane + 1])
                 }
                 x = await nwbFile.getDatasetData(dataDataset.path, {slice, canceler})
+                if (!x) throw Error(`Unable to read data from nwb file: ${dataDataset.path}`)
             }
 
             if (canceled) return
@@ -166,6 +171,9 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}
             const i1 = frameIndex
             const i2 = i1 + inc
             const tt = await timeseriesDataClient.getTimestampsForDataIndices(i2, i2 + 1)
+            if (!tt) {
+                throw Error('Unexpected: unable to get timestamps for data indices')
+            }
             setCurrentTime(tt[0])
         })()
     }), [timeseriesDataClient, frameIndex, setCurrentTime])

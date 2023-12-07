@@ -2,7 +2,7 @@
 import { FunctionComponent, useContext, useEffect, useState } from "react"
 import RasterPlotView3 from "../../../BrowsePage/FileView/RasterPlotView3/RasterPlotView3"
 import { NwbFileContext } from "../../NwbFileContext"
-import { DatasetDataType, RemoteH5File } from "../../RemoteH5File/RemoteH5File"
+import { DatasetDataType, MergedRemoteH5File, RemoteH5File } from "../../RemoteH5File/RemoteH5File"
 
 type Props = {
     width: number
@@ -49,13 +49,17 @@ export class LabeledEventsSpikeTrainsClient {
     #endTimeSec: number | undefined
     #blockSizeSec = 60 * 5
     #spikeTrains: {spikeTrain: number[], unitId: number | string}[] | undefined
-    constructor(private nwbFile: RemoteH5File, private path: string) {
+    constructor(private nwbFile: RemoteH5File | MergedRemoteH5File, private path: string) {
     }
     async initialize() {
         const path = this.path
         const dataDataset = await this.nwbFile.getDataset(path + '/data')
         const timestampsData = await this.nwbFile.getDatasetData(`${path}/timestamps`, {})
         const labelsData = await this.nwbFile.getDatasetData(`${path}/data`, {})
+
+        if (!dataDataset) throw Error(`Unable to load data dataset in LabeledEventsSpikeTrainsClient: ${path}/data`)
+        if (!labelsData) throw Error(`Unable to load labels data in LabeledEventsSpikeTrainsClient: ${path}/data`)
+        if (!timestampsData) throw Error(`Unable to load timestamps data in LabeledEventsSpikeTrainsClient: ${path}/timestamps`)
 
         const labelNames = dataDataset.attrs['labels']
 

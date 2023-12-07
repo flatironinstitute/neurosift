@@ -135,7 +135,7 @@ self.onmessage = function (e) {
             if (!group) {
                 sendResponse({
                     success: false,
-                    error: `Group not found: ${req.path || '<undefined>'}`
+                    error: `Group not found ***: ${req.path || '<undefined>'}`
                 })
                 return
             }
