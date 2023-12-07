@@ -76,12 +76,19 @@ export class RemoteH5File {
     }
     this.#groupCache[path] = null
     const dummyCanceler = {onCancel: []}
-    const resp = await postRemoteH5WorkerRequest({
-      type: 'getGroup',
-      url: this.metaUrl || this.url,
-      path,
-      chunkSize: this.metaUrl ? chunkSizeForMetaFile : defaultChunkSize
-    }, dummyCanceler)
+    let resp
+    try {
+      resp = await postRemoteH5WorkerRequest({
+        type: 'getGroup',
+        url: this.metaUrl || this.url,
+        path,
+        chunkSize: this.metaUrl ? chunkSizeForMetaFile : defaultChunkSize
+      }, dummyCanceler)
+    }
+    catch {
+      this.#groupCache[path] = {success: false}
+      return undefined
+    }
     this.#groupCache[path] = resp
     globalRemoteH5FileStats.getGroupCount ++
     return resp.group
@@ -100,12 +107,19 @@ export class RemoteH5File {
     }
     this.#datasetCache[path] = null
     const dummyCanceler = {onCancel: []}
-    const resp = await postRemoteH5WorkerRequest({
-      type: 'getDataset',
-      url: this.metaUrl || this.url,
-      path,
-      chunkSize: this.metaUrl ? chunkSizeForMetaFile : defaultChunkSize
-    }, dummyCanceler)
+    let resp
+    try {
+      resp = await postRemoteH5WorkerRequest({
+        type: 'getDataset',
+        url: this.metaUrl || this.url,
+        path,
+        chunkSize: this.metaUrl ? chunkSizeForMetaFile : defaultChunkSize
+      }, dummyCanceler)
+    }
+    catch (e) {
+      this.#datasetCache[path] = {success: false}
+      return undefined
+    }
     this.#datasetCache[path] = resp
     globalRemoteH5FileStats.getDatasetCount ++
     return resp.dataset
@@ -128,13 +142,19 @@ export class RemoteH5File {
 
     const { slice, allowBigInt, canceler } = o
     const dummyCanceler = {onCancel: []}
-    const resp = await postRemoteH5WorkerRequest({
-      type: 'getDatasetData',
-      url: urlToUse,
-      path,
-      slice,
-      chunkSize: urlToUse === this.metaUrl ? chunkSizeForMetaFile : defaultChunkSize,
-    }, canceler || dummyCanceler)
+    let resp
+    try {
+      resp = await postRemoteH5WorkerRequest({
+        type: 'getDatasetData',
+        url: urlToUse,
+        path,
+        slice,
+        chunkSize: urlToUse === this.metaUrl ? chunkSizeForMetaFile : defaultChunkSize,
+      }, canceler || dummyCanceler)
+    }
+    catch {
+      return undefined
+    }
     const { data } = resp
     let x = data
     if (!allowBigInt) {
@@ -178,7 +198,8 @@ export class MergedRemoteH5File {
     }
     console.log(`Got ${allGroups.length} groups`, path)
     if (allGroups.length === 0) return undefined
-    return mergeGroups(allGroups)
+    const ret = mergeGroups(allGroups)
+    return ret
   }
   async getDataset(path: string): Promise<RemoteH5Dataset | undefined> {
     for (const f of this.#files) {
