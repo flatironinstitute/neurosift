@@ -52,6 +52,7 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({width, height}) => {
             setLoadingMessage(`Loading ${path}...`)
             const gr = await nwbFile.getGroup(path)
             if (canceled) return
+            if (!gr) return
             const nt = gr.attrs['neurodata_type']
             if (neurodataTypeInheritsFrom(nt, 'TimeSeries')) {
                 try {
@@ -61,9 +62,11 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({width, height}) => {
                     if (timestampsSubdataset) {
                         const v1 = await nwbFile.getDatasetData(timestampsSubdataset.path, {slice: [[0, 1]]})
                         if (canceled) return
+                        if (!v1) return
                         const N = timestampsSubdataset.shape[0]
                         const v2 = await nwbFile.getDatasetData(timestampsSubdataset.path, {slice: [[N - 1, N]]})
                         if (canceled) return
+                        if (!v2) return
                         const startTime = v1[0]
                         const endTime = v2[0]
                         timeseriesAlignmentDispatch({

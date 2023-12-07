@@ -42,26 +42,36 @@ export const globalRemoteH5FileStats = {
   numPendingRequests: 0
 }
 
+type GetGroupResponse = {
+  success: boolean
+  group?: RemoteH5Group
+}
+
+type GetDatasetResponse = {
+  success: boolean
+  dataset?: RemoteH5Dataset
+}
+
 
 export class RemoteH5File {
-  #groupCache: { [path: string]: RemoteH5Group | null } = {} // null means in progress
-  #datasetCache: { [path: string]: RemoteH5Dataset | null } = {} // null means in progress
+  #groupCache: { [path: string]: GetGroupResponse | null } = {} // null means in progress
+  #datasetCache: { [path: string]: GetDatasetResponse | null } = {} // null means in progress
   constructor(public url: string, private metaUrl: string | undefined) {
 
   }
   get dataIsRemote() {
     return !this.url.startsWith('http://localhost')
   }
-  async getGroup(path: string): Promise<RemoteH5Group> {
+  async getGroup(path: string): Promise<RemoteH5Group | undefined> {
     const cc = this.#groupCache[path]
-    if (cc) return cc
+    if (cc) return cc.group
     if (cc === null) {
       // in progress
       while (this.#groupCache[path] === null) {
         await new Promise(resolve => setTimeout(resolve, 100))
       }
       const cc2 = this.#groupCache[path]
-      if (cc2) return cc2
+      if (cc2) return cc2.group
       else throw Error('Unexpected')
     }
     this.#groupCache[path] = null
@@ -72,20 +82,20 @@ export class RemoteH5File {
       path,
       chunkSize: this.metaUrl ? chunkSizeForMetaFile : defaultChunkSize
     }, dummyCanceler)
-    this.#groupCache[path] = resp.group
+    this.#groupCache[path] = resp
     globalRemoteH5FileStats.getGroupCount ++
     return resp.group
   }
-  async getDataset(path: string): Promise<RemoteH5Dataset> {
+  async getDataset(path: string): Promise<RemoteH5Dataset | undefined> {
     const cc = this.#datasetCache[path]
-    if (cc) return cc
+    if (cc) return cc.dataset
     if (cc === null) {
       // in progress
       while (this.#datasetCache[path] === null) {
         await new Promise(resolve => setTimeout(resolve, 100))
       }
       const cc2 = this.#datasetCache[path]
-      if (cc2) return cc2
+      if (cc2) return cc2.dataset
       else throw Error('Unexpected')
     }
     this.#datasetCache[path] = null
@@ -96,11 +106,11 @@ export class RemoteH5File {
       path,
       chunkSize: this.metaUrl ? chunkSizeForMetaFile : defaultChunkSize
     }, dummyCanceler)
-    this.#datasetCache[path] = resp.dataset
+    this.#datasetCache[path] = resp
     globalRemoteH5FileStats.getDatasetCount ++
     return resp.dataset
   }
-  async getDatasetData(path: string, o: { slice?: [number, number][], allowBigInt?: boolean, canceler?: Canceler}): Promise<DatasetDataType> {
+  async getDatasetData(path: string, o: { slice?: [number, number][], allowBigInt?: boolean, canceler?: Canceler}): Promise<DatasetDataType | undefined> {
     if (o.slice) {
       for (const ss of o.slice) {
         if (isNaN(ss[0]) || isNaN(ss[1])) {
@@ -110,6 +120,7 @@ export class RemoteH5File {
       }
     }
     const ds = await this.getDataset(path)
+    if (!ds) return undefined
     let urlToUse: string = this.metaUrl || this.url
     if (product(ds.shape) > 100) {
       urlToUse = this.url
@@ -150,6 +161,125 @@ export class RemoteH5File {
     return x
   }
 }
+
+export class MergedRemoteH5File {
+  #files: RemoteH5File[]
+  constructor(files: (RemoteH5File)[]) {
+    this.#files = files
+  }
+  get dataIsRemote() {
+    return this.#files.some(f => f.dataIsRemote)
+  }
+  async getGroup(path: string): Promise<RemoteH5Group | undefined> {
+    const allGroups: RemoteH5Group[] = []
+    for (const f of this.#files) {
+      const gg = await f.getGroup(path)
+      if (gg) allGroups.push(gg)
+    }
+    console.log(`Got ${allGroups.length} groups`, path)
+    if (allGroups.length === 0) return undefined
+    return mergeGroups(allGroups)
+  }
+  async getDataset(path: string): Promise<RemoteH5Dataset | undefined> {
+    for (const f of this.#files) {
+      const dd = await f.getDataset(path)
+      if (dd) {
+        // just return the first one
+        return dd
+      }
+    }
+    return undefined
+  }
+  async getDatasetData(path: string, o: { slice?: [number, number][], allowBigInt?: boolean, canceler?: Canceler}): Promise<DatasetDataType | undefined> {
+    let canceled = false
+    o.canceler?.onCancel.push(() => {
+      canceled = true
+    })
+    for (const f of this.#files) {
+      const dd = await f.getDatasetData(path, o)
+      if (dd) {
+        // just return the first one
+        return dd
+      }
+      if (canceled) return undefined
+    }
+    return undefined
+  }
+  getFiles() {
+    return this.#files
+  }
+}
+
+const mergeGroups = (groups: RemoteH5Group[]): RemoteH5Group => {
+  if (groups.length === 0) throw Error('Unexpected groups.length == 0')
+  const ret: RemoteH5Group = {
+    path: groups[0].path,
+    subgroups: [],
+    datasets: [],
+    attrs: {}
+  }
+  const allSubgroupNames: string[] = []
+  const allDatasetNames: string[] = []
+  for (const g of groups) {
+    for (const sg of g.subgroups) {
+      if (!allSubgroupNames.includes(sg.name)) {
+        allSubgroupNames.push(sg.name)
+      }
+    }
+    for (const ds of g.datasets) {
+      if (!allDatasetNames.includes(ds.name)) {
+        allDatasetNames.push(ds.name)
+      }
+    }
+  }
+  for (const sgName of allSubgroupNames) {
+    const subgroups: RemoteH5Subgroup[] = []
+    for (const g of groups) {
+      const sg = g.subgroups.find(s => (s.name === sgName))
+      if (sg) subgroups.push(sg)
+    }
+    ret.subgroups.push(mergeSubgroups(subgroups))
+  }
+  for (const dsName of allDatasetNames) {
+    const datasets: RemoteH5Subdataset[] = []
+    for (const g of groups) {
+      const ds = g.datasets.find(d => (d.name === dsName))
+      if (ds) datasets.push(ds)
+    }
+    // for the datasets we just use the first one
+    if (datasets.length > 0) {
+      ret.datasets.push(datasets[0])
+    }
+  }
+  for (const g of groups) {
+    for (const key in g.attrs) {
+      if (!(key in ret.attrs)) {
+        // the first takes precedence
+        ret.attrs[key] = g.attrs[key]
+      }
+    }
+  }
+  return ret
+}
+
+const mergeSubgroups = (subgroups: RemoteH5Subgroup[]): RemoteH5Subgroup => {
+  if (subgroups.length === 0) throw Error('Unexpected subgroups.length == 0')
+  const ret: RemoteH5Subgroup = {
+    name: subgroups[0].name,
+    path: subgroups[0].path,
+    attrs: {}
+  }
+  for (const g of subgroups) {
+    for (const key in g.attrs) {
+      if (!(key in ret.attrs)) {
+        // the first takes precedence
+        ret.attrs[key] = g.attrs[key]
+      }
+    }
+  }
+  return ret
+}
+
 const globalRemoteH5Files: { [url: string]: RemoteH5File } = {}
 export const getRemoteH5File = async (url: string, metaUrl: string | undefined) => {
   const kk = url + '|' + metaUrl
@@ -157,6 +287,21 @@ export const getRemoteH5File = async (url: string, metaUrl: string | undefined) 
     globalRemoteH5Files[kk] = new RemoteH5File(url, metaUrl)
   }
   return globalRemoteH5Files[kk]
+}
+
+const globalMergedRemoteH5Files: { [kk: string]: MergedRemoteH5File } = {}
+export const getMergedRemoteH5File = async (urls: string[], metaUrls: (string | undefined)[]) => {
+  if (urls.length === 0) throw Error(`Length of urls must be > 0`)
+  if (metaUrls.length !== urls.length) throw Error(`Length of metaUrls must be equal to length of urls`)
+  if (urls.length === 1) {
+    return await getRemoteH5File(urls[0], metaUrls[0])
+  }
+  const kk = urls.join('|') + '|||' + metaUrls.join('|')
+  if (!globalMergedRemoteH5Files[kk]) {
+    const files = await Promise.all(urls.map((url, i) => getRemoteH5File(url, metaUrls[i])))
+    globalMergedRemoteH5Files[kk] = new MergedRemoteH5File(files)
+  }
+  return globalMergedRemoteH5Files[kk]
 }
 
 const product = (x: number[]) => {

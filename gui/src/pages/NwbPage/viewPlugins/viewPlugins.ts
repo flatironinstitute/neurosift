@@ -14,7 +14,7 @@ import RasterPlotUnitsItemView from "./Units/RasterPlotUnitsItemView"
 import AutocorrelogramsUnitsItemView from "./Units/AutocorrelogramsUnitsItemView"
 import DirectRasterPlotUnitsItemView from "./Units/DirectRasterPlotUnitsItemView"
 import SpatialSeriesXYView from "./SpatialSeries/SpatialSeriesWidget/SpatialSeriesXYView"
-import { RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import PSTHItemView from "./PSTH/PSTHItemView"
 import LabeledEventsItemView from "./LabeledEvents/LabeledEventsItemView"
 import BehavioralEventsItemView from "./BehavioralEvents/BehavioralEventsItemView"
@@ -35,7 +35,7 @@ export type ViewPlugin = {
     component: FunctionComponent<Props>
     buttonLabel?: string
     remoteDataOnly?: boolean
-    checkEnabled?: (nwbFile: RemoteH5File, path: string) => Promise<boolean>
+    checkEnabled?: (nwbFile: RemoteH5File | MergedRemoteH5File, path: string) => Promise<boolean>
     isTimeView?: boolean
     getCustomPythonCode?: (group: RemoteH5Group) => string
 }
@@ -70,8 +70,9 @@ viewPlugins.push({
     component: SpatialSeriesXYView,
     buttonLabel: 'X/Y',
     isTimeView: true,
-    checkEnabled: async (nwbFile: RemoteH5File, path: string) => {
+    checkEnabled: async (nwbFile: RemoteH5File | MergedRemoteH5File, path: string) => {
         const grp = await nwbFile.getGroup(path)
+        if (!grp) return false
         const ds = grp.datasets.find(ds => (ds.name === 'data'))
         if (!ds) return false
         if (ds.shape.length !== 2) return false
@@ -131,8 +132,9 @@ viewPlugins.push({
     neurodataType: 'TimeIntervals',
     defaultForNeurodataType: false,
     component: PSTHItemView,
-    checkEnabled: async (nwbFile: RemoteH5File, path: string) => {
+    checkEnabled: async (nwbFile: RemoteH5File | MergedRemoteH5File, path: string) => {
         const rootGroup = await nwbFile.getGroup('/')
+        if (!rootGroup) return false
         return rootGroup.subgroups.find(sg => (sg.name === 'units')) ? true : false
     },
     isTimeView: false
@@ -233,7 +235,7 @@ viewPlugins.push({
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-export const findViewPluginsForType = (neurodataType: string, o: {nwbFile: RemoteH5File}): {viewPlugins: ViewPlugin[], defaultViewPlugin: ViewPlugin | undefined} => {
+export const findViewPluginsForType = (neurodataType: string, o: {nwbFile: RemoteH5File | MergedRemoteH5File}): {viewPlugins: ViewPlugin[], defaultViewPlugin: ViewPlugin | undefined} => {
     const viewPluginsRet: ViewPlugin[] = []
     let defaultViewPlugin: ViewPlugin | undefined
     let nt: string | undefined = neurodataType

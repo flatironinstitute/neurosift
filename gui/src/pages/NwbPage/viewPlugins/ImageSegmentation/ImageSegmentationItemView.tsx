@@ -3,7 +3,7 @@ import { FunctionComponent, useContext, useEffect, useState } from "react"
 import Splitter from "../../../../components/Splitter"
 import { NwbFileContext } from "../../NwbFileContext"
 import { useGroup } from "../../NwbMainView/NwbMainView"
-import { RemoteH5File, RemoteH5Group } from "../../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5File, RemoteH5Group } from "../../RemoteH5File/RemoteH5File"
 import PlaneSegmentationView from "./PlaneSegmentationView"
 
 type Props = {
@@ -55,7 +55,7 @@ type LeftPanelProps = {
     width: number
     height: number
     group: RemoteH5Group
-    nwbFile: RemoteH5File
+    nwbFile: RemoteH5File | MergedRemoteH5File
     selectedSegmentationName?: string
     setSelectedSegmentationName: (name: string) => void
 }

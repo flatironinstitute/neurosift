@@ -1,10 +1,10 @@
 import { Canceler } from "../../../RemoteH5File/helpers";
-import { RemoteH5Dataset, RemoteH5File } from "../../../RemoteH5File/RemoteH5File";
+import { MergedRemoteH5File, RemoteH5Dataset, RemoteH5File } from "../../../RemoteH5File/RemoteH5File";
 
 class TimeseriesDatasetChunkingClient {
     #chunks: {[k: number]: number[][]} = {}
     #noiseLevelForAutoSeparation: number | undefined
-    constructor(private nwbFile: RemoteH5File, private dataset: RemoteH5Dataset, private chunkSize: number, private o: {visibleChannelsRange?: [number, number], autoChannelSeparation?: number}={}) {
+    constructor(private nwbFile: RemoteH5File | MergedRemoteH5File, private dataset: RemoteH5Dataset, private chunkSize: number, private o: {visibleChannelsRange?: [number, number], autoChannelSeparation?: number}={}) {
     }
     async getConcatenatedChunk(startChunkIndex: number, endChunkIndex: number, canceler: Canceler): Promise<{concatenatedChunk: number[][], completed: boolean}> {
         if ((this.o.autoChannelSeparation) && (this.#noiseLevelForAutoSeparation === undefined)) {
@@ -65,6 +65,7 @@ class TimeseriesDatasetChunkingClient {
         if (shape.length > 2) throw Error('TimeseriesDatasetChunkingClient not implemented implemented for shape.length > 2')
         const slice: [number, number][] = shape.length === 1 ? [[i1, i2]] : [[i1, i2], channelSlice]
         const data = await this.nwbFile.getDatasetData(this.dataset.path, {slice, canceler})
+        if (!data) throw Error(`Unable to get dataset data: ${this.dataset.path}`)
         const chunk: number[][] = []
         for (let i = 0; i < N1; i ++) {
             const x: number[] = []

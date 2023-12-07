@@ -2,14 +2,14 @@ import { FunctionComponent, useMemo } from "react"
 import Hyperlink from "../../../components/Hyperlink"
 import '../nwb-table.css'
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
-import { RemoteH5File, RemoteH5Group, RemoteH5Subgroup } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5File, RemoteH5Group, RemoteH5Subgroup } from "../RemoteH5File/RemoteH5File"
 import { useSelectedItemViews } from "../SelectedItemViewsContext"
 import ViewPluginButton from "../viewPlugins/ViewPluginButton"
 import { findViewPluginsForType } from "../viewPlugins/viewPlugins"
 import { useGroup } from "./NwbMainView"
 
 type Props = {
-    nwbFile: RemoteH5File
+    nwbFile: RemoteH5File | MergedRemoteH5File
     group: RemoteH5Group
 }
 
@@ -48,7 +48,7 @@ const IntervalsContentPanel: FunctionComponent<Props> = ({nwbFile, group}) => {
 }
 
 type GroupTableRowProps = {
-    nwbFile: RemoteH5File
+    nwbFile: RemoteH5File | MergedRemoteH5File
     subgroup: RemoteH5Subgroup
     selected: boolean
     onToggleSelect: (neurodataType: string) => void

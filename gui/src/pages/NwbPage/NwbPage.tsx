@@ -1,13 +1,12 @@
-import { FunctionComponent, useEffect, useReducer, useState } from "react"
+import { FunctionComponent, useEffect, useMemo, useReducer, useState } from "react"
 import { useRtcshare } from "../../rtcshare/useRtcshare"
 import { useCustomStatusBarStrings } from "../../StatusBar"
 import useRoute from "../../useRoute"
 import { NwbFileContext } from "./NwbFileContext"
 import { SetupNwbOpenTabs } from "./NwbOpenTabsContext"
 import NwbTabWidget from "./NwbTabWidget"
-import { getRemoteH5File, globalRemoteH5FileStats, RemoteH5File } from "./RemoteH5File/RemoteH5File"
+import { getMergedRemoteH5File, getRemoteH5File, globalRemoteH5FileStats, MergedRemoteH5File, RemoteH5File } from "./RemoteH5File/RemoteH5File"
 import { SelectedItemViewsContext, selectedItemViewsReducer } from "./SelectedItemViewsContext"
-import { fetchJson } from "./viewPlugins/ImageSeries/ImageSeriesItemView"
 import getAuthorizationHeaderForUrl from "./getAuthorizationHeaderForUrl"
 
 type Props = {
@@ -17,32 +16,29 @@ type Props = {
 
 // const url = 'https://api.dandiarchive.org/api/assets/29ba1aaf-9091-469a-b331-6b8ab818b5a6/download/'
 
-const defaultId = 'c86cdfba-e1af-45a7-8dfd-d243adc20ced'
-const defaultUrl = `https://dandiarchive.s3.amazonaws.com/blobs/${defaultId.slice(0, 3)}/${defaultId.slice(3, 6)}/${defaultId}`
-
 const NwbPage: FunctionComponent<Props> = ({width, height}) => {
     const {route, setRoute} = useRoute()
 
-    useEffect(() => {
-        let canceled = false
-        ; (async () => {
-            if ((route.page === 'nwb') && (!route.url) && (route.dandiAssetUrl)) {
-                const info = await fetchJson(route.dandiAssetUrl)
-                if (canceled) return
-                const blobUrl = info['contentUrl'].find((x: any) => (x.startsWith('https://dandiarchive.s3.amazonaws.com/blobs')))
-                setRoute({
-                    ...route,
-                    url: blobUrl
-                })
-            }
-        })()
-        return () => {canceled = true}
-    }, [route.page, route, setRoute])
+    // useEffect(() => {
+    //     let canceled = false
+    //     ; (async () => {
+    //         if ((route.page === 'nwb') && (!route.url) && (route.dandiAssetUrl)) {
+    //             const info = await fetchJson(route.dandiAssetUrl)
+    //             if (canceled) return
+    //             const blobUrl = info['contentUrl'].find((x: any) => (x.startsWith('https://dandiarchive.s3.amazonaws.com/blobs')))
+    //             setRoute({
+    //                 ...route,
+    //                 url: blobUrl
+    //             })
+    //         }
+    //     })()
+    //     return () => {canceled = true}
+    // }, [route.page, route, setRoute])
 
     if ((route.page === 'nwb') && (!route.url)) {
-        if (route.dandiAssetUrl) {
-            return <div style={{paddingLeft: 20}}>Obtaining asset blob URL from {route.dandiAssetUrl}</div>
-        }
+        // if (route.dandiAssetUrl) {
+        //     return <div style={{paddingLeft: 20}}>Obtaining asset blob URL from {route.dandiAssetUrl}</div>
+        // }
         return <div style={{paddingLeft: 20}}>No url query parameter</div>
     }
     return (
@@ -55,8 +51,9 @@ const NwbPage: FunctionComponent<Props> = ({width, height}) => {
 
 const NwbPageChild: FunctionComponent<Props> = ({width, height}) => {
     const {route} = useRoute()
-    const url = route.page === 'nwb' ? route.url : route.page === 'test' ? defaultUrl : undefined
-    const [nwbFile, setNwbFile] = useState<RemoteH5File | undefined>(undefined)
+    if (route.page !== 'nwb') throw Error('Unexpected: route.page is not nwb')
+    const urlList = route.url
+    const [nwbFile, setNwbFile] = useState<RemoteH5File | MergedRemoteH5File | undefined>(undefined)
     const [selectedItemViewsState, selectedItemViewsDispatch] = useReducer(selectedItemViewsReducer, {selectedItemViews: []})
     const {client: rtcshareClient} = useRtcshare()
 
@@ -75,24 +72,24 @@ const NwbPageChild: FunctionComponent<Props> = ({width, height}) => {
     useEffect(() => {
         let canceled = false
         const load = async () => {
-            const urlResolved = await getResolvedUrl(url || defaultUrl)
-            const metaUrl = await getMetaUrl(urlResolved)
+            const urlListResolved = await getResolvedUrls(urlList)
+            const metaUrls = await getMetaUrls(urlListResolved)
             if (canceled) return
-            if ((!metaUrl) && (urlResolved) && (rtcshareClient)) {
-                console.info(`Requesting meta for ${urlResolved}`)
-                rtcshareClient.serviceQuery('neurosift-nwb-request', {
-                    type: 'request-meta-nwb',
-                    nwbUrl: urlResolved
-                })
-            }
-            const f = await getRemoteH5File(urlResolved, metaUrl)
+            // if ((!metaUrl) && (urlListResolved) && (rtcshareClient)) {
+            //     console.info(`Requesting meta for ${urlListResolved}`)
+            //     rtcshareClient.serviceQuery('neurosift-nwb-request', {
+            //         type: 'request-meta-nwb',
+            //         nwbUrl: urlListResolved
+            //     })
+            // }
+            const f = await getMergedRemoteH5File(urlListResolved, metaUrls)
             if (canceled) return
             setNwbFile(f)
         }
         load()
         return () => {canceled = true}
-    }, [url, rtcshareClient])
-    if (!nwbFile) return <div>Loading {url}</div>
+    }, [urlList, rtcshareClient])
+    if (!nwbFile) return <div>Loading {urlList}</div>
     return (
         <NwbFileContext.Provider value={nwbFile}>
             <SelectedItemViewsContext.Provider value={{selectedItemViewsState, selectedItemViewsDispatch}}>
@@ -152,7 +149,7 @@ export const getEtag = async (url: string) => {
 const urlQueryString = window.location.search
 const urlQueryParams = new URLSearchParams(urlQueryString)
 
-const getMetaUrl = async (url: string) => {
+const getMetaUrl = async (url: string): Promise<string | undefined> => {
     if (urlQueryParams.get('no-meta') === '1') return undefined
 
     const etag = await getEtag(url)
@@ -188,6 +185,11 @@ const getMetaUrl = async (url: string) => {
     // return undefined
 }
 
+const getMetaUrls = async (urlList: string[]) => {
+    const metaUrls = await Promise.all(urlList.map(url => getMetaUrl(url)))
+    return metaUrls
+}
+
 const getResolvedUrl = async (url: string) => {
     if (isDandiAssetUrl(url)) {
         const authorizationHeader = getAuthorizationHeaderForUrl(url)
@@ -198,6 +200,11 @@ const getResolvedUrl = async (url: string) => {
         }
     }
     return url
+}
+
+const getResolvedUrls = async (urlList: string[]) => {
+    const urlListResolved = await Promise.all(urlList.map(url => getResolvedUrl(url)))
+    return urlListResolved
 }
 
 const getRedirectUrl = async (url: string, headers: any) => {

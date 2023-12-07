@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { DatasetDataType, getRemoteH5File, RemoteH5File } from "../../../NwbPage/RemoteH5File/RemoteH5File"
+import { DatasetDataType, getRemoteH5File, MergedRemoteH5File, RemoteH5File } from "../../../NwbPage/RemoteH5File/RemoteH5File"
 
 class SpikeTrainsClientFromRemoteNwb {
-    #nwbFile: RemoteH5File | undefined
+    #nwbFile: RemoteH5File | MergedRemoteH5File | undefined
     #unitIds: DatasetDataType | undefined
     #spikeTimesIndices: DatasetDataType | undefined
     // #spikeTimes: DatasetDataType | undefined
@@ -16,9 +16,12 @@ class SpikeTrainsClientFromRemoteNwb {
         this.#nwbFile = nwbFile
         this.#unitIds = await nwbFile.getDatasetData('/units/id', {})
         this.#spikeTimesIndices = await nwbFile.getDatasetData('/units/spike_times_index', {})
+        if (!this.#spikeTimesIndices) throw Error(`Not able to get spike_times_index dataset: ${this.url}`)
         const v1 = await nwbFile.getDatasetData('/units/spike_times', {slice: [[0, 1]]})
+        if (!v1) throw Error(`Not able to get spike_times dataset: ${this.url}`)
         const n = this.#spikeTimesIndices[this.#spikeTimesIndices.length - 1]
         const v2 = await nwbFile.getDatasetData('/units/spike_times', {slice: [[n - 1, n]]})
+        if (!v2) throw Error(`Not able to get spike_times dataset: ${this.url}`)
         this.#startTimeSec = v1[0]
         this.#endTimeSec = v2[0]
     }
@@ -53,11 +56,13 @@ class SpikeTrainsClientFromRemoteNwb {
 
             const tt0 = await this.#nwbFile.getDatasetData('/units/spike_times', {slice: [[i1, Math.min(i2, i1 + 100)]]})
 
-            const tt = Array.from(tt0.filter((t: number) => (t >= t1 && t < t2)))
-            ret.push({
-                unitId: this.#unitIds[ii],
-                spikeTimesSec: tt
-            })
+            if (tt0) {
+                const tt = Array.from(tt0.filter((t: number) => (t >= t1 && t < t2)))
+                ret.push({
+                    unitId: this.#unitIds[ii],
+                    spikeTimesSec: tt
+                })
+            }
         }
         return ret
     }

@@ -1,17 +1,16 @@
-import { FunctionComponent, useContext, useEffect, useMemo, useReducer, useState } from "react"
+import { FunctionComponent, useEffect, useMemo, useReducer, useState } from "react"
 import Hyperlink from "../../../components/Hyperlink"
+import { useNwbOpenTabs } from "../NwbOpenTabsContext"
+import { MergedRemoteH5File, RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { useSelectedItemViews } from "../SelectedItemViewsContext"
 import '../nwb-table.css'
 import Abbreviate from "../viewPlugins/TimeSeries/TimeseriesItemView/Abbreviate"
-import { useNwbOpenTabs } from "../NwbOpenTabsContext"
-import { RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
-import { useSelectedItemViews } from "../SelectedItemViewsContext"
-import { useGroup } from "./NwbMainView"
-import { findViewPluginsForType } from "../viewPlugins/viewPlugins"
 import ViewPluginButton from "../viewPlugins/ViewPluginButton"
-import { NwbFileContext } from "../NwbFileContext"
+import { findViewPluginsForType } from "../viewPlugins/viewPlugins"
+import { useGroup } from "./NwbMainView"
 
 type Props = {
-    nwbFile: RemoteH5File
+    nwbFile: RemoteH5File | MergedRemoteH5File
     groupPath: string
 }
 
@@ -55,7 +54,9 @@ const ProcessingGroupContentPanel: FunctionComponent<Props> = ({nwbFile, groupPa
         const load = async () => {
             for (const p of loadedGroups.requestedPaths) {
                 const g = await nwbFile.getGroup(p)
-                dispatchLoadedGroups({type: 'set', path: p, group: g})
+                if (g) {
+                    dispatchLoadedGroups({type: 'set', path: p, group: g})
+                }
             }
         }
         load()
@@ -132,7 +133,7 @@ const ProcessingGroupContentPanel: FunctionComponent<Props> = ({nwbFile, groupPa
 
 type GroupTableRowProps = {
     name: string,
-    nwbFile: RemoteH5File
+    nwbFile: RemoteH5File | MergedRemoteH5File
     path: string
     selected: boolean
     onToggleSelect: (neurodataType: string) => void

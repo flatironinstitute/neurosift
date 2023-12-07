@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { FunctionComponent, useEffect, useState } from "react"
-import { RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../../RemoteH5File/RemoteH5File"
 
 type Props = {
     width: number
     height: number
     imageSegmentationGroup: RemoteH5Group
-    nwbFile: RemoteH5File
+    nwbFile: RemoteH5File | MergedRemoteH5File
     selectedSegmentationName: string
 }
 
@@ -23,7 +23,7 @@ const blockSize = 50
 class PlaneSegmentationClient {
     #imageMaskDataset: RemoteH5Dataset | undefined
     #blocks: {[i: number]: UnitMask[]} = {}
-    constructor(private nwbFile: RemoteH5File, private objectPath: string) {
+    constructor(private nwbFile: RemoteH5File | MergedRemoteH5File, private objectPath: string) {
     }
     async initialize() {
         this.#imageMaskDataset = await this.nwbFile.getDataset(`${this.objectPath}/image_mask`)
@@ -40,6 +40,7 @@ class PlaneSegmentationClient {
         const i1 = chunkIndex * blockSize
         const i2 = Math.min(this.shape[0], i1 + blockSize)
         const data = await this.nwbFile.getDatasetData(`${this.objectPath}/image_mask`, {slice: [[i1, i2], [0, this.shape[1]], [0, this.shape[2]]]})
+        if (!data) throw Error(`Unable to load image mask data`)
         const block: (UnitMask)[] = []
         for (let i = 0; i < i2 - i1; i++) {
             const plane: number[][] = []

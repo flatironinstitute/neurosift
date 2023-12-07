@@ -1,11 +1,11 @@
 import { FunctionComponent } from "react"
-import { RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import DynamicTableView from "../viewPlugins/DynamicTable/DynamicTableView"
 import ViewPluginButton from "../viewPlugins/ViewPluginButton"
 import viewPlugins from "../viewPlugins/viewPlugins"
 
 type Props = {
-    nwbFile: RemoteH5File
+    nwbFile: RemoteH5File | MergedRemoteH5File
     group: RemoteH5Group
     width: number
 }

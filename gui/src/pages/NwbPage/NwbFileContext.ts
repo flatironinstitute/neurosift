@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
-import { RemoteH5File } from "./RemoteH5File/RemoteH5File";
+import { MergedRemoteH5File, RemoteH5File } from "./RemoteH5File/RemoteH5File";
 
-type NwbFileContextType = RemoteH5File | null
+type NwbFileContextType = RemoteH5File | MergedRemoteH5File | null
 
 export const NwbFileContext = createContext<NwbFileContextType>(null)
 
