@@ -297,6 +297,7 @@ const GroupBySelectionComponent: FunctionComponent<{groupByVariable: string, set
                 if (ds.shape.length !== 1) continue
                 const slice = ds.shape[0] < 1000 ? undefined : [[0, 1000]] as [number, number][] // just check the first 1000 values
                 const dd = await nwbFile.getDatasetData(path + '/' + option, {slice})
+                if (!dd) throw Error(`Unable to get data for ${path}/${option}`)
                 if (canceled) return
                 const uniqueValues = [...new Set(dd)]
                 if (uniqueValues.length <= dd.length / 2) {

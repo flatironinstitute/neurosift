@@ -109,6 +109,7 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({ width, height, path }) 
         const load = async () => {
             let finished = false
             const tt = await dataClient.getTimestampsForDataIndices(startChunkIndex * chunkSize, endChunkIndex * chunkSize)
+            if (!tt) throw Error(`Unable to get timestamps for data indices ${startChunkIndex * chunkSize} to ${endChunkIndex * chunkSize}`)
             setLoading(true)
             while (!finished) {
                 try {

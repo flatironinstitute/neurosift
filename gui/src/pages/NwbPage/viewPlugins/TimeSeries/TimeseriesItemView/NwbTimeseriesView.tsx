@@ -136,6 +136,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
         const load = async () => {
             let finished = false
             const tt = await dataClient.getTimestampsForDataIndices(startChunkIndex * chunkSize, endChunkIndex * chunkSize)
+            if (!tt) throw Error(`Unable to get timestamps for data indices ${startChunkIndex * chunkSize} to ${endChunkIndex * chunkSize}`)
             while (!finished) {
                 try {
                     canceler = {onCancel: []}

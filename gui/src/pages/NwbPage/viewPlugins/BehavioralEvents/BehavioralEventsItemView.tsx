@@ -68,8 +68,10 @@ const BehavioralEventsItemView: FunctionComponent<Props> = ({width, height, path
             for (const grp of timeSeriesGroups) {
                 const timestampsData = await nwbFile.getDatasetData(grp.path + '/timestamps', {})
                 if (canceled) return
+                if (!timestampsData) throw Error('Unexpected: timestampsData is null')
                 const dataData = await nwbFile.getDatasetData(grp.path + '/data', {})
                 if (canceled) return
+                if (!dataData) throw Error('Unexpected: dataData is null')
                 const categories = uniqueSortedItems(Array.from(dataData))
                 beDataDispatch({
                     type: 'SET_SERIES',

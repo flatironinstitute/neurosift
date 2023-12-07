@@ -100,6 +100,7 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({w
         let canceled = false
         const load = async () => {
             const times = await nwbFile.getDatasetData(path + '/' + alignToVariable, {})
+            if (!times) throw Error(`Unable to load ${path}/${alignToVariable}`)
             if (canceled) return
             setAlignToTimes(Array.from(times))
         }
@@ -113,6 +114,7 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({w
         let canceled = false
         const load = async () => {
             const vals = await nwbFile.getDatasetData(path + '/' + groupByVariable, {})
+            if (!vals) throw Error(`Unable to load ${path}/${groupByVariable}`)
             if (canceled) return
             setGroupByValues(Array.from(vals))
         }
@@ -242,6 +244,7 @@ const PSTHGroupLegend: FunctionComponent<PSTHGroupLegendProps> = ({width, height
         let canceled = false
         const load = async () => {
             const vals = await nwbFile.getDatasetData(path + '/' + groupByVariable, {})
+            if (!vals) throw Error(`Unable to load ${path}/${groupByVariable}`)
             if (canceled) return
             setValues(Array.from(vals))
         }

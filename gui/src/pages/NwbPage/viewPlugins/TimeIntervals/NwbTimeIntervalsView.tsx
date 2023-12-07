@@ -27,6 +27,7 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({width, height, path}) =
             const scores: {colname: string, score: number, values: string[]}[] = []
             for (const colname of colnames) {
                 const d = await nwbFile.getDatasetData(`${path}/${colname}`, {})
+                if (!d) throw Error(`Unable to get dataset data for ${path}/${colname}`)
                 if (canceled) return
                 try {
                     const values = Array.from(d) as any as string[]

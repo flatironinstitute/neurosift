@@ -4,6 +4,7 @@ import { useRtcshare } from "../../../../rtcshare/useRtcshare"
 import NeurosiftItemView from "../../NeurosiftItemView/NeurosiftItemView"
 import { NwbFileContext } from "../../NwbFileContext"
 import { getEtag, headRequest } from "../../NwbPage"
+import { MergedRemoteH5File } from "../../RemoteH5File/RemoteH5File"
 
 type Props = {
     width: number
@@ -15,11 +16,20 @@ type Props = {
 const useRasterPlotUrl = () => {
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is null')
+
+    let nwbFileUrl: string
+    if (nwbFile instanceof MergedRemoteH5File) {
+        nwbFileUrl = nwbFile.getFiles()[0].url
+    }
+    else {
+        nwbFileUrl = nwbFile.url
+    }
+
     const [url, setUrl] = useState<string | null | undefined>(undefined)
     useEffect(() => {
         let canceled = false
         const load = async () => {
-            const etag = await getEtag(nwbFile.url)
+            const etag = await getEtag(nwbFileUrl)
             if (canceled) return
             if (!etag) {
                 setUrl(null)
@@ -34,7 +44,7 @@ const useRasterPlotUrl = () => {
         }
         load()
         return () => {canceled = true}
-    }, [nwbFile])
+    }, [nwbFileUrl])
     return url
 }
 
@@ -48,14 +58,15 @@ const RasterPlotUnitsItemView: FunctionComponent<Props> = ({width, height, path,
     const handleRequestRasterPlot = useCallback(() => {
         (async () => {
             if (!rtcshareClient) return
-            await rtcshareClient.serviceQuery('neurosift-nwb-request', {
-                type: 'request-raster-plot',
-                nwbUrl: nwbFile.url,
-                path: '/units'
-            })
-            setRasterPlotRequested(true)
+            console.log('WARNING: this feature no longer supported')
+            // await rtcshareClient.serviceQuery('neurosift-nwb-request', {
+            //     type: 'request-raster-plot',
+            //     nwbUrl: nwbFile.url,
+            //     path: '/units'
+            // })
+            // setRasterPlotRequested(true)
         })()
-    }, [nwbFile, rtcshareClient])
+    }, [])
 
     if (rasterPlotUrl === undefined) {
         return (

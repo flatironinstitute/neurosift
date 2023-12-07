@@ -4,6 +4,7 @@ import { useRtcshare } from "../../../../rtcshare/useRtcshare"
 import NeurosiftItemView from "../../NeurosiftItemView/NeurosiftItemView"
 import { NwbFileContext } from "../../NwbFileContext"
 import { getEtag, headRequest } from "../../NwbPage"
+import { MergedRemoteH5File } from "../../RemoteH5File/RemoteH5File"
 
 type Props = {
     width: number
@@ -16,10 +17,19 @@ const useAutocorrelogramsUrl = () => {
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is null')
     const [url, setUrl] = useState<string | null | undefined>(undefined)
+
+    let nwbFileUrl: string
+    if (nwbFile instanceof MergedRemoteH5File) {
+        nwbFileUrl = nwbFile.getFiles()[0].url
+    }
+    else {
+        nwbFileUrl = nwbFile.url
+    }
+
     useEffect(() => {
         let canceled = false
         const load = async () => {
-            const etag = await getEtag(nwbFile.url)
+            const etag = await getEtag(nwbFileUrl)
             if (canceled) return
             if (!etag) {
                 setUrl(null)
@@ -34,7 +44,7 @@ const useAutocorrelogramsUrl = () => {
         }
         load()
         return () => {canceled = true}
-    }, [nwbFile])
+    }, [nwbFileUrl])
     return url
 }
 
@@ -45,17 +55,25 @@ const AutocorrelogramsUnitsItemView: FunctionComponent<Props> = ({width, height,
     const [autocorrelogramsRequested, setAutocorrelogramsRequested] = useState(false)
     const {client: rtcshareClient} = useRtcshare()
 
+    let nwbFileUrl: string
+    if (nwbFile instanceof MergedRemoteH5File) {
+        nwbFileUrl = nwbFile.getFiles()[0].url
+    }
+    else {
+        nwbFileUrl = nwbFile.url
+    }
+
     const handleRequestAutocorrelograms = useCallback(() => {
         (async () => {
             if (!rtcshareClient) return
             await rtcshareClient.serviceQuery('neurosift-nwb-request', {
                 type: 'request-autocorrelograms',
-                nwbUrl: nwbFile.url,
+                nwbUrl: nwbFileUrl,
                 path: '/units'
             })
             setAutocorrelogramsRequested(true)
         })()
-    }, [nwbFile, rtcshareClient])
+    }, [nwbFileUrl, rtcshareClient])
 
     if (autocorrelogramsUrl === undefined) {
         return (

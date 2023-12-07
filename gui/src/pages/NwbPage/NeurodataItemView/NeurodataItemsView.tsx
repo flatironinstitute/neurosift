@@ -1,7 +1,7 @@
 import { FunctionComponent, useContext, useMemo } from "react"
 import Splitter from "../../../components/Splitter"
 import { NwbFileContext } from "../NwbFileContext"
-import { RemoteH5File } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5File } from "../RemoteH5File/RemoteH5File"
 import TimeseriesSelectionWidget from "../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget"
 import viewPlugins, { findViewPluginsForType } from "../viewPlugins/viewPlugins"
 import ShareTabComponent from "./ShareTabComponent"
@@ -121,7 +121,7 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({width, height, items}) =>
     )
 }
 
-const getViewPluginAndItemPath = (item: string, nwbFile: RemoteH5File) => {
+const getViewPluginAndItemPath = (item: string, nwbFile: RemoteH5File | MergedRemoteH5File) => {
     if (item.startsWith('neurodata-item:')) {
         const itemPath = item.slice(`neurodata-item:`.length).split('|')[0]
         const neurodataType = item.slice(`neurodata-item:`.length).split('|')[1]

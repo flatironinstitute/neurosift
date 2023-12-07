@@ -5,7 +5,7 @@ import Hyperlink from "../../../components/Hyperlink"
 import ModalWindow from "../../../components/ModalWindow/ModalWindow"
 import Markdown from "../../../Markdown/Markdown"
 import { useNwbFile } from "../NwbFileContext"
-import { RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
 import { findViewPluginsForType, ViewPlugin } from "../viewPlugins/viewPlugins"
 
 type Props = {
@@ -36,10 +36,19 @@ const LoadInPythonComponent: FunctionComponent<Props> = ({path, group, viewName}
 
 const LoadInPythonWindow: FunctionComponent<Props> = ({path, group, viewName}) => {
     const nwbFile = useNwbFile()
+
+    let nwbFileUrl: string
+    if (nwbFile instanceof MergedRemoteH5File) {
+        nwbFileUrl = nwbFile.getFiles()[0].url
+    }
+    else {
+        nwbFileUrl = nwbFile.url
+    }
+
     const source = useMemo(() => {
         const viewPlugin = findViewPluginsForType(group.attrs.neurodata_type, {nwbFile}).defaultViewPlugin
-        return createSource(nwbFile.url, viewPlugin, path, group, viewName)
-    }, [path, group, viewName, nwbFile])
+        return createSource(nwbFileUrl, viewPlugin, path, group, viewName)
+    }, [path, group, viewName, nwbFileUrl, nwbFile])
     return (
         <Markdown
             source={source}
@@ -50,8 +59,8 @@ const LoadInPythonWindow: FunctionComponent<Props> = ({path, group, viewName}) =
 const createSource = (url: string, viewPlugin: ViewPlugin | undefined, path: string, group: RemoteH5Group, viewName: string) => {
     const backtics = '```'
     const backtic = '`'
-    const nt = group.attrs.neurodata_type
-    let customCode = viewPlugin && viewPlugin.getCustomPythonCode ? viewPlugin.getCustomPythonCode(group) : ''
+    // const nt = group.attrs.neurodata_type
+    const customCode = viewPlugin && viewPlugin.getCustomPythonCode ? viewPlugin.getCustomPythonCode(group) : ''
     return `
 ## Loading ${backtic}${path}${backtic} (${backtic}${group.attrs.neurodata_type}${backtic}).
 

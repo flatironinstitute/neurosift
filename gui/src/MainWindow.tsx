@@ -46,12 +46,12 @@ const MainWindow: FunctionComponent<Props> = () => {
                             width={width}
                             height={H}
                         />
-                    ) : route.page === 'avi' ? (
-                        <AviPage
-                            width={width}
-                            height={H}
-                            url={route.url}
-                        />
+                    // ) : route.page === 'avi' ? (
+                    //     <AviPage
+                    //         width={width}
+                    //         height={H}
+                    //         url={route.url}
+                    //     />
                     ) : (
                         <div>404</div>
                     )
