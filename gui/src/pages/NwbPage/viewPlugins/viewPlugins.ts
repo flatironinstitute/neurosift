@@ -1,25 +1,24 @@
 import { FunctionComponent } from "react"
-import ImageSegmentationItemView from "./ImageSegmentation/ImageSegmentationItemView"
+import { MergedRemoteH5File, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { neurodataTypeInheritanceRaw } from "../neurodataSpec"
+import BehavioralEventsItemView from "./BehavioralEvents/BehavioralEventsItemView"
+import DynamicTableView from "./DynamicTable/DynamicTableView"
 import NeurodataElectricalSeriesItemView from "./ElectricalSeries/NeurodataElectricalSeriesItemView"
+import ImageSegmentationItemView from "./ImageSegmentation/ImageSegmentationItemView"
+import ImageSeriesItemView from "./ImageSeries/ImageSeriesItemView"
+import ImagesItemView from "./Images/ImagesItemView"
+import LabeledEventsItemView from "./LabeledEvents/LabeledEventsItemView"
+import PSTHItemView from "./PSTH/PSTHItemView"
 import NeurodataSpatialSeriesItemView from "./SpatialSeries/SpatialSeriesWidget/NeurodataSpatialSeriesItemView"
+import SpatialSeriesXYView from "./SpatialSeries/SpatialSeriesWidget/SpatialSeriesXYView"
 import NeurodataTimeIntervalsItemView from "./TimeIntervals/NeurodataTimeIntervalsItemView"
 import NeurodataTimeSeriesItemView from "./TimeSeries/NeurodataTimeSeriesItemView"
-import { neurodataTypeInheritanceRaw } from "../neurodataSpec"
 import TwoPhotonSeriesItemView from "./TwoPhotonSeries/TwoPhotonSeriesItemView"
-import HelloWorldView from "./HelloWorld/HelloWorldView"
-import ImageSeriesItemView from "./ImageSeries/ImageSeriesItemView"
-import DynamicTableView from "./DynamicTable/DynamicTableView"
-import ImagesItemView from "./Images/ImagesItemView"
-import RasterPlotUnitsItemView from "./Units/RasterPlotUnitsItemView"
 import AutocorrelogramsUnitsItemView from "./Units/AutocorrelogramsUnitsItemView"
 import DirectRasterPlotUnitsItemView from "./Units/DirectRasterPlotUnitsItemView"
-import SpatialSeriesXYView from "./SpatialSeries/SpatialSeriesWidget/SpatialSeriesXYView"
-import { MergedRemoteH5File, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
-import PSTHItemView from "./PSTH/PSTHItemView"
-import LabeledEventsItemView from "./LabeledEvents/LabeledEventsItemView"
-import BehavioralEventsItemView from "./BehavioralEvents/BehavioralEventsItemView"
-import { getCustomPythonCodeForTimeIntervals, getCustomPythonCodeForTimeSeries, getCustomPythonCodeForUnits } from "./customPythonCode"
+import RasterPlotUnitsItemView from "./Units/RasterPlotUnitsItemView"
 import UnitsItemView from "./Units/UnitsItemView"
+import { getCustomPythonCodeForTimeIntervals, getCustomPythonCodeForTimeSeries, getCustomPythonCodeForUnits } from "./customPythonCode"
 
 type Props = {
     width: number,
@@ -158,13 +157,13 @@ viewPlugins.push({
     component: LabeledEventsItemView,
     isTimeView: true
 })
-viewPlugins.push({
-    name: 'HelloWorld',
-    neurodataType: 'LabeledEvents', // hi-jacking this type for now
-    defaultForNeurodataType: false,
-    component: HelloWorldView, // see ./HelloWorld/HelloWorldView.tsx
-    isTimeView: true
-})
+// viewPlugins.push({
+//     name: 'HelloWorld',
+//     neurodataType: 'LabeledEvents', // hi-jacking this type for now
+//     defaultForNeurodataType: false,
+//     component: HelloWorldView, // see ./HelloWorld/HelloWorldView.tsx
+//     isTimeView: true
+// })
 // See https://flatironinstitute.github.io/neurosift/#/nwb?url=https://dandiarchive.s3.amazonaws.com/blobs/8cf/38e/8cf38e36-6cd8-4c10-9d74-c2e6be70f019
 // for an example that has a LabeledEvents object inside processing/behavior
 
