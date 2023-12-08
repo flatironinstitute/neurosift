@@ -5,14 +5,14 @@ import SmallIconButton from "../../../../components/SmallIconButton"
 import { useTimeRange, useTimeseriesSelection, useTimeseriesSelectionInitialization } from "../../../../package/context-timeseries-selection"
 import { NwbFileContext } from "../../NwbFileContext"
 import { useDataset } from "../../NwbMainView/NwbMainView"
-import { getEtag, headRequest } from "../../NwbPage"
-import { Canceler } from "../../RemoteH5File/helpers"
 import { DatasetDataType, MergedRemoteH5File, RemoteH5File } from "../../RemoteH5File/RemoteH5File"
+import { Canceler } from "../../RemoteH5File/helpers"
 import { useNwbTimeseriesDataClient } from "../TimeSeries/TimeseriesItemView/NwbTimeseriesDataClient"
 import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../TimeSeries/TimeseriesItemView/TimeseriesSelectionBar"
 import MultiRangeSlider from "./MultiRangeSlider/MultiRangeSlider"
+import PlaneTransformSelector, { PlaneTransform, defaultPlaneTransform } from "./PlaneTransformSelector"
 
-const queryParams = parseQuery(window.location.href)
+// const queryParams = parseQuery(window.location.href)
 
 type Props = {
     width: number
@@ -72,6 +72,8 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}
     const [currentPlane, setCurrentPlane] = useState<number>(0)
     const [currentMinValue, setCurrentMinValue] = useState<number | undefined>(undefined)
     const [currentMaxValue, setCurrentMaxValue] = useState<number | undefined>(undefined)
+
+    const [planeTransform, setPlaneTransform] = useState(defaultPlaneTransform)
 
     useEffect(() => {
         setCurrentPlane(Math.floor((dataDataset?.shape[3] || 1) / 2))
@@ -141,11 +143,14 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}
             }
 
             if (canceled) return
-            setCurrentImage({
+
+            const imageData = transformImageData({
                 width: N3,
                 height: N2,
                 data: x
-            })
+            }, planeTransform)
+
+            setCurrentImage(imageData)
             setLoading(false)
         }
         load()
@@ -153,7 +158,7 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}
             canceler.onCancel.forEach((f) => f())
             canceled = true
         }
-    }, [dataDataset, usePrecomputed, nwbFile, computedDataDatUrl, frameIndex, timeseriesDataClient, currentPlane])
+    }, [dataDataset, usePrecomputed, nwbFile, computedDataDatUrl, frameIndex, timeseriesDataClient, currentPlane, planeTransform])
 
     const [maxDataValue, setMaxDataValue] = useState<number | undefined>(undefined)
     useEffect(() => {
@@ -210,8 +215,15 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({width, height, path}
                 <PlaneSelector currentPlane={currentPlane} setCurrentPlane={setCurrentPlane} numPlanes={dataDataset?.shape[3] || 1} />
                 &nbsp;&nbsp;
                 <ValueRangeSelector min={0} max={maxDataValue || 1} currentMinValue={currentMinValue} currentMaxValue={currentMaxValue} setCurrentMinValue={setCurrentMinValue} setCurrentMaxValue={setCurrentMaxValue} />
+                &nbsp;&nbsp;
+                <PlaneTransformSelector planeTransform={planeTransform} setPlaneTransform={setPlaneTransform} />
+                &nbsp;&nbsp;
                 {
-                    loading && <span>&nbsp;&nbsp;(Loading...)</span>
+                    loading && (
+                        <div style={{position: 'relative', top: 7}}>
+                            <span>&nbsp;&nbsp;loading...</span>
+                        </div>
+                    )
                 }
             </div>
         </div>
@@ -390,16 +402,53 @@ const readDataFromDat = async (url: string, offset: number, length: number, dtyp
     }
 }
 
-function parseQuery(queryString: string) {
-    const ind = queryString.indexOf('?')
-    if (ind <0) return {}
-    const query: {[k: string]: string} = {};
-    const pairs = queryString.slice(ind + 1).split('&');
-    for (let i = 0; i < pairs.length; i++) {
-        const pair = pairs[i].split('=');
-        query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+// function parseQuery(queryString: string) {
+//     const ind = queryString.indexOf('?')
+//     if (ind <0) return {}
+//     const query: {[k: string]: string} = {};
+//     const pairs = queryString.slice(ind + 1).split('&');
+//     for (let i = 0; i < pairs.length; i++) {
+//         const pair = pairs[i].split('=');
+//         query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+//     }
+//     return query;
+// }
+
+const transformImageData = (imageData: ImageData, planeTransform: PlaneTransform) => {
+    const { xyswap, xflip, yflip } = planeTransform
+    const { width, height, data } = imageData
+    if ((!xyswap) && (!xflip) && (!yflip)) return imageData
+    const N = width * height
+    const newWidth = xyswap ? height : width
+    const newHeight = xyswap ? width : height
+    const data2 = new Float32Array(N)
+    if (xyswap) {
+        for (let i = 0; i < N; i++) {
+            let newY = i % width
+            let newX = Math.floor(i / width)
+            if (xflip) newX = newWidth - 1 - newX
+            if (yflip) newY = newHeight - 1 - newY
+            const j = newX + newY * newWidth
+            data2[j] = data[i]
+        }
     }
-    return query;
+    else {
+        for (let i = 0; i < N; i++) {
+            let newY = Math.floor(i / width)
+            let newX = i % width
+            if (xflip) newX = newWidth - 1 - newX
+            if (yflip) newY = newHeight - 1 - newY
+            const j = newX + newY * newWidth
+            data2[j] = data[i]
+        }
+    }
+    
+    return {
+        width: newWidth,
+        height: newHeight,
+        data: data2
+    }
 }
+
 
 export default TwoPhotonSeriesItemView
