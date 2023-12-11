@@ -115,6 +115,7 @@ export class DirectSpikeTrainsClient {
     #blockSizeSec = 60 * 5
     #group: RemoteH5Group | undefined
     #spike_or_event: 'spike' | 'event' | undefined = undefined
+    #initialized = false
     constructor(private nwbFile: RemoteH5File | MergedRemoteH5File, private path: string) {
     }
     async initialize() {
@@ -136,25 +137,31 @@ export class DirectSpikeTrainsClient {
         const v2 = await this.nwbFile.getDatasetData(`${path}/${this.#spike_or_event}_times`, {slice: [[n - 1, n]]})
         this.#startTimeSec = v1 ? v1[0] : 0
         this.#endTimeSec = v2 ? v2[0] : 1
+        this.#initialized = true
     }
     get startTimeSec() {
+        if (!this.#initialized) throw Error('Unexpected: not initialized (in startTimeSec)')
         return this.#startTimeSec
     }
     get endTimeSec() {
+        if (!this.#initialized) throw Error('Unexpected: not initialized (in endTimeSec)')
         return this.#endTimeSec
     }
     get blockSizeSec() {
         return this.#blockSizeSec
     }
     get unitIds() {
+        if (!this.#initialized) throw Error('Unexpected: not initialized (in unitIds)')
         if (!this.#unitIds) throw Error('Unexpected: unitIds not initialized')
         return Array.from(this.#unitIds)
     }
     get totalNumSpikes() {
         if (!this.#spikeTimesIndices) return undefined
+        if (!this.#spikeTimesIndices) return undefined
         return this.#spikeTimesIndices[this.#spikeTimesIndices.length - 1]
     }
     numSpikesForUnit(unitId: number | string) {
+        if (!this.#initialized) throw Error('Unexpected: not initialized (in numSpikesForUnit)')
         if (!this.#unitIds) throw Error('Unexpected: unitIds not initialized')
         if (!this.#spikeTimesIndices) throw Error('Unexpected: spikeTimesIndices not initialized')
         const ii = this.#unitIds.indexOf(unitId)
@@ -164,7 +171,7 @@ export class DirectSpikeTrainsClient {
         return i2 - i1
     }
     async getData(blockStartIndex: number, blockEndIndex: number, options: {unitIds?: (number | string)[]}={}) {
-        await this.initialize()
+        if (!this.#initialized) throw Error('Unexpected: not initialized (in getData)')
         if (!this.#unitIds) throw Error('Unexpected: unitIds not initialized')
         if (!this.#spikeTimesIndices) throw Error('Unexpected: spikeTimesIndices not initialized')
         // if (!this.#spikeTimes) throw Error('Unexpected: spikeTimes not initialized')
@@ -195,7 +202,7 @@ export class DirectSpikeTrainsClient {
         return ret
     }
     async getUnitSpikeTrain(unitId: number | string) {
-        await this.initialize()
+        if (!this.#initialized) throw Error('Unexpected: not initialized (in getUnitSpikeTrain)')
         if (!this.#unitIds) throw Error('Unexpected: unitIds not initialized')
         if (!this.#spikeTimesIndices) throw Error('Unexpected: spikeTimesIndices not initialized')
         const ii = this.#unitIds.indexOf(unitId)

@@ -281,7 +281,7 @@ const GroupBySelectionComponent: FunctionComponent<{groupByVariable: string, set
     if (!nwbFile) throw Error('Unexpected: no nwbFile')
 
     const group = useGroup(nwbFile, path)
-    const options = (group?.datasets || []).map(ds => ds.name).filter(name => (!name.endsWith('_time') && !name.endsWith('_times')))
+    const options = useMemo(() => ((group?.datasets || []).map(ds => ds.name).filter(name => (!name.endsWith('_time') && !name.endsWith('_times')))), [group])
 
     // determine which columns are categorical -- but don't let this slow down the UI
     // while it is calculating, we can use the full list of options
