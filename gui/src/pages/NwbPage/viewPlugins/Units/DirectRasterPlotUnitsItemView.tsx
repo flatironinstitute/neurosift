@@ -31,15 +31,20 @@ const DirectRasterPlotUnitsItemView: FunctionComponent<Props> = ({width, height,
     const [spikeTrainsClient2, setSpikeTrainsClient2] = useState<DirectSpikeTrainsClientUnitSlice | DirectSpikeTrainsClient | undefined>(undefined)
     useEffect(() => {
         if (!spikeTrainsClient) return
-        const maxNumSpikes = 5e5
+        const maxNumSpikes = 2e6
         const ids = spikeTrainsClient.unitIds
         let ct = 0
-        const unitIdsToInclude: (number | string)[] = []
+        let unitIdsToInclude: (number | string)[] = []
         for (const id of ids) {
             const numSpikes = spikeTrainsClient.numSpikesForUnit(id)
             ct += numSpikes || 0
             if (ct > maxNumSpikes) break
             unitIdsToInclude.push(id)
+        }
+        if (unitIdsToInclude.length === 0) {
+            // include at least one unit.
+            // if no units, then use the first
+            unitIdsToInclude = [ids[0]]
         }
         if (unitIdsToInclude.length < ids.length) {
             const client = new DirectSpikeTrainsClientUnitSlice(spikeTrainsClient, unitIdsToInclude)
@@ -92,8 +97,12 @@ class DirectSpikeTrainsClientUnitSlice {
     numSpikesForUnit(unitId: number | string) {
         return this.client.numSpikesForUnit(unitId)
     }
-    async getData(blockStartIndex: number, blockEndIndex: number) {
-        return this.client.getData(blockStartIndex, blockEndIndex, {unitIds: this.#unitIds})
+    async getData(blockStartIndex: number, blockEndIndex: number, options: {unitIds?: (number | string)[]}={}) {
+        const options2 = {
+            ...options,
+            unitIds: this.#unitIds.filter(id => (!options.unitIds) || options.unitIds.includes(id))
+        }
+        return this.client.getData(blockStartIndex, blockEndIndex, options2)
     }
     get totalNumSpikes() {
         let ret = 0

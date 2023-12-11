@@ -75,7 +75,7 @@ const RasterPlotView3: FunctionComponent<Props> = ({spikeTrainsClient, width, he
         const blockStartIndex = Math.floor((visibleStartTimeSec - startTimeSec) / blockSizeSec)
         const blockEndIndex = Math.floor((visibleEndTimeSec - startTimeSec) / blockSizeSec) + 1
         return {blockStartIndex, blockEndIndex, zoomInRequired: false}
-    }, [spikeTrainsClient, visibleStartTimeSec, visibleEndTimeSec])
+    }, [spikeTrainsClient, visibleStartTimeSec, visibleEndTimeSec, endTimeSec])
 
     useEffect(() => {
         let canceled = false
@@ -84,7 +84,7 @@ const RasterPlotView3: FunctionComponent<Props> = ({spikeTrainsClient, width, he
         if (blockEndIndex === undefined) return
 
         (async () => {
-            const dd = await spikeTrainsClient.getData(blockStartIndex, blockEndIndex)
+            const dd = await spikeTrainsClient.getData(blockStartIndex, blockEndIndex, {})
             if (canceled) return
             const plotData = {
                 plots: dd.map(unit => ({
