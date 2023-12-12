@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react"
 import TopLevelGroupContentPanel from "../BrowseNwbView/TopLevelGroupContentPanel"
-import { MergedRemoteH5File, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5File, RemoteH5Group } from "@fi-sci/remote-h5-file"
 import UnitsContentPanel from "./UnitsContentPanel"
 import IntervalsContentPanel from "./IntervalsContentPanel"
 import { useGroup } from "./NwbMainView"

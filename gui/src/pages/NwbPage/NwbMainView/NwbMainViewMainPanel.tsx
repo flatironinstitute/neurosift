@@ -1,7 +1,7 @@
 import { ToggleButton, ToggleButtonGroup } from "@mui/material"
 import { FunctionComponent, useState } from "react"
 import BrowseNwbView from "../BrowseNwbView/BrowseNwbView"
-import { MergedRemoteH5File, RemoteH5File } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5File } from "@fi-sci/remote-h5-file"
 import DefaultNwbFileView from "./DefaultNwbFileView"
 
 type Props = {

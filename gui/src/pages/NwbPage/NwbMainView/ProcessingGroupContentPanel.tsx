@@ -1,7 +1,7 @@
 import { FunctionComponent, useEffect, useMemo, useReducer, useState } from "react"
 import Hyperlink from "../../../components/Hyperlink"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
-import { MergedRemoteH5File, RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "@fi-sci/remote-h5-file"
 import { useSelectedItemViews } from "../SelectedItemViewsContext"
 import '../nwb-table.css'
 import Abbreviate from "../viewPlugins/TimeSeries/TimeseriesItemView/Abbreviate"

@@ -1,11 +1,10 @@
-import { create } from "@mui/material/styles/createTransitions"
 import { FunctionComponent, useMemo } from "react"
 import { useModalDialog } from "../../../ApplicationBar"
 import Hyperlink from "../../../components/Hyperlink"
 import ModalWindow from "../../../components/ModalWindow/ModalWindow"
 import Markdown from "../../../Markdown/Markdown"
 import { useNwbFile } from "../NwbFileContext"
-import { MergedRemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5Group } from "@fi-sci/remote-h5-file"
 import { findViewPluginsForType, ViewPlugin } from "../viewPlugins/viewPlugins"
 
 type Props = {

@@ -8,7 +8,6 @@ import { useTimeRange, useTimeseriesSelectionInitialization } from "../../../../
 import { ToolbarItem } from "../../../../../package/ViewToolbar/Toolbars"
 import { NwbFileContext } from "../../../NwbFileContext"
 import { useDataset } from "../../../NwbMainView/NwbMainView"
-import { Canceler } from "../../../RemoteH5File/helpers"
 import { useNwbTimeseriesDataClient } from "./NwbTimeseriesDataClient"
 import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient"
 import { timeSelectionBarHeight } from "./TimeseriesSelectionBar"
@@ -131,7 +130,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
         if (dataClient === undefined) return
         if (zoomInRequired) return
 
-        let canceler: Canceler | undefined = undefined
+        let canceler: {onCancel: (() => void)[]} | undefined = undefined
         let canceled = false
         const load = async () => {
             let finished = false

@@ -3,7 +3,7 @@ import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useStat
 import { useTimeRange, useTimeseriesSelection, useTimeseriesSelectionInitialization } from "../../../../../package/context-timeseries-selection";
 import { NwbFileContext } from "../../../NwbFileContext";
 import { useDataset } from "../../../NwbMainView/NwbMainView";
-import { Canceler } from "../../../RemoteH5File/helpers";
+import { Canceler } from "@fi-sci/remote-h5-file";
 import { useNwbTimeseriesDataClient } from "../../TimeSeries/TimeseriesItemView/NwbTimeseriesDataClient";
 import TimeseriesDatasetChunkingClient from "../../TimeSeries/TimeseriesItemView/TimeseriesDatasetChunkingClient";
 import TimeseriesSelectionBar, { timeSelectionBarHeight } from "../../TimeSeries/TimeseriesItemView/TimeseriesSelectionBar";

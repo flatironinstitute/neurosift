@@ -5,7 +5,7 @@ import useRoute from "../../useRoute"
 import { NwbFileContext } from "./NwbFileContext"
 import { SetupNwbOpenTabs } from "./NwbOpenTabsContext"
 import NwbTabWidget from "./NwbTabWidget"
-import { getMergedRemoteH5File, getRemoteH5File, globalRemoteH5FileStats, MergedRemoteH5File, RemoteH5File } from "./RemoteH5File/RemoteH5File"
+import { getMergedRemoteH5File, globalRemoteH5FileStats, MergedRemoteH5File, RemoteH5File } from "@fi-sci/remote-h5-file"
 import { SelectedItemViewsContext, selectedItemViewsReducer } from "./SelectedItemViewsContext"
 import getAuthorizationHeaderForUrl from "./getAuthorizationHeaderForUrl"
 

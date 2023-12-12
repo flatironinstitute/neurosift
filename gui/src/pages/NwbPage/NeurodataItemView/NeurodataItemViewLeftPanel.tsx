@@ -1,6 +1,6 @@
 import { FunctionComponent, PropsWithChildren } from "react"
 import TimeseriesSelectionWidget from "../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget"
-import { RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { RemoteH5Group } from "@fi-sci/remote-h5-file"
 import ShareTabComponent from "./ShareTabComponent"
 import { ViewPlugin } from "../viewPlugins/viewPlugins"
 import LoadInPythonComponent from "./LoadInPythonComponent"

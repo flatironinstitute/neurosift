@@ -2,7 +2,7 @@ import { FunctionComponent, useMemo } from "react"
 import Hyperlink from "../../../components/Hyperlink"
 import '../nwb-table.css'
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
-import { MergedRemoteH5File, RemoteH5File, RemoteH5Group, RemoteH5Subgroup } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5File, RemoteH5Group, RemoteH5Subgroup } from "@fi-sci/remote-h5-file"
 import { useSelectedItemViews } from "../SelectedItemViewsContext"
 import ViewPluginButton from "../viewPlugins/ViewPluginButton"
 import { findViewPluginsForType } from "../viewPlugins/viewPlugins"

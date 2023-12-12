@@ -4,7 +4,7 @@ import { useRtcshare } from "../../../../rtcshare/useRtcshare"
 import NeurosiftItemView from "../../NeurosiftItemView/NeurosiftItemView"
 import { NwbFileContext } from "../../NwbFileContext"
 import { getEtag, headRequest } from "../../NwbPage"
-import { MergedRemoteH5File } from "../../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File } from "@fi-sci/remote-h5-file"
 
 type Props = {
     width: number

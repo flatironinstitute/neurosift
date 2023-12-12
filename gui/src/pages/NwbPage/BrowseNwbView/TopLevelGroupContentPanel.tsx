@@ -3,7 +3,7 @@ import { FaEye, FaRegCircle } from "react-icons/fa"
 import SmallIconButton from "../../../components/SmallIconButton"
 import { NwbFileContext, useNwbFile } from "../NwbFileContext"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
-import { MergedRemoteH5File, RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "@fi-sci/remote-h5-file"
 import { findViewPluginsForType } from "../viewPlugins/viewPlugins"
 import { valueToString } from "./BrowseNwbView"
 import './nwb-attributes-table.css'

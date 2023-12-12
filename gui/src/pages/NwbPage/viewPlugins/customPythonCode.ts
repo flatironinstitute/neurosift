@@ -1,4 +1,4 @@
-import { RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { RemoteH5Group } from "@fi-sci/remote-h5-file"
 
 export const getCustomPythonCodeForTimeSeries = (group: RemoteH5Group) => {
     let customCode = ''

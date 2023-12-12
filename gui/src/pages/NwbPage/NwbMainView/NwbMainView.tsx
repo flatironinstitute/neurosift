@@ -1,7 +1,7 @@
 import { FunctionComponent, useContext, useEffect, useState } from "react"
 import Splitter from "../../../components/Splitter"
 import { NwbFileContext } from "../NwbFileContext"
-import { MergedRemoteH5File, RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "@fi-sci/remote-h5-file"
 import NwbMainLeftPanel from "./NwbMainLeftPanel"
 import NwbMainViewMainPanel from "./NwbMainViewMainPanel"
 
@@ -34,7 +34,7 @@ const NwbMainView: FunctionComponent<Props> = ({width, height}) => {
     )
 }
 
-export const useGroup = (nwbFile: RemoteH5File | MergedRemoteH5File, path: string) => {
+export const useGroup = (nwbFile: RemoteH5File | MergedRemoteH5File, path: string): RemoteH5Group | undefined => {
     const [group, setGroup] = useState<RemoteH5Group | undefined>(undefined)
     useEffect(() => {
         let canceled = false

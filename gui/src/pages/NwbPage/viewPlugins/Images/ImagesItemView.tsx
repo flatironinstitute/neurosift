@@ -1,7 +1,7 @@
 import { FunctionComponent, useContext, useEffect, useMemo, useState } from "react"
 import { NwbFileContext } from "../../NwbFileContext"
 import { useDatasetData, useGroup } from "../../NwbMainView/NwbMainView"
-import { DatasetDataType, MergedRemoteH5File, RemoteH5Dataset, RemoteH5File } from "../../RemoteH5File/RemoteH5File"
+import { DatasetDataType, MergedRemoteH5File, RemoteH5Dataset, RemoteH5File } from "@fi-sci/remote-h5-file"
 
 type Props = {
     width: number

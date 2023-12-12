@@ -1,5 +1,5 @@
 import { FunctionComponent } from "react"
-import { MergedRemoteH5File, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5File, RemoteH5Group } from "@fi-sci/remote-h5-file"
 import { neurodataTypeInheritanceRaw } from "../neurodataSpec"
 import BehavioralEventsItemView from "./BehavioralEvents/BehavioralEventsItemView"
 import DynamicTableView from "./DynamicTable/DynamicTableView"

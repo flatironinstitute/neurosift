@@ -2,7 +2,7 @@
 import { FunctionComponent, useContext, useEffect, useState } from "react"
 import RasterPlotView3 from "../../../BrowsePage/FileView/RasterPlotView3/RasterPlotView3"
 import { NwbFileContext } from "../../NwbFileContext"
-import { DatasetDataType, MergedRemoteH5File, RemoteH5File } from "../../RemoteH5File/RemoteH5File"
+import { DatasetDataType, MergedRemoteH5File, RemoteH5File } from "@fi-sci/remote-h5-file"
 
 type Props = {
     width: number

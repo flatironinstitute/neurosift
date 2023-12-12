@@ -4,7 +4,7 @@ import { serializeBigInt, valueToString } from "../BrowseNwbView/BrowseNwbView"
 import { NwbFileContext } from "../NwbFileContext"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 import { getEtag } from "../NwbPage"
-import { MergedRemoteH5File, RemoteH5File } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5File } from "@fi-sci/remote-h5-file"
 import { useDatasetData, useGroup } from "./NwbMainView"
 import SelectedNeurodataItemsWidget from "./SelectedNeurodataItemsWidget"
 

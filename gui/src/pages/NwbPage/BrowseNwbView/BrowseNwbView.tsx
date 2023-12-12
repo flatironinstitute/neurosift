@@ -1,9 +1,9 @@
-import { FunctionComponent, useContext, useEffect, useState } from "react"
+import { MergedRemoteH5File, RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "@fi-sci/remote-h5-file"
+import { FunctionComponent, useContext, useState } from "react"
 import { NwbFileContext } from "../NwbFileContext"
 import { useDataset, useDatasetData, useGroup } from "../NwbMainView/NwbMainView"
-import { MergedRemoteH5File, RemoteH5Dataset, RemoteH5File, RemoteH5Group } from "../RemoteH5File/RemoteH5File"
-import './nwb-attributes-table.css'
 import TopLevelGroupContentPanel from "./TopLevelGroupContentPanel"
+import './nwb-attributes-table.css'
 
 type Props = {
     width: number

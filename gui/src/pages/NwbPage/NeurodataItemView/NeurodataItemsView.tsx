@@ -1,7 +1,7 @@
 import { FunctionComponent, useContext, useMemo } from "react"
 import Splitter from "../../../components/Splitter"
 import { NwbFileContext } from "../NwbFileContext"
-import { MergedRemoteH5File, RemoteH5File } from "../RemoteH5File/RemoteH5File"
+import { MergedRemoteH5File, RemoteH5File } from "@fi-sci/remote-h5-file"
 import TimeseriesSelectionWidget from "../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget"
 import viewPlugins, { findViewPluginsForType } from "../viewPlugins/viewPlugins"
 import ShareTabComponent from "./ShareTabComponent"
