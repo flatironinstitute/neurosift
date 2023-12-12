@@ -6,28 +6,28 @@ type Props = {
     width: number
     height: number
     objectPath: string
-    electricalSeriesOpts: ElectricalSeriesOpts
-    setElectricalSeriesOpts: (opts: ElectricalSeriesOpts) => void
+    timeSeriesViewOpts: TimeSeriesViewOpts
+    setTimeSeriesViewOpts: (opts: TimeSeriesViewOpts) => void
 }
 
-export type ElectricalSeriesOpts = {
+export type TimeSeriesViewOpts = {
     numVisibleChannels: number
     visibleStartChannel: number
     autoChannelSeparation: number | undefined
 }
 
-const ElectricalSeriesToolbar: FunctionComponent<Props> = ({width, height, objectPath, electricalSeriesOpts, setElectricalSeriesOpts}) => {
+const TimeSeriesViewToolbar: FunctionComponent<Props> = ({width, height, objectPath, timeSeriesViewOpts, setTimeSeriesViewOpts}) => {
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is undefined (no context provider)')
     const dataDataset = useDataset(nwbFile, `${objectPath}/data`)
     const numChannels = dataDataset ? dataDataset.shape[1] : undefined
     return (
         <div style={{display: 'flex'}}>
-            <NumVisibleChannelsSelector totalNumChannels={numChannels} value={electricalSeriesOpts.numVisibleChannels} setValue={numVisibleChannels => setElectricalSeriesOpts({...electricalSeriesOpts, numVisibleChannels})} />
+            <NumVisibleChannelsSelector totalNumChannels={numChannels} value={timeSeriesViewOpts.numVisibleChannels} setValue={numVisibleChannels => setTimeSeriesViewOpts({...timeSeriesViewOpts, numVisibleChannels})} />
             &nbsp;&nbsp;&nbsp;&nbsp;
-            <VisibleStartChannelSelector totalNumChannels={numChannels} value={electricalSeriesOpts.visibleStartChannel} setValue={visibleStartChannel => setElectricalSeriesOpts({...electricalSeriesOpts, visibleStartChannel})} numVisibleChannels={electricalSeriesOpts.numVisibleChannels} />
+            <VisibleStartChannelSelector totalNumChannels={numChannels} value={timeSeriesViewOpts.visibleStartChannel} setValue={visibleStartChannel => setTimeSeriesViewOpts({...timeSeriesViewOpts, visibleStartChannel})} numVisibleChannels={timeSeriesViewOpts.numVisibleChannels} />
             &nbsp;&nbsp;&nbsp;&nbsp;
-            <AutoChannelSeparationSelector value={electricalSeriesOpts.autoChannelSeparation} setValue={autoChannelSeparation => setElectricalSeriesOpts({...electricalSeriesOpts, autoChannelSeparation})} />
+            <AutoChannelSeparationSelector value={timeSeriesViewOpts.autoChannelSeparation} setValue={autoChannelSeparation => setTimeSeriesViewOpts({...timeSeriesViewOpts, autoChannelSeparation})} />
         </div>
     )
 }
@@ -145,4 +145,4 @@ const AutoChannelSeparationSelector: FunctionComponent<AutoChannelSeparationSele
     )
 }
 
-export default ElectricalSeriesToolbar
+export default TimeSeriesViewToolbar

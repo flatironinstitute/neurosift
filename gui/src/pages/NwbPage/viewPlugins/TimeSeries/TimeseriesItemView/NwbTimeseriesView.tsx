@@ -60,7 +60,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({ width, height, objectPath
 
     // Set chunkSize
     const chunkSize = useMemo(() => (
-        dataset ? Math.floor(1e4 / (numVisibleChannels || 1)) : 0
+        dataset ? Math.floor(3e3 / (numVisibleChannels || 1)) : 0
     ), [dataset, numVisibleChannels])
 
     // set visible time range

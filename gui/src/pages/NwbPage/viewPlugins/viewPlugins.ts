@@ -3,7 +3,7 @@ import { MergedRemoteH5File, RemoteH5File, RemoteH5Group } from "../RemoteH5File
 import { neurodataTypeInheritanceRaw } from "../neurodataSpec"
 import BehavioralEventsItemView from "./BehavioralEvents/BehavioralEventsItemView"
 import DynamicTableView from "./DynamicTable/DynamicTableView"
-import NeurodataElectricalSeriesItemView from "./ElectricalSeries/NeurodataElectricalSeriesItemView"
+import TimeSeriesItemView from "./TimeSeries/NeurodataTimeSeriesItemView"
 import ImageSegmentationItemView from "./ImageSegmentation/ImageSegmentationItemView"
 import ImageSeriesItemView from "./ImageSeries/ImageSeriesItemView"
 import ImagesItemView from "./Images/ImagesItemView"
@@ -144,7 +144,7 @@ viewPlugins.push({
     name: 'ElectricalSeries',
     neurodataType: 'ElectricalSeries',
     defaultForNeurodataType: true,
-    component: NeurodataElectricalSeriesItemView,
+    component: TimeSeriesItemView,
     isTimeView: true,
     getCustomPythonCode: getCustomPythonCodeForTimeSeries
 })
