@@ -50,7 +50,7 @@ class SpikeTrainsClientFromRemoteNwb {
             const i1 = ii === 0 ? 0 : this.spikeTimesIndices[ii - 1]
             const i2 = this.spikeTimesIndices[ii]
 
-            const tt0 = await this.#nwbFile.getDatasetData('/units/spike_times', {slice: [[i1, Math.min(i2, i1 + 100)]]})
+            const tt0 = await this.nwbFile.getDatasetData('/units/spike_times', {slice: [[i1, Math.min(i2, i1 + 100)]]})
 
             if (tt0) {
                 const tt = Array.from(tt0.filter((t: number) => (t >= t1 && t < t2)))
