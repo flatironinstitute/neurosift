@@ -9,13 +9,14 @@ type Props = {
     width: number
     height: number
     path: string
+    additionalPaths?: string[]
     group: RemoteH5Group | undefined
     viewName: string
     tabName?: string
     viewPlugin: ViewPlugin
 }
 
-const NeurodataItemViewLeftPanel: FunctionComponent<Props> = ({width, height, path, group, viewName, tabName, viewPlugin}) => {
+const NeurodataItemViewLeftPanel: FunctionComponent<Props> = ({width, height, path, additionalPaths, group, viewName, tabName, viewPlugin}) => {
     return (
         <div>
             <table className="nwb-table">

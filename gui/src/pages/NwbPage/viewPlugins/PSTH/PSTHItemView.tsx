@@ -11,14 +11,15 @@ type Props = {
     width: number
     height: number
     path: string
+    additionalPaths?: string[]
     condensed?: boolean
 }
 
-const PSTHItemView: FunctionComponent<Props> = ({width, height, path}) => {
+const PSTHItemView: FunctionComponent<Props> = ({width, height, path, additionalPaths}) => {
     const [unitSelection, unitSelectionDispatch] = useReducer(unitSelectionReducer, defaultUnitSelection)
     return (
         <UnitSelectionContext.Provider value={{unitSelection, unitSelectionDispatch}}>
-            <PSTHItemViewChild width={width} height={height} path={path} />
+            <PSTHItemViewChild width={width} height={height} path={path} additionalPaths={additionalPaths} />
         </UnitSelectionContext.Provider>
     )
 }
@@ -59,7 +60,7 @@ export const defaultPSTHPrefs: PSTHPrefs = {
     numBins: 30
 }
 
-const PSTHItemViewChild: FunctionComponent<Props> = ({width, height, path}) => {
+const PSTHItemViewChild: FunctionComponent<Props> = ({width, height, path, additionalPaths}) => {
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: no nwbFile')
 
@@ -75,14 +76,14 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({width, height, path}) => {
     useEffect(() => {
         let canceled = false
         const load = async () => {
-            const client = new DirectSpikeTrainsClient(nwbFile, '/units')
-            await client.initialize()
+            const unitsPath = (additionalPaths || []).length === 0 ? '/units' : (additionalPaths || [])[0]
+            const client = await DirectSpikeTrainsClient.create(nwbFile, unitsPath)
             if (canceled) return
             setSpikeTrainsClient(client)
         }
         load()
         return () => {canceled = true}
-    }, [nwbFile, path])
+    }, [nwbFile, path, additionalPaths])
 
     const unitIds = useMemo(() => {
         if (!spikeTrainsClient) return []

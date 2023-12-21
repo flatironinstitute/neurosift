@@ -3,7 +3,6 @@ import RtcshareFileSystemClient from "../../../../rtcshare/RtcshareDataManager/R
 import JsonlClient from "../AnnotatedVideoView/JsonlClient"
 
 export interface SpikeTrainsClientType {
-    initialize(): Promise<void>
     startTimeSec: number | undefined
     endTimeSec: number | undefined
     blockSizeSec: number | undefined
@@ -17,56 +16,45 @@ export interface SpikeTrainsClientType {
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 class SpikeTrainsClient {
-    #jsonlClient: JsonlClient
-    #headerRecord: {
-        type: 'SpikeTrains'
-        startTimeSec: number
-        endTimeSec: number
-        blockSizeSec: number
-        numBlocks: number
-        units: {
-            unitId: number | string
-            numSpikes: number
-        }[]
-    } | undefined = undefined
-    #initialized = false
-    #initializing = false
-    constructor(filePath: string, rtcshareClient: RtcshareFileSystemClient) {
-        const uri = filePath.startsWith('http://') || filePath.startsWith('https://') ? filePath : `rtcshare://${filePath}`
-        this.#jsonlClient = new JsonlClient(uri, rtcshareClient)
+    constructor(
+        private filePath: string,
+        private rtcshareClient: RtcshareFileSystemClient,
+        private uri: string,
+        private jsonlClient: JsonlClient,
+        private headerRecord: {
+            type: 'SpikeTrains'
+            startTimeSec: number
+            endTimeSec: number
+            blockSizeSec: number
+            numBlocks: number
+            units: {
+                unitId: number | string
+                numSpikes: number
+            }[]
+        }
+    ) {
+        
     }
-    async initialize() {
-        if (this.#initialized) return
-        if (this.#initializing) {
-            while (!this.#headerRecord) {
-                await new Promise(r => setTimeout(r, 100))
-            }
-            return
-        }
-        this.#initializing = true
-        try {
-            await this.#jsonlClient.initialize()
-            this.#headerRecord = await this.#jsonlClient.getRecord(0) as any
-        }
-        finally {
-            this.#initializing = false
-            this.#initialized = true
-        }
+    static async create(filePath: string, rtcshareClient: RtcshareFileSystemClient) {
+        const uri = filePath.startsWith('http://') || filePath.startsWith('https://') ? filePath : `rtcshare://${filePath}`
+        const jsonlClient = new JsonlClient(uri, rtcshareClient)
+        await jsonlClient.initialize()
+        const headerRecord = await jsonlClient.getRecord(0) as any
+        return new SpikeTrainsClient(filePath, rtcshareClient, uri, jsonlClient, headerRecord)
     }
     get startTimeSec() {
-        return this.#headerRecord?.startTimeSec
+        return this.headerRecord?.startTimeSec
     }
     get endTimeSec() {
-        return this.#headerRecord?.endTimeSec
+        return this.headerRecord?.endTimeSec
     }
     get blockSizeSec() {
-        return this.#headerRecord?.blockSizeSec
+        return this.headerRecord?.blockSizeSec
     }
     get unitIds() {
-        return this.#headerRecord?.units.map(u => (u.unitId))
+        return this.headerRecord?.units.map(u => (u.unitId))
     }
     async getData(startBlockIndex: number, endBlockIndex: number) {
-        await this.initialize()
         const ret: {
             unitId: number | string
             spikeTimesSec: number[]
@@ -79,8 +67,8 @@ class SpikeTrainsClient {
         }
 
         for (let i = startBlockIndex; i <= endBlockIndex; i++) {
-            if ((i >= 0) && (i < this.#headerRecord!.numBlocks)) {
-                const block = await deserializeReturnValue(await this.#jsonlClient.getRecord(i + 1))
+            if ((i >= 0) && (i < this.headerRecord!.numBlocks)) {
+                const block = await deserializeReturnValue(await this.jsonlClient.getRecord(i + 1))
                 for (let j = 0; j < block.units.length; j++) {
                     const unitId = block.units[j].unitId
                     const spikeTimesSec = block.units[j].spikeTimesSec
@@ -93,7 +81,7 @@ class SpikeTrainsClient {
         return ret
     }
     get totalNumSpikes() {
-        return this.#headerRecord?.units.reduce((sum, u) => (sum + u.numSpikes), 0)
+        return this.headerRecord?.units.reduce((sum, u) => (sum + u.numSpikes), 0)
     }
 }
 

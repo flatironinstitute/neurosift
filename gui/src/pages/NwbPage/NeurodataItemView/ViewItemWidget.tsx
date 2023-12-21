@@ -10,11 +10,12 @@ type Props = {
     height: number
     viewPlugin: ViewPlugin
     itemPath: string
+    additionalItemPaths?: string[]
     condensed?: boolean
     tabName?: string
 }
 
-const ViewItemWidget: FunctionComponent<Props> = ({width, height, viewPlugin, itemPath, condensed, tabName}) => {
+const ViewItemWidget: FunctionComponent<Props> = ({width, height, viewPlugin, itemPath, additionalItemPaths, condensed, tabName}) => {
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is undefined (no context provider)')
     const group = useGroup(nwbFile, itemPath)
@@ -24,6 +25,7 @@ const ViewItemWidget: FunctionComponent<Props> = ({width, height, viewPlugin, it
             width={width}
             height={height}
             path={itemPath}
+            additionalPaths={additionalItemPaths}
             condensed={condensed}
         />
     )
@@ -41,6 +43,7 @@ const ViewItemWidget: FunctionComponent<Props> = ({width, height, viewPlugin, it
                 width={0}
                 height={0}
                 path={itemPath}
+                additionalPaths={additionalItemPaths}
                 group={group}
                 viewName={viewPlugin.name}
                 tabName={tabName}

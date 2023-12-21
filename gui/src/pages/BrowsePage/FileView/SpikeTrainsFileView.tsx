@@ -24,12 +24,11 @@ const SpikeTrainsFileView: FunctionComponent<Props> = ({width, height, filePath}
             let stc: SpikeTrainsClientType
             if (filePath.startsWith('remote-nwb|')) {
                 const url = filePath.slice('remote-nwb|'.length)
-                stc = new SpikeTrainsClientFromRemoteNwb(url)
+                stc = await SpikeTrainsClientFromRemoteNwb.create(url)
             }
             else {
-                stc = new SpikeTrainsClient(filePath, client)
+                stc = await SpikeTrainsClient.create(filePath, client)
             }
-            await stc.initialize()
             if (canceled) return
             setSpikeTrainsClient(stc)
         })()

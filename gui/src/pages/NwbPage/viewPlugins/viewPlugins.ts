@@ -24,6 +24,7 @@ type Props = {
     width: number,
     height: number,
     path: string
+    additionalPaths?: string[]
     condensed?: boolean
 }
 

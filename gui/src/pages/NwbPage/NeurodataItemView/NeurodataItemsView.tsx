@@ -94,7 +94,7 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({width, height, items}) =>
         <div style={{position: 'absolute', width, height}}>
             {
                 items.map((item, i) => {
-                    const {viewPlugin, itemPath} = getViewPluginAndItemPath(item, nwbFile)
+                    const {viewPlugin, itemPath, additionalItemPaths} = getViewPluginAndItemPath(item, nwbFile)
                     if (!viewPlugin) return (
                         <div>View plugin not found: {item}</div>
                     )
@@ -109,6 +109,7 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({width, height, items}) =>
                                         width={width}
                                         height={H - titleBarHeight}
                                         path={itemPath}
+                                        additionalPaths={additionalItemPaths}
                                         condensed={true}
                                     />
                                 }
@@ -126,15 +127,20 @@ const getViewPluginAndItemPath = (item: string, nwbFile: RemoteH5File | MergedRe
         const itemPath = item.slice(`neurodata-item:`.length).split('|')[0]
         const neurodataType = item.slice(`neurodata-item:`.length).split('|')[1]
         const {defaultViewPlugin} = findViewPluginsForType(neurodataType, {nwbFile})
-        return {viewPlugin: defaultViewPlugin, itemPath}
+        return {viewPlugin: defaultViewPlugin, itemPath, additionalItemPaths: undefined}
     }
     else if (item.startsWith('view:')) {
         const pName = item.slice(`view:`.length).split('|')[0]
-        const itemPath = item.slice(`view:`.length).split('|')[1]
+        let itemPath = item.slice(`view:`.length).split('|')[1]
+        let additionalItemPaths: string[] | undefined = undefined
+        if (itemPath.includes('^')) {
+            additionalItemPaths = itemPath.split('^').slice(1)
+            itemPath = itemPath.split('^')[0]
+        }
         const viewPlugin = viewPlugins.find(p => (p.name === pName))
-        return {viewPlugin, itemPath}
+        return {viewPlugin, itemPath, additionalItemPaths}
     }
-    else return {viewPlugin: undefined, itemPath: undefined}
+    else return {viewPlugin: undefined, itemPath: undefined, additionalItemPaths: undefined}
 }
 
 export default NeurodataItemsView

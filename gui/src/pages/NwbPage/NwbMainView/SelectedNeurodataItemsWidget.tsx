@@ -1,4 +1,4 @@
-import { FunctionComponent, useCallback } from "react"
+import { FunctionComponent, useCallback, useMemo } from "react"
 import { FaEye } from "react-icons/fa"
 import Hyperlink from "../../../components/Hyperlink"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
@@ -29,6 +29,38 @@ const SelectedNeurodataItemsWidget: FunctionComponent<Props> = () => {
                     <span>No views selected</span>
                 )
            }
+           <SpecialPSTHButton
+                selectedItemViews={selectedItemViews}
+                openTab={openTab}
+           />
+        </div>
+    )
+}
+
+type SpecialPSTHButtonProps = {
+    selectedItemViews: string[]
+    openTab: (path: string) => void
+}
+
+const SpecialPSTHButton: FunctionComponent<SpecialPSTHButtonProps> = ({selectedItemViews, openTab}) => {
+    const {unitsSelectedItemPath, timeIntervalsSelectedItemPath} = useMemo(() => {
+        if (selectedItemViews.length !== 2) return {
+            unitsSelectedItem: undefined,
+            timeIntervalsSelectedItem: undefined
+        }
+        const unitsSelectedItemPath = selectedItemViews.find(a => a.endsWith('|Units'))?.split('|')[0]?.split(':')[1]
+        const timeIntervalsSelectedItemPath = selectedItemViews.find(a => a.endsWith('|TimeIntervals'))?.split('|')[0]?.split(':')[1]
+        return {unitsSelectedItemPath, timeIntervalsSelectedItemPath}
+    }, [selectedItemViews])
+    const enabled = unitsSelectedItemPath && timeIntervalsSelectedItemPath
+    if (!enabled) return <span />
+    return (
+        <div>
+            <Hyperlink onClick={() => {
+                if (!unitsSelectedItemPath) return
+                if (!timeIntervalsSelectedItemPath) return
+                openTab(`view:PSTH|${timeIntervalsSelectedItemPath}^${unitsSelectedItemPath}`)
+            }}>Open PSTH for selected items</Hyperlink>
         </div>
     )
 }

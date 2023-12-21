@@ -50,20 +50,26 @@ const TabChild: FunctionComponent<TabChildProps> = ({tabName, width, height, con
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is undefined')
     const [unitSelection, unitSelectionDispatch] = useReducer(unitSelectionReducer, defaultUnitSelection)
-    const {viewPlugin, itemPath} = useMemo(() => {
+    const {viewPlugin, itemPath, additionalItemPaths} = useMemo(() => {
         if (tabName.startsWith('view:')) {
             const pName = tabName.slice(`view:`.length).split('|')[0]
-            const itemPath = tabName.slice(`view:`.length).split('|')[1]
+            let itemPath = tabName.slice(`view:`.length).split('|')[1]
+            let additionalItemPaths: string[] | undefined = undefined
+            if (itemPath.includes('^')) {
+                const aa = itemPath
+                itemPath = aa.split('^')[0]
+                additionalItemPaths = aa.split('^').slice(1)
+            }
             const viewPlugin = viewPlugins.find(p => (p.name === pName))
-            return {viewPlugin, itemPath}
+            return {viewPlugin, itemPath, additionalItemPaths}
         }
         else if (tabName.startsWith('neurodata-item:')) {
             const itemPath = tabName.slice(`neurodata-item:`.length).split('|')[0]
             const neurodataType = tabName.slice(`neurodata-item:`.length).split('|')[1]
             const {defaultViewPlugin} = findViewPluginsForType(neurodataType, {nwbFile})
-            return {viewPlugin: defaultViewPlugin, itemPath}
+            return {viewPlugin: defaultViewPlugin, itemPath, additionalItemPaths: undefined}
         }
-        else return {viewPlugin: undefined, itemPath: undefined}
+        else return {viewPlugin: undefined, itemPath: undefined, additionalItemPaths: undefined}
     }, [tabName, nwbFile])
     return (
         <SetupTimeseriesSelection initialTimeSelection={initialTimeSelection}>
@@ -79,6 +85,7 @@ const TabChild: FunctionComponent<TabChildProps> = ({tabName, width, height, con
                                 height={height}
                                 viewPlugin={viewPlugin}
                                 itemPath={itemPath}
+                                additionalItemPaths={additionalItemPaths}
                                 condensed={condensed}
                                 tabName={tabName}
                             />
