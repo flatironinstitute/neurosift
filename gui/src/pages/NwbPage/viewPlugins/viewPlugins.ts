@@ -194,25 +194,25 @@ viewPlugins.push({
     isTimeView: true,
     getCustomPythonCode: getCustomPythonCodeForUnits
 })
-viewPlugins.push({
-    name: 'RasterPlot',
-    neurodataType: 'Units',
-    defaultForNeurodataType: false,
-    buttonLabel: 'precomputed raster plot',
-    component: RasterPlotUnitsItemView,
-    remoteDataOnly: true,
-    isTimeView: true,
-    getCustomPythonCode: getCustomPythonCodeForUnits
-})
-viewPlugins.push({
-    name: 'Autocorrelograms',
-    neurodataType: 'Units',
-    defaultForNeurodataType: false,
-    buttonLabel: 'autocorrelograms',
-    component: AutocorrelogramsUnitsItemView,
-    remoteDataOnly: true,
-    isTimeView: false
-})
+// viewPlugins.push({
+//     name: 'RasterPlot',
+//     neurodataType: 'Units',
+//     defaultForNeurodataType: false,
+//     buttonLabel: 'precomputed raster plot',
+//     component: RasterPlotUnitsItemView,
+//     remoteDataOnly: true,
+//     isTimeView: true,
+//     getCustomPythonCode: getCustomPythonCodeForUnits
+// })
+// viewPlugins.push({
+//     name: 'Autocorrelograms',
+//     neurodataType: 'Units',
+//     defaultForNeurodataType: false,
+//     buttonLabel: 'autocorrelograms',
+//     component: AutocorrelogramsUnitsItemView,
+//     remoteDataOnly: true,
+//     isTimeView: false
+// })
 
 // Images
 viewPlugins.push({
