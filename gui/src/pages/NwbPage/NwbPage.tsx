@@ -8,6 +8,7 @@ import NwbTabWidget from "./NwbTabWidget"
 import { getMergedRemoteH5File, globalRemoteH5FileStats, MergedRemoteH5File, RemoteH5File } from "@fi-sci/remote-h5-file"
 import { SelectedItemViewsContext, selectedItemViewsReducer } from "./SelectedItemViewsContext"
 import getAuthorizationHeaderForUrl from "./getAuthorizationHeaderForUrl"
+import { DandiAssetContext, DandiAssetContextType, defaultDandiAssetContext } from "./DandiAssetContext"
 
 type Props = {
     width: number
@@ -89,18 +90,59 @@ const NwbPageChild: FunctionComponent<Props> = ({width, height}) => {
         load()
         return () => {canceled = true}
     }, [urlList, rtcshareClient])
+
+    const [dandiAssetContextValue, setDandiAssetContextValue] = useState<DandiAssetContextType>(defaultDandiAssetContext)
+    useEffect(() => {
+        let canceled = false;
+        (async () => {
+            const query = new URLSearchParams(window.location.search)
+            const assetUrl = query.get('url')
+            const dandisetId = query.get('dandisetId')
+            const dandisetVersion = query.get('dandisetVersion')
+            if (!assetUrl) return
+            if (!dandisetId) return
+            if (!dandisetVersion) return
+            // todo: get the asset ID and the asset path
+            let assetId: string | undefined = undefined
+            // https://api.dandiarchive.org/api/assets/26e85f09-39b7-480f-b337-278a8f034007/download/
+            if (isDandiAssetUrl(assetUrl)) {
+                const aa = assetUrl.split('/')
+                assetId = aa[5]
+            }
+            setDandiAssetContextValue({
+                assetUrl,
+                dandisetId,
+                dandisetVersion,
+                assetId
+            })
+            const staging = assetUrl.startsWith('https://api-staging.dandiarchive.org/')
+            const assetPath = assetId ? await getAssetPathForAssetId(dandisetId, dandisetVersion, assetId, staging) : undefined
+            if (canceled) return
+            setDandiAssetContextValue({
+                assetUrl,
+                dandisetId,
+                dandisetVersion,
+                assetId,
+                assetPath
+            })
+        })()
+        return () => {canceled = true}
+    }, [])
+
     if (!nwbFile) return <div>Loading {urlList}</div>
     return (
-        <NwbFileContext.Provider value={nwbFile}>
-            <SelectedItemViewsContext.Provider value={{selectedItemViewsState, selectedItemViewsDispatch}}>
-                <SetupNwbOpenTabs>
-                    <NwbTabWidget
-                        width={width}
-                        height={height}
-                    />
-                </SetupNwbOpenTabs>
-            </SelectedItemViewsContext.Provider>
-        </NwbFileContext.Provider>
+        <DandiAssetContext.Provider value={dandiAssetContextValue}>
+            <NwbFileContext.Provider value={nwbFile}>
+                <SelectedItemViewsContext.Provider value={{selectedItemViewsState, selectedItemViewsDispatch}}>
+                    <SetupNwbOpenTabs>
+                        <NwbTabWidget
+                            width={width}
+                            height={height}
+                        />
+                    </SetupNwbOpenTabs>
+                </SelectedItemViewsContext.Provider>
+            </NwbFileContext.Provider>
+        </DandiAssetContext.Provider>
     )
 }
 
@@ -229,6 +271,16 @@ const isDandiAssetUrl = (url: string) => {
     if (url.startsWith('https://api.dandiarchive.org/')) {
       return true
     }
+}
+
+const getAssetPathForAssetId = async (dandisetId: string, dandisetVersion: string, assetId: string | undefined, staging: boolean) => {
+    if (!assetId) return undefined
+    const baseUrl = staging ? 'https://api-staging.dandiarchive.org' : 'https://api.dandiarchive.org'
+    const url = `${baseUrl}/api/dandisets/${dandisetId}/versions/${dandisetVersion}/assets/${assetId}/`
+    const resp = await fetch(url)
+    if (!resp.ok) return undefined
+    const obj = await resp.json()
+    return obj['path']
 }
 
 export default NwbPage

@@ -1,10 +1,10 @@
-import { FunctionComponent, useContext, useEffect, useMemo, useState } from "react"
+import { MergedRemoteH5File, RemoteH5File } from "@fi-sci/remote-h5-file"
+import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react"
 import Hyperlink from "../../../components/Hyperlink"
 import { serializeBigInt, valueToString } from "../BrowseNwbView/BrowseNwbView"
+import { useDandiAssetContext } from "../DandiAssetContext"
 import { NwbFileContext } from "../NwbFileContext"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
-import { getEtag } from "../NwbPage"
-import { MergedRemoteH5File, RemoteH5File } from "@fi-sci/remote-h5-file"
 import { useDatasetData, useGroup } from "./NwbMainView"
 import SelectedNeurodataItemsWidget from "./SelectedNeurodataItemsWidget"
 
@@ -157,14 +157,14 @@ const valueToString2 = (val: any): string => {
     }
 }
 
-type DandiAssetInfo = {
-    dandiset_id: string
-    dandiset_version_id: string
-    dandi_asset_id: string
-    dandi_asset_path: string
-    dandi_asset_size: number
-    dandi_asset_blob_id: string
-}
+// type DandiAssetInfo = {
+//     dandiset_id: string
+//     dandiset_version_id: string
+//     dandi_asset_id: string
+//     dandi_asset_path: string
+//     dandi_asset_size: number
+//     dandi_asset_blob_id: string
+// }
 
 type DandisetInfo = {
     id: string,
@@ -178,66 +178,95 @@ const DandiTable = () => {
     const nwbFile = useContext(NwbFileContext)
     if (!nwbFile) throw Error('Unexpected: nwbFile is null')
 
-    const [dandiAssetInfo, setDandiAssetInfo] = useState<DandiAssetInfo | undefined>(undefined)
+    const {assetUrl, dandisetId, dandisetVersion, assetPath} = useDandiAssetContext()
+
+    // const [dandiAssetInfo, setDandiAssetInfo] = useState<DandiAssetInfo | undefined>(undefined)
     const [dandisetInfo, setDandisetInfo] = useState<DandisetInfo | undefined>(undefined)
 
-    let nwbFileUrl: string
-    if (nwbFile instanceof MergedRemoteH5File) {
-        nwbFileUrl = nwbFile.getFiles()[0].url
-    }
-    else {
-        nwbFileUrl = nwbFile.url
-    }
+    // let nwbFileUrl: string
+    // if (nwbFile instanceof MergedRemoteH5File) {
+    //     nwbFileUrl = nwbFile.getFiles()[0].url
+    // }
+    // else {
+    //     nwbFileUrl = nwbFile.url
+    // }
+
+    // useEffect(() => {
+    //     const getDandiAssetInfo = async () => {
+    //         const etag = await getEtag(nwbFileUrl)
+    //         if (!etag) return
+    //         const assetInfoUrl = `https://neurosift.org/computed/nwb/ETag/${etag.slice(0, 2)}/${etag.slice(2, 4)}/${etag.slice(4, 6)}/${etag}/dandi_asset_info.1.json`
+    //         const resp = await fetch(assetInfoUrl)
+    //         if (!resp.ok) return
+    //         const obj = await resp.json() as DandiAssetInfo
+    //         setDandiAssetInfo(obj)
+    //         const dandiInfoUrl = `https://api.dandiarchive.org/api/dandisets/${obj.dandiset_id}/versions/${obj.dandiset_version_id}/`
+    //         const resp2 = await fetch(dandiInfoUrl)
+    //         if (!resp2.ok) return
+    //         const obj2 = await resp2.json() as DandisetInfo
+    //         setDandisetInfo(obj2)
+    //     }
+    //     getDandiAssetInfo()
+    // }, [nwbFileUrl])
+
+    // if (!dandiAssetInfo) return <span />
 
     useEffect(() => {
-        const getDandiAssetInfo = async () => {
-            const etag = await getEtag(nwbFileUrl)
-            if (!etag) return
-            const assetInfoUrl = `https://neurosift.org/computed/nwb/ETag/${etag.slice(0, 2)}/${etag.slice(2, 4)}/${etag.slice(4, 6)}/${etag}/dandi_asset_info.1.json`
-            const resp = await fetch(assetInfoUrl)
+        if (!dandisetId) return
+        if (!dandisetVersion) return
+        const getDandisetInfo = async () => {
+            const resp = await fetch(`https://api.dandiarchive.org/api/dandisets/${dandisetId}/versions/${dandisetVersion}/`)
             if (!resp.ok) return
-            const obj = await resp.json() as DandiAssetInfo
-            setDandiAssetInfo(obj)
-            const dandiInfoUrl = `https://api.dandiarchive.org/api/dandisets/${obj.dandiset_id}/versions/${obj.dandiset_version_id}/`
-            const resp2 = await fetch(dandiInfoUrl)
-            if (!resp2.ok) return
-            const obj2 = await resp2.json() as DandisetInfo
-            setDandisetInfo(obj2)
+            const obj = await resp.json() as DandisetInfo
+            setDandisetInfo(obj)
         }
-        getDandiAssetInfo()
-    }, [nwbFileUrl])
+        getDandisetInfo()
+    }, [dandisetId, dandisetVersion])
 
-    if (!dandiAssetInfo) return <span />
+    const assetPathParentPath = assetPath ? assetPath.split('/').slice(0, -1).join('/') : undefined
+    const assetPathFileName = assetPath ? assetPath.split('/').slice(-1)[0] : undefined
 
-    const assetPathParentPath = dandiAssetInfo.dandi_asset_path.split('/').slice(0, -1).join('/')
-    const assetPathFileName = dandiAssetInfo.dandi_asset_path.split('/').slice(-1)[0]
+    const handleExportToDendro = useCallback(() => {
+        const assetPathEncoded = encodeURIComponent(assetPath || '')
+        const url = `https://dendro.vercel.app/importDandiAsset?projectName=neurosift&dandisetId=${dandisetId}&dandisetVersion=${dandisetVersion}&assetPath=${assetPathEncoded}&assetUrl=${assetUrl}`
+        window.open(url, '_blank')
+    }, [dandisetId, dandisetVersion, assetPath, assetUrl])
+
+    if (!dandisetId) return <span />
 
     return (
         <div>
-            <p>
-                DANDISET:&nbsp;
-                <Hyperlink
-                    href={`https://gui.dandiarchive.org/#/dandiset/${dandiAssetInfo.dandiset_id}/${dandiAssetInfo.dandiset_version_id}`}
-                    target="_blank"
-                >
-                    {dandiAssetInfo.dandiset_id} {dandiAssetInfo.dandiset_version_id}
-                </Hyperlink>&nbsp;
-            </p>
-            <p>
-                <Hyperlink
-                    href={`https://gui.dandiarchive.org/#/dandiset/${dandiAssetInfo.dandiset_id}/${dandiAssetInfo.dandiset_version_id}/files?location=${assetPathParentPath}`}
-                    target="_blank"
-                >
-                    {assetPathParentPath}
-                </Hyperlink>/{assetPathFileName}
-            </p>
-            {
-                dandisetInfo && (
-                    <p>
-                        {dandisetInfo.name}
-                    </p>
-                )
-            }
+            {dandisetId && (
+                <p>
+                    DANDISET:&nbsp;
+                    <Hyperlink
+                        href={`https://gui.dandiarchive.org/#/dandiset/${dandisetId}/${dandisetVersion}`}
+                        target="_blank"
+                    >
+                        {dandisetId} {dandisetVersion}
+                    </Hyperlink>&nbsp;
+                </p>
+            )}
+            {dandisetInfo && (
+                <p>
+                    {dandisetInfo.name}
+                </p>
+            )}
+            {dandisetId && dandisetVersion && assetPath && (
+                <p>
+                    <Hyperlink
+                        href={`https://gui.dandiarchive.org/#/dandiset/${dandisetId}/${dandisetVersion}/files?location=${assetPathParentPath}`}
+                        target="_blank"
+                    >
+                        {assetPathParentPath}
+                    </Hyperlink>/{assetPathFileName}
+                </p>
+            )}
+            {dandisetId && dandisetVersion && assetPath && (
+                <p>
+                    <Hyperlink onClick={handleExportToDendro}>Export to Dendro</Hyperlink>
+                </p>
+            )}
             <hr />
         </div>
     )
