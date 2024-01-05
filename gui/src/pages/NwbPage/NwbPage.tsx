@@ -277,7 +277,9 @@ const getAssetPathForAssetId = async (dandisetId: string, dandisetVersion: strin
     if (!assetId) return undefined
     const baseUrl = staging ? 'https://api-staging.dandiarchive.org' : 'https://api.dandiarchive.org'
     const url = `${baseUrl}/api/dandisets/${dandisetId}/versions/${dandisetVersion}/assets/${assetId}/`
-    const resp = await fetch(url)
+    const authorizationHeader = getAuthorizationHeaderForUrl(url)
+    const headers = authorizationHeader ? {Authorization: authorizationHeader} : undefined
+    const resp = await fetch(url, {headers})
     if (!resp.ok) return undefined
     const obj = await resp.json()
     return obj['path']

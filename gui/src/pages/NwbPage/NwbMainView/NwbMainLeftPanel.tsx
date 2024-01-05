@@ -7,6 +7,7 @@ import { NwbFileContext } from "../NwbFileContext"
 import { useNwbOpenTabs } from "../NwbOpenTabsContext"
 import { useDatasetData, useGroup } from "./NwbMainView"
 import SelectedNeurodataItemsWidget from "./SelectedNeurodataItemsWidget"
+import getAuthorizationHeaderForUrl from "../getAuthorizationHeaderForUrl"
 
 type Props = {
     width: number
@@ -215,13 +216,18 @@ const DandiTable = () => {
         if (!dandisetId) return
         if (!dandisetVersion) return
         const getDandisetInfo = async () => {
-            const resp = await fetch(`https://api.dandiarchive.org/api/dandisets/${dandisetId}/versions/${dandisetVersion}/`)
+            const staging = assetUrl.startsWith('https://api-staging.dandiarchive.org')
+            const baseUrl = staging ? 'https://api-staging.dandiarchive.org' : 'https://api.dandiarchive.org'
+            const url = `${baseUrl}/dandisets/${dandisetId}/versions/${dandisetVersion}/`
+            const authorizationHeader = getAuthorizationHeaderForUrl(url)
+            const headers = authorizationHeader ? {Authorization: authorizationHeader} : undefined
+            const resp = await fetch(url, {headers})
             if (!resp.ok) return
             const obj = await resp.json() as DandisetInfo
             setDandisetInfo(obj)
         }
         getDandisetInfo()
-    }, [dandisetId, dandisetVersion])
+    }, [dandisetId, dandisetVersion, assetUrl])
 
     const assetPathParentPath = assetPath ? assetPath.split('/').slice(0, -1).join('/') : undefined
     const assetPathFileName = assetPath ? assetPath.split('/').slice(-1)[0] : undefined
