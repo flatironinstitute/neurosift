@@ -234,7 +234,7 @@ const DandiTable = () => {
 
     const handleExportToDendro = useCallback(() => {
         const assetPathEncoded = encodeURIComponent(assetPath || '')
-        const url = `https://dendro.vercel.app/importDandiAsset?projectName=neurosift&dandisetId=${dandisetId}&dandisetVersion=${dandisetVersion}&assetPath=${assetPathEncoded}&assetUrl=${assetUrl}`
+        const url = `https://dendro.vercel.app/importDandiAsset?projectName=D-${dandisetId}&dandisetId=${dandisetId}&dandisetVersion=${dandisetVersion}&assetPath=${assetPathEncoded}&assetUrl=${assetUrl}`
         window.open(url, '_blank')
     }, [dandisetId, dandisetVersion, assetPath, assetUrl])
 
@@ -273,9 +273,101 @@ const DandiTable = () => {
                     <Hyperlink onClick={handleExportToDendro}>Export to Dendro</Hyperlink>
                 </p>
             )}
+            <AssociatedDendroProjectsComponent
+                assetUrl={assetUrl}
+            />
             <hr />
         </div>
     )
+}
+
+type AssociatedDendroProjectsComponentProps = {
+    assetUrl: string
+}
+
+type AssociatedProject = {
+    projectId: string
+    name: string
+    ownerId: string
+}
+
+const AssociatedDendroProjectsComponent: FunctionComponent<AssociatedDendroProjectsComponentProps> = ({assetUrl}) => {
+    const [projects, setProjects] = useState<AssociatedProject[]>([])
+    useEffect(() => {
+        let canceled = false
+        ; (async () => {
+            const url = 'https://dendro.vercel.app/api/gui/find_projects'
+            const data = {
+                'fileUrl': assetUrl
+            }
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data),
+            })
+            if (!resp.ok) return
+            const obj = await resp.json()
+            if (canceled) return
+            setProjects(obj.projects.map(p => ({
+                projectId: p.projectId,
+                name: p.name,
+                ownerId: p.ownerId
+            })) as AssociatedProject[])
+        })()
+        return () => {
+            canceled = true
+        }
+    }, [assetUrl])
+    const [expanded, setExpanded] = useState(false)
+    const initialNumProjectsToShow = 6
+    const projectsFiltered = useMemo(() => {
+        if (expanded) return projects
+        else return projects.slice(0, initialNumProjectsToShow)
+    }, [projects, expanded])
+    return (
+        <div>
+            <span>Associated Dendro projects:&nbsp; </span>
+            {
+                projectsFiltered.map((project, i) => (
+                    <span key={project.projectId}>
+                        <span style={{whiteSpace: 'nowrap'}}>
+                            <Hyperlink
+                                href={`https://dendro.vercel.app/project/${project.projectId}`}
+                                target="_blank"
+                            >
+                                {project.name}
+                                &nbsp;({formatUserId(project.ownerId)})
+                            </Hyperlink>
+                        </span>
+                        {
+                            i < projectsFiltered.length - 1 && <span>&nbsp;|&nbsp; </span>
+                        }
+                    </span>
+                ))
+            }
+            {
+                !expanded && projects.length > initialNumProjectsToShow && (
+                    <span>
+                        &nbsp;|&nbsp;...&nbsp;
+                        <span style={{whiteSpace: 'nowrap'}}>
+                            <Hyperlink onClick={() => setExpanded(true)}>Show all</Hyperlink>
+                        </span>
+                    </span>
+                )
+            }
+        </div>
+    )
+}
+
+const formatUserId = (userId: string) => {
+    if (userId.startsWith('github|')) {
+        return userId.slice('github|'.length)
+    }
+    else {
+        return userId
+    }
 }
 
 export default NwbMainLeftPanel
