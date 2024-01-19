@@ -1,5 +1,5 @@
 import { ToggleButton, ToggleButtonGroup } from "@mui/material"
-import { FunctionComponent, useState } from "react"
+import { FunctionComponent, useEffect, useState } from "react"
 import DynamicTableView from "../DynamicTable/DynamicTableView"
 import NwbTimeIntervalsView from "./NwbTimeIntervalsView"
 
@@ -17,25 +17,40 @@ const NeurodataTimeIntervalsItemView: FunctionComponent<Props> = ({ width, heigh
 
     const [viewMode, setViewMode] = useState<ViewMode>('timeplot')
 
+    const [visitedViewModes, setVisitedViewModes] = useState<ViewMode[]>([])
+    useEffect(() => {
+        if (!visitedViewModes.includes(viewMode)) {
+            setVisitedViewModes([...visitedViewModes, viewMode])
+        }
+    }, [visitedViewModes, viewMode])
+
     return (
         <div style={{ position: 'absolute', width, height }}>
             <div style={{ position: 'absolute', width, height: topBarHeight, paddingLeft: 10}}>
                 <ViewModeToggleButton viewMode={viewMode} setViewMode={setViewMode} />
             </div>
             {/* Important to use undefined rather than visible so that the hidden value is respected for parent components */}
-            <div style={{ position: 'absolute', width, height: height - topBarHeight, top: topBarHeight, visibility: viewMode === 'table' ? undefined : 'hidden' }}>
-                <DynamicTableView
-                    width={width}
-                    height={height - topBarHeight}
-                    path={path}
-                />
-            </div>
             <div style={{ position: 'absolute', width, height: height - topBarHeight, top: topBarHeight, visibility: viewMode === 'timeplot' ? undefined : 'hidden' }}>
-              <NwbTimeIntervalsView
-                    width={width}
-                    height={height - topBarHeight}
-                    path={path}
-                />
+                {
+                    visitedViewModes.includes('timeplot') && (
+                        <NwbTimeIntervalsView
+                            width={width}
+                            height={height - topBarHeight}
+                            path={path}
+                        />
+                    )
+                }
+            </div>
+            <div style={{ position: 'absolute', width, height: height - topBarHeight, top: topBarHeight, visibility: viewMode === 'table' ? undefined : 'hidden' }}>
+                {
+                    visitedViewModes.includes('table') && (
+                        <DynamicTableView
+                            width={width}
+                            height={height - topBarHeight}
+                            path={path}
+                        />
+                    )
+                }
             </div>
         </div>
     )

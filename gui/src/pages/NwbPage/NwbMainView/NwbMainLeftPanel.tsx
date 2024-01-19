@@ -310,7 +310,7 @@ const AssociatedDendroProjectsComponent: FunctionComponent<AssociatedDendroProje
             if (!resp.ok) return
             const obj = await resp.json()
             if (canceled) return
-            setProjects(obj.projects.map(p => ({
+            setProjects(obj.projects.map((p: any) => ({
                 projectId: p.projectId,
                 name: p.name,
                 ownerId: p.ownerId

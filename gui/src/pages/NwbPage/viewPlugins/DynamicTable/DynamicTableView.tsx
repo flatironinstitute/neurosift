@@ -250,9 +250,27 @@ const DynamicTableView: FunctionComponent<Props> = ({ width, height, path, refer
         }
     }, [validColumnNames, group])
 
+    const sortedRowItemsAbbreviated = useMemo(() => {
+        const maxLength = 20_000 / (validColumnNames?.length || 1)
+        if (sortedRowItems.length < maxLength) {
+            return sortedRowItems
+        }
+        const ret = []
+        for (let i = 0; i < maxLength; i++) {
+            ret.push(sortedRowItems[i])
+        }
+        return ret
+    }, [sortedRowItems, validColumnNames])
+
     if (!validColumnNames) return <div>Loading...</div>
+
     return (
         <div style={{position: 'absolute', width, height, overflowY: 'auto'}}>
+            {
+                sortedRowItemsAbbreviated.length < sortedRowItems.length && (
+                    <div style={{padding: 10, fontSize: 12, color: 'gray'}}>Showing {sortedRowItemsAbbreviated.length} of {sortedRowItems.length} rows</div>
+                )
+            }
             <table className="nwb-table">
                 <thead>
                     <tr>
@@ -278,7 +296,7 @@ const DynamicTableView: FunctionComponent<Props> = ({ width, height, path, refer
                 </thead>
                 <tbody>
                     {
-                        sortedRowItems.map((rowItem, i) => (
+                        sortedRowItemsAbbreviated.map((rowItem, i) => (
                             <tr key={i}>
                                 {
                                     rowItem.columnValues.map((val, j) => (

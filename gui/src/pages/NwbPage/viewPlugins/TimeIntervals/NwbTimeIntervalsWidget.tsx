@@ -31,8 +31,8 @@ const NwbTimeIntervalsWidget: FunctionComponent<Props> = ({width, height, labels
         let startTime = Number.MAX_VALUE
         let endTime = Number.MIN_VALUE
         for (let i = 0; i < startTimes.length; i++) {
-            startTime = Math.min(startTime, startTimes[i])
-            endTime = Math.max(endTime, stopTimes[i])
+            if (!isNaN(startTimes[i])) startTime = Math.min(startTime, startTimes[i])
+            if (!isNaN(stopTimes[i])) endTime = Math.max(endTime, stopTimes[i])
         }
         return {startTime, endTime}
     }, [startTimes, stopTimes])
@@ -78,30 +78,48 @@ const NwbTimeIntervalsWidget: FunctionComponent<Props> = ({width, height, labels
         const y1 = margins.top + 20
         const y2 = canvasHeight - margins.bottom - 20
 
-        for (const pass of [1, 2]) {
-            for (let i = 0; i < startTimes.length; i++) {
-                const x1 = timeToPixel(startTimes[i])
-                const x2 = timeToPixel(stopTimes[i])
+        let timer = Date.now()
 
-                const rect = [x1, y1, x2 - x1, y2 - y1]
+        let canceled = false
 
-                if (pass === 1) {
-                    ctx.fillStyle = labels ? colorForLabel(labels[i]) : 'gray'
-                    ctx.fillRect(rect[0], rect[1], rect[2], rect[3])
-                }
-                
-                if ((pass === 2) && (labels)) {
-                    // draw text in the center mid of the rect
-                    const text = labels[i]
-                    ctx.textBaseline = 'middle'
-                    ctx.textAlign = 'center'
-                    ctx.fillStyle = 'black'
-                    ctx.font = `16px sans-serif`
-                    const yPos = y1 + (y2 - y1) * fracPositionForLabel(labels[i])
-                    ctx.fillText(text, rect[0] + rect[2] / 2, yPos)
+        ; (async () => {
+            for (const pass of [1, 2]) {
+                for (let i = 0; i < startTimes.length; i++) {
+                    const elapsed = Date.now() - timer
+                    if (elapsed > 20) {
+                        // take a break so we don't block the UI
+                        await new Promise(r => setTimeout(r, 1))
+                        timer = Date.now()
+                    }
+                    if (canceled) return
+                    const x1 = timeToPixel(startTimes[i])
+                    const x2 = timeToPixel(stopTimes[i])
+    
+                    if (x2 < 0) continue
+                    if (x1 > canvasWidth) continue
+    
+                    const rect = [x1, y1, x2 - x1, y2 - y1]
+    
+                    if (pass === 1) {
+                        ctx.fillStyle = labels ? colorForLabel(labels[i]) : 'gray'
+                        ctx.fillRect(rect[0], rect[1], rect[2], rect[3])
+                    }
+                    
+                    if ((pass === 2) && (labels)) {
+                        // draw text in the center mid of the rect
+                        const text = labels[i]
+                        ctx.textBaseline = 'middle'
+                        ctx.textAlign = 'center'
+                        ctx.fillStyle = 'black'
+                        ctx.font = `16px sans-serif`
+                        const yPos = y1 + (y2 - y1) * fracPositionForLabel(labels[i])
+                        ctx.fillText(text, rect[0] + rect[2] / 2, yPos)
+                    }
                 }
             }
-        }
+        })()
+
+        return () => { canceled = true }
     }, [canvasElement, canvasWidth, canvasHeight, visibleStartTimeSec, visibleEndTimeSec, startTimes, stopTimes, timeToPixel, margins, labels, colorForLabel, fracPositionForLabel])
 
     return (

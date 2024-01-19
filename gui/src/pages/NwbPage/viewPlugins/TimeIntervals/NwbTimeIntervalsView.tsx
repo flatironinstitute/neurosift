@@ -41,7 +41,7 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({width, height, path}) =
                     console.warn(err)
                 }
             }
-            scores.sort((a, b) => (b.score - a.score))
+            scores.sort((a, b) => (a.score - b.score))
             if (scores.length > 0) {
                 setLabelData(scores[0].values)
             }
