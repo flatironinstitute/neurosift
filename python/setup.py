@@ -6,10 +6,7 @@ setup(
     include_package_data=True,
     package_data={},
     install_requires=[
-        'rtcshare>=0.1.5',
-        'kachery_cloud',
-        'zarr',
-        'filelock'
+        'click'
     ],
     entry_points={
         "console_scripts": [

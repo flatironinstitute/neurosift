@@ -6,9 +6,11 @@ import socket
 from contextlib import closing
 from .TemporaryDirectory import TemporaryDirectory
 
+
 @click.group()
 def neurosift():
     pass
+
 
 @click.command()
 @click.argument('file', type=click.Path(exists=True))
@@ -34,15 +36,15 @@ def view_nwb(file):
         try:
             npm_version = subprocess.run(["npm", "--version"], stdout=subprocess.PIPE, universal_newlines=True, shell=shell).stdout.strip()
             print(f'npm version: {npm_version}')
-        except:
+        except Exception:
             raise Exception('Unable to run npm.')
-        
+
         try:
             node_version = subprocess.run(["node", "--version"], stdout=subprocess.PIPE, universal_newlines=True, shell=shell).stdout.strip()
             print(f'node version: {node_version}')
-        except:
+        except Exception:
             raise Exception('Unable to run node.')
-        
+
         # parse node_version v18.0.0 to get the major version number
         node_major_version = int(node_version.split('.')[0][1:])
         if node_major_version < 16:
@@ -65,14 +67,17 @@ def view_nwb(file):
         # wait for the process to finish
         process.wait()
 
+
 def find_free_port():
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
         s.bind(('', 0))
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         return s.getsockname()[1]
 
+
 # Add command to the neurosift group
 neurosift.add_command(view_nwb)
+
 
 if __name__ == '__main__':
     neurosift()

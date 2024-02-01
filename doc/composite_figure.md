@@ -1,3 +1,0 @@
-# Composite figures
-
-TODO
