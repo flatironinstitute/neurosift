@@ -1,13 +1,9 @@
 import { FunctionComponent } from "react";
 import ApplicationBar, { applicationBarHeight } from "./ApplicationBar";
-import GitHubAuthPage from "./GitHub/GitHubAuthPage";
+import StatusBar, { statusBarHeight } from "./StatusBar";
 import AboutPage from "./pages/AboutPage/AboutPage";
-import AviPage from "./pages/AviPage/AviPage";
-import BrowsePage from "./pages/BrowsePage/BrowsePage";
-import { SetupOpenTabs } from "./pages/BrowsePage/OpenTabsContext";
 import HomePage from "./pages/HomePage/HomePage";
 import NwbPage from "./pages/NwbPage/NwbPage";
-import StatusBar, { statusBarHeight } from "./StatusBar";
 import useRoute from "./useRoute";
 import useWindowDimensions from "./useWindowDimensions";
 
@@ -30,12 +26,6 @@ const MainWindow: FunctionComponent<Props> = () => {
                         <HomePage width={width} height={H} />
                     ) : route.page === 'about' ? (
                         <AboutPage width={width} height={H} />
-                    ) : route.page === 'browse' ? (
-                        <SetupOpenTabs>
-                            <BrowsePage folder={route.folder} width={width} height={H} />
-                        </SetupOpenTabs>
-                    ) : route.page === 'github-auth' ? (
-                        <GitHubAuthPage />
                     ) : route.page === 'test' ? (
                         <NwbPage
                             width={width}

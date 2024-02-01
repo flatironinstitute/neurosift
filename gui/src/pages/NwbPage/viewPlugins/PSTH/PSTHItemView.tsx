@@ -1,11 +1,11 @@
-import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react"
+import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react"
 import { defaultUnitSelection, sortIds, UnitSelectionContext, unitSelectionReducer } from "../../../../package/context-unit-selection"
 import { useSelectedUnitIds } from "../../../../package/context-unit-selection/UnitSelectionContext"
-import IfHasBeenVisible from "../../../BrowsePage/FileView/SpikeSortingDigestView/IfHasBeenVisible"
 import { NwbFileContext } from "../../NwbFileContext"
 import { useGroup } from "../../NwbMainView/NwbMainView"
 import { DirectSpikeTrainsClient } from "../Units/DirectRasterPlotUnitsItemView"
 import PSTHUnitWidget from "./PSTHUnitWidget"
+import IfHasBeenVisible from "./IfHasBeenVisible"
 
 type Props = {
     width: number

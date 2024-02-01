@@ -5,7 +5,6 @@ import { defaultUnitSelection, UnitSelectionContext, unitSelectionReducer } from
 import TabWidget from "../../TabWidget/TabWidget";
 import NeurodataItemsView from "./NeurodataItemView/NeurodataItemsView";
 import ViewItemWidget from "./NeurodataItemView/ViewItemWidget";
-import NeurosiftItemView from "./NeurosiftItemView/NeurosiftItemView";
 import { NwbFileContext } from "./NwbFileContext";
 import NwbMainView from "./NwbMainView/NwbMainView";
 import { useNwbOpenTabs } from "./NwbOpenTabsContext";
@@ -105,11 +104,6 @@ const TabChild: FunctionComponent<TabChildProps> = ({tabName, width, height, con
                         })()
                     ) : tabName === 'timeseries-alignment' ? (
                         <TimeseriesAlignmentView key={tabName} width={width} height={height} />
-                    ) : tabName.startsWith('ns:') ? (
-                        (() => {
-                            const url = tabName.slice(`ns:`.length)
-                            return <NeurosiftItemView key={tabName} width={width} height={height} url={url} />
-                        })()
                     ) : (
                         <div key={tabName}>Not implemented</div>
                     )

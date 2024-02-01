@@ -1,5 +1,4 @@
 import { createContext, FunctionComponent, useCallback, useContext } from "react";
-import { useRtcshareConnection } from "./RtcshareConnection/RtcshareConnectionContext";
 
 type Props = {
     width: number
@@ -44,19 +43,9 @@ export const useCustomStatusBarStrings = () => {
 }
 
 const StatusBar: FunctionComponent<Props> = ({width, height}) => {
-    const {rtcshareAvailable, rtcshareUrl} = useRtcshareConnection()
     const {customStatusBarStrings} = useCustomStatusBarStrings()
     return (
         <div style={{fontSize: 12, paddingTop: 3, paddingLeft: 5}}>
-            {
-                rtcshareAvailable === undefined ? (
-                    <span>Checking Rtcshare connectivity...</span>
-                ) : rtcshareAvailable ? (
-                    <span style={{color: connectedColor}}>Connected to rtcshare at {rtcshareUrl}</span>
-                ) : (
-                    <span style={{color: notConnectedColor}}>Unable to connect to rtcshare at {rtcshareUrl}</span>
-                )
-            }
             {/* The following is flush right */}
             <span style={{position: 'absolute', right: 5, color: 'gray'}}>
                 {

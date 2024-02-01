@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import Splitter from '../../components/Splitter';
+import { ViewToolbar } from '../ViewToolbar';
 import { DefaultToolbarWidth } from '../component-time-scroll-view';
-import { useAnnotations } from '../context-annotations';
 import { useTimeRange } from '../context-timeseries-selection';
 import { TimeseriesLayoutOpts } from '../saneslab/view-firing-rates-plot/FiringRatesPlotView';
-import { convert1dDataSeries, use1dScalingMatrix } from '../util-point-projection';
-import { ViewToolbar } from '../ViewToolbar';
+import { use1dScalingMatrix } from '../util-point-projection';
+import TSVAxesLayer from './TSVAxesLayer';
+import TSVCursorLayer from './TSVCursorLayer';
+import TSVHighlightLayer from './TSVHighlightLayer';
+import TSVMainLayer from './TSVMainLayer';
 import { useTimeTicks } from './TimeAxisTicks';
 import useActionToolbar, { OptionalToolbarActions } from './TimeScrollViewActionsToolbar';
 import { HighlightIntervalSet } from './TimeScrollViewData';
@@ -13,11 +16,6 @@ import { Margins, useDefinedMargins, useFocusTimeInPixels, usePanelDimensions } 
 import useTimeScrollEventHandlers, { suppressWheelScroll } from './TimeScrollViewInteractions/TimeScrollViewEventHandlers';
 import useTimeScrollZoom from './TimeScrollViewInteractions/useTimeScrollZoom';
 import { filterAndProjectHighlightSpans } from './TimeScrollViewSpans';
-import TSVAnnotationLayer from './TSVAnnotationLayer';
-import TSVAxesLayer from './TSVAxesLayer';
-import TSVCursorLayer from './TSVCursorLayer';
-import TSVHighlightLayer from './TSVHighlightLayer';
-import TSVMainLayer from './TSVMainLayer';
 import { TickSet } from './YAxisTicks';
 
 
@@ -149,40 +147,40 @@ const TimeScrollView = <T extends {[key: string]: any}> (props: TimeScrollViewPr
         )
     }, [effectiveWidth, height, timeRange, definedMargins, currentTimeInPixels, currentTimeIntervalInPixels])
 
-    const {annotations} = useAnnotations()
-    const annotationLayer = useMemo(() => {
-        const annotationsInRange = annotations.filter(x => (
-            x.type === 'timepoint' ? (
-                (timeRange[0] <= x.timeSec) && (x.timeSec <= timeRange[1])
-            ) : (
-                (timeRange[0] <= x.timeIntervalSec[1]) && (x.timeIntervalSec[0] <= timeRange[1])
-            )
-        ))
-        const pixelTimepointAnnotations = annotationsInRange.filter(x => (x.type === 'timepoint')).map(x => {
-            if (x.type !== 'timepoint') throw Error('Unexpected')
-            return {
-                pixelTime: convert1dDataSeries([x.timeSec], timeToPixelMatrix)[0],
-                annotation: x
-            }
-        })
-        const pixelTimeIntervalAnnotations = annotationsInRange.filter(x => (x.type === 'time-interval')).map(x => {
-            if (x.type !== 'time-interval') throw Error('Unexpected')
-            return {
-                pixelTimeInterval: convert1dDataSeries(x.timeIntervalSec, timeToPixelMatrix) as [number, number],
-                annotation: x
-            }
-        })
-        return (
-            <TSVAnnotationLayer
-                width={effectiveWidth}
-                height={height}
-                timeRange={timeRange}
-                pixelTimepointAnnotations={pixelTimepointAnnotations}
-                pixelTimeIntervalAnnotations={pixelTimeIntervalAnnotations}
-                margins={definedMargins}
-            />
-        )
-    }, [annotations, definedMargins, effectiveWidth, height, timeRange, timeToPixelMatrix])
+    // const {annotations} = useAnnotations()
+    // const annotationLayer = useMemo(() => {
+    //     const annotationsInRange = annotations.filter(x => (
+    //         x.type === 'timepoint' ? (
+    //             (timeRange[0] <= x.timeSec) && (x.timeSec <= timeRange[1])
+    //         ) : (
+    //             (timeRange[0] <= x.timeIntervalSec[1]) && (x.timeIntervalSec[0] <= timeRange[1])
+    //         )
+    //     ))
+    //     const pixelTimepointAnnotations = annotationsInRange.filter(x => (x.type === 'timepoint')).map(x => {
+    //         if (x.type !== 'timepoint') throw Error('Unexpected')
+    //         return {
+    //             pixelTime: convert1dDataSeries([x.timeSec], timeToPixelMatrix)[0],
+    //             annotation: x
+    //         }
+    //     })
+    //     const pixelTimeIntervalAnnotations = annotationsInRange.filter(x => (x.type === 'time-interval')).map(x => {
+    //         if (x.type !== 'time-interval') throw Error('Unexpected')
+    //         return {
+    //             pixelTimeInterval: convert1dDataSeries(x.timeIntervalSec, timeToPixelMatrix) as [number, number],
+    //             annotation: x
+    //         }
+    //     })
+    //     return (
+    //         <TSVAnnotationLayer
+    //             width={effectiveWidth}
+    //             height={height}
+    //             timeRange={timeRange}
+    //             pixelTimepointAnnotations={pixelTimepointAnnotations}
+    //             pixelTimeIntervalAnnotations={pixelTimeIntervalAnnotations}
+    //             margins={definedMargins}
+    //         />
+    //     )
+    // }, [annotations, definedMargins, effectiveWidth, height, timeRange, timeToPixelMatrix])
 
     const handleKeyDown: React.KeyboardEventHandler = useCallback((e) => {
         if (e.key === '=') {
@@ -212,7 +210,7 @@ const TimeScrollView = <T extends {[key: string]: any}> (props: TimeScrollViewPr
                 tabIndex={0}
                 onKeyDown={handleKeyDown}
             >
-                {annotationLayer}
+                {/* {annotationLayer} */}
                 {axesLayer}
                 {mainLayer}
                 {highlightLayer}
@@ -220,7 +218,7 @@ const TimeScrollView = <T extends {[key: string]: any}> (props: TimeScrollViewPr
             </div>
         )
     }, [style, handleWheel, handleMouseDown, handleMouseUp, handleMouseMove, handleMouseLeave,
-        annotationLayer, axesLayer, mainLayer, highlightLayer, cursorLayer, handleKeyDown])
+        axesLayer, mainLayer, highlightLayer, cursorLayer, handleKeyDown])
     
     if (hideToolbar) {
         return (

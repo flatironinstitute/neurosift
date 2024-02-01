@@ -1,14 +1,13 @@
-import { FunctionComponent, useEffect, useMemo, useReducer, useState } from "react"
-import { useRtcshare } from "../../rtcshare/useRtcshare"
+import { MergedRemoteH5File, RemoteH5File, getMergedRemoteH5File, globalRemoteH5FileStats } from "@fi-sci/remote-h5-file"
+import { FunctionComponent, useEffect, useReducer, useState } from "react"
 import { useCustomStatusBarStrings } from "../../StatusBar"
 import useRoute from "../../useRoute"
+import { DandiAssetContext, DandiAssetContextType, defaultDandiAssetContext } from "./DandiAssetContext"
 import { NwbFileContext } from "./NwbFileContext"
 import { SetupNwbOpenTabs } from "./NwbOpenTabsContext"
 import NwbTabWidget from "./NwbTabWidget"
-import { getMergedRemoteH5File, globalRemoteH5FileStats, MergedRemoteH5File, RemoteH5File } from "@fi-sci/remote-h5-file"
 import { SelectedItemViewsContext, selectedItemViewsReducer } from "./SelectedItemViewsContext"
 import getAuthorizationHeaderForUrl from "./getAuthorizationHeaderForUrl"
-import { DandiAssetContext, DandiAssetContextType, defaultDandiAssetContext } from "./DandiAssetContext"
 
 type Props = {
     width: number
@@ -56,7 +55,6 @@ const NwbPageChild: FunctionComponent<Props> = ({width, height}) => {
     const urlList = route.url
     const [nwbFile, setNwbFile] = useState<RemoteH5File | MergedRemoteH5File | undefined>(undefined)
     const [selectedItemViewsState, selectedItemViewsDispatch] = useReducer(selectedItemViewsReducer, {selectedItemViews: []})
-    const {client: rtcshareClient} = useRtcshare()
 
     // status bar text
     const {setCustomStatusBarString} = useCustomStatusBarStrings()
@@ -76,20 +74,13 @@ const NwbPageChild: FunctionComponent<Props> = ({width, height}) => {
             const urlListResolved = await getResolvedUrls(urlList)
             const metaUrls = await getMetaUrls(urlListResolved)
             if (canceled) return
-            // if ((!metaUrl) && (urlListResolved) && (rtcshareClient)) {
-            //     console.info(`Requesting meta for ${urlListResolved}`)
-            //     rtcshareClient.serviceQuery('neurosift-nwb-request', {
-            //         type: 'request-meta-nwb',
-            //         nwbUrl: urlListResolved
-            //     })
-            // }
             const f = await getMergedRemoteH5File(urlListResolved, metaUrls)
             if (canceled) return
             setNwbFile(f)
         }
         load()
         return () => {canceled = true}
-    }, [urlList, rtcshareClient])
+    }, [urlList])
 
     const [dandiAssetContextValue, setDandiAssetContextValue] = useState<DandiAssetContextType>(defaultDandiAssetContext)
     useEffect(() => {

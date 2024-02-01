@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { FunctionComponent, useContext, useEffect, useState } from "react"
-import RasterPlotView3 from "../../../BrowsePage/FileView/RasterPlotView3/RasterPlotView3"
 import { NwbFileContext } from "../../NwbFileContext"
 import { DatasetDataType, MergedRemoteH5File, RemoteH5File } from "@fi-sci/remote-h5-file"
+import RasterPlotView3 from "../Units/RasterPlotView3/RasterPlotView3"
 
 type Props = {
     width: number

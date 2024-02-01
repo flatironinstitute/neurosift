@@ -1,17 +1,15 @@
 import { mean } from 'mathjs';
 import { FunctionComponent, useCallback, useEffect, useMemo, useState } from 'react';
-import { FaMinus, FaPlus } from 'react-icons/fa';
+import { FaArrowLeft, FaArrowRight, FaMinus, FaPlus } from 'react-icons/fa';
+import Splitter from '../../components/Splitter';
+import { AmplitudeScaleToolbarEntries } from '../AmplitudeScaleToolbarEntries';
+import { ToolbarItem, UnitsTableBottomToolbar, UnitsTableBottomToolbarOptions, ViewToolbar, defaultUnitsTableBottomToolbarOptions } from '../ViewToolbar';
+import { PGPlot, PlotGrid } from '../component-plot-grid';
+import { VerticalScrollView } from '../component-vertical-scroll-view';
+import { INITIALIZE_UNITS, idToNum, sortIds, useSelectedUnitIds } from '../context-unit-selection';
 import { getUnitColor } from '../view-units-table/unitColors';
-import { defaultUnitsTableBottomToolbarOptions, ToolbarItem, UnitsTableBottomToolbar, UnitsTableBottomToolbarOptions, ViewToolbar } from '../ViewToolbar';
 import AverageWaveformPlot, { AverageWaveformPlotProps } from './AverageWaveformPlot';
 import { AverageWaveformsViewData } from './AverageWaveformsViewData';
-import { FaArrowRight, FaArrowLeft, FaRegTimesCircle } from 'react-icons/fa'
-import { idToNum, INITIALIZE_UNITS, sortIds, useSelectedUnitIds } from '../context-unit-selection';
-import { PGPlot, PlotGrid } from '../component-plot-grid';
-import { AmplitudeScaleToolbarEntries } from '../AmplitudeScaleToolbarEntries';
-import Splitter from '../../components/Splitter';
-import { VerticalScrollView } from '../component-vertical-scroll-view';
-import { transpose } from '../../pages/BrowsePage/FileView/SpikeSortingDigestView/SnippetsView/SnippetsPlot';
 
 type Props = {
     data: AverageWaveformsViewData
@@ -342,5 +340,19 @@ const subtractChannelMeans = (waveform: number[][]): number[][] => {
 }
 
 const computeMean = (ary: number[]) => ary.length > 0 ? mean(ary) : 0
+
+export const transpose = (x: number[][]) => {
+    const M = x.length
+    const N = x[0].length
+    const ret: number[][] = []
+    for (let j = 0; j < N; j++) {
+        const row: number[] = []
+        for (let i = 0; i < M; i++) {
+            row.push(x[i][j])
+        }
+        ret.push(row)
+    }
+    return ret
+}
 
 export default AverageWaveformsView

@@ -14,9 +14,7 @@ import SpatialSeriesXYView from "./SpatialSeries/SpatialSeriesWidget/SpatialSeri
 import NeurodataTimeIntervalsItemView from "./TimeIntervals/NeurodataTimeIntervalsItemView"
 import NeurodataTimeSeriesItemView from "./TimeSeries/NeurodataTimeSeriesItemView"
 import TwoPhotonSeriesItemView from "./TwoPhotonSeries/TwoPhotonSeriesItemView"
-import AutocorrelogramsUnitsItemView from "./Units/AutocorrelogramsUnitsItemView"
 import DirectRasterPlotUnitsItemView from "./Units/DirectRasterPlotUnitsItemView"
-import RasterPlotUnitsItemView from "./Units/RasterPlotUnitsItemView"
 import UnitsItemView from "./Units/UnitsItemView"
 import { getCustomPythonCodeForTimeIntervals, getCustomPythonCodeForTimeSeries, getCustomPythonCodeForUnits } from "./customPythonCode"
 

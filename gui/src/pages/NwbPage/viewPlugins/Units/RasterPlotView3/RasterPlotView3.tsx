@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { FunctionComponent, useCallback, useEffect, useMemo, useState } from 'react'
-import TimeScrollView2, { useTimeScrollView2 } from '../../../../package/component-time-scroll-view-2/TimeScrollView2'
-import { useTimeRange, useTimeseriesSelectionInitialization } from '../../../../package/context-timeseries-selection'
-import { useSelectedUnitIds } from '../../../../package/context-unit-selection'
 import { SpikeTrainsClientType } from './SpikeTrainsClient'
 import { Opts } from './WorkerTypes'
+import { useTimeRange, useTimeseriesSelectionInitialization } from '../../../../../package/context-timeseries-selection'
+import { useSelectedUnitIds } from '../../../../../package/context-unit-selection'
+import TimeScrollView2, { useTimeScrollView2 } from '../../../../../package/component-time-scroll-view-2/TimeScrollView2'
 
 type Props = {
     spikeTrainsClient: SpikeTrainsClientType
