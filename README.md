@@ -1,16 +1,23 @@
 # Neurosift
 
-Neurosift provides a platform for the visualization of neuroscience data in the web browser. It caters to both individual users through its local mode, allowing the visualization of views directly from your device, as well as a remote access function for presenting your findings to other users on different machines. With Neurosift, you have the ability to construct a multitude of synchronized visuals such as spike raster plots, audio spectrograms, videos, video annotations, position decode fields, timeseries graphs, and more.
+Neurosift is a web-based tool designed for the visualization of NWB (Neurodata Without Borders) files, whether stored locally or hosted remotely, and enables interactive exploration of the [DANDI Archive](https://dandiarchive.org/).
 
-Neurosift is integrated with [DANDI Archive](https://dandiarchive.org/). You can browse the contents of a dandiset directly in your browser, and visualize the items using Neurosift views.
+Capabilities of Neurosift include:
+- View DANDI NWB files - use the integrated menu of DANDI Archive to launch Neurosift from any NWB file asset within a public or embargoed DANDIset.
+- Visualize remote NWB files hosted on non-DANDI web servers or cloud storage.
+- Visualize local NWB files directly within your browser.
+- Browse a DANDIset within Neurosift, enabling the selection and simultaneous viewing or browsing of one or more NWB files.
+- Upcoming integration with Dendro for enhanced data analysis and visualization capabilities (more details to be announced).
 
-Here is an example:
+Visualization plugins include:
+- Timeseries data (spatial, electrical, events, ...)
+- Images
+- Time intervals
+- Spike raster plots
+- Peristimulus time histograms
+- ...
 
-https://flatironinstitute.github.io/neurosift/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/c86/cdf/c86cdfba-e1af-45a7-8dfd-d243adc20ced
-
-Replace the url query parameter with the appropriate URL for your dandiset. Or you can point it to any NWB file on the web.
-
-Or even simpler, Neurosift is now registered as an external service of DANDI archive, so you if you browse to an .nwb asset on DANDI, you can use the menu button to launch Neurosift directly.
+Beyond plots and graphs, Neurosift lets you browse the hierarchical structure of NWB files.
 
 [Here is a collection of DANDI examples highlighting the various view plugins](https://github.com/flatironinstitute/neurosift/wiki/Neurosift-DANDI-Examples)
 
