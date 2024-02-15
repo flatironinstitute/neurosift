@@ -19,6 +19,8 @@ Visualization plugins include:
 
 Beyond plots and graphs, Neurosift lets you browse the hierarchical structure of NWB files.
 
+Here are a couple examples: [DANDI NWB File](https://flatironinstitute.github.io/neurosift/?p=/nwb&url=https://api.dandiarchive.org/api/assets/50b43c75-686f-4d06-acf2-cd0b1b42e8be/download/&dandisetId=000402&dandisetVersion=0.230307.2132) | [DANDIset](https://flatironinstitute.github.io/neurosift/?p=/dandiset&dandisetId=000402&dandisetVersion=0.230307.2132).
+
 [Here is a collection of DANDI examples highlighting the various view plugins](https://github.com/flatironinstitute/neurosift/wiki/Neurosift-DANDI-Examples)
 
 ## Quick instructions for viewing a local .nwb file
