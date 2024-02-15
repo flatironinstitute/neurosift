@@ -2,6 +2,8 @@
 
 Neurosift is a web-based tool designed for the visualization of NWB (Neurodata Without Borders) files, whether stored locally or hosted remotely, and enables interactive exploration of the [DANDI Archive](https://dandiarchive.org/).
 
+[Visit the live site!](https://flatironinstitute.github.io/neurosift)
+
 Capabilities of Neurosift include:
 - View DANDI NWB files - use the integrated menu of DANDI Archive to launch Neurosift from any NWB file asset within a public or embargoed DANDIset.
 - Visualize remote NWB files hosted on non-DANDI web servers or cloud storage.
