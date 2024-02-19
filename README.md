@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/flatironinstitute/neurosift/assets/844306/6fbc4e77-c16f-4b3e-b136-33d192ec1d94">
+  <img src="https://github.com/flatironinstitute/neurosift/assets/844306/6fbc4e77-c16f-4b3e-b136-33d192ec1d94", height=80>
 </p>
 
 # Neurosift
