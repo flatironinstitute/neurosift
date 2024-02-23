@@ -5,13 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 3000",
-    "old-build": "tsc && vite build",
-    "build": "cd ../../fi-sci && nx build neurosift",
+    "provide-message": "echo 'This is the old source code. Please see the readme.txt in this directory for more information.'",
+    "build": "npm run provide-message",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "old-deploy": "cp _vercel.json vercel.json && vercel --prod && rm vercel.json",
     "old2-deploy": "npm run build && gh-pages -d dist --no-history",
-    "deploy": "npm run build && rm -rf dist && cp -r ../../fi-sci/dist/apps/neurosift dist && gh-pages -d dist --no-history"
+    "old-build": "tsc && vite build",
+    "old-build-2": "npm run provide-message && cd ../../fi-sci && nx build neurosift",
+    "old-deploy-2": "npm run build && rm -rf dist && cp -r ../../fi-sci/dist/apps/neurosift dist && gh-pages -d dist --no-history"
   },
   "dependencies": {
     "@emotion/react": "^11.10.5",
