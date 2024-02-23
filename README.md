@@ -43,6 +43,10 @@ This will open a web browser window with the Neurosift web app pointing to a sym
 
 When finished, you can stop the server by pressing Ctrl-C in the terminal window.
 
+## Viewing a remote NWB file hosted somewhere other than on DANDI
+
+See [How can I view a remote NWB file hosted somewhere other than on DANDI?](https://github.com/flatironinstitute/neurosift/issues/129#issuecomment-1961798285)
+
 ## Contributing
 
 We welcome feedback and code contributions. Please submit a pull request or open an issue.
