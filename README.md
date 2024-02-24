@@ -47,6 +47,14 @@ When finished, you can stop the server by pressing Ctrl-C in the terminal window
 
 See [How can I view a remote NWB file hosted somewhere other than on DANDI?](https://github.com/flatironinstitute/neurosift/issues/129#issuecomment-1961798285)
 
+## Installation
+
+To use Neurosift, you don't need to install anything. Just visit the [live site](https://flatironinstitute.github.io/neurosift) and start browsing NWB files.
+
+You can also [install and run Neurosift locally for development purposes](doc/development_environment.md).
+
+In addition to the frontend, there is also a [Python package called neurosift](https://pypi.org/project/neurosift/) that provides a command-line interface for viewing local NWB files. See the instructions above. The source code for this package is in the [python directory](python).
+
 ## Contributing
 
 We welcome feedback and code contributions. Please submit a pull request or open an issue.
