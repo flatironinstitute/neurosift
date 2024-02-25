@@ -1,4 +1,4 @@
-# experimental-local-file-access
+# local-file-access-js
 
 This is a simple server that allows you to access local NWB files using Neurosift.
 

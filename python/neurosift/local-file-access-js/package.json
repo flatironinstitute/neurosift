@@ -1,7 +1,7 @@
 {
-  "name": "experimental-local-file-access",
+  "name": "local-file-access-js",
   "version": "0.0.1",
-  "description": "experimental service for allowing neurosift to access local files",
+  "description": "service for allowing neurosift to access local files",
   "main": "src/index.js",
   "author": "Jeremy Magland",
   "license": "Apache-2.0",

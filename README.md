@@ -49,7 +49,7 @@ See [How can I view a remote NWB file hosted somewhere other than on DANDI?](htt
 
 ## Installation
 
-To use Neurosift, you don't need to install anything. Just visit the [live site](https://flatironinstitute.github.io/neurosift) and start browsing NWB files.
+To use Neurosift, you don't need to install anything. Just visit the [live site](https://flatironinstitute.github.io/neurosift) and start browsing DANDI.
 
 You can also [install and run Neurosift locally for development purposes](doc/development_environment.md).
 

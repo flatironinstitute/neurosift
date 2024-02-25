@@ -51,13 +51,13 @@ def view_nwb(file):
             raise Exception('node version must be >= 16.0.0')
 
         # run the command npm install in the js directory
-        subprocess.run(["npm", "install"], cwd=f'{this_directory}/experimental-local-file-access', shell=shell)
+        subprocess.run(["npm", "install"], cwd=f'{this_directory}/local-file-access-js', shell=shell)
 
         # find an open port
         port = find_free_port()
 
         # run the service
-        process = subprocess.Popen(['npm', 'run', 'start', tmpdir], cwd=f'{this_directory}/experimental-local-file-access', shell=shell, env=dict(os.environ, PORT=str(port)))
+        process = subprocess.Popen(['npm', 'run', 'start', tmpdir], cwd=f'{this_directory}/local-file-access-js', shell=shell, env=dict(os.environ, PORT=str(port)))
 
         # open the browser
         url = f"https://flatironinstitute.github.io/neurosift/?p=/nwb&url=http://localhost:{port}/files/{base_fname}"
