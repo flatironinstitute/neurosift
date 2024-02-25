@@ -55,6 +55,10 @@ You can also [install and run Neurosift locally for development purposes](doc/de
 
 In addition to the frontend, there is also a [Python package called neurosift](https://pypi.org/project/neurosift/) that provides a command-line interface for viewing local NWB files. See the instructions above. The source code for this package is in the [python directory](python).
 
+## Seeking help
+
+Please report any issues or suggest features on the [GitHub issue tracker](https://github.com/flatironinstitute/neurosift/issues).
+
 ## Contributing
 
 We welcome feedback and code contributions. Please submit a pull request or open an issue.
@@ -62,6 +66,8 @@ We welcome feedback and code contributions. Please submit a pull request or open
 ## Developers
 
 [Setting up a development environment](./doc/development.md)
+
+If you are familiar with with React and TypeScript, developing and extending Neurosift is fairly straightforward.
 
 ## License
 
