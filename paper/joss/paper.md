@@ -18,9 +18,9 @@ authors:
     orcid: 0000-0001-5725-6910
     affiliation: 2
 affiliations:
- - name: Flatiron Institute, USA
+ - name: Center for Computational Mathematics, Flatiron Institute, USA
    index: 1
- - name: CatalystNeuro, Country
+ - name: CatalystNeuro, USA
    index: 2
 date: 23 February 2024
 bibliography: paper.bib
