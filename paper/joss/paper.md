@@ -14,7 +14,7 @@ authors:
   - name: Cody Baker
     orcid: 0000-0002-0829-4790
     affiliation: 2
-  - name: Ben Dichter
+  - name: Benjamin Dichter
     orcid: 0000-0001-5725-6910
     affiliation: 2
 affiliations:
