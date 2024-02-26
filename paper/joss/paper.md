@@ -51,4 +51,8 @@ The main technical challenge in developing Neurosift lies in its requirement to 
 
 In conclusion, Neurosift makes neurophysiology data more accessible and manageable for scientists. By facilitating the exploration of complex datasets directly within a browser, without requiring specialized programming knowledge, it lowers the barrier to entry for data analysis and fosters collaborative research efforts. Looking forward, there is potential for Neurosift to expand its capabilities, with enhanced visualizations and support for additional data types.
 
+## Acknowledgements
+
+Some of the visualizations in Neurosift were ported from other projects where Jeff Soules was a core developer.
+
 # References
