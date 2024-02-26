@@ -1,4 +1,10 @@
-on: workflow_dispatch
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "paper/joss/**"
+  workflow_dispatch:
 
 jobs:
   paper:
