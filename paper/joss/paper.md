@@ -46,11 +46,11 @@ In the evolving field of neuroscience research, the ability to manage and share 
 
 Because files found on DANDI can often be large and unwieldy, various Python tools have emerged to address this by streaming portions of the NWB file without the need to download the entire file. One such tool is NWB Widgets [@nwbwidgets], which provides a suite of interactive widgets for visualizing NWB data within Jupyter notebooks, enabling users to navigate the hierarchical structure of NWB files and directly visualize specific data elements. This package was a large part of the inspiration for Neurosift. The main difference is that NWB Widgets is a Python package that runs within interactive Python environments, while Neurosift is a browser-based tool that can be used without any installation. These two tools cater to different use cases, with Neurosift being more accessible to a wider audience, and being better suited for integration with DANDI.
 
-## Functionality and user experience
+# Functionality and user experience
 
 Neurodata Without Borders files are structured hierarchically, encapsulating various *neurodata types* that reflect different aspects of neurophysiological experiments. These types range from *BehavioralEvents*, which record discrete actions or occurrences within experiments, to data structures like *Fluorescence*, *ImageSegmentation*, and *RoiResponseSeries*. Other neurodata types include *ElectricalSeries* for electrophysiological signals and *Units* for spike times of neurons. Neurosift allows interactive navigation of this hierarchical structure and provides plugin visualizations for many of these types. It also facilitates the creation of composite views by allowing users to select and synchronize multiple data types within the same interface. This synchronization extends to navigation actions such as zooming and panning, where different sub-windows, each displaying a different aspect of the data, maintain a shared time axis.
 
-## Architecture and technical innovation
+# Architecture and technical innovation
 
 Neurosift is a *static* React/TypeScript website meaning that it is delivered to the user's browser exactly as stored, without the need for dynamic server-side processing of requests. This approach simplifies deployment and maintenance; It is currently being hosted on GitHub Pages, but it could easily be deployed to any other static hosting service.
 
@@ -58,11 +58,11 @@ The main technical challenge in developing Neurosift was the requirement to lazy
 
 In addition to HDF5-backed NWB files, Neurosift also supports NWB datasets stored using [Zarr][https://zarr.dev], which is a more efficient, cloud-friendly format, but which can be less convenient to manage since NWB-Zarr datasets can contain thousands of individual files in contrast to a single HDF5 file.
 
-## Conclusion
+# Conclusion
 
 Neurosift makes neurophysiology data more accessible for scientists. By facilitating the exploration of complex datasets directly within a browser, without requiring specialized programming knowledge, it lowers the barrier to entry for data analysis and fosters collaborative research efforts. Looking forward, there is potential for Neurosift to expand its capabilities, with enhanced visualizations and support for additional data types.
 
-## Acknowledgements
+# Acknowledgements
 
 Thank you to Jeff Soules who helped develop visualizations that were ported over to Neurosift.
 
