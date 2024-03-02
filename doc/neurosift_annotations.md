@@ -30,7 +30,9 @@ repository to store your annotations.
 
 Navigate to a DANDI NWB file in Neurosift. You will see a new "Annotations" tab.
 Click on this tab to get more information about viewing and managing the
-annotations for this file.
+annotations for this file. Once you have set up neurosift-annotations and logged
+in, you will be able to attach a top-level text note to the file or to any
+neurodata object in the file.
 
 ## How annotations are stored in the repository
 
