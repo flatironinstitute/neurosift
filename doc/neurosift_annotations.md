@@ -15,7 +15,7 @@ easily with others. Possible names could be "annotations",
 "neurosift-annotations", or "dandi-annotations". The same repo can be used to
 hold annotations for multiple NWB files in multiple DANDIsets.
 
-**Step 2: Install the neurosift-annotations GitHub app on your repository** (this is a one-time step)
+**Step 2: Install the neurosift-annotations GitHub app for your GitHub account** (this is a one-time step)
 
 Go to the [neurosift-annotations GitHub app](https://github.com/apps/neurosift-annotations) and click "Install".
 Following the principle of least privilege, you should give access only to the repository where you want to store your annotations.
