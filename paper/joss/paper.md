@@ -28,17 +28,7 @@ bibliography: paper.bib
 
 # Summary
 
-Neurosift, a browser-based visualization tool,
-is designed for the interactive exploration of Neurodata Without Borders (NWB) files,
-whether stored locally, on remote servers,
-or within the Distributed Archives for Neurophysiology Data Integration (DANDI).
-NWB [@teeters2015neurodata; @rubel2022neurodata] is an open data standard for neurophysiology that enables the sharing, archiving, and analysis of various types of neurophysiology data.
-DANDI [@rubel2022neurodata] is a cloud-based platform that supports the storage, sharing, and analysis of neurophysiology data including NWB files.
-With Neurosift integration, users browsing DANDI can easily open any NWB file in the browser
-and explore its contents, including timeseries data, images, and more.
-Neurosift can also be used to browse the DANDI database or individual DANDIsets.
-Overall, Neurosift simplifies the visualization and exploration of complex NWB file structures,
-making it a valuable tool for neuroscientists.
+Neurosift, a browser-based visualization tool, is designed for the interactive exploration of Neurodata Without Borders (NWB) files, whether stored locally, on remote servers, or within the Distributed Archives for Neurophysiology Data Integration (DANDI). NWB [@teeters2015neurodata; @rubel2022neurodata] is an open data standard for neurophysiology that enables the sharing, archiving, and analysis of various types of neurophysiology data. DANDI [@rubel2022neurodata] is a cloud-based platform that supports the storage, sharing, and analysis of neurophysiology data including NWB files. With Neurosift integration, users browsing DANDI can easily open any NWB file in the browser and explore its contents, including timeseries data, images, and more. Neurosift can also be used to browse the DANDI database or individual DANDIsets. Overall, Neurosift simplifies the visualization and exploration of complex NWB file structures, making it a valuable tool for neuroscientists.
 
 # Statement of need
 
@@ -54,7 +44,7 @@ Neurodata Without Borders files are structured hierarchically and encapsulate va
 
 Neurosift is a *static* React/TypeScript website, meaning that it is delivered to the user's browser exactly as stored, without the need for dynamic server-side processing of requests. This approach simplifies deployment and maintenance; it is currently hosted on GitHub Pages, but could easily be deployed to any other static hosting service.
 
-The main technical challenge in developing Neurosift was the requirement to lazy-load data objects from remote NWB files, which are built on the complex HDF5 format. While HDF5's efficient data organization is ideal for the large, multidimensional datasets typical in neurophysiology, its primary implementations are in the C language. This necessitates a creative solution to enable efficient web-based access to these files. To bridge this gap, Neurosift leverages WebAssembly to run compiled C code in the browser, specifically utilizing a modified version of the h5wasm [@h5wasm] library. Unlike the original h5wasm, which was built primarily to handle fully downloaded files, Neurosift's fork introduces an innovative approach to efficiently read data chunks from remote files. This allows for synchronous data reads without the need for a prior download of the entire file. This solution not only makes Neurosift a powerful tool for neuroscience research but also showcases the potential of WebAssembly in overcoming challenges associated with web-based data analysis tools.
+The main technical challenge in developing Neurosift was the requirement to lazy-load data objects from remote NWB files, which are built on the complex HDF5 format. While HDF5's efficient data organization is ideal for the large, multidimensional datasets typical in neurophysiology, its primary implementations are in the C language. This necessitates a creative solution to enable efficient web-based access to these files. To bridge this gap, Neurosift leverages WebAssembly to run compiled C code in the browser, specifically utilizing a modified version of the h5wasm [@h5wasm] library. Unlike the unmodified h5wasm, which primarily handles fully downloaded files, Neurosift's fork introduces an innovative approach to efficiently read data chunks from remote files. This allows for synchronous data reads without the need for a prior download of the entire file. This solution not only makes Neurosift a powerful tool for neuroscience research but also showcases the potential of WebAssembly in overcoming challenges associated with web-based data analysis tools.
 
 # Conclusion
 
