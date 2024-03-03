@@ -15,14 +15,14 @@ easily with others. Possible names could be "annotations",
 "neurosift-annotations", or "dandi-annotations". The same repo can be used to
 hold annotations for multiple NWB files in multiple DANDIsets.
 
-**Step 2: Install the neurosift-annotations GitHub app on your repository** (this is a one-time step)
+**Step 2: Install the neurosift-annotations GitHub app for your GitHub account** (this is a one-time step)
 
 Go to the [neurosift-annotations GitHub app](https://github.com/apps/neurosift-annotations) and click "Install".
 Following the principle of least privilege, you should give access only to the repository where you want to store your annotations.
 
 **Step 3: Authenticate with GitHub in Neurosift to give it access to your installed app**
 
-In Neurosift, click on the key icon in the top right corner and click to log in
+In [Neurosift](https://flatironinstitute.github.io/neurosift), click on the key icon in the top right corner and click to log in
 to neurosift-annotations. This will allow Neurosift to access your GitHub
 repository to store your annotations.
 
@@ -30,8 +30,7 @@ repository to store your annotations.
 
 Navigate to a DANDI NWB file in Neurosift. You will see a new "Annotations" tab.
 Click on this tab to get more information about viewing and managing the
-annotations for this file. Once you have set up neurosift-annotations and logged
-in, you will be able to attach a top-level text note to the file or to any
+annotations for this file. You will specify your repo there. Once you have set this up, you will be able to attach a top-level text note to the file or to any
 neurodata object in the file.
 
 ## How annotations are stored in the repository
