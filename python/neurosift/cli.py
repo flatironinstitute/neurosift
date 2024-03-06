@@ -18,7 +18,7 @@ def view_nwb(file):
     abs_fname = os.path.abspath(file)
     base_fname = os.path.basename(abs_fname)
     with TemporaryDirectory(prefix="view_nwb") as tmpdir:
-        # create a symbolic link to the file
+        # create a symbolic link to the file (or zarr folder)
         os.symlink(abs_fname, f'{tmpdir}/{base_fname}')
 
         # this directory
@@ -59,8 +59,14 @@ def view_nwb(file):
         # run the service
         process = subprocess.Popen(['npm', 'run', 'start', tmpdir], cwd=f'{this_directory}/local-file-access-js', shell=shell, env=dict(os.environ, PORT=str(port)))
 
+        zarr_param = ''
+        if os.path.isdir(abs_fname):
+            if not os.path.exists(f'{abs_fname}/.zmetadata'):
+                raise Exception(f'{abs_fname} is a directory but does not contain a .zmetadata file.')
+            zarr_param = '&zarr=1'
+
         # open the browser
-        url = f"https://flatironinstitute.github.io/neurosift/?p=/nwb&url=http://localhost:{port}/files/{base_fname}"
+        url = f"https://flatironinstitute.github.io/neurosift/?p=/nwb&url=http://localhost:{port}/files/{base_fname}{zarr_param}"
         print(f'Opening {url}')
         webbrowser.open(url)
 

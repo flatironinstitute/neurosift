@@ -6,9 +6,10 @@ if (!dir) {
     console.error('Please specify a directory.')
     process.exit(-1)
 }
+console.info('Serving files in', dir)
 
 // Allow CORS from flatironinstitute.github.io and localhost:3000
-const allowedOrigins = ['https://flatironinstitute.github.io', 'http://localhost:3000']
+const allowedOrigins = ['https://flatironinstitute.github.io', 'http://localhost:3000', 'http://localhost:4200']
 app.use((req, resp, next) => {
     const origin = req.get('origin')
     const allowedOrigin = allowedOrigins.includes(origin) ? origin : undefined
@@ -26,19 +27,24 @@ app.options('*', (req, resp) => {
 // Serve files
 app.get('/files/:fileName(*)', async (req, resp) => {
     const fileName = req.params.fileName
-
     // Check if the file is shareable
     if (!isShareable(fileName)) {
+        console.warn('Access to this file is forbidden.', fileName)
         resp.send(500).send('Access to this file is forbidden.')
         return
     }
 
     // Send the file
     const options = {
-        root: dir
+        root: dir,
+        // let's allow dot files for now
+        dotfiles: 'allow'
     }
     resp.sendFile(fileName, options, function (err) {
         // I think it's important to have an error handler even if it's just this. (not sure though)
+        if (err) {
+            console.warn('Error sending file:', err)
+        }
     })
 })
 
@@ -54,7 +60,7 @@ function isShareable(f) {
     }
     const fileName = bb[bb.length - 1]
     if (fileName.startsWith('.')) {
-        if (!['.zattrs'].includes(fileName)) {
+        if (!['.zattrs', '.zgroup', '.zarray', '.zmetadata'].includes(fileName)) {
             // don't show hidden files (with some exceptions)
             return false
         }
