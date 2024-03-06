@@ -1,0 +1,29 @@
+on:
+  push:
+    branches:
+      - paper
+    paths:
+      - "paper/joss/**"
+  workflow_dispatch:
+
+jobs:
+  paper:
+    runs-on: ubuntu-latest
+    name: Paper Draft
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: paper
+      - name: Build draft PDF
+        uses: openjournals/openjournals-draft-action@master
+        with:
+          journal: joss
+          paper-path: paper/joss/paper.md
+      - uses: actions/upload-artifact@v4
+        id: artifact-upload-step
+        with:
+          name: paper
+          path: paper/joss/paper.pdf
+      - name: Output artifact URL
+        run:  echo 'Artifact URL is ${{ steps.artifact-upload-step.outputs.artifact-url }}'
