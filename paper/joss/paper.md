@@ -28,8 +28,6 @@ bibliography: paper.bib
 
 # Summary
 
-TESTING
-
 Neurosift, a browser-based visualization tool, is designed for the interactive exploration of Neurodata Without Borders (NWB) files, whether stored locally, on remote servers, or within the Distributed Archives for Neurophysiology Data Integration (DANDI). NWB [@teeters2015neurodata; @rubel2022neurodata] is an open data standard for neurophysiology that enables the sharing, archiving, and analysis of various types of neurophysiology data. DANDI [@rubel2022neurodata] is a cloud-based platform that supports the storage, sharing, and analysis of neurophysiology data including NWB files. With Neurosift integration, users browsing DANDI can easily open any NWB file in the browser and explore its contents, including timeseries data, images, and more. Neurosift can also be used to browse the DANDI database or individual DANDIsets. Overall, Neurosift simplifies the visualization and exploration of complex NWB file structures, making it a valuable tool for neuroscientists.
 
 # Statement of need
@@ -38,9 +36,20 @@ In the evolving field of neuroscience research, the ability to manage and share 
 
 Because files found on DANDI can often be large and unwieldy, various Python tools have emerged to address this issue by streaming portions of the NWB file without the need to download the entire file. One such tool is NWB Widgets [@nwbwidgets], which provides a suite of interactive widgets for visualizing NWB data within Jupyter notebooks, enabling users to navigate the hierarchical structure of NWB files and directly visualize specific data elements. This package was a large part of the inspiration for Neurosift. The main difference is that NWB Widgets is a Python package that runs within interactive Python environments, while Neurosift is a browser-based tool that can be used without any installation. These two tools cater to different use cases, with Neurosift being more accessible to a wider audience, and being better suited for integration with DANDI.
 
-# Functionality and user experience
+# Functionality
 
-Neurodata Without Borders files are structured hierarchically and encapsulate various "neurodata" types that reflect different aspects of neurophysiological experiments. These types range from *BehavioralEvents*, which record discrete actions or occurrences within experiments, to data structures like *Fluorescence*, *ImageSegmentation*, and *RoiResponseSeries*, key data types in optical neurophysiology. Other neurodata types include *ElectricalSeries* for electrophysiological signals and *Units* for spike times of neurons. Neurosift allows interactive navigation of this hierarchical structure and provides plugin visualizations for many of these types. It also facilitates the creation of composite views by allowing users to select and synchronize multiple data types within the same interface. This synchronization extends to navigation actions such as zooming and panning, where different sub-windows, each displaying a different aspect of the data, maintain a shared time axis. These views can then be shared with others as a URL.
+Neurodata Without Borders files are structured hierarchically and encapsulate various "neurodata" types that reflect different aspects of neurophysiological experiments. These types range from *BehavioralEvents*, which record discrete actions or occurrences within experiments, to data structures like *Fluorescence*, *ImageSegmentation*, and *RoiResponseSeries*, which are key data types in optical neurophysiology. Other neurodata types include *ElectricalSeries* for electrophysiological signals and *Units* for spike times of neurons. Neurosift allows interactive navigation of this hierarchical structure (Figure 1) and provides plugin visualizations for many of these types (Figure 2). It also facilitates the creation of composite views by allowing users to select and synchronize multiple data types within the same interface (Figure 3). This synchronization extends to navigation actions such as zooming and panning, where different sub-windows, each displaying a different aspect of the data, maintain a shared time axis. These views can then be shared with others as a URL.
+
+<!-- https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/db8b5f00-05a1-4485-89ca-1767acf0ae36/download/&dandisetId=000409&dandisetVersion=draft -->
+![Screenshot of Neurosift displaying a NWB file from the 'IBL - Brain Wide Map' DANDIset (ID 000409), showcasing the tool's capability to navigate and visualize the hierarchical structure of neurophysiological data. Visible are expanded panels for ElectricalSeries and ImageSeries objects, alongside a TimeIntervals object and a Units table.](./images/neurosift-screenshot-1.png)
+
+<!-- https://neurosift.app/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/f76/b9f/f76b9f7e-38ed-43fb-8fd0-4cc272fcd8bd&dandisetId=000409&dandisetVersion=draft&tab=view:PSTH|/intervals/trials -->
+![Interactive Peri-stimulus Time Histogram (PSTH) visualization in Neurosift, enabling users to select neural units, time alignment variables, and customize options like window range, histogram bin count, and grouping variables.](./images/neurosift-screenshot-3.png)
+
+<!-- https://neurosift.app/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/c86/cdf/c86cdfba-e1af-45a7-8dfd-d243adc20ced&tab=neurodata-items:neurodata-item:/acquisition/ElectricalSeries|ElectricalSeries@view:DirectRasterPlot|/units -->
+![Synchronized view within Neurosift demonstrating the interactive alignment between an ElectricalSeries and a Spike Raster Plot. This feature allows users to seamlessly zoom and pan across both visualizations, maintaining a coherent temporal perspective across different data types.](./images/neurosift-screenshot-2.png)
+
+
 
 # Architecture and technical innovation
 
