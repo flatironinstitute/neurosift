@@ -36,7 +36,7 @@ neurodata object in the file.
 ## How annotations are stored in the repository
 
 Suppose that the DANDset ID is `000582` and the path of the NWB file is
-`000582/sub-10073/sub-10073_ses-17010302_behavior+ecephys.nwb``. Then, the
+`000582/sub-10073/sub-10073_ses-17010302_behavior+ecephys.nwb`. Then, the
 annotations will get stored at
 
 ```
