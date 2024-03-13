@@ -63,11 +63,7 @@ Please report any issues or suggest features on the [GitHub issue tracker](https
 
 We welcome feedback and code contributions. Please submit a pull request or open an issue.
 
-## Developers
-
-[Setting up a development environment](./doc/development.md)
-
-If you are familiar with with React and TypeScript, developing and extending Neurosift is fairly straightforward.
+To set up a development environment for updating current features or adding new ones, see [setting up a development environment](./doc/development.md).
 
 ## License
 
