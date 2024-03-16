@@ -59,9 +59,13 @@ Neurosift is a *static* React/TypeScript website, meaning that it is delivered t
 
 The main technical challenge in developing Neurosift was the requirement to lazy-load data objects from remote NWB files that are built on the complex HDF5 format. While HDF5's efficient data organization is ideal for the large, multidimensional datasets typical in neurophysiology, its primary implementations are in the C language. This necessitates a creative solution to enable efficient web-based access to these files. To bridge this gap, Neurosift leverages WebAssembly to run compiled C code in the browser, specifically utilizing a modified version of the h5wasm [@h5wasm] library. Unlike the unmodified h5wasm, which primarily handles fully downloaded files, Neurosift's fork introduces an innovative approach to efficiently read data chunks from remote files. This allows for synchronous data reads without the need for a prior download of the entire file. This solution showcases the potential of WebAssembly in overcoming challenges associated with web-based data analysis tools.
 
+# Future directions
+
+Looking forward, there is potential to expand Neurosift's capabilities with enhanced visualizations and support for additional data types. Additionally, we are adding support for Zarr [@zarr], a cloud-friendly alternative to HDF5 as a storage backend for NWB files.
+
 # Conclusion
 
-Neurosift makes neurophysiology data more accessible to scientists. By facilitating the exploration of complex datasets directly within a browser, it lowers the barrier to entry for data analysis and fosters collaborative research efforts. Looking forward, there is potential for Neurosift to expand its capabilities, with enhanced visualizations and support for additional data types.
+Neurosift makes neurophysiology data more accessible to scientists. By facilitating the exploration of complex datasets directly within a browser, it lowers the barrier to entry for data analysis and fosters collaborative research efforts.
 
 # Acknowledgements
 
