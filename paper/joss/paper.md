@@ -13,6 +13,9 @@ authors:
     orcid: 0000-0002-5286-4375
     affiliation: 1
     corresponding: true
+  - name: Jeff Soules
+    orcid: 0000-0002-2240-1038
+    affiliation: 1
   - name: Cody Baker
     orcid: 0000-0002-0829-4790
     affiliation: 2
@@ -66,9 +69,5 @@ Looking forward, there is potential to expand Neurosift's capabilities with enha
 # Conclusion
 
 Neurosift makes neurophysiology data more accessible to scientists. By facilitating the exploration of complex datasets directly within a browser, it lowers the barrier to entry for data analysis and fosters collaborative research efforts.
-
-# Acknowledgements
-
-Thank you to Jeff Soules who helped develop visualizations that were ported over to Neurosift.
 
 # References
