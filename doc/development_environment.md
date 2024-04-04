@@ -76,7 +76,7 @@ viewPlugins.push({
 })
 ```
 
-This plugin has a name, a neurodataType, and a component. The defaultForNeurodataType is true, which means that this plugin will be used by default for visualizing SpatialSeries objects when they are clicked. If it were false, then the button for the plugin would appear separately. The isTimeView property is true, which means that this plugin is designed to visualize a particular item within the NWB hierarchy. The getCustomPythonCode property is a function that returns Python code that can be used to load the item into Python.
+This plugin has a name, a neurodataType, and a component. The defaultForNeurodataType is true, which means that this plugin will be used by default for visualizing SpatialSeries objects when they are clicked. If it were false, then the button for the plugin would appear separately. The isTimeView property is true, which means that this plugin is a timeseries visualization. In this case, time controls will appear on the left panel. The getCustomPythonCode property is a function that returns Python code that can be used to load the item into Python.
 
 The NeurodataSpatialSeriesItemView component is a React component [defined here](https://github.com/magland/fi-sci/blob/main/apps/neurosift/src/app/pages/NwbPage/viewPlugins/SpatialSeries/SpatialSeriesWidget/NeurodataSpatialSeriesItemView.tsx). The props are
 

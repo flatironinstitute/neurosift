@@ -63,7 +63,7 @@ Please report any issues or suggest features on the [GitHub issue tracker](https
 
 We welcome feedback and code contributions. Please submit a pull request or open an issue.
 
-To set up a development environment for updating current features or adding new ones, see [setting up a development environment](./doc/development.md).
+To set up a development environment for updating current features or adding new ones, see [setting up a development environment](./doc/development_environment.md).
 
 ## License
 
