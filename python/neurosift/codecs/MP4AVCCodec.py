@@ -44,10 +44,15 @@ class MP4AVCCodec(Codec):
         if array.ndim not in (3, 4):
             raise ValueError("MP4AVCCodec only supports 3D or 4D arrays")
 
+        if array.ndim == 3:
+            is_color = False
+        else:
+            is_color = True
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_output_fname = f'{tmpdir}/output.mp4'
             fourcc = cv2.VideoWriter_fourcc(*'avc1')  # type: ignore
-            writer = cv2.VideoWriter(tmp_output_fname, fourcc, self.fps, (array.shape[2], array.shape[1]))
+            writer = cv2.VideoWriter(tmp_output_fname, fourcc, self.fps, (array.shape[2], array.shape[1]), isColor=is_color)
             for i in range(array.shape[0]):
                 writer.write(array[i])
             writer.release()
