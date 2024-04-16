@@ -5,7 +5,7 @@ The goal is to eventually support all data types with plugins.
 |Neurodata Type|Parent Type|Neurosift Plugin|
 |--------------|-----------|----------------|
 |AbstractFeatureSeries|TimeSeries|From TimeSeries|
-|AnnotatedEventsTable|Units||
+|AnnotatedEventsTable|Units|From Units|
 |AnnotationSeries|TimeSeries|From TimeSeries|
 |BehavioralEpochs|NWBDataInterface||
 |BehavioralEvents|NWBDataInterface|BehavioralEvents|
