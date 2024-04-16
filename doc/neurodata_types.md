@@ -1,5 +1,7 @@
 # Neurosift Plugins for Neurodata Types
 
+The goal is to eventually support all data types with plugins.
+
 |Neurodata Type|Parent Type|Neurosift Plugin|
 |--------------|-----------|----------------|
 |AbstractFeatureSeries|TimeSeries|From TimeSeries|
