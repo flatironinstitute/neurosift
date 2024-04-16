@@ -23,6 +23,8 @@ Visualization plugins include:
 - Peristimulus time histograms
 - ...
 
+For a table of Neurodata Types and their corresponding Neurosift plugins, see [neurodata_types.md](doc/neurodata_types.md).
+
 Beyond plots and graphs, Neurosift lets you browse the hierarchical structure of NWB files.
 
 Here are a couple examples: [DANDI NWB File](https://flatironinstitute.github.io/neurosift/?p=/nwb&url=https://api.dandiarchive.org/api/assets/50b43c75-686f-4d06-acf2-cd0b1b42e8be/download/&dandisetId=000402&dandisetVersion=0.230307.2132) | [DANDIset](https://flatironinstitute.github.io/neurosift/?p=/dandiset&dandisetId=000402&dandisetVersion=0.230307.2132).
@@ -73,7 +75,7 @@ Neurosift is licensed under the terms of the Apache License 2.0.
 
 Jeremy Magland - main developer
 
-Ben Dichter and Cody Baker from CatalystNeuro have helped with the NWB and DANDI integration. 
+Ben Dichter and Cody Baker from CatalystNeuro have helped with the NWB and DANDI integration.
 
 Jeff Soules developed many of the visualizations that have been ported from SortingView.
 
