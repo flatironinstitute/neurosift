@@ -61,6 +61,8 @@ In addition to the frontend, there is also a [Python package called neurosift](h
 
 Please report any issues or suggest features on the [GitHub issue tracker](https://github.com/flatironinstitute/neurosift/issues).
 
+You can also use [Discussions](https://github.com/flatironinstitute/neurosift/discussions) to ask questions about how to use Neurosift or enhance your experience with it, share ideas and feedback that can help improve Neurosift, or discuss any related topics.
+
 ## Contributing
 
 We welcome feedback and code contributions. Please submit a pull request or open an issue.
