@@ -21,15 +21,6 @@
                 "clear": true
             },
             "detail": "Publish package to PyPI"
-        },
-        {
-            "label": "JOSS: compile paper",
-            "type": "shell",
-            "command": "docker run --rm --volume $PWD/paper/joss:/data --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/inara",
-            "presentation": {
-                "clear": true
-            },
-            "detail": "Compile the JOSS paper"
         }
     ]
 }
