@@ -63,11 +63,13 @@ Please report any issues or suggest features on the [GitHub issue tracker](https
 
 You can also use [Discussions](https://github.com/flatironinstitute/neurosift/discussions) to ask questions about how to use Neurosift or enhance your experience with it, share ideas and feedback that can help improve Neurosift, or discuss any related topics.
 
-## Contributing
+## For developers
 
 We welcome feedback and code contributions. Please submit a pull request or open an issue.
 
 To set up a development environment for updating current features or adding new ones, see [setting up a development environment](./doc/development_environment.md).
+
+[This page](https://neurosift.app/?p=/tests) has a table of tests for many of the view plugins.
 
 ## License
 
