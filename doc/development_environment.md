@@ -60,7 +60,7 @@ You can then edit the source code located at `gui/fi-sci/apps/neurosift`, and th
 
 ### Testing the view plugins
 
-Navigate to http://localhost:4200?p=/tests to see a table of tests for many of the view plugins.
+Navigate to `http://localhost:4200?p=/tests` to see a table of tests for many of the view plugins.
 
 ### Improving or adding visualizations
 
