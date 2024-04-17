@@ -58,6 +58,10 @@ The development server will start (keep the terminal open) and you can access th
 
 You can then edit the source code located at `gui/fi-sci/apps/neurosift`, and the application will automatically reload in your browser as you make changes.
 
+### Testing the view plugins
+
+Navigate to http://localhost:4200?p=/tests to see a table of tests for many of the view plugins.
+
 ### Improving or adding visualizations
 
 In Neurosift, visualizations are structured into plugins. Each plugin is specifically designed to visualize a distinct neurodata type. This approach mirrors the organization of NWB files, where objects are categorized according to their neurodata types.
