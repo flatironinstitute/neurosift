@@ -60,7 +60,9 @@ You can then edit the source code located at `gui/fi-sci/apps/neurosift`, and th
 
 ### Testing the view plugins
 
-Navigate to `http://localhost:4200?p=/tests` to see a table of tests for many of the view plugins.
+Navigate to `http://localhost:4200?p=/tests` to see a table of tests for many of the view plugins. If you make changes to view plugins, you can compare the results of the tests with the expected results at `https://neurosift.app/?p=/tests`. If you add new view plugins, it is recommended to add new tests for them.
+
+We also have the beginnings of an automated test suite using [puppeteer](https://pptr.dev/) (WIP).
 
 ### Improving or adding visualizations
 
