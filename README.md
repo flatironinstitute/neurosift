@@ -23,7 +23,7 @@ Visualization plugins include:
 - Peristimulus time histograms
 - ...
 
-For a table of Neurodata Types and their corresponding Neurosift plugins, see [neurodata_types.md](doc/neurodata_types.md).
+For a list of available plugins, see [neurodata_types.md](doc/neurodata_types.md).
 
 Beyond plots and graphs, Neurosift lets you browse the hierarchical structure of NWB files.
 
@@ -57,19 +57,19 @@ You can also [install and run Neurosift locally for development purposes](doc/de
 
 In addition to the frontend, there is also a [Python package called neurosift](https://pypi.org/project/neurosift/) that provides a command-line interface for viewing local NWB files. See the instructions above. The source code for this package is in the [python directory](python).
 
+## Where to find documentation
+
+* **Quick start:** If you are new to Neurosift, we recommend that you follow the links at the top of this README. Basic usage in the browser does not require installation. If you're looking for a quick way to view a local NWB file, see the instructions above.
+* **Supported Neurodata types:** For a table of Neurodata Types and their corresponding Neurosift plugins, see [neurodata_types.md](doc/neurodata_types.md).
+* **Development environment:** If you want to set up a development environment for updating current features or adding new ones, see [setting up a development environment](doc/development_environment.md). We welcome feedback and code contributions. Please submit a pull request or open an issue.
+* **API documentations:** API documentation is not available at this point, but you the development environment documentation provides guidance on how to explore the source code.
+* **Adding annotations (experimental):** For information on how to add annotations to NWB files, see [neurosift_annotations.md](doc/neurosift_annotations.md). This is an experimental feature that is still under development.
+
 ## Seeking help
 
 Please report any issues or suggest features on the [GitHub issue tracker](https://github.com/flatironinstitute/neurosift/issues).
 
 You can also use [Discussions](https://github.com/flatironinstitute/neurosift/discussions) to ask questions about how to use Neurosift or enhance your experience with it, share ideas and feedback that can help improve Neurosift, or discuss any related topics.
-
-## For developers
-
-We welcome feedback and code contributions. Please submit a pull request or open an issue.
-
-To set up a development environment for updating current features or adding new ones, see [setting up a development environment](./doc/development_environment.md).
-
-[This page](https://neurosift.app/?p=/tests) has a table of tests for many of the view plugins.
 
 ## License
 
