@@ -8,8 +8,8 @@ if (!dir) {
 }
 console.info('Serving files in', dir)
 
-// Allow CORS from flatironinstitute.github.io and localhost:3000
-const allowedOrigins = ['https://flatironinstitute.github.io', 'http://localhost:3000', 'http://localhost:4200']
+// Allow CORS from neurosift.app flatironinstitute.github.io and localhost:3000
+const allowedOrigins = ['https://neurosift.app', 'https://flatironinstitute.github.io', 'http://localhost:3000', 'http://localhost:4200']
 app.use((req, resp, next) => {
     const origin = req.get('origin')
     const allowedOrigin = allowedOrigins.includes(origin) ? origin : undefined
