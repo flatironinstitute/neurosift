@@ -71,6 +71,11 @@ Please report any issues or suggest features on the [GitHub issue tracker](https
 
 You can also use [Discussions](https://github.com/flatironinstitute/neurosift/discussions) to ask questions about how to use Neurosift or enhance your experience with it, share ideas and feedback that can help improve Neurosift, or discuss any related topics.
 
+## See also
+
+* [NWB Widgets](https://nwb-widgets.readthedocs.io/en/latest/)
+* [NWB Explorer](https://github.com/MetaCell/nwb-explorer)
+
 ## License
 
 Neurosift is licensed under the terms of the Apache License 2.0.
@@ -84,5 +89,7 @@ Ben Dichter and Cody Baker from CatalystNeuro have helped with the NWB and DANDI
 Jeff Soules developed many of the visualizations that have been ported from SortingView.
 
 Thank you to Ralph Peterson and Alessio Buccino for valuable feedback.
+
+Thank you for the very constructive feedback from Alex Rockhill during the [JOSS](https://joss.theoj.org/) review process.
 
 Jeremy is a member of the [Center for Computational Mathematics at the Flatiron Institute](https://www.simonsfoundation.org/flatiron/center-for-computational-mathematics/)
