@@ -29,6 +29,8 @@ Beyond plots and graphs, Neurosift lets you browse the hierarchical structure of
 
 Here are a couple examples: [DANDI NWB File](https://flatironinstitute.github.io/neurosift/?p=/nwb&url=https://api.dandiarchive.org/api/assets/50b43c75-686f-4d06-acf2-cd0b1b42e8be/download/&dandisetId=000402&dandisetVersion=0.230307.2132) | [DANDIset](https://flatironinstitute.github.io/neurosift/?p=/dandiset&dandisetId=000402&dandisetVersion=0.230307.2132).
 
+[Read the JOSS paper](https://joss.theoj.org/papers/10.21105/joss.06590)
+
 ## Quick instructions for viewing a local .nwb file
 
 * Prerequisite: [NodeJS v16 or higher](https://nodejs.org/en/download)
