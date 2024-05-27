@@ -1,0 +1,50 @@
+cff-version: "1.2.0"
+authors:
+- family-names: Magland
+  given-names: Jeremy
+  orcid: "https://orcid.org/0000-0002-5286-4375"
+- family-names: Soules
+  given-names: Jeff
+  orcid: "https://orcid.org/0000-0002-2240-1038"
+- family-names: Baker
+  given-names: Cody
+  orcid: "https://orcid.org/0000-0002-0829-4790"
+- family-names: Dichter
+  given-names: Benjamin
+  orcid: "https://orcid.org/0000-0001-5725-6910"
+contact:
+- family-names: Magland
+  given-names: Jeremy
+  orcid: "https://orcid.org/0000-0002-5286-4375"
+doi: 10.5281/zenodo.11192864
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Magland
+    given-names: Jeremy
+    orcid: "https://orcid.org/0000-0002-5286-4375"
+  - family-names: Soules
+    given-names: Jeff
+    orcid: "https://orcid.org/0000-0002-2240-1038"
+  - family-names: Baker
+    given-names: Cody
+    orcid: "https://orcid.org/0000-0002-0829-4790"
+  - family-names: Dichter
+    given-names: Benjamin
+    orcid: "https://orcid.org/0000-0001-5725-6910"
+  date-published: 2024-05-27
+  doi: 10.21105/joss.06590
+  issn: 2475-9066
+  issue: 97
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 6590
+  title: "Neurosift: DANDI exploration and NWB visualization in the
+    browser"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.06590"
+  volume: 9
+title: "Neurosift: DANDI exploration and NWB visualization in the
+  browser"
