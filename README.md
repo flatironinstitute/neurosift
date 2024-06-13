@@ -64,8 +64,8 @@ In addition to the frontend, there is also a [Python package called neurosift](h
 * **Quick start:** If you are new to Neurosift, we recommend that you follow the links at the top of this README. Basic usage in the browser does not require installation. If you're looking for a quick way to view a local NWB file, see the instructions above.
 * **Supported Neurodata types:** For a table of Neurodata Types and their corresponding Neurosift plugins, see [neurodata_types.md](doc/neurodata_types.md).
 * **Development environment:** If you want to set up a development environment for updating current features or adding new ones, see [setting up a development environment](doc/development_environment.md). We welcome feedback and code contributions. Please submit a pull request or open an issue.
-* **API documentations:** API documentation is not available at this point, but you the development environment documentation provides guidance on how to explore the source code.
-* **Adding annotations (experimental):** For information on how to add annotations to NWB files, see [neurosift_annotations.md](doc/neurosift_annotations.md). This is an experimental feature that is still under development.
+* **API documentations:** API documentation is not available at this point, but the development environment documentation provides guidance on how to explore the source code.
+* **Adding annotations (experimental):** See the GUI for information on adding annotations to Dandisets and NWB files on DANDI.
 
 ## Seeking help
 
