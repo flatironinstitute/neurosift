@@ -6,7 +6,7 @@
 
 Neurosift is a browser-based tool designed for the visualization of NWB (Neurodata Without Borders) files, whether stored locally or hosted remotely, and enables interactive exploration of the [DANDI Archive](https://dandiarchive.org/).
 
-[Visit the live site!](https://flatironinstitute.github.io/neurosift)
+[Visit the live site!](https://neurosift.app)
 
 Capabilities of Neurosift include:
 - View DANDI NWB files - use the integrated menu of DANDI Archive to launch Neurosift from any NWB file asset within a public or embargoed DANDIset.
@@ -27,7 +27,7 @@ For a list of available plugins, see [neurodata_types.md](doc/neurodata_types.md
 
 Beyond plots and graphs, Neurosift lets you browse the hierarchical structure of NWB files.
 
-Here are a couple examples: [DANDI NWB File](https://flatironinstitute.github.io/neurosift/?p=/nwb&url=https://api.dandiarchive.org/api/assets/50b43c75-686f-4d06-acf2-cd0b1b42e8be/download/&dandisetId=000402&dandisetVersion=0.230307.2132) | [DANDIset](https://flatironinstitute.github.io/neurosift/?p=/dandiset&dandisetId=000402&dandisetVersion=0.230307.2132).
+Here are a couple examples: [DANDI NWB File](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/50b43c75-686f-4d06-acf2-cd0b1b42e8be/download/&dandisetId=000402&dandisetVersion=0.230307.2132) | [Dandiset](https://neurosift.app/?p=/dandiset&dandisetId=000402&dandisetVersion=0.230307.2132).
 
 [Read the JOSS paper](https://joss.theoj.org/papers/10.21105/joss.06590)
 

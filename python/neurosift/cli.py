@@ -69,7 +69,7 @@ def view_nwb(file):
             zarr_param = '&zarr=1'
 
         # open the browser
-        url = f"https://flatironinstitute.github.io/neurosift/?p=/nwb&url=http://localhost:{port}/files/{base_fname}{zarr_param}"
+        url = f"https://neurosift.app/?p=/nwb&url=http://localhost:{port}/files/{base_fname}{zarr_param}"
         print(f'Opening {url}')
         webbrowser.open(url)
 
