@@ -24,6 +24,8 @@ def view_nwb(file):
         # this directory
         this_directory = os.path.dirname(os.path.realpath(__file__))
 
+        env = os.environ.copy()
+
         # apparently shell=True is necessary for Windows, but shell=False is necessary for Linux
         if os.name == 'nt':
             shell = True
@@ -34,13 +36,13 @@ def view_nwb(file):
             shell = False
 
         try:
-            npm_version = subprocess.run(["npm", "--version"], stdout=subprocess.PIPE, universal_newlines=True, shell=shell).stdout.strip()
+            npm_version = subprocess.run(["npm", "--version"], stdout=subprocess.PIPE, universal_newlines=True, shell=shell, env=env).stdout.strip()
             print(f'npm version: {npm_version}')
         except Exception:
             raise Exception('Unable to run npm.')
 
         try:
-            node_version = subprocess.run(["node", "--version"], stdout=subprocess.PIPE, universal_newlines=True, shell=shell).stdout.strip()
+            node_version = subprocess.run(["node", "--version"], stdout=subprocess.PIPE, universal_newlines=True, shell=shell, env=env).stdout.strip()
             print(f'node version: {node_version}')
         except Exception:
             raise Exception('Unable to run node.')
@@ -51,13 +53,14 @@ def view_nwb(file):
             raise Exception('node version must be >= 16.0.0')
 
         # run the command npm install in the js directory
-        subprocess.run(["npm", "install"], cwd=f'{this_directory}/local-file-access-js', shell=shell)
+        subprocess.run(["npm", "install"], cwd=f'{this_directory}/local-file-access-js', shell=shell, env=env)
 
         # find an open port
         port = find_free_port()
 
         # run the service
-        process = subprocess.Popen(['npm', 'run', 'start', tmpdir], cwd=f'{this_directory}/local-file-access-js', shell=shell, env=dict(os.environ, PORT=str(port)))
+        env['PORT'] = str(port)
+        process = subprocess.Popen(['npm', 'run', 'start', tmpdir], cwd=f'{this_directory}/local-file-access-js', shell=shell, env=env)
 
         zarr_param = ''
         if os.path.isdir(abs_fname):

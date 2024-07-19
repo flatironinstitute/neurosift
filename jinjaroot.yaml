@@ -1,5 +1,5 @@
 projectName: neurosift
-pythonProjectVersion: 0.2.8
+pythonProjectVersion: 0.2.9
 projectAuthor: Jeremy Magland
 projectAuthorEmail: jmagland@flatironinstitute.org
 projectDescription: Simple utility to view local NWB files using Neurosift
