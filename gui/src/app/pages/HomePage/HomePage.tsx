@@ -11,24 +11,37 @@ type Props = {
 const HomePage: FunctionComponent<Props> = ({ width, height }) => {
   const { setRoute } = useRoute();
   return (
-    <div style={{ padding: 20 }}>
+    <div style={{ padding: 20, maxWidth: 800 }}>
       <h2>Welcome to Neurosift</h2>
       <p>
-        <Hyperlink href="https://github.com/flatironinstitute/neurosift">
-          About this project
-        </Hyperlink>
+        Neurosift is a browser-based tool designed for the visualization of NWB
+        (Neurodata Without Borders) files, whether stored locally or hosted
+        remotely, and enables interactive exploration of the DANDI Archive.
       </p>
       <p>
-        <FaGithub /> Please{" "}
         <Hyperlink href="https://github.com/flatironinstitute/neurosift">
-          star us
-        </Hyperlink>{" "}
-        on GitHub.
+          Read more
+        </Hyperlink>
       </p>
       <hr />
       <div>
-        <Hyperlink onClick={() => setRoute({ page: "tests" })}>Tests</Hyperlink>
+        <Hyperlink onClick={() => setRoute({ page: "tests" })}>
+          Component tests
+        </Hyperlink>
       </div>
+      <hr />
+      <p>
+        <Hyperlink href="https://github.com/flatironinstitute/neurosift/issues">
+          Request a feature or report a bug
+        </Hyperlink>
+      </p>
+      <p>
+        <FaGithub /> If you find this project useful in your research, please{" "}
+        <Hyperlink href="https://github.com/flatironinstitute/neurosift">
+          give us a star on GitHub
+        </Hyperlink>
+        .
+      </p>
     </div>
   );
 };
