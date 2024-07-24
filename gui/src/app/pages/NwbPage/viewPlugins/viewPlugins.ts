@@ -306,9 +306,9 @@ viewPlugins.push({
     }
     return false;
   },
-  testLinks: [
-    "https://neurosift.app/?p=/nwb&dandisetId=213569&dandisetVersion=draft&staging=1&url=https://api-staging.dandiarchive.org/api/assets/9b372ad4-a3f8-4d95-bda7-dc56637c8873/download/&st=lindi&tab=view:Autocorrelograms|/units",
-  ],
+  // testLinks: [
+  //   "https://neurosift.app/?p=/nwb&dandisetId=213569&dandisetVersion=draft&staging=1&url=https://api-staging.dandiarchive.org/api/assets/9b372ad4-a3f8-4d95-bda7-dc56637c8873/download/&st=lindi&tab=view:Autocorrelograms|/units",
+  // ],
 });
 viewPlugins.push({
   name: "UnitsSummary",
