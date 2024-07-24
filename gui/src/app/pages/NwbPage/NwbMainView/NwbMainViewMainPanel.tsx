@@ -163,13 +163,23 @@ const ViewModeToggleButton: FunctionComponent<ViewModeToggleButtonProps> = ({
       onChange={handleChange}
       aria-label="Platform"
     >
-      <ToggleButton value="default">Default</ToggleButton>
-      <ToggleButton value="raw">Raw</ToggleButton>
+      <ToggleButton value="default" title="NWB file exploration">
+        Default
+      </ToggleButton>
+      <ToggleButton value="raw" title="HDF5 file exploration">
+        Raw
+      </ToggleButton>
       {/* disable for now until we develop it more */}
       {/* <ToggleButton value="dendro">Dendro</ToggleButton> */}
-      <ToggleButton value="widgets">Widgets</ToggleButton>
-      <ToggleButton value="specifications">Specifications</ToggleButton>
-      <ToggleButton value="annotations">Annotations</ToggleButton>
+      <ToggleButton value="widgets" title="Views relevant for this file">
+        Widgets
+      </ToggleButton>
+      <ToggleButton value="specifications" title="HDMF specifications">
+        Specifications
+      </ToggleButton>
+      <ToggleButton value="annotations" title="Neurosift annotations">
+        Annotations
+      </ToggleButton>
     </ToggleButtonGroup>
   );
 };
