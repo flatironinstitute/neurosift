@@ -74,8 +74,16 @@ class TimeseriesDatasetChunkingClient {
   }
   private async _loadChunk(chunkIndex: number, canceler: Canceler) {
     const shape = this.dataset.shape;
-    const conversion = this.dataset.attrs["conversion"] || 1;
-    const offset = this.dataset.attrs["offset"] || 0;
+    let conversion = this.dataset.attrs["conversion"] || 1;
+    // if conversion is NaN, set it to 1
+    if (isNaN(conversion)) {
+      conversion = 1;
+    }
+    let offset = this.dataset.attrs["offset"] || 0;
+    // if offset is NaN, set it to 0
+    if (isNaN(offset)) {
+      offset = 0;
+    }
     const i1 = chunkIndex * this.chunkSize;
     const i2 = Math.min(i1 + this.chunkSize, shape[0]);
     let channelSlice: [number, number] = [0, Math.min(shape[1] || 1, 15)]; // for now limit to 15 columns when no channel slice is specified
