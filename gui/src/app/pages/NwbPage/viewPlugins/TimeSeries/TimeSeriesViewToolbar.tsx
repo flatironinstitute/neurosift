@@ -14,6 +14,7 @@ export type TimeSeriesViewOpts = {
   numVisibleChannels: number;
   visibleStartChannel: number;
   autoChannelSeparation: number | undefined;
+  colorChannels?: boolean;
 };
 
 const TimeSeriesViewToolbar: FunctionComponent<Props> = ({
@@ -58,6 +59,35 @@ const TimeSeriesViewToolbar: FunctionComponent<Props> = ({
           })
         }
       />
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      <ColorChannelsSelector
+        value={timeSeriesViewOpts.colorChannels || false}
+        setValue={(colorChannels) =>
+          setTimeSeriesViewOpts({ ...timeSeriesViewOpts, colorChannels })
+        }
+      />
+    </div>
+  );
+};
+
+type ColorChannelsSelectorProps = {
+  value: boolean;
+  setValue: (value: boolean) => void;
+};
+
+const ColorChannelsSelector: FunctionComponent<ColorChannelsSelectorProps> = ({
+  value,
+  setValue,
+}) => {
+  return (
+    <div>
+      <input
+        type="checkbox"
+        checked={value}
+        onChange={(e) => setValue(e.target.checked)}
+      />
+      &nbsp;
+      <span>Color channels</span>
     </div>
   );
 };

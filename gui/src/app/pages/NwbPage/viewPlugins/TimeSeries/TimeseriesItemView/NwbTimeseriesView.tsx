@@ -31,6 +31,7 @@ type Props = {
   objectPath: string;
   visibleChannelsRange?: [number, number];
   autoChannelSeparation?: number;
+  colorChannels?: boolean;
 };
 
 const gridlineOpts = {
@@ -46,6 +47,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
   objectPath,
   visibleChannelsRange,
   autoChannelSeparation,
+  colorChannels,
 }) => {
   const [canvasElement, setCanvasElement] = useState<
     HTMLCanvasElement | undefined
@@ -217,6 +219,24 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
 
   const [loading, setLoading] = useState<boolean>(false);
 
+  const colorForChannel = useMemo(
+    () => (i: number) => {
+      if (!colorChannels) return "black";
+      const colors = [
+        "black",
+        "darkred",
+        "darkgreen",
+        "darkblue",
+        "darkorange",
+        "purple",
+        "brown",
+        "pink",
+      ];
+      return colors[i % colors.length];
+    },
+    [colorChannels],
+  );
+
   // Set dataSeries
   const [dataSeries, setDataSeries] = useState<DataSeries[] | undefined>(
     undefined,
@@ -259,7 +279,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
             dataSeries.push({
               type: dataseriesMode,
               title: `ch${i}`,
-              attributes: { color: "black" },
+              attributes: { color: colorForChannel(i) },
               t: Array.from(tt),
               y: concatenatedChunk[i],
             });
@@ -287,6 +307,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
     dataClient,
     zoomInRequired,
     dataseriesMode,
+    colorForChannel,
   ]);
 
   // Set valueRange
@@ -444,7 +465,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
   );
 
   if (dataset?.dtype === "|O") {
-    return <div>Unable to display timeseries dataset with dtype '|O'</div>;
+    return <div>Unable to display timeseries dataset with dtype |O</div>;
   }
 
   return (

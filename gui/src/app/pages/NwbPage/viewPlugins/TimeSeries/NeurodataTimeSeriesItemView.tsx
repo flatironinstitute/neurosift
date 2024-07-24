@@ -23,6 +23,7 @@ const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({
       numVisibleChannels: 1,
       visibleStartChannel: 0,
       autoChannelSeparation: 0.5,
+      colorChannels: true,
     });
   const visibleChannelsRange = useMemo(() => {
     const { numVisibleChannels, visibleStartChannel } = timeSeriesViewOpts;
@@ -46,6 +47,7 @@ const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({
           objectPath={path}
           visibleChannelsRange={visibleChannelsRange}
           autoChannelSeparation={timeSeriesViewOpts.autoChannelSeparation}
+          colorChannels={timeSeriesViewOpts.colorChannels}
         />
       </div>
       <div
