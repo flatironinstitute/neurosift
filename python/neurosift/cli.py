@@ -1,3 +1,4 @@
+import time
 import os
 import click
 import subprocess
@@ -67,6 +68,9 @@ def view_nwb(file):
             if not os.path.exists(f'{abs_fname}/.zmetadata'):
                 raise Exception(f'{abs_fname} is a directory but does not contain a .zmetadata file.')
             zarr_param = '&zarr=1'
+
+        # it's important to wait a bit before opening the browser
+        time.sleep(3)
 
         # open the browser
         url = f"https://neurosift.app/?p=/nwb&url=http://localhost:{port}/files/{base_fname}{zarr_param}"

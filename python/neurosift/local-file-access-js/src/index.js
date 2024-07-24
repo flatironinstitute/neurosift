@@ -2,6 +2,7 @@ const express = require('express')
 const app = express()
 const port = process.env.PORT || 61762
 const dir = process.argv[2]
+const fs = require('fs')
 if (!dir) {
     console.error('Please specify a directory.')
     process.exit(-1)
@@ -34,18 +35,41 @@ app.get('/files/:fileName(*)', async (req, resp) => {
         return
     }
 
-    // Send the file
-    const options = {
-        root: dir,
-        // let's allow dot files for now
-        dotfiles: 'allow'
-    }
-    resp.sendFile(fileName, options, function (err) {
-        // I think it's important to have an error handler even if it's just this. (not sure though)
-        if (err) {
-            console.warn('Error sending file:', err)
+    try {
+        const fullFileName = `${dir}/${fileName}`
+        const stats = await fs.promises.stat(fullFileName)
+        const fileSize = stats.size
+
+        const range = req.headers.range
+
+        if (range) {
+            const parts = range.replace(/bytes=/, "").split("-")
+            const start = parseInt(parts[0], 10)
+            const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1
+            const chunksize = (end - start) + 1
+            const file = fs.createReadStream(fullFileName, { start, end })
+            const head = {
+                'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+                'Accept-Ranges': 'bytes',
+                'Content-Length': chunksize,
+                'Content-Type': 'application/octet-stream',
+            }
+            resp.writeHead(206, head)
+            file.pipe(resp)
         }
-    })
+        else {
+            const head = {
+                'Content-Length': fileSize,
+                'Content-Type': 'application/octet-stream',
+            }
+            resp.writeHead(200, head)
+            fs.createReadStream(fullFileName).pipe(resp)
+        }
+    }
+    catch (err) {
+        console.error(err)
+        resp.sendStatus(500)
+    }
 })
 
 app.options('/files/:fileName(*)', async (req, resp) => {
