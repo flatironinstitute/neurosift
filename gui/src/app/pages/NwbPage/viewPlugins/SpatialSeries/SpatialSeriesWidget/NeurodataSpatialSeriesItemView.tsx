@@ -11,11 +11,10 @@ type Props = {
 const NeurodataSpatialSeriesItemView: FunctionComponent<Props> = ({
   width,
   height,
-  path,
-  condensed,
+  path
 }) => {
   // in the future, do something specific to the spatial series, like providing an X/Y legend
-  return <NwbTimeseriesView width={width} height={height} objectPath={path} />;
+  return <NwbTimeseriesView width={width} height={height} objectPath={path} colorChannels={true} />;
 };
 
 export default NeurodataSpatialSeriesItemView;
