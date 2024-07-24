@@ -69,8 +69,8 @@ const GrayscaleImageItem: FunctionComponent<GrayscaleImageItemProps> = ({
   dataset,
   data,
 }) => {
-  const W = dataset.shape[0];
-  const H = dataset.shape[1];
+  const H = dataset.shape[0];
+  const W = dataset.shape[1];
 
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(
     null,
@@ -106,8 +106,8 @@ const GrayscaleImageItem: FunctionComponent<GrayscaleImageItemProps> = ({
     const buf = imageData.data;
     for (let j = 0; j < H; j++) {
       for (let i = 0; i < W; i++) {
-        const val = data[i * H + (H - 1 - j)];
-        const ind = (i + j * W) * 4;
+        const val = data[i + j * W];
+        const ind = (i + j * W) * 4
         const v = Math.min(
           Math.max(0, ((val - windowMin) / (windowMax - windowMin)) * 255),
           255,
