@@ -1,5 +1,5 @@
 import { FunctionComponent, PropsWithChildren, useRef } from "react";
-import { InView } from "react-intersection-observer";
+import { useInView } from "react-intersection-observer";
 
 type Props = {
   width: number;
@@ -12,22 +12,11 @@ const IfHasBeenVisible: FunctionComponent<PropsWithChildren<Props>> = ({
   height,
 }) => {
   const hasBeenVisible = useRef(false);
+  const { inView, ref } = useInView({ trackVisibility: true, delay: 400 });
+  if (inView) hasBeenVisible.current = true;
   return (
-    <div style={{ position: "relative", width, height }}>
-      <InView>
-        {({ inView, ref }: { inView: boolean; ref: any }) => {
-          if (inView) hasBeenVisible.current = true;
-          return (
-            <div ref={ref}>
-              {inView || hasBeenVisible.current ? (
-                children
-              ) : (
-                <span>Not visible</span>
-              )}
-            </div>
-          );
-        }}
-      </InView>
+    <div ref={ref} style={{ position: "relative", width, height }}>
+      {inView || hasBeenVisible.current ? children : <span>.</span>}
     </div>
   );
 };

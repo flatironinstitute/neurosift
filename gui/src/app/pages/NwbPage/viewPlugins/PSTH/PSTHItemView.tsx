@@ -154,7 +154,7 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
   }, [nwbFile, unitsPath]);
 
   const unitIds = useMemo(() => {
-    if (!spikeTrainsClient) return [];
+    if (!spikeTrainsClient) return undefined;
     return spikeTrainsClient.unitIds;
   }, [spikeTrainsClient]);
 
@@ -196,6 +196,7 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
 
   const sortedUnitIds = useMemo(() => {
     if (!sortUnitsByVariable) return unitIds;
+    if (!unitIds) return undefined;
     const sortedUnitIds = [...unitIds].sort(unitIdSortFunction);
     return sortedUnitIds;
   }, [unitIds, sortUnitsByVariable, unitIdSortFunction]);
@@ -236,7 +237,7 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
     if (!a) return;
     if (a.complementOfSelectedUnitIds) {
       setSelectedUnitIds(
-        sortedUnitIds.filter(
+        (sortedUnitIds || []).filter(
           (unitId) => !a.complementOfSelectedUnitIds.includes(unitId),
         ),
       );
@@ -305,8 +306,8 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
       windowRangeStr,
       prefs,
     };
-    if (selectedUnitIds.length > sortedUnitIds.length / 2) {
-      state0.complementOfSelectedUnitIds = sortedUnitIds.filter(
+    if (selectedUnitIds.length > (sortedUnitIds || []).length / 2) {
+      state0.complementOfSelectedUnitIds = (sortedUnitIds || []).filter(
         (unitId) => !selectedUnitIds.includes(unitId),
       );
       delete state0.selectedUnitIds;
@@ -591,7 +592,7 @@ export const AlignToSelectionComponent: FunctionComponent<{
 };
 
 type UnitsSelectionComponentProps = {
-  unitIds: (number | string)[];
+  unitIds?: (number | string)[];
   selectedUnitIds: (number | string)[];
   setSelectedUnitIds: (x: (number | string)[]) => void;
   sortUnitsByVariable: [string, "asc" | "desc"] | undefined;
@@ -607,6 +608,7 @@ const UnitSelectionComponent: FunctionComponent<
   sortUnitsByVariable,
   sortUnitsByValues,
 }) => {
+  if (!unitIds) return <div>Loading unit IDs...</div>;
   return (
     <table className="nwb-table">
       <thead>
@@ -615,14 +617,15 @@ const UnitSelectionComponent: FunctionComponent<
             <input
               type="checkbox"
               checked={
-                unitIds.length > 0 && selectedUnitIds.length === unitIds.length
+                (unitIds || []).length > 0 &&
+                selectedUnitIds.length === (unitIds || []).length
               }
               onChange={() => {}}
               onClick={() => {
                 if (selectedUnitIds.length > 0) {
                   setSelectedUnitIds([]);
                 } else {
-                  setSelectedUnitIds(unitIds);
+                  setSelectedUnitIds(unitIds || []);
                 }
               }}
             />
@@ -632,7 +635,7 @@ const UnitSelectionComponent: FunctionComponent<
         </tr>
       </thead>
       <tbody>
-        {unitIds.map((unitId) => (
+        {(unitIds || []).map((unitId) => (
           <tr key={unitId}>
             <td>
               <input
