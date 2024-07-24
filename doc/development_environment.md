@@ -2,7 +2,7 @@
 
 Neurosift is a web application built using React and TypeScript. It is deployed at [neurosift.app](https://neurosift.app), but you can also run it locally for development purposes. This document describes how to set up a development environment for Neurosift and add new visualizations.
 
-> Tip: You can do all of this in [GitHub Codespaces](https://github.com/features/codespaces), which is a convenient way to develop web applications without having to install anything on your local machine. When you serve the application on port 4200, as described below, Codespaces will give you an option to open a new browser window to view the application. Therefore, you can develop Neurosift for free in the cloud, without downloading anything to your local machine!
+> Tip: You can do all of this in [GitHub Codespaces](https://github.com/features/codespaces), which is a convenient way to develop web applications without having to install anything on your local machine. When you serve the application on port 3000, as described below, Codespaces will give you an option to open a new browser window to view the application. Therefore, you can develop Neurosift for free in the cloud, without downloading anything to your local machine!
 
 ### Prerequisites
 
@@ -17,23 +17,6 @@ git clone https://github.com/flatironinstitute/neurosift
 cd neurosift
 ```
 
-Download the fi-sci submodule
-
-```bash
-git submodule update --init --recursive
-```
-
-<details>
-<summary>About the fi-sci submodule</summary>
-
-The source code for the frontend is now part of the [fi-sci mono-repo](https://github.com/magland/fi-sci).
-The reason for this is that the frontend shares many components with other projects. Therefore, it is
-most convenient to develop them all together in the same repository. The mono-repo is managed [using Nx](https://nx.dev/).
-
-Note that issue tracking for Neurosift is still done in this neurosift repository.
-
-</details>
-
 ### Install the required packages
 
 Install a recent version of Node.js (e.g., version 20).
@@ -41,7 +24,7 @@ Install a recent version of Node.js (e.g., version 20).
 Install the required packages
 
 ```bash
-cd gui/fi-sci
+cd gui
 yarn install
 ```
 
@@ -50,25 +33,23 @@ yarn install
 Start the development server
 
 ```bash
-# in the gui/fi-sci directory
-npx nx serve neurosift
+# in the gui directory
+yarn dev
 ```
 
-The development server will start (keep the terminal open) and you can access the application in your browser at `http://localhost:4200`.
+The development server will start (keep the terminal open) and you can access the application in your browser at `http://localhost:3000`.
 
-You can then edit the source code located at `gui/fi-sci/apps/neurosift`, and the application will automatically reload in your browser as you make changes.
+You can then edit the source code located in the `gui` directory, and the application will automatically reload in your browser as you make changes.
 
 ### Testing the view plugins
 
-Navigate to `http://localhost:4200?p=/tests` to see a table of tests for many of the view plugins. If you make changes to view plugins, you can compare the results of the tests with the expected results at `https://neurosift.app/?p=/tests`. If you add new view plugins, it is recommended to add new tests for them.
-
-We also have the beginnings of an automated test suite using [puppeteer](https://pptr.dev/) (WIP).
+Navigate to `http://localhost:3000?p=/tests` to see a table of tests for many of the view plugins. If you make changes to view plugins, you can compare the results of the tests with the expected results at `https://neurosift.app/?p=/tests`. If you add new view plugins, it is recommended to add new tests for them.
 
 ### Improving or adding visualizations
 
 In Neurosift, visualizations are structured into plugins. Each plugin is specifically designed to visualize a distinct neurodata type. This approach mirrors the organization of NWB files, where objects are categorized according to their neurodata types.
 
-Plugins are registered in [gui/fi-sci/apps/neurosift/src/app/pages/NwbPage/viewPlugins/viewPlugins.ts](https://github.com/magland/fi-sci/blob/main/apps/neurosift/src/app/pages/NwbPage/viewPlugins/viewPlugins.ts) (please pardon the long path). For example, the plugin for visualizing SpatialSeries objects is registered with the following code:
+Plugins are registered in [gui/src/app/pages/NwbPage/viewPlugins/viewPlugins.ts](https://github.com/flatironinstitute/neurosift/blob/main/gui/src/app/pages/NwbPage/viewPlugins/viewPlugins.ts). For example, the plugin for visualizing SpatialSeries objects is registered with the following code:
 
 ```typescript
 // SpatialSeries
@@ -84,7 +65,7 @@ viewPlugins.push({
 
 This plugin has a name, a neurodataType, and a component. The defaultForNeurodataType is true, which means that this plugin will be used by default for visualizing SpatialSeries objects when they are clicked. If it were false, then the button for the plugin would appear separately. The isTimeView property is true, which means that this plugin is a timeseries visualization. In this case, time controls will appear on the left panel. The getCustomPythonCode property is a function that returns Python code that can be used to load the item into Python.
 
-The NeurodataSpatialSeriesItemView component is a React component [defined here](https://github.com/magland/fi-sci/blob/main/apps/neurosift/src/app/pages/NwbPage/viewPlugins/SpatialSeries/SpatialSeriesWidget/NeurodataSpatialSeriesItemView.tsx). The props are
+The NeurodataSpatialSeriesItemView component is a React component [defined here](https://github.com/flatironinstitute/neurosift/blob/main/gui/src/app/pages/NwbPage/viewPlugins/SpatialSeries/SpatialSeriesWidget/NeurodataSpatialSeriesItemView.tsx). The props are
 
 ```typescript
 // props for the NeurodataSpatialSeriesItemView component
