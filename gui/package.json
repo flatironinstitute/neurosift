@@ -15,7 +15,8 @@
     "build": "tsc && vite build",
     "format": "prettier --write .",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "rm -rf ./dist && yarn build && cp -r .vercel dist/ && vercel --prod dist"
   },
   "dependencies": {
     "@emotion/react": "^11.11.4",
