@@ -7,14 +7,16 @@ type NeurodataTypesSelectorProps = {
   setSelectedNeurodataTypes: (selectedNeurodataTypes: string[]) => void;
 };
 
-const NeurodataTypesSelector: FunctionComponent<NeurodataTypesSelectorProps> = ({
+const NeurodataTypesSelector: FunctionComponent<
+  NeurodataTypesSelectorProps
+> = ({
   allNeurodataTypes,
   selectedNeurodataTypes,
   setSelectedNeurodataTypes,
 }) => {
   const handleDelete = (chipToDelete: string) => {
     setSelectedNeurodataTypes(
-      selectedNeurodataTypes.filter((chip) => chip !== chipToDelete)
+      selectedNeurodataTypes.filter((chip) => chip !== chipToDelete),
     );
   };
 

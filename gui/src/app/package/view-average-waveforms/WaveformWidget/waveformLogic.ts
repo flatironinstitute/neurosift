@@ -1,5 +1,4 @@
-
-export const defaultSpikeToNoiseRatio = 10
+export const defaultSpikeToNoiseRatio = 10;
 
 // A spike is defined as a signal which exceeds a threshold multiple of the recording background noise.
 // (By default the threshold multiple is 10.)
@@ -13,5 +12,5 @@ export const defaultSpikeToNoiseRatio = 10
 // }
 
 export const getSpikeAmplitudeNormalizationFactor = (peakAmplitude: number) => {
-    return 1 / peakAmplitude
-}
+  return 1 / peakAmplitude;
+};

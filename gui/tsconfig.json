@@ -24,15 +24,9 @@
     /* Imports */
     "baseUrl": "./src",
     "paths": {
-      "@NSComponents/*": [
-        "app/components/*"
-      ],
-      "@remote-h5-file/*": [
-        "remote-h5-file/*"
-      ],
-      "@electrode-geometry/*": [
-        "electrode-geometry/*"
-      ]
+      "@NSComponents/*": ["app/components/*"],
+      "@remote-h5-file/*": ["remote-h5-file/*"],
+      "@electrode-geometry/*": ["electrode-geometry/*"]
     }
   },
   "include": ["src"],

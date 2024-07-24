@@ -3,20 +3,19 @@ import zarrDecodeChunkArray from "./zarrDecodeChunkArray";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type ReferenceFileSystemObject = {
-  version: any
-  refs: {[key: string]: (
-    string | [string, number, number]
-  )}
-  templates?: {[key: string]: string}
-}
+  version: any;
+  refs: { [key: string]: string | [string, number, number] };
+  templates?: { [key: string]: string };
+};
 
 export class ReferenceFileSystemClient {
-  #fileContentCache: {[key: string]: {content: any | undefined, found: boolean}} = {};
-  #inProgressReads: {[key: string]: boolean} = {};
-  constructor(private obj: ReferenceFileSystemObject) {
-  }
-  async readJson(path: string): Promise<{[key: string]: any} | undefined> {
-    const buf = await this.readBinary(path, {decodeArray: false});
+  #fileContentCache: {
+    [key: string]: { content: any | undefined; found: boolean };
+  } = {};
+  #inProgressReads: { [key: string]: boolean } = {};
+  constructor(private obj: ReferenceFileSystemObject) {}
+  async readJson(path: string): Promise<{ [key: string]: any } | undefined> {
+    const buf = await this.readBinary(path, { decodeArray: false });
     if (!buf) return undefined;
     const text = new TextDecoder().decode(buf);
     // replace NaN by "NaN" so that JSON.parse doesn't choke on it
@@ -24,58 +23,82 @@ export class ReferenceFileSystemClient {
     // BUT we want to make sure we don't replace NaN within quoted strings
     // Here's an example where this matters: https://neurosift.app/?p=/nwb&dandisetId=000409&dandisetVersion=draft&url=https://api.dandiarchive.org/api/assets/54b277ce-2da7-4730-b86b-cfc8dbf9c6fd/download/
     //    raw/intervals/contrast_left
-    let newText: string
-    if (text.includes('NaN')) {
-      newText = '';
+    let newText: string;
+    if (text.includes("NaN")) {
+      newText = "";
       let inString = false;
       let isEscaped = false;
       for (let i = 0; i < text.length; i++) {
-          const c = text[i];
-          if (c === '"' && !isEscaped) inString = !inString;
-          if (!inString && c === 'N' && text.slice(i, i + 3) === 'NaN') {
-              newText += '"___NaN___"';
-              i += 2;
-          } else {
-              newText += c;
-          }
-          isEscaped = c === '\\' && !isEscaped;
+        const c = text[i];
+        if (c === '"' && !isEscaped) inString = !inString;
+        if (!inString && c === "N" && text.slice(i, i + 3) === "NaN") {
+          newText += '"___NaN___"';
+          i += 2;
+        } else {
+          newText += c;
+        }
+        isEscaped = c === "\\" && !isEscaped;
       }
-    }
-    else {
+    } else {
       newText = text;
     }
     try {
       return JSON.parse(newText, (_key, value) => {
-        if (value === '___NaN___') return NaN;
+        if (value === "___NaN___") return NaN;
         return value;
-      })
-    }
-    catch (e) {
+      });
+    } catch (e) {
       console.warn(text);
-      throw Error('Failed to parse JSON for ' + path + ': ' + e);
+      throw Error("Failed to parse JSON for " + path + ": " + e);
     }
   }
-  async readBinary(path: string, o: {decodeArray?: boolean, startByte?: number, endByte?: number, disableCache?: boolean}): Promise<any | undefined> {
+  async readBinary(
+    path: string,
+    o: {
+      decodeArray?: boolean;
+      startByte?: number;
+      endByte?: number;
+      disableCache?: boolean;
+    },
+  ): Promise<any | undefined> {
     if (o.startByte !== undefined) {
-      if (o.decodeArray) throw Error('Cannot decode array and read a slice at the same time');
-      if (o.endByte === undefined) throw Error('If you specify startByte, you must also specify endByte');
+      if (o.decodeArray)
+        throw Error("Cannot decode array and read a slice at the same time");
+      if (o.endByte === undefined)
+        throw Error("If you specify startByte, you must also specify endByte");
+    } else if (o.endByte !== undefined) {
+      throw Error("If you specify endByte, you must also specify startByte");
     }
-    else if (o.endByte !== undefined) {
-      throw Error('If you specify endByte, you must also specify startByte');
+    if (
+      o.endByte !== undefined &&
+      o.startByte !== undefined &&
+      o.endByte < o.startByte
+    ) {
+      throw Error(
+        `endByte must be greater than or equal to startByte: ${o.startByte} ${o.endByte} for ${path}`,
+      );
     }
-    if ((o.endByte !== undefined) && (o.startByte !== undefined) && (o.endByte < o.startByte)) {
-      throw Error(`endByte must be greater than or equal to startByte: ${o.startByte} ${o.endByte} for ${path}`);
-    }
-    if ((o.endByte !== undefined) && (o.startByte !== undefined) && (o.endByte === o.startByte)) {
+    if (
+      o.endByte !== undefined &&
+      o.startByte !== undefined &&
+      o.endByte === o.startByte
+    ) {
       return new ArrayBuffer(0);
     }
-    const kk = path + '|' + (o.decodeArray ? 'decode' : '') + '|' + (o.startByte) + '|' + (o.endByte);
+    const kk =
+      path +
+      "|" +
+      (o.decodeArray ? "decode" : "") +
+      "|" +
+      o.startByte +
+      "|" +
+      o.endByte;
     while (this.#inProgressReads[kk]) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
     this.#inProgressReads[kk] = true;
     try {
-      if (path.startsWith('/')) path = path.slice(1)
+      if (path.startsWith("/")) path = path.slice(1);
       if (this.#fileContentCache[kk]) {
         if (this.#fileContentCache[kk].found) {
           return this.#fileContentCache[kk].content;
@@ -83,21 +106,19 @@ export class ReferenceFileSystemClient {
         return undefined;
       }
       const ref = this.obj.refs[path];
-      if (!ref) return undefined
+      if (!ref) return undefined;
       let buf: ArrayBuffer | undefined;
-      if (typeof ref === 'string') {
-        if (ref.startsWith('base64:')) {
-          buf = _base64ToArrayBuffer(ref.slice('base64:'.length));
-        }
-        else {
+      if (typeof ref === "string") {
+        if (ref.startsWith("base64:")) {
+          buf = _base64ToArrayBuffer(ref.slice("base64:".length));
+        } else {
           // just a string
           buf = new TextEncoder().encode(ref).buffer;
         }
         if (o.startByte !== undefined) {
           buf = buf.slice(o.startByte, o.endByte);
         }
-      }
-      else if ((typeof ref === 'object') && (Array.isArray(ref))) {
+      } else if (typeof ref === "object" && Array.isArray(ref)) {
         if (ref.length !== 3) throw Error(`Invalid ref for ${path}`);
         const refUrl = this._applyTemplates(ref[0]);
         let start = ref[1];
@@ -112,42 +133,44 @@ export class ReferenceFileSystemClient {
         }
         const r = await fetch(url0, {
           headers: {
-            Range: `bytes=${start}-${start + numBytes - 1}`
-          }
+            Range: `bytes=${start}-${start + numBytes - 1}`,
+          },
         });
-        if (!r.ok) throw Error('Failed to fetch ' + refUrl);
+        if (!r.ok) throw Error("Failed to fetch " + refUrl);
         buf = await r.arrayBuffer();
-      }
-      else if (typeof ref === 'object') {
+      } else if (typeof ref === "object") {
         buf = new TextEncoder().encode(JSON.stringify(ref)).buffer;
-      }
-      else {
-        throw Error('Invalid ref for ' + path);
+      } else {
+        throw Error("Invalid ref for " + path);
       }
       if (o.decodeArray) {
-        const parentPath = path.split('/').slice(0, -1).join('/');
-        const zarray = (await this.readJson(parentPath + '/.zarray')) as ZMetaDataZArray | undefined;
-        if (!zarray) throw Error('Failed to read .zarray for ' + path);
+        const parentPath = path.split("/").slice(0, -1).join("/");
+        const zarray = (await this.readJson(parentPath + "/.zarray")) as
+          | ZMetaDataZArray
+          | undefined;
+        if (!zarray) throw Error("Failed to read .zarray for " + path);
         try {
-          buf = await zarrDecodeChunkArray(buf, zarray.dtype, zarray.compressor, zarray.filters, zarray.chunks);
-        }
-        catch (e) {
+          buf = await zarrDecodeChunkArray(
+            buf,
+            zarray.dtype,
+            zarray.compressor,
+            zarray.filters,
+            zarray.chunks,
+          );
+        } catch (e) {
           throw Error(`Failed to decode chunk array for ${path}: ${e}`);
         }
       }
       if (buf) {
-        this.#fileContentCache[kk] = {content: buf, found: true};
-      }
-      else {
-        this.#fileContentCache[kk] = {content: undefined, found: false};
+        this.#fileContentCache[kk] = { content: buf, found: true };
+      } else {
+        this.#fileContentCache[kk] = { content: undefined, found: false };
       }
       return buf;
-    }
-    catch (e) {
-      this.#fileContentCache[kk] = {content: undefined, found: false}; // important to do this so we don't keep trying to read the same file
+    } catch (e) {
+      this.#fileContentCache[kk] = { content: undefined, found: false }; // important to do this so we don't keep trying to read the same file
       throw e;
-    }
-    finally {
+    } finally {
       this.#inProgressReads[kk] = false;
     }
   }
@@ -155,13 +178,12 @@ export class ReferenceFileSystemClient {
     return this.obj.refs;
   }
   _applyTemplates(s: string): string {
-    if ((s.includes('{{') && s.includes('}}')) && (this.obj.templates)) {
+    if (s.includes("{{") && s.includes("}}") && this.obj.templates) {
       for (const [k, v] of Object.entries(this.obj.templates)) {
-        s = s.replace('{{' + k + '}}', v);
+        s = s.replace("{{" + k + "}}", v);
       }
       return s;
-    }
-    else {
+    } else {
       return s;
     }
   }

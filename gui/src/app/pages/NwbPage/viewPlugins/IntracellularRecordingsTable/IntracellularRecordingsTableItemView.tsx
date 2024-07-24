@@ -1,137 +1,186 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { FunctionComponent, useEffect, useState } from "react"
-import { useNwbFile } from "../../NwbFileContext"
-import { ReferenceComponent } from "../../BrowseNwbView/BrowseNwbView"
+import { FunctionComponent, useEffect, useState } from "react";
+import { useNwbFile } from "../../NwbFileContext";
+import { ReferenceComponent } from "../../BrowseNwbView/BrowseNwbView";
 
 type Props = {
-    width: number
-    height: number
-    path: string
-    condensed?: boolean
-}
+  width: number;
+  height: number;
+  path: string;
+  condensed?: boolean;
+};
 
-const IntracellularRecordingsTableItemView: FunctionComponent<Props> = ({width, height, path, condensed}) => {
-    const nwbFile = useNwbFile()
-    const [rows, setRows] = useState<{
-        id: number
-        electrode: any
-        stimulus: any
-        response: any
-    }[] | undefined>(undefined)
-    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined)
-    useEffect(() => {
-        setRows(undefined)
-        if (!nwbFile) {
-            setErrorMessage("No NWB file")
-            return
-        }
-        ;(async () => {
-            try {
-                const ids = await nwbFile.getDatasetData(`${path}/id`, {})
-                if (!ids) {
-                    throw Error(`No ids found at path ${path}/id`)
-                }
-                const electrodesIds = await nwbFile.getDatasetData(`${path}/electrodes/id`, {})
-                if (!electrodesIds) {
-                    throw Error(`No electrode ids found at path ${path}/electrodes/id`)
-                }
-                const electrodesData = await nwbFile.getDatasetData(`${path}/electrodes/electrode`, {})
-                if (!electrodesData) {
-                    throw Error(`No electrode data found at path ${path}/electrodes/electrode`)
-                }
-                const stimuliIds = await nwbFile.getDatasetData(`${path}/stimuli/id`, {})
-                if (!stimuliIds) {
-                    throw Error(`No stimulus ids found at path ${path}/stimuli/id`)
-                }
-                const stimuliData = await nwbFile.getDatasetData(`${path}/stimuli/stimulus`, {})
-                if (!stimuliData) {
-                    throw Error(`No stimulus data found at path ${path}/stimuli/stimulus`)
-                }
-                const responsesIds = await nwbFile.getDatasetData(`${path}/responses/id`, {})
-                if (!responsesIds) {
-                    throw Error(`No response ids found at path ${path}/responses/id`)
-                }
-                const responsesData = await nwbFile.getDatasetData(`${path}/responses/response`, {})
-                if (!responsesData) {
-                    throw Error(`No response data found at path ${path}/responses/response`)
-                }
-                const rows = Array.from(ids).map((id: number) => {
-                    const electrodesIndex = electrodesIds.indexOf(id)
-                    const stimuliIndex = stimuliIds.indexOf(id)
-                    const responsesIndex = responsesIds.indexOf(id)
-                    return {
-                        id,
-                        electrode: electrodesIndex === -1 ? undefined : electrodesData[electrodesIndex],
-                        stimulus: stimuliIndex === -1 ? undefined : stimuliData[stimuliIndex],
-                        response: responsesIndex === -1 ? undefined : responsesData[responsesIndex]
-                    }
-                })
-                setRows(rows)
-            } catch (error: any) {
-                console.error(error)
-                setErrorMessage(error.message)
-            }
-        })()
-    }, [nwbFile, path])
-    if (!rows) {
-        if (errorMessage) {
-            return <div>{errorMessage}</div>
-        }
-        else {
-            return <div>Loading...</div>
-        }
+const IntracellularRecordingsTableItemView: FunctionComponent<Props> = ({
+  width,
+  height,
+  path,
+  condensed,
+}) => {
+  const nwbFile = useNwbFile();
+  const [rows, setRows] = useState<
+    | {
+        id: number;
+        electrode: any;
+        stimulus: any;
+        response: any;
+      }[]
+    | undefined
+  >(undefined);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(
+    undefined,
+  );
+  useEffect(() => {
+    setRows(undefined);
+    if (!nwbFile) {
+      setErrorMessage("No NWB file");
+      return;
     }
+    (async () => {
+      try {
+        const ids = await nwbFile.getDatasetData(`${path}/id`, {});
+        if (!ids) {
+          throw Error(`No ids found at path ${path}/id`);
+        }
+        const electrodesIds = await nwbFile.getDatasetData(
+          `${path}/electrodes/id`,
+          {},
+        );
+        if (!electrodesIds) {
+          throw Error(`No electrode ids found at path ${path}/electrodes/id`);
+        }
+        const electrodesData = await nwbFile.getDatasetData(
+          `${path}/electrodes/electrode`,
+          {},
+        );
+        if (!electrodesData) {
+          throw Error(
+            `No electrode data found at path ${path}/electrodes/electrode`,
+          );
+        }
+        const stimuliIds = await nwbFile.getDatasetData(
+          `${path}/stimuli/id`,
+          {},
+        );
+        if (!stimuliIds) {
+          throw Error(`No stimulus ids found at path ${path}/stimuli/id`);
+        }
+        const stimuliData = await nwbFile.getDatasetData(
+          `${path}/stimuli/stimulus`,
+          {},
+        );
+        if (!stimuliData) {
+          throw Error(
+            `No stimulus data found at path ${path}/stimuli/stimulus`,
+          );
+        }
+        const responsesIds = await nwbFile.getDatasetData(
+          `${path}/responses/id`,
+          {},
+        );
+        if (!responsesIds) {
+          throw Error(`No response ids found at path ${path}/responses/id`);
+        }
+        const responsesData = await nwbFile.getDatasetData(
+          `${path}/responses/response`,
+          {},
+        );
+        if (!responsesData) {
+          throw Error(
+            `No response data found at path ${path}/responses/response`,
+          );
+        }
+        const rows = Array.from(ids).map((id: number) => {
+          const electrodesIndex = electrodesIds.indexOf(id);
+          const stimuliIndex = stimuliIds.indexOf(id);
+          const responsesIndex = responsesIds.indexOf(id);
+          return {
+            id,
+            electrode:
+              electrodesIndex === -1
+                ? undefined
+                : electrodesData[electrodesIndex],
+            stimulus:
+              stimuliIndex === -1 ? undefined : stimuliData[stimuliIndex],
+            response:
+              responsesIndex === -1 ? undefined : responsesData[responsesIndex],
+          };
+        });
+        setRows(rows);
+      } catch (error: any) {
+        console.error(error);
+        setErrorMessage(error.message);
+      }
+    })();
+  }, [nwbFile, path]);
+  if (!rows) {
+    if (errorMessage) {
+      return <div>{errorMessage}</div>;
+    } else {
+      return <div>Loading...</div>;
+    }
+  }
+  return (
+    <table className="nwb-table">
+      <thead>
+        <tr>
+          <th>id</th>
+          <th>electrode</th>
+          <th>stimulus</th>
+          <th>response</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr key={row.id}>
+            <td>{row.id}</td>
+            <td>
+              <ItemView item={row.electrode} />
+            </td>
+            <td>
+              <ItemView item={row.stimulus} />
+            </td>
+            <td>
+              <ItemView item={row.response} />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
+const ItemView: FunctionComponent<{ item: any }> = ({ item }) => {
+  if (item === null) {
+    return "null";
+  }
+  if (item === undefined) {
+    return "undefined";
+  }
+  if (typeof item !== "object") {
+    return <span>{item}</span>;
+  }
+  if (item._REFERENCE) {
+    return <ReferenceComponent value={item._REFERENCE} />;
+  }
+  if (Array.isArray(item)) {
     return (
-        <table className="nwb-table">
-            <thead>
-                <tr>
-                    <th>id</th>
-                    <th>electrode</th>
-                    <th>stimulus</th>
-                    <th>response</th>
-                </tr>
-            </thead>
-            <tbody>
-                {rows.map(row => (
-                    <tr key={row.id}>
-                        <td>{row.id}</td>
-                        <td><ItemView item={row.electrode} /></td>
-                        <td><ItemView item={row.stimulus} /></td>
-                        <td><ItemView item={row.response} /></td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    )
-}
-
-const ItemView: FunctionComponent<{item: any}> = ({item}) => {
-    if (item === null) {
-        return 'null'
-    }
-    if (item === undefined) {
-        return 'undefined'
-    }
-    if (typeof item !== "object") {
-        return <span>{item}</span>
-    }
-    if (item._REFERENCE) {
-        return <ReferenceComponent value={item._REFERENCE} />
-    }
-    if (Array.isArray(item)) {
-        return <span>
-            {item.map((x: any, i: number) => {
-                if (i > 0) {
-                    return <span key={i}>, <ItemView item={x} /></span>
-                }
-                else {
-                    return <ItemView key={i} item={x} />
-                }
-            })}
-        </span>
-    }
-    return <pre>{JSON.stringify(item, null, 2)}</pre>
-}
+      <span>
+        {item.map((x: any, i: number) => {
+          if (i > 0) {
+            return (
+              <span key={i}>
+                , <ItemView item={x} />
+              </span>
+            );
+          } else {
+            return <ItemView key={i} item={x} />;
+          }
+        })}
+      </span>
+    );
+  }
+  return <pre>{JSON.stringify(item, null, 2)}</pre>;
+};
 
 // the spec:
 // {
@@ -166,4 +215,4 @@ const ItemView: FunctionComponent<{item: any}> = ({item}) => {
 //     ]
 //   }
 
-export default IntracellularRecordingsTableItemView
+export default IntracellularRecordingsTableItemView;

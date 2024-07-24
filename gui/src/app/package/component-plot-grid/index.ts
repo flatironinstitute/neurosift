@@ -1,2 +1,2 @@
-export {default as PlotGrid} from "./PlotGrid";
-export type {PGPlot} from './PlotGrid'
+export { default as PlotGrid } from "./PlotGrid";
+export type { PGPlot } from "./PlotGrid";

@@ -1,1 +1,1 @@
-export {default as VerticalScrollView} from './VerticalScrollView'
+export { default as VerticalScrollView } from "./VerticalScrollView";

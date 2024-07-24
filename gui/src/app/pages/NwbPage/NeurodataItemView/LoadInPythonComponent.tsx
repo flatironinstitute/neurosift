@@ -1,90 +1,106 @@
-import { FunctionComponent, useMemo } from "react"
-import { useModalDialog } from "../../../ApplicationBar"
-import { useNwbFile } from "../NwbFileContext"
-import { MergedRemoteH5File, RemoteH5File, RemoteH5FileLindi, RemoteH5Group } from "@remote-h5-file/index"
-import { findViewPluginsForType, ViewPlugin } from "../viewPlugins/viewPlugins"
-import { Hyperlink } from "@fi-sci/misc"
-import ModalWindow from "@fi-sci/modal-window"
-import Markdown from "../../../Markdown/Markdown"
-import { useNwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider"
+import { FunctionComponent, useMemo } from "react";
+import { useModalDialog } from "../../../ApplicationBar";
+import { useNwbFile } from "../NwbFileContext";
+import {
+  MergedRemoteH5File,
+  RemoteH5File,
+  RemoteH5FileLindi,
+  RemoteH5Group,
+} from "@remote-h5-file/index";
+import { findViewPluginsForType, ViewPlugin } from "../viewPlugins/viewPlugins";
+import { Hyperlink } from "@fi-sci/misc";
+import ModalWindow from "@fi-sci/modal-window";
+import Markdown from "../../../Markdown/Markdown";
+import { useNwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 type Props = {
-    path: string
-    group: RemoteH5Group
-    viewName: string
-}
+  path: string;
+  group: RemoteH5Group;
+  viewName: string;
+};
 
-const LoadInPythonComponent: FunctionComponent<Props> = ({path, group, viewName}) => {
-    const {visible: windowVisible, handleOpen: handleOpenWindow, handleClose: handleCloseWindow} = useModalDialog()
+const LoadInPythonComponent: FunctionComponent<Props> = ({
+  path,
+  group,
+  viewName,
+}) => {
+  const {
+    visible: windowVisible,
+    handleOpen: handleOpenWindow,
+    handleClose: handleCloseWindow,
+  } = useModalDialog();
 
-    return (
-        <div>
-            <Hyperlink onClick={handleOpenWindow}>Load in Python</Hyperlink>
-            <ModalWindow
-                visible={windowVisible}
-                onClose={handleCloseWindow}
-            >
-                <LoadInPythonWindow
-                    path={path}
-                    group={group}
-                    viewName={viewName}
-                />
-            </ModalWindow>
-        </div>
-    )
-}
+  return (
+    <div>
+      <Hyperlink onClick={handleOpenWindow}>Load in Python</Hyperlink>
+      <ModalWindow visible={windowVisible} onClose={handleCloseWindow}>
+        <LoadInPythonWindow path={path} group={group} viewName={viewName} />
+      </ModalWindow>
+    </div>
+  );
+};
 
-const LoadInPythonWindow: FunctionComponent<Props> = ({path, group, viewName}) => {
-    const nwbFile = useNwbFile()
-    const specifications = useNwbFileSpecifications()
+const LoadInPythonWindow: FunctionComponent<Props> = ({
+  path,
+  group,
+  viewName,
+}) => {
+  const nwbFile = useNwbFile();
+  const specifications = useNwbFileSpecifications();
 
-    let nwbFileUrl: string
-    let urlType: 'hdf5' | 'lindi'
-    if (nwbFile instanceof MergedRemoteH5File) {
-        const f = nwbFile.getFiles()[0]
-        if (f instanceof RemoteH5FileLindi) {
-            nwbFileUrl = f.url
-            urlType = 'lindi'
-        }
-        else if (f instanceof RemoteH5File) {
-            nwbFileUrl = f.url
-            urlType = 'hdf5'
-        }
-        else {
-            nwbFileUrl = 'unknown'
-            urlType = 'hdf5'
-        }
+  let nwbFileUrl: string;
+  let urlType: "hdf5" | "lindi";
+  if (nwbFile instanceof MergedRemoteH5File) {
+    const f = nwbFile.getFiles()[0];
+    if (f instanceof RemoteH5FileLindi) {
+      nwbFileUrl = f.url;
+      urlType = "lindi";
+    } else if (f instanceof RemoteH5File) {
+      nwbFileUrl = f.url;
+      urlType = "hdf5";
+    } else {
+      nwbFileUrl = "unknown";
+      urlType = "hdf5";
     }
-    else {
-        if (nwbFile instanceof RemoteH5FileLindi) {
-            nwbFileUrl = nwbFile.url
-            urlType = 'lindi'
-        }
-        else {
-            nwbFileUrl = nwbFile.url
-            urlType = 'hdf5'
-        }
+  } else {
+    if (nwbFile instanceof RemoteH5FileLindi) {
+      nwbFileUrl = nwbFile.url;
+      urlType = "lindi";
+    } else {
+      nwbFileUrl = nwbFile.url;
+      urlType = "hdf5";
     }
+  }
 
-    const source = useMemo(() => {
-        if (!specifications) return ''
-        const viewPlugin = findViewPluginsForType(group.attrs.neurodata_type, {nwbFile}, specifications).defaultViewPlugin
-        return createSource(nwbFileUrl, urlType, viewPlugin, path, group, viewName)
-    }, [path, group, viewName, nwbFileUrl, urlType, nwbFile])
-    return (
-        <Markdown
-            source={source}
-        />
-    )
-}
+  const source = useMemo(() => {
+    if (!specifications) return "";
+    const viewPlugin = findViewPluginsForType(
+      group.attrs.neurodata_type,
+      { nwbFile },
+      specifications,
+    ).defaultViewPlugin;
+    return createSource(nwbFileUrl, urlType, viewPlugin, path, group, viewName);
+  }, [path, group, viewName, nwbFileUrl, urlType, nwbFile]);
+  return <Markdown source={source} />;
+};
 
-const createSource = (url: string, urlType: 'hdf5' | 'lindi', viewPlugin: ViewPlugin | undefined, path: string, group: RemoteH5Group, viewName: string) => {
-    const backtics = '```'
-    const backtic = '`'
-    // const nt = group.attrs.neurodata_type
-    const customCode = viewPlugin && viewPlugin.getCustomPythonCode ? viewPlugin.getCustomPythonCode(group) : ''
-    if (urlType === 'hdf5') {
-        return `
+const createSource = (
+  url: string,
+  urlType: "hdf5" | "lindi",
+  viewPlugin: ViewPlugin | undefined,
+  path: string,
+  group: RemoteH5Group,
+  viewName: string,
+) => {
+  const backtics = "```";
+  const backtic = "`";
+  // const nt = group.attrs.neurodata_type
+  const customCode =
+    viewPlugin && viewPlugin.getCustomPythonCode
+      ? viewPlugin.getCustomPythonCode(group)
+      : "";
+  if (urlType === "hdf5") {
+    return `
 ## Loading ${backtic}${path}${backtic} (${backtic}${group.attrs.neurodata_type}${backtic}).
 
 ${backtics}bash
@@ -110,10 +126,9 @@ ${backtics}
 
 See [remfile](https://github.com/magland/remfile) for more information on loading remote files.
 
-`
-    }
-    else if (urlType === 'lindi') {
-        return `
+`;
+  } else if (urlType === "lindi") {
+    return `
 ## Loading ${backtic}${path}${backtic} (${backtic}${group.attrs.neurodata_type}${backtic}).
 
 ${backtics}bash
@@ -137,11 +152,10 @@ ${backtics}
 ## Notes
 
 See [lindi](https://github.com/neurodatawithoutborders/lindi) for more information on LINDI files.
-`
-    }
-    else {
-        return `Unexpected urlType: ${urlType}`
-    }
-}
+`;
+  } else {
+    return `Unexpected urlType: ${urlType}`;
+  }
+};
 
-export default LoadInPythonComponent
+export default LoadInPythonComponent;

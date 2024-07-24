@@ -11,13 +11,20 @@ type Props = {
   value2: number;
   setValue1: (value: number) => void;
   setValue2: (value: number) => void;
-}
+};
 
-const MultiRangeSlider = ({ min, max, value1, value2, setValue1, setValue2 }: Props) => {
+const MultiRangeSlider = ({
+  min,
+  max,
+  value1,
+  value2,
+  setValue1,
+  setValue2,
+}: Props) => {
   // Convert to percentage
   const getPercent = useCallback(
     (value: number) => Math.round(((value - min) / (max - min)) * 1000) / 10,
-    [min, max]
+    [min, max],
   );
 
   return (
@@ -32,7 +39,7 @@ const MultiRangeSlider = ({ min, max, value1, value2, setValue1, setValue2 }: Pr
           setValue1(value);
         }}
         className="thumb thumb--left"
-        style={{ zIndex: value1 > (min + max) / 2 ? 5: undefined}} // deal with the case where the left and right thumbs overlap
+        style={{ zIndex: value1 > (min + max) / 2 ? 5 : undefined }} // deal with the case where the left and right thumbs overlap
       />
       <input
         type="range"
@@ -44,12 +51,18 @@ const MultiRangeSlider = ({ min, max, value1, value2, setValue1, setValue2 }: Pr
           setValue2(value);
         }}
         className="thumb thumb--right"
-        style={{ zIndex: value2 < (min + max) / 2 ? 5: undefined}} // deal with the case where the left and right thumbs overlap
+        style={{ zIndex: value2 < (min + max) / 2 ? 5 : undefined }} // deal with the case where the left and right thumbs overlap
       />
 
       <div className="slider">
         <div className="slider__track" />
-        <div style={{left: `${getPercent(value1)}%`, width: `${getPercent(value2) - getPercent(value1)}%`}} className="slider__range" />
+        <div
+          style={{
+            left: `${getPercent(value1)}%`,
+            width: `${getPercent(value2) - getPercent(value1)}%`,
+          }}
+          className="slider__range"
+        />
         {/* <div className="slider__left-value">{minVal}</div>
         <div className="slider__right-value">{maxVal}</div> */}
       </div>

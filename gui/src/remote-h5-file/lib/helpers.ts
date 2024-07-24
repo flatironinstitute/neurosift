@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { globalRemoteH5FileStats } from './RemoteH5File';
+import { globalRemoteH5FileStats } from "./RemoteH5File";
 
 type RRequest = {
   requestId: string;
@@ -18,7 +18,7 @@ export type Canceler = { onCancel: (() => void)[] };
 // See: https://stackoverflow.com/a/62914052
 const getWorkerURL = (url: string) => {
   const content = `importScripts( "${url}" );`;
-  return URL.createObjectURL(new Blob([content], { type: 'text/javascript' }));
+  return URL.createObjectURL(new Blob([content], { type: "text/javascript" }));
 };
 
 const createWorker = (url: string) => {
@@ -37,7 +37,7 @@ class RemoteH5WorkerWrapper {
     // this.#worker = createWorker('https://cdn.jsdelivr.net/gh/magland/remote-h5-worker@0.1.2/dist/RemoteH5Worker.js');
 
     // but maybe it's faster and more reliable to load from cloudflare
-    this.#worker = createWorker('https://tempory.net/js/RemoteH5Worker.js')
+    this.#worker = createWorker("https://tempory.net/js/RemoteH5Worker.js");
   }
   get numRunningRequests() {
     return this.#runningRequest ? 1 : 0;
@@ -58,10 +58,12 @@ class RemoteH5WorkerWrapper {
         onRejected: reject,
       });
       canceler.onCancel.push(() => {
-        const ind = this.#pendingRequests.findIndex((rr) => rr.requestId === requestId);
+        const ind = this.#pendingRequests.findIndex(
+          (rr) => rr.requestId === requestId,
+        );
         if (ind >= 0) {
           this.#pendingRequests.splice(ind, 1);
-          reject(new Error('canceled'));
+          reject(new Error("canceled"));
         }
       });
       this._processPendingRequests();
@@ -77,7 +79,7 @@ class RemoteH5WorkerWrapper {
     const doResolve = (resp: any) => {
       if (completed) return;
       completed = true;
-      this.#worker.removeEventListener('message', listener);
+      this.#worker.removeEventListener("message", listener);
       rr.onResolved(resp);
       this.#runningRequest = undefined;
       this._processPendingRequests();
@@ -85,14 +87,14 @@ class RemoteH5WorkerWrapper {
     const doReject = (err: Error) => {
       if (completed) return;
       completed = true;
-      this.#worker.removeEventListener('message', listener);
+      this.#worker.removeEventListener("message", listener);
       rr.onRejected(err);
       this.#runningRequest = undefined;
       this._processPendingRequests();
     };
     const listener = (e: MessageEvent) => {
       const d = e.data;
-      if (d.type === 'response' && d.requestId === rr.requestId) {
+      if (d.type === "response" && d.requestId === rr.requestId) {
         if (d.response.success) {
           doResolve(d.response);
         } else {
@@ -100,14 +102,14 @@ class RemoteH5WorkerWrapper {
         }
       }
     };
-    this.#worker.addEventListener('message', listener);
+    this.#worker.addEventListener("message", listener);
     this.#worker.postMessage({
-      type: 'request',
+      type: "request",
       requestId: rr.requestId,
       request: rr.request,
     });
     setTimeout(() => {
-      doReject(new Error('timeout'));
+      doReject(new Error("timeout"));
     }, 60000 * 3);
   };
 }
@@ -124,13 +126,18 @@ class RemoteH5WorkerManager {
     }
   }
   async postRequest(req: any, canceler: Canceler) {
-    const worker = this.#workers.sort((a, b) => a.numRequests - b.numRequests)[0];
+    const worker = this.#workers.sort(
+      (a, b) => a.numRequests - b.numRequests,
+    )[0];
     return await worker.postRequest(req, canceler);
   }
 }
 const workerManager = new RemoteH5WorkerManager();
 
-export const postRemoteH5WorkerRequest = async (req: any, canceler: Canceler) => {
+export const postRemoteH5WorkerRequest = async (
+  req: any,
+  canceler: Canceler,
+) => {
   globalRemoteH5FileStats.numPendingRequests++;
   try {
     const ret = await workerManager.postRequest(req, canceler);

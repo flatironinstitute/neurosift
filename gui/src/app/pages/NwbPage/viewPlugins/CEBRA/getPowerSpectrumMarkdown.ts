@@ -1,5 +1,8 @@
-const getPowerSpectrumMarkdown = (cebraOutputUrl: string, binSizeMsec: number) => {
-    return `
+const getPowerSpectrumMarkdown = (
+  cebraOutputUrl: string,
+  binSizeMsec: number,
+) => {
+  return `
 # Plot power spectrum for this embedding
 
 \`\`\`bash
@@ -40,7 +43,7 @@ plt.ylabel('Power')
 plt.grid(True)
 plt.show()
 \`\`\`
-`
-}
+`;
+};
 
-export default getPowerSpectrumMarkdown
+export default getPowerSpectrumMarkdown;

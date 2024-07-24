@@ -1,5 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react'
-
+import { useCallback, useMemo, useRef } from "react";
 
 /*
   Overview:
@@ -41,12 +40,15 @@ import { useCallback, useMemo, useRef } from 'react'
  * a resolution, else false. If the function returns true, the rate-limited function framework
  * will schedule a resolution operation if required.
  */
-export type DebounceThrottleUpdater<T, TRefs> = (refs: TRefs, state: T) => boolean
+export type DebounceThrottleUpdater<T, TRefs> = (
+  refs: TRefs,
+  state: T,
+) => boolean;
 
 /**
  * Defines a type-parameterized state resolution function which maps the pending state (refs)
  * to the external system state (e.g. a reducer) using the needed props.
- * 
+ *
  * This function is expected to set the refs (pending-resolution-state) to a neutral state, but
  * does not need to do any tracking of whether a resolution actually is pending--that's handled
  * by the framework.
@@ -54,14 +56,17 @@ export type DebounceThrottleUpdater<T, TRefs> = (refs: TRefs, state: T) => boole
  * @param props An implementation-dependent set of values and functions which allow the resolver
  * to affect some external state at resolution time.
  */
-export type DebounceThrottleResolver<TRefs, ResolverProps> = (refs: TRefs, props: ResolverProps) => void
+export type DebounceThrottleResolver<TRefs, ResolverProps> = (
+  refs: TRefs,
+  props: ResolverProps,
+) => void;
 
 // TODO: Could probably combine these into one with a version toggle
 
 /**
  * Hook sets up the infrastructure for a throttled rate-limited function. A throttler schedules resolution
  * so that it occurs once every `timeMs` ms, as long as there is input which hasn't been resolved.
- * 
+ *
  * @param updateFn The function to call on new input from the data stream.
  * @param resolveFn The function which resolves any pending changes.
  * @param refs The set of refs which track state-pending-resolution between resolutions.
@@ -71,41 +76,50 @@ export type DebounceThrottleResolver<TRefs, ResolverProps> = (refs: TRefs, props
  * @returns A callback mapping an instance of state T (the user input) to void.
  */
 export const useThrottler = <T, TRefs, ResolverProps>(
-    updateFn: DebounceThrottleUpdater<T, TRefs>,
-    resolveFn: DebounceThrottleResolver<TRefs, ResolverProps>,
-    refs: TRefs,
-    resolverProps: ResolverProps,
-    timeMs?: number,
+  updateFn: DebounceThrottleUpdater<T, TRefs>,
+  resolveFn: DebounceThrottleResolver<TRefs, ResolverProps>,
+  refs: TRefs,
+  resolverProps: ResolverProps,
+  timeMs?: number,
 ) => {
-    const pendingRequest = useRef<number| undefined>(undefined)
-    const cancelThrottled = useCallback(() => {
-        if (!pendingRequest.current) return
-        timeMs ? window.cancelAnimationFrame(pendingRequest.current) : window.clearTimeout(pendingRequest.current)
-        pendingRequest.current = undefined
-    }, [pendingRequest, timeMs])
+  const pendingRequest = useRef<number | undefined>(undefined);
+  const cancelThrottled = useCallback(() => {
+    if (!pendingRequest.current) return;
+    timeMs
+      ? window.cancelAnimationFrame(pendingRequest.current)
+      : window.clearTimeout(pendingRequest.current);
+    pendingRequest.current = undefined;
+  }, [pendingRequest, timeMs]);
 
-    const resolver = useCallback((time: number) => {
-        // OPTIONAL: could insert debug messages here
-        resolveFn(refs, resolverProps)
-        pendingRequest.current = undefined
-    }, [pendingRequest, refs, resolveFn, resolverProps])
+  const resolver = useCallback(
+    (time: number) => {
+      // OPTIONAL: could insert debug messages here
+      resolveFn(refs, resolverProps);
+      pendingRequest.current = undefined;
+    },
+    [pendingRequest, refs, resolveFn, resolverProps],
+  );
 
-    const throttler = useCallback((state: T) => {
-        const change = updateFn(refs, state)
+  const throttler = useCallback(
+    (state: T) => {
+      const change = updateFn(refs, state);
 
-        if (change && !(pendingRequest.current)) {
-            pendingRequest.current = timeMs ? window.requestAnimationFrame(resolver) : window.setTimeout(resolver, timeMs)
-        }
-    }, [pendingRequest, updateFn, resolver, refs, timeMs])
-    return { throttler, cancelThrottled }
-}
-
+      if (change && !pendingRequest.current) {
+        pendingRequest.current = timeMs
+          ? window.requestAnimationFrame(resolver)
+          : window.setTimeout(resolver, timeMs);
+      }
+    },
+    [pendingRequest, updateFn, resolver, refs, timeMs],
+  );
+  return { throttler, cancelThrottled };
+};
 
 /**
  * Hook sets up the infrastructure for a debounced rate-limited function. A debouncer schedules resolution
  * so that it does not occur until `timeMs` seconds have passed since the last unresolved input. Any new
  * input before resolution will reset the timer.
- * 
+ *
  * @param updateFn The function to call on new input from the data stream.
  * @param resolveFn The function which resolves any pending changes.
  * @param refs The set of refs which track state-pending-resolution between resolutions.
@@ -115,30 +129,36 @@ export const useThrottler = <T, TRefs, ResolverProps>(
  * @returns A callback mapping an instance of state T (the user input) to void.
  */
 export const useDebouncer = <T, TRefs, ResolverProps>(
-        updateFn: DebounceThrottleUpdater<T, TRefs>,
-        resolveFn: DebounceThrottleResolver<TRefs, ResolverProps>,
-        refs: TRefs,
-        resolverProps: ResolverProps,
-        timeMs?: number
-    ) => {
-    const time = useMemo(() => timeMs ?? 100, [timeMs]) // we don't debounce on animation frames b/c that's probably too fast
-    const lastRequest = useRef<number | undefined>(undefined)
-    const cancelDebouncer = useCallback(() => {
-        if (!lastRequest.current) return
-        window.clearTimeout(lastRequest.current)
-        lastRequest.current = undefined
-    }, [lastRequest])
+  updateFn: DebounceThrottleUpdater<T, TRefs>,
+  resolveFn: DebounceThrottleResolver<TRefs, ResolverProps>,
+  refs: TRefs,
+  resolverProps: ResolverProps,
+  timeMs?: number,
+) => {
+  const time = useMemo(() => timeMs ?? 100, [timeMs]); // we don't debounce on animation frames b/c that's probably too fast
+  const lastRequest = useRef<number | undefined>(undefined);
+  const cancelDebouncer = useCallback(() => {
+    if (!lastRequest.current) return;
+    window.clearTimeout(lastRequest.current);
+    lastRequest.current = undefined;
+  }, [lastRequest]);
 
-    const resolver = useCallback((time: number) => {
-        resolveFn(refs, resolverProps)
-        lastRequest.current = undefined
-    }, [resolveFn, refs, resolverProps])
-    const debouncer = useCallback((state: T) => {
-        const change = updateFn(refs, state)
-        if (change) {
-            if (lastRequest.current) clearTimeout(lastRequest.current)
-            lastRequest.current = setTimeout(resolver, time)
-        }
-    }, [updateFn, refs, lastRequest, resolver, time])
-    return { debouncer, cancelDebouncer }
-}
+  const resolver = useCallback(
+    (time: number) => {
+      resolveFn(refs, resolverProps);
+      lastRequest.current = undefined;
+    },
+    [resolveFn, refs, resolverProps],
+  );
+  const debouncer = useCallback(
+    (state: T) => {
+      const change = updateFn(refs, state);
+      if (change) {
+        if (lastRequest.current) clearTimeout(lastRequest.current);
+        lastRequest.current = setTimeout(resolver, time);
+      }
+    },
+    [updateFn, refs, lastRequest, resolver, time],
+  );
+  return { debouncer, cancelDebouncer };
+};

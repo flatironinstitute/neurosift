@@ -1,4 +1,3 @@
-
 /*
     This file provides an element that collects Canvases into the same layout space. (Note, though,
     that dimensions of the Canvas elements are set externally--because they're passed in, not
@@ -12,35 +11,45 @@
     some additional code for it.
 */
 
-type MaybeCanvas = JSX.Element | boolean
+type MaybeCanvas = JSX.Element | boolean;
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 interface CanvasFrameProps<T extends {}> {
-    width: number
-    height: number
-    canvases: MaybeCanvas[]
-    disableHandlers?: boolean
-    handlers?: T
-    // Not sure if we need these parameters--probably would've been better not to implement, but...
-    leftOffset?: number
-    topOffset?: number
+  width: number;
+  height: number;
+  canvases: MaybeCanvas[];
+  disableHandlers?: boolean;
+  handlers?: T;
+  // Not sure if we need these parameters--probably would've been better not to implement, but...
+  leftOffset?: number;
+  topOffset?: number;
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 const CanvasFrame = <T extends {}>(props: CanvasFrameProps<T>) => {
-    const {width, height, canvases, disableHandlers, handlers, leftOffset, topOffset} = props
-    return <div
-        style={{
-            width: width,
-            height: height,
-            position: 'relative',
-            left: leftOffset ?? 0,
-            top: topOffset ?? 0
-        }}
-        {...(!disableHandlers ? (handlers && {...handlers}) : {})}
+  const {
+    width,
+    height,
+    canvases,
+    disableHandlers,
+    handlers,
+    leftOffset,
+    topOffset,
+  } = props;
+  return (
+    <div
+      style={{
+        width: width,
+        height: height,
+        position: "relative",
+        left: leftOffset ?? 0,
+        top: topOffset ?? 0,
+      }}
+      {...(!disableHandlers ? handlers && { ...handlers } : {})}
     >
-        {canvases}
+      {canvases}
     </div>
-}
+  );
+};
 
-export default CanvasFrame
+export default CanvasFrame;

@@ -1,13 +1,20 @@
-import { Hyperlink, SmallIconButton } from '@fi-sci/misc';
-import { Refresh } from '@mui/icons-material';
-import { FunctionComponent, useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
+import { Refresh } from "@mui/icons-material";
+import {
+  FunctionComponent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useState,
+} from "react";
 import {
   CreateJobRequest,
   PairioJob,
   PairioJobDefinition,
   PairioJobRequiredResources,
   isCreateJobResponse,
-} from '../../../../pairio/types';
+} from "../../../../pairio/types";
 import {
   AllJobsView,
   MultipleChoiceNumberSelector,
@@ -16,21 +23,21 @@ import {
   getJobParameterValue,
   useAllJobs,
   useJob,
-  usePairioApiKey
-} from './PairioHelpers';
-import { RemoteH5FileX } from '@remote-h5-file/index';
-import { useNwbFile } from '../../NwbFileContext';
+  usePairioApiKey,
+} from "./PairioHelpers";
+import { RemoteH5FileX } from "@remote-h5-file/index";
+import { useNwbFile } from "../../NwbFileContext";
 
 type AdjustableParameterValues = { [key: string]: any };
 
-type AdjustableParametersAction = { type: 'set'; key: string; value: any };
+type AdjustableParametersAction = { type: "set"; key: string; value: any };
 
 const adjustableParametersReducer = (
   state: AdjustableParameterValues,
-  action: AdjustableParametersAction
+  action: AdjustableParametersAction,
 ): AdjustableParameterValues => {
   switch (action.type) {
-    case 'set': {
+    case "set": {
       return {
         ...state,
         [action.key]: action.value,
@@ -52,35 +59,67 @@ type PairioItemViewProps = {
   processorName?: string;
   tags?: string[];
   title: string;
-  adjustableParameters: { name: string; type: 'number' | 'string'; choices: any[] }[];
+  adjustableParameters: {
+    name: string;
+    type: "number" | "string";
+    choices: any[];
+  }[];
   defaultAdjustableParameters: AdjustableParameterValues;
-  getJobDefinition: (adjustableParameterValues: AdjustableParameterValues, inputFileUrl: string, path: string) => PairioJobDefinition;
+  getJobDefinition: (
+    adjustableParameterValues: AdjustableParameterValues,
+    inputFileUrl: string,
+    path: string,
+  ) => PairioJobDefinition;
   getRequiredResources: (requireGpu: boolean) => PairioJobRequiredResources;
-  gpuMode: 'optional' | 'required' | 'forbidden';
-  OutputComponent: FunctionComponent<{ job: PairioJob, width: number, nwbFile: RemoteH5FileX }>;
+  gpuMode: "optional" | "required" | "forbidden";
+  OutputComponent: FunctionComponent<{
+    job: PairioJob;
+    width: number;
+    nwbFile: RemoteH5FileX;
+  }>;
   compact?: boolean;
   jobFilter?: (job: PairioJob) => boolean;
 };
 
-const PairioItemView: FunctionComponent<PairioItemViewProps> = ({ width, height, nwbUrl, path, serviceName, appName, processorName, tags, title, adjustableParameters, defaultAdjustableParameters, getJobDefinition, getRequiredResources, gpuMode, OutputComponent, compact, jobFilter }) => {
-  const [selectedJobId, setSelectedJobId] = useState<string | undefined>(undefined);
-  const { job: selectedJob, refreshJob: refreshSelectedJob } = useJob(selectedJobId || undefined);
+const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
+  width,
+  height,
+  nwbUrl,
+  path,
+  serviceName,
+  appName,
+  processorName,
+  tags,
+  title,
+  adjustableParameters,
+  defaultAdjustableParameters,
+  getJobDefinition,
+  getRequiredResources,
+  gpuMode,
+  OutputComponent,
+  compact,
+  jobFilter,
+}) => {
+  const [selectedJobId, setSelectedJobId] = useState<string | undefined>(
+    undefined,
+  );
+  const { job: selectedJob, refreshJob: refreshSelectedJob } = useJob(
+    selectedJobId || undefined,
+  );
 
   const inputFileUrl = nwbUrl;
 
   const nwbFile = useNwbFile();
 
   // new job definition parameters
-  const [adjustableParameterValues, adjustableParameterValuesDispatch] = useReducer(
-    adjustableParametersReducer,
-    defaultAdjustableParameters
-  );
+  const [adjustableParameterValues, adjustableParameterValuesDispatch] =
+    useReducer(adjustableParametersReducer, defaultAdjustableParameters);
 
   const [requireGpu, setRequireGpu] = useState(false);
   useEffect(() => {
-    if (gpuMode === 'required') {
+    if (gpuMode === "required") {
       setRequireGpu(true);
-    } else if (gpuMode === 'forbidden') {
+    } else if (gpuMode === "forbidden") {
       setRequireGpu(false);
     }
   }, [gpuMode]);
@@ -91,7 +130,7 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({ width, height,
     for (const p of adjustableParameters) {
       const value = getJobParameterValue(selectedJob, p.name);
       if (value !== undefined) {
-        adjustableParameterValuesDispatch({ type: 'set', key: p.name, value });
+        adjustableParameterValuesDispatch({ type: "set", key: p.name, value });
       }
     }
   }, [selectedJob, adjustableParameterValuesDispatch, adjustableParameters]);
@@ -101,8 +140,11 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({ width, height,
   const [submittingNewJob, setSubmittingNewJob] = useState(false);
   const [definingNewJob, setDefiningNewJob] = useState(false);
   const newJobDefinition: PairioJobDefinition | undefined = useMemo(
-    () => (nwbUrl ? getJobDefinition(adjustableParameterValues, inputFileUrl, path) : undefined),
-    [nwbUrl, inputFileUrl, adjustableParameterValues, path, getJobDefinition]
+    () =>
+      nwbUrl
+        ? getJobDefinition(adjustableParameterValues, inputFileUrl, path)
+        : undefined,
+    [nwbUrl, inputFileUrl, adjustableParameterValues, path, getJobDefinition],
   );
   useEffect(() => {
     // if the job definition has changed, close up the submission
@@ -114,7 +156,13 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({ width, height,
   }, [requireGpu, getRequiredResources]);
 
   // do not include service when we are finding all jobs
-  const { allJobs, refreshAllJobs } = useAllJobs({ appName, processorName, inputFileUrl, tags, jobFilter });
+  const { allJobs, refreshAllJobs } = useAllJobs({
+    appName,
+    processorName,
+    inputFileUrl,
+    tags,
+    jobFilter,
+  });
   useEffect(() => {
     if (!allJobs) return;
     if (allJobs.length === 0) {
@@ -124,7 +172,7 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({ width, height,
 
   useEffect(() => {
     if (selectedJobId) return;
-    for (const ss of ['completed', 'running', 'pending', 'failed']) {
+    for (const ss of ["completed", "running", "pending", "failed"]) {
       const candidateJobs = allJobs?.filter((job) => job.status === ss);
       if (candidateJobs && candidateJobs.length > 0) {
         setSelectedJobId(candidateJobs[0].jobId);
@@ -135,16 +183,19 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({ width, height,
 
   const { pairioApiKey, setPairioApiKey } = usePairioApiKey();
 
-  const parameterNames = useMemo(() => (adjustableParameters.map((p) => p.name)), [adjustableParameters]);
+  const parameterNames = useMemo(
+    () => adjustableParameters.map((p) => p.name),
+    [adjustableParameters],
+  );
 
   const handleSubmitNewJob = useCallback(async () => {
     if (!newJobDefinition) return;
     const req: CreateJobRequest = {
-      type: 'createJobRequest',
+      type: "createJobRequest",
       serviceName,
-      userId: '',
-      batchId: '',
-      tags: tags ? tags : ['neurosift'],
+      userId: "",
+      batchId: "",
+      tags: tags ? tags : ["neurosift"],
       jobDefinition: newJobDefinition,
       requiredResources,
       secrets: [],
@@ -154,11 +205,11 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({ width, height,
       deleteFailing: true,
     };
     const headers = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization: `Bearer ${pairioApiKey}`,
     };
     const resp = await fetch(`https://pairio.vercel.app/api/createJob`, {
-      method: 'POST',
+      method: "POST",
       headers,
       body: JSON.stringify(req),
     });
@@ -173,88 +224,142 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({ width, height,
     setSelectedJobId(rr.job.jobId);
     setAllJobsExpanded(false);
     refreshAllJobs();
-  }, [newJobDefinition, pairioApiKey, refreshAllJobs, requiredResources, serviceName, tags]);
+  }, [
+    newJobDefinition,
+    pairioApiKey,
+    refreshAllJobs,
+    requiredResources,
+    serviceName,
+    tags,
+  ]);
 
   const hasNoCompletedJobs = useMemo(() => {
     if (!allJobs) return false;
-    return allJobs.filter((job) => job.status === 'completed').length === 0;
+    return allJobs.filter((job) => job.status === "completed").length === 0;
   }, [allJobs]);
 
   return (
-    <div style={{ position: 'relative', width, height: height || undefined, overflowY: 'auto' }}>
-      {!compact && (<>
-        <h3>{title}</h3>
-        {definingNewJob ? (
-          <div>
-            <table className="table" style={{ maxWidth: 300 }}>
-              <tbody>
-                {adjustableParameters.map((p) => (
-                  <tr key={p.name}>
-                    <td>{p.name}:</td>
-                    <td>
-                      {
-                        p.type === 'number' ? (
+    <div
+      style={{
+        position: "relative",
+        width,
+        height: height || undefined,
+        overflowY: "auto",
+      }}
+    >
+      {!compact && (
+        <>
+          <h3>{title}</h3>
+          {definingNewJob ? (
+            <div>
+              <table className="table" style={{ maxWidth: 300 }}>
+                <tbody>
+                  {adjustableParameters.map((p) => (
+                    <tr key={p.name}>
+                      <td>{p.name}:</td>
+                      <td>
+                        {p.type === "number" ? (
                           <MultipleChoiceNumberSelector
                             value={adjustableParameterValues[p.name]}
-                            setValue={(x) => adjustableParameterValuesDispatch({ type: 'set', key: p.name, value: x })}
+                            setValue={(x) =>
+                              adjustableParameterValuesDispatch({
+                                type: "set",
+                                key: p.name,
+                                value: x,
+                              })
+                            }
                             choices={p.choices}
                           />
-                        ) : p.type === 'string' ? (
+                        ) : p.type === "string" ? (
                           <MultipleChoiceStringSelector
                             value={adjustableParameterValues[p.name]}
-                            setValue={(x) => adjustableParameterValuesDispatch({ type: 'set', key: p.name, value: x })}
-                            choices={p.choices} />
-                        ) : <span />
-                      }
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {!submittingNewJob && <div style={{paddingTop: 10}}>
-              <button onClick={() => setSubmittingNewJob(true)}>SUBMIT JOB</button>
-            </div>}
-            {submittingNewJob && (
-              <div>
-                <div style={{paddingTop: 10}}>
-                  <SelectPairioApiKeyComponent value={pairioApiKey} setValue={setPairioApiKey} />
-                </div>
-                {gpuMode === 'optional' && <div style={{paddingTop: 10}}>
-                  <RequireGpuSelector value={requireGpu} setValue={setRequireGpu} />
-                </div>}
-                <div style={{paddingTop: 10}}>
-                  <button onClick={handleSubmitNewJob} disabled={!pairioApiKey}>
+                            setValue={(x) =>
+                              adjustableParameterValuesDispatch({
+                                type: "set",
+                                key: p.name,
+                                value: x,
+                              })
+                            }
+                            choices={p.choices}
+                          />
+                        ) : (
+                          <span />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {!submittingNewJob && (
+                <div style={{ paddingTop: 10 }}>
+                  <button onClick={() => setSubmittingNewJob(true)}>
                     SUBMIT JOB
                   </button>
                 </div>
-              </div>
-            )}
-            <hr />
-          </div>
-        ) : (
-          <div>
-            <Hyperlink onClick={() => setDefiningNewJob(true)}>Create new job</Hyperlink>
-          </div>
-        )}
-        <AllJobsView
-          expanded={allJobsExpanded}
-          setExpanded={setAllJobsExpanded}
-          allJobs={allJobs || undefined}
-          refreshAllJobs={refreshAllJobs}
-          selectedJobId={selectedJobId}
-          onJobClicked={setSelectedJobId}
-          parameterNames={parameterNames}
-        />
-        <hr />
-      </>)}
+              )}
+              {submittingNewJob && (
+                <div>
+                  <div style={{ paddingTop: 10 }}>
+                    <SelectPairioApiKeyComponent
+                      value={pairioApiKey}
+                      setValue={setPairioApiKey}
+                    />
+                  </div>
+                  {gpuMode === "optional" && (
+                    <div style={{ paddingTop: 10 }}>
+                      <RequireGpuSelector
+                        value={requireGpu}
+                        setValue={setRequireGpu}
+                      />
+                    </div>
+                  )}
+                  <div style={{ paddingTop: 10 }}>
+                    <button
+                      onClick={handleSubmitNewJob}
+                      disabled={!pairioApiKey}
+                    >
+                      SUBMIT JOB
+                    </button>
+                  </div>
+                </div>
+              )}
+              <hr />
+            </div>
+          ) : (
+            <div>
+              <Hyperlink onClick={() => setDefiningNewJob(true)}>
+                Create new job
+              </Hyperlink>
+            </div>
+          )}
+          <AllJobsView
+            expanded={allJobsExpanded}
+            setExpanded={setAllJobsExpanded}
+            allJobs={allJobs || undefined}
+            refreshAllJobs={refreshAllJobs}
+            selectedJobId={selectedJobId}
+            onJobClicked={setSelectedJobId}
+            parameterNames={parameterNames}
+          />
+          <hr />
+        </>
+      )}
       {selectedJob && (
         <div>
-            {!compact && <JobInfoView job={selectedJob} onRefreshJob={refreshSelectedJob} parameterNames={parameterNames} />}
-            {
-              selectedJob && (selectedJob.status === 'completed') && (
-                <OutputComponent job={selectedJob} width={width} nwbFile={nwbFile} />
-              )
-            }
+          {!compact && (
+            <JobInfoView
+              job={selectedJob}
+              onRefreshJob={refreshSelectedJob}
+              parameterNames={parameterNames}
+            />
+          )}
+          {selectedJob && selectedJob.status === "completed" && (
+            <OutputComponent
+              job={selectedJob}
+              width={width}
+              nwbFile={nwbFile}
+            />
+          )}
         </div>
       )}
       {hasNoCompletedJobs && (
@@ -267,48 +372,57 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({ width, height,
   );
 };
 
-const RequireGpuSelector: FunctionComponent<{ value: boolean; setValue: (value: boolean) => void }> = ({
-  value,
-  setValue,
-}) => {
+const RequireGpuSelector: FunctionComponent<{
+  value: boolean;
+  setValue: (value: boolean) => void;
+}> = ({ value, setValue }) => {
   return (
     <div>
-      <input type="checkbox" checked={value} onChange={(e) => setValue(e.target.checked)} />
+      <input
+        type="checkbox"
+        checked={value}
+        onChange={(e) => setValue(e.target.checked)}
+      />
       <label>Require GPU</label>
     </div>
   );
 };
 
 type JobInfoViewProps = {
-  job: PairioJob
-  onRefreshJob: () => void
-  parameterNames: string[]
-}
+  job: PairioJob;
+  onRefreshJob: () => void;
+  parameterNames: string[];
+};
 
 const getJobUrl = (jobId: string) => {
-  return `https://pairio.vercel.app/job/${jobId}`
-}
+  return `https://pairio.vercel.app/job/${jobId}`;
+};
 
-export const JobInfoView: FunctionComponent<JobInfoViewProps> = ({ job, onRefreshJob, parameterNames }) => {
-  const jobUrl = getJobUrl(job.jobId)
+export const JobInfoView: FunctionComponent<JobInfoViewProps> = ({
+  job,
+  onRefreshJob,
+  parameterNames,
+}) => {
+  const jobUrl = getJobUrl(job.jobId);
   return (
-      <div>
-          <Hyperlink href={jobUrl} target="_blank">
-              Job {job.status}
-          </Hyperlink>&nbsp;<SmallIconButton icon={<Refresh />} onClick={onRefreshJob} />
-          <table className="table" style={{ maxWidth: 300 }}>
-              <tbody>
-                  {parameterNames.map((name, index) => (
-                      <tr key={index}>
-                          <td>{name}:</td>
-                          <td>{getJobParameterValue(job, name)}</td>
-                      </tr>
-                  ))}
-              </tbody>
-          </table>
-      </div>
-  )
-
-}
+    <div>
+      <Hyperlink href={jobUrl} target="_blank">
+        Job {job.status}
+      </Hyperlink>
+      &nbsp;
+      <SmallIconButton icon={<Refresh />} onClick={onRefreshJob} />
+      <table className="table" style={{ maxWidth: 300 }}>
+        <tbody>
+          {parameterNames.map((name, index) => (
+            <tr key={index}>
+              <td>{name}:</td>
+              <td>{getJobParameterValue(job, name)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
 export default PairioItemView;

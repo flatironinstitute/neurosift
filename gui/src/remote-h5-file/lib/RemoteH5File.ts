@@ -1,8 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Canceler, postRemoteH5WorkerRequest } from './helpers';
-import RemoteH5FileLindi, { getRemoteH5FileLindi } from './lindi/RemoteH5FileLindi';
+import { Canceler, postRemoteH5WorkerRequest } from "./helpers";
+import RemoteH5FileLindi, {
+  getRemoteH5FileLindi,
+} from "./lindi/RemoteH5FileLindi";
 
-export type RemoteH5FileX = RemoteH5File | MergedRemoteH5File | RemoteH5FileLindi
+export type RemoteH5FileX =
+  | RemoteH5File
+  | MergedRemoteH5File
+  | RemoteH5FileLindi;
 
 export type RemoteH5Group = {
   path: string;
@@ -66,9 +71,12 @@ type GetDatasetResponse = {
 export class RemoteH5File {
   #groupCache: { [path: string]: GetGroupResponse | null } = {}; // null means in progress
   #datasetCache: { [path: string]: GetDatasetResponse | null } = {}; // null means in progress
-  constructor(public url: string, private o: {chunkSize?: number}) {}
+  constructor(
+    public url: string,
+    private o: { chunkSize?: number },
+  ) {}
   get dataIsRemote() {
-    return !this.url.startsWith('http://localhost');
+    return !this.url.startsWith("http://localhost");
   }
   async getGroup(path: string): Promise<RemoteH5Group | undefined> {
     const cc = this.#groupCache[path];
@@ -80,7 +88,7 @@ export class RemoteH5File {
       }
       const cc2 = this.#groupCache[path];
       if (cc2) return cc2.group;
-      else throw Error('Unexpected');
+      else throw Error("Unexpected");
     }
     this.#groupCache[path] = null;
     const dummyCanceler = { onCancel: [] };
@@ -88,12 +96,12 @@ export class RemoteH5File {
     try {
       resp = await postRemoteH5WorkerRequest(
         {
-          type: 'getGroup',
+          type: "getGroup",
           url: this.url,
           path,
           chunkSize: this.o.chunkSize || defaultChunkSize,
         },
-        dummyCanceler
+        dummyCanceler,
       );
     } catch {
       this.#groupCache[path] = { success: false };
@@ -113,7 +121,7 @@ export class RemoteH5File {
       }
       const cc2 = this.#datasetCache[path];
       if (cc2) return cc2.dataset;
-      else throw Error('Unexpected');
+      else throw Error("Unexpected");
     }
     this.#datasetCache[path] = null;
     const dummyCanceler = { onCancel: [] };
@@ -121,12 +129,12 @@ export class RemoteH5File {
     try {
       resp = await postRemoteH5WorkerRequest(
         {
-          type: 'getDataset',
+          type: "getDataset",
           url: this.url,
           path,
           chunkSize: this.o.chunkSize || defaultChunkSize,
         },
-        dummyCanceler
+        dummyCanceler,
       );
     } catch (e) {
       this.#datasetCache[path] = { success: false };
@@ -142,13 +150,13 @@ export class RemoteH5File {
       slice?: [number, number][];
       allowBigInt?: boolean;
       canceler?: Canceler;
-    }
+    },
   ): Promise<DatasetDataType | undefined> {
     if (o.slice) {
       for (const ss of o.slice) {
         if (isNaN(ss[0]) || isNaN(ss[1])) {
-          console.warn('Invalid slice', path, o.slice);
-          throw Error('Invalid slice');
+          console.warn("Invalid slice", path, o.slice);
+          throw Error("Invalid slice");
         }
       }
     }
@@ -165,13 +173,13 @@ export class RemoteH5File {
     try {
       resp = await postRemoteH5WorkerRequest(
         {
-          type: 'getDatasetData',
+          type: "getDatasetData",
           url: urlToUse,
           path,
           slice,
           chunkSize: this.o.chunkSize || defaultChunkSize,
         },
-        canceler || dummyCanceler
+        canceler || dummyCanceler,
       );
     } catch {
       return undefined;
@@ -180,7 +188,7 @@ export class RemoteH5File {
     let x = data;
     if (!allowBigInt) {
       // check if x is a BigInt64Array
-      if (x && x.constructor && x.constructor.name === 'BigInt64Array') {
+      if (x && x.constructor && x.constructor.name === "BigInt64Array") {
         // convert to Int32Array
         const y = new Int32Array(x.length);
         for (let i = 0; i < x.length; i++) {
@@ -189,7 +197,7 @@ export class RemoteH5File {
         x = y;
       }
       // check if x is a BigUint64Array
-      if (x && x.constructor && x.constructor.name === 'BigUint64Array') {
+      if (x && x.constructor && x.constructor.name === "BigUint64Array") {
         // convert to Uint32Array
         const y = new Uint32Array(x.length);
         for (let i = 0; i < x.length; i++) {
@@ -214,14 +222,12 @@ export class MergedRemoteH5File {
   get dataIsRemote() {
     return this.#files.some((f) => {
       if (f instanceof RemoteH5File) {
-        return f.dataIsRemote
-      }
-      else if (f instanceof MergedRemoteH5File) {
+        return f.dataIsRemote;
+      } else if (f instanceof MergedRemoteH5File) {
         // this case shouldn't happen - unfortunately we can't call f.dataIsRemote here because typescript doesn't allow it
-        return false
-      }
-      else {
-        throw Error('Unexpected')
+        return false;
+      } else {
+        throw Error("Unexpected");
       }
     });
   }
@@ -252,7 +258,7 @@ export class MergedRemoteH5File {
       slice?: [number, number][];
       allowBigInt?: boolean;
       canceler?: Canceler;
-    }
+    },
   ): Promise<DatasetDataType | undefined> {
     let canceled = false;
     o.canceler?.onCancel.push(() => {
@@ -277,7 +283,7 @@ export class MergedRemoteH5File {
 }
 
 const mergeGroups = (groups: RemoteH5Group[]): RemoteH5Group => {
-  if (groups.length === 0) throw Error('Unexpected groups.length == 0');
+  if (groups.length === 0) throw Error("Unexpected groups.length == 0");
   const ret: RemoteH5Group = {
     path: groups[0].path,
     subgroups: [],
@@ -329,7 +335,7 @@ const mergeGroups = (groups: RemoteH5Group[]): RemoteH5Group => {
 };
 
 const mergeSubgroups = (subgroups: RemoteH5Subgroup[]): RemoteH5Subgroup => {
-  if (subgroups.length === 0) throw Error('Unexpected subgroups.length == 0');
+  if (subgroups.length === 0) throw Error("Unexpected subgroups.length == 0");
   const ret: RemoteH5Subgroup = {
     name: subgroups[0].name,
     path: subgroups[0].path,
@@ -350,32 +356,37 @@ const globalRemoteH5Files: { [url: string]: RemoteH5File } = {};
 export const getRemoteH5File = async (url: string) => {
   const kk = url;
   if (!globalRemoteH5Files[kk]) {
-    globalRemoteH5Files[kk] = new RemoteH5File(url, {})
+    globalRemoteH5Files[kk] = new RemoteH5File(url, {});
   }
   return globalRemoteH5Files[kk];
 };
 
 const globalMergedRemoteH5Files: { [kk: string]: MergedRemoteH5File } = {};
-export const getMergedRemoteH5File = async (urls: string[], storageType: ('h5' | 'zarr' | 'lindi')[]) => {
+export const getMergedRemoteH5File = async (
+  urls: string[],
+  storageType: ("h5" | "zarr" | "lindi")[],
+) => {
   if (urls.length === 0) throw Error(`Length of urls must be > 0`);
-  if (storageType.length !== urls.length) throw Error(`Length of storageType must be equal to length of urls`);
+  if (storageType.length !== urls.length)
+    throw Error(`Length of storageType must be equal to length of urls`);
   if (urls.length === 1) {
-    if (storageType[0] === 'lindi') {
+    if (storageType[0] === "lindi") {
       return await getRemoteH5FileLindi(urls[0]);
     } else {
       return await getRemoteH5File(urls[0]);
     }
   }
-  const kk = urls.join('|');
+  const kk = urls.join("|");
   if (!globalMergedRemoteH5Files[kk]) {
-    const files = await Promise.all(urls.map((url, i) => {
-      if (storageType[i] === 'lindi') {
-        return getRemoteH5FileLindi(url);
-      }
-      else {
-        return getRemoteH5File(url)
-      }
-    }));
+    const files = await Promise.all(
+      urls.map((url, i) => {
+        if (storageType[i] === "lindi") {
+          return getRemoteH5FileLindi(url);
+        } else {
+          return getRemoteH5File(url);
+        }
+      }),
+    );
     globalMergedRemoteH5Files[kk] = new MergedRemoteH5File(files);
   }
   return globalMergedRemoteH5Files[kk];

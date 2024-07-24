@@ -1,1 +1,1 @@
-export {default as colorForUnitId} from './colorForUnitId'
+export { default as colorForUnitId } from "./colorForUnitId";

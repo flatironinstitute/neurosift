@@ -1,6 +1,6 @@
 export type SortingRule = {
-    columnName: string,
-    sortAscending: boolean
-}
+  columnName: string;
+  sortAscending: boolean;
+};
 
-export type SortingCallback = (rules: SortingRule[]) => (number | string)[]
+export type SortingCallback = (rules: SortingRule[]) => (number | string)[];

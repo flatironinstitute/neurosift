@@ -1,47 +1,54 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { isArrayOf, isBoolean, isNumber, isString, optional, validateObject } from "@fi-sci/misc";
+import {
+  isArrayOf,
+  isBoolean,
+  isNumber,
+  isString,
+  optional,
+  validateObject,
+} from "@fi-sci/misc";
 
 export type NeurosiftAnnotation = {
-  annotationId: string
-  userId: string
-  annotationType: string
-  annotation: any
-  timestampCreated: number
-  dandiInstanceName?: string
-  dandisetId?: string
-  dandisetVersion?: string
-  assetPath?: string
-  assetId?: string
-  assetUrl?: string
-}
+  annotationId: string;
+  userId: string;
+  annotationType: string;
+  annotation: any;
+  timestampCreated: number;
+  dandiInstanceName?: string;
+  dandisetId?: string;
+  dandisetVersion?: string;
+  assetPath?: string;
+  assetId?: string;
+  assetUrl?: string;
+};
 
 export const isNeurosiftAnnotation = (x: any): x is NeurosiftAnnotation => {
   return validateObject(x, {
     annotationId: isString,
     userId: isString,
     annotationType: isString,
-    annotation: () => (true),
+    annotation: () => true,
     timestampCreated: isNumber,
     dandiInstanceName: optional(isString),
     dandisetId: optional(isString),
     dandisetVersion: optional(isString),
     assetPath: optional(isString),
     assetId: optional(isString),
-    assetUrl: optional(isString)
-  })
-}
+    assetUrl: optional(isString),
+  });
+};
 
 export type GetAnnotationsRequest = {
-  annotationId?: string
-  userId?: string
-  annotationType?: string
-  dandiInstanceName?: string
-  dandisetId?: string
-  dandisetVersion?: string
-  assetPath?: string
-  assetId?: string
-  assetUrl?: string
-}
+  annotationId?: string;
+  userId?: string;
+  annotationType?: string;
+  dandiInstanceName?: string;
+  dandisetId?: string;
+  dandisetVersion?: string;
+  assetPath?: string;
+  assetId?: string;
+  assetUrl?: string;
+};
 
 export const isGetAnnotationsRequest = (x: any): x is GetAnnotationsRequest => {
   return validateObject(x, {
@@ -54,71 +61,77 @@ export const isGetAnnotationsRequest = (x: any): x is GetAnnotationsRequest => {
     assetPath: optional(isString),
     assetId: optional(isString),
     assetUrl: optional(isString),
-  })
-}
+  });
+};
 
 export type GetAnnotationsResponse = {
-  annotations: NeurosiftAnnotation[]
-}
+  annotations: NeurosiftAnnotation[];
+};
 
-export const isGetAnnotationsResponse = (x: any): x is GetAnnotationsResponse => {
+export const isGetAnnotationsResponse = (
+  x: any,
+): x is GetAnnotationsResponse => {
   return validateObject(x, {
-    annotations: isArrayOf(isNeurosiftAnnotation)
-  })
-}
+    annotations: isArrayOf(isNeurosiftAnnotation),
+  });
+};
 
 export type AddAnnotationRequest = {
-  userId: string
-  annotationType: string
-  annotation: any
-  dandiInstanceName?: string
-  dandisetId?: string
-  dandisetVersion?: string
-  assetPath?: string
-  assetId?: string
-  assetUrl?: string
-}
+  userId: string;
+  annotationType: string;
+  annotation: any;
+  dandiInstanceName?: string;
+  dandisetId?: string;
+  dandisetVersion?: string;
+  assetPath?: string;
+  assetId?: string;
+  assetUrl?: string;
+};
 
 export const isAddAnnotationRequest = (x: any): x is AddAnnotationRequest => {
   return validateObject(x, {
     userId: isString,
     annotationType: isString,
-    annotation: () => (true),
+    annotation: () => true,
     dandiInstanceName: optional(isString),
     dandisetId: optional(isString),
     dandisetVersion: optional(isString),
     assetPath: optional(isString),
     assetId: optional(isString),
     assetUrl: optional(isString),
-  })
-}
+  });
+};
 
 export type AddAnnotationResponse = {
-  annotationId: string
-}
+  annotationId: string;
+};
 
 export const isAddAnnotationResponse = (x: any): x is AddAnnotationResponse => {
   return validateObject(x, {
-    annotationId: isString
-  })
-}
+    annotationId: isString,
+  });
+};
 
 export type DeleteAnnotationRequest = {
-  annotationId: string
-}
+  annotationId: string;
+};
 
-export const isDeleteAnnotationRequest = (x: any): x is DeleteAnnotationRequest => {
+export const isDeleteAnnotationRequest = (
+  x: any,
+): x is DeleteAnnotationRequest => {
   return validateObject(x, {
-    annotationId: isString
-  })
-}
+    annotationId: isString,
+  });
+};
 
 export type DeleteAnnotationResponse = {
-  success: boolean
-}
+  success: boolean;
+};
 
-export const isDeleteAnnotationResponse = (x: any): x is DeleteAnnotationResponse => {
+export const isDeleteAnnotationResponse = (
+  x: any,
+): x is DeleteAnnotationResponse => {
   return validateObject(x, {
-    success: isBoolean
-  })
-}
+    success: isBoolean,
+  });
+};

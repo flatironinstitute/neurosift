@@ -1,5 +1,5 @@
 const getIntrinsicDimensionMarkdown = (cebraOutputUrl: string) => {
-    return `
+  return `
 # Computing intrinsic dimension for this embedding
 
 \`\`\`bash
@@ -21,7 +21,7 @@ num_dims = embedding.shape[1]
 danco = skdim.id.DANCo().fit(embedding)
 print("DANCo intrinsic dimension estimate: ", danco.dimension_)
 \`\`\`
-`
-}
+`;
+};
 
-export default getIntrinsicDimensionMarkdown
+export default getIntrinsicDimensionMarkdown;

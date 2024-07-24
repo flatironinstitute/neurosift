@@ -1,7 +1,7 @@
-import colorList from "./colorList"
+import colorList from "./colorList";
 
 const colorForUnitId = (unitId: number) => {
-    return colorList[unitId % colorList.length]
-}
+  return colorList[unitId % colorList.length];
+};
 
-export default colorForUnitId
+export default colorForUnitId;

@@ -1,1 +1,1 @@
-export {default as AmplitudeScaleToolbarEntries} from './AmplitudeScaleToolbarEntries'
+export { default as AmplitudeScaleToolbarEntries } from "./AmplitudeScaleToolbarEntries";

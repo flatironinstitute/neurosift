@@ -1,17 +1,17 @@
-import { FunctionComponent } from "react"
-import Markdown from "../../Markdown/Markdown"
+import { FunctionComponent } from "react";
+import Markdown from "../../Markdown/Markdown";
 
 type QueryHintsViewProps = {
-    //
-}
+  //
+};
 
 const QueryHintsView: FunctionComponent<QueryHintsViewProps> = () => {
-    return (
-        <div>
-            <Markdown source={md} />
-        </div>
-    )
-}
+  return (
+    <div>
+      <Markdown source={md} />
+    </div>
+  );
+};
 
 const md = `
 # Query hints
@@ -56,6 +56,6 @@ return groups
     \`\${k}: [\${g.data._zarray.shape. join(', ')}]\`
   ))
 \`\`\`
-`
+`;
 
-export default QueryHintsView
+export default QueryHintsView;
