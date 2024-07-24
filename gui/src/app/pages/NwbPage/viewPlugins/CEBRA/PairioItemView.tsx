@@ -27,6 +27,7 @@ import {
 } from "./PairioHelpers";
 import { RemoteH5FileX } from "@remote-h5-file/index";
 import { useNwbFile } from "../../NwbFileContext";
+import { LazyPlotlyPlotContext } from "./LazyPlotlyPlot";
 
 type AdjustableParameterValues = { [key: string]: any };
 
@@ -79,6 +80,10 @@ type PairioItemViewProps = {
   }>;
   compact?: boolean;
   jobFilter?: (job: PairioJob) => boolean;
+};
+
+const lazyPlotlyPlotContextValue = {
+  showPlotEvenWhenNotVisible: true,
 };
 
 const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
@@ -239,136 +244,138 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
   }, [allJobs]);
 
   return (
-    <div
-      style={{
-        position: "relative",
-        width,
-        height: height || undefined,
-        overflowY: "auto",
-      }}
-    >
-      {!compact && (
-        <>
-          <h3>{title}</h3>
-          {definingNewJob ? (
-            <div>
-              <table className="table" style={{ maxWidth: 300 }}>
-                <tbody>
-                  {adjustableParameters.map((p) => (
-                    <tr key={p.name}>
-                      <td>{p.name}:</td>
-                      <td>
-                        {p.type === "number" ? (
-                          <MultipleChoiceNumberSelector
-                            value={adjustableParameterValues[p.name]}
-                            setValue={(x) =>
-                              adjustableParameterValuesDispatch({
-                                type: "set",
-                                key: p.name,
-                                value: x,
-                              })
-                            }
-                            choices={p.choices}
-                          />
-                        ) : p.type === "string" ? (
-                          <MultipleChoiceStringSelector
-                            value={adjustableParameterValues[p.name]}
-                            setValue={(x) =>
-                              adjustableParameterValuesDispatch({
-                                type: "set",
-                                key: p.name,
-                                value: x,
-                              })
-                            }
-                            choices={p.choices}
-                          />
-                        ) : (
-                          <span />
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {!submittingNewJob && (
-                <div style={{ paddingTop: 10 }}>
-                  <button onClick={() => setSubmittingNewJob(true)}>
-                    SUBMIT JOB
-                  </button>
-                </div>
-              )}
-              {submittingNewJob && (
-                <div>
+    <LazyPlotlyPlotContext.Provider value={lazyPlotlyPlotContextValue}>
+      <div
+        style={{
+          position: "relative",
+          width,
+          height: height || undefined,
+          overflowY: "auto",
+        }}
+      >
+        {!compact && (
+          <>
+            <h3>{title}</h3>
+            {definingNewJob ? (
+              <div>
+                <table className="table" style={{ maxWidth: 300 }}>
+                  <tbody>
+                    {adjustableParameters.map((p) => (
+                      <tr key={p.name}>
+                        <td>{p.name}:</td>
+                        <td>
+                          {p.type === "number" ? (
+                            <MultipleChoiceNumberSelector
+                              value={adjustableParameterValues[p.name]}
+                              setValue={(x) =>
+                                adjustableParameterValuesDispatch({
+                                  type: "set",
+                                  key: p.name,
+                                  value: x,
+                                })
+                              }
+                              choices={p.choices}
+                            />
+                          ) : p.type === "string" ? (
+                            <MultipleChoiceStringSelector
+                              value={adjustableParameterValues[p.name]}
+                              setValue={(x) =>
+                                adjustableParameterValuesDispatch({
+                                  type: "set",
+                                  key: p.name,
+                                  value: x,
+                                })
+                              }
+                              choices={p.choices}
+                            />
+                          ) : (
+                            <span />
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {!submittingNewJob && (
                   <div style={{ paddingTop: 10 }}>
-                    <SelectPairioApiKeyComponent
-                      value={pairioApiKey}
-                      setValue={setPairioApiKey}
-                    />
-                  </div>
-                  {gpuMode === "optional" && (
-                    <div style={{ paddingTop: 10 }}>
-                      <RequireGpuSelector
-                        value={requireGpu}
-                        setValue={setRequireGpu}
-                      />
-                    </div>
-                  )}
-                  <div style={{ paddingTop: 10 }}>
-                    <button
-                      onClick={handleSubmitNewJob}
-                      disabled={!pairioApiKey}
-                    >
+                    <button onClick={() => setSubmittingNewJob(true)}>
                       SUBMIT JOB
                     </button>
                   </div>
-                </div>
-              )}
-              <hr />
-            </div>
-          ) : (
-            <div>
-              <Hyperlink onClick={() => setDefiningNewJob(true)}>
-                Create new job
-              </Hyperlink>
-            </div>
-          )}
-          <AllJobsView
-            expanded={allJobsExpanded}
-            setExpanded={setAllJobsExpanded}
-            allJobs={allJobs || undefined}
-            refreshAllJobs={refreshAllJobs}
-            selectedJobId={selectedJobId}
-            onJobClicked={setSelectedJobId}
-            parameterNames={parameterNames}
-          />
-          <hr />
-        </>
-      )}
-      {selectedJob && (
-        <div>
-          {!compact && (
-            <JobInfoView
-              job={selectedJob}
-              onRefreshJob={refreshSelectedJob}
+                )}
+                {submittingNewJob && (
+                  <div>
+                    <div style={{ paddingTop: 10 }}>
+                      <SelectPairioApiKeyComponent
+                        value={pairioApiKey}
+                        setValue={setPairioApiKey}
+                      />
+                    </div>
+                    {gpuMode === "optional" && (
+                      <div style={{ paddingTop: 10 }}>
+                        <RequireGpuSelector
+                          value={requireGpu}
+                          setValue={setRequireGpu}
+                        />
+                      </div>
+                    )}
+                    <div style={{ paddingTop: 10 }}>
+                      <button
+                        onClick={handleSubmitNewJob}
+                        disabled={!pairioApiKey}
+                      >
+                        SUBMIT JOB
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <hr />
+              </div>
+            ) : (
+              <div>
+                <Hyperlink onClick={() => setDefiningNewJob(true)}>
+                  Create new job
+                </Hyperlink>
+              </div>
+            )}
+            <AllJobsView
+              expanded={allJobsExpanded}
+              setExpanded={setAllJobsExpanded}
+              allJobs={allJobs || undefined}
+              refreshAllJobs={refreshAllJobs}
+              selectedJobId={selectedJobId}
+              onJobClicked={setSelectedJobId}
               parameterNames={parameterNames}
             />
-          )}
-          {selectedJob && selectedJob.status === "completed" && (
-            <OutputComponent
-              job={selectedJob}
-              width={width}
-              nwbFile={nwbFile}
-            />
-          )}
-        </div>
-      )}
-      {hasNoCompletedJobs && (
-        <div>
-          <div>No completed jobs</div>
-        </div>
-      )}
-      <hr />
-    </div>
+            <hr />
+          </>
+        )}
+        {selectedJob && (
+          <div>
+            {!compact && (
+              <JobInfoView
+                job={selectedJob}
+                onRefreshJob={refreshSelectedJob}
+                parameterNames={parameterNames}
+              />
+            )}
+            {selectedJob && selectedJob.status === "completed" && (
+              <OutputComponent
+                job={selectedJob}
+                width={width}
+                nwbFile={nwbFile}
+              />
+            )}
+          </div>
+        )}
+        {hasNoCompletedJobs && (
+          <div>
+            <div>No completed jobs</div>
+          </div>
+        )}
+        <hr />
+      </div>
+    </LazyPlotlyPlotContext.Provider>
   );
 };
 

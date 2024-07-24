@@ -52,7 +52,8 @@ export const dragReducer = (
   switch (type) {
     case RESET_DRAG: // should happen on mousedown
       return { isActive: false };
-    case END_DRAG: { // should happen on mouseup
+    case END_DRAG: {
+      // should happen on mouseup
       const rect =
         dragAnchor && point
           ? getRectFromPointPair(dragAnchor, point)

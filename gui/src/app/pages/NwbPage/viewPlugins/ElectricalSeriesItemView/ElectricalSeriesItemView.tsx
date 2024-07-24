@@ -59,7 +59,7 @@ const ElectricalSeriesItemView: FunctionComponent<Props> = ({
         path={path}
         condensed={condensed}
       />
-      {!condensed && (
+      {showDendroView && (
         <EphysSummaryItemView
           width={width}
           height={height}

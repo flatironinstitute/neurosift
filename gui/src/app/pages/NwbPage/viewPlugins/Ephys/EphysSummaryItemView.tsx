@@ -20,6 +20,7 @@ import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/PairioHelpers";
 import PairioItemView from "../CEBRA/PairioItemView";
 import LazyPlotlyPlot from "../CEBRA/LazyPlotlyPlot";
 import ElectrodeGeometryView from "./ElectrodeGeometryView";
+import { useInView } from "react-intersection-observer";
 
 type Props = {
   width: number;

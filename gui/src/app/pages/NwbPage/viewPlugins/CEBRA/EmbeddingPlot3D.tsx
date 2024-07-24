@@ -1,10 +1,14 @@
 import { FunctionComponent, useMemo, useState } from "react";
-import LazyPlotlyPlot from "./LazyPlotlyPlot";
+import LazyPlotlyPlot, { LazyPlotlyPlotContext } from "./LazyPlotlyPlot";
 
 type EmbeddingPlot3DPlotProps = {
   embedding: number[][];
   width: number;
   height: number;
+};
+
+const lazyPlotlyPlotContextValue = {
+  showPlotEvenWhenNotVisible: true,
 };
 
 const EmbeddingPlot3D: FunctionComponent<EmbeddingPlot3DPlotProps> = ({
@@ -63,14 +67,16 @@ const EmbeddingPlot3D: FunctionComponent<EmbeddingPlot3DPlotProps> = ({
   );
 
   return (
-    <div style={{ position: "relative", width, height }}>
-      <DimensionsSelector
-        dims={dims}
-        setDims={setDims}
-        dimensionChoices={dimensionChoices}
-      />
-      <LazyPlotlyPlot data={data} layout={layout} />
-    </div>
+    <LazyPlotlyPlotContext.Provider value={lazyPlotlyPlotContextValue}>
+      <div style={{ position: "relative", width, height }}>
+        <DimensionsSelector
+          dims={dims}
+          setDims={setDims}
+          dimensionChoices={dimensionChoices}
+        />
+        <LazyPlotlyPlot data={data} layout={layout} />
+      </div>
+    </LazyPlotlyPlotContext.Provider>
   );
 };
 
