@@ -107,7 +107,7 @@ const GrayscaleImageItem: FunctionComponent<GrayscaleImageItemProps> = ({
     for (let j = 0; j < H; j++) {
       for (let i = 0; i < W; i++) {
         const val = data[i + j * W];
-        const ind = (i + j * W) * 4
+        const ind = (i + j * W) * 4;
         const v = Math.min(
           Math.max(0, ((val - windowMin) / (windowMax - windowMin)) * 255),
           255,
