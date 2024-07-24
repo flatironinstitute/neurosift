@@ -14,7 +14,7 @@ export const paintAxes = (
   paintTimeTicks(context, timeTicks, xAxisVerticalPosition, margins.top, {
     hideGridlines: gridlineOpts?.hideX,
   });
-  context.strokeStyle = "black";
+  context.strokeStyle = "lightgray";
   drawLine(
     context,
     margins.left,
