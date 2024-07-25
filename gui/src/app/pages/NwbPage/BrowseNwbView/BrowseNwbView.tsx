@@ -78,7 +78,7 @@ const TopLevelGroupView: FunctionComponent<TopLevelGroupViewProps> = ({
   const expandable =
     group && (group.subgroups.length > 0 || group.datasets.length > 0);
   return (
-    <div style={{ marginLeft: 10 }}>
+    <div style={{ marginLeft: 10, userSelect: "none" }}>
       <div
         style={{
           cursor: "pointer",

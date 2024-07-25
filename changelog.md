@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 * Improve "share this tab" feature - can "Set URL to address bar"
 * For Dendro Summary of ElectricalSeries, detect if sampling rate is >= 10 kHz and if so. If not, do not show the ephys summary
 * Add link to changelog.md in info page
+* Remove unnecessary headings in DEFAULT tab, e.g. specifications, general, stimulus (if not used), units (if not used)
 
 
 ## 2024-07-24
