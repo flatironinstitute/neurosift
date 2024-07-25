@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 * Remove unnecessary headings in DEFAULT tab, e.g. specifications, general, stimulus (if not used), units (if not used)
 * Change "DEFAULT" tab name to "NWB"
 * WIP spike sorting
+* WIP support RGBImage https://github.com/flatironinstitute/neurosift/issues/180
 
 
 ## 2024-07-24

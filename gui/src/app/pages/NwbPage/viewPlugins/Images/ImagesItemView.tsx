@@ -55,6 +55,8 @@ const ImageItem: FunctionComponent<ImageItemProps> = ({
     return <GrayscaleImageItem dataset={dataset} data={data} />;
   } else if (neurodataType === "Image") {
     return <RegularImageItem dataset={dataset} data={data} />;
+  } else if (neurodataType === "RGBImage") {
+    return <RGBImageItem dataset={dataset} data={data} />;
   } else {
     return <div>Unexpected neurodata_type: {neurodataType}</div>;
   }
@@ -150,6 +152,56 @@ const RegularImageItem: FunctionComponent<RegularImageItemProps> = ({
       <div>Image not supported with shape: {dataset.shape.join(", ")}</div>
     );
   }
+};
+
+type RGBImageItemProps = {
+  dataset: RemoteH5Dataset;
+  data: DatasetDataType;
+};
+
+const RGBImageItem: FunctionComponent<RGBImageItemProps> = ({
+  dataset,
+  data,
+}) => {
+  const H = dataset.shape[0];
+  const W = dataset.shape[1];
+
+  const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (dataset.shape.length !== 3) {
+      console.error("Unexpected dataset shape for RGB image: ", dataset.shape);
+      return;
+    }
+    if (dataset.shape[2] !== 3) {
+      console.error(
+        "Unexpected number of channels for RGB image: ",
+        dataset.shape[2],
+      );
+      return;
+    }
+    if (!canvasElement) return;
+    const ctx = canvasElement.getContext("2d");
+    if (!ctx) return;
+    const imageData = ctx.createImageData(W, H);
+    console.log("--- x", W, H, dataset.shape, data.length, data);
+    const buf = imageData.data;
+    for (let j = 0; j < H; j++) {
+      for (let i = 0; i < W; i++) {
+        const ind = (i + j * W) * 3;
+        buf[ind + 0] = data[ind + 0] * 255;
+        buf[ind + 1] = data[ind + 1] * 255;
+        buf[ind + 2] = data[ind + 2] * 255;
+        buf[ind + 3] = 255;
+      }
+    }
+    ctx.putImageData(imageData, 0, 0);
+  }, [canvasElement, W, H, dataset, data]);
+
+  // return <canvas ref={(elmt) => setCanvasElement(elmt)} width={W} height={H} />;
+  return <div>RGBImage is WIP</div>;
 };
 
 type BrightnessSelectorProps = {
