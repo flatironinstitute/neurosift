@@ -41,6 +41,7 @@ import {
 import { DendroFile } from "../../dendro/dendro-types";
 import { SetupNwbFileSpecificationsProvider } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
 import { track } from "@vercel/analytics/react";
+import formatByteCount from "../DandiPage/DandiBrowser/formatByteCount";
 
 type Props = {
   width: number;
@@ -351,7 +352,7 @@ const NwbPageChild3: FunctionComponent<NwbPageChild3Props> = ({
       lastStatsString = JSONStringifyDeterministic(x);
 
       const s = (
-        <span style={{}}>
+        <span style={{ cursor: "pointer" }}>
           {x.numPendingRequests > 0 && (
             <span style={{ color: "darkblue" }}>Loading...</span>
           )}
@@ -365,6 +366,8 @@ const NwbPageChild3: FunctionComponent<NwbPageChild3Props> = ({
           </span>
           &nbsp;|&nbsp;
           <span title="Number of pending requests">{x.numPendingRequests}</span>
+          {/* &nbsp;|&nbsp; WIP
+          <span title="Amount of data fetched">{formatByteCount(computeTotalBytesFetched(x))}</span> */}
         </span>
       );
       setCustomStatusBarElement && setCustomStatusBarElement("custom1", s);
@@ -444,6 +447,11 @@ const NwbPageChild3: FunctionComponent<NwbPageChild3Props> = ({
       </SelectedItemViewsContext.Provider>
     </NwbFileContext.Provider>
   );
+};
+
+const computeTotalBytesFetched = () => {
+  // how to calculate this?
+  return 0;
 };
 
 export const headRequest = async (url: string, headers?: any) => {
