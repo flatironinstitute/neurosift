@@ -16,11 +16,10 @@ import {
   PairioJobRequiredResources,
 } from "../../../../pairio/types";
 import { useNwbFile } from "../../NwbFileContext";
+import LazyPlotlyPlot from "../CEBRA/LazyPlotlyPlot";
 import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/PairioHelpers";
 import PairioItemView from "../CEBRA/PairioItemView";
-import LazyPlotlyPlot from "../CEBRA/LazyPlotlyPlot";
 import ElectrodeGeometryView from "./ElectrodeGeometryView";
-import { useInView } from "react-intersection-observer";
 
 type Props = {
   width: number;
@@ -194,8 +193,13 @@ const EphysSummaryItemView: FunctionComponent<Props> = ({
   );
 };
 
-const useElectricalSeriesSamplingRate = (nwbFile: RemoteH5FileX, path: string) => {
-  const [samplingRate, setSamplingRate] = useState<number | undefined | null>(undefined);
+const useElectricalSeriesSamplingRate = (
+  nwbFile: RemoteH5FileX,
+  path: string,
+) => {
+  const [samplingRate, setSamplingRate] = useState<number | undefined | null>(
+    undefined,
+  );
   useEffect(() => {
     let canceled = false;
     setSamplingRate(undefined);
@@ -207,21 +211,27 @@ const useElectricalSeriesSamplingRate = (nwbFile: RemoteH5FileX, path: string) =
         if (!dd) throw Error(`Dataset not found: ${path}/data`);
         const st = await nwbFile.getDataset(`${path}/starting_time`);
         if (st) {
-          const rate = st.attrs['rate'];
+          const rate = st.attrs["rate"];
           if (canceled) return;
           setSamplingRate(rate);
-        }
-        else {
+        } else {
           const ts = await nwbFile.getDataset(`${path}/timestamps`);
-          if (!ts) throw Error(`Dataset not found: ${path}/starting_time and ${path}/timestamps`);
-          const tsData = await nwbFile.getDatasetData(`${path}/timestamps`, {slice: [[0, 1000]]});
-          if (!tsData) throw Error(`No data for timestamps: ${path}/timestamps`);
-          const rate = estimateSamplingRateFromTimestamps(tsData as any as number[]);
+          if (!ts)
+            throw Error(
+              `Dataset not found: ${path}/starting_time and ${path}/timestamps`,
+            );
+          const tsData = await nwbFile.getDatasetData(`${path}/timestamps`, {
+            slice: [[0, 1000]],
+          });
+          if (!tsData)
+            throw Error(`No data for timestamps: ${path}/timestamps`);
+          const rate = estimateSamplingRateFromTimestamps(
+            tsData as any as number[],
+          );
           if (canceled) return;
           setSamplingRate(rate);
         }
-      }
-      catch (err) {
+      } catch (err) {
         console.error(err);
         setSamplingRate(null);
       }
@@ -231,14 +241,18 @@ const useElectricalSeriesSamplingRate = (nwbFile: RemoteH5FileX, path: string) =
     };
   }, [nwbFile, path]);
   return samplingRate;
-}
+};
 
 const estimateSamplingRateFromTimestamps = (timestamps: number[]) => {
-  const diffs = timestamps.filter(t => !isNaN(t)).slice(1).map((t, i) => t - timestamps[i]);
-  if (diffs.length === 0) throw Error('No diffs when estimating sampling rate from timestamps');
+  const diffs = timestamps
+    .filter((t) => !isNaN(t))
+    .slice(1)
+    .map((t, i) => t - timestamps[i]);
+  if (diffs.length === 0)
+    throw Error("No diffs when estimating sampling rate from timestamps");
   const medianDiff = median(diffs);
   return 1 / medianDiff;
-}
+};
 
 // const useElectricalSeriesPathChoices = (nwbFile: RemoteH5FileX | null) => {
 //   const [choices, setChoices] = useState<string[] | undefined>(undefined);

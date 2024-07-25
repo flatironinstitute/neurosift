@@ -24,6 +24,7 @@ export type Route =
       dandisetVersion?: string;
       dandiAssetId?: string;
       storageType: StorageType[];
+      tab?: string;
     }
   | {
       page: "avi";
@@ -129,6 +130,7 @@ const useRoute = () => {
         dandisetVersion: (query.dandisetVersion || "") as string,
         dandiAssetId: (query.dandiAssetId || "") as string,
         storageType,
+        tab: (query.tab as string) || undefined,
       };
     } else if (p === "/avi") {
       return {
@@ -223,6 +225,9 @@ const useRoute = () => {
         if (r.storageType.some((t) => t !== "h5")) {
           // if any of storageType is not h5
           newQuery.st = r.storageType;
+        }
+        if (r.tab) {
+          newQuery.tab = r.tab;
         }
       } else if (r.page === "avi") {
         newQuery.p = "/avi";

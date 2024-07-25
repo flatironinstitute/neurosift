@@ -1,3 +1,4 @@
+import useRoute from "app/useRoute";
 import React, { FunctionComponent, PropsWithChildren, useEffect } from "react";
 
 type NwbOpenTabsState = {
@@ -153,6 +154,10 @@ const urlQueryParams = new URLSearchParams(window.location.search);
 export const SetupNwbOpenTabs: FunctionComponent<PropsWithChildren<Props>> = ({
   children,
 }) => {
+  const { route } = useRoute();
+  if (route.page !== "nwb") {
+    throw new Error("SetupNwbOpenTabs should only be used in NwbPage");
+  }
   const [openTabs, openTabsDispatch] = React.useReducer(
     nwbOpenTabsReducer,
     defaultNwbOpenTabsState,
@@ -176,7 +181,7 @@ export const SetupNwbOpenTabs: FunctionComponent<PropsWithChildren<Props>> = ({
   );
 
   useEffect(() => {
-    const tab = urlQueryParams.get("tab");
+    const tab = route.tab;
     if (tab) {
       let t1: number | undefined = undefined;
       let t2: number | undefined = undefined;
@@ -200,7 +205,7 @@ export const SetupNwbOpenTabs: FunctionComponent<PropsWithChildren<Props>> = ({
         stateString: tabStateString,
       });
     }
-  }, []);
+  }, [route.tab]);
 
   return (
     <NwbOpenTabsContext.Provider value={value}>

@@ -9,7 +9,10 @@ import {
   useTimeRange,
   useTimeseriesSelection,
 } from "../../../package/context-timeseries-selection";
-import { Hyperlink } from "@fi-sci/misc";
+import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
+import { ContentCopy } from "@mui/icons-material";
+import { GiPaperClip } from "react-icons/gi";
+import useRoute from "app/useRoute";
 
 type Props = {
   tabName?: string;
@@ -20,6 +23,7 @@ const ShareTabComponent: FunctionComponent<Props> = ({
   tabName,
   stateString,
 }) => {
+  const { route, setRoute } = useRoute();
   const [clicked, setClicked] = useState(false);
   const [includeTimeSelection, setIncludeTimeSelection] = useState(false);
   const [includeState, setIncludeState] = useState(false);
@@ -51,12 +55,23 @@ const ShareTabComponent: FunctionComponent<Props> = ({
     includeState,
   ]);
 
+  const handleCopyToAddressBar = useCallback(
+    (txt: string) => {
+      if (route.page !== "nwb") return;
+      setRoute({ ...route, tab: tabName });
+    },
+    [route, setRoute, tabName],
+  );
+
   if (!tabName) return <div />;
 
   if (clicked && url) {
     return (
       <div>
-        <CopyableText text={url} />
+        <CopyableText
+          text={url}
+          onCopyToAddressBar={route.page === "nwb" && handleCopyToAddressBar}
+        />
         <Checkbox
           value={includeTimeSelection}
           setValue={setIncludeTimeSelection}
@@ -97,7 +112,10 @@ const Checkbox: FunctionComponent<{
   );
 };
 
-const CopyableText: FunctionComponent<{ text: string }> = ({ text }) => {
+const CopyableText: FunctionComponent<{
+  text: string;
+  onCopyToAddressBar?: (txt: string) => void;
+}> = ({ text, onCopyToAddressBar }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(text);
@@ -113,7 +131,18 @@ const CopyableText: FunctionComponent<{ text: string }> = ({ text }) => {
           inputRef.current?.select();
         }}
       />
-      <button onClick={handleCopy}>Copy</button>
+      <SmallIconButton
+        icon={<ContentCopy />}
+        onClick={handleCopy}
+        title="Copy URL to clipboard"
+      />
+      {onCopyToAddressBar && (
+        <SmallIconButton
+          icon={<GiPaperClip />}
+          onClick={() => onCopyToAddressBar(text)}
+          title="Set URL to address bar"
+        />
+      )}
     </div>
   );
 };
