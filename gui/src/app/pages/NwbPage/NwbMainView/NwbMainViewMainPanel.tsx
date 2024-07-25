@@ -14,7 +14,7 @@ type Props = {
 };
 
 type ViewMode =
-  | "default"
+  | "nwb"
   | "raw"
   | "specifications"
   | "widgets"
@@ -28,7 +28,7 @@ const NwbMainViewMainPanel: FunctionComponent<Props> = ({
 }) => {
   const topBarHeight = 50;
 
-  const [viewMode, setViewMode] = useState<ViewMode>("default");
+  const [viewMode, setViewMode] = useState<ViewMode>("nwb");
 
   const [hasBeenVisibleViewModes, setHasBeenVisibleViewModes] = useState<
     ViewMode[]
@@ -58,10 +58,10 @@ const NwbMainViewMainPanel: FunctionComponent<Props> = ({
           width,
           height: height - topBarHeight,
           top: topBarHeight,
-          visibility: viewMode === "default" ? undefined : "hidden",
+          visibility: viewMode === "nwb" ? undefined : "hidden",
         }}
       >
-        {hasBeenVisibleViewModes.includes("default") && (
+        {hasBeenVisibleViewModes.includes("nwb") && (
           <DefaultNwbFileView
             width={width}
             height={height - topBarHeight}
@@ -163,8 +163,8 @@ const ViewModeToggleButton: FunctionComponent<ViewModeToggleButtonProps> = ({
       onChange={handleChange}
       aria-label="Platform"
     >
-      <ToggleButton value="default" title="NWB file exploration">
-        Default
+      <ToggleButton value="nwb" title="NWB file exploration">
+        NWB
       </ToggleButton>
       <ToggleButton value="raw" title="HDF5 file exploration">
         Raw
