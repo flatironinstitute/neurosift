@@ -70,7 +70,9 @@ const ShareTabComponent: FunctionComponent<Props> = ({
       <div>
         <CopyableText
           text={url}
-          onCopyToAddressBar={(route.page === "nwb") ? handleCopyToAddressBar : undefined}
+          onCopyToAddressBar={
+            route.page === "nwb" ? handleCopyToAddressBar : undefined
+          }
         />
         <Checkbox
           value={includeTimeSelection}

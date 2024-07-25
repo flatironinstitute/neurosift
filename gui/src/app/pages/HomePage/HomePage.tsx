@@ -31,6 +31,11 @@ const HomePage: FunctionComponent<Props> = ({ width, height }) => {
       </div>
       <hr />
       <p>
+        <Hyperlink href="https://github.com/flatironinstitute/neurosift/blob/main/changelog.md">
+          CHANGELOG
+        </Hyperlink>
+      </p>
+      <p>
         <Hyperlink href="https://github.com/flatironinstitute/neurosift/issues">
           Request a feature or report a bug
         </Hyperlink>
