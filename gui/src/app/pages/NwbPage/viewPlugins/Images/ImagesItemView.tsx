@@ -186,22 +186,23 @@ const RGBImageItem: FunctionComponent<RGBImageItemProps> = ({
     const ctx = canvasElement.getContext("2d");
     if (!ctx) return;
     const imageData = ctx.createImageData(W, H);
-    console.log("--- x", W, H, dataset.shape, data.length, data);
     const buf = imageData.data;
     for (let j = 0; j < H; j++) {
       for (let i = 0; i < W; i++) {
-        const ind = (i + j * W) * 3;
-        buf[ind + 0] = data[ind + 0] * 255;
-        buf[ind + 1] = data[ind + 1] * 255;
-        buf[ind + 2] = data[ind + 2] * 255;
+        const v1 = data[(i + j * W) * 3 + 0];
+        const v2 = data[(i + j * W) * 3 + 1];
+        const v3 = data[(i + j * W) * 3 + 2];
+        const ind = (i + j * W) * 4;
+        buf[ind + 0] = v1;
+        buf[ind + 1] = v2;
+        buf[ind + 2] = v3;
         buf[ind + 3] = 255;
       }
     }
     ctx.putImageData(imageData, 0, 0);
   }, [canvasElement, W, H, dataset, data]);
 
-  // return <canvas ref={(elmt) => setCanvasElement(elmt)} width={W} height={H} />;
-  return <div>RGBImage is WIP</div>;
+  return <canvas ref={(elmt) => setCanvasElement(elmt)} width={W} height={H} />;
 };
 
 type BrightnessSelectorProps = {

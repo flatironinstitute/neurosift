@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 * Remove unnecessary headings in DEFAULT tab, e.g. specifications, general, stimulus (if not used), units (if not used)
 * Change "DEFAULT" tab name to "NWB"
 * WIP spike sorting
-* WIP support RGBImage https://github.com/flatironinstitute/neurosift/issues/180
+* Support RGBImage https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/acd6a646-f8c7-405e-9815-78fd6b6e442d/download/&dandisetId=000673&dandisetVersion=0.240524.1758&tab=neurodata-item:/stimulus/templates/StimulusTemplates|Images
 
 
 ## 2024-07-24
