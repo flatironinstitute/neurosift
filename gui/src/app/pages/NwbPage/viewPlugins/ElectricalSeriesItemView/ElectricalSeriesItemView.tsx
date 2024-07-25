@@ -4,6 +4,7 @@ import TabWidget from "../../../../TabWidget/TabWidget";
 import EphysSummaryItemView from "../Ephys/EphysSummaryItemView";
 import { checkUrlIsLocal } from "../viewPlugins";
 import { useNwbFile } from "../../NwbFileContext";
+import ElectricalSeriesSpikeSortingView from "./ElectricalSeriesSpikeSortingView";
 
 type Props = {
   width: number;
@@ -20,7 +21,7 @@ const ElectricalSeriesItemView: FunctionComponent<Props> = ({
 }) => {
   const [currentTabId, setCurrentTabId] = useState<string>("traces");
   const nwbFile = useNwbFile();
-  const showDendroView = useMemo(() => {
+  const showDendroViews = useMemo(() => {
     return (
       nwbFile &&
       !checkUrlIsLocal({ nwbUrl: nwbFile.getUrls()[0] }) &&
@@ -35,15 +36,20 @@ const ElectricalSeriesItemView: FunctionComponent<Props> = ({
         closeable: false,
       },
     ];
-    if (showDendroView) {
+    if (showDendroViews) {
       tabs.push({
         label: "Dendro Summary",
         id: "dendro-summary",
         closeable: false,
       });
+      tabs.push({
+        label: "Spike Sorting (WIP)",
+        id: "spike-sorting",
+        closeable: false,
+      });
     }
     return tabs;
-  }, [showDendroView]);
+  }, [showDendroViews]);
   return (
     <TabWidget
       width={width}
@@ -54,18 +60,21 @@ const ElectricalSeriesItemView: FunctionComponent<Props> = ({
       onCloseTab={() => {}}
     >
       <NeurodataTimeSeriesItemView
-        width={width}
-        height={height}
+        width={0}
+        height={0}
         path={path}
         condensed={condensed}
       />
-      {showDendroView && (
+      {showDendroViews && (
         <EphysSummaryItemView
-          width={width}
-          height={height}
+          width={0}
+          height={0}
           path={path}
           condensed={false}
         />
+      )}
+      {showDendroViews && (
+        <ElectricalSeriesSpikeSortingView width={0} height={0} path={path} />
       )}
     </TabWidget>
   );

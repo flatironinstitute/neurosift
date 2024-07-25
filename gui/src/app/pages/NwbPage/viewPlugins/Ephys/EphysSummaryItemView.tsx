@@ -75,7 +75,7 @@ const getJobDefinition = (
 };
 
 const getRequiredResources = (
-  requireGpu: boolean,
+  _requireGpu: boolean,
 ): PairioJobRequiredResources => {
   return {
     numCpus: 2,
@@ -193,7 +193,7 @@ const EphysSummaryItemView: FunctionComponent<Props> = ({
   );
 };
 
-const useElectricalSeriesSamplingRate = (
+export const useElectricalSeriesSamplingRate = (
   nwbFile: RemoteH5FileX,
   path: string,
 ) => {

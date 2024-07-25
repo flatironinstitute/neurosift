@@ -108,9 +108,9 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
   const [selectedJobId, setSelectedJobId] = useState<string | undefined>(
     undefined,
   );
-  const { job: selectedJob, refreshJob: refreshSelectedJob } = useJob(
-    selectedJobId || undefined,
-  );
+  const { job: selectedJob } = useJob(selectedJobId || undefined);
+
+  const [errorText, setErrorText] = useState<string | undefined>(undefined);
 
   const inputFileUrl = nwbUrl;
 
@@ -195,40 +195,46 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
 
   const handleSubmitNewJob = useCallback(async () => {
     if (!newJobDefinition) return;
-    const req: CreateJobRequest = {
-      type: "createJobRequest",
-      serviceName,
-      userId: "",
-      batchId: "",
-      tags: tags ? tags : ["neurosift"],
-      jobDefinition: newJobDefinition,
-      requiredResources,
-      secrets: [],
-      jobDependencies: [],
-      skipCache: false,
-      rerunFailing: true,
-      deleteFailing: true,
-    };
-    const headers = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${pairioApiKey}`,
-    };
-    const resp = await fetch(`https://pairio.vercel.app/api/createJob`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(req),
-    });
-    if (!resp.ok) {
-      throw Error(`Error creating job: ${resp.statusText}`);
+    setErrorText(undefined);
+    try {
+      const req: CreateJobRequest = {
+        type: "createJobRequest",
+        serviceName,
+        userId: "",
+        batchId: "",
+        tags: tags ? tags : ["neurosift"],
+        jobDefinition: newJobDefinition,
+        requiredResources,
+        secrets: [],
+        jobDependencies: [],
+        skipCache: false,
+        rerunFailing: true,
+        deleteFailing: true,
+      };
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${pairioApiKey}`,
+      };
+      const resp = await fetch(`https://pairio.vercel.app/api/createJob`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(req),
+      });
+      if (!resp.ok) {
+        console.error(resp);
+        throw Error(`Error creating job: ${resp.statusText}`);
+      }
+      const rr = await resp.json();
+      if (!isCreateJobResponse(rr)) {
+        throw Error(`Unexpected response: ${JSON.stringify(rr)}`);
+      }
+      setDefiningNewJob(false);
+      setSelectedJobId(rr.job.jobId);
+      setAllJobsExpanded(false);
+      refreshAllJobs();
+    } catch (err: any) {
+      setErrorText(err.message);
     }
-    const rr = await resp.json();
-    if (!isCreateJobResponse(rr)) {
-      throw Error(`Unexpected response: ${JSON.stringify(rr)}`);
-    }
-    setDefiningNewJob(false);
-    setSelectedJobId(rr.job.jobId);
-    setAllJobsExpanded(false);
-    refreshAllJobs();
   }, [
     newJobDefinition,
     pairioApiKey,
@@ -338,6 +344,7 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
                 </Hyperlink>
               </div>
             )}
+            {errorText && <div style={{ color: "red" }}>{errorText}</div>}
             <AllJobsView
               expanded={allJobsExpanded}
               setExpanded={setAllJobsExpanded}
@@ -355,10 +362,11 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
             {!compact && (
               <JobInfoView
                 job={selectedJob}
-                onRefreshJob={refreshSelectedJob}
+                onRefreshJob={refreshAllJobs}
                 parameterNames={parameterNames}
               />
             )}
+            <div>&nbsp;</div>
             {selectedJob && selectedJob.status === "completed" && (
               <OutputComponent
                 job={selectedJob}

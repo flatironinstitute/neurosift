@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 * Add link to changelog.md in info page
 * Remove unnecessary headings in DEFAULT tab, e.g. specifications, general, stimulus (if not used), units (if not used)
 * Change "DEFAULT" tab name to "NWB"
+* WIP spike sorting
 
 
 ## 2024-07-24
