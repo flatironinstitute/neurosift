@@ -1,7 +1,10 @@
-import { useWindowDimensions } from "@fi-sci/misc";
-import { FunctionComponent } from "react";
+import { Hyperlink, useWindowDimensions } from "@fi-sci/misc";
+import { FunctionComponent, useEffect, useState } from "react";
 import ApplicationBar, { applicationBarHeight } from "./ApplicationBar";
-import StatusBar, { statusBarHeight } from "./StatusBar";
+import StatusBar, {
+  statusBarHeight,
+  useCustomStatusBarElements,
+} from "./StatusBar";
 import DandiPage from "./pages/DandiPage/DandiPage";
 import DandisetPage from "./pages/DandisetPage/DandisetPage";
 import HomePage from "./pages/HomePage/HomePage";
@@ -24,6 +27,10 @@ const MainWindow: FunctionComponent<Props> = () => {
   const { route } = useRoute();
   const { width, height } = useWindowDimensions();
   const H = height - applicationBarHeight - statusBarHeight;
+  const { setCustomStatusBarElement } = useCustomStatusBarElements();
+  useEffect(() => {
+    setCustomStatusBarElement("route", <NotUsingCookiesNotice />);
+  }, [setCustomStatusBarElement]);
   return (
     <div
       className="MainWindow"
@@ -102,6 +109,40 @@ const MainWindow: FunctionComponent<Props> = () => {
       <Analytics />
     </div>
   );
+};
+
+const NotUsingCookiesNotice: FunctionComponent = () => {
+  const { hideNotUsingCookiesMessage, setHideNotUsingCookiesMessage } =
+    useHideNotUsingCookiesMessage();
+  if (hideNotUsingCookiesMessage) return <span />;
+  return (
+    <span>
+      We do not use cookies, but we collect anonymous usage statistics{" "}
+      <Hyperlink
+        color="green"
+        onClick={() => {
+          setHideNotUsingCookiesMessage(true);
+        }}
+      >
+        OK
+      </Hyperlink>
+    </span>
+  );
+};
+
+const useHideNotUsingCookiesMessage = () => {
+  const [hide, setHide] = useState(false);
+  const key = "hideNotUsingCookiesMessage";
+  const value = "3"; // this could be incremented if the message is updated
+  useEffect(() => {
+    const h = localStorage.getItem(key) === value;
+    setHide(h);
+  }, []);
+  const setHideNotUsingCookiesMessage = (v: boolean) => {
+    localStorage.setItem(key, v ? value : "0");
+    setHide(v);
+  };
+  return { hideNotUsingCookiesMessage: hide, setHideNotUsingCookiesMessage };
 };
 
 export default MainWindow;

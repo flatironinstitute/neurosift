@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 * Change "DEFAULT" tab name to "NWB"
 * WIP spike sorting
 * Support RGBImage https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/acd6a646-f8c7-405e-9815-78fd6b6e442d/download/&dandisetId=000673&dandisetVersion=0.240524.1758&tab=neurodata-item:/stimulus/templates/StimulusTemplates|Images
+* Not using cookies notice
 
 
 ## 2024-07-24
