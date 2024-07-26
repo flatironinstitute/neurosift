@@ -38,8 +38,8 @@ const ElectricalSeriesItemView: FunctionComponent<Props> = ({
     ];
     if (showDendroViews) {
       tabs.push({
-        label: "Dendro Summary",
-        id: "dendro-summary",
+        label: "Ephys Summary",
+        id: "ephys-summary",
         closeable: false,
       });
       tabs.push({
