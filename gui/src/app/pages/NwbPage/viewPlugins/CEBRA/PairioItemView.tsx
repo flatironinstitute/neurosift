@@ -20,6 +20,7 @@ import {
   MultipleChoiceNumberSelector,
   MultipleChoiceStringSelector,
   SelectPairioApiKeyComponent,
+  SelectPairioComputeClientIdComponent,
   getJobParameterValue,
   useAllJobs,
   useJob,
@@ -108,7 +109,9 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
   const [selectedJobId, setSelectedJobId] = useState<string | undefined>(
     undefined,
   );
-  const { job: selectedJob } = useJob(selectedJobId || undefined);
+  const { job: selectedJob, refreshJob: refreshSelectedJob } = useJob(
+    selectedJobId || undefined,
+  );
 
   const [errorText, setErrorText] = useState<string | undefined>(undefined);
 
@@ -187,6 +190,9 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
   }, [allJobs, selectedJobId]);
 
   const { pairioApiKey, setPairioApiKey } = usePairioApiKey();
+  const [computeClientId, setComputeClientId] = useState<string | undefined>(
+    undefined,
+  );
 
   const parameterNames = useMemo(
     () => adjustableParameters.map((p) => p.name),
@@ -205,6 +211,7 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
         tags: tags ? tags : ["neurosift"],
         jobDefinition: newJobDefinition,
         requiredResources,
+        targetComputeClientIds: computeClientId ? [computeClientId] : undefined,
         secrets: [],
         jobDependencies: [],
         skipCache: false,
@@ -232,13 +239,16 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
       setSelectedJobId(rr.job.jobId);
       setAllJobsExpanded(false);
       refreshAllJobs();
+      refreshSelectedJob();
     } catch (err: any) {
       setErrorText(err.message);
     }
   }, [
     newJobDefinition,
     pairioApiKey,
+    computeClientId,
     refreshAllJobs,
+    refreshSelectedJob,
     requiredResources,
     serviceName,
     tags,
@@ -315,6 +325,12 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
                       <SelectPairioApiKeyComponent
                         value={pairioApiKey}
                         setValue={setPairioApiKey}
+                      />
+                    </div>
+                    <div style={{ paddingTop: 10 }}>
+                      <SelectPairioComputeClientIdComponent
+                        value={computeClientId}
+                        setValue={setComputeClientId}
                       />
                     </div>
                     {gpuMode === "optional" && (

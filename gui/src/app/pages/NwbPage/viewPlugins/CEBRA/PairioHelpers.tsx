@@ -115,6 +115,21 @@ export const SelectPairioApiKeyComponent: FunctionComponent<{
   );
 };
 
+export const SelectPairioComputeClientIdComponent: FunctionComponent<{
+  value: string | undefined;
+  setValue: (value: string | undefined) => void;
+}> = ({ value, setValue }) => {
+  return (
+    <div>
+      <label>Compute client (optional):&nbsp;</label>
+      <input
+        value={value || ""}
+        onChange={(e) => setValue(e.target.value || undefined)}
+      />
+    </div>
+  );
+};
+
 export const useJob = (jobId: string | undefined) => {
   const [job, setJob] = useState<PairioJob | undefined>(undefined);
   const [refreshCode, setRefreshCode] = useState(0);
