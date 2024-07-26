@@ -18,7 +18,9 @@ You can use the refresh icon button to refresh the job status. If everything is 
 
 By running a compute client on your computer, you are allowing Neurosift to send jobs to your computer for running spike sorting and other compute-intensive tasks.
 
-Prerequisites: Python 3.7 or later and Docker.
+NOTE: In order for this to work, your GitHub user will need to have permission to process jobs on the hello_world_service service. Reach out to the Neurosift maintainers if you would like to be added to this service.
+
+Prerequisites: Python 3.7 or later and Docker. It is also possible to use apptainer instead of Docker, but the instructions here assume you are using Docker.
 
 First install pairio
 
@@ -43,7 +45,7 @@ When prompted for the service name, enter "hello_world_service".
 
 Click the link to complete the configuration. You will be redirected to a page where you can log in using GitHub and authorize the compute client.
 
-IMPORTANT: By default, your compute client will process jobs from anyone who does not explicitly specify a compute client. If you want to restrict your compute client to only process jobs from a specific users (for example you), then click on the link in the terminal where it says "You can configure it here..." Click the edit button for "Process jobs for users", and enter your GitHub user name (or a list of user user names).
+IMPORTANT: By default, your compute client will process jobs from anyone who does not explicitly specify a compute client. If you want to restrict your compute client to only process jobs from specific users (for example you), then click on the link in the terminal where it says "You can configure it here..." Click the edit button for "Process jobs for users", and enter your GitHub user name (or a list of user user names).
 
 
 Finally, start the compute client
