@@ -20,6 +20,7 @@ import { Hyperlink } from "@fi-sci/misc";
 import useRoute from "../../../useRoute";
 import ViewObjectNotesIconThing from "../../NwbPage/ObjectNote/ViewObjectNotesIconThing";
 import ViewObjectAnalysesIconThing from "../../NwbPage/ObjectNote/ViewObjectAnalysesIconThing";
+import { reportRecentlyViewedDandiset } from "app/pages/DandiPage/DandiBrowser/DandiBrowser";
 
 const applicationBarColorDarkened = "#546"; // from dendro
 
@@ -41,6 +42,8 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
   onOpenAssets,
 }) => {
   const { setRoute, route } = useRoute();
+  if (route.page !== "dandiset" && route.page !== "dandi")
+    throw Error("Unexpected route for DandisetView: " + route.page);
   const stagingStr2 = useStaging ? "gui-staging." : "";
   const dandisetResponse: DandisetSearchResultItem | null = useQueryDandiset(
     dandisetId,
@@ -116,6 +119,15 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
     },
     [onOpenAssets, allAssets, useStaging],
   );
+
+  useEffect(() => {
+    reportRecentlyViewedDandiset({
+      dandisetId: dandisetVersionInfo?.dandiset.identifier || "",
+      dandisetVersion: dandisetVersionInfo?.version || "",
+      title: dandisetVersionInfo?.name || "",
+      staging: route.staging || false,
+    });
+  }, [dandisetVersionInfo, route.staging]);
 
   if (!dandisetResponse) return <div>Loading dandiset...</div>;
   if (!dandisetVersionInfo) return <div>Loading dandiset info...</div>;

@@ -1,8 +1,9 @@
-import { FunctionComponent, useCallback, useMemo } from "react";
+import { FunctionComponent, useCallback, useEffect, useMemo } from "react";
 import useRoute from "../../useRoute";
 import DandisetView from "./DandisetViewFromDendro/DandisetView";
 import { DandiAssetContext } from "../NwbPage/DandiAssetContext";
 import { SetupContextAnnotationsProvider } from "../NwbPage/NeurosiftAnnotations/useContextAnnotations";
+import { reportRecentlyViewedDandiset } from "../DandiPage/DandiBrowser/DandiBrowser";
 
 type DandisetPageProps = {
   width: number;

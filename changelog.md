@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## 2024-07-26
 
 * Fix units summary ac view
+* List recently viewed Dandisets
 
 ## 2024-07-25
 

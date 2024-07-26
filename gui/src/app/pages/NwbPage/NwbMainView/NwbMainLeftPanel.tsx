@@ -18,6 +18,7 @@ import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import SupplementalDendroFilesView from "./SupplementalDendroFilesView";
 import { useSupplementalDendroFiles } from "../SupplementalDendroFilesContext";
 import ViewObjectAnalysesIconThing from "../ObjectNote/ViewObjectAnalysesIconThing";
+import { reportRecentlyViewedDandiset } from "app/pages/DandiPage/DandiBrowser/DandiBrowser";
 
 type Props = {
   width: number;
@@ -305,6 +306,16 @@ const DandiTable = () => {
     handleClose: closeSupplementalFiles,
     visible: supplementalFilesVisible,
   } = useModalWindow();
+
+  useEffect(() => {
+    if (!dandisetId) return;
+    reportRecentlyViewedDandiset({
+      dandisetId: dandisetId,
+      dandisetVersion: dandisetVersion,
+      title: dandisetInfo?.name || "",
+      staging: staging,
+    });
+  }, [dandisetId, dandisetVersion, dandisetInfo, staging]);
 
   if (!dandisetId) return <span />;
 

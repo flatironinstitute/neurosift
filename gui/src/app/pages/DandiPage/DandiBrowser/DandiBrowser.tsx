@@ -1,7 +1,7 @@
 import { Hyperlink, SmallIconButton, VBoxLayout } from "@fi-sci/misc";
 import { Search } from "@mui/icons-material";
 import { FunctionComponent, useCallback, useEffect, useState } from "react";
-import SearchResults from "./SearchResults";
+import SearchResults, { applicationBarColorDarkened } from "./SearchResults";
 import { DandisetSearchResultItem, DandisetsResponse } from "./types";
 import useRoute from "../../../useRoute";
 
@@ -104,6 +104,7 @@ const DandiBrowser: FunctionComponent<Props> = ({ width, height }) => {
         />
       </div>
       <div>
+        <RecentlyViewedDandisets />
         <SearchResults
           width={width}
           height={height - searchBarHeight}
@@ -112,6 +113,78 @@ const DandiBrowser: FunctionComponent<Props> = ({ width, height }) => {
         />
       </div>
     </VBoxLayout>
+  );
+};
+
+type RecentlyViewedDandiset = {
+  dandisetId: string;
+  dandisetVersion: string;
+  title: string;
+  staging: boolean;
+};
+
+const isRecentlyViewedDandiset = (x: any): x is RecentlyViewedDandiset => {
+  if (!x) return false;
+  if (typeof x !== "object") return false;
+  return (
+    typeof x.dandisetId === "string" &&
+    typeof x.dandisetVersion === "string" &&
+    typeof x.title === "string" &&
+    typeof x.staging === "boolean"
+  );
+};
+
+const getRecentlyViewedDandisets = (): RecentlyViewedDandiset[] => {
+  const k = "recentlyViewedDandisets";
+  const s = localStorage.getItem(k);
+  if (!s) return [];
+  const x = JSON.parse(s);
+  if (!Array.isArray(x)) return [];
+  if (!x.every(isRecentlyViewedDandiset)) return [];
+  return x;
+};
+
+export const reportRecentlyViewedDandiset = (
+  dandiset: RecentlyViewedDandiset,
+) => {
+  if (!dandiset.dandisetId) return;
+  let x = getRecentlyViewedDandisets().filter(
+    (d) => d.dandisetId !== dandiset.dandisetId && d.dandisetId,
+  );
+  x.unshift(dandiset);
+  if (x.length > 10) {
+    x = x.slice(0, 10);
+  }
+  localStorage.setItem("recentlyViewedDandisets", JSON.stringify(x));
+};
+
+const RecentlyViewedDandisets: FunctionComponent = () => {
+  const { setRoute } = useRoute();
+  const recentlyViewed = getRecentlyViewedDandisets();
+  if (recentlyViewed.length === 0) return <span />;
+  return (
+    <div style={{ paddingLeft: 11, fontStyle: "italic" }}>
+      Recently viewed:&nbsp;|&nbsp;
+      {recentlyViewed.map((dandiset) => (
+        <span key={dandiset.dandisetId}>
+          <Hyperlink
+            onClick={() => {
+              setRoute({
+                page: "dandiset",
+                dandisetId: dandiset.dandisetId,
+                dandisetVersion: dandiset.dandisetVersion,
+                staging: dandiset.staging,
+              });
+            }}
+            color={applicationBarColorDarkened}
+            title={`${dandiset.dandisetId} (${dandiset.dandisetVersion}): ${dandiset.title}`}
+          >
+            {dandiset.dandisetId}
+          </Hyperlink>
+          &nbsp;|&nbsp;
+        </span>
+      ))}
+    </div>
   );
 };
 

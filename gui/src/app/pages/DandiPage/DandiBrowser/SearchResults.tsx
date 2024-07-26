@@ -7,7 +7,7 @@ import { DandisetSearchResultItem } from "./types";
 import DandisetView from "../../DandisetPage/DandisetViewFromDendro/DandisetView";
 import useRoute from "../../../useRoute";
 
-const applicationBarColorDarkened = "#546"; // from dendro
+export const applicationBarColorDarkened = "#546"; // from dendro
 
 type SearchResultsProps = {
   width: number;
