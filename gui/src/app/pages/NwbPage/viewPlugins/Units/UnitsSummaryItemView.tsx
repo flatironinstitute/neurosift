@@ -233,11 +233,11 @@ const useUnitIds = (h5: RemoteH5FileX | null) => {
       if (!h5) return;
       const rootGroup = await h5.getGroup("/");
       if (!rootGroup) return;
-      if (rootGroup.attrs["channel_ids"]) {
+      if (rootGroup.attrs["unit_ids"]) {
         // new method
-        const channelIds = rootGroup.attrs["channel_ids"];
+        const unitIds = rootGroup.attrs["unit_ids"];
         if (canceled) return;
-        setData(channelIds as any as string[]);
+        setData(unitIds as any as string[]);
       } else {
         // old method (support first created output files)
         const dsData = await h5.getDatasetData("unit_ids", {});

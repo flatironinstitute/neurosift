@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2024-07-26
+
+* Fix units summary ac view
+
 ## 2024-07-25
 
 * Added changelog.md
