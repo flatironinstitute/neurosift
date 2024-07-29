@@ -159,9 +159,10 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
   }, [timeseriesAlignment]);
 
   return (
-    <div style={{ position: "absolute", width, height, overflowY: "auto" }}>
+    <div style={{ position: "absolute", width, height, overflowY: "auto" }} >
       <div>{loadingMessage}&nbsp;</div>
       {timeseriesAlignment.timeseries.map((item) => (
+        <div key={item.path} title={item.neurodataType}>
         <TAItemView
           key={item.path}
           item={item}
@@ -169,6 +170,7 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
           endTime={endTime}
           width={width}
         />
+      </div>
       ))}
     </div>
   );
@@ -190,7 +192,7 @@ const getColorForNeurodataType = (nt: string) => {
     case "OnePhotonSeries":
       return "green";
     case "SpatialSeries":
-      return "red";
+      return "salmon";
     case "ImageSeries":
       return "orange";
     case "RoiResponseSeries":
