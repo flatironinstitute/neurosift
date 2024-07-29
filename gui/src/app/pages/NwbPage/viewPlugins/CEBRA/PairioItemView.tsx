@@ -81,6 +81,7 @@ type PairioItemViewProps = {
   }>;
   compact?: boolean;
   jobFilter?: (job: PairioJob) => boolean;
+  sortCandidateJobs?: (jobs: PairioJob[]) => PairioJob[];
 };
 
 const lazyPlotlyPlotContextValue = {
@@ -105,6 +106,7 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
   OutputComponent,
   compact,
   jobFilter,
+  sortCandidateJobs
 }) => {
   const [selectedJobId, setSelectedJobId] = useState<string | undefined>(
     undefined,
@@ -181,13 +183,18 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
   useEffect(() => {
     if (selectedJobId) return;
     for (const ss of ["completed", "running", "pending", "failed"]) {
-      const candidateJobs = allJobs?.filter((job) => job.status === ss);
-      if (candidateJobs && candidateJobs.length > 0) {
-        setSelectedJobId(candidateJobs[0].jobId);
-        return;
+      let candidateJobs = allJobs?.filter((job) => job.status === ss);
+      if (candidateJobs) {
+        if (sortCandidateJobs) {
+          candidateJobs = sortCandidateJobs(candidateJobs)
+        }
+        if (candidateJobs && (candidateJobs.length > 0)) {
+          setSelectedJobId(candidateJobs[0].jobId);
+          return;
+        }
       }
     }
-  }, [allJobs, selectedJobId]);
+  }, [allJobs, selectedJobId, sortCandidateJobs]);
 
   const { pairioApiKey, setPairioApiKey } = usePairioApiKey();
   const [computeClientId, setComputeClientId] = useState<string | undefined>(
@@ -378,7 +385,10 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
             {!compact && (
               <JobInfoView
                 job={selectedJob}
-                onRefreshJob={refreshAllJobs}
+                onRefreshJob={() => {
+                  refreshAllJobs();
+                  refreshSelectedJob();
+                }}
                 parameterNames={parameterNames}
               />
             )}

@@ -103,7 +103,11 @@ const ElectricalSeriesSpikeSortingView: FunctionComponent<
       choices: any[];
     }[] = [
       { name: "segment_start_time_sec", type: "number", choices: [0] },
-      { name: "segment_duration_sec", type: "number", choices: [60] },
+      {
+        name: "segment_duration_sec",
+        type: "number",
+        choices: [60, 60 * 5, 60 * 30],
+      },
     ];
 
     const defaultAdjustableParameters = {
@@ -124,6 +128,23 @@ const ElectricalSeriesSpikeSortingView: FunctionComponent<
       return true;
     },
     [path],
+  );
+
+  const sortCandidateJobs = useMemo(
+    () => (jobs: PairioJob[]) => {
+      // favor jobs that have longest segment_duration_sec
+      return [...jobs].sort((a, b) => {
+        const p1 = a.jobDefinition.parameters.find(
+          (p) => p.name === "segment_duration_sec",
+        );
+        const p2 = b.jobDefinition.parameters.find(
+          (p) => p.name === "segment_duration_sec",
+        );
+        if (!p1 || !p2) return 0;
+        return (p2.value as number) - (p1.value as number);
+      });
+    },
+    [],
   );
 
   // if (!electricalSeriesPathChoices) {
@@ -148,8 +169,8 @@ const ElectricalSeriesSpikeSortingView: FunctionComponent<
     return (
       <div>
         <p>
-          The sampling rate of the electrical series is too low to run the
-          ephys_summary processor.
+          The sampling rate of the electrical series is too low to run spike
+          sorting.
         </p>
         <p>Sampling rate: {samplingRate} Hz</p>
       </div>
@@ -175,6 +196,7 @@ const ElectricalSeriesSpikeSortingView: FunctionComponent<
       OutputComponent={ElectricalSeriesSpikeSortingOutputComponent}
       compact={false}
       jobFilter={jobFilter}
+      sortCandidateJobs={sortCandidateJobs}
     />
   );
 };

@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2024-07-29
+
+* View timeseries alignment: tooltip and color
+
+
 ## 2024-07-26
 
 * Fix units summary ac view
