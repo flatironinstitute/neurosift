@@ -18,7 +18,9 @@ const TimeSeriesLeftPanelComponent: FunctionComponent<
         <div style={{ paddingTop: 8 }}>Rate: {samplingRate} Hz</div>
       )}
       {duration && (
-        <div style={{ paddingTop: 8 }}>Duration: {durationString(duration)}</div>
+        <div style={{ paddingTop: 8 }}>
+          Duration: {durationString(duration)}
+        </div>
       )}
     </>
   );
@@ -35,6 +37,6 @@ const durationString = (durationSeconds: number) => {
     return `${minutes}m ${seconds}s`;
   }
   return `${seconds} s`;
-}
+};
 
 export default TimeSeriesLeftPanelComponent;
