@@ -40,9 +40,10 @@ const TabWidget: FunctionComponent<PropsWithChildren<Props>> = ({
     if (index < 0) return undefined;
     return index;
   }, [currentTabId, tabs]);
-  const children2 = Array.isArray(children)
+  let children2 = Array.isArray(children)
     ? (children as React.ReactElement[])
     : ([children] as React.ReactElement[]);
+  children2 = children2.filter((c) => c);
   if ((children2 || []).length !== tabs.length) {
     throw Error(
       `TabWidget: incorrect number of tabs ${(children2 || []).length} <> ${tabs.length}`,
