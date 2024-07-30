@@ -1,17 +1,15 @@
+import { RemoteH5FileX } from "@remote-h5-file/index";
 import {
   PairioJob,
   PairioJobDefinition,
   PairioJobRequiredResources,
 } from "app/pairio/types";
-import { FunctionComponent, useMemo } from "react";
-import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/PairioHelpers";
-import { useNwbFile } from "../../NwbFileContext";
-import { useElectricalSeriesSamplingRate } from "../Ephys/EphysSummaryItemView";
-import PairioItemView from "../CEBRA/PairioItemView";
-import { RemoteH5FileX } from "@remote-h5-file/index";
-import { useRemoteH5FileLindi } from "../CEBRA/CEBRAView";
-import RasterPlotView3 from "../Units/RasterPlotView3/RasterPlotView3";
 import useRoute from "app/useRoute";
+import { FunctionComponent, useMemo } from "react";
+import { useNwbFile } from "../../NwbFileContext";
+import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/PairioHelpers";
+import PairioItemView from "../CEBRA/PairioItemView";
+import useTimeSeriesInfo from "../TimeSeries/useTimeseriesInfo";
 
 type ElectricalSeriesSpikeSortingViewProps = {
   width: number;
@@ -91,7 +89,7 @@ const ElectricalSeriesSpikeSortingView: FunctionComponent<
 
   // const electricalSeriesPathChoices: string[] | undefined = useElectricalSeriesPathChoices(nwbFile);
 
-  const samplingRate = useElectricalSeriesSamplingRate(nwbFile, path);
+  const { samplingRate } = useTimeSeriesInfo(nwbFile, path);
 
   const tags = useMemo(() => ["neurosift", "MountainSort5"], []);
 

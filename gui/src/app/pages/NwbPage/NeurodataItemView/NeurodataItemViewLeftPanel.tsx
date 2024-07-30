@@ -20,15 +20,19 @@ type Props = {
 
 const NeurodataItemViewLeftPanel: FunctionComponent<Props> = ({
   width,
-  height,
   path,
-  additionalPaths,
   group,
   viewName,
   tabName,
   viewPlugin,
-  stateString,
+  stateString
 }) => {
+  const customContent = viewPlugin.leftPanelComponent ? (
+    <viewPlugin.leftPanelComponent
+      width={width}
+      path={path}
+    />
+  ) : null;
   return (
     <div>
       <table className="nwb-table">
@@ -58,6 +62,12 @@ const NeurodataItemViewLeftPanel: FunctionComponent<Props> = ({
         </tbody>
       </table>
       {viewPlugin.isTimeView && <TimeseriesSelectionWidget />}
+      {customContent ? (
+        <>
+          <hr />
+          {customContent}
+        </>
+      ) : null}
       <hr />
       <ShareTabComponent tabName={tabName} stateString={stateString} />
       <hr />

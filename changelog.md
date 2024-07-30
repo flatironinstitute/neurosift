@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 * View timeseries alignment: tooltip and color
 * Longer duration spike sorting
-
+* Display rate and duration in timeseries plots
 
 ## 2024-07-26
 

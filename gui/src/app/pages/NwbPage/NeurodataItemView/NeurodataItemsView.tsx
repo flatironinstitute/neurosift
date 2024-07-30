@@ -107,7 +107,7 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({
       {items.map((item, i) => {
         const { viewPlugin, itemPath, additionalItemPaths } =
           getViewPluginAndItemPath(item, nwbFile, specifications);
-        if (!viewPlugin) return <div>View plugin not found: {item}</div>;
+        if (!viewPlugin) return <div key="">View plugin not found: {item}</div>;
         return (
           <div
             key={item}

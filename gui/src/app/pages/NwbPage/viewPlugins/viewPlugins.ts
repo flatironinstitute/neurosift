@@ -30,6 +30,7 @@ import {
   getCustomPythonCodeForTimeSeries,
   getCustomPythonCodeForUnits,
 } from "./customPythonCode";
+import TimeSeriesLeftPanelComponent from "./TimeSeries/TimeSeriesLeftPanelComponent";
 
 type Props = {
   width: number;
@@ -47,6 +48,7 @@ export type ViewPlugin = {
   neurodataType: string;
   defaultForNeurodataType?: boolean;
   component: FunctionComponent<Props>;
+  leftPanelComponent?: FunctionComponent<{ width: number; path: string }>;
   buttonLabel?: string;
   remoteDataOnly?: boolean;
   checkEnabled?: (nwbFile: RemoteH5FileX, path: string) => Promise<boolean>;
@@ -80,6 +82,7 @@ viewPlugins.push({
   neurodataType: "SpatialSeries",
   defaultForNeurodataType: true,
   component: NeurodataSpatialSeriesItemView,
+  leftPanelComponent: TimeSeriesLeftPanelComponent,
   isTimeView: true,
   getCustomPythonCode: getCustomPythonCodeForTimeSeries,
   testLinks: [
@@ -91,6 +94,7 @@ viewPlugins.push({
   neurodataType: "SpatialSeries",
   defaultForNeurodataType: false,
   component: SpatialSeriesXYView,
+  leftPanelComponent: TimeSeriesLeftPanelComponent,
   buttonLabel: "X/Y",
   isTimeView: true,
   checkEnabled: async (nwbFile: RemoteH5FileX, path: string) => {
@@ -131,6 +135,7 @@ viewPlugins.push({
   neurodataType: "TimeSeries",
   defaultForNeurodataType: true,
   component: NeurodataTimeSeriesItemView,
+  leftPanelComponent: TimeSeriesLeftPanelComponent,
   isTimeView: true,
   getCustomPythonCode: getCustomPythonCodeForTimeSeries,
   testLinks: [
@@ -195,6 +200,7 @@ viewPlugins.push({
   neurodataType: "ElectricalSeries",
   defaultForNeurodataType: true,
   component: ElectricalSeriesItemView,
+  leftPanelComponent: TimeSeriesLeftPanelComponent,
   isTimeView: true,
   getCustomPythonCode: getCustomPythonCodeForTimeSeries,
   testLinks: [
