@@ -117,6 +117,7 @@ viewPlugins.push({
   neurodataType: "TwoPhotonSeries",
   defaultForNeurodataType: true,
   component: TwoPhotonSeriesItemView,
+  leftPanelComponent: TimeSeriesLeftPanelComponent,
   isTimeView: true,
 });
 
@@ -126,6 +127,7 @@ viewPlugins.push({
   neurodataType: "OnePhotonSeries",
   defaultForNeurodataType: true,
   component: TwoPhotonSeriesItemView, // same as TwoPhotonSeries
+  leftPanelComponent: TimeSeriesLeftPanelComponent,
   isTimeView: true,
 });
 
