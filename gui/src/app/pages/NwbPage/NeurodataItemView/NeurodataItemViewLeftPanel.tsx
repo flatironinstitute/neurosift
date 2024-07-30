@@ -25,13 +25,10 @@ const NeurodataItemViewLeftPanel: FunctionComponent<Props> = ({
   viewName,
   tabName,
   viewPlugin,
-  stateString
+  stateString,
 }) => {
   const customContent = viewPlugin.leftPanelComponent ? (
-    <viewPlugin.leftPanelComponent
-      width={width}
-      path={path}
-    />
+    <viewPlugin.leftPanelComponent width={width} path={path} />
   ) : null;
   return (
     <div>

@@ -106,7 +106,7 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
   OutputComponent,
   compact,
   jobFilter,
-  sortCandidateJobs
+  sortCandidateJobs,
 }) => {
   const [selectedJobId, setSelectedJobId] = useState<string | undefined>(
     undefined,
@@ -186,9 +186,9 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
       let candidateJobs = allJobs?.filter((job) => job.status === ss);
       if (candidateJobs) {
         if (sortCandidateJobs) {
-          candidateJobs = sortCandidateJobs(candidateJobs)
+          candidateJobs = sortCandidateJobs(candidateJobs);
         }
-        if (candidateJobs && (candidateJobs.length > 0)) {
+        if (candidateJobs && candidateJobs.length > 0) {
           setSelectedJobId(candidateJobs[0].jobId);
           return;
         }
