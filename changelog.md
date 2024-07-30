@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2024-07-30
+
+* Fix TabWidget bug, incorrect number of tabs
+* Format rate/duration in timeseries plots
+
 ## 2024-07-29
 
 * View timeseries alignment: tooltip and color
