@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2024-08-02
+
+* Support lindi tar!
+
 ## 2024-07-30
 
 * Fix TabWidget bug, incorrect number of tabs
