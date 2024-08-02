@@ -3,17 +3,36 @@ import zarrDecodeChunkArray from "./zarrDecodeChunkArray";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type ReferenceFileSystemObject = {
-  version: any;
+  version?: any;
   refs: { [key: string]: string | [string, number, number] };
   templates?: { [key: string]: string };
 };
+
+export const isReferenceFileSystemObject = (
+  x: any,
+): x is ReferenceFileSystemObject => {
+  if (!x) return false;
+  if (typeof x !== "object") return false;
+  if (!x.refs) return false;
+  return true;
+};
+
+export interface RemoteTarInterface {
+  url: string;
+  getByteRangeForFile: (
+    fileName: string,
+  ) => Promise<{ startByte: number; endByte: number }>;
+}
 
 export class ReferenceFileSystemClient {
   #fileContentCache: {
     [key: string]: { content: any | undefined; found: boolean };
   } = {};
   #inProgressReads: { [key: string]: boolean } = {};
-  constructor(private obj: ReferenceFileSystemObject) {}
+  constructor(
+    private obj: ReferenceFileSystemObject,
+    private remoteTar: RemoteTarInterface | undefined,
+  ) {}
   async readJson(path: string): Promise<{ [key: string]: any } | undefined> {
     const buf = await this.readBinary(path, { decodeArray: false });
     if (!buf) return undefined;
@@ -120,9 +139,16 @@ export class ReferenceFileSystemClient {
         }
       } else if (typeof ref === "object" && Array.isArray(ref)) {
         if (ref.length !== 3) throw Error(`Invalid ref for ${path}`);
-        const refUrl = this._applyTemplates(ref[0]);
+        let refUrl = this._applyTemplates(ref[0]);
         let start = ref[1];
         let numBytes = ref[2];
+        if (refUrl.startsWith("./") && this.remoteTar) {
+          const { startByte } = await this._getByteRangeForFileInRemoteTar(
+            refUrl.slice("./".length),
+          );
+          refUrl = this.remoteTar.url;
+          start = startByte + start;
+        }
         if (o.startByte !== undefined) {
           start += o.startByte;
           numBytes = o.endByte! - o.startByte;
@@ -177,7 +203,7 @@ export class ReferenceFileSystemClient {
   get _refs() {
     return this.obj.refs;
   }
-  _applyTemplates(s: string): string {
+  private _applyTemplates(s: string): string {
     if (s.includes("{{") && s.includes("}}") && this.obj.templates) {
       for (const [k, v] of Object.entries(this.obj.templates)) {
         s = s.replace("{{" + k + "}}", v);
@@ -186,6 +212,14 @@ export class ReferenceFileSystemClient {
     } else {
       return s;
     }
+  }
+  private async _getByteRangeForFileInRemoteTar(fileName: string) {
+    if (!this.remoteTar) {
+      throw Error("Unexpected");
+    }
+    const { startByte, endByte } =
+      await this.remoteTar.getByteRangeForFile(fileName);
+    return { startByte, endByte };
   }
 }
 

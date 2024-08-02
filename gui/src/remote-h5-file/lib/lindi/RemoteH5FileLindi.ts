@@ -12,6 +12,8 @@ import { Canceler } from "../helpers";
 
 import ReferenceFileSystemClient, {
   ReferenceFileSystemObject,
+  RemoteTarInterface,
+  isReferenceFileSystemObject,
 } from "./ReferenceFileSystemClient";
 import lindiDatasetDataLoader from "./lindiDatasetDataLoader";
 
@@ -40,9 +42,7 @@ class RemoteH5FileLindi {
     private pathsByParentPath: { [key: string]: string[] },
   ) {}
   static async create(url: string) {
-    const r = await fetch(url);
-    if (!r.ok) throw Error("Failed to fetch LINDI file" + url);
-    const obj: ReferenceFileSystemObject = await r.json();
+    const { rfs: obj, remoteTar } = await fetchRfsFromRemoteLindi(url);
     console.info(`reference file system for ${url}`, obj);
     console.info(`Meta only`, metaOnly(obj));
     const pathsByParentPath: { [key: string]: string[] } = {};
@@ -67,7 +67,7 @@ class RemoteH5FileLindi {
     }
     return new RemoteH5FileLindi(
       url,
-      new ReferenceFileSystemClient(obj),
+      new ReferenceFileSystemClient(obj, remoteTar),
       pathsByParentPath,
     );
   }
@@ -268,6 +268,113 @@ class RemoteH5FileLindi {
     this.#cacheDisabled = true;
   }
 }
+
+const fetchRfsFromRemoteLindi = async (
+  url: string,
+): Promise<{
+  rfs: ReferenceFileSystemObject;
+  remoteTar: RemoteTarInterface | undefined;
+}> => {
+  const buf: ArrayBuffer = await fetchByteRange(url, 0, 512 * 3);
+  if (isTarHeader(buf.slice(0, 512))) {
+    const tarEntryBuf = buf.slice(512, 512 + 1024);
+    const tarEntryJson = new TextDecoder().decode(tarEntryBuf);
+    const tarEntry = JSON.parse(tarEntryJson);
+    const indexInfo = tarEntry["index"];
+    const entryDataStartByte = indexInfo["d"];
+    const entryDataSize = indexInfo["s"];
+
+    const indexBuf = await fetchByteRange(
+      url,
+      entryDataStartByte,
+      entryDataSize,
+    );
+    const indexStr = new TextDecoder().decode(indexBuf);
+    const index = JSON.parse(indexStr);
+    const remoteTar: RemoteTarInterface = {
+      url: url,
+      getByteRangeForFile: async (fileName: string) => {
+        const f = index.files.find((ff: any) => ff.n === fileName);
+        if (!f) {
+          throw Error(`File ${fileName} not found in tar`);
+        }
+        return {
+          startByte: f.d as number,
+          endByte: (f.d + f.s) as number,
+        };
+      },
+    };
+    const { startByte: rfsStartByte, endByte: rfsEndByte } =
+      await remoteTar.getByteRangeForFile("lindi.json");
+    const rfsBuf = await fetchByteRange(
+      url,
+      rfsStartByte,
+      rfsEndByte - rfsStartByte,
+    );
+    const rfs = JSON.parse(new TextDecoder().decode(rfsBuf));
+    if (!isReferenceFileSystemObject(rfs)) {
+      console.warn(rfs);
+      throw Error("Invalid rfs from tar");
+    }
+    return {
+      rfs,
+      remoteTar,
+    };
+  } else {
+    const r = await fetch(url);
+    if (!r.ok) throw Error("Failed to fetch LINDI file" + url);
+    const rfs = await r.json();
+    if (!isReferenceFileSystemObject(rfs)) {
+      console.warn(rfs);
+      throw Error("Invalid rfs");
+    }
+    return {
+      rfs,
+      remoteTar: undefined,
+    };
+  }
+};
+
+const fetchByteRange = async (url: string, startByte: number, size: number) => {
+  const r = await fetch(url, {
+    headers: {
+      Range: `bytes=${startByte}-${startByte + size - 1}`,
+    },
+  });
+  if (!r.ok)
+    throw Error(
+      `Failed to fetch byte range ${startByte}-${startByte + size - 1} of ${url}`,
+    );
+  return await r.arrayBuffer();
+};
+
+const isTarHeader = (buf: ArrayBuffer) => {
+  if (buf.byteLength < 512) {
+    return false;
+  }
+
+  // We're only going to support ustar format
+  // get the ustar indicator at bytes 257-262
+  const ustarIndicator = buf.slice(257, 262);
+  const ustarIndicatorStr = new TextDecoder().decode(
+    ustarIndicator.slice(0, 5),
+  );
+  const bb = new Uint8Array(buf);
+  if (ustarIndicatorStr === "ustar" && bb[257 + 5] == 0) {
+    return true;
+  }
+
+  // Check for any 0 bytes in the header
+  const bb2 = new Uint8Array(buf);
+  if (bb2.includes(0)) {
+    console.warn(ustarIndicatorStr);
+    throw Error(
+      "Problem with lindi file: 0 byte found in header, but not ustar tar format",
+    );
+  }
+
+  return false;
+};
 
 const getNameFromPath = (path: string) => {
   const parts = path.split("/");
