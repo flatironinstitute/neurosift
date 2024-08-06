@@ -203,7 +203,7 @@ export class ReferenceFileSystemClient {
   get _refs() {
     return this.obj.refs;
   }
-  private _applyTemplates(s: string): string {
+  _applyTemplates(s: string): string {
     if (s.includes("{{") && s.includes("}}") && this.obj.templates) {
       for (const [k, v] of Object.entries(this.obj.templates)) {
         s = s.replace("{{" + k + "}}", v);
