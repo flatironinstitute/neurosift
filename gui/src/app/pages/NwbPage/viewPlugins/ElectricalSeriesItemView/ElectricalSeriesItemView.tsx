@@ -5,6 +5,7 @@ import EphysSummaryItemView from "../Ephys/EphysSummaryItemView";
 import { checkUrlIsLocal } from "../viewPlugins";
 import { useNwbFile } from "../../NwbFileContext";
 import ElectricalSeriesSpikeSortingView from "./ElectricalSeriesSpikeSortingView";
+import EphysPreprocessingView from "./EphysPreprocessingView";
 
 type Props = {
   width: number;
@@ -47,6 +48,11 @@ const ElectricalSeriesItemView: FunctionComponent<Props> = ({
         id: "spike-sorting",
         closeable: false,
       });
+      tabs.push({
+        label: "Preprocessing (WIP)",
+        id: "preprocessing",
+        closeable: false,
+      });
     }
     return tabs;
   }, [showDendroViews]);
@@ -75,6 +81,9 @@ const ElectricalSeriesItemView: FunctionComponent<Props> = ({
       )}
       {showDendroViews && (
         <ElectricalSeriesSpikeSortingView width={0} height={0} path={path} />
+      )}
+      {showDendroViews && (
+        <EphysPreprocessingView width={0} height={0} path={path} />
       )}
     </TabWidget>
   );
