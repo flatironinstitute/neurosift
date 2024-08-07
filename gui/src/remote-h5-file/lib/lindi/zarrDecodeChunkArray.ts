@@ -1,5 +1,6 @@
 import { Blosc } from "numcodecs";
 import pako from "pako";
+import { qfcDecompress } from "./qfc";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const zarrDecodeChunkArray = async (
@@ -20,6 +21,11 @@ const zarrDecodeChunkArray = async (
     } else if (compressor.id === "neurosift.mp4") {
       // ret = await decodeMp4(chunk, shape![0], shape![1], shape![2]);
       throw Error("neurosift.mp4 decoder not yet implemented");
+    } else if (compressor.id === "qfc") {
+      if (!shape) {
+        throw Error("No shape for qfc");
+      }
+      ret = await qfcDecompress(chunk, shape, compressor);
     } else {
       throw Error("Unhandled compressor " + compressor.id);
     }

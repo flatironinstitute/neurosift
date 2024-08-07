@@ -15,7 +15,7 @@ def neurosift():
 
 @click.command()
 @click.argument('file', type=click.Path(exists=True))
-def view_nwb(file):
+def view_nwb(file: str):
     abs_fname = os.path.abspath(file)
     base_fname = os.path.basename(abs_fname)
     with TemporaryDirectory(prefix="view_nwb") as tmpdir:
@@ -74,6 +74,8 @@ def view_nwb(file):
 
         # open the browser
         url = f"https://neurosift.app/?p=/nwb&url=http://localhost:{port}/files/{base_fname}{zarr_param}"
+        if file.endswith('.lindi') or file.endswith('.lindi.json'):
+            url = url + '&st=lindi'
         print(f'Opening {url}')
         webbrowser.open(url)
 
