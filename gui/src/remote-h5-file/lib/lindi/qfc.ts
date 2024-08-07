@@ -231,7 +231,8 @@ const qfc_inv_pre_compress = async (o: {
   const mm = isEvenNumberOfSamples ? m : m + 1;
   for (let i = 1; i < mm; i++) {
     for (let j = 0; j < num_channels; j++) {
-      x_im[i * num_channels + j] = array[(m + 1 + (i - 1)) * num_channels + j] / qs;
+      x_im[i * num_channels + j] =
+        array[(m + 1 + (i - 1)) * num_channels + j] / qs;
     }
   }
 
@@ -312,7 +313,7 @@ const irfft = async (
   // let's verify that imaginary part is close to zero
   for (let i = 0; i < num_samples; i++) {
     if (Math.abs(x_im_copy[i]) > 1e-5) {
-      throw Error('Unexpected non-zero imaginary part after inverse transform')
+      throw Error("Unexpected non-zero imaginary part after inverse transform");
     }
   }
   return x_re_copy;
