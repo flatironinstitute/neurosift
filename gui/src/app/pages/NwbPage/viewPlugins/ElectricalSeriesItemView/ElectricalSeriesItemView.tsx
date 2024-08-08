@@ -4,7 +4,7 @@ import TabWidget from "../../../../TabWidget/TabWidget";
 import EphysSummaryItemView from "../Ephys/EphysSummaryItemView";
 import { checkUrlIsLocal } from "../viewPlugins";
 import { useNwbFile } from "../../NwbFileContext";
-import ElectricalSeriesSpikeSortingView from "./ElectricalSeriesSpikeSortingView";
+import SpikeSortingView from "./SpikeSortingView/SpikeSortingView";
 import EphysPreprocessingView from "./EphysPreprocessingView";
 
 type Props = {
@@ -80,7 +80,7 @@ const ElectricalSeriesItemView: FunctionComponent<Props> = ({
         />
       )}
       {showDendroViews && (
-        <ElectricalSeriesSpikeSortingView width={0} height={0} path={path} />
+        <SpikeSortingView width={0} height={0} path={path} />
       )}
       {showDendroViews && (
         <EphysPreprocessingView width={0} height={0} path={path} />

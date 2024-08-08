@@ -6,12 +6,12 @@ import {
 } from "app/pairio/types";
 import useRoute from "app/useRoute";
 import { FunctionComponent, useMemo } from "react";
-import { useNwbFile } from "../../NwbFileContext";
-import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/PairioHelpers";
-import PairioItemView from "../CEBRA/PairioItemView";
-import useTimeSeriesInfo from "../TimeSeries/useTimeseriesInfo";
+import { useNwbFile } from "../../../NwbFileContext";
+import { getJobOutputUrl, removeLeadingSlash } from "../../CEBRA/PairioHelpers";
+import PairioItemView from "../../CEBRA/PairioItemView";
+import useTimeSeriesInfo from "../../TimeSeries/useTimeseriesInfo";
 
-type ElectricalSeriesSpikeSortingViewProps = {
+type SpikeSortingViewProps = {
   width: number;
   height: number;
   path: string;
@@ -78,8 +78,8 @@ const gpuMode: "optional" | "required" | "forbidden" = "forbidden" as any;
 
 const title = "Spike Sorting (under construction - do not use!)";
 
-const ElectricalSeriesSpikeSortingView: FunctionComponent<
-  ElectricalSeriesSpikeSortingViewProps
+const SpikeSortingView: FunctionComponent<
+  SpikeSortingViewProps
 > = ({ width, height, path }) => {
   const nwbFile = useNwbFile();
   if (!nwbFile)
@@ -193,7 +193,7 @@ const ElectricalSeriesSpikeSortingView: FunctionComponent<
       getJobDefinition={getJobDefinition}
       getRequiredResources={getRequiredResources}
       gpuMode={gpuMode}
-      OutputComponent={ElectricalSeriesSpikeSortingOutputComponent}
+      OutputComponent={SpikeSortingOutputComponent}
       compact={false}
       jobFilter={jobFilter}
       sortCandidateJobs={sortCandidateJobs}
@@ -201,14 +201,14 @@ const ElectricalSeriesSpikeSortingView: FunctionComponent<
   );
 };
 
-type ElectricalSeriesSpikeSortingOutputComponentProps = {
+type SpikeSortingOutputComponentProps = {
   job: PairioJob;
   width: number;
   nwbFile: RemoteH5FileX;
 };
 
-const ElectricalSeriesSpikeSortingOutputComponent: FunctionComponent<
-  ElectricalSeriesSpikeSortingOutputComponentProps
+const SpikeSortingOutputComponent: FunctionComponent<
+  SpikeSortingOutputComponentProps
 > = ({ job, width, nwbFile }) => {
   const { route } = useRoute();
   if (route.page !== "nwb") {
@@ -246,4 +246,4 @@ const ElectricalSeriesSpikeSortingOutputComponent: FunctionComponent<
   );
 };
 
-export default ElectricalSeriesSpikeSortingView;
+export default SpikeSortingView;
