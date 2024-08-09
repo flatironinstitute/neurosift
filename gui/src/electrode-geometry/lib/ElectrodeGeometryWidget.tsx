@@ -133,18 +133,29 @@ const ElectrodeGeometryWidget: FunctionComponent<
       ctx.beginPath();
       ctx.arc(xp, yp, markerPixelRadius, 0, 2 * Math.PI);
       ctx.stroke();
+      let textFillStyle = "black";
       if (i === hoveredElectrodeIndex) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+        textFillStyle = "white";
         ctx.fill();
       } else {
         if (colors) {
           ctx.fillStyle = colors[i];
+          textFillStyle = contrastColor(colors[i]);
           ctx.fill();
         } else {
           ctx.fillStyle = "white";
+          textFillStyle = "black";
           ctx.fill();
         }
       }
+      const text = `${i}`;
+      ctx.font = `${markerPixelRadius}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = textFillStyle;
+      ctx.fillText(text, xp, yp);
+
       if (deadElectrodeIndices && deadElectrodeIndices.includes(i)) {
         ctx.strokeStyle = "gray";
         ctx.lineWidth = 2;
@@ -163,7 +174,14 @@ const ElectrodeGeometryWidget: FunctionComponent<
     function drawScaleBar() {
       if (!ctx) return;
       const { yp: yMaxP } = coordToPixel(0, ymax);
-      const pixelWidth = 100 * isotropicScale;
+      let scaleBarNumMicrons = 100;
+      if (xmax - xmin < 200) {
+        scaleBarNumMicrons = 20;
+      }
+      if (xmax - xmin < 40) {
+        scaleBarNumMicrons = 10;
+      }
+      const pixelWidth = scaleBarNumMicrons * isotropicScale;
       // center horizontally
       const xOffset = (width - pixelWidth) / 2;
       const x1 = xOffset;
@@ -179,7 +197,7 @@ const ElectrodeGeometryWidget: FunctionComponent<
       ctx.font = "12px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
-      ctx.fillText("100 μm", (x1 + x2) / 2, y2 + 5);
+      ctx.fillText(`${scaleBarNumMicrons} μm`, (x1 + x2) / 2, y2 + 5);
     }
     drawScaleBar();
   }, [
@@ -194,6 +212,9 @@ const ElectrodeGeometryWidget: FunctionComponent<
     ymax,
     colors,
     outlineColors,
+    xmax,
+    xmin,
+    deadElectrodeIndices,
   ]);
 
   const handleMouseMove = useCallback(
@@ -311,5 +332,68 @@ const getColorForIndex = (i: number) => {
   ];
   return colors[i % colors.length];
 };
+
+function hexToRgb(hex: string) {
+  // Remove the leading '#' if present
+  hex = hex.replace(/^#/, "");
+
+  // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+  if (hex.length === 3) {
+    hex = hex
+      .split("")
+      .map((x) => x + x)
+      .join("");
+  }
+
+  const bigint = parseInt(hex, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+
+  return [r, g, b];
+}
+
+function rgbStringToRgb(rgbString: string) {
+  const match = rgbString.match(
+    /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*\d+\.?\d*)?\)/,
+  );
+  if (match) {
+    return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])];
+  }
+  return [0, 0, 0];
+}
+
+function luminance(r: number, g: number, b: number) {
+  // Convert to luminance
+  const a = [r, g, b].map(function (v) {
+    v /= 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+}
+
+function contrastColor(color: string) {
+  let rgb: number[];
+
+  if (color.startsWith("#")) {
+    rgb = hexToRgb(color);
+  } else if (color.startsWith("rgb")) {
+    rgb = rgbStringToRgb(color);
+  } else {
+    // we won't resort to the following trick for now
+    // const tempElement = document.createElement("div");
+    // tempElement.style.color = color;
+    // document.body.appendChild(tempElement);
+    // const computedColor = window.getComputedStyle(tempElement).color;
+    // document.body.removeChild(tempElement);
+    // rgb = rgbStringToRgb(computedColor);
+    return "black";
+  }
+
+  const lum = luminance(rgb[0], rgb[1], rgb[2]);
+
+  // If the luminance is greater than 0.5, return black; otherwise, return white
+  return lum > 0.5 ? "#000000" : "#FFFFFF";
+}
 
 export default ElectrodeGeometryWidget;
