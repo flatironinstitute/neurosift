@@ -266,7 +266,7 @@ const useSpikeSortingStep = (prepareEphysJob?: PairioJob) => {
 
   if (!prepareEphysJob || prepareEphysJob.status !== "completed") {
     return {
-      selectSpikeSortingOptsComponent: <div>Preparing dataset...</div>,
+      selectSpikeSortingOptsComponent: undefined,
       spikeSortingJobId: undefined,
       setSpikeSortingJobId: () => {},
       spikeSortingJob: undefined,
@@ -286,6 +286,115 @@ const useSpikeSortingStep = (prepareEphysJob?: PairioJob) => {
     prepareEphysOutputNwbUrl: getJobOutputUrl(prepareEphysJob, "output"),
     spikeSortingRequiredResources,
     spikeSortingJobDefinition,
+  };
+};
+
+type PostProcessingOpts = {
+  // none
+};
+
+const defaultPostProcessingOpts: PostProcessingOpts = {
+  // none
+};
+
+const tagsPostProcessing = [
+  "neurosift",
+  "spike_sorting",
+  "post_processing",
+];
+
+const usePostProcessingStep = (spikeSortingJob?: PairioJob) => {
+  const [postProcessingOpts, setPostProcessingOpts] =
+    useState<PostProcessingOpts>(
+      defaultPostProcessingOpts,
+    );
+
+  const selectPostProcessingOptsComponent = (
+    <SelectPostProcessingOpts
+      postProcessingOpts={postProcessingOpts}
+      setPostProcessingOpts={setPostProcessingOpts}
+    />
+  );
+
+  const [postProcessingJobId, setPostProcessingJobId] =
+    useState<string | undefined>(undefined);
+  const {
+    job: postProcessingJob,
+    refreshJob: refreshPostProcessingJob,
+  } = useJob(postProcessingJobId);
+
+  const postProcessingRequiredResources: PairioJobRequiredResources =
+    useMemo(() => {
+      return {
+        numCpus: 4,
+        numGpus: 0,
+        memoryGb: 4,
+        timeSec: 60 * 50,
+      };
+    }, []);
+
+  const postProcessingJobDefinition:
+    | PairioJobDefinition
+    | undefined = useMemo(() => {
+    if (!spikeSortingJob) {
+      return undefined;
+    }
+    const inputFileUrl = getJobOutputUrl(spikeSortingJob, "output");
+    if (!inputFileUrl) {
+      return undefined;
+    }
+    return {
+      appName: "hello_neurosift",
+      processorName: "spike_sorting_post_processing",
+      inputFiles: [
+        {
+          name: "input",
+          fileBaseName: "input.nwb.lindi",
+          url: inputFileUrl,
+        },
+      ],
+      outputFiles: [
+        {
+          name: "output",
+          fileBaseName: "post.nwb.lindi",
+        },
+      ],
+      parameters: [
+        {
+          name: "electrical_series_path",
+          value: getInputParameterValue(
+            spikeSortingJob,
+            "electrical_series_path",
+          ),
+        },
+        {
+          name: "units_path",
+          value: 'processing/ecephys/' + getInputParameterValue(spikeSortingJob, "output_units_name"),
+        },
+      ],
+    };
+  }, [spikeSortingJob]);
+
+  if (!spikeSortingJob || spikeSortingJob.status !== "completed") {
+    return {
+      selectPostProcessingOptsComponent: undefined,
+      postProcessingJobId: undefined,
+      setPostProcessingJobId: () => {},
+      postProcessingJob: undefined,
+      refreshPostProcessingJob: () => {},
+      postProcessingRequiredResources: undefined,
+      postProcessingJobDefinition: undefined,
+    };
+  }
+
+  return {
+    selectPostProcessingOptsComponent,
+    postProcessingJobId,
+    setPostProcessingJobId,
+    postProcessingJob,
+    refreshPostProcessingJob,
+    postProcessingRequiredResources,
+    postProcessingJobDefinition,
   };
 };
 
@@ -324,6 +433,16 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
     spikeSortingRequiredResources,
     spikeSortingJobDefinition,
   } = useSpikeSortingStep(prepareEphysJob);
+
+  const {
+    selectPostProcessingOptsComponent,
+    postProcessingJobId,
+    setPostProcessingJobId,
+    postProcessingJob,
+    refreshPostProcessingJob,
+    postProcessingRequiredResources,
+    postProcessingJobDefinition,
+  } = usePostProcessingStep(spikeSortingJob);
 
   if (samplingRate === undefined) {
     return <div>Loading...</div>;
@@ -382,6 +501,31 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
                 selectOptsComponent={selectSpikeSortingOptsComponent}
                 parameterNames={spikeSortingParameterNames}
                 jobDefinition={spikeSortingJobDefinition}
+              />
+            </>
+          )}
+        {spikeSortingJobId &&
+          spikeSortingJob &&
+          spikeSortingJob.status === "completed" &&
+          spikeSortingJobDefinition &&
+          postProcessingRequiredResources && (
+            <>
+              <h3>Step 3: Post-processing</h3>
+              <Step
+                appName="hello_neurosift"
+                processorName="spike_sorting_post_processing"
+                tags={tagsPostProcessing}
+                inputFileUrl={getJobOutputUrl(spikeSortingJob, "output") || ""}
+                requiredResources={postProcessingRequiredResources}
+                jobId={postProcessingJobId}
+                setJobId={setPostProcessingJobId}
+                job={postProcessingJob}
+                refreshJob={refreshPostProcessingJob}
+                selectOptsComponent={
+                  selectPostProcessingOptsComponent
+                }
+                parameterNames={[]}
+                jobDefinition={postProcessingJobDefinition}
               />
             </>
           )}
@@ -835,6 +979,27 @@ const InputChoices: FunctionComponent<InputChoicesProps> = ({
       ))}
     </select>
   );
+};
+
+type SelectPostProcessingOptsProps = {
+  postProcessingOpts: PostProcessingOpts;
+  setPostProcessingOpts: (
+    opts: PostProcessingOpts,
+  ) => void;
+};
+
+const SelectPostProcessingOpts: FunctionComponent<
+  SelectPostProcessingOptsProps
+> = () => {
+  return <div />;
+};
+
+const getInputParameterValue = (job: PairioJob, name: string) => {
+  const pp = job.jobDefinition.parameters.find((p) => p.name === name);
+  if (!pp) {
+    throw Error(`Parameter not found: ${name}`);
+  }
+  return pp.value;
 };
 
 export default SpikeSortingView;
