@@ -78,9 +78,11 @@ const gpuMode: "optional" | "required" | "forbidden" = "forbidden" as any;
 
 const title = "Spike Sorting (under construction - do not use!)";
 
-const SpikeSortingView: FunctionComponent<
-  SpikeSortingViewProps
-> = ({ width, height, path }) => {
+const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
+  width,
+  height,
+  path,
+}) => {
   const nwbFile = useNwbFile();
   if (!nwbFile)
     throw Error("Unexpected: nwbFile is undefined (no context provider)");

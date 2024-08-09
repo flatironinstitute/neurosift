@@ -50,13 +50,12 @@ const getJobDefinition = (
       {
         name: "electrical_series_path",
         value: removeLeadingSlash(path),
-      }
+      },
     ],
   };
 };
 
-const getRequiredResources = (
-): PairioJobRequiredResources => {
+const getRequiredResources = (): PairioJobRequiredResources => {
   return {
     numCpus: 2,
     numGpus: 0,
@@ -133,7 +132,7 @@ const EphysPreprocessingView: FunctionComponent<
         // );
         // if (!p1 || !p2) return 0;
         // return (p2.value as number) - (p1.value as number);
-        return 0
+        return 0;
       });
     },
     [],
@@ -161,7 +160,8 @@ const EphysPreprocessingView: FunctionComponent<
     return (
       <div>
         <p>
-          The sampling rate of the electrical series is too low to run preprocessing.
+          The sampling rate of the electrical series is too low to run
+          preprocessing.
         </p>
         <p>Sampling rate: {samplingRate} Hz</p>
       </div>

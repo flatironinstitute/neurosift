@@ -1,11 +1,13 @@
-import { RemoteH5FileX } from "@remote-h5-file/index";
+import { Button } from "@mui/material";
 import {
   CreateJobRequest,
   PairioJob,
   PairioJobDefinition,
+  PairioJobParameter,
   PairioJobRequiredResources,
   isCreateJobResponse,
 } from "app/pairio/types";
+import useRoute from "app/useRoute";
 import {
   FunctionComponent,
   useCallback,
@@ -15,16 +17,16 @@ import {
 } from "react";
 import { useNwbFile } from "../../../NwbFileContext";
 import {
+  AllJobsView,
   SelectPairioApiKeyComponent,
   SelectPairioComputeClientIdComponent,
   getJobOutputUrl,
+  useAllJobs,
   useJob,
   usePairioApiKey,
 } from "../../CEBRA/PairioHelpers";
-import useTimeSeriesInfo from "../../TimeSeries/useTimeseriesInfo";
-import { Button, Select } from "@mui/material";
 import { JobInfoView } from "../../CEBRA/PairioItemView";
-import useRoute from "app/useRoute";
+import useTimeSeriesInfo from "../../TimeSeries/useTimeseriesInfo";
 
 type SpikeSortingViewProps = {
   width: number;
@@ -34,10 +36,15 @@ type SpikeSortingViewProps = {
 
 const serviceName = "hello_world_service";
 const title = "Spike Sorting (under construction - do not use!)";
-const tagsPrepareDataset = ["neurosift", "prepare_ephys_spike_sorting_dataset"];
-const tagsSpikeSorting = ["neurosift", "spike_sorting"];
+const tagsPrepareEphys = ["neurosift", "spike_sorting", "prepare_ephys"];
+const tagsSpikeSorting = [
+  "neurosift",
+  "spike_sorting",
+  "spike_sort",
+  "mountainsort5",
+];
 
-type PrepareDatasetOpts = {
+type PrepareEphysOpts = {
   duration_sec: number; // 0 means full duration
   electrode_indices: number[];
   freq_min: number;
@@ -46,7 +53,7 @@ type PrepareDatasetOpts = {
   output_electrical_series_name: string;
 };
 
-const defaultPrepareDatasetOpts: PrepareDatasetOpts = {
+const defaultPrepareEphysOpts: PrepareEphysOpts = {
   duration_sec: 60,
   electrode_indices: [0],
   freq_min: 300,
@@ -55,7 +62,7 @@ const defaultPrepareDatasetOpts: PrepareDatasetOpts = {
   output_electrical_series_name: "",
 };
 
-const prepareDatasetParameterNames = [
+const prepareEphysParameterNames = [
   "duration_sec",
   "electrode_indices",
   "freq_min",
@@ -69,10 +76,218 @@ type SpikeSortingOpts = {
 };
 
 const defaultSpikeSortingOpts: SpikeSortingOpts = {
-  detect_threshold: 6,
+  detect_threshold: 5,
 };
 
 const spikeSortingParameterNames = ["detect_threshold"];
+
+const usePrepareEphysStep = (o: { path: string; nwbUrl: string }) => {
+  const { path, nwbUrl } = o;
+  const [prepareEphysOpts, setPrepareEphysOpts] = useState<PrepareEphysOpts>(
+    defaultPrepareEphysOpts,
+  );
+  useEffect(() => {
+    if (!prepareEphysOpts.output_electrical_series_name) {
+      const name = path.split("/").slice(-1)[0];
+      setPrepareEphysOpts((o) => ({
+        ...o,
+        output_electrical_series_name: name + "_pre",
+      }));
+    }
+  }, [path, prepareEphysOpts.output_electrical_series_name]);
+
+  const [prepareEphysJobId, setPrepareEphysJobId] = useState<
+    string | undefined
+  >(undefined);
+  useEffect(() => {
+    setPrepareEphysJobId(undefined);
+  }, [prepareEphysOpts]);
+
+  const { job: prepareEphysJob, refreshJob: refreshPrepareEphysJob } =
+    useJob(prepareEphysJobId);
+
+  const prepareEphysJobParameters: PairioJobParameter[] = useMemo(() => {
+    return [
+      { name: "electrical_series_path", value: path },
+      { name: "duration_sec", value: prepareEphysOpts.duration_sec },
+      {
+        name: "electrode_indices",
+        value: prepareEphysOpts.electrode_indices,
+      },
+      { name: "freq_min", value: prepareEphysOpts.freq_min },
+      { name: "freq_max", value: prepareEphysOpts.freq_max },
+      {
+        name: "compression_ratio",
+        value: prepareEphysOpts.compression_ratio,
+      },
+      {
+        name: "output_electrical_series_name",
+        value: prepareEphysOpts.output_electrical_series_name,
+      },
+    ];
+  }, [prepareEphysOpts, path]);
+
+  const prepareEphysJobRequiredResources: PairioJobRequiredResources =
+    useMemo(() => {
+      return {
+        numCpus: 4,
+        numGpus: 0,
+        memoryGb: 4,
+        timeSec: 60 * 50,
+      };
+    }, []);
+
+  const prepareEphysJobDefinition: PairioJobDefinition = useMemo(() => {
+    return {
+      appName: "hello_neurosift",
+      processorName: "prepare_ephys_spike_sorting_dataset",
+      inputFiles: [
+        {
+          name: "input",
+          fileBaseName: nwbUrl.endsWith(".lindi.json")
+            ? "input.lindi.json"
+            : nwbUrl.endsWith(".lindi")
+              ? "input.lindi"
+              : "input.nwb",
+          url: nwbUrl,
+        },
+      ],
+      outputFiles: [
+        {
+          name: "output",
+          fileBaseName: "pre.nwb.lindi",
+        },
+      ],
+      parameters: prepareEphysJobParameters,
+    };
+  }, [nwbUrl, prepareEphysJobParameters]);
+
+  const selectPrepareEphysOptsComponent = (
+    <SelectPrepareEphysOpts
+      prepareEphysOpts={prepareEphysOpts}
+      setPrepareEphysOpts={setPrepareEphysOpts}
+    />
+  );
+
+  return {
+    selectPrepareEphysOptsComponent,
+    prepareEphysJobId,
+    setPrepareEphysJobId,
+    prepareEphysJob,
+    refreshPrepareEphysJob,
+    prepareEphysJobRequiredResources,
+    prepareEphysJobDefinition,
+  };
+};
+
+const useSpikeSortingStep = (prepareEphysJob?: PairioJob) => {
+  const [spikeSortingOpts, setSpikeSortingOpts] = useState<SpikeSortingOpts>(
+    defaultSpikeSortingOpts,
+  );
+
+  const selectSpikeSortingOptsComponent = (
+    <SelectSpikeSortingOpts
+      spikeSortingOpts={spikeSortingOpts}
+      setSpikeSortingOpts={setSpikeSortingOpts}
+    />
+  );
+
+  const [spikeSortingJobId, setSpikeSortingJobId] = useState<
+    string | undefined
+  >(undefined);
+  const { job: spikeSortingJob, refreshJob: refreshSpikeSortingJob } =
+    useJob(spikeSortingJobId);
+
+  const spikeSortingRequiredResources: PairioJobRequiredResources =
+    useMemo(() => {
+      return {
+        numCpus: 4,
+        numGpus: 0,
+        memoryGb: 4,
+        timeSec: 60 * 50,
+      };
+    }, []);
+
+  const prepareEphysOutputElectricalSeriesPath = useMemo(() => {
+    if (!prepareEphysJob) {
+      return undefined;
+    }
+    const pp = prepareEphysJob.jobDefinition.parameters.find(
+      (p) => p.name === "output_electrical_series_name",
+    );
+    if (!pp) {
+      return undefined;
+    }
+    return `acquisition/${pp.value as string}`;
+  }, [prepareEphysJob]);
+
+  const spikeSortingJobDefinition: PairioJobDefinition | undefined =
+    useMemo(() => {
+      const inputFileUrl = getJobOutputUrl(prepareEphysJob, "output");
+      if (!inputFileUrl) {
+        return undefined;
+      }
+      if (!prepareEphysOutputElectricalSeriesPath) {
+        return undefined;
+      }
+      return {
+        appName: "hello_neurosift",
+        processorName: "mountainsort5",
+        inputFiles: [
+          {
+            name: "input",
+            fileBaseName: "input.nwb.lindi",
+            url: inputFileUrl,
+          },
+        ],
+        outputFiles: [
+          {
+            name: "output",
+            fileBaseName: "output.nwb.lindi",
+          },
+        ],
+        parameters: [
+          {
+            name: "electrical_series_path",
+            value: prepareEphysOutputElectricalSeriesPath,
+          },
+          { name: "output_units_name", value: "units_mountainsort5" },
+          {
+            name: "detect_threshold",
+            value: spikeSortingOpts.detect_threshold,
+          },
+        ],
+      };
+    }, [
+      prepareEphysJob,
+      spikeSortingOpts,
+      prepareEphysOutputElectricalSeriesPath,
+    ]);
+
+  if (!prepareEphysJob || prepareEphysJob.status !== "completed") {
+    return {
+      selectSpikeSortingOptsComponent: <div>Preparing dataset...</div>,
+      spikeSortingJobId: undefined,
+      setSpikeSortingJobId: () => {},
+      spikeSortingJob: undefined,
+      refreshSpikeSortingJob: () => {},
+      prepareEphysOutputNwbUrl: undefined,
+      spikeSortingRequiredResources: undefined,
+      spikeSortingJobDefinition: undefined,
+    };
+  }
+
+  return {
+    selectSpikeSortingOptsComponent,
+    spikeSortingJobId,
+    setSpikeSortingJobId,
+    spikeSortingJob,
+    refreshSpikeSortingJob,
+    prepareEphysOutputNwbUrl: getJobOutputUrl(prepareEphysJob, "output"),
+    spikeSortingRequiredResources,
+    spikeSortingJobDefinition,
+  };
+};
 
 const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
   width,
@@ -89,27 +304,26 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
 
   const { samplingRate } = useTimeSeriesInfo(nwbFile, path);
 
-  const [prepareDatasetOpts, setPrepareDatasetOpts] =
-    useState<PrepareDatasetOpts>(defaultPrepareDatasetOpts);
-  useEffect(() => {
-    if (!prepareDatasetOpts.output_electrical_series_name) {
-      const name = path.split("/").slice(-1)[0];
-      setPrepareDatasetOpts((o) => ({
-        ...o,
-        output_electrical_series_name: name + "_pre",
-      }));
-    }
-  }, [path, prepareDatasetOpts.output_electrical_series_name]);
+  const {
+    selectPrepareEphysOptsComponent,
+    prepareEphysJobId,
+    setPrepareEphysJobId,
+    prepareEphysJob,
+    refreshPrepareEphysJob,
+    prepareEphysJobRequiredResources,
+    prepareEphysJobDefinition,
+  } = usePrepareEphysStep({ path, nwbUrl });
 
-  const [prepareDatasetJobId, setPrepareDatasetJobId] = useState<
-    string | undefined
-  >(undefined);
-  useEffect(() => {
-    setPrepareDatasetJobId(undefined);
-  }, [prepareDatasetOpts]);
-
-  const { job: prepareDatasetJob, refreshJob: refreshPrepareDatasetJob } =
-    useJob(prepareDatasetJobId);
+  const {
+    selectSpikeSortingOptsComponent,
+    spikeSortingJobId,
+    setSpikeSortingJobId,
+    spikeSortingJob,
+    refreshSpikeSortingJob,
+    prepareEphysOutputNwbUrl,
+    spikeSortingRequiredResources,
+    spikeSortingJobDefinition,
+  } = useSpikeSortingStep(prepareEphysJob);
 
   if (samplingRate === undefined) {
     return <div>Loading...</div>;
@@ -135,21 +349,40 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
         <h3>{title}</h3>
         <hr />
         <h3>Step 1: Prepare dataset</h3>
-        <Step1
-          electricalSeriesPath={path}
-          prepareDatasetOpts={prepareDatasetOpts}
-          setPrepareDatasetOpts={setPrepareDatasetOpts}
-          prepareDatasetJobId={prepareDatasetJobId}
-          setPrepareDatasetJobId={setPrepareDatasetJobId}
-          prepareDatasetJob={prepareDatasetJob}
-          refreshPrepareDatasetJob={refreshPrepareDatasetJob}
+        <Step
+          appName="hello_neurosift"
+          processorName="prepare_ephys_spike_sorting_dataset"
+          tags={tagsPrepareEphys}
+          inputFileUrl={nwbUrl}
+          requiredResources={prepareEphysJobRequiredResources}
+          jobId={prepareEphysJobId}
+          setJobId={setPrepareEphysJobId}
+          job={prepareEphysJob}
+          refreshJob={refreshPrepareEphysJob}
+          selectOptsComponent={selectPrepareEphysOptsComponent}
+          parameterNames={prepareEphysParameterNames}
+          jobDefinition={prepareEphysJobDefinition}
         />
-        {prepareDatasetJobId &&
-          prepareDatasetJob &&
-          prepareDatasetJob.status === "completed" && (
+        {prepareEphysJobId &&
+          prepareEphysJob &&
+          prepareEphysJob.status === "completed" &&
+          prepareEphysOutputNwbUrl && (
             <>
               <h3>Step 2: Spike sorting</h3>
-              <Step2 prepareDatasetJob={prepareDatasetJob} />
+              <Step
+                appName="hello_neurosift"
+                processorName="mountainsort5"
+                tags={tagsSpikeSorting}
+                inputFileUrl={prepareEphysOutputNwbUrl}
+                requiredResources={spikeSortingRequiredResources}
+                jobId={spikeSortingJobId}
+                setJobId={setSpikeSortingJobId}
+                job={spikeSortingJob}
+                refreshJob={refreshSpikeSortingJob}
+                selectOptsComponent={selectSpikeSortingOptsComponent}
+                parameterNames={spikeSortingParameterNames}
+                jobDefinition={spikeSortingJobDefinition}
+              />
             </>
           )}
       </div>
@@ -157,24 +390,34 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
   );
 };
 
-type Step1Props = {
-  electricalSeriesPath: string;
-  prepareDatasetOpts: PrepareDatasetOpts;
-  setPrepareDatasetOpts: (opts: PrepareDatasetOpts) => void;
-  prepareDatasetJobId?: string;
-  setPrepareDatasetJobId: (jobId: string) => void;
-  prepareDatasetJob?: PairioJob;
-  refreshPrepareDatasetJob: () => void;
+type StepProps = {
+  appName: string;
+  processorName: string;
+  tags: string[];
+  inputFileUrl: string;
+  requiredResources: PairioJobRequiredResources;
+  jobId?: string;
+  setJobId: (jobId: string | undefined) => void;
+  job?: PairioJob;
+  refreshJob: () => void;
+  selectOptsComponent: any;
+  parameterNames: string[];
+  jobDefinition?: PairioJobDefinition;
 };
 
-const Step1: FunctionComponent<Step1Props> = ({
-  electricalSeriesPath,
-  prepareDatasetOpts,
-  setPrepareDatasetOpts,
-  prepareDatasetJobId,
-  setPrepareDatasetJobId,
-  prepareDatasetJob,
-  refreshPrepareDatasetJob,
+const Step: FunctionComponent<StepProps> = ({
+  appName,
+  processorName,
+  tags,
+  inputFileUrl,
+  requiredResources,
+  jobId,
+  setJobId,
+  job,
+  refreshJob,
+  selectOptsComponent: selectParametersComponent,
+  parameterNames,
+  jobDefinition,
 }) => {
   const nwbFile = useNwbFile();
   if (!nwbFile)
@@ -184,8 +427,7 @@ const Step1: FunctionComponent<Step1Props> = ({
     return nwbFile.getUrls()[0];
   }, [nwbFile]);
 
-  const [submittingNewPrepareDatasetJob, setSubmittingNewPrepareDatasetJob] =
-    useState(false);
+  const [definingNewJob, setDefiningNewJob] = useState(false);
 
   const [errorText, setErrorText] = useState<string | undefined>(undefined);
 
@@ -194,52 +436,18 @@ const Step1: FunctionComponent<Step1Props> = ({
     undefined,
   );
 
-  const handleSubmitNewPrepareDatasetJob = useCallback(async () => {
-    const jobDefinition: PairioJobDefinition = {
-      appName: "hello_neurosift",
-      processorName: "prepare_ephys_spike_sorting_dataset",
-      inputFiles: [
-        {
-          name: "input",
-          fileBaseName: nwbUrl.endsWith(".lindi.json")
-            ? "input.lindi.json"
-            : nwbUrl.endsWith(".lindi")
-              ? "input.lindi"
-              : "input.nwb",
-          url: nwbUrl,
-        },
-      ],
-      outputFiles: [
-        {
-          name: "output",
-          fileBaseName: "pre.nwb.lindi",
-        },
-      ],
-      parameters: [
-        { name: "electrical_series_path", value: electricalSeriesPath },
-        { name: "duration_sec", value: prepareDatasetOpts.duration_sec },
-        {
-          name: "electrode_indices",
-          value: prepareDatasetOpts.electrode_indices,
-        },
-        { name: "freq_min", value: prepareDatasetOpts.freq_min },
-        { name: "freq_max", value: prepareDatasetOpts.freq_max },
-        {
-          name: "compression_ratio",
-          value: prepareDatasetOpts.compression_ratio,
-        },
-        {
-          name: "output_electrical_series_name",
-          value: prepareDatasetOpts.output_electrical_series_name,
-        },
-      ],
-    };
-    const requiredResources: PairioJobRequiredResources = {
-      numCpus: 4,
-      numGpus: 0,
-      memoryGb: 4,
-      timeSec: 60 * 50,
-    };
+  const { allJobs, refreshAllJobs } = useAllJobs({
+    appName,
+    processorName,
+    tags,
+    inputFileUrl,
+    jobFilter: undefined,
+  });
+
+  const handleSubmitNewJob = useCallback(async () => {
+    if (!jobDefinition) {
+      throw Error("Unexpected: jobDefinition is undefined");
+    }
     setErrorText(undefined);
     try {
       const req: CreateJobRequest = {
@@ -247,7 +455,7 @@ const Step1: FunctionComponent<Step1Props> = ({
         serviceName,
         userId: "",
         batchId: "",
-        tags: tagsPrepareDataset,
+        tags,
         jobDefinition,
         requiredResources,
         targetComputeClientIds: computeClientId ? [computeClientId] : undefined,
@@ -266,241 +474,88 @@ const Step1: FunctionComponent<Step1Props> = ({
         headers,
         body: JSON.stringify(req),
       });
+      const rr = await resp.json();
       if (!resp.ok) {
         console.error(resp);
-        throw Error(`Error creating job: ${resp.statusText}`);
+        throw Error(`Error creating job: ${rr.error || resp.statusText}`);
       }
-      const rr = await resp.json();
       if (!isCreateJobResponse(rr)) {
         throw Error(`Unexpected response: ${JSON.stringify(rr)}`);
       }
-      setPrepareDatasetJobId(rr.job.jobId);
+      setJobId(rr.job.jobId);
+      refreshAllJobs();
     } catch (err: any) {
       setErrorText(err.message);
     }
   }, [
-    prepareDatasetOpts,
-    electricalSeriesPath,
-    nwbUrl,
     pairioApiKey,
     computeClientId,
-    setPrepareDatasetJobId,
+    setJobId,
+    refreshAllJobs,
+    requiredResources,
+    jobDefinition,
+    tags,
   ]);
 
-  return (
-    <div>
-      <SelectPrepareDatasetOpts
-        prepareDatasetOpts={prepareDatasetOpts}
-        setPrepareDatasetOpts={setPrepareDatasetOpts}
-      />
-      {(!prepareDatasetJobId || (prepareDatasetJob && prepareDatasetJob.status === 'failed')) && (
-        <>
-          {!submittingNewPrepareDatasetJob && (
-            <Button onClick={() => setSubmittingNewPrepareDatasetJob(true)}>
-              submit
-            </Button>
-          )}
-          {submittingNewPrepareDatasetJob && (
-            <div>
-              <div style={{ paddingTop: 10 }}>
-                <SelectPairioApiKeyComponent
-                  value={pairioApiKey}
-                  setValue={setPairioApiKey}
-                />
-              </div>
-              <div style={{ paddingTop: 10 }}>
-                <SelectPairioComputeClientIdComponent
-                  value={computeClientId}
-                  setValue={setComputeClientId}
-                />
-              </div>
-              <div style={{ paddingTop: 10 }}>
-                <button
-                  onClick={handleSubmitNewPrepareDatasetJob}
-                  disabled={!pairioApiKey}
-                >
-                  SUBMIT JOB
-                </button>
-                {errorText && <div style={{ color: "red" }}>{errorText}</div>}
-              </div>
-            </div>
-          )}
-        </>
-      )}
-      {prepareDatasetJobId && prepareDatasetJob && (
-        <JobInfoView
-          job={prepareDatasetJob}
-          onRefreshJob={() => {
-            refreshPrepareDatasetJob();
-          }}
-          parameterNames={prepareDatasetParameterNames}
-        />
-      )}
-      {prepareDatasetJobId &&
-        prepareDatasetJob &&
-        prepareDatasetJob.status === "completed" && (
-          <NeurosiftLink url={getJobOutputUrl(prepareDatasetJob, "output")} />
-        )}
-    </div>
-  );
-};
-
-type Step2Props = {
-  prepareDatasetJob: PairioJob;
-};
-
-const Step2: FunctionComponent<Step2Props> = ({ prepareDatasetJob }) => {
-  const { inputNwbUrl, electricalSeriesPath } = useMemo(() => {
-    const x = prepareDatasetJob.outputFileResults.find(
-      (x) => x.name === "output",
-    );
-    if (!x) {
-      throw Error("Unexpected: output file not found in job");
-    }
-    const inputNwbUrl = x.url;
-    const pp = prepareDatasetJob.jobDefinition.parameters.find(
-      (p) => p.name === "output_electrical_series_name",
-    );
-    if (!pp) {
-      throw Error(
-        "Unexpected: output_electrical_series_name parameter not found in job",
-      );
-    }
-    const outputElectricalSeriesName = pp.value as string;
-    const outputElectricalSeriesPath = `acquisition/${outputElectricalSeriesName}`;
-    return { inputNwbUrl, electricalSeriesPath: outputElectricalSeriesPath };
-  }, [prepareDatasetJob]);
-
-  const [spikeSortingOpts, setSpikeSortingOpts] = useState<SpikeSortingOpts>(
-    defaultSpikeSortingOpts,
-  );
-
-  const [spikeSortingJobId, setSpikeSortingJobId] = useState<string | undefined>(
-    undefined,
-  );
-  const { job: spikeSortingJob, refreshJob: refreshSpikeSortingJob } = useJob(
-    spikeSortingJobId,
-  );
-  const [submittingNewSpikeSortingJob, setSubmittingNewSpikeSortingJob] = useState(
-    false,
-  );
   useEffect(() => {
-    setSpikeSortingJobId(undefined);
-  }, [spikeSortingOpts]);
-
-  const { pairioApiKey, setPairioApiKey } = usePairioApiKey();
-  const [computeClientId, setComputeClientId] = useState<string | undefined>(undefined);
-
-  const [errorText, setErrorText] = useState<string | undefined>(undefined);
-
-  const handleSubmitNewSpikeSortingJob = useCallback(async () => {
-    const jobDefinition: PairioJobDefinition = {
-      appName: "hello_neurosift",
-      processorName: "mountainsort5",
-      inputFiles: [
-        {
-          name: "input",
-          fileBaseName: "input.nwb.lindi",
-          url: inputNwbUrl,
-        },
-      ],
-      outputFiles: [
-        {
-          name: "output",
-          fileBaseName: "output.nwb.lindi",
-        },
-      ],
-      parameters: [
-        { name: "electrical_series_path", value: electricalSeriesPath },
-        { name: "output_units_name", value: "units_mountainsort5" },
-        { name: "detect_threshold", value: spikeSortingOpts.detect_threshold },
-      ],
-    };
-    const requiredResources: PairioJobRequiredResources = {
-      numCpus: 4,
-      numGpus: 0,
-      memoryGb: 4,
-      timeSec: 60 * 50,
-    };
-    setErrorText(undefined);
-    try {
-      const req: CreateJobRequest = {
-        type: "createJobRequest",
-        serviceName,
-        userId: "",
-        batchId: "",
-        tags: tagsSpikeSorting,
-        jobDefinition,
-        requiredResources,
-        targetComputeClientIds: computeClientId ? [computeClientId] : undefined,
-        secrets: [],
-        jobDependencies: [prepareDatasetJob.jobId],
-        skipCache: false,
-        rerunFailing: true,
-        deleteFailing: true,
-      };
-      const headers = {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${pairioApiKey}`,
-      };
-      const resp = await fetch(`https://pairio.vercel.app/api/createJob`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(req),
-      });
-      if (!resp.ok) {
-        console.error(resp);
-        throw Error(`Error creating job: ${resp.statusText}`);
-      }
-      const rr = await resp.json();
-      if (!isCreateJobResponse(rr)) {
-        throw Error(`Unexpected response: ${JSON.stringify(rr)}`);
-      }
-      setSpikeSortingJobId(rr.job.jobId);
-    } catch (err: any) {
-      setErrorText(err.message);
-    }
-  }, [spikeSortingOpts, inputNwbUrl, electricalSeriesPath, pairioApiKey, computeClientId, prepareDatasetJob]);
+    // when job ID changes, reset definingNewJob
+    setDefiningNewJob(false);
+  }, [jobId]);
 
   return (
     <div>
-      <SelectSpikeSortingOpts
-        spikeSortingOpts={spikeSortingOpts}
-        setSpikeSortingOpts={setSpikeSortingOpts}
+      <AllJobsView
+        allJobs={allJobs || undefined}
+        refreshAllJobs={refreshAllJobs}
+        parameterNames={parameterNames}
+        selectedJobId={jobId}
+        onJobClicked={setJobId}
       />
-      {(!spikeSortingJobId || (spikeSortingJob && spikeSortingJob.status === 'failed')) && (
+      {errorText && <div style={{ color: "red" }}>{errorText}</div>}
+      {definingNewJob && (
         <>
-          {errorText && <div style={{ color: "red" }}>{errorText}</div>}
-          {!submittingNewSpikeSortingJob && (
-            <Button onClick={() => setSubmittingNewSpikeSortingJob(true)}>
-              submit
-            </Button>
-          )}
-          {submittingNewSpikeSortingJob && (
-            <div>
-              <SelectPairioApiKeyComponent value={pairioApiKey} setValue={setPairioApiKey} />
-              <SelectPairioComputeClientIdComponent value={computeClientId} setValue={setComputeClientId} />
-              <Button onClick={handleSubmitNewSpikeSortingJob} disabled={false}>
-                SUBMIT JOB
-              </Button>
+          {selectParametersComponent}
+          <div>
+            <div style={{ paddingTop: 10 }}>
+              <SelectPairioApiKeyComponent
+                value={pairioApiKey}
+                setValue={setPairioApiKey}
+              />
             </div>
-          )}
+            <div style={{ paddingTop: 10 }}>
+              <SelectPairioComputeClientIdComponent
+                value={computeClientId}
+                setValue={setComputeClientId}
+              />
+            </div>
+            <div style={{ paddingTop: 10 }}>
+              <button
+                onClick={handleSubmitNewJob}
+                disabled={!pairioApiKey || !jobDefinition}
+              >
+                SUBMIT JOB
+              </button>
+            </div>
+          </div>
         </>
       )}
-      {spikeSortingJobId && spikeSortingJob && (
+      {!definingNewJob && (
+        <Button onClick={() => setDefiningNewJob(true)}>Create new job</Button>
+      )}
+      {jobId && job && (
         <JobInfoView
-          job={spikeSortingJob}
+          job={job}
           onRefreshJob={() => {
-            refreshSpikeSortingJob();
+            refreshJob();
           }}
-          parameterNames={spikeSortingParameterNames}
+          parameterNames={parameterNames}
         />
       )}
-      {spikeSortingJobId && spikeSortingJob && spikeSortingJob.status === "completed" && (
-        <NeurosiftLink url={getJobOutputUrl(spikeSortingJob, "output")} />
+      {jobId && job && job.status === "completed" && (
+        <NeurosiftLink url={getJobOutputUrl(job, "output")} />
       )}
     </div>
-  )
+  );
 };
 
 type NeurosiftLinkProps = {
@@ -535,10 +590,9 @@ type SelectSpikeSortingOptsProps = {
   setSpikeSortingOpts: (opts: SpikeSortingOpts) => void;
 };
 
-const SelectSpikeSortingOpts: FunctionComponent<SelectSpikeSortingOptsProps> = ({
-  spikeSortingOpts,
-  setSpikeSortingOpts,
-}) => {
+const SelectSpikeSortingOpts: FunctionComponent<
+  SelectSpikeSortingOptsProps
+> = ({ spikeSortingOpts, setSpikeSortingOpts }) => {
   return (
     <div>
       <table>
@@ -564,14 +618,14 @@ const SelectSpikeSortingOpts: FunctionComponent<SelectSpikeSortingOptsProps> = (
   );
 };
 
-type SelectPrepareDatasetOptsProps = {
-  prepareDatasetOpts: PrepareDatasetOpts;
-  setPrepareDatasetOpts: (opts: PrepareDatasetOpts) => void;
+type SelectPrepareEphysOptsProps = {
+  prepareEphysOpts: PrepareEphysOpts;
+  setPrepareEphysOpts: (opts: PrepareEphysOpts) => void;
 };
 
-const SelectPrepareDatasetOpts: FunctionComponent<
-  SelectPrepareDatasetOptsProps
-> = ({ prepareDatasetOpts, setPrepareDatasetOpts }) => {
+const SelectPrepareEphysOpts: FunctionComponent<
+  SelectPrepareEphysOptsProps
+> = ({ prepareEphysOpts, setPrepareEphysOpts }) => {
   return (
     <div>
       <table>
@@ -581,14 +635,14 @@ const SelectPrepareDatasetOpts: FunctionComponent<
             <td>
               <InputChoices
                 value={
-                  prepareDatasetOpts.duration_sec === 0
+                  prepareEphysOpts.duration_sec === 0
                     ? "full"
-                    : prepareDatasetOpts.duration_sec / 60
+                    : prepareEphysOpts.duration_sec / 60
                 }
                 choices={[1, 5, 20, 60, "full"]}
                 onChange={(duration_min) =>
-                  setPrepareDatasetOpts({
-                    ...prepareDatasetOpts,
+                  setPrepareEphysOpts({
+                    ...prepareEphysOpts,
                     duration_sec:
                       duration_min === "full"
                         ? 0
@@ -602,10 +656,10 @@ const SelectPrepareDatasetOpts: FunctionComponent<
             <td>Electrode indices:</td>
             <td>
               <IntListInput
-                value={prepareDatasetOpts.electrode_indices}
+                value={prepareEphysOpts.electrode_indices}
                 onChange={(electrode_indices) =>
-                  setPrepareDatasetOpts({
-                    ...prepareDatasetOpts,
+                  setPrepareEphysOpts({
+                    ...prepareEphysOpts,
                     electrode_indices,
                   })
                 }
@@ -616,22 +670,22 @@ const SelectPrepareDatasetOpts: FunctionComponent<
             <td>Frequency range (Hz):</td>
             <td>
               <InputChoices
-                value={prepareDatasetOpts.freq_min}
+                value={prepareEphysOpts.freq_min}
                 choices={[300]}
                 onChange={(freq_min) =>
-                  setPrepareDatasetOpts({
-                    ...prepareDatasetOpts,
+                  setPrepareEphysOpts({
+                    ...prepareEphysOpts,
                     freq_min: freq_min as number,
                   })
                 }
               />
               -
               <InputChoices
-                value={prepareDatasetOpts.freq_max}
+                value={prepareEphysOpts.freq_max}
                 choices={[6000, 9000, 12000]}
                 onChange={(freq_max) =>
-                  setPrepareDatasetOpts({
-                    ...prepareDatasetOpts,
+                  setPrepareEphysOpts({
+                    ...prepareEphysOpts,
                     freq_max: freq_max as number,
                   })
                 }
@@ -642,11 +696,11 @@ const SelectPrepareDatasetOpts: FunctionComponent<
             <td>Compression ratio:</td>
             <td>
               <InputChoices
-                value={prepareDatasetOpts.compression_ratio}
+                value={prepareEphysOpts.compression_ratio}
                 choices={["none", 4, 8, 12, 16, 20, 30, 40, 50, 75, 100]}
                 onChange={(compressionRatio) =>
-                  setPrepareDatasetOpts({
-                    ...prepareDatasetOpts,
+                  setPrepareEphysOpts({
+                    ...prepareEphysOpts,
                     compression_ratio: compressionRatio as number,
                   })
                 }
@@ -658,10 +712,10 @@ const SelectPrepareDatasetOpts: FunctionComponent<
             <td>
               <input
                 type="text"
-                value={prepareDatasetOpts.output_electrical_series_name}
+                value={prepareEphysOpts.output_electrical_series_name}
                 onChange={(e) =>
-                  setPrepareDatasetOpts({
-                    ...prepareDatasetOpts,
+                  setPrepareEphysOpts({
+                    ...prepareEphysOpts,
                     output_electrical_series_name: e.target.value,
                   })
                 }
@@ -700,7 +754,7 @@ const IntListInput: FunctionComponent<IntListInputProps> = ({
   );
 };
 
-const intListToString = (v: number[]) => {
+export const intListToString = (v: number[]) => {
   const vSorted = v.slice().sort((a, b) => a - b);
   const runs: number[][] = [];
   let currentRun: number[] = [];

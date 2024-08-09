@@ -1,5 +1,5 @@
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
-import { Refresh } from "@mui/icons-material";
+import { Delete, OpenInNew, Refresh } from "@mui/icons-material";
 import {
   FunctionComponent,
   PropsWithChildren,
@@ -15,6 +15,7 @@ import {
   isFindJobsResponse,
 } from "../../../../pairio/types";
 import { timeAgoString } from "../../../../timeStrings";
+import { intListToString } from "../ElectricalSeriesItemView/SpikeSortingView/SpikeSortingView";
 
 export const useAllJobs = (o: {
   appName?: string;
@@ -232,8 +233,6 @@ export const getJobParameterValue = (
 };
 
 type AllJobsViewProps = {
-  expanded: boolean;
-  setExpanded: (expanded: boolean) => void;
   allJobs: PairioJob[] | undefined;
   refreshAllJobs: () => void;
   parameterNames: string[];
@@ -242,29 +241,22 @@ type AllJobsViewProps = {
 };
 
 export const AllJobsView: FunctionComponent<AllJobsViewProps> = ({
-  expanded,
-  setExpanded,
   allJobs,
   refreshAllJobs,
   parameterNames,
-  onJobClicked: jobClicked,
+  onJobClicked,
   selectedJobId,
 }) => {
   if (!allJobs) return <div></div>;
+  if (allJobs.length === 0) return <div>No jobs found</div>;
   return (
-    <Expandable
-      title={`View all jobs (${allJobs.length})`}
-      expanded={expanded}
-      setExpanded={setExpanded}
-    >
-      <AllJobsTable
-        allJobs={allJobs}
-        refreshAllJobs={refreshAllJobs}
-        parameterNames={parameterNames}
-        selectedJobId={selectedJobId}
-        onJobClicked={jobClicked}
-      />
-    </Expandable>
+    <AllJobsTable
+      allJobs={allJobs}
+      refreshAllJobs={refreshAllJobs}
+      parameterNames={parameterNames}
+      selectedJobId={selectedJobId}
+      onJobClicked={onJobClicked}
+    />
   );
 };
 
@@ -297,6 +289,7 @@ const AllJobsTable: FunctionComponent<AllJobsTableProps> = ({
               <th key={pn}>{pn}</th>
             ))}
             <th>Created</th>
+            {<th />}
           </tr>
         </thead>
         <tbody>
@@ -314,15 +307,45 @@ const AllJobsTable: FunctionComponent<AllJobsTableProps> = ({
               </td>
               <td>{job.status}</td>
               {parameterNames.map((pn) => (
-                <td key={pn}>{getJobParameter(job, pn)}</td>
+                <td key={pn}>{formatValue(getJobParameter(job, pn))}</td>
               ))}
               <td>{timeAgoString(job.timestampCreatedSec)}</td>
+              <td>
+                <SmallIconButton
+                  icon={<OpenInNew />}
+                  onClick={() => {
+                    window.open(
+                      `https://pairio.vercel.app/job/${job.jobId}`,
+                      "_blank",
+                    );
+                  }}
+                />
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
   );
+};
+
+const formatValue = (value: any) => {
+  if (value === undefined) return "";
+  if (value === null) return "null";
+  if (typeof value === "object") {
+    if (Array.isArray(value)) {
+      const isAllInts = value.every(
+        (v) => typeof v === "number" && v % 1 === 0,
+      );
+      if (isAllInts) {
+        return intListToString(value);
+      } else {
+        return value.join(", ");
+      }
+    }
+    return JSON.stringify(value);
+  }
+  return value;
 };
 
 const getJobParameter = (job: PairioJob, parameterName: string) => {

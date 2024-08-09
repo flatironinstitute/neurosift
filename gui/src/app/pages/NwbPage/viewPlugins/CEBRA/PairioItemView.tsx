@@ -145,8 +145,6 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
     }
   }, [selectedJob, adjustableParameterValuesDispatch, adjustableParameters]);
 
-  const [allJobsExpanded, setAllJobsExpanded] = useState(false);
-
   const [submittingNewJob, setSubmittingNewJob] = useState(false);
   const [definingNewJob, setDefiningNewJob] = useState(false);
   const newJobDefinition: PairioJobDefinition | undefined = useMemo(
@@ -244,7 +242,6 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
       }
       setDefiningNewJob(false);
       setSelectedJobId(rr.job.jobId);
-      setAllJobsExpanded(false);
       refreshAllJobs();
       refreshSelectedJob();
     } catch (err: any) {
@@ -369,8 +366,6 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
             )}
             {errorText && <div style={{ color: "red" }}>{errorText}</div>}
             <AllJobsView
-              expanded={allJobsExpanded}
-              setExpanded={setAllJobsExpanded}
               allJobs={allJobs || undefined}
               refreshAllJobs={refreshAllJobs}
               selectedJobId={selectedJobId}

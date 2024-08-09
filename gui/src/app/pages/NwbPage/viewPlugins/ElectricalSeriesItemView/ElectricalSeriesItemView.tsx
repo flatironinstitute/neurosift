@@ -79,9 +79,7 @@ const ElectricalSeriesItemView: FunctionComponent<Props> = ({
           condensed={false}
         />
       )}
-      {showDendroViews && (
-        <SpikeSortingView width={0} height={0} path={path} />
-      )}
+      {showDendroViews && <SpikeSortingView width={0} height={0} path={path} />}
       {showDendroViews && (
         <EphysPreprocessingView width={0} height={0} path={path} />
       )}
