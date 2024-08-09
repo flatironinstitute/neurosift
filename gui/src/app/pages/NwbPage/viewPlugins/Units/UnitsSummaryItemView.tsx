@@ -64,8 +64,8 @@ const getJobDefinition = (
         name: "input",
         fileBaseName: inputFileUrl.endsWith(".lindi.json")
           ? "input.lindi.json"
-          : inputFileUrl.endsWith(".lindi")
-            ? "input.lindi"
+          : inputFileUrl.endsWith(".lindi.tar")
+            ? "input.lindi.tar"
             : "input.nwb",
         url: inputFileUrl,
       },
@@ -73,7 +73,7 @@ const getJobDefinition = (
     outputFiles: [
       {
         name: "output",
-        fileBaseName: "units_summary.lindi",
+        fileBaseName: "units_summary.lindi.tar",
       },
     ],
     parameters: [

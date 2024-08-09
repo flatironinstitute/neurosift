@@ -146,8 +146,8 @@ const usePrepareEphysStep = (o: { path: string; nwbUrl: string }) => {
           name: "input",
           fileBaseName: nwbUrl.endsWith(".lindi.json")
             ? "input.lindi.json"
-            : nwbUrl.endsWith(".lindi")
-              ? "input.lindi"
+            : nwbUrl.endsWith(".lindi.tar")
+              ? "input.lindi.tar"
               : "input.nwb",
           url: nwbUrl,
         },
@@ -155,7 +155,7 @@ const usePrepareEphysStep = (o: { path: string; nwbUrl: string }) => {
       outputFiles: [
         {
           name: "output",
-          fileBaseName: "pre.nwb.lindi",
+          fileBaseName: "pre.nwb.lindi.tar",
         },
       ],
       parameters: prepareEphysJobParameters,
@@ -236,14 +236,14 @@ const useSpikeSortingStep = (prepareEphysJob?: PairioJob) => {
         inputFiles: [
           {
             name: "input",
-            fileBaseName: "input.nwb.lindi",
+            fileBaseName: "input.nwb.lindi.tar",
             url: inputFileUrl,
           },
         ],
         outputFiles: [
           {
             name: "output",
-            fileBaseName: "output.nwb.lindi",
+            fileBaseName: "output.nwb.lindi.tar",
           },
         ],
         parameters: [
@@ -349,14 +349,14 @@ const usePostProcessingStep = (spikeSortingJob?: PairioJob) => {
       inputFiles: [
         {
           name: "input",
-          fileBaseName: "input.nwb.lindi",
+          fileBaseName: "input.nwb.lindi.tar",
           url: inputFileUrl,
         },
       ],
       outputFiles: [
         {
           name: "output",
-          fileBaseName: "post.nwb.lindi",
+          fileBaseName: "post.nwb.lindi.tar",
         },
       ],
       parameters: [
@@ -713,7 +713,7 @@ const NeurosiftLink: FunctionComponent<NeurosiftLinkProps> = ({ url }) => {
   }
   if (!url) return <div>url is undefined</div>;
   let neurosiftUrl = `https://neurosift.app/?p=/nwb&url=${url}`;
-  if (url.endsWith(".lindi") || url.endsWith(".lindi.json")) {
+  if (url.endsWith(".lindi.tar") || url.endsWith(".lindi.json")) {
     neurosiftUrl += "&st=lindi";
   }
   if (route.dandisetId) {

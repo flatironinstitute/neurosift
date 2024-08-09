@@ -74,7 +74,7 @@ def view_nwb(file: str):
 
         # open the browser
         url = f"https://neurosift.app/?p=/nwb&url=http://localhost:{port}/files/{base_fname}{zarr_param}"
-        if file.endswith('.lindi') or file.endswith('.lindi.json'):
+        if file.endswith('.lindi') or file.endswith('.lindi.tar') or file.endswith('.lindi.json'):
             url = url + '&st=lindi'
         print(f'Opening {url}')
         webbrowser.open(url)
