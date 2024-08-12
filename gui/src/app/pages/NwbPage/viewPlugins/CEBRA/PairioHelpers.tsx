@@ -329,7 +329,7 @@ const AllJobsTable: FunctionComponent<AllJobsTableProps> = ({
   );
 };
 
-const formatValue = (value: any) => {
+export const formatValue = (value: any) => {
   if (value === undefined) return "";
   if (value === null) return "null";
   if (typeof value === "object") {

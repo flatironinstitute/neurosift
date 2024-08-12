@@ -21,6 +21,7 @@ import {
   MultipleChoiceStringSelector,
   SelectPairioApiKeyComponent,
   SelectPairioComputeClientIdComponent,
+  formatValue,
   getJobParameterValue,
   useAllJobs,
   useJob,
@@ -452,7 +453,7 @@ export const JobInfoView: FunctionComponent<JobInfoViewProps> = ({
           {parameterNames.map((name, index) => (
             <tr key={index}>
               <td>{name}:</td>
-              <td>{getJobParameterValue(job, name)}</td>
+              <td>{formatValue(getJobParameterValue(job, name))}</td>
             </tr>
           ))}
         </tbody>
