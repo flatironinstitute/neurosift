@@ -268,7 +268,11 @@ const usePostProcessingStep = (spikeSortingJob?: PairioJob) => {
     };
   }, [spikeSortingJob]);
 
-  if (!spikeSortingJob || spikeSortingJob.status !== "completed") {
+  useEffect(() => {
+    setPostProcessingJobId(undefined);
+  }, [spikeSortingJob]);
+
+  if (!spikeSortingJob) {
     return {
       selectPostProcessingOptsComponent: undefined,
       postProcessingJobId: undefined,
@@ -429,7 +433,6 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
         />
         {prepareEphysJobId &&
           prepareEphysJob &&
-          prepareEphysJob.status === "completed" &&
           prepareEphysOutputNwbUrl && (
             <>
               <h3>Step 2: Spike sorting</h3>
@@ -476,7 +479,6 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
           )}
         {spikeSortingJobId &&
           spikeSortingJob &&
-          spikeSortingJob.status === "completed" &&
           spikeSortingJobDefinition &&
           postProcessingRequiredResources && (
             <>

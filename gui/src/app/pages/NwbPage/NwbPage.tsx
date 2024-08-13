@@ -563,7 +563,10 @@ const getRedirectUrl = async (url: string, headers: any) => {
   // However, we run into mysterious cors problems
   // So instead, we do a HEAD request with no redirect option, and then look at the response.url
   const response = await headRequest(url, headers);
-  if (response.url) return response.url;
+  if (response.url) {
+    const redirectUrl = response.url;
+    return redirectUrl
+  }
 
   // if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
   //     return response.headers.get('Location')

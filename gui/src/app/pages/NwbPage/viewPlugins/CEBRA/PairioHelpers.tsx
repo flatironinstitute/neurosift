@@ -214,7 +214,6 @@ export const getJobOutputUrl = (
   outputName: string,
 ) => {
   if (!job) return undefined;
-  if (job.status !== "completed") return undefined;
   const oo = job.outputFileResults.find((r) => r.name === outputName);
   if (!oo) return undefined;
   return oo.url;

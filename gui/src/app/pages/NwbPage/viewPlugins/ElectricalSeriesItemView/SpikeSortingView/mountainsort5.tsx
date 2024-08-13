@@ -1,4 +1,4 @@
-import { FunctionComponent, useMemo, useState } from "react";
+import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import InputChoices from "./InputChoices";
 import { getJobOutputUrl, useJob } from "../../CEBRA/PairioHelpers";
 import { PairioJob, PairioJobDefinition, PairioJobRequiredResources } from "app/pairio/types";
@@ -97,7 +97,11 @@ export const useSpikeSortingMountainSort5Step = (prepareEphysJob?: PairioJob) =>
         prepareEphysOutputElectricalSeriesPath,
       ]);
 
-    if (!prepareEphysJob || prepareEphysJob.status !== "completed") {
+    useEffect(() => {
+      setSpikeSortingMountainSort5JobId(undefined);
+    }, [prepareEphysJob]);
+
+    if (!prepareEphysJob) {
       return {
         selectSpikeSortingMountainSort5OptsComponent: undefined,
         spikeSortingMountainSort5JobId: undefined,
