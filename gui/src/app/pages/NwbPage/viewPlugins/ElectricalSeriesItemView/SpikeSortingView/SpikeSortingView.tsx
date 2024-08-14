@@ -27,9 +27,9 @@ import {
 } from "../../CEBRA/PairioHelpers";
 import { JobInfoView } from "../../CEBRA/PairioItemView";
 import useTimeSeriesInfo from "../../TimeSeries/useTimeseriesInfo";
-import { spikeSortingMountainSort5ParameterNames, useSpikeSortingMountainSort5Step } from "./mountainsort5";
 import InputChoices from "./InputChoices";
 import { spikeSortingKilosort4ParameterNames, useSpikeSortingKilosort4Step } from "./kilosort4";
+import { spikeSortingMountainSort5ParameterNames, useSpikeSortingMountainSort5Step } from "./mountainsort5";
 
 type SpikeSortingViewProps = {
   width: number;
@@ -314,7 +314,7 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
 
   const { samplingRate } = useTimeSeriesInfo(nwbFile, path);
 
-  const [spikeSortingAlgorithm, setSpikeSortingAlgorithm] = useState<SpikeSortingAlgorithmChoices>('mountainsort5');
+  const [spikeSortingAlgorithm, setSpikeSortingAlgorithm] = useState<SpikeSortingAlgorithmChoices | undefined>(undefined);
 
   const {
     selectPrepareEphysOptsComponent,
@@ -363,8 +363,12 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
     spikeSortingJobDefinition = spikeSortingKilosort4JobDefinition;
   }
   else {
-    throw Error(`Unexpected spike sorting algorithm: ${spikeSortingAlgorithm}`);
+    //
   }
+
+  useEffect(() => {
+    setSpikeSortingAlgorithm(undefined);
+  }, [prepareEphysJobId])
 
   const prepareEphysOutputNwbUrl = useMemo(() => (
     getJobOutputUrl(prepareEphysJob, "output")
@@ -508,8 +512,8 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
 };
 
 type SelectSpikeSortingAlgorithmProps = {
-  value: SpikeSortingAlgorithmChoices;
-  setValue: (value: SpikeSortingAlgorithmChoices) => void;
+  value: SpikeSortingAlgorithmChoices | undefined;
+  setValue: (value: SpikeSortingAlgorithmChoices | undefined) => void;
 };
 
 const SelectSpikeSortingAlgorithmComponent: FunctionComponent<SelectSpikeSortingAlgorithmProps> = ({
@@ -519,16 +523,20 @@ const SelectSpikeSortingAlgorithmComponent: FunctionComponent<SelectSpikeSorting
   return (
     <div>
       Select spike sorting algorithm:&nbsp;
-      <select
-        value={value}
-        onChange={(e) => setValue(e.target.value as SpikeSortingAlgorithmChoices)}
-      >
-        {spikeSortingAlgorithmChoices.map((choice) => (
-          <option key={choice} value={choice}>
-            {choice}
-          </option>
-        ))}
-      </select>
+      <>
+        <input
+          type="radio"
+          onClick={() => setValue('mountainsort5')}
+          checked={value === 'mountainsort5'}
+        /> MountainSort 5
+      </>
+      <>
+        <input
+          type="radio"
+          onClick={() => setValue('kilosort4')}
+          checked={value === 'kilosort4'}
+        /> Kilosort 4
+      </>
     </div>
   );
 };

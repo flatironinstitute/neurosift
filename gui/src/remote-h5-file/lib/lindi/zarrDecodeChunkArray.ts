@@ -101,6 +101,15 @@ const zarrDecodeChunkArray = async (
         ret2.push(ret3.join(""));
       }
       ret = ret2;
+    } else if (dtype.startsWith("|S")) {
+      const fixedLength = parseInt(dtype.slice(2));
+      const nn = ret.byteLength / fixedLength;
+      const ret2 = [];
+      for (let i = 0; i < nn; i++) {
+        const ret1 = new Uint8Array(ret, i * fixedLength, fixedLength);
+        ret2.push(new TextDecoder().decode(ret1));
+      }
+      ret = ret2;
     } else {
       throw Error("Unhandled dtype " + dtype);
     }
