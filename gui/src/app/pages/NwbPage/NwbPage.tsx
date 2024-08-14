@@ -455,29 +455,26 @@ const computeTotalBytesFetched = () => {
 };
 
 export const headRequest = async (url: string, headers?: any) => {
-  // Cannot use HEAD, because it is not allowed by CORS on DANDI AWS bucket
-  // let headResponse
-  // try {
-  //     headResponse = await fetch(url, {method: 'HEAD'})
-  //     if (headResponse.status !== 200) {
-  //         return undefined
-  //     }
-  // }
-  // catch(err: any) {
-  //     console.warn(`Unable to HEAD ${url}: ${err.message}`)
-  //     return undefined
-  // }
-  // return headResponse
+  // // Cannot use HEAD, because it is not allowed by CORS on DANDI AWS bucket
+  let headResponse
+  try {
+      headResponse = await fetch(url, {method: 'HEAD', headers})
+      return headResponse
+  }
+  catch(err: any) {
+      console.warn(`Unable to HEAD ${url}: ${err.message}`)
+      throw err
+  }
 
-  // Instead, use aborted GET.
-  const controller = new AbortController();
-  const signal = controller.signal;
-  const response = await fetch(url, {
-    signal,
-    headers,
-  });
-  controller.abort();
-  return response;
+  // // Instead, use aborted GET.
+  // const controller = new AbortController();
+  // const signal = controller.signal;
+  // const response = await fetch(url, {
+  //   signal,
+  //   headers,
+  // });
+  // controller.abort();
+  // return response;
 };
 
 const etagCache: { [key: string]: string | undefined } = {};
@@ -558,21 +555,30 @@ const getResolvedUrls = async (
 };
 
 const getRedirectUrl = async (url: string, headers: any) => {
-  // This is tricky. Normally we would do a HEAD request with a redirect: 'manual' option.
-  // and then look at the Location response header.
-  // However, we run into mysterious cors problems
-  // So instead, we do a HEAD request with no redirect option, and then look at the response.url
-  const response = await headRequest(url, headers);
-  if (response.url) {
-    const redirectUrl = response.url;
-    return redirectUrl;
+  const response = await fetch(url, { method: "HEAD", headers, redirect: 'follow' });
+  const redirectUrl = response.headers.get('Location') || response.url;
+  if (!redirectUrl) {
+    console.warn(`No redirect for ${url}`);
+    return null;
   }
+  return redirectUrl;
 
-  // if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
-  //     return response.headers.get('Location')
+
+  // // This is tricky. Normally we would do a HEAD request with a redirect: 'manual' option.
+  // // and then look at the Location response header.
+  // // However, we run into mysterious cors problems
+  // // So instead, we do a HEAD request with no redirect option, and then look at the response.url
+  // const response = await headRequest(url, headers);
+  // if (response.url) {
+  //   const redirectUrl = response.url;
+  //   return redirectUrl;
   // }
 
-  return null; // No redirect
+  // // if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
+  // //     return response.headers.get('Location')
+  // // }
+
+  // return null; // No redirect
 };
 
 const isDandiAssetUrl = (url: string) => {
