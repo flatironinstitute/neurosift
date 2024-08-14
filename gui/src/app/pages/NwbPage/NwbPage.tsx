@@ -565,7 +565,7 @@ const getRedirectUrl = async (url: string, headers: any) => {
   const response = await headRequest(url, headers);
   if (response.url) {
     const redirectUrl = response.url;
-    return redirectUrl
+    return redirectUrl;
   }
 
   // if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {

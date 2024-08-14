@@ -28,8 +28,14 @@ import {
 import { JobInfoView } from "../../CEBRA/PairioItemView";
 import useTimeSeriesInfo from "../../TimeSeries/useTimeseriesInfo";
 import InputChoices from "./InputChoices";
-import { spikeSortingKilosort4ParameterNames, useSpikeSortingKilosort4Step } from "./kilosort4";
-import { spikeSortingMountainSort5ParameterNames, useSpikeSortingMountainSort5Step } from "./mountainsort5";
+import {
+  spikeSortingKilosort4ParameterNames,
+  useSpikeSortingKilosort4Step,
+} from "./kilosort4";
+import {
+  spikeSortingMountainSort5ParameterNames,
+  useSpikeSortingMountainSort5Step,
+} from "./mountainsort5";
 
 type SpikeSortingViewProps = {
   width: number;
@@ -40,21 +46,11 @@ type SpikeSortingViewProps = {
 const serviceName = "hello_world_service";
 const title = "Spike Sorting (under construction - do not use!)";
 const tagsPrepareEphys = ["neurosift", "spike_sorting", "prepare_ephys"];
-const tagsSpikeSorting = [
-  "neurosift",
-  "spike_sorting",
-  "spike_sort"
-];
+const tagsSpikeSorting = ["neurosift", "spike_sorting", "spike_sort"];
 
-const tagsSpikeSortingMountainSort5 = [
-  ...tagsSpikeSorting,
-  "mountainsort5",
-];
+const tagsSpikeSortingMountainSort5 = [...tagsSpikeSorting, "mountainsort5"];
 
-const tagsSpikeSortingKilosort4 = [
-  ...tagsSpikeSorting,
-  "kilosort4",
-];
+const tagsSpikeSortingKilosort4 = [...tagsSpikeSorting, "kilosort4"];
 
 type PrepareEphysOpts = {
   duration_sec: number; // 0 means full duration
@@ -190,17 +186,11 @@ const defaultPostProcessingOpts: PostProcessingOpts = {
   // none
 };
 
-const tagsPostProcessing = [
-  "neurosift",
-  "spike_sorting",
-  "post_processing",
-];
+const tagsPostProcessing = ["neurosift", "spike_sorting", "post_processing"];
 
 const usePostProcessingStep = (spikeSortingJob?: PairioJob) => {
   const [postProcessingOpts, setPostProcessingOpts] =
-    useState<PostProcessingOpts>(
-      defaultPostProcessingOpts,
-    );
+    useState<PostProcessingOpts>(defaultPostProcessingOpts);
 
   const selectPostProcessingOptsComponent = (
     <SelectPostProcessingOpts
@@ -209,12 +199,11 @@ const usePostProcessingStep = (spikeSortingJob?: PairioJob) => {
     />
   );
 
-  const [postProcessingJobId, setPostProcessingJobId] =
-    useState<string | undefined>(undefined);
-  const {
-    job: postProcessingJob,
-    refreshJob: refreshPostProcessingJob,
-  } = useJob(postProcessingJobId);
+  const [postProcessingJobId, setPostProcessingJobId] = useState<
+    string | undefined
+  >(undefined);
+  const { job: postProcessingJob, refreshJob: refreshPostProcessingJob } =
+    useJob(postProcessingJobId);
 
   const postProcessingRequiredResources: PairioJobRequiredResources =
     useMemo(() => {
@@ -226,47 +215,48 @@ const usePostProcessingStep = (spikeSortingJob?: PairioJob) => {
       };
     }, []);
 
-  const postProcessingJobDefinition:
-    | PairioJobDefinition
-    | undefined = useMemo(() => {
-    if (!spikeSortingJob) {
-      return undefined;
-    }
-    const inputFileUrl = getJobOutputUrl(spikeSortingJob, "output");
-    if (!inputFileUrl) {
-      return undefined;
-    }
-    return {
-      appName: "hello_neurosift",
-      processorName: "spike_sorting_post_processing",
-      inputFiles: [
-        {
-          name: "input",
-          fileBaseName: "input.nwb.lindi.tar",
-          url: inputFileUrl,
-        },
-      ],
-      outputFiles: [
-        {
-          name: "output",
-          fileBaseName: "post.nwb.lindi.tar",
-        },
-      ],
-      parameters: [
-        {
-          name: "electrical_series_path",
-          value: getInputParameterValue(
-            spikeSortingJob,
-            "electrical_series_path",
-          ),
-        },
-        {
-          name: "units_path",
-          value: 'processing/ecephys/' + getInputParameterValue(spikeSortingJob, "output_units_name"),
-        },
-      ],
-    };
-  }, [spikeSortingJob]);
+  const postProcessingJobDefinition: PairioJobDefinition | undefined =
+    useMemo(() => {
+      if (!spikeSortingJob) {
+        return undefined;
+      }
+      const inputFileUrl = getJobOutputUrl(spikeSortingJob, "output");
+      if (!inputFileUrl) {
+        return undefined;
+      }
+      return {
+        appName: "hello_neurosift",
+        processorName: "spike_sorting_post_processing",
+        inputFiles: [
+          {
+            name: "input",
+            fileBaseName: "input.nwb.lindi.tar",
+            url: inputFileUrl,
+          },
+        ],
+        outputFiles: [
+          {
+            name: "output",
+            fileBaseName: "post.nwb.lindi.tar",
+          },
+        ],
+        parameters: [
+          {
+            name: "electrical_series_path",
+            value: getInputParameterValue(
+              spikeSortingJob,
+              "electrical_series_path",
+            ),
+          },
+          {
+            name: "units_path",
+            value:
+              "processing/ecephys/" +
+              getInputParameterValue(spikeSortingJob, "output_units_name"),
+          },
+        ],
+      };
+    }, [spikeSortingJob]);
 
   useEffect(() => {
     setPostProcessingJobId(undefined);
@@ -295,9 +285,12 @@ const usePostProcessingStep = (spikeSortingJob?: PairioJob) => {
   };
 };
 
-type SpikeSortingAlgorithmChoices = 'mountainsort5' | 'kilosort4';
+type SpikeSortingAlgorithmChoices = "mountainsort5" | "kilosort4";
 
-const spikeSortingAlgorithmChoices: SpikeSortingAlgorithmChoices[] = ['mountainsort5', 'kilosort4'];
+const spikeSortingAlgorithmChoices: SpikeSortingAlgorithmChoices[] = [
+  "mountainsort5",
+  "kilosort4",
+];
 
 const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
   width,
@@ -314,7 +307,9 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
 
   const { samplingRate } = useTimeSeriesInfo(nwbFile, path);
 
-  const [spikeSortingAlgorithm, setSpikeSortingAlgorithm] = useState<SpikeSortingAlgorithmChoices | undefined>(undefined);
+  const [spikeSortingAlgorithm, setSpikeSortingAlgorithm] = useState<
+    SpikeSortingAlgorithmChoices | undefined
+  >(undefined);
 
   const {
     selectPrepareEphysOptsComponent,
@@ -350,29 +345,29 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
   let spikeSortingJob: PairioJob | undefined;
   let selectSpikeSortingOptsComponent: any;
   let spikeSortingJobDefinition: PairioJobDefinition | undefined;
-  if (spikeSortingAlgorithm === 'mountainsort5') {
+  if (spikeSortingAlgorithm === "mountainsort5") {
     spikeSortingJobId = spikeSortingMountainSort5JobId;
     spikeSortingJob = spikeSortingMountainSort5Job;
-    selectSpikeSortingOptsComponent = selectSpikeSortingMountainSort5OptsComponent;
+    selectSpikeSortingOptsComponent =
+      selectSpikeSortingMountainSort5OptsComponent;
     spikeSortingJobDefinition = spikeSortingMountainSort5JobDefinition;
-  }
-  else if (spikeSortingAlgorithm === 'kilosort4') {
+  } else if (spikeSortingAlgorithm === "kilosort4") {
     spikeSortingJobId = spikeSortingKilosort4JobId;
     spikeSortingJob = spikeSortingKilosort4Job;
     selectSpikeSortingOptsComponent = selectSpikeSortingKilosort4OptsComponent;
     spikeSortingJobDefinition = spikeSortingKilosort4JobDefinition;
-  }
-  else {
+  } else {
     //
   }
 
   useEffect(() => {
     setSpikeSortingAlgorithm(undefined);
-  }, [prepareEphysJobId])
+  }, [prepareEphysJobId]);
 
-  const prepareEphysOutputNwbUrl = useMemo(() => (
-    getJobOutputUrl(prepareEphysJob, "output")
-  ), [prepareEphysJob]);
+  const prepareEphysOutputNwbUrl = useMemo(
+    () => getJobOutputUrl(prepareEphysJob, "output"),
+    [prepareEphysJob],
+  );
 
   const {
     selectPostProcessingOptsComponent,
@@ -435,52 +430,54 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
           jobDefinition={prepareEphysJobDefinition}
           jobDependencies={prepareEphysJobDependencies}
         />
-        {prepareEphysJobId &&
-          prepareEphysJob &&
-          prepareEphysOutputNwbUrl && (
-            <>
-              <h3>Step 2: Spike sorting</h3>
-              <SelectSpikeSortingAlgorithmComponent
-                value={spikeSortingAlgorithm}
-                setValue={setSpikeSortingAlgorithm}
+        {prepareEphysJobId && prepareEphysJob && prepareEphysOutputNwbUrl && (
+          <>
+            <h3>Step 2: Spike sorting</h3>
+            <SelectSpikeSortingAlgorithmComponent
+              value={spikeSortingAlgorithm}
+              setValue={setSpikeSortingAlgorithm}
+            />
+            {spikeSortingAlgorithm === "mountainsort5" ? (
+              <Step
+                appName="hello_neurosift"
+                processorName="mountainsort5"
+                tags={tagsSpikeSortingMountainSort5}
+                inputFileUrl={prepareEphysOutputNwbUrl}
+                requiredResources={spikeSortingMountainSort5RequiredResources}
+                jobId={spikeSortingMountainSort5JobId}
+                setJobId={setSpikeSortingMountainSort5JobId}
+                job={spikeSortingMountainSort5Job}
+                refreshJob={refreshSpikeSortingMountainSort5Job}
+                selectOptsComponent={
+                  selectSpikeSortingMountainSort5OptsComponent
+                }
+                parameterNames={spikeSortingMountainSort5ParameterNames}
+                jobDefinition={spikeSortingMountainSort5JobDefinition}
+                jobDependencies={spikeSortingJobDependencies}
               />
-              {spikeSortingAlgorithm === 'mountainsort5' ? (
-                <Step
-                  appName="hello_neurosift"
-                  processorName="mountainsort5"
-                  tags={tagsSpikeSortingMountainSort5}
-                  inputFileUrl={prepareEphysOutputNwbUrl}
-                  requiredResources={spikeSortingMountainSort5RequiredResources}
-                  jobId={spikeSortingMountainSort5JobId}
-                  setJobId={setSpikeSortingMountainSort5JobId}
-                  job={spikeSortingMountainSort5Job}
-                  refreshJob={refreshSpikeSortingMountainSort5Job}
-                  selectOptsComponent={selectSpikeSortingMountainSort5OptsComponent}
-                  parameterNames={spikeSortingMountainSort5ParameterNames}
-                  jobDefinition={spikeSortingMountainSort5JobDefinition}
-                  jobDependencies={spikeSortingJobDependencies}
-                />
-              ) : spikeSortingAlgorithm === 'kilosort4' ? (
-                <Step
-                  appName="hello_kilosort4"
-                  processorName="kilosort4"
-                  tags={tagsSpikeSortingKilosort4}
-                  inputFileUrl={prepareEphysOutputNwbUrl}
-                  requiredResources={spikeSortingKilosort4RequiredResources}
-                  jobId={spikeSortingKilosort4JobId}
-                  setJobId={setSpikeSortingKilosort4JobId}
-                  job={spikeSortingKilosort4Job}
-                  refreshJob={refreshSpikeSortingKilosort4Job}
-                  selectOptsComponent={selectSpikeSortingKilosort4OptsComponent}
-                  parameterNames={spikeSortingKilosort4ParameterNames}
-                  jobDefinition={spikeSortingKilosort4JobDefinition}
-                  jobDependencies={spikeSortingJobDependencies}
-                />
-              ) : (
-                <div>Unexpected spike sorting algorithm: {spikeSortingAlgorithm}</div>
-              )}
-            </>
-          )}
+            ) : spikeSortingAlgorithm === "kilosort4" ? (
+              <Step
+                appName="hello_kilosort4"
+                processorName="kilosort4"
+                tags={tagsSpikeSortingKilosort4}
+                inputFileUrl={prepareEphysOutputNwbUrl}
+                requiredResources={spikeSortingKilosort4RequiredResources}
+                jobId={spikeSortingKilosort4JobId}
+                setJobId={setSpikeSortingKilosort4JobId}
+                job={spikeSortingKilosort4Job}
+                refreshJob={refreshSpikeSortingKilosort4Job}
+                selectOptsComponent={selectSpikeSortingKilosort4OptsComponent}
+                parameterNames={spikeSortingKilosort4ParameterNames}
+                jobDefinition={spikeSortingKilosort4JobDefinition}
+                jobDependencies={spikeSortingJobDependencies}
+              />
+            ) : (
+              <div>
+                Unexpected spike sorting algorithm: {spikeSortingAlgorithm}
+              </div>
+            )}
+          </>
+        )}
         {spikeSortingJobId &&
           spikeSortingJob &&
           spikeSortingJobDefinition &&
@@ -497,9 +494,7 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
                 setJobId={setPostProcessingJobId}
                 job={postProcessingJob}
                 refreshJob={refreshPostProcessingJob}
-                selectOptsComponent={
-                  selectPostProcessingOptsComponent
-                }
+                selectOptsComponent={selectPostProcessingOptsComponent}
                 parameterNames={[]}
                 jobDefinition={postProcessingJobDefinition}
                 jobDependencies={postProcessingJobDependencies}
@@ -516,26 +511,27 @@ type SelectSpikeSortingAlgorithmProps = {
   setValue: (value: SpikeSortingAlgorithmChoices | undefined) => void;
 };
 
-const SelectSpikeSortingAlgorithmComponent: FunctionComponent<SelectSpikeSortingAlgorithmProps> = ({
-  value,
-  setValue,
-}) => {
+const SelectSpikeSortingAlgorithmComponent: FunctionComponent<
+  SelectSpikeSortingAlgorithmProps
+> = ({ value, setValue }) => {
   return (
     <div>
       Select spike sorting algorithm:&nbsp;
       <>
         <input
           type="radio"
-          onClick={() => setValue('mountainsort5')}
-          checked={value === 'mountainsort5'}
-        /> MountainSort 5
+          onClick={() => setValue("mountainsort5")}
+          checked={value === "mountainsort5"}
+        />{" "}
+        MountainSort 5
       </>
       <>
         <input
           type="radio"
-          onClick={() => setValue('kilosort4')}
-          checked={value === 'kilosort4'}
-        /> Kilosort 4
+          onClick={() => setValue("kilosort4")}
+          checked={value === "kilosort4"}
+        />{" "}
+        Kilosort 4
       </>
     </div>
   );
@@ -570,7 +566,7 @@ const Step: FunctionComponent<StepProps> = ({
   selectOptsComponent: selectParametersComponent,
   parameterNames,
   jobDefinition,
-  jobDependencies
+  jobDependencies,
 }) => {
   const nwbFile = useNwbFile();
   if (!nwbFile)
@@ -651,7 +647,7 @@ const Step: FunctionComponent<StepProps> = ({
     requiredResources,
     jobDefinition,
     tags,
-    jobDependencies
+    jobDependencies,
   ]);
 
   useEffect(() => {
@@ -931,9 +927,7 @@ const stringToIntList = (s: string) => {
 
 type SelectPostProcessingOptsProps = {
   postProcessingOpts: PostProcessingOpts;
-  setPostProcessingOpts: (
-    opts: PostProcessingOpts,
-  ) => void;
+  setPostProcessingOpts: (opts: PostProcessingOpts) => void;
 };
 
 const SelectPostProcessingOpts: FunctionComponent<
