@@ -13,6 +13,17 @@ type ElectrodeGeometryWidgetProps = {
   electrodeRegions?: string[];
   colors?: string[];
   deadElectrodeIndices?: number[];
+  range?: {
+    xMin: number;
+    xMax: number;
+    yMin: number;
+    yMax: number;
+  };
+  units?: {
+    unitId: number | string;
+    x: number;
+    y: number;
+  }[];
 };
 
 export type ElectrodeLocation = {
@@ -29,10 +40,19 @@ const ElectrodeGeometryWidget: FunctionComponent<
   electrodeRegions,
   colors,
   deadElectrodeIndices,
+  range,
+  units
 }) => {
   const [hoveredElectrodeIndex, setHoveredElectrodeIndex] = useState<
     number | undefined
   >(undefined);
+
+  const doTranspose = useMemo(() => {
+    const { xmin, xmax, ymin, ymax } = getBounds(electrodeLocations);
+    const xspan = xmax - xmin;
+    const yspan = ymax - ymin;
+    return shouldTranspose(xspan, yspan, width, height);
+  }, [electrodeLocations, width, height]);
 
   const outlineColors = useMemo(() => {
     if (!electrodeRegions) return undefined;
@@ -47,17 +67,31 @@ const ElectrodeGeometryWidget: FunctionComponent<
   }, [electrodeRegions]);
 
   const locations2: ElectrodeLocation[] = useMemo(() => {
-    const { xmin, xmax, ymin, ymax } = getBounds(electrodeLocations);
-    const xspan = xmax - xmin;
-    const yspan = ymax - ymin;
-    const doTranspose = shouldTranspose(xspan, yspan, width, height);
     if (!doTranspose) return electrodeLocations;
     else return electrodeLocations.map((loc) => ({ x: loc.y, y: loc.x }));
-  }, [electrodeLocations, width, height]);
+  }, [doTranspose, electrodeLocations]);
+
+  const units2 = useMemo(() => {
+    if (!units) return undefined;
+    return units.map((unit) => {
+      if (!doTranspose) return unit;
+      else return { ...unit, x: unit.y, y: unit.x };
+    });
+  } , [doTranspose, units]);
 
   const { xmin, xmax, ymin, ymax } = useMemo(() => {
-    return getBounds(locations2);
-  }, [locations2]);
+    if (range) {
+      if (doTranspose) {
+        return { xmin: range.yMin, xmax: range.yMax, ymin: range.xMin, ymax: range.xMax };
+      }
+      else {
+        return { xmin: range.xMin, xmax: range.xMax, ymin: range.yMin, ymax: range.yMax };
+      }
+    }
+    else {
+      return getBounds(locations2);
+    }
+  }, [range, locations2, doTranspose]);
 
   const scaleBarHeight = 30;
   const { isotropicScale, xPixelOffset, yPixelOffset, markerPixelRadius } =
@@ -125,6 +159,9 @@ const ElectrodeGeometryWidget: FunctionComponent<
     ctx.lineWidth = 1;
     for (let i = 0; i < locations2.length; i++) {
       const loc = locations2[i];
+      if ((loc.x < xmin) || (loc.x > xmax) || (loc.y < ymin) || (loc.y > ymax)) {
+        continue;
+      }
       const { xp, yp } = coordToPixel(loc.x, loc.y);
       if (outlineColors) {
         ctx.strokeStyle = outlineColors[i];
@@ -169,6 +206,19 @@ const ElectrodeGeometryWidget: FunctionComponent<
         ctx.lineWidth = 1;
       }
     }
+    if (units2) {
+      for (let i = 0; i < units2.length; i++) {
+        const unit = units2[i];
+        const { xp, yp } = coordToPixel(unit.x, unit.y);
+        ctx.strokeStyle = "lightgreen";
+        ctx.fillStyle = "darkgreen";
+        ctx.beginPath();
+        const rad = 4;
+        ctx.arc(xp, yp, rad, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
     ctx.strokeStyle = "black";
     ctx.fillStyle = "black";
     function drawScaleBar() {
@@ -209,12 +259,14 @@ const ElectrodeGeometryWidget: FunctionComponent<
     hoveredElectrodeIndex,
     isotropicScale,
     coordToPixel,
+    ymin,
     ymax,
     colors,
     outlineColors,
     xmax,
     xmin,
     deadElectrodeIndices,
+    units2,
   ]);
 
   const handleMouseMove = useCallback(

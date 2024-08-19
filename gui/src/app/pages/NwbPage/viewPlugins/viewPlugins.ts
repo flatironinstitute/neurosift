@@ -31,6 +31,7 @@ import {
   getCustomPythonCodeForUnits,
 } from "./customPythonCode";
 import TimeSeriesLeftPanelComponent from "./TimeSeries/TimeSeriesLeftPanelComponent";
+import UnitLocationsUnitsItemView from "./Units/UnitLocationsUnitsItemView";
 
 type Props = {
   width: number;
@@ -290,6 +291,7 @@ viewPlugins.push({
     "https://neurosift.app/?p=/nwb&dandisetId=000939&dandisetVersion=0.240327.2229&url=https://api.dandiarchive.org/api/assets/56d875d6-a705-48d3-944c-53394a389c85/download/&tab=view:AverageWaveforms%7C/units",
   ],
 });
+// Autocorrelograms
 viewPlugins.push({
   name: "Autocorrelograms",
   neurodataType: "Units",
@@ -318,6 +320,24 @@ viewPlugins.push({
   //   "https://neurosift.app/?p=/nwb&dandisetId=213569&dandisetVersion=draft&staging=1&url=https://api-staging.dandiarchive.org/api/assets/9b372ad4-a3f8-4d95-bda7-dc56637c8873/download/&st=lindi&tab=view:Autocorrelograms|/units",
   // ],
 });
+// Unit locations
+viewPlugins.push({
+  name: 'UnitLocations',
+  neurodataType: 'Units',
+  defaultForNeurodataType: false,
+  buttonLabel: 'unit locations',
+  component: UnitLocationsUnitsItemView,
+  isTimeView: false,
+  getCustomPythonCode: getCustomPythonCodeForUnits,
+  checkEnabled: async (nwbFile: RemoteH5FileX, path: string) => {
+    const x = await nwbFile.getGroup(path);
+    if (!x) return false;
+    const dx_x = x.datasets.find(ds => ds.name === 'x');
+    const dx_y = x.datasets.find(ds => ds.name === 'y');
+    return !!dx_x && !!dx_y;
+  }
+});
+// UnitsSummary
 viewPlugins.push({
   name: "UnitsSummary",
   neurodataType: "Units",

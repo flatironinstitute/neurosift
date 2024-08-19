@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect, useState } from "react";
+import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import {
   ElectrodeGeometryWidget,
   ElectrodeLocation,
@@ -9,9 +9,23 @@ type ElectrodeGeometryViewProps = {
   width: number;
   height: number;
   nwbFile: RemoteH5FileX;
-  electricalSeriesPath: string;
+  electricalSeriesPath?: string;
   colors?: string[];
   deadElectrodeIndices?: number[];
+  range?: {
+    xMin: number;
+    xMax: number;
+    yMin: number;
+    yMax: number;
+    zMin: number;
+    zMax: number;
+  }
+  units?: {
+    unitId: number | string;
+    x: number;
+    y: number;
+    z: number;
+  }[];
 };
 
 const ElectrodeGeometryView: FunctionComponent<ElectrodeGeometryViewProps> = ({
@@ -21,7 +35,10 @@ const ElectrodeGeometryView: FunctionComponent<ElectrodeGeometryViewProps> = ({
   electricalSeriesPath,
   colors,
   deadElectrodeIndices,
+  range,
+  units
 }) => {
+  const [usingZ, setUsingZ] = useState<boolean>(false);
   const [electrodeLocations, setElectrodeLocations] = useState<
     ElectrodeLocation[] | undefined
   >(undefined);
@@ -29,22 +46,25 @@ const ElectrodeGeometryView: FunctionComponent<ElectrodeGeometryViewProps> = ({
   useEffect(() => {
     (async () => {
       setElectrodeLocations(undefined);
-      const esGrp = await nwbFile.getGroup(electricalSeriesPath);
-      if (!esGrp) {
-        console.error(`Unable to load group: ${electricalSeriesPath}`);
-        return;
-      }
-      const esElectrodeIndices = await nwbFile.getDatasetData(
-        `${electricalSeriesPath}/electrodes`,
-        {},
-      );
-      if (!esElectrodeIndices) {
-        console.error(
-          `Unable to load dataset: ${electricalSeriesPath}/electrodes`,
+      let electrodeIndices: number[] | undefined
+      if (electricalSeriesPath) {
+        const esGrp = await nwbFile.getGroup(electricalSeriesPath);
+        if (!esGrp) {
+          console.error(`Unable to load group: ${electricalSeriesPath}`);
+          return;
+        }
+        const esElectrodeIndices = await nwbFile.getDatasetData(
+          `${electricalSeriesPath}/electrodes`,
+          {},
         );
-        return;
+        if (!esElectrodeIndices) {
+          console.error(
+            `Unable to load dataset: ${electricalSeriesPath}/electrodes`,
+          );
+          return;
+        }
+        electrodeIndices = Array.from(esElectrodeIndices);
       }
-      const electrodeIndices = Array.from(esElectrodeIndices);
       const grp = await nwbFile.getGroup(
         "/general/extracellular_ephys/electrodes",
       );
@@ -101,13 +121,27 @@ const ElectrodeGeometryView: FunctionComponent<ElectrodeGeometryViewProps> = ({
       ) {
         console.info("Using z instead of y");
         y = z;
+        setUsingZ(true);
+      }
+      else {
+        setUsingZ(false);
       }
       const locations: ElectrodeLocation[] = [];
-      for (let i = 0; i < electrodeIndices.length; i++) {
-        locations.push({
-          x: x[electrodeIndices[i]],
-          y: y[electrodeIndices[i]],
-        });
+      if (electrodeIndices) {
+        for (let i = 0; i < electrodeIndices.length; i++) {
+          locations.push({
+            x: x[electrodeIndices[i]],
+            y: y[electrodeIndices[i]],
+          });
+        }
+      }
+      else {
+        for (let i = 0; i < x.length; i++) {
+          locations.push({
+            x: x[i],
+            y: y[i],
+          });
+        }
       }
       setElectrodeLocations(locations);
       // const xx = await nwbFile.getDatasetData('/general/extracellular_ephys/electrodes/location', {})
@@ -119,6 +153,42 @@ const ElectrodeGeometryView: FunctionComponent<ElectrodeGeometryViewProps> = ({
       // }
     })();
   }, [nwbFile, electricalSeriesPath]);
+  const range2 = useMemo(() => {
+    if (!range) return undefined;
+    if (usingZ) {
+      return {
+        xMin: range.xMin,
+        xMax: range.xMax,
+        yMin: range.zMin,
+        yMax: range.zMax,
+      }
+    }
+    else {
+      return {
+        xMin: range.xMin,
+        xMax: range.xMax,
+        yMin: range.yMin,
+        yMax: range.yMax,
+      }
+    }
+  }, [range, usingZ]);
+  const units2 = useMemo(() => {
+    if (!units) return undefined;
+    if (usingZ) {
+      return units.map(u => ({
+        unitId: u.unitId,
+        x: u.x,
+        y: u.z,
+      }));
+    }
+    else {
+      return units.map(u => ({
+        unitId: u.unitId,
+        x: u.x,
+        y: u.y,
+      }));
+    }
+  }, [units, usingZ]);
   if (!electrodeLocations) return <div />;
   return (
     <ElectrodeGeometryWidget
@@ -128,6 +198,8 @@ const ElectrodeGeometryView: FunctionComponent<ElectrodeGeometryViewProps> = ({
       // electrodeRegions={electrodeRegions}
       colors={colors}
       deadElectrodeIndices={deadElectrodeIndices}
+      range={range2}
+      units={units2}
     />
   );
 };
