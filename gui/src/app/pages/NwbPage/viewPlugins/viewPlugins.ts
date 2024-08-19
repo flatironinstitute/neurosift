@@ -322,20 +322,20 @@ viewPlugins.push({
 });
 // Unit locations
 viewPlugins.push({
-  name: 'UnitLocations',
-  neurodataType: 'Units',
+  name: "UnitLocations",
+  neurodataType: "Units",
   defaultForNeurodataType: false,
-  buttonLabel: 'unit locations',
+  buttonLabel: "unit locations",
   component: UnitLocationsUnitsItemView,
   isTimeView: false,
   getCustomPythonCode: getCustomPythonCodeForUnits,
   checkEnabled: async (nwbFile: RemoteH5FileX, path: string) => {
     const x = await nwbFile.getGroup(path);
     if (!x) return false;
-    const dx_x = x.datasets.find(ds => ds.name === 'x');
-    const dx_y = x.datasets.find(ds => ds.name === 'y');
+    const dx_x = x.datasets.find((ds) => ds.name === "x");
+    const dx_y = x.datasets.find((ds) => ds.name === "y");
     return !!dx_x && !!dx_y;
-  }
+  },
 });
 // UnitsSummary
 viewPlugins.push({

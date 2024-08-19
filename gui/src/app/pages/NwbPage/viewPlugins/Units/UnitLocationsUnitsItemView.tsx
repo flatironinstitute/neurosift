@@ -17,8 +17,8 @@ type UnitLocationsViewData = {
     x: number;
     y: number;
     z: number;
-  }[]
-}
+  }[];
+};
 
 const UnitLocationsUnitsItemView: FunctionComponent<Props> = ({
   width,
@@ -81,12 +81,14 @@ const UnitLocationsUnitsItemView: FunctionComponent<Props> = ({
       const zDs = await nwbFile.getDataset(`${path}/z`);
       const zData = zDs ? await nwbFile.getDatasetData(`${path}/z`, {}) : null;
       const viewData = {
-        units: Array.from(unitIds).map((unitId: number | string, i: number) => ({
-          unitId,
-          x: xData[i],
-          y: yData[i],
-          z: zData ? zData[i] : 0,
-        })),
+        units: Array.from(unitIds).map(
+          (unitId: number | string, i: number) => ({
+            unitId,
+            x: xData[i],
+            y: yData[i],
+            z: zData ? zData[i] : 0,
+          }),
+        ),
       };
       setData(viewData);
     };
@@ -113,7 +115,7 @@ type UnitLocationsViewProps = {
 const UnitLocationsView: FunctionComponent<UnitLocationsViewProps> = ({
   data,
   width,
-  height
+  height,
 }) => {
   const nwbFile = useNwbFile();
   const { xMin, xMax, yMin, yMax, zMin, zMax } = useMemo(() => {
@@ -140,7 +142,7 @@ const UnitLocationsView: FunctionComponent<UnitLocationsViewProps> = ({
       yMin,
       yMax,
       zMin,
-      zMax
+      zMax,
     };
   }, [xMax, xMin, yMax, yMin, zMax, zMin]);
   return (
@@ -152,7 +154,7 @@ const UnitLocationsView: FunctionComponent<UnitLocationsViewProps> = ({
       range={range}
       units={data.units}
     />
-  )
-}
+  );
+};
 
 export default UnitLocationsUnitsItemView;

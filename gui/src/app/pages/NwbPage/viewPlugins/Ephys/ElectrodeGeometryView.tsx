@@ -19,7 +19,7 @@ type ElectrodeGeometryViewProps = {
     yMax: number;
     zMin: number;
     zMax: number;
-  }
+  };
   units?: {
     unitId: number | string;
     x: number;
@@ -38,7 +38,7 @@ const ElectrodeGeometryView: FunctionComponent<ElectrodeGeometryViewProps> = ({
   deadElectrodeIndices,
   range,
   units,
-  visibleElectrodeIndices
+  visibleElectrodeIndices,
 }) => {
   const [usingZ, setUsingZ] = useState<boolean>(false);
   const [electrodeLocations, setElectrodeLocations] = useState<
@@ -48,7 +48,7 @@ const ElectrodeGeometryView: FunctionComponent<ElectrodeGeometryViewProps> = ({
   useEffect(() => {
     (async () => {
       setElectrodeLocations(undefined);
-      let electrodeIndices: number[] | undefined
+      let electrodeIndices: number[] | undefined;
       if (electricalSeriesPath) {
         const esGrp = await nwbFile.getGroup(electricalSeriesPath);
         if (!esGrp) {
@@ -115,7 +115,7 @@ const ElectrodeGeometryView: FunctionComponent<ElectrodeGeometryViewProps> = ({
         return;
       }
       const z = await nwbFile.getDatasetData(zDatasetPath, {});
-      const indsInRange: number[] = []
+      const indsInRange: number[] = [];
       if (range) {
         for (let i = 0; i < x.length; i++) {
           let ok = true;
@@ -129,8 +129,7 @@ const ElectrodeGeometryView: FunctionComponent<ElectrodeGeometryViewProps> = ({
             indsInRange.push(i);
           }
         }
-      }
-      else {
+      } else {
         for (let i = 0; i < x.length; i++) {
           indsInRange.push(i);
         }
@@ -144,8 +143,7 @@ const ElectrodeGeometryView: FunctionComponent<ElectrodeGeometryViewProps> = ({
         console.info("Using z instead of y");
         y = z;
         setUsingZ(true);
-      }
-      else {
+      } else {
         setUsingZ(false);
       }
       const locations: ElectrodeLocation[] = [];
@@ -163,8 +161,7 @@ const ElectrodeGeometryView: FunctionComponent<ElectrodeGeometryViewProps> = ({
             y: y[electrodeIndices[i]],
           });
         }
-      }
-      else {
+      } else {
         for (let i = 0; i < x.length; i++) {
           if (visibleElectrodeIndices && !visibleElectrodeIndices.includes(i)) {
             continue;
@@ -197,28 +194,26 @@ const ElectrodeGeometryView: FunctionComponent<ElectrodeGeometryViewProps> = ({
         xMax: range.xMax,
         yMin: range.zMin,
         yMax: range.zMax,
-      }
-    }
-    else {
+      };
+    } else {
       return {
         xMin: range.xMin,
         xMax: range.xMax,
         yMin: range.yMin,
         yMax: range.yMax,
-      }
+      };
     }
   }, [range, usingZ]);
   const units2 = useMemo(() => {
     if (!units) return undefined;
     if (usingZ) {
-      return units.map(u => ({
+      return units.map((u) => ({
         unitId: u.unitId,
         x: u.x,
         y: u.z,
       }));
-    }
-    else {
-      return units.map(u => ({
+    } else {
+      return units.map((u) => ({
         unitId: u.unitId,
         x: u.x,
         y: u.y,

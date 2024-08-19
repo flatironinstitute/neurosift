@@ -14,10 +14,13 @@ type SpikeSortingMountainSort5Opts = {
 
 const defaultSpikeSortingMountainSort5Opts: SpikeSortingMountainSort5Opts = {
   detect_threshold: 5,
-  channel_radius: 100
+  channel_radius: 100,
 };
 
-export const spikeSortingMountainSort5ParameterNames = ["detect_threshold", "channel_radius"];
+export const spikeSortingMountainSort5ParameterNames = [
+  "detect_threshold",
+  "channel_radius",
+];
 
 export const useSpikeSortingMountainSort5Step = (
   prepareEphysJob?: PairioJob,
@@ -27,7 +30,7 @@ export const useSpikeSortingMountainSort5Step = (
       defaultSpikeSortingMountainSort5Opts,
     );
 
-    const selectSpikeSortingMountainSort5OptsComponent = (
+  const selectSpikeSortingMountainSort5OptsComponent = (
     <SelectSpikeSortingMountainSort5Opts
       spikeSortingOpts={spikeSortingMountainSort5Opts}
       setSpikeSortingOpts={setSpikeSortingMountainSort5Opts}
@@ -103,7 +106,7 @@ export const useSpikeSortingMountainSort5Step = (
         {
           name: "channel_radius",
           value: spikeSortingMountainSort5Opts.channel_radius,
-        }
+        },
       ],
     };
   }, [

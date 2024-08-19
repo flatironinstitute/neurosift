@@ -456,14 +456,13 @@ const computeTotalBytesFetched = () => {
 
 export const headRequest = async (url: string, headers?: any) => {
   // // Cannot use HEAD, because it is not allowed by CORS on DANDI AWS bucket
-  let headResponse
+  let headResponse;
   try {
-      headResponse = await fetch(url, {method: 'HEAD', headers})
-      return headResponse
-  }
-  catch(err: any) {
-      console.warn(`Unable to HEAD ${url}: ${err.message}`)
-      throw err
+    headResponse = await fetch(url, { method: "HEAD", headers });
+    return headResponse;
+  } catch (err: any) {
+    console.warn(`Unable to HEAD ${url}: ${err.message}`);
+    throw err;
   }
 
   // // Instead, use aborted GET.
@@ -555,14 +554,17 @@ const getResolvedUrls = async (
 };
 
 const getRedirectUrl = async (url: string, headers: any) => {
-  const response = await fetch(url, { method: "HEAD", headers, redirect: 'follow' });
-  const redirectUrl = response.headers.get('Location') || response.url;
+  const response = await fetch(url, {
+    method: "HEAD",
+    headers,
+    redirect: "follow",
+  });
+  const redirectUrl = response.headers.get("Location") || response.url;
   if (!redirectUrl) {
     console.warn(`No redirect for ${url}`);
     return null;
   }
   return redirectUrl;
-
 
   // // This is tricky. Normally we would do a HEAD request with a redirect: 'manual' option.
   // // and then look at the Location response header.

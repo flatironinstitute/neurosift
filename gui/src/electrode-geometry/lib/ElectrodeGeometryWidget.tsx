@@ -42,7 +42,7 @@ const ElectrodeGeometryWidget: FunctionComponent<
   colors,
   deadElectrodeIndices,
   range,
-  units
+  units,
 }) => {
   const [hoveredElectrodeIndices, setHoveredElectrodeIndices] = useState<
     number[] | undefined
@@ -73,7 +73,8 @@ const ElectrodeGeometryWidget: FunctionComponent<
 
   const locations2: ElectrodeLocation[] = useMemo(() => {
     if (!doTranspose) return electrodeLocations;
-    else return electrodeLocations.map((loc) => ({ ...loc, x: loc.y, y: loc.x }));
+    else
+      return electrodeLocations.map((loc) => ({ ...loc, x: loc.y, y: loc.x }));
   }, [doTranspose, electrodeLocations]);
 
   const units2 = useMemo(() => {
@@ -82,18 +83,26 @@ const ElectrodeGeometryWidget: FunctionComponent<
       if (!doTranspose) return unit;
       else return { ...unit, x: unit.y, y: unit.x };
     });
-  } , [doTranspose, units]);
+  }, [doTranspose, units]);
 
   const { xmin, xmax, ymin, ymax } = useMemo(() => {
     if (range) {
       if (doTranspose) {
-        return { xmin: range.yMin, xmax: range.yMax, ymin: range.xMin, ymax: range.xMax };
+        return {
+          xmin: range.yMin,
+          xmax: range.yMax,
+          ymin: range.xMin,
+          ymax: range.xMax,
+        };
+      } else {
+        return {
+          xmin: range.xMin,
+          xmax: range.xMax,
+          ymin: range.yMin,
+          ymax: range.yMax,
+        };
       }
-      else {
-        return { xmin: range.xMin, xmax: range.xMax, ymin: range.yMin, ymax: range.yMax };
-      }
-    }
-    else {
+    } else {
       return getBounds(locations2);
     }
   }, [range, locations2, doTranspose]);
@@ -164,7 +173,7 @@ const ElectrodeGeometryWidget: FunctionComponent<
     ctx.lineWidth = 1;
     for (let i = 0; i < locations2.length; i++) {
       const loc = locations2[i];
-      if ((loc.x < xmin) || (loc.x > xmax) || (loc.y < ymin) || (loc.y > ymax)) {
+      if (loc.x < xmin || loc.x > xmax || loc.y < ymin || loc.y > ymax) {
         continue;
       }
       const { xp, yp } = coordToPixel(loc.x, loc.y);
@@ -293,12 +302,7 @@ const ElectrodeGeometryWidget: FunctionComponent<
       );
       setHoveredElectrodeIndices(hoveredElectrodeIndices);
 
-      const hoveredUnitIndices = getUnitIndicesAt(
-        units2 || [],
-        x,
-        y,
-        8,
-      );
+      const hoveredUnitIndices = getUnitIndicesAt(units2 || [], x, y, 8);
       setHoveredUnitIndices(hoveredUnitIndices);
     },
     [pixelToCoord, locations2, markerPixelRadius, isotropicScale, units2],
@@ -320,18 +324,22 @@ const ElectrodeGeometryWidget: FunctionComponent<
         width={width}
         height={height - bottomBarHeight}
       />
-      <div style={{ position: "absolute", left: 0, bottom: 0, height: bottomBarHeight, width }}>
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          bottom: 0,
+          height: bottomBarHeight,
+          width,
+        }}
+      >
         <div style={{ padding: 5 }}>
           {hoveredElectrodeIndices && hoveredElectrodeIndices.length > 0 && (
-            <>
-              Electrode: {hoveredElectrodeIndices.join(", ")}
-            </>
+            <>Electrode: {hoveredElectrodeIndices.join(", ")}</>
           )}
           &nbsp;&nbsp;&nbsp;&nbsp;
           {hoveredUnitIndices && hoveredUnitIndices.length > 0 && (
-            <>
-              Unit: {hoveredUnitIndices.join(", ")}
-            </>
+            <>Unit: {hoveredUnitIndices.join(", ")}</>
           )}
         </div>
       </div>
@@ -424,7 +432,7 @@ const getUnitIndicesAt = (
   }
   if (ret.length > 0) return ret;
   return undefined;
-}
+};
 
 const getColorForIndex = (i: number) => {
   const colors = [
