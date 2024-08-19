@@ -27,6 +27,7 @@ type ElectrodeGeometryWidgetProps = {
 };
 
 export type ElectrodeLocation = {
+  channelId: number | string;
   x: number;
   y: number;
 };
@@ -43,8 +44,12 @@ const ElectrodeGeometryWidget: FunctionComponent<
   range,
   units
 }) => {
-  const [hoveredElectrodeIndex, setHoveredElectrodeIndex] = useState<
-    number | undefined
+  const [hoveredElectrodeIndices, setHoveredElectrodeIndices] = useState<
+    number[] | undefined
+  >(undefined);
+
+  const [hoveredUnitIndices, setHoveredUnitIndices] = useState<
+    number[] | undefined
   >(undefined);
 
   const doTranspose = useMemo(() => {
@@ -68,7 +73,7 @@ const ElectrodeGeometryWidget: FunctionComponent<
 
   const locations2: ElectrodeLocation[] = useMemo(() => {
     if (!doTranspose) return electrodeLocations;
-    else return electrodeLocations.map((loc) => ({ x: loc.y, y: loc.x }));
+    else return electrodeLocations.map((loc) => ({ ...loc, x: loc.y, y: loc.x }));
   }, [doTranspose, electrodeLocations]);
 
   const units2 = useMemo(() => {
@@ -171,7 +176,7 @@ const ElectrodeGeometryWidget: FunctionComponent<
       ctx.arc(xp, yp, markerPixelRadius, 0, 2 * Math.PI);
       ctx.stroke();
       let textFillStyle = "black";
-      if (i === hoveredElectrodeIndex) {
+      if (hoveredElectrodeIndices && hoveredElectrodeIndices.includes(i)) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
         textFillStyle = "white";
         ctx.fill();
@@ -186,7 +191,7 @@ const ElectrodeGeometryWidget: FunctionComponent<
           ctx.fill();
         }
       }
-      const text = `${i}`;
+      const text = `${locations2[i].channelId}`;
       ctx.font = `${markerPixelRadius}px sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -212,8 +217,12 @@ const ElectrodeGeometryWidget: FunctionComponent<
         const { xp, yp } = coordToPixel(unit.x, unit.y);
         ctx.strokeStyle = "lightgreen";
         ctx.fillStyle = "darkgreen";
+        let rad = 4;
+        if (hoveredUnitIndices && hoveredUnitIndices.includes(i)) {
+          ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+          rad = 6;
+        }
         ctx.beginPath();
-        const rad = 4;
         ctx.arc(xp, yp, rad, 0, 2 * Math.PI);
         ctx.fill();
         ctx.stroke();
@@ -256,7 +265,7 @@ const ElectrodeGeometryWidget: FunctionComponent<
     height,
     locations2,
     markerPixelRadius,
-    hoveredElectrodeIndex,
+    hoveredElectrodeIndices,
     isotropicScale,
     coordToPixel,
     ymin,
@@ -267,6 +276,7 @@ const ElectrodeGeometryWidget: FunctionComponent<
     xmin,
     deadElectrodeIndices,
     units2,
+    hoveredUnitIndices,
   ]);
 
   const handleMouseMove = useCallback(
@@ -275,21 +285,30 @@ const ElectrodeGeometryWidget: FunctionComponent<
         evt.nativeEvent.offsetX,
         evt.nativeEvent.offsetY,
       );
-      const hoveredElectrodeIndex = getElectrodeIndexAt(
+      const hoveredElectrodeIndices = getElectrodeIndicesAt(
         locations2,
         x,
         y,
         markerPixelRadius / isotropicScale / 0.8,
       );
-      setHoveredElectrodeIndex(hoveredElectrodeIndex);
+      setHoveredElectrodeIndices(hoveredElectrodeIndices);
+
+      const hoveredUnitIndices = getUnitIndicesAt(
+        units2 || [],
+        x,
+        y,
+        8,
+      );
+      setHoveredUnitIndices(hoveredUnitIndices);
     },
-    [pixelToCoord, locations2, markerPixelRadius, isotropicScale],
+    [pixelToCoord, locations2, markerPixelRadius, isotropicScale, units2],
   );
 
   const handleMouseLeave = useCallback(() => {
-    setHoveredElectrodeIndex(undefined);
+    setHoveredElectrodeIndices(undefined);
   }, []);
 
+  const bottomBarHeight = 30;
   return (
     <div
       style={{ position: "relative", width, height }}
@@ -299,8 +318,23 @@ const ElectrodeGeometryWidget: FunctionComponent<
       <canvas
         ref={(elmt) => elmt && setCanvasElement(elmt)}
         width={width}
-        height={height}
+        height={height - bottomBarHeight}
       />
+      <div style={{ position: "absolute", left: 0, bottom: 0, height: bottomBarHeight, width }}>
+        <div style={{ padding: 5 }}>
+          {hoveredElectrodeIndices && hoveredElectrodeIndices.length > 0 && (
+            <>
+              Electrode: {hoveredElectrodeIndices.join(", ")}
+            </>
+          )}
+          &nbsp;&nbsp;&nbsp;&nbsp;
+          {hoveredUnitIndices && hoveredUnitIndices.length > 0 && (
+            <>
+              Unit: {hoveredUnitIndices.join(", ")}
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
@@ -356,19 +390,41 @@ const medianDistanceToNearestNeighbor = (locations: ElectrodeLocation[]) => {
   return distances[Math.floor(distances.length / 2)];
 };
 
-const getElectrodeIndexAt = (
+const getElectrodeIndicesAt = (
   locations: ElectrodeLocation[],
   x: number,
   y: number,
   maxDist: number,
 ) => {
+  const ret: number[] = [];
   for (let i = 0; i < locations.length; i++) {
     const loc = locations[i];
     const dist = Math.sqrt(Math.pow(loc.x - x, 2) + Math.pow(loc.y - y, 2));
-    if (dist <= maxDist) return i;
+    if (dist <= maxDist) {
+      ret.push(i);
+    }
   }
+  if (ret.length > 0) return ret;
   return undefined;
 };
+
+const getUnitIndicesAt = (
+  units: { unitId: number | string; x: number; y: number }[],
+  x: number,
+  y: number,
+  maxDist: number,
+) => {
+  const ret: number[] = [];
+  for (let i = 0; i < units.length; i++) {
+    const unit = units[i];
+    const dist = Math.sqrt(Math.pow(unit.x - x, 2) + Math.pow(unit.y - y, 2));
+    if (dist <= maxDist) {
+      ret.push(i);
+    }
+  }
+  if (ret.length > 0) return ret;
+  return undefined;
+}
 
 const getColorForIndex = (i: number) => {
   const colors = [

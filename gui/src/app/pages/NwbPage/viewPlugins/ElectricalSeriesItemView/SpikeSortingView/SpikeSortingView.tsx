@@ -36,6 +36,7 @@ import {
   spikeSortingMountainSort5ParameterNames,
   useSpikeSortingMountainSort5Step,
 } from "./mountainsort5";
+import ElectrodeGeometryView from "../../Ephys/ElectrodeGeometryView";
 
 type SpikeSortingViewProps = {
   width: number;
@@ -430,6 +431,17 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
           jobDefinition={prepareEphysJobDefinition}
           jobDependencies={prepareEphysJobDependencies}
         />
+        {
+          prepareEphysJobId && prepareEphysJob && (
+            <ElectrodeGeometryView
+              width={width - 50}
+              height={200}
+              nwbFile={nwbFile}
+              electricalSeriesPath={path}
+              visibleElectrodeIndices={prepareEphysJob.jobDefinition.parameters.find(p => p.name === "electrode_indices")?.value as number[]}
+            />
+          )
+        }
         {prepareEphysJobId && prepareEphysJob && prepareEphysOutputNwbUrl && (
           <>
             <h3>Step 2: Spike sorting</h3>

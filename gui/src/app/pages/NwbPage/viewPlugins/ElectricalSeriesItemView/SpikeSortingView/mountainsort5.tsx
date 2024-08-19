@@ -9,13 +9,15 @@ import {
 
 type SpikeSortingMountainSort5Opts = {
   detect_threshold: number;
+  channel_radius: number;
 };
 
 const defaultSpikeSortingMountainSort5Opts: SpikeSortingMountainSort5Opts = {
   detect_threshold: 5,
+  channel_radius: 100
 };
 
-export const spikeSortingMountainSort5ParameterNames = ["detect_threshold"];
+export const spikeSortingMountainSort5ParameterNames = ["detect_threshold", "channel_radius"];
 
 export const useSpikeSortingMountainSort5Step = (
   prepareEphysJob?: PairioJob,
@@ -25,7 +27,7 @@ export const useSpikeSortingMountainSort5Step = (
       defaultSpikeSortingMountainSort5Opts,
     );
 
-  const selectSpikeSortingMountainSort5OptsComponent = (
+    const selectSpikeSortingMountainSort5OptsComponent = (
     <SelectSpikeSortingMountainSort5Opts
       spikeSortingOpts={spikeSortingMountainSort5Opts}
       setSpikeSortingOpts={setSpikeSortingMountainSort5Opts}
@@ -98,6 +100,10 @@ export const useSpikeSortingMountainSort5Step = (
           name: "detect_threshold",
           value: spikeSortingMountainSort5Opts.detect_threshold,
         },
+        {
+          name: "channel_radius",
+          value: spikeSortingMountainSort5Opts.channel_radius,
+        }
       ],
     };
   }, [
@@ -156,6 +162,21 @@ const SelectSpikeSortingMountainSort5Opts: FunctionComponent<
                   setSpikeSortingOpts({
                     ...spikeSortingOpts,
                     detect_threshold: detectThreshold as number,
+                  })
+                }
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>Channel radius:</td>
+            <td>
+              <InputChoices
+                value={spikeSortingOpts.channel_radius}
+                choices={[10, 50, 100, 200, 500, 1000, 5000]}
+                onChange={(channelRadius) =>
+                  setSpikeSortingOpts({
+                    ...spikeSortingOpts,
+                    channel_radius: channelRadius as number,
                   })
                 }
               />
