@@ -13,7 +13,7 @@ type SpikeSortingMountainSort5Opts = {
 };
 
 const defaultSpikeSortingMountainSort5Opts: SpikeSortingMountainSort5Opts = {
-  detect_threshold: 5,
+  detect_threshold: 4.5,
   channel_radius: 100,
 };
 
@@ -160,7 +160,7 @@ const SelectSpikeSortingMountainSort5Opts: FunctionComponent<
             <td>
               <InputChoices
                 value={spikeSortingOpts.detect_threshold}
-                choices={[5, 6, 7, 8]}
+                choices={[4, 4.5, 5, 5.5, 6, 7, 8]}
                 onChange={(detectThreshold) =>
                   setSpikeSortingOpts({
                     ...spikeSortingOpts,

@@ -312,6 +312,16 @@ const ElectrodeGeometryWidget: FunctionComponent<
     setHoveredElectrodeIndices(undefined);
   }, []);
 
+  const hoveredChannelIds = useMemo(() => {
+    if (!hoveredElectrodeIndices) return undefined;
+    return hoveredElectrodeIndices.map((i) => locations2[i].channelId);
+  }, [hoveredElectrodeIndices, locations2]);
+
+  const hoveredUnitIds = useMemo(() => {
+    if (!hoveredUnitIndices) return undefined;
+    return hoveredUnitIndices.map((i) => units2![i].unitId);
+  }, [hoveredUnitIndices, units2]);
+
   const bottomBarHeight = 30;
   return (
     <div
@@ -334,12 +344,12 @@ const ElectrodeGeometryWidget: FunctionComponent<
         }}
       >
         <div style={{ padding: 5 }}>
-          {hoveredElectrodeIndices && hoveredElectrodeIndices.length > 0 && (
-            <>Electrode: {hoveredElectrodeIndices.join(", ")}</>
+          {hoveredChannelIds && hoveredChannelIds.length > 0 && (
+            <>Electrode: {hoveredChannelIds.join(", ")}</>
           )}
           &nbsp;&nbsp;&nbsp;&nbsp;
-          {hoveredUnitIndices && hoveredUnitIndices.length > 0 && (
-            <>Unit: {hoveredUnitIndices.join(", ")}</>
+          {hoveredUnitIds && hoveredUnitIds.length > 0 && (
+            <>Unit: {hoveredUnitIds.join(", ")}</>
           )}
         </div>
       </div>
