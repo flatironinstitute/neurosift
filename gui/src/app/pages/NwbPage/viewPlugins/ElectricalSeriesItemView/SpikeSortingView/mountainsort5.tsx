@@ -10,16 +10,19 @@ import {
 type SpikeSortingMountainSort5Opts = {
   detect_threshold: number;
   channel_radius: number;
+  output_units_name: string;
 };
 
 const defaultSpikeSortingMountainSort5Opts: SpikeSortingMountainSort5Opts = {
   detect_threshold: 4.5,
   channel_radius: 100,
+  output_units_name: "units_mountainsort5",
 };
 
 export const spikeSortingMountainSort5ParameterNames = [
   "detect_threshold",
   "channel_radius",
+  "output_units_name",
 ];
 
 export const useSpikeSortingMountainSort5Step = (
@@ -98,7 +101,10 @@ export const useSpikeSortingMountainSort5Step = (
           name: "electrical_series_path",
           value: prepareEphysOutputElectricalSeriesPath,
         },
-        { name: "output_units_name", value: "units_mountainsort5" },
+        {
+          name: "output_units_name",
+          value: spikeSortingMountainSort5Opts.output_units_name,
+        },
         {
           name: "detect_threshold",
           value: spikeSortingMountainSort5Opts.detect_threshold,
@@ -180,6 +186,21 @@ const SelectSpikeSortingMountainSort5Opts: FunctionComponent<
                   setSpikeSortingOpts({
                     ...spikeSortingOpts,
                     channel_radius: channelRadius as number,
+                  })
+                }
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>Output units name:</td>
+            <td>
+              <input
+                type="text"
+                value={spikeSortingOpts.output_units_name}
+                onChange={(e) =>
+                  setSpikeSortingOpts({
+                    ...spikeSortingOpts,
+                    output_units_name: e.target.value,
                   })
                 }
               />

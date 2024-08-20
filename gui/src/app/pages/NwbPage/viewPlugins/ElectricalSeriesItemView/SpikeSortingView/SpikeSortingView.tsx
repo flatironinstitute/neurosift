@@ -832,12 +832,16 @@ const SelectPrepareEphysOpts: FunctionComponent<
               <InputChoices
                 value={prepareEphysOpts.compression_ratio}
                 choices={["none", 4, 8, 12, 16, 20, 30, 40, 50, 75, 100]}
-                onChange={(compressionRatio) =>
+                onChange={(compressionRatio) => {
+                  const cr =
+                    compressionRatio === "none"
+                      ? 0
+                      : (compressionRatio as number);
                   setPrepareEphysOpts({
                     ...prepareEphysOpts,
-                    compression_ratio: compressionRatio as number,
-                  })
-                }
+                    compression_ratio: cr,
+                  });
+                }}
               />
             </td>
           </tr>

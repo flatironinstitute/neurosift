@@ -7,14 +7,14 @@ import {
 } from "app/pairio/types";
 
 type SpikeSortingKilosort4Opts = {
-  // none
+  output_units_name: string;
 };
 
 const defaultSpikeSortingKilosort4Opts: SpikeSortingKilosort4Opts = {
-  // none
+  output_units_name: "units_kilosort4",
 };
 
-export const spikeSortingKilosort4ParameterNames = [];
+export const spikeSortingKilosort4ParameterNames = ["output_units_name"];
 
 export const useSpikeSortingKilosort4Step = (prepareEphysJob?: PairioJob) => {
   const [spikeSortingKilosort4Opts, setSpikeSortingKilosort4Opts] =
@@ -88,10 +88,17 @@ export const useSpikeSortingKilosort4Step = (prepareEphysJob?: PairioJob) => {
             name: "electrical_series_path",
             value: prepareEphysOutputElectricalSeriesPath,
           },
-          { name: "output_units_name", value: "units_kilosort4" },
+          {
+            name: "output_units_name",
+            value: spikeSortingKilosort4Opts.output_units_name,
+          },
         ],
       };
-    }, [prepareEphysJob, prepareEphysOutputElectricalSeriesPath]);
+    }, [
+      prepareEphysJob,
+      prepareEphysOutputElectricalSeriesPath,
+      spikeSortingKilosort4Opts,
+    ]);
 
   useEffect(() => {
     setSpikeSortingKilosort4JobId(undefined);
@@ -133,21 +140,21 @@ const SelectSpikeSortingKilosort4Opts: FunctionComponent<
     <div>
       <table>
         <tbody>
-          {/* <tr>
-              <td>Detect threshold:</td>
-              <td>
-                <InputChoices
-                  value={spikeSortingOpts.detect_threshold}
-                  choices={[5, 6, 7, 8]}
-                  onChange={(detectThreshold) =>
-                    setSpikeSortingOpts({
-                      ...spikeSortingOpts,
-                      detect_threshold: detectThreshold as number,
-                    })
-                  }
-                />
-              </td>
-            </tr> */}
+          <tr>
+            <td>Output units name:</td>
+            <td>
+              <input
+                type="text"
+                value={spikeSortingOpts.output_units_name}
+                onChange={(e) =>
+                  setSpikeSortingOpts({
+                    ...spikeSortingOpts,
+                    output_units_name: e.target.value,
+                  })
+                }
+              />
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
