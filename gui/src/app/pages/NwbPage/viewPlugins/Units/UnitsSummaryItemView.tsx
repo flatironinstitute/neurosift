@@ -10,13 +10,13 @@ import {
 } from "../../../../package/view-autocorrelograms";
 import { AutocorrelogramData } from "../../../../package/view-autocorrelograms/AutocorrelogramsViewData";
 import {
-  PairioJob,
-  PairioJobDefinition,
-  PairioJobRequiredResources,
-} from "../../../../pairio/types";
+  DendroJob,
+  DendroJobDefinition,
+  DendroJobRequiredResources,
+} from "../../../../dendro/dendro-types";
 import { useNwbFile } from "../../NwbFileContext";
-import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/PairioHelpers";
-import PairioItemView from "../CEBRA/PairioItemView";
+import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/DendroHelpers";
+import DendroItemView from "../CEBRA/DendroItemView";
 
 type Props = {
   width: number;
@@ -55,7 +55,7 @@ const getJobDefinition = (
   adjustableParameterValues: { [key: string]: any },
   inputFileUrl: string,
   path: string,
-): PairioJobDefinition => {
+): DendroJobDefinition => {
   return {
     appName,
     processorName,
@@ -95,7 +95,7 @@ const getJobDefinition = (
 
 const getRequiredResources = (
   requireGpu: boolean,
-): PairioJobRequiredResources => {
+): DendroJobRequiredResources => {
   return {
     numCpus: 2,
     numGpus: 0,
@@ -124,7 +124,7 @@ const UnitsSummaryItemView: FunctionComponent<Props> = ({
   const tags = useMemo(() => ["neurosift", "UnitsSummary"], []);
 
   return (
-    <PairioItemView
+    <DendroItemView
       width={width}
       height={height}
       nwbUrl={nwbUrl}
@@ -145,7 +145,7 @@ const UnitsSummaryItemView: FunctionComponent<Props> = ({
 };
 
 const UnitsSummaryJobOutputWidget: FunctionComponent<{
-  job: PairioJob;
+  job: DendroJob;
   width: number;
   nwbFile: RemoteH5FileX;
 }> = ({ job, width }) => {

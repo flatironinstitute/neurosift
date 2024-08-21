@@ -5,7 +5,6 @@ import pako from "pako";
 import NeurodataTypesSelector from "./NeurodataTypesSelector";
 import { Hyperlink } from "@fi-sci/misc";
 import JsonPathQueryComponent from "./JsonPathQueryComponent";
-import { Checkbox } from "../NwbPage/NwbMainView/SupplementalDendroFilesView";
 import { Splitter } from "@fi-sci/splitter";
 
 type DandiQueryPageProps = {
@@ -304,6 +303,22 @@ const useFetchJsonGz = (url: string) => {
     };
   }, [url]);
   return data;
+};
+
+type CheckboxProps = {
+  checked: boolean;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+};
+
+const Checkbox: FunctionComponent<CheckboxProps> = ({ checked, onChange }) => {
+  return (
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={onChange}
+      style={{ cursor: "pointer" }}
+    />
+  );
 };
 
 export default DandiQueryPage;

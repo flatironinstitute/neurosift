@@ -1,10 +1,10 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import { getJobOutputUrl, useJob } from "../../CEBRA/PairioHelpers";
+import { getJobOutputUrl, useJob } from "../../CEBRA/DendroHelpers";
 import {
-  PairioJob,
-  PairioJobDefinition,
-  PairioJobRequiredResources,
-} from "app/pairio/types";
+  DendroJob,
+  DendroJobDefinition,
+  DendroJobRequiredResources,
+} from "app/dendro/dendro-types";
 
 type SpikeSortingKilosort4Opts = {
   output_units_name: string;
@@ -16,7 +16,7 @@ const defaultSpikeSortingKilosort4Opts: SpikeSortingKilosort4Opts = {
 
 export const spikeSortingKilosort4ParameterNames = ["output_units_name"];
 
-export const useSpikeSortingKilosort4Step = (prepareEphysJob?: PairioJob) => {
+export const useSpikeSortingKilosort4Step = (prepareEphysJob?: DendroJob) => {
   const [spikeSortingKilosort4Opts, setSpikeSortingKilosort4Opts] =
     useState<SpikeSortingKilosort4Opts>(defaultSpikeSortingKilosort4Opts);
 
@@ -35,7 +35,7 @@ export const useSpikeSortingKilosort4Step = (prepareEphysJob?: PairioJob) => {
     refreshJob: refreshSpikeSortingKilosort4Job,
   } = useJob(spikeSortingKilosort4JobId);
 
-  const spikeSortingKilosort4RequiredResources: PairioJobRequiredResources =
+  const spikeSortingKilosort4RequiredResources: DendroJobRequiredResources =
     useMemo(() => {
       return {
         numCpus: 4,
@@ -58,7 +58,7 @@ export const useSpikeSortingKilosort4Step = (prepareEphysJob?: PairioJob) => {
     return `acquisition/${pp.value as string}`;
   }, [prepareEphysJob]);
 
-  const spikeSortingKilosort4JobDefinition: PairioJobDefinition | undefined =
+  const spikeSortingKilosort4JobDefinition: DendroJobDefinition | undefined =
     useMemo(() => {
       const inputFileUrl = getJobOutputUrl(prepareEphysJob, "output");
       if (!inputFileUrl) {

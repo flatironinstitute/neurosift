@@ -9,6 +9,7 @@ import {
   getRemoteH5FileLindi,
   globalRemoteH5FileStats,
 } from "@remote-h5-file/index";
+import { track } from "@vercel/analytics/react";
 import {
   FunctionComponent,
   useEffect,
@@ -23,7 +24,6 @@ import {
   DandiAssetContext,
   DandiAssetContextType,
   defaultDandiAssetContext,
-  useDandiAssetContext,
 } from "./DandiAssetContext";
 import { SetupContextAnnotationsProvider } from "./NeurosiftAnnotations/useContextAnnotations";
 import { NwbFileContext } from "./NwbFileContext";
@@ -33,15 +33,8 @@ import {
   SelectedItemViewsContext,
   selectedItemViewsReducer,
 } from "./SelectedItemViewsContext";
-import getAuthorizationHeaderForUrl from "./getAuthorizationHeaderForUrl";
-import {
-  SupplementalDendroFilesContext,
-  useSupplementalDendroFiles,
-} from "./SupplementalDendroFilesContext";
-import { DendroFile } from "../../dendro/dendro-types";
 import { SetupNwbFileSpecificationsProvider } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
-import { track } from "@vercel/analytics/react";
-import formatByteCount from "../DandiPage/DandiBrowser/formatByteCount";
+import getAuthorizationHeaderForUrl from "./getAuthorizationHeaderForUrl";
 
 type Props = {
   width: number;
@@ -200,78 +193,7 @@ const NwbPageChild2: FunctionComponent<NwbPageChild2Props> = ({
   width,
   height,
 }) => {
-  const [selectedSupplementalFileIds, setSelectedSupplementalFileIds] =
-    useState<string[]>([]);
-
-  const { assetUrl, dandisetId, dandisetVersion, assetId } =
-    useDandiAssetContext();
-  const supplementalDendroFiles = useSupplementalDendroFilesHelper({
-    dandisetId,
-    dandisetVersion,
-    dandiAssetId: assetId,
-    thisUrl: assetUrl,
-  });
-
-  return (
-    <SupplementalDendroFilesContext.Provider
-      value={{
-        supplementalFiles: supplementalDendroFiles,
-        selectedSupplementalFileIds,
-        setSelectedSupplementalFileIds,
-      }}
-    >
-      <NwbPageChild3 width={width} height={height} />
-    </SupplementalDendroFilesContext.Provider>
-  );
-};
-
-export const useSupplementalDendroFilesHelper = (a: {
-  dandisetId: string;
-  dandisetVersion: string;
-  dandiAssetId?: string;
-  thisUrl: string;
-}): DendroFile[] | undefined => {
-  const { dandisetId, dandisetVersion, dandiAssetId } = a;
-  const [supplementalDendroFiles, setSupplementalDendroFiles] = useState<
-    DendroFile[] | undefined
-  >(undefined);
-  useEffect(() => {
-    if (!dandisetId) return;
-    if (!dandisetVersion) return;
-    if (!dandiAssetId) return;
-    let canceled = false;
-    (async () => {
-      const url = "https://dendro.vercel.app/api/gui/find_files_with_metadata";
-      const data = {
-        query: {
-          dandisetId,
-          dandisetVersion,
-          dandiAssetId,
-          supplemental: true,
-        },
-      };
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      if (!resp.ok) return;
-      const obj = await resp.json();
-      if (canceled) return;
-      setSupplementalDendroFiles(
-        obj.files.filter((x: any) => x.content !== "url:" + a.thisUrl),
-      ); // don't include this one
-    })();
-    return () => {
-      canceled = true;
-    };
-  }, [dandisetId, dandisetVersion, dandiAssetId, a.thisUrl]);
-  if (!dandisetId) return undefined;
-  if (!dandisetVersion) return undefined;
-  if (!dandiAssetId) return undefined;
-  return supplementalDendroFiles;
+  return <NwbPageChild3 width={width} height={height} />;
 };
 
 type NwbPageChild3Props = {
@@ -323,22 +245,6 @@ const NwbPageChild3: FunctionComponent<NwbPageChild3Props> = ({
       });
   }, [nwbFile, urlList]);
 
-  const { supplementalFiles, selectedSupplementalFileIds } =
-    useSupplementalDendroFiles();
-
-  const selectedSupplementalUrls = useMemo(() => {
-    const ret: string[] = [];
-    for (const id of selectedSupplementalFileIds) {
-      const file = supplementalFiles?.find((x) => x.fileId === id);
-      if (file) {
-        if (file.content.startsWith("url:")) {
-          ret.push(file.content.substring("url:".length));
-        }
-      }
-    }
-    return ret;
-  }, [selectedSupplementalFileIds, supplementalFiles]);
-
   // status bar text
   const { setCustomStatusBarElement } = useCustomStatusBarElements();
   useEffect(() => {
@@ -383,17 +289,8 @@ const NwbPageChild3: FunctionComponent<NwbPageChild3Props> = ({
     let canceled = false;
     const load = async () => {
       const dandisetId = route.dandisetId;
-      const urlListSupplemented = [...urlList, ...selectedSupplementalUrls];
-      const storageTypeListSupplemented = [
-        ...route.storageType,
-        ...selectedSupplementalUrls.map(() => "lindi" as StorageType),
-      ]; // for now we assume all supplemental are lindi
       const { urls: urlListResolved, storageTypes: storageTypeResolved } =
-        await getResolvedUrls(
-          urlListSupplemented,
-          storageTypeListSupplemented,
-          { dandisetId },
-        );
+        await getResolvedUrls(urlList, route.storageType, { dandisetId });
       if (canceled) return;
       let f: MergedRemoteH5File | RemoteH5File | RemoteH5FileLindi;
       setUsingLindi(storageTypeResolved.includes("lindi"));
@@ -413,7 +310,7 @@ const NwbPageChild3: FunctionComponent<NwbPageChild3Props> = ({
     return () => {
       canceled = true;
     };
-  }, [urlList, route.storageType, route.dandisetId, selectedSupplementalUrls]);
+  }, [urlList, route.storageType, route.dandisetId]);
 
   const nwbFileContextValue = useMemo(() => {
     if (!nwbFile) return undefined;

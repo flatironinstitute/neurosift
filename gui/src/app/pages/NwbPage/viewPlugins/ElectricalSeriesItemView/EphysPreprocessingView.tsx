@@ -1,14 +1,14 @@
 import { RemoteH5FileX } from "@remote-h5-file/index";
 import {
-  PairioJob,
-  PairioJobDefinition,
-  PairioJobRequiredResources,
-} from "app/pairio/types";
+  DendroJob,
+  DendroJobDefinition,
+  DendroJobRequiredResources,
+} from "app/dendro/dendro-types";
 import useRoute from "app/useRoute";
 import { FunctionComponent, useMemo } from "react";
 import { useNwbFile } from "../../NwbFileContext";
-import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/PairioHelpers";
-import PairioItemView from "../CEBRA/PairioItemView";
+import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/DendroHelpers";
+import DendroItemView from "../CEBRA/DendroItemView";
 import useTimeSeriesInfo from "../TimeSeries/useTimeseriesInfo";
 
 type EphysPreprocessingViewProps = {
@@ -25,7 +25,7 @@ const getJobDefinition = (
   adjustableParameterValues: { [key: string]: any },
   inputFileUrl: string,
   path: string,
-): PairioJobDefinition => {
+): DendroJobDefinition => {
   return {
     appName,
     processorName,
@@ -55,7 +55,7 @@ const getJobDefinition = (
   };
 };
 
-const getRequiredResources = (): PairioJobRequiredResources => {
+const getRequiredResources = (): DendroJobRequiredResources => {
   return {
     numCpus: 2,
     numGpus: 0,
@@ -108,7 +108,7 @@ const EphysPreprocessingView: FunctionComponent<
   }, []);
 
   const jobFilter = useMemo(
-    () => (job: PairioJob) => {
+    () => (job: DendroJob) => {
       // make sure electrical_series_path matches
       const p = job.jobDefinition.parameters.find(
         (p) => p.name === "electrical_series_path",
@@ -121,7 +121,7 @@ const EphysPreprocessingView: FunctionComponent<
   );
 
   const sortCandidateJobs = useMemo(
-    () => (jobs: PairioJob[]) => {
+    () => (jobs: DendroJob[]) => {
       // favor jobs that have longest segment_duration_sec
       return [...jobs].sort((a, b) => {
         // const p1 = a.jobDefinition.parameters.find(
@@ -169,7 +169,7 @@ const EphysPreprocessingView: FunctionComponent<
   }
 
   return (
-    <PairioItemView
+    <DendroItemView
       width={width}
       height={height}
       nwbUrl={nwbUrl}
@@ -193,7 +193,7 @@ const EphysPreprocessingView: FunctionComponent<
 };
 
 type EphysPreprocessingOutputComponentProps = {
-  job: PairioJob;
+  job: DendroJob;
   width: number;
   nwbFile: RemoteH5FileX;
 };

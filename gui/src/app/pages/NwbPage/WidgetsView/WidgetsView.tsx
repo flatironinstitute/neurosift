@@ -171,7 +171,7 @@ const ViewPluginView: FunctionComponent<ViewPluginViewProps> = ({
         onClick={() => setExpanded(!expanded)}
       >
         {expanded ? "▼" : "►"} {plugin.name}
-        {plugin.usesPairio ? "*" : ""} ({items.length})
+        {plugin.usesDendro ? "*" : ""} ({items.length})
       </div>
       {expanded && (
         <>
@@ -181,7 +181,7 @@ const ViewPluginView: FunctionComponent<ViewPluginViewProps> = ({
                 onClick={() => {
                   onOpenTab(item.itemTabString);
                 }}
-                color={plugin.usesPairio ? "darkgreen" : undefined}
+                color={plugin.usesDendro ? "darkgreen" : undefined}
               >
                 {item.label}
               </Hyperlink>

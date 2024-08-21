@@ -1,12 +1,12 @@
 import { Button } from "@mui/material";
 import {
   CreateJobRequest,
-  PairioJob,
-  PairioJobDefinition,
-  PairioJobParameter,
-  PairioJobRequiredResources,
+  DendroJob,
+  DendroJobDefinition,
+  DendroJobParameter,
+  DendroJobRequiredResources,
   isCreateJobResponse,
-} from "app/pairio/types";
+} from "app/dendro/dendro-types";
 import useRoute from "app/useRoute";
 import {
   FunctionComponent,
@@ -18,14 +18,14 @@ import {
 import { useNwbFile } from "../../../NwbFileContext";
 import {
   AllJobsView,
-  SelectPairioApiKeyComponent,
-  SelectPairioComputeClientIdComponent,
+  SelectDendroApiKeyComponent,
+  SelectDendroComputeClientIdComponent,
   getJobOutputUrl,
   useAllJobs,
   useJob,
-  usePairioApiKey,
-} from "../../CEBRA/PairioHelpers";
-import { JobInfoView } from "../../CEBRA/PairioItemView";
+  useDendroApiKey,
+} from "../../CEBRA/DendroHelpers";
+import { JobInfoView } from "../../CEBRA/DendroItemView";
 import useTimeSeriesInfo from "../../TimeSeries/useTimeseriesInfo";
 import InputChoices from "./InputChoices";
 import {
@@ -105,7 +105,7 @@ const usePrepareEphysStep = (o: { path: string; nwbUrl: string }) => {
   const { job: prepareEphysJob, refreshJob: refreshPrepareEphysJob } =
     useJob(prepareEphysJobId);
 
-  const prepareEphysJobParameters: PairioJobParameter[] = useMemo(() => {
+  const prepareEphysJobParameters: DendroJobParameter[] = useMemo(() => {
     return [
       { name: "electrical_series_path", value: path },
       { name: "duration_sec", value: prepareEphysOpts.duration_sec },
@@ -126,7 +126,7 @@ const usePrepareEphysStep = (o: { path: string; nwbUrl: string }) => {
     ];
   }, [prepareEphysOpts, path]);
 
-  const prepareEphysJobRequiredResources: PairioJobRequiredResources =
+  const prepareEphysJobRequiredResources: DendroJobRequiredResources =
     useMemo(() => {
       return {
         numCpus: 4,
@@ -136,7 +136,7 @@ const usePrepareEphysStep = (o: { path: string; nwbUrl: string }) => {
       };
     }, []);
 
-  const prepareEphysJobDefinition: PairioJobDefinition = useMemo(() => {
+  const prepareEphysJobDefinition: DendroJobDefinition = useMemo(() => {
     return {
       appName: "hello_neurosift",
       processorName: "prepare_ephys_spike_sorting_dataset",
@@ -189,7 +189,7 @@ const defaultPostProcessingOpts: PostProcessingOpts = {
 
 const tagsPostProcessing = ["neurosift", "spike_sorting", "post_processing"];
 
-const usePostProcessingStep = (spikeSortingJob?: PairioJob) => {
+const usePostProcessingStep = (spikeSortingJob?: DendroJob) => {
   const [postProcessingOpts, setPostProcessingOpts] =
     useState<PostProcessingOpts>(defaultPostProcessingOpts);
 
@@ -206,7 +206,7 @@ const usePostProcessingStep = (spikeSortingJob?: PairioJob) => {
   const { job: postProcessingJob, refreshJob: refreshPostProcessingJob } =
     useJob(postProcessingJobId);
 
-  const postProcessingRequiredResources: PairioJobRequiredResources =
+  const postProcessingRequiredResources: DendroJobRequiredResources =
     useMemo(() => {
       return {
         numCpus: 4,
@@ -216,7 +216,7 @@ const usePostProcessingStep = (spikeSortingJob?: PairioJob) => {
       };
     }, []);
 
-  const postProcessingJobDefinition: PairioJobDefinition | undefined =
+  const postProcessingJobDefinition: DendroJobDefinition | undefined =
     useMemo(() => {
       if (!spikeSortingJob) {
         return undefined;
@@ -343,9 +343,9 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
   } = useSpikeSortingKilosort4Step(prepareEphysJob);
 
   let spikeSortingJobId: string | undefined;
-  let spikeSortingJob: PairioJob | undefined;
+  let spikeSortingJob: DendroJob | undefined;
   let selectSpikeSortingOptsComponent: any;
-  let spikeSortingJobDefinition: PairioJobDefinition | undefined;
+  let spikeSortingJobDefinition: DendroJobDefinition | undefined;
   if (spikeSortingAlgorithm === "mountainsort5") {
     spikeSortingJobId = spikeSortingMountainSort5JobId;
     spikeSortingJob = spikeSortingMountainSort5Job;
@@ -556,14 +556,14 @@ type StepProps = {
   processorName: string;
   tags: string[];
   inputFileUrl: string;
-  requiredResources?: PairioJobRequiredResources;
+  requiredResources?: DendroJobRequiredResources;
   jobId?: string;
   setJobId: (jobId: string | undefined) => void;
-  job?: PairioJob;
+  job?: DendroJob;
   refreshJob: () => void;
   selectOptsComponent: any;
   parameterNames: string[];
-  jobDefinition?: PairioJobDefinition;
+  jobDefinition?: DendroJobDefinition;
   jobDependencies: string[];
 };
 
@@ -594,7 +594,7 @@ const Step: FunctionComponent<StepProps> = ({
 
   const [errorText, setErrorText] = useState<string | undefined>(undefined);
 
-  const { pairioApiKey, setPairioApiKey } = usePairioApiKey();
+  const { dendroApiKey, setDendroApiKey } = useDendroApiKey();
   const [computeClientId, setComputeClientId] = useState<string | undefined>(
     undefined,
   );
@@ -633,9 +633,9 @@ const Step: FunctionComponent<StepProps> = ({
       };
       const headers = {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${pairioApiKey}`,
+        Authorization: `Bearer ${dendroApiKey}`,
       };
-      const resp = await fetch(`https://pairio.vercel.app/api/createJob`, {
+      const resp = await fetch(`https://dendro.vercel.app/api/createJob`, {
         method: "POST",
         headers,
         body: JSON.stringify(req),
@@ -654,7 +654,7 @@ const Step: FunctionComponent<StepProps> = ({
       setErrorText(err.message);
     }
   }, [
-    pairioApiKey,
+    dendroApiKey,
     computeClientId,
     setJobId,
     refreshAllJobs,
@@ -684,13 +684,13 @@ const Step: FunctionComponent<StepProps> = ({
           {selectParametersComponent}
           <div>
             <div style={{ paddingTop: 10 }}>
-              <SelectPairioApiKeyComponent
-                value={pairioApiKey}
-                setValue={setPairioApiKey}
+              <SelectDendroApiKeyComponent
+                value={dendroApiKey}
+                setValue={setDendroApiKey}
               />
             </div>
             <div style={{ paddingTop: 10 }}>
-              <SelectPairioComputeClientIdComponent
+              <SelectDendroComputeClientIdComponent
                 value={computeClientId}
                 setValue={setComputeClientId}
               />
@@ -698,7 +698,7 @@ const Step: FunctionComponent<StepProps> = ({
             <div style={{ paddingTop: 10 }}>
               <button
                 onClick={handleSubmitNewJob}
-                disabled={!pairioApiKey || !jobDefinition}
+                disabled={!dendroApiKey || !jobDefinition}
               >
                 SUBMIT JOB
               </button>
@@ -956,7 +956,7 @@ const SelectPostProcessingOpts: FunctionComponent<
   return <div />;
 };
 
-const getInputParameterValue = (job: PairioJob, name: string) => {
+const getInputParameterValue = (job: DendroJob, name: string) => {
   const pp = job.jobDefinition.parameters.find((p) => p.name === name);
   if (!pp) {
     throw Error(`Parameter not found: ${name}`);

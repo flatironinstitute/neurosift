@@ -10,10 +10,10 @@ import {
 import {
   GetJobRequest,
   FindJobsRequest,
-  PairioJob,
+  DendroJob,
   isGetJobResponse,
   isFindJobsResponse,
-} from "../../../../pairio/types";
+} from "../../../../dendro/dendro-types";
 import { timeAgoString } from "../../../../timeStrings";
 import { intListToString } from "../ElectricalSeriesItemView/SpikeSortingView/SpikeSortingView";
 
@@ -22,10 +22,10 @@ export const useAllJobs = (o: {
   processorName?: string;
   tags?: any;
   inputFileUrl?: string;
-  jobFilter?: (job: PairioJob) => boolean;
+  jobFilter?: (job: DendroJob) => boolean;
 }) => {
   const { appName, processorName, tags, inputFileUrl, jobFilter } = o;
-  const [allJobs, setAllJobs] = useState<PairioJob[] | undefined | null>(
+  const [allJobs, setAllJobs] = useState<DendroJob[] | undefined | null>(
     undefined,
   );
   const [refreshCode, setRefreshCode] = useState(0);
@@ -49,7 +49,7 @@ export const useAllJobs = (o: {
       const headers = {
         "Content-Type": "application/json",
       };
-      const resp = await fetch("https://pairio.vercel.app/api/findJobs", {
+      const resp = await fetch("https://dendro.vercel.app/api/findJobs", {
         method: "POST",
         headers,
         body: JSON.stringify(req),
@@ -76,22 +76,22 @@ export const useAllJobs = (o: {
   return { allJobs, refreshAllJobs };
 };
 
-export const usePairioApiKey = () => {
+export const useDendroApiKey = () => {
   // save in local storage
-  const [pairioApiKey, setPairioApiKey] = useState<string>("");
+  const [dendroApiKey, setDendroApiKey] = useState<string>("");
   useEffect(() => {
-    const storedPairioApiKey = localStorage.getItem("pairioApiKey");
-    if (storedPairioApiKey) {
-      setPairioApiKey(storedPairioApiKey);
+    const storedDendroApiKey = localStorage.getItem("dendroApiKey");
+    if (storedDendroApiKey) {
+      setDendroApiKey(storedDendroApiKey);
     }
   }, []);
   useEffect(() => {
-    localStorage.setItem("pairioApiKey", pairioApiKey);
-  }, [pairioApiKey]);
-  return { pairioApiKey, setPairioApiKey };
+    localStorage.setItem("dendroApiKey", dendroApiKey);
+  }, [dendroApiKey]);
+  return { dendroApiKey, setDendroApiKey };
 };
 
-export const SelectPairioApiKeyComponent: FunctionComponent<{
+export const SelectDendroApiKeyComponent: FunctionComponent<{
   value: string;
   setValue: (value: string) => void;
 }> = ({ value, setValue }) => {
@@ -99,11 +99,11 @@ export const SelectPairioApiKeyComponent: FunctionComponent<{
     <div>
       <label>
         <a
-          href="https://pairio.vercel.app/settings"
+          href="https://dendro.vercel.app/settings"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Pairio API key
+          Dendro API key
         </a>
         :&nbsp;
       </label>
@@ -116,7 +116,7 @@ export const SelectPairioApiKeyComponent: FunctionComponent<{
   );
 };
 
-export const SelectPairioComputeClientIdComponent: FunctionComponent<{
+export const SelectDendroComputeClientIdComponent: FunctionComponent<{
   value: string | undefined;
   setValue: (value: string | undefined) => void;
 }> = ({ value, setValue }) => {
@@ -132,7 +132,7 @@ export const SelectPairioComputeClientIdComponent: FunctionComponent<{
 };
 
 export const useJob = (jobId: string | undefined) => {
-  const [job, setJob] = useState<PairioJob | undefined>(undefined);
+  const [job, setJob] = useState<DendroJob | undefined>(undefined);
   const [refreshCode, setRefreshCode] = useState(0);
   const refreshJob = useCallback(() => {
     setRefreshCode((c) => c + 1);
@@ -153,7 +153,7 @@ export const useJob = (jobId: string | undefined) => {
       const headers = {
         "Content-Type": "application/json",
       };
-      const resp = await fetch("https://pairio.vercel.app/api/getJob", {
+      const resp = await fetch("https://dendro.vercel.app/api/getJob", {
         method: "POST",
         headers,
         body: JSON.stringify(req),
@@ -210,7 +210,7 @@ export const MultipleChoiceStringSelector: FunctionComponent<{
 };
 
 export const getJobOutputUrl = (
-  job: PairioJob | undefined,
+  job: DendroJob | undefined,
   outputName: string,
 ) => {
   if (!job) return undefined;
@@ -220,7 +220,7 @@ export const getJobOutputUrl = (
 };
 
 export const getJobParameterValue = (
-  job: PairioJob | undefined,
+  job: DendroJob | undefined,
   parameterName: string,
 ) => {
   if (!job) return undefined;
@@ -232,7 +232,7 @@ export const getJobParameterValue = (
 };
 
 type AllJobsViewProps = {
-  allJobs: PairioJob[] | undefined;
+  allJobs: DendroJob[] | undefined;
   refreshAllJobs: () => void;
   parameterNames: string[];
   selectedJobId: string | undefined;
@@ -260,7 +260,7 @@ export const AllJobsView: FunctionComponent<AllJobsViewProps> = ({
 };
 
 type AllJobsTableProps = {
-  allJobs: PairioJob[];
+  allJobs: DendroJob[];
   refreshAllJobs: () => void;
   parameterNames: string[];
   selectedJobId: string | undefined;
@@ -314,7 +314,7 @@ const AllJobsTable: FunctionComponent<AllJobsTableProps> = ({
                   icon={<OpenInNew />}
                   onClick={() => {
                     window.open(
-                      `https://pairio.vercel.app/job/${job.jobId}`,
+                      `https://dendro.vercel.app/job/${job.jobId}`,
                       "_blank",
                     );
                   }}
@@ -347,7 +347,7 @@ export const formatValue = (value: any) => {
   return value;
 };
 
-const getJobParameter = (job: PairioJob, parameterName: string) => {
+const getJobParameter = (job: DendroJob, parameterName: string) => {
   const pp = job.jobDefinition.parameters.find(
     (pp) => pp.name === parameterName,
   );

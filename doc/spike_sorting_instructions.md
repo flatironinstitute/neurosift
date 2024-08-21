@@ -10,7 +10,7 @@ Navigate to the raw ephys data by clicking on acquisition -> ElectricalSeries (i
 
 If a spike sorting job has already run, you will see a link "View in Neurosift" where you can view the output of the spike sorting. If you want to try out running spike sorting, you will need to find a dataset that does not have spike sorting results yet. You can browse for one [here](https://neurosift.app/?p=/dandiset&dandisetId=000463&dandisetVersion=draft).
 
-To submit a spike sorting job, click the "SUBMIT JOB" button. You will need to enter your PAIRIO API key and optionally the compute client ID. If you do not specify a compute client, then public resources will be used if available. But let's assume that you want to use your own computer for running the spike sorting. Configure and run your own compute client using the instructions below and then enter the client ID in the form. Click "SUBMIT JOB" again and your job will be submitted. It should appear in the "pending" state.
+To submit a spike sorting job, click the "SUBMIT JOB" button. You will need to enter your DENDRO API key and optionally the compute client ID. If you do not specify a compute client, then public resources will be used if available. But let's assume that you want to use your own computer for running the spike sorting. Configure and run your own compute client using the instructions below and then enter the client ID in the form. Click "SUBMIT JOB" again and your job will be submitted. It should appear in the "pending" state.
 
 You can use the refresh icon button to refresh the job status. If everything is set up properly, the job will go to the "starting" status, which is when the docker image is being downloaded. Then it will go to the "running" status, which is when the spike sorting is actually running. You can click on the job to see the console output and progress of the job. Once the job is finished, the status will change to "completed" and you will see a link to view the output in Neurosift.
 
@@ -22,23 +22,23 @@ NOTE: In order for this to work, your GitHub user will need to have permission t
 
 Prerequisites: Python 3.7 or later and Docker. It is also possible to use apptainer instead of Docker, but the instructions here assume you are using Docker.
 
-First install pairio
+First install dendro
 
 ```bash
-pip install --upgrade pairio
+pip install --upgrade dendro
 ```
 
 Then create a new directory for your compute client
 
 ```bash
-mkdir pairio_compute_client
-cd pairio_compute_client
+mkdir dendro_compute_client
+cd dendro_compute_client
 ```
 
 Register the compute client
 
 ```bash
-pairio register-compute-client
+dendro register-compute-client
 ```
 
 When prompted for the service name, enter "hello_world_service".
@@ -51,7 +51,7 @@ IMPORTANT: By default, your compute client will process jobs from anyone who doe
 Finally, start the compute client
 
 ```bash
-pairio start-compute-client
+dendro start-compute-client
 ```
 
 You should see a message with your client ID. Copy this ID and use it to submit jobs in Neurosift.

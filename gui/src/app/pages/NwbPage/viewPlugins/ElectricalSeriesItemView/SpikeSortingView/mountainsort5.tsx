@@ -1,11 +1,11 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import InputChoices from "./InputChoices";
-import { getJobOutputUrl, useJob } from "../../CEBRA/PairioHelpers";
+import { getJobOutputUrl, useJob } from "../../CEBRA/DendroHelpers";
 import {
-  PairioJob,
-  PairioJobDefinition,
-  PairioJobRequiredResources,
-} from "app/pairio/types";
+  DendroJob,
+  DendroJobDefinition,
+  DendroJobRequiredResources,
+} from "app/dendro/dendro-types";
 
 type SpikeSortingMountainSort5Opts = {
   detect_threshold: number;
@@ -26,7 +26,7 @@ export const spikeSortingMountainSort5ParameterNames = [
 ];
 
 export const useSpikeSortingMountainSort5Step = (
-  prepareEphysJob?: PairioJob,
+  prepareEphysJob?: DendroJob,
 ) => {
   const [spikeSortingMountainSort5Opts, setSpikeSortingMountainSort5Opts] =
     useState<SpikeSortingMountainSort5Opts>(
@@ -47,7 +47,7 @@ export const useSpikeSortingMountainSort5Step = (
     refreshJob: refreshSpikeSortingMountainSort5Job,
   } = useJob(spikeSortingMountainSort5JobId);
 
-  const spikeSortingMountainSort5RequiredResources: PairioJobRequiredResources =
+  const spikeSortingMountainSort5RequiredResources: DendroJobRequiredResources =
     useMemo(() => {
       return {
         numCpus: 4,
@@ -71,7 +71,7 @@ export const useSpikeSortingMountainSort5Step = (
   }, [prepareEphysJob]);
 
   const spikeSortingMountainSort5JobDefinition:
-    | PairioJobDefinition
+    | DendroJobDefinition
     | undefined = useMemo(() => {
     const inputFileUrl = getJobOutputUrl(prepareEphysJob, "output");
     if (!inputFileUrl) {

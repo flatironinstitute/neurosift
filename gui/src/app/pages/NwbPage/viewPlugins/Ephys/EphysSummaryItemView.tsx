@@ -11,14 +11,14 @@ import {
   useState,
 } from "react";
 import {
-  PairioJob,
-  PairioJobDefinition,
-  PairioJobRequiredResources,
-} from "../../../../pairio/types";
+  DendroJob,
+  DendroJobDefinition,
+  DendroJobRequiredResources,
+} from "../../../../dendro/dendro-types";
 import { useNwbFile } from "../../NwbFileContext";
 import LazyPlotlyPlot from "../CEBRA/LazyPlotlyPlot";
-import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/PairioHelpers";
-import PairioItemView from "../CEBRA/PairioItemView";
+import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/DendroHelpers";
+import DendroItemView from "../CEBRA/DendroItemView";
 import ElectrodeGeometryView from "./ElectrodeGeometryView";
 import useTimeSeriesInfo from "../TimeSeries/useTimeseriesInfo";
 
@@ -39,7 +39,7 @@ const getJobDefinition = (
   adjustableParameterValues: { [key: string]: any },
   inputFileUrl: string,
   path: string,
-): PairioJobDefinition => {
+): DendroJobDefinition => {
   return {
     appName,
     processorName,
@@ -79,7 +79,7 @@ const getJobDefinition = (
 
 const getRequiredResources = (
   _requireGpu: boolean,
-): PairioJobRequiredResources => {
+): DendroJobRequiredResources => {
   return {
     numCpus: 2,
     numGpus: 0,
@@ -131,7 +131,7 @@ const EphysSummaryItemView: FunctionComponent<Props> = ({
   }, []);
 
   const jobFilter = useMemo(
-    () => (job: PairioJob) => {
+    () => (job: DendroJob) => {
       // make sure electrical_series_path matches
       const p = job.jobDefinition.parameters.find(
         (p) => p.name === "electrical_series_path",
@@ -174,7 +174,7 @@ const EphysSummaryItemView: FunctionComponent<Props> = ({
   }
 
   return (
-    <PairioItemView
+    <DendroItemView
       width={width}
       height={height}
       nwbUrl={nwbUrl}
@@ -231,7 +231,7 @@ const EphysSummaryItemView: FunctionComponent<Props> = ({
 // }
 
 const EphysSummaryJobOutputWidget: FunctionComponent<{
-  job: PairioJob;
+  job: DendroJob;
   width: number;
   nwbFile: RemoteH5FileX;
 }> = ({ job, width, nwbFile }) => {

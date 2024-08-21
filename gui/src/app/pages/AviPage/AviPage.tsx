@@ -8,16 +8,16 @@ import {
 import useRoute from "../../useRoute";
 import {
   CreateJobRequest,
-  PairioJob,
-  PairioJobDefinition,
-  PairioJobRequiredResources,
+  DendroJob,
+  DendroJobDefinition,
+  DendroJobRequiredResources,
   isCreateJobResponse,
-} from "../../pairio/types";
+} from "../../dendro/dendro-types";
 import {
-  SelectPairioApiKeyComponent,
+  SelectDendroApiKeyComponent,
   useAllJobs,
-} from "../NwbPage/viewPlugins/CEBRA/PairioHelpers";
-import { JobInfoView } from "../NwbPage/viewPlugins/CEBRA/PairioItemView";
+} from "../NwbPage/viewPlugins/CEBRA/DendroHelpers";
+import { JobInfoView } from "../NwbPage/viewPlugins/CEBRA/DendroItemView";
 
 type AviPageProps = {
   width: number;
@@ -82,10 +82,10 @@ const useMp4UrlForAviUrl = (
   aviUrl: string,
 ): {
   mp4Url: string | undefined;
-  job: PairioJob | undefined | null; // undefined means loading, null means not found
-  incompleteJob: PairioJob | undefined | null; // undefined means loading, null means not found (or not relevant)
+  job: DendroJob | undefined | null; // undefined means loading, null means not found
+  incompleteJob: DendroJob | undefined | null; // undefined means loading, null means not found (or not relevant)
   refreshAllJobs: () => void;
-  submitJob: (pairioApiKey: string, durationSec: number) => void;
+  submitJob: (dendroApiKey: string, durationSec: number) => void;
 } => {
   const tags = useMemo(() => ["neurosift", "avi_to_mp4"], []);
   const { allJobs, refreshAllJobs } = useAllJobs({
@@ -95,7 +95,7 @@ const useMp4UrlForAviUrl = (
   const { job, incompleteJob } = useMemo(() => {
     if (!allJobs) return { job: undefined, incompleteJob: undefined };
     // find the job with the largest duration_sec parameter
-    const jobsWithDurations: { job: PairioJob; duration_sec: number }[] =
+    const jobsWithDurations: { job: DendroJob; duration_sec: number }[] =
       allJobs.map((j) => {
         const aa = j.jobDefinition.parameters.find(
           (p) => p.name === "duration_sec",
@@ -111,8 +111,8 @@ const useMp4UrlForAviUrl = (
 
     // job is the longest duration job that is completed
     // incompleteJob is the longest duration job that is not completed, as long as it has a duration longer than job
-    let job: PairioJob | null = null;
-    let incompleteJob: PairioJob | null = null;
+    let job: DendroJob | null = null;
+    let incompleteJob: DendroJob | null = null;
     for (const j of sortedJobsWithDurations) {
       if (j.job.status === "completed") {
         job = j.job;
@@ -133,8 +133,8 @@ const useMp4UrlForAviUrl = (
     return oo.url;
   }, [job]);
   const submitJob = useCallback(
-    async (pairioApiKey: string, durationSec: number) => {
-      const jobDefinition: PairioJobDefinition = {
+    async (dendroApiKey: string, durationSec: number) => {
+      const jobDefinition: DendroJobDefinition = {
         appName: "hello_neurosift",
         processorName: "avi_to_mp4",
         inputFiles: [
@@ -161,7 +161,7 @@ const useMp4UrlForAviUrl = (
           },
         ],
       };
-      const requiredResources: PairioJobRequiredResources = {
+      const requiredResources: DendroJobRequiredResources = {
         numCpus: 1,
         numGpus: 0,
         memoryGb: 4,
@@ -184,9 +184,9 @@ const useMp4UrlForAviUrl = (
       };
       const headers = {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${pairioApiKey}`,
+        Authorization: `Bearer ${dendroApiKey}`,
       };
-      const resp = await fetch(`https://pairio.vercel.app/api/createJob`, {
+      const resp = await fetch(`https://dendro.vercel.app/api/createJob`, {
         method: "POST",
         headers,
         body: JSON.stringify(req),
@@ -208,13 +208,13 @@ const useMp4UrlForAviUrl = (
 type LeftAreaProps = {
   width: number;
   height: number;
-  job: PairioJob | undefined | null; // undefined means loading, null means not found
-  incompleteJob: PairioJob | undefined | null; // undefined means loading, null means not found (or not relevant)
+  job: DendroJob | undefined | null; // undefined means loading, null means not found
+  incompleteJob: DendroJob | undefined | null; // undefined means loading, null means not found (or not relevant)
   onRefreshJob: () => void;
-  submitJob: (pairioApiKey: string, durationSec: number) => void;
+  submitJob: (dendroApiKey: string, durationSec: number) => void;
 };
 
-const durationSecForJob = (job: PairioJob) => {
+const durationSecForJob = (job: DendroJob) => {
   const aa = job.jobDefinition.parameters.find(
     (p) => p.name === "duration_sec",
   );
@@ -223,7 +223,7 @@ const durationSecForJob = (job: PairioJob) => {
   return aa.value;
 };
 
-const totalDurationForJob = async (job: PairioJob) => {
+const totalDurationForJob = async (job: DendroJob) => {
   const infoOutput = job.outputFileResults.find((o) => o.name === "info");
   if (!infoOutput) return undefined;
   if (!infoOutput.url) return undefined;
@@ -234,7 +234,7 @@ const totalDurationForJob = async (job: PairioJob) => {
   return duration_sec;
 };
 
-const useTotalDurationForJob = (job: PairioJob | undefined | null) => {
+const useTotalDurationForJob = (job: DendroJob | undefined | null) => {
   const [totalDuration, setTotalDuration] = useState<number | undefined>(
     undefined,
   );
@@ -267,7 +267,7 @@ const LeftArea: FunctionComponent<LeftAreaProps> = ({
   submitJob,
 }) => {
   const [submittingNewJob, setSubmittingNewJob] = useState(false);
-  const [pairioApiKey, setPairioApiKey] = useState("");
+  const [dendroApiKey, setDendroApiKey] = useState("");
   const [selectedDurationSec, setSelectedDurationSec] = useState(60);
   const totalDuration = useTotalDurationForJob(job);
   return (
@@ -304,16 +304,16 @@ const LeftArea: FunctionComponent<LeftAreaProps> = ({
             value={selectedDurationSec}
             setValue={setSelectedDurationSec}
           />
-          <SelectPairioApiKeyComponent
-            value={pairioApiKey}
-            setValue={setPairioApiKey}
+          <SelectDendroApiKeyComponent
+            value={dendroApiKey}
+            setValue={setDendroApiKey}
           />
         </div>
       )}
       {submittingNewJob && (
         <button
           onClick={() => {
-            submitJob(pairioApiKey, selectedDurationSec);
+            submitJob(dendroApiKey, selectedDurationSec);
             setSubmittingNewJob(false);
           }}
         >

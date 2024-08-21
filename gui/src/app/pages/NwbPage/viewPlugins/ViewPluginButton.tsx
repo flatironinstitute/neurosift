@@ -64,10 +64,10 @@ const ViewPluginButton: FunctionComponent<Props> = ({ viewPlugin, path }) => {
       &nbsp;
       <Hyperlink
         onClick={handleClick}
-        color={viewPlugin.usesPairio ? "darkgreen" : undefined}
+        color={viewPlugin.usesDendro ? "darkgreen" : undefined}
       >
         {buttonLabel || name}
-        {viewPlugin.usesPairio ? "*" : ""}
+        {viewPlugin.usesDendro ? "*" : ""}
       </Hyperlink>
     </div>
   );

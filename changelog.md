@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2024-08-21
+
+* Rename pairio -> dendro
+
 ## 2024-08-20
 
 * Spike sorting: Update compression ration choices to include 'lossless'
@@ -74,8 +78,8 @@ All notable changes to this project will be documented in this file.
 
 ## 2024-07-22
 
-* Refactor Pairio view item for better UI flow
-* Fix Pairio component: Add jobFilter to useAllJobs so that only jobs relevant to the object path are shown
+* Refactor Pairio (dendro) view item for better UI flow
+* Fix Pairio (dendro) component: Add jobFilter to useAllJobs so that only jobs relevant to the object path are shown
 * Fix display problem with tab widgets
 * Add Vercel analytics
 
@@ -86,7 +90,7 @@ All notable changes to this project will be documented in this file.
 ## 2024-07-18
 
 * Show y axis label in timeseries plots
-* Disable pairio views when viewing local files
+* Disable pairio (dendro) views when viewing local files
 
 ## 2024-07-12
 

@@ -136,7 +136,7 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
 
   const externalLink = `https://${stagingStr2}dandiarchive.org/dandiset/${dandisetId}/${X.version}`;
 
-  const pairioViewsEnabled = true;
+  const dendroViewsEnabled = true;
 
   const topBarHeight = onOpenAssets ? 30 : 0;
   return (
@@ -166,7 +166,7 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
           </button>
         )}
         &nbsp;&nbsp;&nbsp;&nbsp;
-        {pairioViewsEnabled && (
+        {dendroViewsEnabled && (
           <Hyperlink
             onClick={() =>
               setRoute({

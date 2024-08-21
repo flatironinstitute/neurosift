@@ -6,10 +6,10 @@ import {
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import Markdown from "../../../../Markdown/Markdown";
 import {
-  PairioJob,
-  PairioJobDefinition,
-  PairioJobRequiredResources,
-} from "../../../../pairio/types";
+  DendroJob,
+  DendroJobDefinition,
+  DendroJobRequiredResources,
+} from "../../../../dendro/dendro-types";
 import { useNwbFile } from "../../NwbFileContext";
 import EmbeddingPlot3D from "./EmbeddingPlot3D";
 import EmbeddingTimePlot from "./EmbeddingTimePlot";
@@ -18,8 +18,8 @@ import {
   getJobOutputUrl,
   getJobParameterValue,
   removeLeadingSlash,
-} from "./PairioHelpers";
-import PairioItemView from "./PairioItemView";
+} from "./DendroHelpers";
+import DendroItemView from "./DendroItemView";
 import getIntrinsicDimensionMarkdown from "./getIntrinsicDimensionMarkdown";
 import getPowerSpectrumMarkdown from "./getPowerSpectrumMarkdown";
 
@@ -59,7 +59,7 @@ const getJobDefinition = (
   adjustableParameterValues: { [key: string]: any },
   inputFileUrl: string,
   path: string,
-): PairioJobDefinition => {
+): DendroJobDefinition => {
   return {
     appName,
     processorName,
@@ -107,7 +107,7 @@ const getJobDefinition = (
 
 const getRequiredResources = (
   requireGpu: boolean,
-): PairioJobRequiredResources => {
+): DendroJobRequiredResources => {
   return {
     numCpus: requireGpu ? 1 : 4,
     numGpus: requireGpu ? 1 : 0,
@@ -132,7 +132,7 @@ const CEBRAView: FunctionComponent<Props> = ({ width, height, path }) => {
   const tags = useMemo(() => ["neurosift", "CEBRA"], []);
 
   return (
-    <PairioItemView
+    <DendroItemView
       width={width}
       height={height}
       nwbUrl={nwbUrl}
@@ -153,7 +153,7 @@ const CEBRAView: FunctionComponent<Props> = ({ width, height, path }) => {
 };
 
 const CEBRAJobOutputWidget: FunctionComponent<{
-  job: PairioJob;
+  job: DendroJob;
   width: number;
   nwbFile: RemoteH5FileX;
 }> = ({ job }) => {

@@ -1,7 +1,6 @@
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import { useDandiAssetContext } from "../DandiAssetContext";
 import { Hyperlink } from "@fi-sci/misc";
-import DendroLinksView from "../DendroLinksView/DendroLinksView";
 
 type DendroViewProps = {
   width: number;
@@ -37,9 +36,6 @@ const DendroView: FunctionComponent<DendroViewProps> = ({ width, height }) => {
       <div>&nbsp;</div>
       <AssociatedDendroProjectsComponent assetUrl={assetUrl} />
       <div>&nbsp;</div>
-      <hr />
-      <div>&nbsp;</div>
-      <DendroLinksView />
       <hr />
       {dandisetId && dandisetVersion && assetPath && (
         <div>

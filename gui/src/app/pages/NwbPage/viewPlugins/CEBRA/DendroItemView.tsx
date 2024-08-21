@@ -10,23 +10,23 @@ import {
 } from "react";
 import {
   CreateJobRequest,
-  PairioJob,
-  PairioJobDefinition,
-  PairioJobRequiredResources,
+  DendroJob,
+  DendroJobDefinition,
+  DendroJobRequiredResources,
   isCreateJobResponse,
-} from "../../../../pairio/types";
+} from "../../../../dendro/dendro-types";
 import {
   AllJobsView,
   MultipleChoiceNumberSelector,
   MultipleChoiceStringSelector,
-  SelectPairioApiKeyComponent,
-  SelectPairioComputeClientIdComponent,
+  SelectDendroApiKeyComponent,
+  SelectDendroComputeClientIdComponent,
   formatValue,
   getJobParameterValue,
   useAllJobs,
   useJob,
-  usePairioApiKey,
-} from "./PairioHelpers";
+  useDendroApiKey,
+} from "./DendroHelpers";
 import { RemoteH5FileX } from "@remote-h5-file/index";
 import { useNwbFile } from "../../NwbFileContext";
 import { LazyPlotlyPlotContext } from "./LazyPlotlyPlot";
@@ -52,7 +52,7 @@ const adjustableParametersReducer = (
   }
 };
 
-type PairioItemViewProps = {
+type DendroItemViewProps = {
   width: number;
   height: number;
   nwbUrl: string;
@@ -72,24 +72,24 @@ type PairioItemViewProps = {
     adjustableParameterValues: AdjustableParameterValues,
     inputFileUrl: string,
     path: string,
-  ) => PairioJobDefinition;
-  getRequiredResources: (requireGpu: boolean) => PairioJobRequiredResources;
+  ) => DendroJobDefinition;
+  getRequiredResources: (requireGpu: boolean) => DendroJobRequiredResources;
   gpuMode: "optional" | "required" | "forbidden";
   OutputComponent: FunctionComponent<{
-    job: PairioJob;
+    job: DendroJob;
     width: number;
     nwbFile: RemoteH5FileX;
   }>;
   compact?: boolean;
-  jobFilter?: (job: PairioJob) => boolean;
-  sortCandidateJobs?: (jobs: PairioJob[]) => PairioJob[];
+  jobFilter?: (job: DendroJob) => boolean;
+  sortCandidateJobs?: (jobs: DendroJob[]) => DendroJob[];
 };
 
 const lazyPlotlyPlotContextValue = {
   showPlotEvenWhenNotVisible: true,
 };
 
-const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
+const DendroItemView: FunctionComponent<DendroItemViewProps> = ({
   width,
   height,
   nwbUrl,
@@ -148,7 +148,7 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
 
   const [submittingNewJob, setSubmittingNewJob] = useState(false);
   const [definingNewJob, setDefiningNewJob] = useState(false);
-  const newJobDefinition: PairioJobDefinition | undefined = useMemo(
+  const newJobDefinition: DendroJobDefinition | undefined = useMemo(
     () =>
       nwbUrl
         ? getJobDefinition(adjustableParameterValues, inputFileUrl, path)
@@ -160,7 +160,7 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
     setSubmittingNewJob(false);
   }, [newJobDefinition]);
 
-  const requiredResources: PairioJobRequiredResources = useMemo(() => {
+  const requiredResources: DendroJobRequiredResources = useMemo(() => {
     return getRequiredResources(requireGpu);
   }, [requireGpu, getRequiredResources]);
 
@@ -195,7 +195,7 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
     }
   }, [allJobs, selectedJobId, sortCandidateJobs]);
 
-  const { pairioApiKey, setPairioApiKey } = usePairioApiKey();
+  const { dendroApiKey, setDendroApiKey } = useDendroApiKey();
   const [computeClientId, setComputeClientId] = useState<string | undefined>(
     undefined,
   );
@@ -226,9 +226,9 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
       };
       const headers = {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${pairioApiKey}`,
+        Authorization: `Bearer ${dendroApiKey}`,
       };
-      const resp = await fetch(`https://pairio.vercel.app/api/createJob`, {
+      const resp = await fetch(`https://dendro.vercel.app/api/createJob`, {
         method: "POST",
         headers,
         body: JSON.stringify(req),
@@ -250,7 +250,7 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
     }
   }, [
     newJobDefinition,
-    pairioApiKey,
+    dendroApiKey,
     computeClientId,
     refreshAllJobs,
     refreshSelectedJob,
@@ -327,13 +327,13 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
                 {submittingNewJob && (
                   <div>
                     <div style={{ paddingTop: 10 }}>
-                      <SelectPairioApiKeyComponent
-                        value={pairioApiKey}
-                        setValue={setPairioApiKey}
+                      <SelectDendroApiKeyComponent
+                        value={dendroApiKey}
+                        setValue={setDendroApiKey}
                       />
                     </div>
                     <div style={{ paddingTop: 10 }}>
-                      <SelectPairioComputeClientIdComponent
+                      <SelectDendroComputeClientIdComponent
                         value={computeClientId}
                         setValue={setComputeClientId}
                       />
@@ -349,7 +349,7 @@ const PairioItemView: FunctionComponent<PairioItemViewProps> = ({
                     <div style={{ paddingTop: 10 }}>
                       <button
                         onClick={handleSubmitNewJob}
-                        disabled={!pairioApiKey}
+                        disabled={!dendroApiKey}
                       >
                         SUBMIT JOB
                       </button>
@@ -426,13 +426,13 @@ const RequireGpuSelector: FunctionComponent<{
 };
 
 type JobInfoViewProps = {
-  job: PairioJob;
+  job: DendroJob;
   onRefreshJob: () => void;
   parameterNames: string[];
 };
 
 const getJobUrl = (jobId: string) => {
-  return `https://pairio.vercel.app/job/${jobId}`;
+  return `https://dendro.vercel.app/job/${jobId}`;
 };
 
 export const JobInfoView: FunctionComponent<JobInfoViewProps> = ({
@@ -462,4 +462,4 @@ export const JobInfoView: FunctionComponent<JobInfoViewProps> = ({
   );
 };
 
-export default PairioItemView;
+export default DendroItemView;

@@ -55,7 +55,7 @@ export type ViewPlugin = {
   checkEnabled?: (nwbFile: RemoteH5FileX, path: string) => Promise<boolean>;
   isTimeView?: boolean;
   usesState?: boolean;
-  usesPairio?: boolean;
+  usesDendro?: boolean;
   getCustomPythonCode?: (group: RemoteH5Group) => string;
   testLinks?: string[];
 };
@@ -270,7 +270,7 @@ viewPlugins.push({
   defaultForNeurodataType: false,
   component: CEBRAView,
   isTimeView: true,
-  usesPairio: true,
+  usesDendro: true,
   testLinks: [],
 });
 viewPlugins.push({
@@ -345,7 +345,7 @@ viewPlugins.push({
   buttonLabel: "units summary",
   component: UnitsSummaryItemView,
   isTimeView: false,
-  usesPairio: true,
+  usesDendro: true,
   testLinks: [],
 });
 
@@ -453,9 +453,9 @@ export const checkUrlIsLocal = (o: { nwbUrl: string }) => {
 
 export const getViewPlugins = (o: { nwbUrl: string }) => {
   const urlIsLocal = checkUrlIsLocal(o);
-  const pairioViewsEnabled = !urlIsLocal;
+  const dendroViewsEnabled = !urlIsLocal;
   return viewPlugins.filter((p) => {
-    if (p.usesPairio && !pairioViewsEnabled) return false;
+    if (p.usesDendro && !dendroViewsEnabled) return false;
     return true;
   });
 };

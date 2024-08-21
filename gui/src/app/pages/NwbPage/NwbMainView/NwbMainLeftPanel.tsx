@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hyperlink } from "@fi-sci/misc";
 import { RemoteH5FileX } from "@remote-h5-file/index";
+import { reportRecentlyViewedDandiset } from "app/pages/DandiPage/DandiBrowser/DandiBrowser";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import useRoute from "../../../useRoute";
 import {
@@ -10,15 +11,11 @@ import {
 import { useDandiAssetContext } from "../DandiAssetContext";
 import { useNwbFile } from "../NwbFileContext";
 import { useNwbOpenTabs } from "../NwbOpenTabsContext";
+import ViewObjectAnalysesIconThing from "../ObjectNote/ViewObjectAnalysesIconThing";
 import ViewObjectNotesIconThing from "../ObjectNote/ViewObjectNotesIconThing";
 import getAuthorizationHeaderForUrl from "../getAuthorizationHeaderForUrl";
 import { useDatasetData, useGroup } from "./NwbMainView";
 import SelectedNeurodataItemsWidget from "./SelectedNeurodataItemsWidget";
-import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
-import SupplementalDendroFilesView from "./SupplementalDendroFilesView";
-import { useSupplementalDendroFiles } from "../SupplementalDendroFilesContext";
-import ViewObjectAnalysesIconThing from "../ObjectNote/ViewObjectAnalysesIconThing";
-import { reportRecentlyViewedDandiset } from "app/pages/DandiPage/DandiBrowser/DandiBrowser";
 
 type Props = {
   width: number;
@@ -298,15 +295,6 @@ const DandiTable = () => {
 
   const { setRoute } = useRoute();
 
-  const { supplementalFiles, selectedSupplementalFileIds } =
-    useSupplementalDendroFiles();
-
-  const {
-    handleOpen: openSupplementalFiles,
-    handleClose: closeSupplementalFiles,
-    visible: supplementalFilesVisible,
-  } = useModalWindow();
-
   useEffect(() => {
     if (!dandisetId) return;
     reportRecentlyViewedDandiset({
@@ -353,27 +341,11 @@ const DandiTable = () => {
           /{assetPathFileName}
         </p>
       )}
-      {supplementalFiles && supplementalFiles.length > 0 && (
-        <div>
-          <Hyperlink onClick={openSupplementalFiles}>
-            {supplementalFiles.length} supplemental{" "}
-            {supplementalFiles.length === 1 ? "file" : "files"}
-            &nbsp; ({selectedSupplementalFileIds.length} selected )
-          </Hyperlink>
-        </div>
-      )}
       <div style={{ display: "flex", flexDirection: "row" }}>
         <ViewObjectNotesIconThing objectPath="/" />
         &nbsp;
         <ViewObjectAnalysesIconThing objectPath="/" />
       </div>
-      <hr />
-      <ModalWindow
-        visible={supplementalFilesVisible}
-        onClose={closeSupplementalFiles}
-      >
-        <SupplementalDendroFilesView />
-      </ModalWindow>
     </div>
   );
 };
