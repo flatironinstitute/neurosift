@@ -12,27 +12,30 @@ export const useJobProducingOutput = (nwbFileUrl: string) => {
     let canceled = false;
     setJob(undefined);
     (async () => {
-      const req: FindJobsRequest = {
-        type: "findJobsRequest",
-        outputFileUrl: nwbFileUrl,
-        limit: 1,
-      };
-      const resp = await apiPostDendroRequest("findJobs", req);
-      if (canceled) return;
-      if (!isFindJobsResponse(resp)) {
-        console.error("Invalid response", resp);
-        return;
-      }
-      const jobs = resp.jobs;
-      if (jobs.length === 0) {
-        setJob(null);
-        return;
-      }
-      setJob(jobs[0]);
+      const j = await getJobProducingOutput(nwbFileUrl);
+      setJob(j);
     })();
     return () => {
       canceled = true;
     };
   }, [nwbFileUrl]);
   return job;
+};
+
+export const getJobProducingOutput = async (nwbFileUrl: string) => {
+  const req: FindJobsRequest = {
+    type: "findJobsRequest",
+    outputFileUrl: nwbFileUrl,
+    limit: 1,
+  };
+  const resp = await apiPostDendroRequest("findJobs", req);
+  if (!isFindJobsResponse(resp)) {
+    console.error("Invalid response", resp);
+    return null;
+  }
+  const jobs = resp.jobs;
+  if (jobs.length === 0) {
+    return null;
+  }
+  return jobs[0];
 };

@@ -272,6 +272,7 @@ const InputsOutputsParametersView: FunctionComponent<
           <th>Type</th>
           <th>Value / URL</th>
           <th>Size</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -288,32 +289,31 @@ const InputsOutputsParametersView: FunctionComponent<
               <td>{row.type}</td>
               <td style={{ maxWidth: 100, wordWrap: "break-word" }}>
                 {row.url ? (
-                  <>
-                    {doLinkToFile ? (
-                      <>
-                        <span>{row.url}</span>&nbsp;
-                        <a
-                          href={row.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ fontSize: 14 }}
-                        >
-                          <Download fontSize="inherit" />
-                        </a>
-                      </>
-                    ) : (
-                      <span>{row.url || ""}</span>
-                    )}
-                    &nbsp;
-                    {row.type === "input" && (
-                      <LinkToJobFromInputFile url={row.url} />
-                    )}
-                  </>
+                  doLinkToFile ? (
+                    <>
+                      <span>{row.url}</span>&nbsp;
+                      <a
+                        href={row.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: 14 }}
+                      >
+                        <Download fontSize="inherit" />
+                      </a>
+                    </>
+                  ) : (
+                    <span>{row.url || ""}</span>
+                  )
                 ) : (
                   <span>{formatValue(row.value)}</span>
                 )}
               </td>
               <td>{row.size ? formatByteCount(row.size) : ""}</td>
+              <td>
+                {row.type === "input" && row.url && (
+                  <LinkToJobFromInputFile url={row.url} />
+                )}
+              </td>
             </tr>
           );
         })}
