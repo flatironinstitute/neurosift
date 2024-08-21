@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2024-08-20
+
+* Spike sorting: Update compression ration choices to include 'lossless'
+
+## 2024-08-19
+
+* Add unit locations view
+
+## 2024-08-14
+
+* Use HEAD request to DANDI bucket rather than aborted GET
+
+## 2024-08-09
+
+* Use .lindi.tar instead of .lindi
+* Add post-processing step for spike sorting
+* Improve appearance of electrode geometry view
+* Develop spike sorting view for ephys data
+
+## 2024-08-07
+
+* Use .lindi instead of .lindi.json
+* QFC decompression for lindi files
+
 ## 2024-08-02
 
 * Support lindi tar!
