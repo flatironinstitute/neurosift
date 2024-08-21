@@ -288,24 +288,26 @@ const InputsOutputsParametersView: FunctionComponent<
               <td>{row.type}</td>
               <td style={{ maxWidth: 100, wordWrap: "break-word" }}>
                 {row.url ? (
-                  <>{
-                  doLinkToFile ? (
-                    <>
-                      <span>{row.url}</span>&nbsp;
-                      <a
-                        href={row.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ fontSize: 14 }}
-                      >
-                        <Download fontSize="inherit" />
-                      </a>
-                    </>
-                  ) : (
-                    <span>{row.url || ""}</span>
-                  )
-                  }&nbsp;
-                  {row.type === 'input' && <LinkToJobFromInputFile url={row.url} />}
+                  <>
+                    {doLinkToFile ? (
+                      <>
+                        <span>{row.url}</span>&nbsp;
+                        <a
+                          href={row.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ fontSize: 14 }}
+                        >
+                          <Download fontSize="inherit" />
+                        </a>
+                      </>
+                    ) : (
+                      <span>{row.url || ""}</span>
+                    )}
+                    &nbsp;
+                    {row.type === "input" && (
+                      <LinkToJobFromInputFile url={row.url} />
+                    )}
                   </>
                 ) : (
                   <span>{formatValue(row.value)}</span>
@@ -320,9 +322,11 @@ const InputsOutputsParametersView: FunctionComponent<
   );
 };
 
-const LinkToJobFromInputFile: FunctionComponent<{ url: string }> = ({ url }) => {
+const LinkToJobFromInputFile: FunctionComponent<{ url: string }> = ({
+  url,
+}) => {
   const job = useJobProducingOutput(url);
-  if (!job) return <></>
+  if (!job) return <></>;
 
   return (
     <a
@@ -332,8 +336,8 @@ const LinkToJobFromInputFile: FunctionComponent<{ url: string }> = ({ url }) => 
     >
       open job
     </a>
-  )
-}
+  );
+};
 
 const formatValue = (value: any) => {
   if (value === null) return "null";
