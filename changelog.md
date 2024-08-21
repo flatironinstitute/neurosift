@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## 2024-08-21
 
+* Dendro provenance!
 * Rename pairio -> dendro
 
 ## 2024-08-20

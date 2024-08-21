@@ -6,6 +6,7 @@ import NeurosiftAnnotationsView from "../NeurosiftAnnotationsView/NeurosiftAnnot
 import DefaultNwbFileView from "./DefaultNwbFileView";
 import SpecificationsView from "../SpecificationsView/SpecificationsView";
 import WidgetsView from "../WidgetsView/WidgetsView";
+import DendroView from "../DendroView/DendroView";
 
 type Props = {
   width: number;
@@ -82,14 +83,19 @@ const NwbMainViewMainPanel: FunctionComponent<Props> = ({
           <BrowseNwbView width={width} height={height - topBarHeight} />
         )}
       </div>
-      {/* <div style={{ position: 'absolute', width, height: height - topBarHeight, top: topBarHeight, visibility: viewMode === 'dendro' ? undefined : 'hidden' }}>
-                {hasBeenVisibleViewModes.includes('dendro') && (
-                    <DendroView
-                        width={width}
-                        height={height - topBarHeight}
-                    />
-                )}
-            </div> */}
+      <div
+        style={{
+          position: "absolute",
+          width,
+          height: height - topBarHeight,
+          top: topBarHeight,
+          visibility: viewMode === "dendro" ? undefined : "hidden",
+        }}
+      >
+        {hasBeenVisibleViewModes.includes("dendro") && (
+          <DendroView width={width} height={height - topBarHeight} />
+        )}
+      </div>
       <div
         style={{
           position: "absolute",
@@ -176,6 +182,9 @@ const ViewModeToggleButton: FunctionComponent<ViewModeToggleButtonProps> = ({
       </ToggleButton>
       <ToggleButton value="specifications" title="HDMF specifications">
         Specifications
+      </ToggleButton>
+      <ToggleButton value="dendro" title="Dendro">
+        Dendro
       </ToggleButton>
       <ToggleButton value="annotations" title="Neurosift annotations">
         Annotations

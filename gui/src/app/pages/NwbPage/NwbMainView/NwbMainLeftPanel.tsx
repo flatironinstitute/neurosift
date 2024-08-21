@@ -16,6 +16,7 @@ import ViewObjectNotesIconThing from "../ObjectNote/ViewObjectNotesIconThing";
 import getAuthorizationHeaderForUrl from "../getAuthorizationHeaderForUrl";
 import { useDatasetData, useGroup } from "./NwbMainView";
 import SelectedNeurodataItemsWidget from "./SelectedNeurodataItemsWidget";
+import DendroView from "../DendroView/DendroView";
 
 type Props = {
   width: number;
