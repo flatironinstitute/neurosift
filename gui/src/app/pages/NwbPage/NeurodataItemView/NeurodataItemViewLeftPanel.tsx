@@ -5,6 +5,7 @@ import ShareTabComponent from "./ShareTabComponent";
 import { ViewPlugin } from "../viewPlugins/viewPlugins";
 import LoadInPythonComponent from "./LoadInPythonComponent";
 import ViewObjectNotesIconThing from "../ObjectNote/ViewObjectNotesIconThing";
+import DendroProvenanceForItem from "./DendroProvenanceForItem";
 
 type Props = {
   width: number;
@@ -73,6 +74,8 @@ const NeurodataItemViewLeftPanel: FunctionComponent<Props> = ({
       )}
       <hr />
       <ViewObjectNotesIconThing objectPath={path} previewText={true} />
+      <hr />
+      <DendroProvenanceForItem path={path} />
     </div>
   );
 };

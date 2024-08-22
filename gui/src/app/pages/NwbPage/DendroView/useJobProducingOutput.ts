@@ -6,11 +6,15 @@ import {
 import { useEffect, useState } from "react";
 import { apiPostDendroRequest } from "./apiPostDendroRequest";
 
-export const useJobProducingOutput = (nwbFileUrl: string) => {
+export const useJobProducingOutput = (nwbFileUrl: string | undefined) => {
   const [job, setJob] = useState<DendroJob | null | undefined>(undefined);
   useEffect(() => {
     let canceled = false;
     setJob(undefined);
+    if (!nwbFileUrl) {
+      setJob(null);
+      return;
+    }
     (async () => {
       const j = await getJobProducingOutput(nwbFileUrl);
       setJob(j);
