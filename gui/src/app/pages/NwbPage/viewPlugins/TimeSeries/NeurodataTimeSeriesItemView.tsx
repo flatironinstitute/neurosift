@@ -3,18 +3,22 @@ import NwbTimeseriesView from "./TimeseriesItemView/NwbTimeseriesView";
 import TimeSeriesViewToolbar, {
   TimeSeriesViewOpts,
 } from "./TimeSeriesViewToolbar";
+import { SpikeTrainsClient } from "../Units/DirectRasterPlotUnitsItemView";
 
 type Props = {
   width: number;
   height: number;
   path: string;
   condensed?: boolean;
+
+  spikeTrainsClient?: SpikeTrainsClient;
 };
 
 const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({
   width,
   height,
   path,
+  spikeTrainsClient,
 }) => {
   const bottomToolBarHeight = 30;
   // important to start with only 1 visible channel --- if we want to default to more, do it in a useEffect after we figure out the number of channels in the dataset
@@ -48,6 +52,7 @@ const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({
           visibleChannelsRange={visibleChannelsRange}
           autoChannelSeparation={timeSeriesViewOpts.autoChannelSeparation}
           colorChannels={timeSeriesViewOpts.colorChannels}
+          spikeTrainsClient={spikeTrainsClient}
         />
       </div>
       <div

@@ -23,7 +23,10 @@ import { useDataset } from "../../../NwbMainView/NwbMainView";
 import { useNwbTimeseriesDataClient } from "./NwbTimeseriesDataClient";
 import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient";
 import { timeSelectionBarHeight } from "./TimeseriesSelectionBar";
-import { DataSeries, Opts } from "./WorkerTypes";
+import { DataSeries, Opts, SpikeTrainsDataForWorker } from "./WorkerTypes";
+import { SpikeTrainsClient } from "../../Units/DirectRasterPlotUnitsItemView";
+import { colorForUnitId } from "app/package/spike_sorting/unit-colors";
+import { getUnitColor } from "app/package/view-units-table";
 
 type Props = {
   width: number;
@@ -32,6 +35,7 @@ type Props = {
   visibleChannelsRange?: [number, number];
   autoChannelSeparation?: number;
   colorChannels?: boolean;
+  spikeTrainsClient?: SpikeTrainsClient;
 };
 
 const gridlineOpts = {
@@ -48,6 +52,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
   visibleChannelsRange,
   autoChannelSeparation,
   colorChannels,
+  spikeTrainsClient,
 }) => {
   const [canvasElement, setCanvasElement] = useState<
     HTMLCanvasElement | undefined
@@ -406,6 +411,66 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
       dataSeries,
     });
   }, [worker, dataSeries]);
+
+  const { spikeTrainBlockStartIndex, spikeTrainBlockEndIndex } = useMemo(() => {
+    if (visibleStartTimeSec === undefined)
+      return {
+        spikeTrainBlockStartIndex: undefined,
+        spikeTrainBlockEndIndex: undefined,
+      };
+    if (visibleEndTimeSec === undefined)
+      return {
+        spikeTrainBlockStartIndex: undefined,
+        spikeTrainBlockEndIndex: undefined,
+      };
+    if (!spikeTrainsClient)
+      return {
+        spikeTrainBlockStartIndex: undefined,
+        spikeTrainBlockEndIndex: undefined,
+      };
+    const blockSizeSec = spikeTrainsClient.blockSizeSec;
+    const spikeTrainBlockStartIndex = Math.floor(
+      visibleStartTimeSec / blockSizeSec,
+    );
+    const spikeTrainBlockEndIndex =
+      Math.ceil(visibleEndTimeSec / blockSizeSec) + 1;
+    return { spikeTrainBlockStartIndex, spikeTrainBlockEndIndex };
+  }, [visibleStartTimeSec, visibleEndTimeSec, spikeTrainsClient]);
+
+  useEffect(() => {
+    if (!spikeTrainsClient) return;
+    if (!worker) return;
+    if (spikeTrainBlockStartIndex === undefined) return;
+    if (spikeTrainBlockEndIndex === undefined) return;
+    let canceled = false;
+    (async () => {
+      if (!spikeTrainsClient) return;
+      const data = await spikeTrainsClient.getData(
+        spikeTrainBlockStartIndex,
+        spikeTrainBlockEndIndex,
+        {},
+      );
+      const data2: SpikeTrainsDataForWorker = data.map((st) => ({
+        unitId: st.unitId,
+        spikeTimesSec: st.spikeTimesSec,
+        color: getUnitColor(st.unitId),
+      }));
+      if (canceled) return;
+      worker.postMessage({
+        spikeTrains: data2,
+      });
+    })();
+    return () => {
+      canceled = true;
+    };
+  }, [
+    spikeTrainsClient,
+    spikeTrainBlockStartIndex,
+    spikeTrainBlockEndIndex,
+    worker,
+  ]);
+
+  useEffect(() => {}, [spikeTrainsClient]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "m") {

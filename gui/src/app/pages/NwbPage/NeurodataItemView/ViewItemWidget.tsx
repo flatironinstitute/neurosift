@@ -8,7 +8,7 @@ import NeurodataItemViewLeftPanel from "./NeurodataItemViewLeftPanel";
 type Props = {
   width: number;
   height: number;
-  viewPlugin: ViewPlugin;
+  viewPlugin?: ViewPlugin;
   itemPath: string;
   additionalItemPaths?: string[];
   condensed?: boolean;
@@ -35,7 +35,7 @@ const ViewItemWidget: FunctionComponent<Props> = ({
 
   const [stateString, setStateString] = useState<string | undefined>(undefined);
 
-  const content = (
+  const content = viewPlugin ? (
     <viewPlugin.component
       width={width}
       height={height}
@@ -46,6 +46,14 @@ const ViewItemWidget: FunctionComponent<Props> = ({
       initialStateString={viewPlugin.usesState ? initialStateString : undefined}
       setStateString={viewPlugin.usesState ? setStateString : undefined}
     />
+  ) : (
+    <div>
+      <h3>View plugin not found</h3>
+      <p>
+        No view plugin found for this item. If you think there should be one,
+        please report this as a bug.
+      </p>
+    </div>
   );
 
   if (condensed) return content;
@@ -63,7 +71,7 @@ const ViewItemWidget: FunctionComponent<Props> = ({
         path={itemPath}
         additionalPaths={additionalItemPaths}
         group={group}
-        viewName={viewPlugin.name}
+        viewName={viewPlugin?.name || ""}
         tabName={tabName}
         viewPlugin={viewPlugin}
         stateString={stateString}

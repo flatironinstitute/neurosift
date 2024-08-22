@@ -172,7 +172,7 @@ const VisibleStartChannelSelector: FunctionComponent<
       {upArrow}
       {downArrow}
       &nbsp; Viewing chans: &nbsp;
-      {range[0]} - {range[1]}
+      {range[0] + 1} - {range[1] + 1}
       &nbsp; / {totalNumChannels}
     </div>
   );

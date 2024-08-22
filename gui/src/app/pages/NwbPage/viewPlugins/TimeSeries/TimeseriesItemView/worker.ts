@@ -1,10 +1,16 @@
-import { Opts, DataSeries, TimeseriesAnnotationFileData } from "./WorkerTypes";
+import {
+  Opts,
+  DataSeries,
+  TimeseriesAnnotationFileData,
+  SpikeTrainsDataForWorker,
+} from "./WorkerTypes";
 
 let canvas: HTMLCanvasElement | undefined = undefined;
 let opts: Opts | undefined = undefined;
 let dataSeries: DataSeries[] | undefined = undefined;
 let plotSeries: PlotSeries[] | undefined = undefined;
 let annotation: TimeseriesAnnotationFileData | undefined = undefined;
+let spikeTrains: SpikeTrainsDataForWorker | undefined = undefined;
 
 onmessage = function (evt) {
   if (evt.data.canvas) {
@@ -21,6 +27,10 @@ onmessage = function (evt) {
   }
   if (evt.data.annotation) {
     annotation = evt.data.annotation;
+    drawDebounced();
+  }
+  if (evt.data.spikeTrains) {
+    spikeTrains = evt.data.spikeTrains;
     drawDebounced();
   }
 };
@@ -107,6 +117,18 @@ async function draw() {
     // the wait time is equal to the render time
     const elapsed = Date.now() - timer;
     await sleepMsec(elapsed);
+  }
+
+  if (spikeTrains) {
+    await drawSpikeTrains({
+      canvasContext,
+      canvasWidth,
+      canvasHeight,
+      visibleStartTimeSec,
+      visibleEndTimeSec,
+      margins,
+      spikeTrains,
+    });
   }
 
   if (annotation) {
@@ -395,6 +417,52 @@ function sleepMsec(msec: number) {
     setTimeout(resolve, msec);
   });
 }
+
+const drawSpikeTrains = async (o: {
+  canvasContext: CanvasRenderingContext2D;
+  canvasWidth: number;
+  canvasHeight: number;
+  visibleStartTimeSec: number;
+  visibleEndTimeSec: number;
+  margins: { left: number; right: number; top: number; bottom: number };
+  spikeTrains: SpikeTrainsDataForWorker;
+}) => {
+  const {
+    canvasContext,
+    canvasWidth,
+    canvasHeight,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    margins,
+    spikeTrains,
+  } = o;
+
+  for (const x of spikeTrains) {
+    const { unitId, spikeTimesSec } = x;
+    for (const t of spikeTimesSec) {
+      if (t < visibleStartTimeSec || t > visibleEndTimeSec) continue;
+      const x0 =
+        margins.left +
+        ((t - visibleStartTimeSec) /
+          (visibleEndTimeSec - visibleStartTimeSec)) *
+          (canvasWidth - margins.left - margins.right);
+      const y1 = margins.top;
+      const y2 = canvasHeight - margins.bottom;
+      canvasContext.strokeStyle = x.color;
+      canvasContext.beginPath();
+      canvasContext.moveTo(x0, y1);
+      canvasContext.lineTo(x0, y2);
+      canvasContext.stroke();
+
+      canvasContext.fillStyle = x.color;
+      const text = `${unitId}`;
+      canvasContext.font = "12px Arial";
+      canvasContext.textAlign = "center";
+      canvasContext.textBaseline = "bottom";
+      canvasContext.fillText(text, x0, y1);
+    }
+  }
+};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // BEGIN drawAnnotation

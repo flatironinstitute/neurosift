@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2024-08-22
+
+* Ephys + Units view
+* Show left panel for item view even when plugin is not found
+* Dendro provenance for individual neurodata objects
+
 ## 2024-08-21
 
 * Dendro provenance!

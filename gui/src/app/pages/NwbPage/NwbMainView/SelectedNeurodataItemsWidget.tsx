@@ -42,6 +42,10 @@ const SelectedNeurodataItemsWidget: FunctionComponent<Props> = () => {
         selectedItemViews={selectedItemViews}
         openTab={openTab}
       />
+      <SpecialEphysAndUnitsButton
+        selectedItemViews={selectedItemViews}
+        openTab={openTab}
+      />
     </div>
   );
 };
@@ -138,6 +142,49 @@ const SpecialTimeAlignedSeriesButton: FunctionComponent<
         }}
       >
         Open TimeAlignedSeries for selected items
+      </Hyperlink>
+    </div>
+  );
+};
+
+type SpecialEphysAndUnitsButtonProps = {
+  selectedItemViews: string[];
+  openTab: (path: string) => void;
+};
+
+const SpecialEphysAndUnitsButton: FunctionComponent<
+  SpecialEphysAndUnitsButtonProps
+> = ({ selectedItemViews, openTab }) => {
+  const { unitsSelectedItemPath, electricalSeriesItemPath } = useMemo(() => {
+    if (selectedItemViews.length !== 2)
+      return {
+        unitsSelectedItem: undefined,
+        electricalSeriesItemPath: undefined,
+      };
+    const unitsSelectedItemPath = selectedItemViews
+      .find((a) => a.endsWith("|Units"))
+      ?.split("|")[0]
+      ?.split(":")[1];
+    const electricalSeriesItemPath = selectedItemViews
+      .find((a) => a.endsWith("|ElectricalSeries"))
+      ?.split("|")[0]
+      ?.split(":")[1];
+    return { unitsSelectedItemPath, electricalSeriesItemPath };
+  }, [selectedItemViews]);
+  const enabled = unitsSelectedItemPath && electricalSeriesItemPath;
+  if (!enabled) return <span />;
+  return (
+    <div>
+      <Hyperlink
+        onClick={() => {
+          if (!unitsSelectedItemPath) return;
+          if (!electricalSeriesItemPath) return;
+          openTab(
+            `view:EphysAndUnits|${electricalSeriesItemPath}^${unitsSelectedItemPath}`,
+          );
+        }}
+      >
+        Open Ephys+Units for selected items
       </Hyperlink>
     </div>
   );

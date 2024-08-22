@@ -32,6 +32,7 @@ import {
 } from "./customPythonCode";
 import TimeSeriesLeftPanelComponent from "./TimeSeries/TimeSeriesLeftPanelComponent";
 import UnitLocationsUnitsItemView from "./Units/UnitLocationsUnitsItemView";
+import EphysAndUnitsItemView from "./EphysAndUnits/EphysAndUnitsItemView";
 
 type Props = {
   width: number;
@@ -411,6 +412,15 @@ viewPlugins.push({
   neurodataType: "test_video",
   defaultForNeurodataType: true,
   component: TestVideoItemView,
+  isTimeView: true,
+});
+
+// EphysAndUnits
+viewPlugins.push({
+  name: "EphysAndUnits",
+  neurodataType: "ElectricalSeries",
+  defaultForNeurodataType: false,
+  component: EphysAndUnitsItemView,
   isTimeView: true,
 });
 

@@ -22,6 +22,8 @@ type Props = {
   path: string;
   condensed?: boolean;
   referenceColumnName?: string; // for example, 'id'
+  selectedRowIds?: (string | number)[];
+  setSelectedRowIds?: (ids: (string | number)[]) => void;
 };
 
 type DataState = {
@@ -119,11 +121,18 @@ const columnDescriptionReducer = (
   } else return state;
 };
 
+type RowItem = {
+  id: string | number;
+  columnValues: any[];
+};
+
 const DynamicTableView: FunctionComponent<Props> = ({
   width,
   height,
   path,
   referenceColumnName,
+  selectedRowIds,
+  setSelectedRowIds,
 }) => {
   const nwbFile = useNwbFile();
   if (!nwbFile) throw Error("Unexpected: nwbFile is null");
@@ -261,7 +270,7 @@ const DynamicTableView: FunctionComponent<Props> = ({
     return ret;
   }, [colnames, data, path, referenceColumnName]);
 
-  const rowItems: { columnValues: any[] }[] = useMemo(() => {
+  const rowItems: RowItem[] = useMemo(() => {
     if (!colnames) return [];
     let numRows = 0;
     for (const colname of colnames) {
@@ -270,9 +279,9 @@ const DynamicTableView: FunctionComponent<Props> = ({
         numRows = Math.max(numRows, d.length);
       }
     }
-    const ret: { columnValues: any[] }[] = [];
+    const ret: RowItem[] = [];
     for (let i = 0; i < numRows; i++) {
-      const row: { columnValues: any[] } = { columnValues: [] };
+      const row: RowItem = { id: "", columnValues: [] };
       for (const colname of colnames) {
         const d = data[colname];
         if (d) {
@@ -280,11 +289,14 @@ const DynamicTableView: FunctionComponent<Props> = ({
         } else {
           row.columnValues.push(undefined);
         }
+        if (colname === referenceColumnName) {
+          row.id = d[i];
+        }
       }
       ret.push(row);
     }
     return ret;
-  }, [colnames, data]);
+  }, [colnames, data, referenceColumnName]);
 
   const sortedRowItems = useMemo(() => {
     if (!validColumnNames) return rowItems;
@@ -418,6 +430,7 @@ const DynamicTableView: FunctionComponent<Props> = ({
       <table className="nwb-table-2">
         <thead>
           <tr>
+            {selectedRowIds && <th />}
             {colnames.map((colname) => (
               <th key={colname}>
                 <span
@@ -442,6 +455,25 @@ const DynamicTableView: FunctionComponent<Props> = ({
         <tbody>
           {sortedRowItemsAbbreviated.map((rowItem, i) => (
             <tr key={i}>
+              {selectedRowIds && (
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={selectedRowIds.includes(rowItem.id)}
+                    onClick={() => {
+                      if (setSelectedRowIds) {
+                        if (selectedRowIds.includes(rowItem.id)) {
+                          setSelectedRowIds(
+                            selectedRowIds.filter((id) => id !== rowItem.id),
+                          );
+                        } else {
+                          setSelectedRowIds([...selectedRowIds, rowItem.id]);
+                        }
+                      }
+                    }}
+                  />
+                </td>
+              )}
               {rowItem.columnValues.map((val, j) => (
                 <td key={j}>{valueToElement(val)}</td>
               ))}

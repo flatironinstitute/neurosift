@@ -147,22 +147,18 @@ const TabChild: FunctionComponent<TabChildProps> = ({
           />
         ) : tabName.startsWith("neurodata-item:") ||
           tabName.startsWith("view:") ? (
-          viewPlugin ? (
-            <ViewItemWidget
-              key={tabName}
-              width={width}
-              height={height}
-              viewPlugin={viewPlugin}
-              itemPath={itemPath}
-              additionalItemPaths={additionalItemPaths}
-              condensed={condensed}
-              tabName={tabName}
-              initialStateString={initialStateString}
-              hidden={hidden}
-            />
-          ) : (
-            <div>View plugin not found: {tabName}</div>
-          )
+          <ViewItemWidget
+            key={tabName}
+            width={width}
+            height={height}
+            viewPlugin={viewPlugin}
+            itemPath={itemPath || ""}
+            additionalItemPaths={additionalItemPaths}
+            condensed={condensed}
+            tabName={tabName}
+            initialStateString={initialStateString}
+            hidden={hidden}
+          />
         ) : tabName.startsWith("neurodata-items:") ? (
           (() => {
             const items = tabName.slice(`neurodata-items:`.length).split("@");

@@ -43,22 +43,11 @@ const DirectRasterPlotUnitsItemView: FunctionComponent<Props> = ({
 
   const [visibleUnitIds, setVisibleUnitIds] = useState<(number | string)[]>([]);
 
-  const [spikeTrainsClient2, setSpikeTrainsClient2] = useState<
-    DirectSpikeTrainsClientUnitSlice | DirectSpikeTrainsClient | undefined
-  >(undefined);
-  useEffect(() => {
-    if (!spikeTrainsClient) return;
-    if (visibleUnitIds.length < spikeTrainsClient.unitIds.length) {
-      const client = new DirectSpikeTrainsClientUnitSlice(
-        spikeTrainsClient,
-        visibleUnitIds,
-      );
-      setSpikeTrainsClient2(client);
-    } else {
-      setSpikeTrainsClient2(spikeTrainsClient);
-    }
-  }, [spikeTrainsClient, visibleUnitIds]);
-
+  const spikeTrainsClient2 = useDirectSpikeTrainsClientUnitSlice(
+    nwbFile,
+    path,
+    visibleUnitIds,
+  );
   if (!spikeTrainsClient2) {
     return <div>Loading spike trains...</div>;
   }
@@ -96,6 +85,61 @@ const DirectRasterPlotUnitsItemView: FunctionComponent<Props> = ({
     </div>
   );
 };
+
+export const useDirectSpikeTrainsClient = (
+  nwbFile: RemoteH5FileX,
+  path: string,
+): DirectSpikeTrainsClient | undefined => {
+  const [spikeTrainsClient, setSpikeTrainsClient] = useState<
+    DirectSpikeTrainsClient | undefined
+  >(undefined);
+  useEffect(() => {
+    let canceled = false;
+    const load = async () => {
+      const client = await DirectSpikeTrainsClient.create(nwbFile, path);
+      if (canceled) return;
+      setSpikeTrainsClient(client);
+    };
+    load();
+    return () => {
+      canceled = true;
+    };
+  }, [nwbFile, path]);
+  return spikeTrainsClient;
+};
+
+export const useDirectSpikeTrainsClientUnitSlice = (
+  nwbFile: RemoteH5FileX,
+  path: string,
+  unitIds: (number | string)[],
+): SpikeTrainsClient | undefined => {
+  const directSpikeTrainsClient = useDirectSpikeTrainsClient(nwbFile, path);
+  return useMemo(() => {
+    if (!directSpikeTrainsClient) return undefined;
+    if (unitIds.length < directSpikeTrainsClient.unitIds.length) {
+      return new DirectSpikeTrainsClientUnitSlice(
+        directSpikeTrainsClient,
+        unitIds,
+      );
+    } else {
+      return directSpikeTrainsClient;
+    }
+  }, [directSpikeTrainsClient, unitIds]);
+};
+
+export interface SpikeTrainsClient {
+  startTimeSec: number;
+  endTimeSec: number;
+  blockSizeSec: number;
+  totalNumSpikes: number | undefined;
+  numSpikesForUnit(unitId: number | string): number | undefined;
+  unitIds: (number | string)[];
+  getData(
+    blockStartIndex: number,
+    blockEndIndex: number,
+    options: { unitIds?: (number | string)[] },
+  ): Promise<{ unitId: number | string; spikeTimesSec: number[] }[]>;
+}
 
 class DirectSpikeTrainsClientUnitSlice {
   #unitIds: (number | string)[];

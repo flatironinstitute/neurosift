@@ -10,11 +10,12 @@ import { apiPostDendroRequest } from "../DendroView/apiPostDendroRequest";
 
 type DendroProvenanceForItemProps = {
   path: string;
+  otherPaths?: string[];
 };
 
 const DendroProvenanceForItem: FunctionComponent<
   DendroProvenanceForItemProps
-> = ({ path }) => {
+> = ({ path, otherPaths }) => {
   const nwbFile = useNwbFile();
   const [dendroJobIds, setDendroJobIds] = useState<string[] | undefined>(
     undefined,
@@ -23,27 +24,31 @@ const DendroProvenanceForItem: FunctionComponent<
     let canceled = false;
     setDendroJobIds(undefined);
     (async () => {
-      const grp = await nwbFile.getGroup(path);
-      if (canceled) return;
-      if (!grp) {
-        setDendroJobIds([]);
-        return;
+      const jobIds: string[] = [];
+      for (const p of [path, ...(otherPaths || [])]) {
+        const grp = await nwbFile.getGroup(p);
+        if (canceled) return;
+        if (!grp) {
+          setDendroJobIds([]);
+          return;
+        }
+        const description = grp.attrs["description"] as string;
+        if (!description) {
+          setDendroJobIds([]);
+          return;
+        }
+        const descriptionParts = description.split(" ");
+        const jj = descriptionParts
+          .filter((part) => part.startsWith("dendro:"))
+          .map((part) => part.slice("dendro:".length).trim());
+        jobIds.push(...jj);
       }
-      const description = grp.attrs["description"] as string;
-      if (!description) {
-        setDendroJobIds([]);
-        return;
-      }
-      const descriptionParts = description.split(" ");
-      const jobIds = descriptionParts
-        .filter((part) => part.startsWith("dendro:"))
-        .map((part) => part.slice("dendro:".length).trim());
       setDendroJobIds(jobIds);
     })();
     return () => {
       canceled = true;
     };
-  }, [path, nwbFile]);
+  }, [path, otherPaths, nwbFile]);
   const dendroJobs = useDendroJobs(dendroJobIds);
   if (dendroJobIds === undefined) return <>...</>;
   if (dendroJobIds.length === 0) return <span />;
@@ -55,22 +60,19 @@ const DendroProvenanceForItem: FunctionComponent<
         .slice()
         .reverse()
         .map((job, i) => (
-          <span key={i}>
-            <>
-              {job ? (
-                <a
-                  href={`https://dendro.vercel.app/job/${job.jobId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {job.jobDefinition.processorName}
-                </a>
-              ) : (
-                <span>job-not-found:{dendroJobIds![i]}</span>
-              )}
-            </>
-            {i < dendroJobs.length - 1 && <>&nbsp;|&nbsp;</>}
-          </span>
+          <div key={i}>
+            {job ? (
+              <a
+                href={`https://dendro.vercel.app/job/${job.jobId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {job.jobDefinition.processorName}
+              </a>
+            ) : (
+              <span>job-not-found:{dendroJobIds![i]}</span>
+            )}
+          </div>
         ))}
     </span>
   );

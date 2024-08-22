@@ -33,3 +33,9 @@ export type TimeseriesAnnotationFileData = {
     color_index: number;
   }[];
 };
+
+export type SpikeTrainsDataForWorker = {
+  unitId: string | number;
+  color: string;
+  spikeTimesSec: number[];
+}[];

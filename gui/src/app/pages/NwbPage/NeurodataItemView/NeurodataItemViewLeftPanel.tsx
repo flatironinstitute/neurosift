@@ -15,20 +15,21 @@ type Props = {
   group: RemoteH5Group | undefined;
   viewName: string;
   tabName?: string;
-  viewPlugin: ViewPlugin;
+  viewPlugin?: ViewPlugin;
   stateString?: string;
 };
 
 const NeurodataItemViewLeftPanel: FunctionComponent<Props> = ({
   width,
   path,
+  additionalPaths,
   group,
   viewName,
   tabName,
   viewPlugin,
   stateString,
 }) => {
-  const customContent = viewPlugin.leftPanelComponent ? (
+  const customContent = viewPlugin?.leftPanelComponent ? (
     <viewPlugin.leftPanelComponent width={width} path={path} />
   ) : null;
   return (
@@ -59,7 +60,7 @@ const NeurodataItemViewLeftPanel: FunctionComponent<Props> = ({
           </tr>
         </tbody>
       </table>
-      {viewPlugin.isTimeView && <TimeseriesSelectionWidget />}
+      {viewPlugin?.isTimeView && <TimeseriesSelectionWidget />}
       {customContent ? (
         <>
           <hr />
@@ -75,7 +76,7 @@ const NeurodataItemViewLeftPanel: FunctionComponent<Props> = ({
       <hr />
       <ViewObjectNotesIconThing objectPath={path} previewText={true} />
       <hr />
-      <DendroProvenanceForItem path={path} />
+      <DendroProvenanceForItem path={path} otherPaths={additionalPaths} />
     </div>
   );
 };
