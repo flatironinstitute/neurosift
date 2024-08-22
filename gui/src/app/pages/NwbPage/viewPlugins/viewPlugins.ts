@@ -424,7 +424,7 @@ viewPlugins.push({
   isTimeView: true,
   checkEnabled: async (nwbFile: RemoteH5FileX, path: string) => {
     return false;
-  }
+  },
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////
