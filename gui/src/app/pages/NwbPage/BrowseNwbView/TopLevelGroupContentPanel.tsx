@@ -13,7 +13,7 @@ import {
   useReducer,
 } from "react";
 import { FaEye, FaRegCircle } from "react-icons/fa";
-import { useNwbFile } from "../NwbFileContext";
+import { useNeurodataItems, useNwbFile } from "../NwbFileContext";
 import { useNwbOpenTabs } from "../NwbOpenTabsContext";
 import { findViewPluginsForType } from "../viewPlugins/viewPlugins";
 import { valueToElement } from "./BrowseNwbView";
@@ -513,14 +513,19 @@ const NeurodataTypeLink: FunctionComponent<NeurodataTypeLinkProps> = ({
 }) => {
   const nwbFile = useNwbFile();
   if (!nwbFile) throw Error("Unexpected: nwbFile is undefined");
+  const neurodataItems = useNeurodataItems();
   const specifications = useNwbFileSpecifications();
   if (tableItem.type !== "group") throw Error("Unexpected table item type");
   const viewPlugins = useMemo(
     () =>
       neurodataType && specifications
-        ? findViewPluginsForType(neurodataType, { nwbFile }, specifications)
+        ? findViewPluginsForType(
+            neurodataType,
+            { nwbFile, neurodataItems },
+            specifications,
+          )
         : undefined,
-    [neurodataType, nwbFile, specifications],
+    [neurodataType, nwbFile, specifications, neurodataItems],
   );
   const { openTab } = useNwbOpenTabs();
   return (

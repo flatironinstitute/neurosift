@@ -1,7 +1,7 @@
 import { RemoteH5FileX } from "@remote-h5-file/index";
 import { Splitter } from "@fi-sci/splitter";
 import { FunctionComponent, useMemo } from "react";
-import { useNwbFile } from "../NwbFileContext";
+import { useNeurodataItems, useNwbFile } from "../NwbFileContext";
 import TimeseriesSelectionWidget from "../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget";
 import {
   findViewPluginsForType,
@@ -95,6 +95,7 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({
   const nwbFile = useNwbFile();
   if (!nwbFile)
     throw Error("Unexpected: nwbFile is undefined (no context provider)");
+  const neurodataItems = useNeurodataItems();
   const specifications = useNwbFileSpecifications();
   const H = height / items.length;
   const positions = items.map((_, i) => i * H);
@@ -106,7 +107,12 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({
     <div style={{ position: "absolute", width, height }}>
       {items.map((item, i) => {
         const { viewPlugin, itemPath, additionalItemPaths } =
-          getViewPluginAndItemPath(item, nwbFile, specifications);
+          getViewPluginAndItemPath(
+            item,
+            nwbFile,
+            neurodataItems,
+            specifications,
+          );
         if (!viewPlugin) return <div key="">View plugin not found: {item}</div>;
         return (
           <div
@@ -160,6 +166,10 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({
 const getViewPluginAndItemPath = (
   item: string,
   nwbFile: RemoteH5FileX,
+  neurodataItems: {
+    path: string;
+    neurodataType: string;
+  }[],
   specifications: NwbFileSpecifications,
 ) => {
   const viewPlugins = getViewPlugins({ nwbUrl: nwbFile.getUrls()[0] || "" });
@@ -168,7 +178,7 @@ const getViewPluginAndItemPath = (
     const neurodataType = item.slice(`neurodata-item:`.length).split("|")[1];
     const { defaultViewPlugin } = findViewPluginsForType(
       neurodataType,
-      { nwbFile },
+      { nwbFile, neurodataItems },
       specifications,
     );
     return {

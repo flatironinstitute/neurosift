@@ -14,11 +14,16 @@ import { useNwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpec
 
 type Props = {
   nwbFile: RemoteH5FileX;
+  neurodataItems: {
+    path: string;
+    neurodataType: string;
+  }[];
   group: RemoteH5Group;
 };
 
 const IntervalsContentPanel: FunctionComponent<Props> = ({
   nwbFile,
+  neurodataItems,
   group,
 }) => {
   const { selectedItemViews, toggleSelectedItemView } = useSelectedItemViews();
@@ -41,6 +46,7 @@ const IntervalsContentPanel: FunctionComponent<Props> = ({
             <GroupTableRow
               key={sg.name}
               nwbFile={nwbFile}
+              neurodataItems={neurodataItems}
               subgroup={sg}
               selected={
                 !!selectedItemViews.find((a) =>
@@ -62,6 +68,10 @@ const IntervalsContentPanel: FunctionComponent<Props> = ({
 
 type GroupTableRowProps = {
   nwbFile: RemoteH5FileX;
+  neurodataItems: {
+    path: string;
+    neurodataType: string;
+  }[];
   subgroup: RemoteH5Subgroup;
   selected: boolean;
   onToggleSelect: (neurodataType: string) => void;
@@ -69,6 +79,7 @@ type GroupTableRowProps = {
 
 const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({
   nwbFile,
+  neurodataItems,
   subgroup,
   selected,
   onToggleSelect,
@@ -92,9 +103,13 @@ const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({
   const { viewPlugins } = useMemo(
     () =>
       specifications
-        ? findViewPluginsForType(neurodataType, { nwbFile }, specifications)
+        ? findViewPluginsForType(
+            neurodataType,
+            { nwbFile, neurodataItems },
+            specifications,
+          )
         : { viewPlugins: [] },
-    [neurodataType, nwbFile, specifications],
+    [neurodataType, nwbFile, specifications, neurodataItems],
   );
   return (
     <tr>

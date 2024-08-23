@@ -10,6 +10,10 @@ type Props = {
   width: number;
   height: number;
   nwbFile: RemoteH5FileX;
+  neurodataItems: {
+    path: string;
+    neurodataType: string;
+  }[];
 };
 
 type Heading = {
@@ -22,6 +26,7 @@ const DefaultNwbFileView: FunctionComponent<Props> = ({
   width,
   height,
   nwbFile,
+  neurodataItems,
 }) => {
   const rootGroup = useGroup(nwbFile, "/");
   const processingGroup = useGroup(nwbFile, "/processing");
@@ -103,6 +108,7 @@ const DefaultNwbFileView: FunctionComponent<Props> = ({
         <TopLevelHeadingView
           key={heading.name}
           nwbFile={nwbFile}
+          neurodataItems={neurodataItems}
           heading={heading}
           width={width}
         />
@@ -188,12 +194,17 @@ const useIncludeUnits = (nwbFile: RemoteH5FileX) => {
 
 type TopLevelHeadingViewProps = {
   nwbFile: RemoteH5FileX;
+  neurodataItems: {
+    path: string;
+    neurodataType: string;
+  }[];
   heading: Heading;
   width: number;
 };
 
 const TopLevelHeadingView: FunctionComponent<TopLevelHeadingViewProps> = ({
   nwbFile,
+  neurodataItems,
   heading,
   width,
 }) => {
@@ -233,6 +244,7 @@ const TopLevelHeadingView: FunctionComponent<TopLevelHeadingViewProps> = ({
           heading={heading}
           group={group}
           nwbFile={nwbFile}
+          neurodataItems={neurodataItems}
           width={width - 25}
         />
       )}
@@ -287,6 +299,10 @@ type TopLevelContentPanelProps = {
   heading: Heading;
   group: RemoteH5Group;
   nwbFile: RemoteH5FileX;
+  neurodataItems: {
+    path: string;
+    neurodataType: string;
+  }[];
   width: number;
 };
 
@@ -294,6 +310,7 @@ const TopLevelContentPanel: FunctionComponent<TopLevelContentPanelProps> = ({
   heading,
   group,
   nwbFile,
+  neurodataItems,
   width,
 }) => {
   const name = heading.name;
@@ -303,6 +320,7 @@ const TopLevelContentPanel: FunctionComponent<TopLevelContentPanelProps> = ({
     return (
       <ProcessingGroupContentPanel
         nwbFile={nwbFile}
+        neurodataItems={neurodataItems}
         groupPath={heading.groupPath}
       />
     );
@@ -310,11 +328,18 @@ const TopLevelContentPanel: FunctionComponent<TopLevelContentPanelProps> = ({
     return (
       <ProcessingGroupContentPanel
         nwbFile={nwbFile}
+        neurodataItems={neurodataItems}
         groupPath={heading.groupPath}
       />
     );
   } else if (name === "intervals") {
-    return <IntervalsContentPanel nwbFile={nwbFile} group={group} />;
+    return (
+      <IntervalsContentPanel
+        nwbFile={nwbFile}
+        neurodataItems={neurodataItems}
+        group={group}
+      />
+    );
   }
   return (
     <TopLevelGroupContentPanel name={name} group={group} nwbFile={nwbFile} />

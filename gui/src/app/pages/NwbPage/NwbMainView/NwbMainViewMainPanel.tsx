@@ -12,6 +12,10 @@ type Props = {
   width: number;
   height: number;
   nwbFile: RemoteH5FileX;
+  neurodataItems: {
+    path: string;
+    neurodataType: string;
+  }[];
 };
 
 type ViewMode =
@@ -26,6 +30,7 @@ const NwbMainViewMainPanel: FunctionComponent<Props> = ({
   width,
   height,
   nwbFile,
+  neurodataItems,
 }) => {
   const topBarHeight = 50;
 
@@ -67,6 +72,7 @@ const NwbMainViewMainPanel: FunctionComponent<Props> = ({
             width={width}
             height={height - topBarHeight}
             nwbFile={nwbFile}
+            neurodataItems={neurodataItems}
           />
         )}
       </div>

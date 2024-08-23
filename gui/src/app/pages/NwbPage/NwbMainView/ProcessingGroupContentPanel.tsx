@@ -22,6 +22,10 @@ import { useNwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpec
 
 type Props = {
   nwbFile: RemoteH5FileX;
+  neurodataItems: {
+    path: string;
+    neurodataType: string;
+  }[];
   groupPath: string;
 };
 
@@ -62,6 +66,7 @@ const loadedGroupsReducer = (
 
 const ProcessingGroupContentPanel: FunctionComponent<Props> = ({
   nwbFile,
+  neurodataItems,
   groupPath,
 }) => {
   const group = useGroup(nwbFile, groupPath);
@@ -162,6 +167,7 @@ const ProcessingGroupContentPanel: FunctionComponent<Props> = ({
               key={tableItem.name}
               name={tableItem.name}
               nwbFile={nwbFile}
+              neurodataItems={neurodataItems}
               path={tableItem.path}
               selected={
                 !!selectedItemViews.find((a) =>
@@ -184,6 +190,10 @@ const ProcessingGroupContentPanel: FunctionComponent<Props> = ({
 type GroupTableRowProps = {
   name: string;
   nwbFile: RemoteH5FileX;
+  neurodataItems: {
+    path: string;
+    neurodataType: string;
+  }[];
   path: string;
   selected: boolean;
   onToggleSelect: (neurodataType: string) => void;
@@ -191,6 +201,7 @@ type GroupTableRowProps = {
 
 const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({
   nwbFile,
+  neurodataItems,
   name,
   path,
   selected,
@@ -218,9 +229,13 @@ const GroupTableRow: FunctionComponent<GroupTableRowProps> = ({
   const { viewPlugins, defaultViewPlugin } = useMemo(
     () =>
       specifications
-        ? findViewPluginsForType(neurodataType, { nwbFile }, specifications)
+        ? findViewPluginsForType(
+            neurodataType,
+            { nwbFile, neurodataItems },
+            specifications,
+          )
         : { viewPlugins: [], defaultViewPlugin: undefined },
-    [neurodataType, nwbFile, specifications],
+    [neurodataType, nwbFile, specifications, neurodataItems],
   );
   return (
     <tr>

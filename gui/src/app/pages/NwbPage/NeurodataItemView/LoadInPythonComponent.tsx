@@ -1,6 +1,6 @@
 import { FunctionComponent, useMemo } from "react";
 import { useModalDialog } from "../../../ApplicationBar";
-import { useNwbFile } from "../NwbFileContext";
+import { useNeurodataItems, useNwbFile } from "../NwbFileContext";
 import {
   MergedRemoteH5File,
   RemoteH5File,
@@ -47,6 +47,7 @@ const LoadInPythonWindow: FunctionComponent<Props> = ({
 }) => {
   const nwbFile = useNwbFile();
   const specifications = useNwbFileSpecifications();
+  const neurodataItems = useNeurodataItems();
 
   let nwbFileUrl: string;
   let urlType: "hdf5" | "lindi";
@@ -76,11 +77,20 @@ const LoadInPythonWindow: FunctionComponent<Props> = ({
     if (!specifications) return "";
     const viewPlugin = findViewPluginsForType(
       group.attrs.neurodata_type,
-      { nwbFile },
+      { nwbFile, neurodataItems },
       specifications,
     ).defaultViewPlugin;
     return createSource(nwbFileUrl, urlType, viewPlugin, path, group, viewName);
-  }, [path, group, viewName, nwbFileUrl, urlType, nwbFile]);
+  }, [
+    path,
+    group,
+    viewName,
+    nwbFileUrl,
+    urlType,
+    nwbFile,
+    specifications,
+    neurodataItems,
+  ]);
   return <Markdown source={source} />;
 };
 

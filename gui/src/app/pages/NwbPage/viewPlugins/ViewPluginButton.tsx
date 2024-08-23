@@ -1,6 +1,6 @@
 import { Hyperlink } from "@fi-sci/misc";
-import { FunctionComponent, useEffect, useState } from "react";
-import { useNwbFile } from "../NwbFileContext";
+import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import { useNeurodataItems, useNwbFile } from "../NwbFileContext";
 import { useNwbOpenTabs } from "../NwbOpenTabsContext";
 import { useSelectedItemViews } from "../SelectedItemViewsContext";
 import { ViewPlugin } from "./viewPlugins";
@@ -13,12 +13,37 @@ type Props = {
 const ViewPluginButton: FunctionComponent<Props> = ({ viewPlugin, path }) => {
   const nwbFile = useNwbFile();
   if (!nwbFile) throw Error("Unexpected: no nwbFile");
+  const neurodataItems = useNeurodataItems();
   const { name, buttonLabel } = viewPlugin;
   const { openTab } = useNwbOpenTabs();
   const { selectedItemViews, toggleSelectedItemView } = useSelectedItemViews();
+  const [selectingSecondaryNeurodataItem, setSelectingSecondaryNeurodataItem] =
+    useState<boolean>(false);
+  const tabName = useMemo(() => {
+    return `view:${viewPlugin.name}|${path}`;
+  }, [viewPlugin, path]);
+  const secondaryNeurodataItems = useMemo(() => {
+    if (!viewPlugin.secondaryNeurodataType) return [];
+    return neurodataItems.filter(
+      (x) => x.neurodataType === viewPlugin.secondaryNeurodataType,
+    );
+  }, [viewPlugin, neurodataItems]);
   const handleClick = () => {
-    console.log(`ViewPluginButton: ${name} ${path}`);
-    openTab(`view:${viewPlugin.name}|${path}`);
+    if (viewPlugin.secondaryNeurodataType) {
+      if (secondaryNeurodataItems.length === 0) {
+        alert(
+          `No neurodata items of type ${viewPlugin.secondaryNeurodataType} found.`,
+        );
+        return;
+      } else if (secondaryNeurodataItems.length === 1) {
+        openTab(tabName + "^" + secondaryNeurodataItems[0].path);
+        return;
+      } else {
+        setSelectingSecondaryNeurodataItem(true);
+      }
+    } else {
+      openTab(tabName);
+    }
   };
   const [enabled, setEnabled] = useState<boolean>(false);
   useEffect(() => {
@@ -39,6 +64,25 @@ const ViewPluginButton: FunctionComponent<Props> = ({ viewPlugin, path }) => {
 
   if (!enabled) return <span />;
 
+  if (selectingSecondaryNeurodataItem) {
+    return (
+      <div>
+        {secondaryNeurodataItems.map((x) => (
+          <div key={x.path}>
+            <Hyperlink
+              onClick={() => {
+                openTab(tabName + "^" + x.path);
+                setSelectingSecondaryNeurodataItem(false);
+              }}
+            >
+              {buttonLabel || name}: {x.path}
+            </Hyperlink>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -49,19 +93,23 @@ const ViewPluginButton: FunctionComponent<Props> = ({ viewPlugin, path }) => {
         paddingBottom: 3,
       }}
     >
-      <input
-        type="checkbox"
-        checked={
-          !!selectedItemViews.find((a) =>
-            a.startsWith(`view:${viewPlugin.name}|${path}`),
-          )
-        }
-        onChange={() => {}}
-        onClick={() =>
-          toggleSelectedItemView(`view:${viewPlugin.name}|${path}`)
-        }
-      />
-      &nbsp;
+      {!viewPlugin.secondaryNeurodataType && (
+        <>
+          <input
+            type="checkbox"
+            checked={
+              !!selectedItemViews.find(
+                (a) =>
+                  // used to be startsWith(...), not sure why
+                  a === tabName,
+              )
+            }
+            onChange={() => {}}
+            onClick={() => toggleSelectedItemView(tabName)}
+          />
+          &nbsp;
+        </>
+      )}
       <Hyperlink
         onClick={handleClick}
         color={viewPlugin.usesDendro ? "darkgreen" : undefined}

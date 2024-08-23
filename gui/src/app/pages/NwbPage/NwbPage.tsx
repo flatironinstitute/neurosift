@@ -4,6 +4,7 @@ import {
   RemoteH5File,
   RemoteH5FileLindi,
   RemoteH5FileX,
+  RemoteH5Group,
   getMergedRemoteH5File,
   getRemoteH5File,
   getRemoteH5FileLindi,
@@ -35,6 +36,7 @@ import {
 } from "./SelectedItemViewsContext";
 import { SetupNwbFileSpecificationsProvider } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
 import getAuthorizationHeaderForUrl from "./getAuthorizationHeaderForUrl";
+import { string } from "mathjs";
 
 type Props = {
   width: number;
@@ -312,12 +314,59 @@ const NwbPageChild3: FunctionComponent<NwbPageChild3Props> = ({
     };
   }, [urlList, route.storageType, route.dandisetId]);
 
+  const [neurodataItems, setNeurodataItems] = useState<
+    {
+      path: string;
+      neurodataType: string;
+    }[]
+  >([]);
+
+  useEffect(() => {
+    let canceled = false;
+    setNeurodataItems([]);
+    if (!nwbFile) return;
+    (async () => {
+      let allItems: {
+        path: string;
+        neurodataType: string;
+      }[] = [];
+      let timer = Date.now();
+      const processGroup = async (group: RemoteH5Group) => {
+        if (group.attrs.neurodata_type) {
+          allItems = [
+            ...allItems,
+            { path: group.path, neurodataType: group.attrs.neurodata_type },
+          ];
+          const elapsed = Date.now() - timer;
+          if (elapsed > 300) {
+            timer = Date.now();
+            setNeurodataItems(allItems);
+          }
+        }
+        for (const subgroup of group.subgroups) {
+          const sg = await nwbFile.getGroup(subgroup.path);
+          if (sg) {
+            await processGroup(sg);
+          }
+        }
+      };
+      const rootGroup = await nwbFile.getGroup("/");
+      if (!rootGroup) return;
+      await processGroup(rootGroup);
+      setNeurodataItems(allItems);
+    })();
+    return () => {
+      canceled = true;
+    };
+  }, [nwbFile]);
+
   const nwbFileContextValue = useMemo(() => {
     if (!nwbFile) return undefined;
     return {
       nwbFile,
+      neurodataItems,
     };
-  }, [nwbFile]);
+  }, [nwbFile, neurodataItems]);
 
   if (!nwbFile || !nwbFileContextValue) return <div>Loading {urlList}</div>;
 

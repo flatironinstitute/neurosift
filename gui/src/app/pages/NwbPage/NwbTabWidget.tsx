@@ -9,7 +9,7 @@ import {
 } from "../../package/context-unit-selection";
 import NeurodataItemsView from "./NeurodataItemView/NeurodataItemsView";
 import ViewItemWidget from "./NeurodataItemView/ViewItemWidget";
-import { useNwbFile } from "./NwbFileContext";
+import { useNeurodataItems, useNwbFile } from "./NwbFileContext";
 import NwbMainView from "./NwbMainView/NwbMainView";
 import { useNwbOpenTabs } from "./NwbOpenTabsContext";
 import TimeseriesAlignmentView from "./TimeseriesAlignmentView/TimeseriesAlignmentView";
@@ -86,6 +86,7 @@ const TabChild: FunctionComponent<TabChildProps> = ({
 }) => {
   const nwbFile = useNwbFile();
   if (!nwbFile) throw Error("Unexpected: nwbFile is undefined");
+  const neurodataItems = useNeurodataItems();
   const viewPlugins = useMemo(
     () => getViewPlugins({ nwbUrl: nwbFile.getUrls()[0] || "" }),
     [nwbFile],
@@ -114,7 +115,7 @@ const TabChild: FunctionComponent<TabChildProps> = ({
         .split("|")[1];
       const { defaultViewPlugin } = findViewPluginsForType(
         neurodataType,
-        { nwbFile },
+        { nwbFile, neurodataItems },
         specifications,
       );
       return {

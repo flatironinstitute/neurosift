@@ -6,7 +6,7 @@ import {
 } from "@remote-h5-file/index";
 import { Splitter } from "@fi-sci/splitter";
 import { FunctionComponent, useEffect, useState } from "react";
-import { useNwbFile } from "../NwbFileContext";
+import { useNeurodataItems, useNwbFile } from "../NwbFileContext";
 import NwbMainLeftPanel from "./NwbMainLeftPanel";
 import NwbMainViewMainPanel from "./NwbMainViewMainPanel";
 
@@ -24,6 +24,7 @@ const NwbMainView: FunctionComponent<Props> = ({
   const nwbFile = useNwbFile();
   if (!nwbFile)
     throw Error("Unexpected: nwbFile is undefined (no context provider)");
+  const neurodataItems = useNeurodataItems();
   return (
     <Splitter
       direction="horizontal"
@@ -37,7 +38,12 @@ const NwbMainView: FunctionComponent<Props> = ({
         nwbFile={nwbFile}
         usingLindi={usingLindi}
       />
-      <NwbMainViewMainPanel width={0} height={0} nwbFile={nwbFile} />
+      <NwbMainViewMainPanel
+        width={0}
+        height={0}
+        nwbFile={nwbFile}
+        neurodataItems={neurodataItems}
+      />
     </Splitter>
   );
 };

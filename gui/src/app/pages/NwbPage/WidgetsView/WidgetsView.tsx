@@ -4,7 +4,7 @@ import {
   ViewPlugin,
   findViewPluginsForType,
 } from "../viewPlugins/viewPlugins";
-import { useNwbFile } from "../NwbFileContext";
+import { useNeurodataItems, useNwbFile } from "../NwbFileContext";
 import { RemoteH5FileX, RemoteH5Group } from "@remote-h5-file/index";
 import { Hyperlink } from "@fi-sci/misc";
 import { useNwbOpenTabs } from "../NwbOpenTabsContext";
@@ -20,6 +20,7 @@ const WidgetsView: FunctionComponent<WidgetsViewProps> = ({
   height,
 }) => {
   const nwbFile = useNwbFile();
+  const neurodataItems = useNeurodataItems();
   const viewPlugins = useMemo(
     () => getViewPlugins({ nwbUrl: nwbFile.getUrls()[0] || "" }),
     [nwbFile],
@@ -64,7 +65,7 @@ const WidgetsView: FunctionComponent<WidgetsViewProps> = ({
       for (const objectGroup of objectGroups) {
         const { viewPlugins, defaultViewPlugin } = findViewPluginsForType(
           objectGroup.attrs.neurodata_type || "",
-          { nwbFile },
+          { nwbFile, neurodataItems },
           specifications,
         );
         const viewPluginsEnabled: ViewPlugin[] = [];
@@ -88,7 +89,7 @@ const WidgetsView: FunctionComponent<WidgetsViewProps> = ({
     return () => {
       canceled = true;
     };
-  }, [nwbFile, specifications]);
+  }, [nwbFile, specifications, neurodataItems]);
   return (
     <div
       style={{
@@ -176,7 +177,7 @@ const ViewPluginView: FunctionComponent<ViewPluginViewProps> = ({
       {expanded && (
         <>
           {items.map((item, i) => (
-            <div style={{ marginLeft: 10 }}>
+            <div key={i} style={{ marginLeft: 10 }}>
               <Hyperlink
                 onClick={() => {
                   onOpenTab(item.itemTabString);

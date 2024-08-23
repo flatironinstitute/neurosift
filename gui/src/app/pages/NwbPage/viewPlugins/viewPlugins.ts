@@ -49,6 +49,7 @@ export type ViewPlugin = {
   name: string;
   neurodataType: string;
   defaultForNeurodataType?: boolean;
+  secondaryNeurodataType?: string;
   component: FunctionComponent<Props>;
   leftPanelComponent?: FunctionComponent<{ width: number; path: string }>;
   buttonLabel?: string;
@@ -175,12 +176,8 @@ viewPlugins.push({
   name: "PSTH",
   neurodataType: "TimeIntervals",
   defaultForNeurodataType: false,
+  secondaryNeurodataType: "Units",
   component: PSTHItemView,
-  checkEnabled: async (nwbFile: RemoteH5FileX, _path: string) => {
-    const rootGroup = await nwbFile.getGroup("/");
-    if (!rootGroup) return false;
-    return rootGroup.subgroups.find((sg) => sg.name === "units") ? true : false;
-  },
   isTimeView: false,
   usesState: true,
   testLinks: [
@@ -429,9 +426,14 @@ viewPlugins.push({
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
+type NeurodataItem = {
+  path: string;
+  neurodataType: string;
+};
+
 export const findViewPluginsForType = (
   neurodataType: string,
-  o: { nwbFile: RemoteH5FileX },
+  o: { nwbFile: RemoteH5FileX; neurodataItems: NeurodataItem[] },
   specifications?: NwbFileSpecifications,
 ): { viewPlugins: ViewPlugin[]; defaultViewPlugin: ViewPlugin | undefined } => {
   const vp = getViewPlugins({ nwbUrl: o.nwbFile.getUrls()[0] || "" });
@@ -441,11 +443,21 @@ export const findViewPluginsForType = (
   const viewPluginsRet: ViewPlugin[] = [];
   let defaultViewPlugin: ViewPlugin | undefined;
   let nt: string | undefined = neurodataType;
+  const neurodataTypesInFile = new Set(
+    o.neurodataItems.map((ni) => ni.neurodataType),
+  );
   while (nt) {
     const currentNt = nt; // Store the value of 'nt' in a temporary variable
     const plugins = vp
       .filter((p) => p.neurodataType === currentNt)
-      .filter((p) => !p.remoteDataOnly || o.nwbFile.dataIsRemote);
+      .filter((p) => !p.remoteDataOnly || o.nwbFile.dataIsRemote)
+      .filter((p) => {
+        if (p.secondaryNeurodataType) {
+          return neurodataTypesInFile.has(p.secondaryNeurodataType);
+        } else {
+          return true;
+        }
+      });
     viewPluginsRet.push(...plugins);
     for (const p of plugins) {
       if (p.defaultForNeurodataType) {
