@@ -70,6 +70,18 @@ async function draw() {
   drawCode += 1;
   const thisDrawCode = drawCode;
 
+  if (spikeTrains) {
+    await drawSpikeTrains({
+      canvasContext,
+      canvasWidth,
+      canvasHeight,
+      visibleStartTimeSec,
+      visibleEndTimeSec,
+      margins,
+      spikeTrains,
+    });
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   for (const pass of plotSeries ? [1, 2] : [1]) {
     if (thisDrawCode !== drawCode) return;
@@ -117,18 +129,6 @@ async function draw() {
     // the wait time is equal to the render time
     const elapsed = Date.now() - timer;
     await sleepMsec(elapsed);
-  }
-
-  if (spikeTrains) {
-    await drawSpikeTrains({
-      canvasContext,
-      canvasWidth,
-      canvasHeight,
-      visibleStartTimeSec,
-      visibleEndTimeSec,
-      margins,
-      spikeTrains,
-    });
   }
 
   if (annotation) {
@@ -257,7 +257,7 @@ const paintPanel = (context: CanvasRenderingContext2D, props: PanelProps) => {
 
   const { margins, canvasWidth, canvasHeight } = opts;
 
-  context.clearRect(0, 0, canvasWidth, canvasHeight);
+  // context.clearRect(0, 0, canvasWidth, canvasHeight);
 
   if (opts.zoomInRequired) {
     context.clearRect(0, 0, canvasWidth, canvasHeight);

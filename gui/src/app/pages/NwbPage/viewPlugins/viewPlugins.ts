@@ -417,11 +417,9 @@ viewPlugins.push({
   name: "EphysAndUnits",
   neurodataType: "ElectricalSeries",
   defaultForNeurodataType: false,
+  secondaryNeurodataType: "Units",
   component: EphysAndUnitsItemView,
   isTimeView: true,
-  checkEnabled: async (nwbFile: RemoteH5FileX, path: string) => {
-    return false;
-  },
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////

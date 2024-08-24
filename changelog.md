@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2024-08-24
+
+* Secondary neurodata item instead of special buttons
+* PSTH button appears even when units not in standard location
+* PSTH links in widget tab
+
 ## 2024-08-22
 
 * Ephys + Units view

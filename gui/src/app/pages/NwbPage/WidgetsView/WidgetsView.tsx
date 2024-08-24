@@ -105,6 +105,7 @@ const WidgetsView: FunctionComponent<WidgetsViewProps> = ({
           <ViewPluginView
             plugin={plugin}
             nwbFile={nwbFile}
+            neurodataItems={neurodataItems}
             neurodataObjects={neurodataObjects}
             onOpenTab={openTab}
             key={i}
@@ -118,6 +119,10 @@ const WidgetsView: FunctionComponent<WidgetsViewProps> = ({
 type ViewPluginViewProps = {
   plugin: ViewPlugin;
   nwbFile: RemoteH5FileX;
+  neurodataItems: {
+    path: string;
+    neurodataType: string;
+  }[];
   neurodataObjects: {
     group: RemoteH5Group;
     viewPlugins: ViewPlugin[];
@@ -128,6 +133,7 @@ type ViewPluginViewProps = {
 
 const ViewPluginView: FunctionComponent<ViewPluginViewProps> = ({
   plugin,
+  neurodataItems,
   neurodataObjects,
   onOpenTab,
 }) => {
@@ -139,22 +145,34 @@ const ViewPluginView: FunctionComponent<ViewPluginViewProps> = ({
     for (const neurodataObject of neurodataObjects) {
       neurodataObject.viewPlugins.forEach((vp) => {
         if (vp.name === plugin.name) {
-          if (plugin.name === neurodataObject.defaultViewPlugin?.name) {
-            ret.push({
-              label: neurodataObject.group.path,
-              itemTabString: `neurodata-item:${neurodataObject.group.path}|${neurodataObject.group.attrs.neurodata_type}`,
-            });
-          } else {
-            ret.push({
-              label: neurodataObject.group.path,
-              itemTabString: `view:${plugin.name}|${neurodataObject.group.path}`,
-            });
+          if (vp.secondaryNeurodataType) {
+            for (const neurodataItem of neurodataItems) {
+              if (neurodataItem.neurodataType === vp.secondaryNeurodataType) {
+                ret.push({
+                  label: neurodataObject.group.path + ' | ' + neurodataItem.path,
+                  itemTabString: `view:${plugin.name}|${neurodataObject.group.path}^${neurodataItem.path}`,
+                });
+              }
+            }
+          }
+          else {
+            if (plugin.name === neurodataObject.defaultViewPlugin?.name) {
+              ret.push({
+                label: neurodataObject.group.path,
+                itemTabString: `neurodata-item:${neurodataObject.group.path}|${neurodataObject.group.attrs.neurodata_type}`,
+              });
+            } else {
+              ret.push({
+                label: neurodataObject.group.path,
+                itemTabString: `view:${plugin.name}|${neurodataObject.group.path}`,
+              });
+            }
           }
         }
       });
     }
     return ret;
-  }, [plugin, neurodataObjects]);
+  }, [plugin, neurodataObjects, neurodataItems]);
   const [expanded, setExpanded] = useState(false);
   const doDisplay = items.length > 0;
   if (!doDisplay) return <span />;
