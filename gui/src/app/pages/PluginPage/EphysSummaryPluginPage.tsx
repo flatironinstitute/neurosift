@@ -1,5 +1,5 @@
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
-import { RemoteH5FileLindi, RemoteH5FileX } from "@remote-h5-file/index";
+import { RemoteH5FileLindi, RemoteH5FileX, RemoteH5Group } from "@remote-h5-file/index";
 import { OpenInNew } from "@mui/icons-material";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import useRoute from "../../useRoute";
@@ -14,7 +14,7 @@ import {
   useQueryAssets,
   useQueryDandiset,
 } from "../DandisetPage/DandisetViewFromDendro/DandisetView";
-import { NwbFileContext } from "../NwbPage/NwbFileContext";
+import { NwbFileContext, useNeurodataItems } from "../NwbPage/NwbFileContext";
 import { tryGetLindiUrl } from "../NwbPage/NwbPage";
 import { LazyPlotlyPlotContext } from "../NwbPage/viewPlugins/CEBRA/LazyPlotlyPlot";
 import EphysSummaryItemView, {
@@ -245,12 +245,59 @@ const EphysSummaryAssetView: FunctionComponent<EphysSummaryAssetViewProps> = ({
   const lindiNwbUrl = useLindiNwbUrl(dandisetId, assetUrl);
   const nwbFile = useLindiNwbFile(lindiNwbUrl);
   const rawEphysPaths = useRawEphysPaths(nwbFile);
+
+  // TODO: deduplicate with NwbPage.tsx
+  const [neurodataItems, setNeurodataItems] = useState<
+    {
+      path: string;
+      neurodataType: string;
+    }[]
+  >([]);
+  useEffect(() => {
+    let canceled = false;
+    setNeurodataItems([]);
+    if (!nwbFile) return;
+    (async () => {
+      let allItems: {
+        path: string;
+        neurodataType: string;
+      }[] = [];
+      let timer = Date.now();
+      const processGroup = async (group: RemoteH5Group) => {
+        if (group.attrs.neurodata_type) {
+          allItems = [
+            ...allItems,
+            { path: group.path, neurodataType: group.attrs.neurodata_type },
+          ];
+          const elapsed = Date.now() - timer;
+          if (elapsed > 300) {
+            timer = Date.now();
+            setNeurodataItems(allItems);
+          }
+        }
+        for (const subgroup of group.subgroups) {
+          const sg = await nwbFile.getGroup(subgroup.path);
+          if (sg) {
+            await processGroup(sg);
+          }
+        }
+      };
+      const rootGroup = await nwbFile.getGroup("/");
+      if (!rootGroup) return;
+      await processGroup(rootGroup);
+      setNeurodataItems(allItems);
+    })();
+    return () => {
+      canceled = true;
+    };
+  }, [nwbFile]);
+
   if (!nwbFile) return <div>No nwbFile</div>;
   return (
     <div style={{ padding: 5 }}>
       {rawEphysPaths?.map((path) => (
         <div key={path}>
-          <NwbFileContext.Provider value={{ nwbFile }}>
+          <NwbFileContext.Provider value={{ nwbFile, neurodataItems }}>
             <EphysSummaryElectricalSeriesView
               width={width}
               electricalSeriesPath={path}
