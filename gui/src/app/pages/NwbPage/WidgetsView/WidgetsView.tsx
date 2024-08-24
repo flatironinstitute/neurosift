@@ -149,13 +149,13 @@ const ViewPluginView: FunctionComponent<ViewPluginViewProps> = ({
             for (const neurodataItem of neurodataItems) {
               if (neurodataItem.neurodataType === vp.secondaryNeurodataType) {
                 ret.push({
-                  label: neurodataObject.group.path + ' | ' + neurodataItem.path,
+                  label:
+                    neurodataObject.group.path + " | " + neurodataItem.path,
                   itemTabString: `view:${plugin.name}|${neurodataObject.group.path}^${neurodataItem.path}`,
                 });
               }
             }
-          }
-          else {
+          } else {
             if (plugin.name === neurodataObject.defaultViewPlugin?.name) {
               ret.push({
                 label: neurodataObject.group.path,
