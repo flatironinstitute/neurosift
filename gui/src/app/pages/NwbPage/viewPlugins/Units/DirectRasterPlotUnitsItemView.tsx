@@ -190,7 +190,7 @@ class DirectSpikeTrainsClientUnitSlice {
 }
 
 export class DirectSpikeTrainsClient {
-  #blockSizeSec = 60 * 5;
+  #blockSizeSec = 60 * 1;
   constructor(
     private nwbFile: RemoteH5FileX,
     private path: string,

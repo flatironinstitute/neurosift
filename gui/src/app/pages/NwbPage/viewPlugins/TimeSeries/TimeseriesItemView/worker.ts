@@ -11,6 +11,7 @@ let dataSeries: DataSeries[] | undefined = undefined;
 let plotSeries: PlotSeries[] | undefined = undefined;
 let annotation: TimeseriesAnnotationFileData | undefined = undefined;
 let spikeTrains: SpikeTrainsDataForWorker | undefined = undefined;
+let zoomInRequiredForSpikeTrains = false;
 
 onmessage = function (evt) {
   if (evt.data.canvas) {
@@ -30,7 +31,16 @@ onmessage = function (evt) {
     drawDebounced();
   }
   if (evt.data.spikeTrains) {
+    console.log("--- setting spike trains", evt.data.spikeTrains);
     spikeTrains = evt.data.spikeTrains;
+    drawDebounced();
+  }
+  if (evt.data.zoomInRequiredForSpikeTrains !== undefined) {
+    console.log(
+      "---- setting zoomInRequiredForSpikeTrains",
+      evt.data.zoomInRequiredForSpikeTrains,
+    );
+    zoomInRequiredForSpikeTrains = evt.data.zoomInRequiredForSpikeTrains;
     drawDebounced();
   }
 };
@@ -70,7 +80,35 @@ async function draw() {
   drawCode += 1;
   const thisDrawCode = drawCode;
 
-  if (spikeTrains) {
+  canvasContext.clearRect(0, 0, canvasWidth, canvasHeight);
+
+  if (opts.zoomInRequired && !zoomInRequiredForSpikeTrains) {
+    // draw text in the center of the canvas in pink: "Zoom in to view raster plot"
+    canvasContext.fillStyle = "pink";
+    canvasContext.textAlign = "center";
+    canvasContext.textBaseline = "middle";
+    canvasContext.font = "20px Arial";
+    canvasContext.fillText(
+      "Zoom in (mouse-wheel) to view data",
+      canvasWidth / 2,
+      canvasHeight / 2,
+    );
+  }
+
+  if (zoomInRequiredForSpikeTrains) {
+    // draw text in the center of the canvas in pink: "Zoom in to view spike trains"
+    canvasContext.fillStyle = "pink";
+    canvasContext.textAlign = "center";
+    canvasContext.textBaseline = "middle";
+    canvasContext.font = "20px Arial";
+    canvasContext.fillText(
+      "Zoom in (mouse-wheel) to view spike trains",
+      canvasWidth / 2,
+      canvasHeight / 2,
+    );
+  }
+
+  if (spikeTrains && !zoomInRequiredForSpikeTrains) {
     await drawSpikeTrains({
       canvasContext,
       canvasWidth,
@@ -260,17 +298,6 @@ const paintPanel = (context: CanvasRenderingContext2D, props: PanelProps) => {
   // context.clearRect(0, 0, canvasWidth, canvasHeight);
 
   if (opts.zoomInRequired) {
-    context.clearRect(0, 0, canvasWidth, canvasHeight);
-    // draw text in the center of the canvas in pink: "Zoom in to view raster plot"
-    context.fillStyle = "pink";
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.font = "20px Arial";
-    context.fillText(
-      "Zoom in (mouse-wheel) to view data",
-      canvasWidth / 2,
-      canvasHeight / 2,
-    );
     return;
   }
 

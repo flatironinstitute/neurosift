@@ -25,7 +25,6 @@ import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient";
 import { timeSelectionBarHeight } from "./TimeseriesSelectionBar";
 import { DataSeries, Opts, SpikeTrainsDataForWorker } from "./WorkerTypes";
 import { SpikeTrainsClient } from "../../Units/DirectRasterPlotUnitsItemView";
-import { colorForUnitId } from "app/package/spike_sorting/unit-colors";
 import { getUnitColor } from "app/package/view-units-table";
 
 type Props = {
@@ -412,21 +411,39 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
     });
   }, [worker, dataSeries]);
 
-  const { spikeTrainBlockStartIndex, spikeTrainBlockEndIndex } = useMemo(() => {
+  const {
+    spikeTrainBlockStartIndex,
+    spikeTrainBlockEndIndex,
+    zoomInRequiredForSpikeTrains,
+  } = useMemo(() => {
     if (visibleStartTimeSec === undefined)
       return {
         spikeTrainBlockStartIndex: undefined,
         spikeTrainBlockEndIndex: undefined,
+        zoomInRequiredForSpikeTrains: false,
       };
     if (visibleEndTimeSec === undefined)
       return {
         spikeTrainBlockStartIndex: undefined,
         spikeTrainBlockEndIndex: undefined,
+        zoomInRequiredForSpikeTrains: false,
       };
+    if (
+      visibleEndTimeSec - visibleStartTimeSec > 60 &&
+      spikeTrainsClient &&
+      spikeTrainsClient.unitIds.length > 0
+    ) {
+      return {
+        spikeTrainBlockStartIndex: undefined,
+        spikeTrainBlockEndIndex: undefined,
+        zoomInRequiredForSpikeTrains: true,
+      };
+    }
     if (!spikeTrainsClient)
       return {
         spikeTrainBlockStartIndex: undefined,
         spikeTrainBlockEndIndex: undefined,
+        zoomInRequiredForSpikeTrains: false,
       };
     const blockSizeSec = spikeTrainsClient.blockSizeSec;
     const spikeTrainBlockStartIndex = Math.floor(
@@ -434,12 +451,22 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
     );
     const spikeTrainBlockEndIndex =
       Math.ceil(visibleEndTimeSec / blockSizeSec) + 1;
-    return { spikeTrainBlockStartIndex, spikeTrainBlockEndIndex };
+    return {
+      spikeTrainBlockStartIndex,
+      spikeTrainBlockEndIndex,
+      zoomInRequiredForSpikeTrains: false,
+    };
   }, [visibleStartTimeSec, visibleEndTimeSec, spikeTrainsClient]);
 
   useEffect(() => {
     if (!spikeTrainsClient) return;
     if (!worker) return;
+    if (zoomInRequiredForSpikeTrains) {
+      worker.postMessage({
+        spikeTrains: [],
+      });
+      return;
+    }
     if (spikeTrainBlockStartIndex === undefined) return;
     if (spikeTrainBlockEndIndex === undefined) return;
     let canceled = false;
@@ -468,9 +495,20 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
     spikeTrainBlockStartIndex,
     spikeTrainBlockEndIndex,
     worker,
+    zoomInRequiredForSpikeTrains,
   ]);
 
-  useEffect(() => {}, [spikeTrainsClient]);
+  useEffect(() => {
+    // post zoomInRequiredForSpikeTrains to worker
+    if (!worker) return;
+    console.log(
+      "--- posting zoomInRequiredForSpikeTrains to worker",
+      zoomInRequiredForSpikeTrains,
+    );
+    worker.postMessage({
+      zoomInRequiredForSpikeTrains,
+    });
+  }, [worker, zoomInRequiredForSpikeTrains]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "m") {
