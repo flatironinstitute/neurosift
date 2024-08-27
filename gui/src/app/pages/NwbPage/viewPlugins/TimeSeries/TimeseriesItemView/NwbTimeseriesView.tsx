@@ -123,11 +123,11 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
     if (visibleEndTimeSec !== undefined) return;
     setVisibleTimeRange(
       startTime,
-      startTime +
-        Math.min(
-          (chunkSize / dataClient.estimatedSamplingFrequency!) * 3,
-          endTime,
-        ),
+      endTime,
+      // Math.min(
+      //   startTime + (chunkSize / dataClient.estimatedSamplingFrequency!) * 3,
+      //   endTime,
+      // ),
     );
   }, [
     chunkSize,
@@ -501,10 +501,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
   useEffect(() => {
     // post zoomInRequiredForSpikeTrains to worker
     if (!worker) return;
-    console.log(
-      "--- posting zoomInRequiredForSpikeTrains to worker",
-      zoomInRequiredForSpikeTrains,
-    );
+    console.log(zoomInRequiredForSpikeTrains);
     worker.postMessage({
       zoomInRequiredForSpikeTrains,
     });

@@ -31,15 +31,11 @@ onmessage = function (evt) {
     drawDebounced();
   }
   if (evt.data.spikeTrains) {
-    console.log("--- setting spike trains", evt.data.spikeTrains);
     spikeTrains = evt.data.spikeTrains;
     drawDebounced();
   }
   if (evt.data.zoomInRequiredForSpikeTrains !== undefined) {
-    console.log(
-      "---- setting zoomInRequiredForSpikeTrains",
-      evt.data.zoomInRequiredForSpikeTrains,
-    );
+    console.log(evt.data.zoomInRequiredForSpikeTrains);
     zoomInRequiredForSpikeTrains = evt.data.zoomInRequiredForSpikeTrains;
     drawDebounced();
   }

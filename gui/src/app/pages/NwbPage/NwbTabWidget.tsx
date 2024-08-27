@@ -129,7 +129,7 @@ const TabChild: FunctionComponent<TabChildProps> = ({
         itemPath: undefined,
         additionalItemPaths: undefined,
       };
-  }, [tabName, nwbFile, specifications, viewPlugins]);
+  }, [tabName, nwbFile, specifications, viewPlugins, neurodataItems]);
   if (!viewPlugin && !specifications && tabName.startsWith("neurodata-item:")) {
     // if the specifications are not loaded yet, we will still give it a chance to find an appropriate view plugin
     return <div>Loading NWB file specifications...</div>;
