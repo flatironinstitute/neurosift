@@ -98,10 +98,10 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
       overrideMaxVisibleDuration ||
       (dataClient
         ? Math.max(
-            1e4 /
+            1e5 /
               (numVisibleChannels || 1) /
               (dataClient.estimatedSamplingFrequency || 1),
-            0.1,
+            0.2,
           )
         : 0),
     [numVisibleChannels, dataClient, overrideMaxVisibleDuration],
