@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2024-08-28
+
+* Improve EphysAndUnits button - only show if sampling rate >= 10 kHz
+
 ## 2024-08-24
 
 * Secondary neurodata item instead of special buttons

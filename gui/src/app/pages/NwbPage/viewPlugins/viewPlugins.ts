@@ -33,6 +33,7 @@ import {
 import TimeSeriesLeftPanelComponent from "./TimeSeries/TimeSeriesLeftPanelComponent";
 import UnitLocationsUnitsItemView from "./Units/UnitLocationsUnitsItemView";
 import EphysAndUnitsItemView from "./EphysAndUnits/EphysAndUnitsItemView";
+import { getTimeseriesInfo } from "./TimeSeries/useTimeseriesInfo";
 
 type Props = {
   width: number;
@@ -420,6 +421,12 @@ viewPlugins.push({
   secondaryNeurodataType: "Units",
   component: EphysAndUnitsItemView,
   isTimeView: true,
+  checkEnabled: async (nwbFile: RemoteH5FileX, path: string) => {
+    const { samplingRate } = await getTimeseriesInfo(nwbFile, path);
+    if (!samplingRate) return false;
+    if (samplingRate < 10000) return false;
+    return true;
+  },
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////
