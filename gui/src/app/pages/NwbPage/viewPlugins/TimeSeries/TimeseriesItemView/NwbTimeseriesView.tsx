@@ -35,6 +35,7 @@ type Props = {
   autoChannelSeparation?: number;
   colorChannels?: boolean;
   spikeTrainsClient?: SpikeTrainsClient;
+  startZoomedOut?: boolean;
 };
 
 const gridlineOpts = {
@@ -52,6 +53,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
   autoChannelSeparation,
   colorChannels,
   spikeTrainsClient,
+  startZoomedOut,
 }) => {
   const [canvasElement, setCanvasElement] = useState<
     HTMLCanvasElement | undefined
@@ -123,11 +125,13 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
     if (visibleEndTimeSec !== undefined) return;
     setVisibleTimeRange(
       startTime,
-      endTime,
-      // Math.min(
-      //   startTime + (chunkSize / dataClient.estimatedSamplingFrequency!) * 3,
-      //   endTime,
-      // ),
+      startZoomedOut
+        ? endTime
+        : Math.min(
+            startTime +
+              (chunkSize / dataClient.estimatedSamplingFrequency!) * 3,
+            endTime,
+          ),
     );
   }, [
     chunkSize,
@@ -137,6 +141,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
     endTime,
     visibleStartTimeSec,
     visibleEndTimeSec,
+    startZoomedOut,
   ]);
 
   // Set the datasetChunkingClient
