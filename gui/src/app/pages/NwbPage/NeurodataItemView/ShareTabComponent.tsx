@@ -58,9 +58,30 @@ const ShareTabComponent: FunctionComponent<Props> = ({
   const handleCopyToAddressBar = useCallback(
     (_txt: string) => {
       if (route.page !== "nwb") return;
-      setRoute({ ...route, tab: tabName });
+      const newQ: { [key: string]: string } = {};
+      if (tabName) {
+        newQ["tab"] = tabName;
+      }
+      if (includeTimeSelection) {
+        newQ["tab-time"] =
+          `${visibleStartTimeSec},${visibleEndTimeSec},${currentTime}`;
+      }
+      if (includeState && stateString) {
+        newQ["tab-state"] = stateString;
+      }
+      setRoute({ ...route, ...newQ });
     },
-    [route, setRoute, tabName],
+    [
+      route,
+      setRoute,
+      tabName,
+      includeTimeSelection,
+      visibleStartTimeSec,
+      visibleEndTimeSec,
+      currentTime,
+      stateString,
+      includeState,
+    ],
   );
 
   if (!tabName) return <div />;

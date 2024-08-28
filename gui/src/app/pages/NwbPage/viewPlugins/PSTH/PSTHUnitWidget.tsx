@@ -12,6 +12,7 @@ type Props = {
   path: string;
   spikeTrainsClient: DirectSpikeTrainsClient;
   unitId: string | number;
+  trialIndices: number[] | null | undefined;
   alignToVariables: string[];
   groupByVariable: string;
   groupByVariableCategories: string[] | undefined;
@@ -25,6 +26,7 @@ const PSTHUnitWidget: FunctionComponent<Props> = ({
   path,
   spikeTrainsClient,
   unitId,
+  trialIndices,
   alignToVariables,
   groupByVariable,
   groupByVariableCategories,
@@ -107,6 +109,7 @@ const PSTHUnitWidget: FunctionComponent<Props> = ({
               path={path}
               spikeTrain={spikeTrain}
               unitId={unitId}
+              trialIndices={trialIndices}
               alignToVariable={alignToVariable}
               groupByVariable={groupByVariable}
               groupByVariableCategories={groupByVariableCategories}
@@ -137,6 +140,7 @@ type PSTHUnitAlignToWidgetProps = {
   path: string;
   spikeTrain: number[];
   unitId: string | number;
+  trialIndices: number[] | null | undefined;
   alignToVariable: string;
   groupByVariable: string;
   groupByVariableCategories: string[] | undefined;
@@ -150,6 +154,7 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
   path,
   spikeTrain,
   unitId,
+  trialIndices,
   alignToVariable,
   groupByVariable,
   groupByVariableCategories,
@@ -171,13 +176,14 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
       );
       if (!times) throw Error(`Unable to load ${path}/${alignToVariable}`);
       if (canceled) return;
-      setAlignToTimes(Array.from(times));
+      const times2 = Array.from(times);
+      setAlignToTimes(times2);
     };
     load();
     return () => {
       canceled = true;
     };
-  }, [nwbFile, path, alignToVariable]);
+  }, [nwbFile, path, alignToVariable, trialIndices]);
 
   const [groupByValues, setGroupByValues] = useState<any[] | undefined>(
     undefined,
@@ -249,19 +255,26 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
     }));
   }, [trials, groupByVariableCategories]);
 
-  const sortedTrials = useMemo(() => {
-    if (!trials) return undefined;
+  const filteredTrials = useMemo(() => {
+    if (!trials) return trials;
+    if (!trialIndices) return trials;
+    const trialIndicesSet = new Set(trialIndices);
+    return trials.filter((trial, i) => trialIndicesSet.has(i));
+  }, [trials, trialIndices]);
+
+  const sortedFilteredTrials = useMemo(() => {
+    if (!filteredTrials) return undefined;
     if (!groups) return undefined;
     const ret: { times: number[]; group: any }[] = [];
     groups.forEach((group) => {
-      trials
+      filteredTrials
         .filter((trial) => trial.group === group.group)
         .forEach((trial) => {
           ret.push(trial);
         });
     });
     return ret;
-  }, [trials, groups]);
+  }, [filteredTrials, groups]);
 
   if (!alignToTimes) {
     return <div>Loading alignment times...</div>;
@@ -279,8 +292,12 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
     return <div>Loading groups...</div>;
   }
 
-  if (!sortedTrials) {
-    return <div>Loading sorted trials...</div>;
+  if (!filteredTrials) {
+    return <div>Loading filtered trials...</div>;
+  }
+
+  if (!sortedFilteredTrials) {
+    return <div>Loading sorted filtered trials...</div>;
   }
 
   const titleHeight = 20;
@@ -320,7 +337,7 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
           <PSTHRasterWidget
             width={width}
             height={rasterWidgetHeight}
-            trials={sortedTrials}
+            trials={sortedFilteredTrials}
             groups={groups}
             windowRange={windowRange}
             alignmentVariableName={alignToVariable}
@@ -341,7 +358,7 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
           <PSTHHistWidget
             width={width}
             height={histWidgetHeight}
-            trials={sortedTrials}
+            trials={sortedFilteredTrials}
             groups={groups}
             windowRange={windowRange}
             alignmentVariableName={alignToVariable}

@@ -23,6 +23,8 @@ import { useGroup } from "../../NwbMainView/NwbMainView";
 import { DirectSpikeTrainsClient } from "../Units/DirectRasterPlotUnitsItemView";
 import IfHasBeenVisible from "./IfHasBeenVisible";
 import PSTHUnitWidget from "./PSTHUnitWidget";
+import { SmallIconButton } from "@fi-sci/misc";
+import { Edit } from "@mui/icons-material";
 
 type Props = {
   width: number;
@@ -172,6 +174,10 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
     [string, "asc" | "desc"] | undefined
   >(undefined);
 
+  const [trialsFilter, setTrialsFilter] = useState<string | undefined>(
+    undefined,
+  );
+
   const sortUnitsByValues: { [unitId: string | number]: any } | undefined =
     useSortUnitsByValues(
       nwbFile,
@@ -223,12 +229,6 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
     };
   }, [windowRangeStr]);
 
-  const {
-    handleOpen: openAdvancedOpts,
-    handleClose: closeAdvancedOpts,
-    visible: advancedOptsVisible,
-  } = useModalWindow();
-
   const [prefs, prefsDispatch] = useReducer(psthPrefsReducer, defaultPSTHPrefs);
 
   useEffect(() => {
@@ -253,6 +253,9 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
     }
     if (a.groupByVariableCategories) {
       setGroupByVariableCategories(a.groupByVariableCategories);
+    }
+    if (a.trialsFilter) {
+      setTrialsFilter(a.trialsFilter);
     }
     if (a.sortUnitsByVariable) {
       setSortUnitsByVariable(a.sortUnitsByVariable);
@@ -290,6 +293,7 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
     setAlignToVariables,
     setGroupByVariable,
     setGroupByVariableCategories,
+    setTrialsFilter,
     setSortUnitsByVariable,
     setWindowRangeStr,
     prefsDispatch,
@@ -302,6 +306,7 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
       alignToVariables,
       groupByVariable,
       groupByVariableCategories,
+      trialsFilter,
       sortUnitsByVariable,
       windowRangeStr,
       prefs,
@@ -320,6 +325,7 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
     alignToVariables,
     groupByVariable,
     groupByVariableCategories,
+    trialsFilter,
     sortUnitsByVariable,
     windowRangeStr,
     prefs,
@@ -360,22 +366,30 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
     />
   );
 
-  const prefsComponent = (
-    <PrefsComponent
-      prefs={prefs}
-      prefsDispatch={prefsDispatch}
-      advanced={false}
-      onOpenAdvanced={openAdvancedOpts}
+  const sortUnitsBySelectionComponent = (
+    <SortUnitsBySelectionComponent
+      sortUnitsByVariable={sortUnitsByVariable}
+      setSortUnitsByVariable={setSortUnitsByVariable}
+      unitsPath={unitsPath}
     />
+  );
+
+  const trialsFilterComponent = (
+    <TrialsFilterComponent
+      trialsFilter={trialsFilter}
+      setTrialsFilter={setTrialsFilter}
+    />
+  );
+
+  const prefsComponent = (
+    <PrefsComponent prefs={prefs} prefsDispatch={prefsDispatch} />
   );
 
   const unitsTableWidth = 200;
   const unitsTableHeight = (height * 2) / 5;
-  const groupByHeight = 50;
-  const windowRangeHeight = 70;
   const prefsHeight = 150;
   const alignToSelectionComponentHeight =
-    height - unitsTableHeight - groupByHeight - windowRangeHeight - prefsHeight;
+    height - unitsTableHeight - prefsHeight;
 
   const unitWidgetHeight = Math.min(
     height,
@@ -393,6 +407,12 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
   //     setSelectedUnitIds([unitIds[0]])
   //     initialized.current = true
   // }, [unitIds, selectedUnitIds, setSelectedUnitIds])
+
+  const bottomAreaHeight = Math.min(70, height / 3);
+
+  const sep = <>&nbsp;&bull;&nbsp;</>;
+
+  const trialIndices = useTrialsFilterIndices(trialsFilter, nwbFile, path);
 
   return (
     <div
@@ -424,43 +444,12 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
         style={{
           position: "absolute",
           width: unitsTableWidth,
-          top: unitsTableHeight + alignToSelectionComponentHeight,
-          height: windowRangeHeight,
-          overflowY: "hidden",
-        }}
-      >
-        <hr />
-        {windowRangeSelectionComponent}
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          width: unitsTableWidth,
-          height: groupByHeight,
-          top:
-            unitsTableHeight +
-            alignToSelectionComponentHeight +
-            windowRangeHeight,
-          overflowY: "hidden",
-        }}
-      >
-        {groupBySelectionComponent}
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          width: unitsTableWidth,
           height: prefsHeight,
-          top:
-            unitsTableHeight +
-            alignToSelectionComponentHeight +
-            windowRangeHeight +
-            groupByHeight,
+          top: unitsTableHeight + alignToSelectionComponentHeight,
           overflowY: "hidden",
         }}
       >
         {prefsComponent}
-        <hr />
       </div>
       <div
         className="psth-item-view-right"
@@ -468,7 +457,7 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
           position: "absolute",
           left: unitsTableWidth,
           width: width - unitsTableWidth,
-          height,
+          height: height - bottomAreaHeight,
           overflowY: "auto",
           overflowX: "hidden",
         }}
@@ -494,6 +483,7 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
                   path={path}
                   spikeTrainsClient={spikeTrainsClient}
                   unitId={unitId}
+                  trialIndices={trialIndices}
                   alignToVariables={alignToVariables}
                   groupByVariable={groupByVariable}
                   groupByVariableCategories={groupByVariableCategories}
@@ -505,42 +495,102 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
           ))}
         {selectedUnitIds.length === 0 && <div>Select one or more units</div>}
       </div>
-      <ModalWindow visible={advancedOptsVisible} onClose={closeAdvancedOpts}>
-        <div>
-          <WindowRangeSelectionComponent
-            windowRangeStr={windowRangeStr}
-            setWindowRangeStr={setWindowRangeStr}
-            advanced={true}
-          />
-          <hr />
-          <GroupBySelectionComponent
-            groupByVariable={groupByVariable}
-            setGroupByVariable={setGroupByVariable}
-            path={path}
-            advanced={true}
-            groupByVariableCategories={groupByVariableCategories}
-            setGroupByVariableCategories={setGroupByVariableCategories}
-          />
-          <hr />
-          <SortUnitsBySelectionComponent
-            sortUnitsByVariable={sortUnitsByVariable}
-            setSortUnitsByVariable={setSortUnitsByVariable}
-            unitsPath={unitsPath}
-          />
-          <hr />
-          <PrefsComponent
-            prefs={prefs}
-            prefsDispatch={prefsDispatch}
-            advanced={true}
-            onOpenAdvanced={undefined}
-          />
-          <div>
-            <Button onClick={closeAdvancedOpts}>Close</Button>
-          </div>
+      <div className="psth-bottom-area">
+        <div
+          style={{
+            position: "absolute",
+            left: unitsTableWidth,
+            width: width - unitsTableWidth,
+            top: height - bottomAreaHeight,
+            height: bottomAreaHeight,
+          }}
+        >
+          {windowRangeSelectionComponent}
+          {sep}
+          {groupBySelectionComponent}
+          {sep}
+          {sortUnitsBySelectionComponent}
+          {sep}
+          {trialsFilterComponent}
         </div>
-      </ModalWindow>
+      </div>
     </div>
   );
+};
+
+const useTrialsFilterIndices = (
+  trialsFilter: string | undefined,
+  nwbFile: RemoteH5FileX,
+  path: string,
+): number[] | undefined | null => {
+  const [trialIndices, setTrialIndices] = useState<number[] | undefined>(
+    undefined,
+  );
+  useEffect(() => {
+    let canceled = false;
+    if (!trialsFilter) {
+      return;
+    }
+    const load = async () => {
+      const grp = await nwbFile.getGroup(path);
+      if (!grp) {
+        console.warn(`Unable to get group: ${path}`);
+        return;
+      }
+      if (canceled) return;
+      const colnames: string[] = grp.attrs?.colnames;
+      if (!colnames) {
+        console.warn(`No colnames found in group: ${path}`);
+        return;
+      }
+      const data: {
+        [colname: string]: any;
+      } = {};
+      for (const colname of colnames) {
+        if (trialsFilter.includes(colname)) {
+          const dsd = await nwbFile.getDatasetData(path + "/" + colname, {});
+          if (!dsd) {
+            console.warn(`Unable to get data for ${path}/${colname}`);
+            return;
+          }
+          if (canceled) return;
+          data[colname] = dsd;
+        }
+      }
+      if (Object.keys(data).length === 0) {
+        console.warn(`No variables found for trials filter: ${trialsFilter}`);
+        return;
+      }
+      const k = Object.keys(data)[0];
+      const n = data[k].length;
+      let script = `var inds = [];\n`;
+      for (let i = 0; i < n; i++) {
+        for (const colname in data) {
+          script += `var ${colname} = data['${colname}'][${i}];\n`;
+        }
+        script += `if (${trialsFilter}) {\n`;
+        script += `  inds.push(${i});\n`;
+        script += `}\n`;
+      }
+      script += `inds;\n`;
+      try {
+        const inds = eval(script);
+        if (canceled) return;
+        setTrialIndices(inds);
+      } catch (err: any) {
+        console.warn(script);
+        console.warn(
+          `Error evaluating script for trials filter: ${err.message}`,
+        );
+      }
+    };
+    load();
+    return () => {
+      canceled = true;
+    };
+  }, [trialsFilter, nwbFile, path]);
+  if (!trialsFilter) return null;
+  return trialIndices;
 };
 
 export const AlignToSelectionComponent: FunctionComponent<{
@@ -668,7 +718,6 @@ type GroupBySelectionComponentProps = {
   groupByVariable: string;
   setGroupByVariable: (x: string) => void;
   path: string;
-  advanced?: boolean;
   groupByVariableCategories?: string[];
   setGroupByVariableCategories?: (x: string[] | undefined) => void;
 };
@@ -679,7 +728,6 @@ export const GroupBySelectionComponent: FunctionComponent<
   groupByVariable,
   setGroupByVariable,
   path,
-  advanced,
   groupByVariableCategories,
   setGroupByVariableCategories,
 }) => {
@@ -744,9 +792,8 @@ export const GroupBySelectionComponent: FunctionComponent<
   }, [groupByVariable, categoricalOptions]);
 
   return (
-    <div>
-      Group by:
-      <br />
+    <>
+      Group trials by:&nbsp;
       <select
         value={groupByVariable}
         onChange={(evt) => {
@@ -762,18 +809,16 @@ export const GroupBySelectionComponent: FunctionComponent<
         ))}
       </select>
       &nbsp;
-      {advanced &&
-        categoriesForSelectedVariable &&
-        setGroupByVariableCategories && (
-          <div>
-            <GroupByVariableCategoriesComponent
-              groupByVariableCategories={groupByVariableCategories}
-              setGroupByVariableCategories={setGroupByVariableCategories}
-              options={categoriesForSelectedVariable}
-            />
-          </div>
-        )}
-    </div>
+      {categoriesForSelectedVariable && setGroupByVariableCategories && (
+        <>
+          <GroupByVariableCategoriesComponent
+            groupByVariableCategories={groupByVariableCategories}
+            setGroupByVariableCategories={setGroupByVariableCategories}
+            options={categoriesForSelectedVariable}
+          />
+        </>
+      )}
+    </>
   );
 };
 
@@ -787,45 +832,39 @@ const GroupByVariableCategoriesComponent: FunctionComponent<
   GroupByVariableCategoriesComponentProps
 > = ({ groupByVariableCategories, setGroupByVariableCategories, options }) => {
   return (
-    <div>
-      <table>
-        <tbody>
-          {options.map((option) => (
-            <tr key={option}>
-              <td>
-                <input
-                  type="checkbox"
-                  checked={
-                    groupByVariableCategories?.includes(option) ||
-                    !groupByVariableCategories
-                  }
-                  onChange={() => {}}
-                  onClick={() => {
-                    if (groupByVariableCategories) {
-                      if (groupByVariableCategories.includes(option)) {
-                        setGroupByVariableCategories(
-                          groupByVariableCategories.filter((x) => x !== option),
-                        );
-                      } else {
-                        setGroupByVariableCategories([
-                          ...(groupByVariableCategories || []),
-                          option,
-                        ]);
-                      }
-                    } else {
-                      setGroupByVariableCategories(
-                        options.filter((x) => x !== option),
-                      );
-                    }
-                  }}
-                />
-              </td>
-              <td>{option}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <>
+      {options.map((option) => (
+        <>
+          <input
+            type="checkbox"
+            checked={
+              groupByVariableCategories?.includes(option) ||
+              !groupByVariableCategories
+            }
+            onChange={() => {}}
+            onClick={() => {
+              if (groupByVariableCategories) {
+                if (groupByVariableCategories.includes(option)) {
+                  setGroupByVariableCategories(
+                    groupByVariableCategories.filter((x) => x !== option),
+                  );
+                } else {
+                  setGroupByVariableCategories([
+                    ...(groupByVariableCategories || []),
+                    option,
+                  ]);
+                }
+              } else {
+                setGroupByVariableCategories(
+                  options.filter((x) => x !== option),
+                );
+              }
+            }}
+          />
+          {option}
+        </>
+      ))}
+    </>
   );
 };
 
@@ -855,9 +894,8 @@ const SortUnitsBySelectionComponent: FunctionComponent<
   );
 
   return (
-    <div>
-      Sort units by:
-      <br />
+    <>
+      Sort units by:&nbsp;
       <select
         value={sortUnitsByVariable ? sortUnitsByVariable[0] : ""}
         onChange={(evt) => {
@@ -888,19 +926,17 @@ const SortUnitsBySelectionComponent: FunctionComponent<
         <option value="asc">Ascending</option>
         <option value="desc">Descending</option>
       </select>
-    </div>
+    </>
   );
 };
 
 export const WindowRangeSelectionComponent: FunctionComponent<{
   windowRangeStr: { start: string; end: string };
   setWindowRangeStr: (x: { start: string; end: string }) => void;
-  advanced?: boolean;
 }> = ({ windowRangeStr: windowRange, setWindowRangeStr: setWindowRange }) => {
   return (
-    <div>
-      Window range (sec):
-      <br />
+    <>
+      Window range (s):&nbsp;
       <input
         style={{ width: 50 }}
         type="text"
@@ -918,6 +954,67 @@ export const WindowRangeSelectionComponent: FunctionComponent<{
           setWindowRange({ start: windowRange.start, end: evt.target.value });
         }}
       />
+    </>
+  );
+};
+
+type TrialsFilterComponentProps = {
+  trialsFilter: string | undefined;
+  setTrialsFilter: (x: string | undefined) => void;
+};
+
+const TrialsFilterComponent: FunctionComponent<TrialsFilterComponentProps> = ({
+  trialsFilter,
+  setTrialsFilter,
+}) => {
+  const { visible, handleOpen, handleClose } = useModalWindow();
+  return (
+    <>
+      Trials filter:&nbsp;
+      {trialsFilter || ""}&nbsp;
+      <SmallIconButton icon={<Edit />} onClick={handleOpen} />
+      <ModalWindow visible={visible} onClose={handleClose}>
+        <TrialsFilterEditWindow
+          trialsFilter={trialsFilter}
+          setTrialsFilter={setTrialsFilter}
+          onClose={handleClose}
+        />
+      </ModalWindow>
+    </>
+  );
+};
+
+type TrialsFilterEditWindowProps = {
+  trialsFilter: string | undefined;
+  setTrialsFilter: (x: string | undefined) => void;
+  onClose: () => void;
+};
+
+const TrialsFilterEditWindow: FunctionComponent<
+  TrialsFilterEditWindowProps
+> = ({ trialsFilter, setTrialsFilter, onClose }) => {
+  const [trialsFilterText, setTrialsFilterText] = useState<string | undefined>(
+    trialsFilter,
+  );
+  return (
+    <div>
+      <textarea
+        style={{ width: 300, height: 100 }}
+        value={trialsFilterText || ""}
+        onChange={(evt) => {
+          setTrialsFilterText(evt.target.value);
+        }}
+      />
+      <br />
+      <button
+        onClick={() => {
+          setTrialsFilter(trialsFilterText);
+          onClose();
+        }}
+      >
+        Apply
+      </button>
+      <button onClick={onClose}>Cancel</button>
     </div>
   );
 };
@@ -925,15 +1022,11 @@ export const WindowRangeSelectionComponent: FunctionComponent<{
 type PrefsComponentProps = {
   prefs: PSTHPrefs;
   prefsDispatch: (x: PSTHPrefsAction) => void;
-  advanced: boolean;
-  onOpenAdvanced: (() => void) | undefined;
 };
 
 const PrefsComponent: FunctionComponent<PrefsComponentProps> = ({
   prefs,
   prefsDispatch,
-  advanced,
-  onOpenAdvanced,
 }) => {
   const handleSetNumBins = useCallback(
     (numBins: number) => {
@@ -993,10 +1086,6 @@ const PrefsComponent: FunctionComponent<PrefsComponentProps> = ({
         <option value="medium">Medium</option>
         <option value="large">Large</option>
       </select>
-      <hr />
-      {!advanced && onOpenAdvanced && (
-        <button onClick={onOpenAdvanced}>Advanced</button>
-      )}
     </div>
   );
 };
