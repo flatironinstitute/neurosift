@@ -443,11 +443,14 @@ export const JobInfoView: FunctionComponent<JobInfoViewProps> = ({
   const jobUrl = getJobUrl(job.jobId);
   return (
     <div>
-      <Hyperlink href={jobUrl} target="_blank">
-        Job {job.status}
-      </Hyperlink>
-      &nbsp;
-      <SmallIconButton icon={<Refresh />} onClick={onRefreshJob} />
+      <div>
+        Job: {job.jobDefinition.processorName} (
+        <Hyperlink href={jobUrl} target="_blank">
+          {job.jobId}
+        </Hyperlink>
+        ) - {job.status}
+        <SmallIconButton icon={<Refresh />} onClick={onRefreshJob} />
+      </div>
       <table className="table" style={{ maxWidth: 300 }}>
         <tbody>
           {parameterNames.map((name, index) => (

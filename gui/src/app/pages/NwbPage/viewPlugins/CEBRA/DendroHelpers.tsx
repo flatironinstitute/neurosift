@@ -15,16 +15,17 @@ import {
   isFindJobsResponse,
 } from "../../../../dendro/dendro-types";
 import { timeAgoString } from "../../../../timeStrings";
-import { intListToString } from "../ElectricalSeriesItemView/SpikeSortingView/SpikeSortingView";
 
 export const useAllJobs = (o: {
+  serviceName?: string;
   appName?: string;
   processorName?: string;
   tags?: any;
   inputFileUrl?: string;
   jobFilter?: (job: DendroJob) => boolean;
 }) => {
-  const { appName, processorName, tags, inputFileUrl, jobFilter } = o;
+  const { serviceName, appName, processorName, tags, inputFileUrl, jobFilter } =
+    o;
   const [allJobs, setAllJobs] = useState<DendroJob[] | undefined | null>(
     undefined,
   );
@@ -34,13 +35,12 @@ export const useAllJobs = (o: {
   }, []);
   useEffect(() => {
     let canceled = false;
-    if (!inputFileUrl) return undefined;
     if (!tags && !(processorName && appName)) return undefined;
     (async () => {
       setAllJobs(undefined);
       const req: FindJobsRequest = {
         type: "findJobsRequest",
-        serviceName: "hello_world_service",
+        serviceName: serviceName || "hello_world_service",
         appName,
         processorName,
         tags: tags && tags.length > 0 ? { $all: tags } : undefined,
@@ -72,19 +72,23 @@ export const useAllJobs = (o: {
     return () => {
       canceled = true;
     };
-  }, [appName, processorName, inputFileUrl, refreshCode, tags, jobFilter]);
+  }, [
+    serviceName,
+    appName,
+    processorName,
+    inputFileUrl,
+    refreshCode,
+    tags,
+    jobFilter,
+  ]);
   return { allJobs, refreshAllJobs };
 };
 
 export const useDendroApiKey = () => {
   // save in local storage
-  const [dendroApiKey, setDendroApiKey] = useState<string>("");
-  useEffect(() => {
-    const storedDendroApiKey = localStorage.getItem("dendroApiKey");
-    if (storedDendroApiKey) {
-      setDendroApiKey(storedDendroApiKey);
-    }
-  }, []);
+  const [dendroApiKey, setDendroApiKey] = useState<string>(
+    localStorage.getItem("dendroApiKey") || "",
+  );
   useEffect(() => {
     localStorage.setItem("dendroApiKey", dendroApiKey);
   }, [dendroApiKey]);
@@ -388,4 +392,35 @@ const Expandable: FunctionComponent<PropsWithChildren<ExpandableProps>> = ({
 export const removeLeadingSlash = (path: string) => {
   if (path.startsWith("/")) return path.slice(1);
   return path;
+};
+
+export const intListToString = (v: number[]) => {
+  const vSorted = v.slice().sort((a, b) => a - b);
+  const runs: number[][] = [];
+  let currentRun: number[] = [];
+  for (let i = 0; i < vSorted.length; i++) {
+    if (currentRun.length === 0) {
+      currentRun.push(vSorted[i]);
+    } else {
+      if (vSorted[i] === currentRun[currentRun.length - 1] + 1) {
+        currentRun.push(vSorted[i]);
+      } else {
+        runs.push(currentRun);
+        currentRun = [vSorted[i]];
+      }
+    }
+  }
+  if (currentRun.length > 0) {
+    runs.push(currentRun);
+  }
+  let ret = "";
+  for (const run of runs) {
+    if (ret) ret += ", ";
+    if (run.length === 1) {
+      ret += run[0].toString();
+    } else {
+      ret += `${run[0]}-${run[run.length - 1]}`;
+    }
+  }
+  return ret;
 };
