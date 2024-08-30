@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2024-08-30
+
+* PSHT: improve state/tab persistence
+
+## 2024-08-29
+
+* PSTH: rework tool bar
+* PSTH: trial filter
+* Rework Spike Sorting Dendro view
+
 ## 2024-08-28
 
 * Improve EphysAndUnits button - only show if sampling rate >= 10 kHz
