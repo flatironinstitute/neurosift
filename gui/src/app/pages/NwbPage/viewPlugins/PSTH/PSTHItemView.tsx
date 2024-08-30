@@ -185,9 +185,10 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
       sortUnitsByVariable ? sortUnitsByVariable[0] : "",
     );
 
-  const sortUnitsByDirection = sortUnitsByVariable
-    ? sortUnitsByVariable[1]
-    : "asc";
+  const sortUnitsByDirection = useMemo(
+    () => (sortUnitsByVariable ? sortUnitsByVariable[1] : "asc"),
+    [sortUnitsByVariable],
+  );
   const unitIdSortFunction = useMemo(
     () => (a: string | number, b: string | number) => {
       if (!sortUnitsByValues) return 0;
@@ -236,11 +237,14 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
     const a = decodeStateFromStateString(initialStateString);
     if (!a) return;
     if (a.complementOfSelectedUnitIds) {
-      setSelectedUnitIds(
-        (sortedUnitIds || []).filter(
-          (unitId) => !a.complementOfSelectedUnitIds.includes(unitId),
-        ),
+      console.warn(
+        "Not supporting complementOfSelectedUnitIds because it causes problems with initial state",
       );
+      // setSelectedUnitIds(
+      //   (sortedUnitIds || []).filter(
+      //     (unitId) => !a.complementOfSelectedUnitIds.includes(unitId),
+      //   ),
+      // );
     } else if (a.selectedUnitIds) {
       const sortedSelectedUnitIds = [...a.selectedUnitIds].sort();
       setSelectedUnitIds(sortedSelectedUnitIds);
@@ -288,7 +292,6 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
     }
   }, [
     initialStateString,
-    sortedUnitIds,
     setSelectedUnitIds,
     setAlignToVariables,
     setGroupByVariable,
@@ -311,12 +314,13 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
       windowRangeStr,
       prefs,
     };
-    if (selectedUnitIds.length > (sortedUnitIds || []).length / 2) {
-      state0.complementOfSelectedUnitIds = (sortedUnitIds || []).filter(
-        (unitId) => !selectedUnitIds.includes(unitId),
-      );
-      delete state0.selectedUnitIds;
-    }
+    // Not supporting complementOfSelectedUnitIds because it causes problems with initial state
+    // if (selectedUnitIds.length > (sortedUnitIds || []).length / 2) {
+    //   state0.complementOfSelectedUnitIds = (sortedUnitIds || []).filter(
+    //     (unitId) => !selectedUnitIds.includes(unitId),
+    //   );
+    //   delete state0.selectedUnitIds;
+    // }
     setStateString(encodeStateToString(state0));
   }, [
     selectedUnitIds,

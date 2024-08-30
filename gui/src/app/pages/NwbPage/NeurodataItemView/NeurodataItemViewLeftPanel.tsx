@@ -68,7 +68,11 @@ const NeurodataItemViewLeftPanel: FunctionComponent<Props> = ({
         </>
       ) : null}
       <hr />
-      <ShareTabComponent tabName={tabName} stateString={stateString} />
+      <ShareTabComponent
+        tabName={tabName}
+        stateString={stateString}
+        defaultIncludeState={!!stateString}
+      />
       <hr />
       {group && (
         <LoadInPythonComponent path={path} group={group} viewName={viewName} />

@@ -1,34 +1,51 @@
+import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
+import { ContentCopy } from "@mui/icons-material";
 import {
   FunctionComponent,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { GiPaperClip } from "react-icons/gi";
 import {
   useTimeRange,
   useTimeseriesSelection,
 } from "../../../package/context-timeseries-selection";
-import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
-import { ContentCopy } from "@mui/icons-material";
-import { GiPaperClip } from "react-icons/gi";
-import useRoute from "app/useRoute";
 
 type Props = {
   tabName?: string;
   stateString?: string;
+  defaultIncludeState?: boolean;
 };
 
 const ShareTabComponent: FunctionComponent<Props> = ({
   tabName,
   stateString,
+  defaultIncludeState,
 }) => {
-  const { route, setRoute } = useRoute();
   const [clicked, setClicked] = useState(false);
   const [includeTimeSelection, setIncludeTimeSelection] = useState(false);
   const [includeState, setIncludeState] = useState(false);
   const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
   const { currentTime } = useTimeseriesSelection();
+
+  useEffect(() => {
+    if (defaultIncludeState) {
+      setIncludeState(true);
+    }
+  }, [defaultIncludeState]);
+
+  const tabTimeString = useMemo(() => {
+    if (!includeTimeSelection) return "";
+    return `${visibleStartTimeSec},${visibleEndTimeSec},${currentTime}`;
+  }, [
+    includeTimeSelection,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    currentTime,
+  ]);
 
   const url = useMemo(() => {
     if (!tabName) return null;
@@ -39,50 +56,13 @@ const ShareTabComponent: FunctionComponent<Props> = ({
     url = url.replace(/&tab-state=[^&]*/g, "");
     url += `&tab=${tabName}`;
     if (includeTimeSelection) {
-      url += `&tab-time=${visibleStartTimeSec},${visibleEndTimeSec},${currentTime}`;
+      url += `&tab-time=${tabTimeString}`;
     }
     if (includeState) {
       url += `&tab-state=${stateString}`;
     }
     return url;
-  }, [
-    tabName,
-    includeTimeSelection,
-    visibleStartTimeSec,
-    visibleEndTimeSec,
-    currentTime,
-    stateString,
-    includeState,
-  ]);
-
-  const handleCopyToAddressBar = useCallback(
-    (_txt: string) => {
-      if (route.page !== "nwb") return;
-      const newQ: { [key: string]: string } = {};
-      if (tabName) {
-        newQ["tab"] = tabName;
-      }
-      if (includeTimeSelection) {
-        newQ["tab-time"] =
-          `${visibleStartTimeSec},${visibleEndTimeSec},${currentTime}`;
-      }
-      if (includeState && stateString) {
-        newQ["tab-state"] = stateString;
-      }
-      setRoute({ ...route, ...newQ });
-    },
-    [
-      route,
-      setRoute,
-      tabName,
-      includeTimeSelection,
-      visibleStartTimeSec,
-      visibleEndTimeSec,
-      currentTime,
-      stateString,
-      includeState,
-    ],
-  );
+  }, [tabName, tabTimeString, includeTimeSelection, includeState, stateString]);
 
   if (!tabName) return <div />;
 
@@ -91,9 +71,10 @@ const ShareTabComponent: FunctionComponent<Props> = ({
       <div>
         <CopyableText
           text={url}
-          onCopyToAddressBar={
-            route.page === "nwb" ? handleCopyToAddressBar : undefined
-          }
+          onCopyToAddressBar={() => {
+            window.history.replaceState(null, "", url);
+            alert("Shareable URL has been set to address bar");
+          }}
         />
         <Checkbox
           value={includeTimeSelection}
@@ -140,8 +121,13 @@ const CopyableText: FunctionComponent<{
   onCopyToAddressBar?: (txt: string) => void;
 }> = ({ text, onCopyToAddressBar }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [hasBeenCopied, setHasBeenCopied] = useState(false);
+  useEffect(() => {
+    setHasBeenCopied(false);
+  }, [text]);
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(text);
+    setHasBeenCopied(true);
   }, [text]);
   return (
     <div>
@@ -159,6 +145,11 @@ const CopyableText: FunctionComponent<{
         onClick={handleCopy}
         title="Copy URL to clipboard"
       />
+      {hasBeenCopied && (
+        <span title="Copied to clipboard" style={{ color: "green" }}>
+          Copied!
+        </span>
+      )}
       {onCopyToAddressBar && (
         <SmallIconButton
           icon={<GiPaperClip />}

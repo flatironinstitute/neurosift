@@ -31,7 +31,7 @@ import {
   getJobOutputUrl,
   useAllJobs,
   useDendroApiKey,
-  useJob
+  useJob,
 } from "../../CEBRA/DendroHelpers";
 import { JobInfoView } from "../../CEBRA/DendroItemView";
 import useTimeSeriesInfo from "../../TimeSeries/useTimeseriesInfo";
