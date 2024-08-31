@@ -393,7 +393,7 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
       sortUnitsByVariable={sortUnitsByVariable}
       sortUnitsByValues={sortUnitsByValues}
     />
-  )
+  );
 
   const prefsComponent = (
     <PrefsComponent prefs={prefs} prefsDispatch={prefsDispatch} />
@@ -528,7 +528,9 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
           {trialsFilterComponent}
 
           {sortUnitsByVariable && sortUnitsByVariable[0] && sep}
-          {sortUnitsByVariable && sortUnitsByVariable[0] && (selectUnitsComponent)}
+          {sortUnitsByVariable &&
+            sortUnitsByVariable[0] &&
+            selectUnitsComponent}
         </div>
       </div>
     </div>
@@ -987,9 +989,7 @@ const TrialsFilterComponent: FunctionComponent<TrialsFilterComponentProps> = ({
   const { visible, handleOpen, handleClose } = useModalWindow();
   return (
     <>
-      <Hyperlink
-        onClick={handleOpen}
-      >Trials filter:</Hyperlink>
+      <Hyperlink onClick={handleOpen}>Trials filter:</Hyperlink>
       &nbsp;
       {abbreviated(trialsFilter, 30)}
       <ModalWindow visible={visible} onClose={handleClose}>
@@ -1029,13 +1029,21 @@ const SelectUnitsComponent: FunctionComponent<SelectUnitsComponentProps> = ({
     );
     setSelectedUnitIds(newSelectedUnitIds || []);
     handleClose();
-  }, [selectedValues, setSelectedUnitIds, unitIds, sortUnitsByValues, handleClose]);
+  }, [
+    selectedValues,
+    setSelectedUnitIds,
+    unitIds,
+    sortUnitsByValues,
+    handleClose,
+  ]);
   return (
     <>
       <Hyperlink onClick={handleOpen}>Select units</Hyperlink>
       <ModalWindow visible={visible} onClose={handleClose}>
         <div>
-          <h3>Select units by {sortUnitsByVariable ? sortUnitsByVariable[0] : ""}</h3>
+          <h3>
+            Select units by {sortUnitsByVariable ? sortUnitsByVariable[0] : ""}
+          </h3>
           <table>
             <tbody>
               {uniqueValues.map((val) => (
@@ -1047,7 +1055,9 @@ const SelectUnitsComponent: FunctionComponent<SelectUnitsComponentProps> = ({
                       onChange={() => {}}
                       onClick={() => {
                         if (selectedValues.includes(val)) {
-                          setSelectedValues(selectedValues.filter((x) => x !== val));
+                          setSelectedValues(
+                            selectedValues.filter((x) => x !== val),
+                          );
                         } else {
                           setSelectedValues([...selectedValues, val]);
                         }
@@ -1059,23 +1069,18 @@ const SelectUnitsComponent: FunctionComponent<SelectUnitsComponentProps> = ({
               ))}
             </tbody>
           </table>
-          <button
-            onClick={handleSelect}
-          >
-            Select
-          </button>
+          <button onClick={handleSelect}>Select</button>
         </div>
       </ModalWindow>
     </>
-  )
-}
+  );
+};
 
 const abbreviated = (s: string | undefined, maxLen: number) => {
   if (!s) return "";
   if (s.length <= maxLen) return s;
   return s.slice(0, maxLen) + "...";
-}
-
+};
 
 type TrialsFilterEditWindowProps = {
   trialsFilter: string | undefined;
