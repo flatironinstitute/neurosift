@@ -23,7 +23,7 @@ import { useGroup } from "../../NwbMainView/NwbMainView";
 import { DirectSpikeTrainsClient } from "../Units/DirectRasterPlotUnitsItemView";
 import IfHasBeenVisible from "./IfHasBeenVisible";
 import PSTHUnitWidget from "./PSTHUnitWidget";
-import { SmallIconButton } from "@fi-sci/misc";
+import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import { Edit } from "@mui/icons-material";
 
 type Props = {
@@ -385,6 +385,16 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
     />
   );
 
+  const selectUnitsComponent = (
+    <SelectUnitsComponent
+      unitIds={sortedUnitIds}
+      selectedUnitIds={selectedUnitIds}
+      setSelectedUnitIds={setSelectedUnitIds}
+      sortUnitsByVariable={sortUnitsByVariable}
+      sortUnitsByValues={sortUnitsByValues}
+    />
+  )
+
   const prefsComponent = (
     <PrefsComponent prefs={prefs} prefsDispatch={prefsDispatch} />
   );
@@ -516,6 +526,9 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
           {sortUnitsBySelectionComponent}
           {sep}
           {trialsFilterComponent}
+
+          {sortUnitsByVariable && sortUnitsByVariable[0] && sep}
+          {sortUnitsByVariable && sortUnitsByVariable[0] && (selectUnitsComponent)}
         </div>
       </div>
     </div>
@@ -974,9 +987,11 @@ const TrialsFilterComponent: FunctionComponent<TrialsFilterComponentProps> = ({
   const { visible, handleOpen, handleClose } = useModalWindow();
   return (
     <>
-      Trials filter:&nbsp;
-      {trialsFilter || ""}&nbsp;
-      <SmallIconButton icon={<Edit />} onClick={handleOpen} />
+      <Hyperlink
+        onClick={handleOpen}
+      >Trials filter:</Hyperlink>
+      &nbsp;
+      {abbreviated(trialsFilter, 30)}
       <ModalWindow visible={visible} onClose={handleClose}>
         <TrialsFilterEditWindow
           trialsFilter={trialsFilter}
@@ -987,6 +1002,80 @@ const TrialsFilterComponent: FunctionComponent<TrialsFilterComponentProps> = ({
     </>
   );
 };
+
+type SelectUnitsComponentProps = {
+  unitIds: (number | string)[] | undefined;
+  selectedUnitIds: (number | string)[];
+  setSelectedUnitIds: (x: (number | string)[]) => void;
+  sortUnitsByVariable: [string, "asc" | "desc"] | undefined;
+  sortUnitsByValues: { [unitId: string | number]: any } | undefined;
+};
+
+const SelectUnitsComponent: FunctionComponent<SelectUnitsComponentProps> = ({
+  unitIds,
+  setSelectedUnitIds,
+  sortUnitsByVariable,
+  sortUnitsByValues,
+}) => {
+  const { visible, handleOpen, handleClose } = useModalWindow();
+  const uniqueValues = useMemo(() => {
+    if (!sortUnitsByValues) return [];
+    return [...new Set(Object.values(sortUnitsByValues))].sort();
+  }, [sortUnitsByValues]);
+  const [selectedValues, setSelectedValues] = useState<string[]>([]);
+  const handleSelect = useCallback(() => {
+    const newSelectedUnitIds = unitIds?.filter((unitId) =>
+      selectedValues.includes(sortUnitsByValues?.[unitId]),
+    );
+    setSelectedUnitIds(newSelectedUnitIds || []);
+    handleClose();
+  }, [selectedValues, setSelectedUnitIds, unitIds, sortUnitsByValues, handleClose]);
+  return (
+    <>
+      <Hyperlink onClick={handleOpen}>Select units</Hyperlink>
+      <ModalWindow visible={visible} onClose={handleClose}>
+        <div>
+          <h3>Select units by {sortUnitsByVariable ? sortUnitsByVariable[0] : ""}</h3>
+          <table>
+            <tbody>
+              {uniqueValues.map((val) => (
+                <tr key={val}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedValues.includes(val)}
+                      onChange={() => {}}
+                      onClick={() => {
+                        if (selectedValues.includes(val)) {
+                          setSelectedValues(selectedValues.filter((x) => x !== val));
+                        } else {
+                          setSelectedValues([...selectedValues, val]);
+                        }
+                      }}
+                    />
+                  </td>
+                  <td>{val}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button
+            onClick={handleSelect}
+          >
+            Select
+          </button>
+        </div>
+      </ModalWindow>
+    </>
+  )
+}
+
+const abbreviated = (s: string | undefined, maxLen: number) => {
+  if (!s) return "";
+  if (s.length <= maxLen) return s;
+  return s.slice(0, maxLen) + "...";
+}
+
 
 type TrialsFilterEditWindowProps = {
   trialsFilter: string | undefined;
