@@ -76,7 +76,7 @@ const EphysPreprocessingView: FunctionComponent<
     throw Error("Unexpected: nwbFile is undefined (no context provider)");
 
   const nwbUrl = useMemo(() => {
-    return nwbFile.getUrls()[0];
+    return (nwbFile.sourceUrls || [])[0];
   }, [nwbFile]);
 
   // const electricalSeriesPathChoices: string[] | undefined = useElectricalSeriesPathChoices(nwbFile);

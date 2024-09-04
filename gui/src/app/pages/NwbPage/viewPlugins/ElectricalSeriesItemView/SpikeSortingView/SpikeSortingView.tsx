@@ -46,6 +46,8 @@ import {
   SpikeSortingMountainSort5Opts,
   defaultSpikeSortingMountainSort5Opts,
 } from "./mountainsort5";
+import ElectrodeGeometryView from "../../Ephys/ElectrodeGeometryView";
+import { Expandable } from "../../Ephys/EphysSummaryItemView";
 
 type SpikeSortingViewProps = {
   width: number;
@@ -80,15 +82,6 @@ const defaultPrepareEphysOpts: PrepareEphysOpts = {
   compression_ratio: 12,
   output_electrical_series_name: "",
 };
-
-const prepareEphysParameterNames = [
-  "duration_sec",
-  "electrode_indices",
-  "freq_min",
-  "freq_max",
-  "compression_ratio",
-  "output_electrical_series_name",
-];
 
 const usePrepareEphysStep = (o: { path: string; nwbUrl: string }) => {
   const { path, nwbUrl } = o;
@@ -197,110 +190,6 @@ const defaultPostProcessingOpts: PostProcessingOpts = {
   // none
 };
 
-const usePostProcessingStep = (spikeSortingJob?: DendroJob) => {
-  const [postProcessingOpts, setPostProcessingOpts] =
-    useState<PostProcessingOpts>(defaultPostProcessingOpts);
-
-  const selectPostProcessingOptsComponent = (
-    <SelectPostProcessingOpts
-      postProcessingOpts={postProcessingOpts}
-      setPostProcessingOpts={setPostProcessingOpts}
-    />
-  );
-
-  const [postProcessingJobId, setPostProcessingJobId] = useState<
-    string | undefined
-  >(undefined);
-  const { job: postProcessingJob, refreshJob: refreshPostProcessingJob } =
-    useJob(postProcessingJobId);
-
-  const postProcessingRequiredResources: DendroJobRequiredResources =
-    useMemo(() => {
-      return {
-        numCpus: 4,
-        numGpus: 0,
-        memoryGb: 4,
-        timeSec: 60 * 50,
-      };
-    }, []);
-
-  const postProcessingJobDefinition: DendroJobDefinition | undefined =
-    useMemo(() => {
-      if (!spikeSortingJob) {
-        return undefined;
-      }
-      const inputFileUrl = getJobOutputUrl(spikeSortingJob, "output");
-      if (!inputFileUrl) {
-        return undefined;
-      }
-      return {
-        appName: "hello_neurosift",
-        processorName: "spike_sorting_post_processing",
-        inputFiles: [
-          {
-            name: "input",
-            fileBaseName: "input.nwb.lindi.tar",
-            url: inputFileUrl,
-          },
-        ],
-        outputFiles: [
-          {
-            name: "output",
-            fileBaseName: "post.nwb.lindi.tar",
-          },
-        ],
-        parameters: [
-          {
-            name: "electrical_series_path",
-            value: getInputParameterValue(
-              spikeSortingJob,
-              "electrical_series_path",
-            ),
-          },
-          {
-            name: "units_path",
-            value:
-              "processing/ecephys/" +
-              getInputParameterValue(spikeSortingJob, "output_units_name"),
-          },
-        ],
-      };
-    }, [spikeSortingJob]);
-
-  useEffect(() => {
-    setPostProcessingJobId(undefined);
-  }, [spikeSortingJob]);
-
-  if (!spikeSortingJob) {
-    return {
-      selectPostProcessingOptsComponent: undefined,
-      postProcessingJobId: undefined,
-      setPostProcessingJobId: () => {},
-      postProcessingJob: undefined,
-      refreshPostProcessingJob: () => {},
-      postProcessingRequiredResources: undefined,
-      postProcessingJobDefinition: undefined,
-    };
-  }
-
-  return {
-    selectPostProcessingOptsComponent,
-    postProcessingJobId,
-    setPostProcessingJobId,
-    postProcessingJob,
-    refreshPostProcessingJob,
-    postProcessingRequiredResources,
-    postProcessingJobDefinition,
-  };
-};
-
-type SpikeSortingAlgorithmChoices = "mountainsort5" | "kilosort4";
-
-const spikeSortingAlgorithmChoices: SpikeSortingAlgorithmChoices[] = [
-  "mountainsort5",
-  "kilosort4",
-];
-
 const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
   width,
   height,
@@ -311,60 +200,12 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
     throw Error("Unexpected: nwbFile is undefined (no context provider)");
 
   const nwbUrl = useMemo(() => {
-    return nwbFile.getUrls()[0];
+    return (nwbFile.sourceUrls || [])[0];
   }, [nwbFile]);
 
   const { samplingRate } = useTimeSeriesInfo(nwbFile, path);
 
   const { allJobs, refreshAllJobs } = useAllSpikeSortingJobs(nwbUrl);
-
-  const [spikeSortingAlgorithm, setSpikeSortingAlgorithm] = useState<
-    SpikeSortingAlgorithmChoices | undefined
-  >(undefined);
-
-  const {
-    selectPrepareEphysOptsComponent,
-    prepareEphysJobId,
-    setPrepareEphysJobId,
-    prepareEphysJob,
-    refreshPrepareEphysJob,
-    prepareEphysJobRequiredResources,
-    prepareEphysJobDefinition,
-  } = usePrepareEphysStep({ path, nwbUrl });
-
-  useEffect(() => {
-    setSpikeSortingAlgorithm(undefined);
-  }, [prepareEphysJobId]);
-
-  const prepareEphysOutputNwbUrl = useMemo(
-    () => getJobOutputUrl(prepareEphysJob, "output"),
-    [prepareEphysJob],
-  );
-
-  const prepareEphysJobDependencies = useMemo(() => {
-    return [];
-  }, []);
-
-  const spikeSortingJobDependencies = useMemo(() => {
-    return prepareEphysJobId ? [prepareEphysJobId] : [];
-  }, [prepareEphysJobId]);
-
-  const tagsPrepareEphys_2 = useMemo(
-    () => [...tagsPrepareEphys, `nwb:${nwbUrl}`],
-    [nwbUrl],
-  );
-  const tagsSpikeSortingMountainSort5_2 = useMemo(
-    () => [...tagsSpikeSortingMountainSort5, `nwb:${nwbUrl}`],
-    [nwbUrl],
-  );
-  const tagsSpikeSortingKilosort4_2 = useMemo(
-    () => [...tagsSpikeSortingKilosort4, `nwb:${nwbUrl}`],
-    [nwbUrl],
-  );
-  const tagsPostProcessing_2 = useMemo(
-    () => [...tagsPostProcessing, `nwb:${nwbUrl}`],
-    [nwbUrl],
-  );
 
   const [selectedJobId, setSelectedJobId] = useState<string | undefined>(
     undefined,
@@ -397,6 +238,15 @@ const SpikeSortingView: FunctionComponent<SpikeSortingViewProps> = ({
     <div style={{ position: "absolute", width, height, overflowY: "auto" }}>
       <div style={{ padding: 10 }}>
         <h3>{title}</h3>
+        <hr />
+        <Expandable title="Electrode geometry" defaultExpanded={false}>
+          <ElectrodeGeometryView
+            width={width - 20}
+            height={500}
+            nwbFile={nwbFile}
+            electricalSeriesPath={path}
+          />
+        </Expandable>
         <hr />
         <AllJobsTree
           allJobs={allJobs || undefined}
@@ -536,8 +386,16 @@ const CreatePrepareEphysJobComponent: FunctionComponent<
       tags={tagsPrepareEphys_2}
       jobDependencies={jobDependencies}
       onNewJobId={onNewJobId}
+      staging={isStagingUrl(nwbUrl)}
     />
   );
+};
+
+export const isStagingUrl = (url: string): boolean => {
+  if (url.startsWith("https://api-staging.dandiarchive.org/")) {
+    return true;
+  }
+  return false;
 };
 
 type CreateSpikeSortJobComponentProps = {
@@ -673,6 +531,7 @@ const CreateMountainSort5JobComponent: FunctionComponent<
       tags={tagsMountainSort5_2}
       jobDependencies={jobDependencies}
       onNewJobId={onNewJobId}
+      staging={isStagingUrl(nwbUrl)}
     />
   );
 };
@@ -777,6 +636,7 @@ const CreateKilosort4JobComponent: FunctionComponent<
       tags={tagsKilosort4_2}
       jobDependencies={jobDependencies}
       onNewJobId={onNewJobId}
+      staging={isStagingUrl(nwbUrl)}
     />
   );
 };
@@ -873,8 +733,23 @@ const CreatePostProcessingJobComponent: FunctionComponent<
       tags={tagsPostProcessing_2}
       jobDependencies={jobDependencies}
       onNewJobId={onNewJobId}
+      staging={isStagingUrl(nwbUrl)}
     />
   );
+};
+
+export const createDendroJobSecrets = (o: {
+  staging: boolean;
+}): { name: string; value: string }[] => {
+  const { staging } = o;
+  const secrets: { name: string; value: string }[] = [];
+  const dandiApiKey = staging
+    ? localStorage.getItem("dandiStagingApiKey") || ""
+    : localStorage.getItem("dandiApiKey") || "";
+  if (dandiApiKey) {
+    secrets.push({ name: "DANDI_API_KEY", value: dandiApiKey });
+  }
+  return secrets;
 };
 
 type CreateJobComponentProps = {
@@ -885,6 +760,7 @@ type CreateJobComponentProps = {
   tags: string[];
   jobDependencies: string[];
   onNewJobId: (jobId: string) => void;
+  staging: boolean;
 };
 
 const CreateJobComponent: FunctionComponent<CreateJobComponentProps> = ({
@@ -895,6 +771,7 @@ const CreateJobComponent: FunctionComponent<CreateJobComponentProps> = ({
   tags,
   jobDependencies,
   onNewJobId,
+  staging,
 }) => {
   const [creating, setCreating] = useState<boolean>(false);
 
@@ -914,6 +791,7 @@ const CreateJobComponent: FunctionComponent<CreateJobComponentProps> = ({
     }
     setErrorText(undefined);
     try {
+      const secrets = createDendroJobSecrets({ staging });
       const req: CreateJobRequest = {
         type: "createJobRequest",
         serviceName,
@@ -923,7 +801,7 @@ const CreateJobComponent: FunctionComponent<CreateJobComponentProps> = ({
         jobDefinition,
         requiredResources,
         targetComputeClientIds: computeClientId ? [computeClientId] : undefined,
-        secrets: [],
+        secrets,
         jobDependencies,
         skipCache: false,
         rerunFailing: true,

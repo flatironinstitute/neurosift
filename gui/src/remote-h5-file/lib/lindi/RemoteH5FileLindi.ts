@@ -36,6 +36,7 @@ export type ZMetaDataZArray = {
 
 class RemoteH5FileLindi {
   #cacheDisabled = false; // just for benchmarking
+  #sourceUrls: string[] | undefined = undefined;
   constructor(
     public url: string,
     private lindiFileSystemClient: ReferenceFileSystemClient,
@@ -263,6 +264,12 @@ class RemoteH5FileLindi {
   }
   getUrls() {
     return [this.url];
+  }
+  get sourceUrls(): string[] | undefined {
+    return this.#sourceUrls;
+  }
+  set sourceUrls(v: string[]) {
+    this.#sourceUrls = v;
   }
   _disableCache() {
     this.#cacheDisabled = true;

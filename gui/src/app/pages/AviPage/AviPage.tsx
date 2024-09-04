@@ -18,6 +18,10 @@ import {
   useAllJobs,
 } from "../NwbPage/viewPlugins/CEBRA/DendroHelpers";
 import { JobInfoView } from "../NwbPage/viewPlugins/CEBRA/DendroItemView";
+import {
+  createDendroJobSecrets,
+  isStagingUrl,
+} from "../NwbPage/viewPlugins/ElectricalSeriesItemView/SpikeSortingView/SpikeSortingView";
 
 type AviPageProps = {
   width: number;
@@ -168,6 +172,7 @@ const useMp4UrlForAviUrl = (
         timeSec: 60 * 30,
       };
       const serviceName = "hello_world_service";
+      const secrets = createDendroJobSecrets({ staging: isStagingUrl(aviUrl) });
       const req: CreateJobRequest = {
         type: "createJobRequest",
         serviceName,
@@ -176,7 +181,7 @@ const useMp4UrlForAviUrl = (
         tags,
         jobDefinition,
         requiredResources,
-        secrets: [],
+        secrets,
         jobDependencies: [],
         skipCache: false,
         rerunFailing: true,

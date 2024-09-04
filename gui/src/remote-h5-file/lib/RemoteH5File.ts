@@ -71,6 +71,7 @@ type GetDatasetResponse = {
 export class RemoteH5File {
   #groupCache: { [path: string]: GetGroupResponse | null } = {}; // null means in progress
   #datasetCache: { [path: string]: GetDatasetResponse | null } = {}; // null means in progress
+  #sourceUrls: string[] | undefined = undefined;
   constructor(
     public url: string,
     private o: { chunkSize?: number },
@@ -212,10 +213,17 @@ export class RemoteH5File {
   getUrls() {
     return [this.url];
   }
+  get sourceUrls(): string[] | undefined {
+    return this.#sourceUrls;
+  }
+  set sourceUrls(v: string[]) {
+    this.#sourceUrls = v;
+  }
 }
 
 export class MergedRemoteH5File {
   #files: RemoteH5FileX[];
+  #sourceUrls: string[] | undefined = undefined;
   constructor(files: RemoteH5FileX[]) {
     this.#files = files;
   }
@@ -279,6 +287,12 @@ export class MergedRemoteH5File {
   }
   getUrls(): string[] {
     return this.#files.flatMap((f) => f.getUrls());
+  }
+  get sourceUrls(): string[] | undefined {
+    return this.#sourceUrls;
+  }
+  set sourceUrls(v: string[]) {
+    this.#sourceUrls = v;
   }
 }
 

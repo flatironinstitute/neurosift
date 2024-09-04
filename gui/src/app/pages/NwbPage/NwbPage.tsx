@@ -305,6 +305,7 @@ const NwbPageChild3: FunctionComponent<NwbPageChild3Props> = ({
       } else {
         f = await getMergedRemoteH5File(urlListResolved, storageTypeResolved);
       }
+      f.sourceUrls = urlList;
       if (canceled) return;
       setNwbFile(f);
     };

@@ -118,7 +118,7 @@ const UnitsSummaryItemView: FunctionComponent<Props> = ({
     throw Error("Unexpected: nwbFile is undefined (no context provider)");
 
   const nwbUrl = useMemo(() => {
-    return nwbFile.getUrls()[0];
+    return (nwbFile.sourceUrls || [])[0];
   }, [nwbFile]);
 
   const tags = useMemo(() => ["neurosift", "UnitsSummary"], []);

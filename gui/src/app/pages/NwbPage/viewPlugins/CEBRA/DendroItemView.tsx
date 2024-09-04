@@ -30,6 +30,10 @@ import {
 import { RemoteH5FileX } from "@remote-h5-file/index";
 import { useNwbFile } from "../../NwbFileContext";
 import { LazyPlotlyPlotContext } from "./LazyPlotlyPlot";
+import {
+  createDendroJobSecrets,
+  isStagingUrl,
+} from "../ElectricalSeriesItemView/SpikeSortingView/SpikeSortingView";
 
 type AdjustableParameterValues = { [key: string]: any };
 
@@ -209,6 +213,7 @@ const DendroItemView: FunctionComponent<DendroItemViewProps> = ({
     if (!newJobDefinition) return;
     setErrorText(undefined);
     try {
+      const secrets = createDendroJobSecrets({ staging: isStagingUrl(nwbUrl) });
       const req: CreateJobRequest = {
         type: "createJobRequest",
         serviceName,
@@ -218,7 +223,7 @@ const DendroItemView: FunctionComponent<DendroItemViewProps> = ({
         jobDefinition: newJobDefinition,
         requiredResources,
         targetComputeClientIds: computeClientId ? [computeClientId] : undefined,
-        secrets: [],
+        secrets,
         jobDependencies: [],
         skipCache: false,
         rerunFailing: true,

@@ -14,7 +14,7 @@ type DendroViewProps = {
 
 const DendroView: FunctionComponent<DendroViewProps> = ({ width, height }) => {
   const nwbFile = useNwbFile();
-  const nwbFileUrl = nwbFile.getUrls()[0];
+  const nwbFileUrl = (nwbFile.sourceUrls || [])[0];
   const job = useJobProducingOutput(nwbFileUrl);
 
   if (!nwbFile) return <div>No NWB file</div>;
