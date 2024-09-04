@@ -23,6 +23,16 @@ const HomePage: FunctionComponent<Props> = ({ width, height }) => {
           Read more
         </Hyperlink>
       </p>
+      <p>
+        Please fill out our{" "}
+        <a
+          href="https://forms.gle/8YrNf1Tnz4685TMY9"
+          target="_blank"
+          rel="noreferrer"
+        >
+          feedback form
+        </a>
+      </p>
       <hr />
       <div>
         <Hyperlink onClick={() => setRoute({ page: "tests" })}>

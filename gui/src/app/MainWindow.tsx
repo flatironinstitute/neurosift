@@ -18,6 +18,7 @@ import AnnotationsPage from "./pages/AnnotationsPage/AnnotationsPage";
 import PluginPage from "./pages/PluginPage/PluginPage";
 import AviPage from "./pages/AviPage/AviPage";
 import { Analytics } from "@vercel/analytics/react";
+import RandomFeedbackForm from "./Feedback/RandomFeedbackForm";
 
 type Props = {
   // none
@@ -107,6 +108,7 @@ const MainWindow: FunctionComponent<Props> = () => {
         </div>
       )}
       <Analytics />
+      <RandomFeedbackForm />
     </div>
   );
 };
