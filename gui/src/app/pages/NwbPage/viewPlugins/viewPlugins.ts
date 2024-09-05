@@ -7,8 +7,8 @@ import ImageSegmentationItemView from "./ImageSegmentation/ImageSegmentationItem
 // import ImageSeriesItemView from "./ImageSeries/ImageSeriesItemView"
 import { NwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
 import { getNeurodataTypeInheritanceRaw } from "../neurodataSpec";
-import CEBRAView from "./CEBRA/CEBRAView";
 import ElectricalSeriesItemView from "./ElectricalSeriesItemView/ElectricalSeriesItemView";
+import EphysAndUnitsItemView from "./EphysAndUnits/EphysAndUnitsItemView";
 import ImagesItemView from "./Images/ImagesItemView";
 import IntracellularRecordingsTableItemView from "./IntracellularRecordingsTable/IntracellularRecordingsTableItemView";
 import LabeledEventsItemView from "./LabeledEvents/LabeledEventsItemView";
@@ -19,21 +19,19 @@ import TestVideoItemView from "./TestVideo/TestVideoItemView";
 import TimeAlignedSeriesItemView from "./TimeAlignedSeries/TimeAlignedSeriesItemView";
 import NeurodataTimeIntervalsItemView from "./TimeIntervals/NeurodataTimeIntervalsItemView";
 import { default as NeurodataTimeSeriesItemView } from "./TimeSeries/NeurodataTimeSeriesItemView";
+import TimeSeriesLeftPanelComponent from "./TimeSeries/TimeSeriesLeftPanelComponent";
+import { getTimeseriesInfo } from "./TimeSeries/useTimeseriesInfo";
 import TwoPhotonSeriesItemView from "./TwoPhotonSeries/TwoPhotonSeriesItemView";
 import AutocorrelogramsUnitsItemView from "./Units/AutocorrelogramsUnitsItemView";
 import AverageWaveformsUnitsItemView from "./Units/AverageWaveformsUnitsItemView";
 import DirectRasterPlotUnitsItemView from "./Units/DirectRasterPlotUnitsItemView";
+import UnitLocationsUnitsItemView from "./Units/UnitLocationsUnitsItemView";
 import UnitsItemView from "./Units/UnitsItemView";
-import UnitsSummaryItemView from "./Units/UnitsSummaryItemView";
 import {
   getCustomPythonCodeForTimeIntervals,
   getCustomPythonCodeForTimeSeries,
   getCustomPythonCodeForUnits,
 } from "./customPythonCode";
-import TimeSeriesLeftPanelComponent from "./TimeSeries/TimeSeriesLeftPanelComponent";
-import UnitLocationsUnitsItemView from "./Units/UnitLocationsUnitsItemView";
-import EphysAndUnitsItemView from "./EphysAndUnits/EphysAndUnitsItemView";
-import { getTimeseriesInfo } from "./TimeSeries/useTimeseriesInfo";
 
 type Props = {
   width: number;
@@ -263,15 +261,15 @@ viewPlugins.push({
   ],
 });
 // CEBRA
-viewPlugins.push({
-  name: "CEBRA",
-  neurodataType: "Units",
-  defaultForNeurodataType: false,
-  component: CEBRAView,
-  isTimeView: true,
-  usesDendro: true,
-  testLinks: [],
-});
+// viewPlugins.push({
+//   name: "CEBRA",
+//   neurodataType: "Units",
+//   defaultForNeurodataType: false,
+//   component: CEBRAView,
+//   isTimeView: true,
+//   usesDendro: true,
+//   testLinks: [],
+// });
 viewPlugins.push({
   name: "AverageWaveforms",
   neurodataType: "Units",
@@ -337,16 +335,16 @@ viewPlugins.push({
   },
 });
 // UnitsSummary
-viewPlugins.push({
-  name: "UnitsSummary",
-  neurodataType: "Units",
-  defaultForNeurodataType: false,
-  buttonLabel: "units summary",
-  component: UnitsSummaryItemView,
-  isTimeView: false,
-  usesDendro: true,
-  testLinks: [],
-});
+// viewPlugins.push({
+//   name: "UnitsSummary",
+//   neurodataType: "Units",
+//   defaultForNeurodataType: false,
+//   buttonLabel: "units summary",
+//   component: UnitsSummaryItemView,
+//   isTimeView: false,
+//   usesDendro: true,
+//   testLinks: [],
+// });
 
 // viewPlugins.push({
 //     name: 'RasterPlot',

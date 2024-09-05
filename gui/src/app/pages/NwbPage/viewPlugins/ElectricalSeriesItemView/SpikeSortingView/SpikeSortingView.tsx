@@ -83,105 +83,6 @@ const defaultPrepareEphysOpts: PrepareEphysOpts = {
   output_electrical_series_name: "",
 };
 
-const usePrepareEphysStep = (o: { path: string; nwbUrl: string }) => {
-  const { path, nwbUrl } = o;
-  const [prepareEphysOpts, setPrepareEphysOpts] = useState<PrepareEphysOpts>(
-    defaultPrepareEphysOpts,
-  );
-  useEffect(() => {
-    if (!prepareEphysOpts.output_electrical_series_name) {
-      const name = path.split("/").slice(-1)[0];
-      setPrepareEphysOpts((o) => ({
-        ...o,
-        output_electrical_series_name: name + "_pre",
-      }));
-    }
-  }, [path, prepareEphysOpts.output_electrical_series_name]);
-
-  const [prepareEphysJobId, setPrepareEphysJobId] = useState<
-    string | undefined
-  >(undefined);
-  useEffect(() => {
-    setPrepareEphysJobId(undefined);
-  }, [prepareEphysOpts]);
-
-  const { job: prepareEphysJob, refreshJob: refreshPrepareEphysJob } =
-    useJob(prepareEphysJobId);
-
-  const prepareEphysJobParameters: DendroJobParameter[] = useMemo(() => {
-    return [
-      { name: "electrical_series_path", value: path },
-      { name: "duration_sec", value: prepareEphysOpts.duration_sec },
-      {
-        name: "electrode_indices",
-        value: prepareEphysOpts.electrode_indices,
-      },
-      { name: "freq_min", value: prepareEphysOpts.freq_min },
-      { name: "freq_max", value: prepareEphysOpts.freq_max },
-      {
-        name: "compression_ratio",
-        value: prepareEphysOpts.compression_ratio,
-      },
-      {
-        name: "output_electrical_series_name",
-        value: prepareEphysOpts.output_electrical_series_name,
-      },
-    ];
-  }, [prepareEphysOpts, path]);
-
-  const prepareEphysJobRequiredResources: DendroJobRequiredResources =
-    useMemo(() => {
-      return {
-        numCpus: 4,
-        numGpus: 0,
-        memoryGb: 4,
-        timeSec: 60 * 60 * 3,
-      };
-    }, []);
-
-  const prepareEphysJobDefinition: DendroJobDefinition = useMemo(() => {
-    return {
-      appName: "hello_neurosift",
-      processorName: "prepare_ephys_spike_sorting_dataset",
-      inputFiles: [
-        {
-          name: "input",
-          fileBaseName: nwbUrl.endsWith(".lindi.json")
-            ? "input.lindi.json"
-            : nwbUrl.endsWith(".lindi.tar")
-              ? "input.lindi.tar"
-              : "input.nwb",
-          url: nwbUrl,
-        },
-      ],
-      outputFiles: [
-        {
-          name: "output",
-          fileBaseName: "pre.nwb.lindi.tar",
-        },
-      ],
-      parameters: prepareEphysJobParameters,
-    };
-  }, [nwbUrl, prepareEphysJobParameters]);
-
-  const selectPrepareEphysOptsComponent = (
-    <SelectPrepareEphysOpts
-      prepareEphysOpts={prepareEphysOpts}
-      setPrepareEphysOpts={setPrepareEphysOpts}
-    />
-  );
-
-  return {
-    selectPrepareEphysOptsComponent,
-    prepareEphysJobId,
-    setPrepareEphysJobId,
-    prepareEphysJob,
-    refreshPrepareEphysJob,
-    prepareEphysJobRequiredResources,
-    prepareEphysJobDefinition,
-  };
-};
-
 type PostProcessingOpts = {
   // none
 };
@@ -763,7 +664,7 @@ type CreateJobComponentProps = {
   staging: boolean;
 };
 
-const CreateJobComponent: FunctionComponent<CreateJobComponentProps> = ({
+export const CreateJobComponent: FunctionComponent<CreateJobComponentProps> = ({
   buttonLabel,
   selectOptsComponent,
   jobDefinition,
@@ -837,6 +738,7 @@ const CreateJobComponent: FunctionComponent<CreateJobComponentProps> = ({
     jobDefinition,
     tags,
     jobDependencies,
+    staging,
   ]);
 
   if (!creating) {
@@ -1018,7 +920,7 @@ type ViewInNeurosiftLinkProps = {
   job: DendroJob;
 };
 
-const ViewInNeurosiftLink: FunctionComponent<ViewInNeurosiftLinkProps> = ({
+export const ViewInNeurosiftLink: FunctionComponent<ViewInNeurosiftLinkProps> = ({
   job,
 }) => {
   const { route } = useRoute();
@@ -1047,6 +949,8 @@ const ViewInNeurosiftLink: FunctionComponent<ViewInNeurosiftLinkProps> = ({
     return window.location.origin + "/?" + query;
   }, [preNwbOutputUrl, route]);
 
+  if (job.status !== "completed") return <div />;
+
   return (
     <div>
       <br />
@@ -1066,7 +970,7 @@ type ExpandedJobIdsAction = {
   jobId: string;
 };
 
-const expandedJobIdsReducer = (
+export const expandedJobIdsReducer = (
   state: ExpandedJobIdsState,
   action: ExpandedJobIdsAction,
 ): ExpandedJobIdsState => {
@@ -1081,7 +985,7 @@ const expandedJobIdsReducer = (
   }
 };
 
-const rowIsVisible = (
+export const rowIsVisible = (
   expandedJobIds: ExpandedJobIdsState,
   row: AllJobsTreeRow,
 ): boolean => {
@@ -1091,7 +995,7 @@ const rowIsVisible = (
   return true;
 };
 
-type AllJobsTreeRow = {
+export type AllJobsTreeRow = {
   job: DendroJob;
   indent: number;
   parentRow?: AllJobsTreeRow;
@@ -1107,7 +1011,7 @@ const formatParameterValue = (value: any) => {
   return value;
 };
 
-const parameterElementForJob = (job: DendroJob) => {
+export const parameterElementForJob = (job: DendroJob) => {
   return (
     <>
       {job.jobDefinition.parameters.map((p, ii) => (
@@ -1128,7 +1032,7 @@ type ExpanderProps = {
   onClick: () => void;
 };
 
-const Expander: FunctionComponent<ExpanderProps> = ({ expanded, onClick }) => {
+export const Expander: FunctionComponent<ExpanderProps> = ({ expanded, onClick }) => {
   return (
     <td>
       <SmallIconButton
@@ -1146,7 +1050,7 @@ type AllJobsTreeProps = {
   setSelectedJobId: (jobId: string) => void;
 };
 
-const AllJobsTree: FunctionComponent<AllJobsTreeProps> = ({
+export const AllJobsTree: FunctionComponent<AllJobsTreeProps> = ({
   allJobs,
   refreshAllJobs,
   selectedJobId,
