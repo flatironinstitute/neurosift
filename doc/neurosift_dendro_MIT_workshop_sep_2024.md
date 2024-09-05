@@ -99,9 +99,84 @@ The DANDI REST API is open, so Neurosift can also function as an alternative DAN
 ## Efficient streaming of NWB files
 
 * NWB files can be very large > 100 GB, so it's important to be able to loazy-load individual objects without downloading the entire file.
-* HDF5 was designed to be read locally, so it is not particularly cloud-friendly - inefficient loading of metadata
+* However, HDF5 was designed to be read locally, so it's not particularly cloud-friendly - inefficient loading of metadata
 * Neurosift uses a WebAssembly/Web Worker trick to load remote files relatively efficiently via the browser.
-* However, what really speeds things up is the pre-indexing of all the public Dandisets using LINDI.
+* But what really speeds things up is the pre-indexing of all the public Dandisets using LINDI.
 
 For more information, see the [LINDI project](https://github.com/neurodatawithoutborders/lindi).
+
+For example [open this file](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/25b641ae-5a56-49c2-893c-7dd19d039912/download/&dandisetId=000552&dandisetVersion=0.230630.2304). There is a "Using LINDI" indicator on the left panel meaning that it found the pre-indexed .nwb.lindi.json file in the cloud and used that instead of the .nwb. The .json file efficiently stores all the meta information and references the original file for the data chunks.
+
+Here's an example LINDI JSON file for inspection: https://lindi.neurosift.org/dandi/dandisets/000552/assets/47be899c-27a8-4864-a1e9-d7a3f92e522e/nwb.lindi.json
+
+## Streaming objects from NWB files using Python
+
+You can load NWB objects using Python.
+
+* Go to [our example NWB file](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/25b641ae-5a56-49c2-893c-7dd19d039912/download/&dandisetId=000552&dandisetVersion=0.230630.2304).
+* Click on processing/behavior -> SleepStates
+* Click on "Load in Python". You will get a Python script you can run to lazy load the data using LINDI.
+
+![image](https://github.com/user-attachments/assets/3f8670f3-280f-4755-a494-d3762b95d400)
+
+```python
+import lindi
+
+url = 'https://lindi.neurosift.org/dandi/dandisets/000552/assets/25b641ae-5a56-49c2-893c-7dd19d039912/nwb.lindi.json'
+
+# Load the remote file
+f = lindi.LindiH5pyFile.from_lindi_file(url)
+
+# load the neurodata object
+X = f['/processing/behavior/SleepStates']
+
+id = X['id']
+label = X['label']
+start_time = X['start_time']
+stop_time = X['stop_time']
+
+print(f'Shape of id: {id.shape}')
+print(f'Shape of start_time: {start_time.shape}')
+print(f'Shape of stop_time: {stop_time.shape}')
+
+print(label[()])
+
+# Output:
+# Shape of id: (46,)
+# Shape of start_time: (46,)
+# Shape of stop_time: (46,)
+# ['Awake' 'Non-REM' 'Awake' 'Non-REM' 'Awake' 'Non-REM' 'REM' 'Awake'
+#  'Non-REM' 'REM' 'Awake' 'Non-REM' 'Awake' 'Non-REM' 'Awake' 'Non-REM'
+#  'REM' 'Awake' 'Non-REM' 'Awake' 'Non-REM' 'REM' 'Awake' 'Non-REM' 'Awake'
+#  'Non-REM' 'REM' 'Awake' 'Non-REM' 'Awake' 'Non-REM' 'Awake' 'Non-REM'
+#  'Awake' 'Non-REM' 'Awake' 'Non-REM' 'Awake' 'Non-REM' 'REM' 'Awake'
+#  'Non-REM' 'REM' 'Awake' 'Non-REM' 'Awake']
+```
+
+# Neurosift tabs
+
+What are the different Neurosift tabs?
+
+![image](https://github.com/user-attachments/assets/1c82e9c1-2816-4df9-8eda-7fc1ee21c01f)
+
+## NWB Tab
+
+The NWB tab gives a hierarchical layout of the Neurodata objects in the NWB file with links to various visualization plugins.
+
+![image](https://github.com/user-attachments/assets/6cf75967-d131-4bbd-8354-79508b13e833)
+
+What are the checkboxes for?
+
+* Clicking a Neurodata object directly will open the default visualization plugin for that Neurodata type.
+* To get a synchronized composite view, tick more than one checkbox and then click the "View xx items" button on the left panel.
+
+## RAW Tab
+
+The RAW tab shows the raw HDF5 structure: groups, datasets, attributes, etc.
+
+Hint: to inspect the contents of a larger dataset, open the browser developer console and click on the CIRCLE icon. The contents of the dataset will be printed to the console.
+
+![image](https://github.com/user-attachments/assets/1be63ee1-d6ee-4b4c-98d7-b28bfb50e696)
+
+
 
