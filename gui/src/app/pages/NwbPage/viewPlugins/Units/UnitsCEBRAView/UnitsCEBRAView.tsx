@@ -65,6 +65,7 @@ const UnitsCEBRAView: FunctionComponent<UnitsCEBRAViewProps> = ({
         refreshAllJobs={refreshAllJobs}
         selectedJobId={selectedJobId}
         setSelectedJobId={setSelectedJobId}
+        unitsPath={path}
       />
       <CreateUnitsCEBRAJobComponent
         nwbUrl={nwbUrl}
@@ -292,6 +293,7 @@ type AllJobsTreeProps = {
   refreshAllJobs: () => void;
   selectedJobId: string | undefined;
   setSelectedJobId: (jobId: string) => void;
+  unitsPath: string;
 };
 
 export const AllJobsTree: FunctionComponent<AllJobsTreeProps> = ({
@@ -299,6 +301,7 @@ export const AllJobsTree: FunctionComponent<AllJobsTreeProps> = ({
   refreshAllJobs,
   selectedJobId,
   setSelectedJobId,
+  unitsPath
 }) => {
   const [expandedJobIds, dispatchExpandedJobIds] = useReducer(
     expandedJobIdsReducer,
@@ -309,14 +312,17 @@ export const AllJobsTree: FunctionComponent<AllJobsTreeProps> = ({
     const handleUnitsCEBRAJobs = () => {
       for (const job of allJobs || []) {
         if (job.tags.includes("UnitsCEBRA")) {
-          const row: AllJobsTreeRow = { job, indent: 0 };
-          ret.push(row);
+          const pp = job.jobDefinition.parameters.find(p => p.name === "units_path");
+          if ((pp) && (pp.value === unitsPath)) {
+            const row: AllJobsTreeRow = { job, indent: 0 };
+            ret.push(row);
+          }
         }
       }
     };
     handleUnitsCEBRAJobs();
     return ret;
-  }, [allJobs]);
+  }, [allJobs, unitsPath]);
   const createIndent = (n: number) => {
     return (
       <span>
