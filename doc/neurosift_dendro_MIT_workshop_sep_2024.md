@@ -215,12 +215,34 @@ You can then select a subset of these Dandisets and perform a SPECIAL query usin
 * List all compressors
 * List all unique descriptions of neurodata objects
 * List the shapes of all ElectricalSeries with more than 1000 samples
+* ...
 
 ![image](https://github.com/user-attachments/assets/e68abab0-62ff-48ca-b126-c369f5356b34)
 
+# Example: Dandiset 000458
 
+On DANDI Archive: [000458](https://dandiarchive.org/dandiset/000458?search=000458&pos=1)
 
+Here's a [thorough description of the dataset](https://github.com/catalystneuro/dandi.github.io/blob/reuse_blog/_posts/data_reuse_000458.md) for purpose of reanalysis.
 
+This notebook shows how to use the DANDI API to summarize all of the sessions: [001_summarize_contents.ipynb](https://github.com/magland/example-notebooks/blob/000458/000458/FlatironInstitute/001_summarize_contents.ipynb)
 
+Here's one of the examples in Neurosift: [sub-551397/sub-551397_ses-20210211_behavior+ecephys.nwb](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/d966b247-2bac-4ef0-8b80-aae010f50c98/download/&dandisetId=000458&dandisetVersion=0.230317.0039)
 
+![image](https://github.com/user-attachments/assets/a2bcc443-3b40-4438-a8c3-3a3776472c39)
+
+As you can see we have EEG, LFP, epochs, trials, running speed, and units.
+
+Let's explore the Peri-Stimulus Time Histograms (PSTH)!
+
+* In Neurosift, open the "Intervals" panel and then click "PSTH" for the "trials" table.
+* Select "Group trials by: behavioral_epoch" and "Sort units by: location".
+* Select "Trials filter" in the bottom right and enter `is_valid === 1 && is_running === 0 && stimulus_type === "electrical"`. This will restrict the trials to those that are valid, not running, and have an electrical stimulus.
+* Scroll down on the units table and click to select some units in the MOs region. You can also use the "Select units" link at the bottom to select all MOs units.
+* The raster plots show the spike trains for the unit where the Y-axis is the trial number and the X-axis is time aligned to the stimulus onset.
+* Unit 500 shows a clear pattern of decreased activity following the stimulus for around 0.15 seconds and then a sharp increase in activity for the "awake" trials.
+* Try adjusting the trials filter to have stimulus_type === "visual" instead of "electrical" to see that the pattern is not present for visual stimuli.
+* Try selecting units at other locations.
+* You can also adjust other settings.
+* To share your view, use the "Share this tab" on the left panel of Neurosift. [Here's a link with the predefined state intact](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/d966b247-2bac-4ef0-8b80-aae010f50c98/download/&dandisetId=000458&dandisetVersion=0.230317.0039&tab=view:PSTH|/intervals/trials^/units&tab-state=H4sIAAAAAAAAA03SvW7bMBSG4VsxOGRSC%2FE3dgAvGYJk7d%2BSFIYiMRIBiTREKkEQ%2BN77SkGLDt%2Bgw8f00Qd9iOxH3xbf%2FYyhPHRZ3Dyag6zMQRFNDLHEkWuyJ4fK1jWRRBFNDLHEkWuyJziJkziJkziJkziJkziJkziFUziFUziFUziFUziFUziN0ziN0ziN0ziN0ziN0ziDMziDMziDMziDMziDMziLsziLsziLsziLsziLsziHcziHcziHc7g953vOD5zTm6U3S2%2BW3iy9WXqz9Oboy9GVoytXm9%2BVaMbQxx%2FpVzOH5nn0a%2FEil2YupxImLxD9nJbz7ftfIW7Esx%2Ba15DmZjz5c2oHUYnC4Zjvwlj8jAj59MrN3e54PO7k7upqx2ReYgyx32b1Osv8xTIu%2BVTez34bP4ntM5hD24xPgntzmsv6SeT%2FF3gUY2qbElJENLldt3wLsUtv35rY%2B%2B%2BFFT4%2B34JdvtRfLc7HjgcpLpU4z%2F4lb2RYf5K3ncu8%2BGqb3Idc%2Fj1PKZXBd5%2BzF96R4eBDP6xXT74Ly8TlcZluQ%2BROXV8ufwD179KNzQIAAA%3D%3D).
 
