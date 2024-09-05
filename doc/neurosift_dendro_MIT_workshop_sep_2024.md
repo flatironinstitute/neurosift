@@ -11,6 +11,23 @@ September, 2024
 
 * Advance cloud visualization and analysis of NWB files on DANDI
 
+## Setup for workshop
+
+It is highly recommended that you bring your own laptop so you can follow along with the examples. You have a couple options
+
+* Run things on your local machine
+  - Works with Linux, Mac OS, maybe Windows Subsystem for Linux (WSL), and maybe Windows
+  - You should install apptainer if you want to run the Dendro processing
+* Run things on Dandihub (recommended)
+  - Go to [https://hub.dandiarchive.org](https://hub.dandiarchive.org)
+  - **Important:** You'll need to sign up ahead of time because it might take a bit of time to get approved. Please include "Neurosift+Dendro workshop" in the DANDI sign up form.
+  - It is recommended that you select the "Base" server option.
+  - Apptainer is already installed, but you'll need to `pip install --upgrade neurosift dendro`
+
+![image](https://github.com/user-attachments/assets/2ebf70f2-d774-4b78-8bc9-75febc8bca78)
+
+Let's get started!
+
 ## What is Neurosift?
 
 * DANDI Archive exploration
@@ -42,9 +59,9 @@ https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/47be89
 ```
 The url query parameter points to the DANDI Archive API. You can point that to the URL of any remote NWB file (not just on DANDI).
 
-## Opening local NWB files on DANDI
+## Opening local NWB files
 
-You can also view local NWB files on DANDI
+You can also view local NWB files
 
 ```bash
 # One-time install of neurosift
@@ -53,5 +70,7 @@ pip install --upgrade neurosift
 # Open the local file (will open a browser window)
 neurosift view-nwb /path/to/file.nwb
 ```
+
+You can try this out by downloading one of [these relatively small NWB files](https://dandiarchive.org/dandiset/000946/draft/files?location=sub-BH494&page=1).
 
 
