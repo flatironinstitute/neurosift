@@ -57,7 +57,7 @@ Let's examine the above Neurosift URL
 ```text
 https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/47be899c-27a8-4864-a1e9-d7a3f92e522e/download/&dandisetId=000552&dandisetVersion=0.230630.2304
 ```
-The url query parameter points to the DANDI Archive API. You can point that to the URL of any remote NWB file (not just on DANDI).
+The `url` query parameter points to the DANDI Archive API. You can point that to the URL of any remote NWB file (not just on DANDI).
 
 ## Opening local NWB files
 
@@ -73,4 +73,35 @@ neurosift view-nwb /path/to/file.nwb
 
 You can try this out by downloading one of [these relatively small NWB files](https://dandiarchive.org/dandiset/000946/draft/files?location=sub-BH494&page=1).
 
+## Neurosift as DANDI Browser
+
+The DANDI REST API is open, so Neurosift can also function as an alternative DANDI Archive explorer.
+
+[https://neurosift.app](https://neurosift.app)
+
+![image](https://github.com/user-attachments/assets/c06ed41a-6842-4705-abb7-1d1a96487766)
+
+## Structure of an NWB file
+
+* NWB (.nwb) uses HDF5 as the underlying format.
+* HDF5 files store data hierarchically in groups and datasets, with metadata at each node.
+
+![image](https://github.com/user-attachments/assets/b5a0c57c-e8bf-4804-948f-6b33c68b63cf)
+
+(Image from https://www.neonscience.org/resources/learning-hub/tutorials/about-hdf5)
+
+* NWB imposes further structure on HDF5 to create a hierarchy of "Neurodata Objects".
+* Examples of Neurodata objects include ElectricalSeries, Units, BehavioralEvents, LFP, TimeIntervals, etc.
+
+![image](https://github.com/user-attachments/assets/32199798-d56a-4fad-a6ba-5cf1c8adc04d)
+(Image from Rübel et al, eLife 2023: https://elifesciences.org/articles/78362)
+
+## Efficient streaming of NWB files
+
+* NWB files can be very large > 100 GB, so it's important to be able to loazy-load individual objects without downloading the entire file.
+* HDF5 was designed to be read locally, so it is not particularly cloud-friendly - inefficient loading of metadata
+* Neurosift uses a WebAssembly/Web Worker trick to load remote files relatively efficiently via the browser.
+* However, what really speeds things up is the pre-indexing of all the public Dandisets using LINDI.
+
+For more information, see the [LINDI project](https://github.com/neurodatawithoutborders/lindi).
 
