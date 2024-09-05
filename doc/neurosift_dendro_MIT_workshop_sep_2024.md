@@ -174,9 +174,53 @@ What are the checkboxes for?
 
 The RAW tab shows the raw HDF5 structure: groups, datasets, attributes, etc.
 
-Hint: to inspect the contents of a larger dataset, open the browser developer console and click on the CIRCLE icon. The contents of the dataset will be printed to the console.
+Pro tip: to inspect the contents of a larger dataset, open the browser developer console and click on the CIRCLE icon. The contents of the dataset will be printed to the console.
 
 ![image](https://github.com/user-attachments/assets/1be63ee1-d6ee-4b4c-98d7-b28bfb50e696)
+
+## WIDGETS Tab
+
+The WIDGETS tab provides a widget-centric view of the file. For each relevant visualization plugin, you can see the neurodata objects that can be opened with it.
+
+![image](https://github.com/user-attachments/assets/465ec755-0b21-4fea-a71a-57b815b2190f)
+
+## SPECIFICATIONS Tab
+
+The SPECIFICATIONS tab lets you visualize the HDMF spec that is embedded in the NWB file.
+
+![image](https://github.com/user-attachments/assets/e14e161a-3f0c-44f0-a2d6-7882aa5d0f2f)
+
+## DENDRO Tab
+
+Will discuss later.
+
+## Annotations Tab
+
+Finally, the ANNOTATIONS tab is an advanced feature that lets you add annotations (notes) to Dandisets, NWB files, and individual Neurodata objects. Other users will be able to see your annotations.
+
+Note: this is an experimental feature and is subject to change / deletion.
+
+# Advanced DANDI Queries
+
+Click on “advanced query” in the upper-right corner of the [main neurosift page](https://neurosift.app).
+
+You can filter by neurodata types. For example, in this screenshots, I searched for all Dandisets that have an object of type Units AND an object of type ElectricalSeries. This is based on a pre-indexing of DANDI that includes only the first 100 assets of each Dandiset.
+
+![image](https://github.com/user-attachments/assets/0595132d-cbc0-4d6e-8dd1-f896996f5922)
+
+You can then select a subset of these Dandisets and perform a SPECIAL query using JSONPath or JavaScript syntax. For example you could ask it to:
+
+* List all the neurodata types for the selected Dandisets
+* List neurodata types within the acquisition group
+* List all compressors
+* List all unique descriptions of neurodata objects
+* List the shapes of all ElectricalSeries with more than 1000 samples
+
+![image](https://github.com/user-attachments/assets/e68abab0-62ff-48ca-b126-c369f5356b34)
+
+
+
+
 
 
 
