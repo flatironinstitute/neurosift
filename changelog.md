@@ -2,9 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2024-09-06
+
+* Trial aligned series views
+
+## 2024-09-05
+
+* CEBRA jobs
+
+## 2024-09-04
+
+* Feedback form
+
 ## 2024-08-30
 
 * PSHT: improve state/tab persistence
+* DANDI Api key secrets
+
+## 2024-08-30
+
+* Select units by variable in PSTH
+* Improve PSTH state
 
 ## 2024-08-29
 
