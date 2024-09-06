@@ -3,10 +3,10 @@ import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import { useNwbFile } from "../../NwbFileContext";
 import { DirectSpikeTrainsClient } from "../Units/DirectRasterPlotUnitsItemView";
 import PSTHHistWidget from "./PSTHHistWidget";
-import { PSTHPrefs, PSTHTimeAlignedSeriesMode } from "./PSTHItemView";
+import { PSTHPrefs, PSTHTrialAlignedSeriesMode } from "./PSTHItemView";
 import PSTHRasterWidget from "./PSTHRasterWidget";
 import { RoiClient } from "./ROIClient";
-import TimeAlignedSeriesWidget from "./TimeAlignedSeriesWidget";
+import TrialAlignedSeriesWidget from "./TrialAlignedSeriesWidget";
 
 type Props = {
   width: number;
@@ -21,7 +21,7 @@ type Props = {
   groupByVariableCategories: string[] | undefined;
   windowRange: { start: number; end: number };
   prefs: PSTHPrefs;
-  mode: PSTHTimeAlignedSeriesMode;
+  mode: PSTHTrialAlignedSeriesMode;
 };
 
 const PSTHUnitWidget: FunctionComponent<Props> = ({
@@ -213,7 +213,7 @@ type PSTHUnitAlignToWidgetProps = {
   groupByVariableCategories: string[] | undefined;
   windowRange: { start: number; end: number };
   prefs: PSTHPrefs;
-  mode: PSTHTimeAlignedSeriesMode;
+  mode: PSTHTrialAlignedSeriesMode;
 };
 
 const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
@@ -463,7 +463,7 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
               showXAxisLabels={!prefs.showHist} // don't show x axis labels if hist is shown
             />
           ) : mode === "time-aligned-series" ? (
-            <TimeAlignedSeriesWidget
+            <TrialAlignedSeriesWidget
               width={width}
               height={rasterWidgetHeight}
               trials={sortedFilteredTrials}
@@ -506,7 +506,7 @@ type PSTHGroupLegendProps = {
   path: string;
   groupByVariable: string;
   groupByVariableCategories: string[] | undefined;
-  mode: PSTHTimeAlignedSeriesMode;
+  mode: PSTHTrialAlignedSeriesMode;
 };
 
 const PSTHGroupLegend: FunctionComponent<PSTHGroupLegendProps> = ({

@@ -25,7 +25,7 @@ import IfHasBeenVisible from "./IfHasBeenVisible";
 import PSTHUnitWidget from "./PSTHUnitWidget";
 import { RoiClient, useRoiClient } from "./ROIClient";
 
-export type PSTHTimeAlignedSeriesMode = "psth" | "time-aligned-series";
+export type PSTHTrialAlignedSeriesMode = "psth" | "time-aligned-series";
 
 type Props = {
   width: number;
@@ -35,7 +35,7 @@ type Props = {
   condensed?: boolean;
   initialStateString?: string;
   setStateString?: (x: string) => void;
-  mode?: PSTHTimeAlignedSeriesMode;
+  mode?: PSTHTrialAlignedSeriesMode;
 };
 
 const PSTHItemView: FunctionComponent<Props> = ({
@@ -116,7 +116,7 @@ type PSTHItemViewChildProps = {
   additionalPaths?: string[];
   initialStateString?: string;
   setStateString?: (x: string) => void;
-  mode: PSTHTimeAlignedSeriesMode;
+  mode: PSTHTrialAlignedSeriesMode;
 };
 
 const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({

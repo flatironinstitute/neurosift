@@ -12,7 +12,7 @@ type Props = {
   setStateString?: (x: string) => void;
 };
 
-const TimeAlignedSeriesItemView: FunctionComponent<Props> = ({
+const TrialAlignedSeriesItemView: FunctionComponent<Props> = ({
   width,
   height,
   path,
@@ -33,4 +33,4 @@ const TimeAlignedSeriesItemView: FunctionComponent<Props> = ({
   );
 };
 
-export default TimeAlignedSeriesItemView;
+export default TrialAlignedSeriesItemView;

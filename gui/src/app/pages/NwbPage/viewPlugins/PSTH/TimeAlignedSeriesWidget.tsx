@@ -2,7 +2,7 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import { getTicks } from "./getTicks";
 
-type TimeAlignedSeriesWidgetProps = {
+type TrialAlignedSeriesWidgetProps = {
   width: number;
   height: number;
   trials: { times: number[]; roiValues?: number[]; group: any }[];
@@ -11,8 +11,8 @@ type TimeAlignedSeriesWidgetProps = {
   alignmentVariableName: string;
 };
 
-const TimeAlignedSeriesWidget: FunctionComponent<
-  TimeAlignedSeriesWidgetProps
+const TrialAlignedSeriesWidget: FunctionComponent<
+  TrialAlignedSeriesWidgetProps
 > = ({ width, height, trials, groups, windowRange }) => {
   const plots: { times: number[]; values: number[]; color: string }[] =
     useMemo(() => {
@@ -329,4 +329,4 @@ const samplePlots = (
   return ret;
 };
 
-export default TimeAlignedSeriesWidget;
+export default TrialAlignedSeriesWidget;

@@ -16,7 +16,7 @@ import PSTHItemView from "./PSTH/PSTHItemView";
 import NeurodataSpatialSeriesItemView from "./SpatialSeries/SpatialSeriesWidget/NeurodataSpatialSeriesItemView";
 import SpatialSeriesXYView from "./SpatialSeries/SpatialSeriesWidget/SpatialSeriesXYView";
 import TestVideoItemView from "./TestVideo/TestVideoItemView";
-import TimeAlignedSeriesItemView from "./TimeAlignedSeries/TimeAlignedSeriesItemView";
+import TrialAlignedSeriesItemView from "./TrialAlignedSeries/TrialAlignedSeriesItemView";
 import NeurodataTimeIntervalsItemView from "./TimeIntervals/NeurodataTimeIntervalsItemView";
 import { default as NeurodataTimeSeriesItemView } from "./TimeSeries/NeurodataTimeSeriesItemView";
 import TimeSeriesLeftPanelComponent from "./TimeSeries/TimeSeriesLeftPanelComponent";
@@ -184,18 +184,18 @@ viewPlugins.push({
   ],
 });
 viewPlugins.push({
-  name: "TimeAlignedSeries",
+  name: "TrialAlignedSeries",
   neurodataType: "TimeIntervals",
   defaultForNeurodataType: false,
   secondaryNeurodataType: [
     "ROIResponseSeries",
     "FiberPhotometryResponseSeries",
   ],
-  component: TimeAlignedSeriesItemView,
+  component: TrialAlignedSeriesItemView,
   usesState: true,
   isTimeView: false,
   testLinks: [
-    "https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/bca70a25-e5a5-4a40-b36f-fe1088b85eb2/download/&dandisetId=001084&dandisetVersion=draft&tab=view:TimeAlignedSeries|/processing/behavior/TimeIntervals^/processing/ophys/DfOverFFiberPhotometryResponseSeriesGreenIsosbestic&tab-state=H4sIAAAAAAAAA2WQT2vcMBBHv4vOr6D%2FkveYXJLrpu0llOLGilewlhdb2yWE%2Fe6RN7RQehlGb37zBPMu1nRMLzUN30quj8Mqds8%2F%2BAv3c34sQ35JG5coVCutapRBWZRDeVRARVSHRku0QrfGoC3aoT06oCO6w2AkRmE0pvUW4zAeEzAR02GxEquwGmuw7emwHhuwEdvhcBKncBpncBbXiMcFXMR1eLzEK7zGG7zFO3yDAR%2FxHYEgCYqgCYZgCY7gCY1HQkckSqKiayfoj3ksX%2Bfv%2FZL7X8fbAcRa%2B6X%2BrHlKoiXGZT6f7t7%2BJMROpN%2BptPnbKYn%2Fxvd9TeO85E%2FTPl36Zdgsl1yG%2BbLvy5ie6iJ275%2B%2FNNsX3SypDK214oo4Lel1vQUO28JaU4vX5Zy4kYe8tq3X%2FrhuYJrnekjDP%2FCQ8njYzFMa8nlq9nKe7nJpUiOv1w%2FwnTXDDAIAAA%3D%3D"
+    "https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/bca70a25-e5a5-4a40-b36f-fe1088b85eb2/download/&dandisetId=001084&dandisetVersion=draft&tab=view:TrialAlignedSeries|/processing/behavior/TimeIntervals^/processing/ophys/DfOverFFiberPhotometryResponseSeriesGreenIsosbestic&tab-state=H4sIAAAAAAAAA2WQT2vcMBBHv4vOr6D%2FkveYXJLrpu0llOLGilewlhdb2yWE%2Fe6RN7RQehlGb37zBPMu1nRMLzUN30quj8Mqds8%2F%2BAv3c34sQ35JG5coVCutapRBWZRDeVRARVSHRku0QrfGoC3aoT06oCO6w2AkRmE0pvUW4zAeEzAR02GxEquwGmuw7emwHhuwEdvhcBKncBpncBbXiMcFXMR1eLzEK7zGG7zFO3yDAR%2FxHYEgCYqgCYZgCY7gCY1HQkckSqKiayfoj3ksX%2Bfv%2FZL7X8fbAcRa%2B6X%2BrHlKoiXGZT6f7t7%2BJMROpN%2BptPnbKYn%2Fxvd9TeO85E%2FTPl36Zdgsl1yG%2BbLvy5ie6iJ275%2B%2FNNsX3SypDK214oo4Lel1vQUO28JaU4vX5Zy4kYe8tq3X%2FrhuYJrnekjDP%2FCQ8njYzFMa8nlq9nKe7nJpUiOv1w%2FwnTXDDAIAAA%3D%3D"
   ]
 });
 
