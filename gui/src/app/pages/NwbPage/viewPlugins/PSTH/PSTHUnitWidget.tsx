@@ -97,7 +97,6 @@ const PSTHUnitWidget: FunctionComponent<Props> = ({
     }
     let canceled = false;
     const load = async () => {
-      if (!roiClient.roiData) return;
       await roiClient.waitForLoaded();
       if (canceled) return;
       setRoiTimestamps(roiClient.roiTimestamps);
@@ -394,6 +393,15 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
   }
 
   if (!trials) {
+    if (!roiData) {
+      return <div>Loading roi data...</div>;
+    }
+    if (!roiTimestamps) {
+      return <div>Loading roi timestamps...</div>;
+    }
+    if (!groupByValues) {
+      return <div>Loading group values...</div>;
+    }
     return <div>Loading trials...</div>;
   }
 
@@ -543,7 +551,7 @@ const PSTHGroupLegend: FunctionComponent<PSTHGroupLegendProps> = ({
       group: val,
       color: groupColorForIndex(i, lighterMode),
     }));
-  }, [values]);
+  }, [values, mode]);
 
   const itemHeight = 20;
   const itemWidth = 20;

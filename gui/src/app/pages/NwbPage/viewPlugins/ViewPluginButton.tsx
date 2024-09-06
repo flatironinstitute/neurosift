@@ -24,15 +24,15 @@ const ViewPluginButton: FunctionComponent<Props> = ({ viewPlugin, path }) => {
   }, [viewPlugin, path]);
   const secondaryNeurodataItems = useMemo(() => {
     if (!viewPlugin.secondaryNeurodataType) return [];
-    return neurodataItems.filter(
-      (x) => x.neurodataType === viewPlugin.secondaryNeurodataType,
+    return neurodataItems.filter((x) =>
+      (viewPlugin.secondaryNeurodataType || []).includes(x.neurodataType),
     );
   }, [viewPlugin, neurodataItems]);
   const handleClick = () => {
     if (viewPlugin.secondaryNeurodataType) {
       if (secondaryNeurodataItems.length === 0) {
         alert(
-          `No neurodata items of type ${viewPlugin.secondaryNeurodataType} found.`,
+          `No neurodata items of type ${viewPlugin.secondaryNeurodataType.join(" | ")} found.`,
         );
         return;
       } else if (secondaryNeurodataItems.length === 1) {

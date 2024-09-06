@@ -195,7 +195,7 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
   const [groupByVariable, setGroupByVariable] = useState<string>("");
   const [groupByVariableCategories, setGroupByVariableCategories] = useState<
     string[] | undefined
-  >([]);
+  >(undefined);
   const [sortUnitsByVariable, setSortUnitsByVariable] = useState<
     [string, "asc" | "desc"] | undefined
   >(undefined);

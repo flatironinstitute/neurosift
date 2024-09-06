@@ -48,7 +48,7 @@ export type ViewPlugin = {
   name: string;
   neurodataType: string;
   defaultForNeurodataType?: boolean;
-  secondaryNeurodataType?: string;
+  secondaryNeurodataType?: string[];
   component: FunctionComponent<Props>;
   leftPanelComponent?: FunctionComponent<{ width: number; path: string }>;
   buttonLabel?: string;
@@ -175,7 +175,7 @@ viewPlugins.push({
   name: "PSTH",
   neurodataType: "TimeIntervals",
   defaultForNeurodataType: false,
-  secondaryNeurodataType: "Units",
+  secondaryNeurodataType: ["Units"],
   component: PSTHItemView,
   isTimeView: false,
   usesState: true,
@@ -187,10 +187,11 @@ viewPlugins.push({
   name: "TimeAlignedSeries",
   neurodataType: "TimeIntervals",
   defaultForNeurodataType: false,
+  secondaryNeurodataType: [
+    "ROIResponseSeries",
+    "FiberPhotometryResponseSeries",
+  ],
   component: TimeAlignedSeriesItemView,
-  checkEnabled: async () => {
-    return false;
-  },
   usesState: true,
   isTimeView: false,
 });
@@ -417,7 +418,7 @@ viewPlugins.push({
   name: "EphysAndUnits",
   neurodataType: "ElectricalSeries",
   defaultForNeurodataType: false,
-  secondaryNeurodataType: "Units",
+  secondaryNeurodataType: ["Units"],
   component: EphysAndUnitsItemView,
   isTimeView: true,
   checkEnabled: async (nwbFile: RemoteH5FileX, path: string) => {
@@ -457,7 +458,10 @@ export const findViewPluginsForType = (
       .filter((p) => !p.remoteDataOnly || o.nwbFile.dataIsRemote)
       .filter((p) => {
         if (p.secondaryNeurodataType) {
-          return neurodataTypesInFile.has(p.secondaryNeurodataType);
+          for (const tt of p.secondaryNeurodataType) {
+            if (neurodataTypesInFile.has(tt)) return true;
+          }
+          return false;
         } else {
           return true;
         }

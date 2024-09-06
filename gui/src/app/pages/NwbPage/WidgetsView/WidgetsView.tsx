@@ -147,7 +147,9 @@ const ViewPluginView: FunctionComponent<ViewPluginViewProps> = ({
         if (vp.name === plugin.name) {
           if (vp.secondaryNeurodataType) {
             for (const neurodataItem of neurodataItems) {
-              if (neurodataItem.neurodataType === vp.secondaryNeurodataType) {
+              if (
+                vp.secondaryNeurodataType.includes(neurodataItem.neurodataType)
+              ) {
                 ret.push({
                   label:
                     neurodataObject.group.path + " | " + neurodataItem.path,
