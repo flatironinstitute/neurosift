@@ -34,62 +34,6 @@ const SelectedNeurodataItemsWidget: FunctionComponent<Props> = () => {
       ) : (
         <span>No views selected</span>
       )}
-      <SpecialTimeAlignedSeriesButton
-        selectedItemViews={selectedItemViews}
-        openTab={openTab}
-      />
-    </div>
-  );
-};
-
-type SpecialTimeAlignedSeriesButtonProps = {
-  selectedItemViews: string[];
-  openTab: (path: string) => void;
-};
-
-const SpecialTimeAlignedSeriesButton: FunctionComponent<
-  SpecialTimeAlignedSeriesButtonProps
-> = ({ selectedItemViews, openTab }) => {
-  const { roiResponseSeriesSelectedItemPath, timeIntervalsSelectedItemPath } =
-    useMemo(() => {
-      if (selectedItemViews.length !== 2)
-        return {
-          roiResponseSeriesSelectedItem: undefined,
-          timeIntervalsSelectedItem: undefined,
-        };
-      const roiResponseSeriesSelectedItemPath = selectedItemViews
-        .find(
-          (a) =>
-            a.endsWith("|RoiResponseSeries") ||
-            a.endsWith("|FiberPhotometryResponseSeries"),
-        )
-        ?.split("|")[0]
-        ?.split(":")[1];
-      const timeIntervalsSelectedItemPath = selectedItemViews
-        .find((a) => a.endsWith("|TimeIntervals"))
-        ?.split("|")[0]
-        ?.split(":")[1];
-      return {
-        roiResponseSeriesSelectedItemPath,
-        timeIntervalsSelectedItemPath,
-      };
-    }, [selectedItemViews]);
-  const enabled =
-    roiResponseSeriesSelectedItemPath && timeIntervalsSelectedItemPath;
-  if (!enabled) return <span />;
-  return (
-    <div>
-      <Hyperlink
-        onClick={() => {
-          if (!roiResponseSeriesSelectedItemPath) return;
-          if (!timeIntervalsSelectedItemPath) return;
-          openTab(
-            `view:TimeAlignedSeries|${timeIntervalsSelectedItemPath}^${roiResponseSeriesSelectedItemPath}`,
-          );
-        }}
-      >
-        Open TimeAlignedSeries for selected items
-      </Hyperlink>
     </div>
   );
 };
