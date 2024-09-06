@@ -188,7 +188,7 @@ viewPlugins.push({
   neurodataType: "TimeIntervals",
   defaultForNeurodataType: false,
   secondaryNeurodataType: [
-    "ROIResponseSeries",
+    "RoiResponseSeries",
     "FiberPhotometryResponseSeries",
   ],
   component: TrialAlignedSeriesItemView,
