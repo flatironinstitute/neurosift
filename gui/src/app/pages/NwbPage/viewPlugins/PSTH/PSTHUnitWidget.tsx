@@ -3,14 +3,17 @@ import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import { useNwbFile } from "../../NwbFileContext";
 import { DirectSpikeTrainsClient } from "../Units/DirectRasterPlotUnitsItemView";
 import PSTHHistWidget from "./PSTHHistWidget";
-import { PSTHPrefs } from "./PSTHItemView";
+import { PSTHPrefs, PSTHTimeAlignedSeriesMode } from "./PSTHItemView";
 import PSTHRasterWidget from "./PSTHRasterWidget";
+import { RoiClient } from "./ROIClient";
+import TimeAlignedSeriesWidget from "./TimeAlignedSeriesWidget";
 
 type Props = {
   width: number;
   height: number;
   path: string;
-  spikeTrainsClient: DirectSpikeTrainsClient;
+  spikeTrainsClient: DirectSpikeTrainsClient | undefined;
+  roiClient: RoiClient | undefined;
   unitId: string | number;
   trialIndices: number[] | null | undefined;
   alignToVariables: string[];
@@ -18,6 +21,7 @@ type Props = {
   groupByVariableCategories: string[] | undefined;
   windowRange: { start: number; end: number };
   prefs: PSTHPrefs;
+  mode: PSTHTimeAlignedSeriesMode;
 };
 
 const PSTHUnitWidget: FunctionComponent<Props> = ({
@@ -25,6 +29,7 @@ const PSTHUnitWidget: FunctionComponent<Props> = ({
   height,
   path,
   spikeTrainsClient,
+  roiClient,
   unitId,
   trialIndices,
   alignToVariables,
@@ -32,6 +37,7 @@ const PSTHUnitWidget: FunctionComponent<Props> = ({
   groupByVariableCategories,
   windowRange,
   prefs,
+  mode,
 }) => {
   const topBarHeight = 40;
   const groupLegendWidth = groupByVariable ? 100 : 0;
@@ -39,6 +45,11 @@ const PSTHUnitWidget: FunctionComponent<Props> = ({
 
   const [spikeTrain, setSpikeTrain] = useState<number[] | undefined>(undefined);
   useEffect(() => {
+    if (mode !== "psth") return;
+    if (!spikeTrainsClient) {
+      setSpikeTrain(undefined);
+      return;
+    }
     let canceled = false;
     const canceler: { onCancel: (() => void)[] } = { onCancel: [] };
     const load = async () => {
@@ -53,7 +64,49 @@ const PSTHUnitWidget: FunctionComponent<Props> = ({
       canceled = true;
       canceler.onCancel.forEach((c) => c());
     };
-  }, [spikeTrainsClient, unitId]);
+  }, [spikeTrainsClient, unitId, mode]);
+
+  const [roiData, setRoiData] = useState<number[] | undefined>(undefined);
+  useEffect(() => {
+    if (mode !== "time-aligned-series") return;
+    if (!roiClient) {
+      setRoiData(undefined);
+      return;
+    }
+    let canceled = false;
+    const load = async () => {
+      await roiClient.waitForLoaded();
+      if (canceled) return;
+      if (!roiClient.roiData) return;
+      const d = roiClient.roiData[unitId as number];
+      setRoiData(d);
+    };
+    load();
+    return () => {
+      canceled = true;
+    };
+  }, [roiClient, mode, unitId]);
+  const [roiTimestamps, setRoiTimestamps] = useState<number[] | undefined>(
+    undefined,
+  );
+  useEffect(() => {
+    if (mode !== "time-aligned-series") return;
+    if (!roiClient) {
+      setRoiTimestamps(undefined);
+      return;
+    }
+    let canceled = false;
+    const load = async () => {
+      if (!roiClient.roiData) return;
+      await roiClient.waitForLoaded();
+      if (canceled) return;
+      setRoiTimestamps(roiClient.roiTimestamps);
+    };
+    load();
+    return () => {
+      canceled = true;
+    };
+  }, [roiClient, mode]);
 
   return (
     <div style={{ position: "absolute", width, height, overflow: "hidden" }}>
@@ -87,10 +140,12 @@ const PSTHUnitWidget: FunctionComponent<Props> = ({
             path={path}
             groupByVariable={groupByVariable}
             groupByVariableCategories={groupByVariableCategories}
+            mode={mode}
           />
         </div>
       )}
-      {spikeTrain ? (
+      {(mode === "psth" && spikeTrain) ||
+      (mode === "time-aligned-series" && roiData) ? (
         alignToVariables.map((alignToVariable, i) => (
           <div
             className="align-to-widget-container"
@@ -103,19 +158,24 @@ const PSTHUnitWidget: FunctionComponent<Props> = ({
               left: i * W,
             }}
           >
-            <PSTHUnitAlignToWidget
-              width={W}
-              height={height - topBarHeight}
-              path={path}
-              spikeTrain={spikeTrain}
-              unitId={unitId}
-              trialIndices={trialIndices}
-              alignToVariable={alignToVariable}
-              groupByVariable={groupByVariable}
-              groupByVariableCategories={groupByVariableCategories}
-              windowRange={windowRange}
-              prefs={prefs}
-            />
+            {
+              <PSTHUnitAlignToWidget
+                width={W}
+                height={height - topBarHeight}
+                path={path}
+                spikeTrain={spikeTrain}
+                roiData={roiData}
+                roiTimestamps={roiTimestamps}
+                unitId={unitId}
+                trialIndices={trialIndices}
+                alignToVariable={alignToVariable}
+                groupByVariable={groupByVariable}
+                groupByVariableCategories={groupByVariableCategories}
+                windowRange={windowRange}
+                prefs={prefs}
+                mode={mode}
+              />
+            }
           </div>
         ))
       ) : (
@@ -127,7 +187,13 @@ const PSTHUnitWidget: FunctionComponent<Props> = ({
             top: topBarHeight,
           }}
         >
-          Loading spike train...
+          {mode === "psth" ? (
+            <>Loading spike train...</>
+          ) : mode === "time-aligned-series" ? (
+            <>Loading series...</>
+          ) : (
+            <></>
+          )}
         </div>
       )}
     </div>
@@ -138,7 +204,9 @@ type PSTHUnitAlignToWidgetProps = {
   width: number;
   height: number;
   path: string;
-  spikeTrain: number[];
+  spikeTrain?: number[];
+  roiData?: number[];
+  roiTimestamps?: number[];
   unitId: string | number;
   trialIndices: number[] | null | undefined;
   alignToVariable: string;
@@ -146,6 +214,7 @@ type PSTHUnitAlignToWidgetProps = {
   groupByVariableCategories: string[] | undefined;
   windowRange: { start: number; end: number };
   prefs: PSTHPrefs;
+  mode: PSTHTimeAlignedSeriesMode;
 };
 
 const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
@@ -153,6 +222,8 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
   height,
   path,
   spikeTrain,
+  roiData,
+  roiTimestamps,
   unitId,
   trialIndices,
   alignToVariable,
@@ -160,6 +231,7 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
   groupByVariableCategories,
   windowRange,
   prefs,
+  mode,
 }) => {
   const nwbFile = useNwbFile();
   if (!nwbFile) throw Error("Unexpected: no nwbFile");
@@ -212,34 +284,70 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
     }
   }, [groupByVariable, alignToTimes]);
 
-  const trials: { times: number[]; group: any }[] | undefined = useMemo(() => {
+  const trials:
+    | { times: number[]; roiValues?: number[]; group: any }[]
+    | undefined = useMemo(() => {
     if (!alignToTimes) return undefined;
     if (!groupByValues) return undefined;
     const t1 = windowRange.start;
     const t2 = windowRange.end;
-    const ret: { times: number[]; group: any }[] = [];
+    const ret: { times: number[]; roiValues?: number[]; group: any }[] = [];
     let i1 = 0;
     for (let iTrial = 0; iTrial < alignToTimes.length; iTrial++) {
-      while (
-        i1 < spikeTrain.length &&
-        spikeTrain[i1] < alignToTimes[iTrial] + t1
-      ) {
-        i1++;
+      if (mode === "psth") {
+        if (!spikeTrain) return undefined;
+        while (
+          i1 < spikeTrain.length &&
+          spikeTrain[i1] < alignToTimes[iTrial] + t1
+        ) {
+          i1++;
+        }
+        let i2 = i1;
+        while (
+          i2 < spikeTrain.length &&
+          spikeTrain[i2] < alignToTimes[iTrial] + t2
+        ) {
+          i2++;
+        }
+        ret.push({
+          times: spikeTrain.slice(i1, i2).map((t) => t - alignToTimes[iTrial]),
+          group: groupByValues[iTrial],
+        });
+      } else if (mode === "time-aligned-series") {
+        if (!roiData) return undefined;
+        if (!roiTimestamps) return undefined;
+        while (
+          i1 < roiTimestamps.length &&
+          roiTimestamps[i1] < alignToTimes[iTrial] + t1
+        ) {
+          i1++;
+        }
+        let i2 = i1;
+        while (
+          i2 < roiTimestamps.length &&
+          roiTimestamps[i2] < alignToTimes[iTrial] + t2
+        ) {
+          i2++;
+        }
+        ret.push({
+          times: roiTimestamps
+            .slice(i1, i2)
+            .map((t) => t - alignToTimes[iTrial]),
+          roiValues: roiData.slice(i1, i2),
+          group: groupByValues[iTrial],
+        });
       }
-      let i2 = i1;
-      while (
-        i2 < spikeTrain.length &&
-        spikeTrain[i2] < alignToTimes[iTrial] + t2
-      ) {
-        i2++;
-      }
-      ret.push({
-        times: spikeTrain.slice(i1, i2).map((t) => t - alignToTimes[iTrial]),
-        group: groupByValues[iTrial],
-      });
     }
     return ret;
-  }, [alignToTimes, spikeTrain, windowRange, groupByValues]);
+  }, [
+    alignToTimes,
+    spikeTrain,
+    roiData,
+    roiTimestamps,
+    mode,
+    windowRange,
+    groupByValues,
+  ]);
 
   const groups: { group: any; color: string }[] | undefined = useMemo(() => {
     if (!trials) return undefined;
@@ -249,11 +357,12 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
     const uniqueVals2 = groupByVariableCategories
       ? uniqueVals.filter((v) => groupByVariableCategories.includes(v + ""))
       : uniqueVals;
+    const lighterMode = mode === "time-aligned-series";
     return uniqueVals2.map((val, i) => ({
       group: val,
-      color: groupColorForIndex(i),
+      color: groupColorForIndex(i, lighterMode),
     }));
-  }, [trials, groupByVariableCategories]);
+  }, [trials, groupByVariableCategories, mode]);
 
   const filteredTrials = useMemo(() => {
     if (!trials) return trials;
@@ -306,9 +415,10 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
       ? (height - titleHeight) / 2
       : height - titleHeight
     : 0;
-  const histWidgetHeight = prefs.showHist
-    ? height - titleHeight - rasterWidgetHeight
-    : 0;
+  const histWidgetHeight =
+    prefs.showHist && mode === "psth"
+      ? height - titleHeight - rasterWidgetHeight
+      : 0;
 
   return (
     <div style={{ position: "absolute", width, height }}>
@@ -333,17 +443,29 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
           top: titleHeight,
         }}
       >
-        {prefs.showRaster && (
-          <PSTHRasterWidget
-            width={width}
-            height={rasterWidgetHeight}
-            trials={sortedFilteredTrials}
-            groups={groups}
-            windowRange={windowRange}
-            alignmentVariableName={alignToVariable}
-            showXAxisLabels={!prefs.showHist} // don't show x axis labels if hist is shown
-          />
-        )}
+        {prefs.showRaster &&
+          (mode === "psth" ? (
+            <PSTHRasterWidget
+              width={width}
+              height={rasterWidgetHeight}
+              trials={sortedFilteredTrials}
+              groups={groups}
+              windowRange={windowRange}
+              alignmentVariableName={alignToVariable}
+              showXAxisLabels={!prefs.showHist} // don't show x axis labels if hist is shown
+            />
+          ) : mode === "time-aligned-series" ? (
+            <TimeAlignedSeriesWidget
+              width={width}
+              height={rasterWidgetHeight}
+              trials={sortedFilteredTrials}
+              groups={groups}
+              windowRange={windowRange}
+              alignmentVariableName={alignToVariable}
+            />
+          ) : (
+            <></>
+          ))}
       </div>
       <div
         className="hist-widget-container"
@@ -376,6 +498,7 @@ type PSTHGroupLegendProps = {
   path: string;
   groupByVariable: string;
   groupByVariableCategories: string[] | undefined;
+  mode: PSTHTimeAlignedSeriesMode;
 };
 
 const PSTHGroupLegend: FunctionComponent<PSTHGroupLegendProps> = ({
@@ -384,6 +507,7 @@ const PSTHGroupLegend: FunctionComponent<PSTHGroupLegendProps> = ({
   path,
   groupByVariable,
   groupByVariableCategories,
+  mode,
 }) => {
   const nwbFile = useNwbFile();
   if (!nwbFile) throw Error("Unexpected: no nwbFile");
@@ -414,9 +538,10 @@ const PSTHGroupLegend: FunctionComponent<PSTHGroupLegendProps> = ({
     const vals = values;
     const uniqueVals = Array.from(new Set(vals));
     uniqueVals.sort();
+    const lighterMode = mode === "time-aligned-series";
     return uniqueVals.map((val, i) => ({
       group: val,
-      color: groupColorForIndex(i),
+      color: groupColorForIndex(i, lighterMode),
     }));
   }, [values]);
 
@@ -482,8 +607,24 @@ const groupColors = [
   "gray",
 ];
 
-const groupColorForIndex = (i: number) => {
-  return groupColors[i % groupColors.length];
+const lighterGroupColors = [
+  "#ccc",
+  "#f00",
+  "#0f0",
+  "#00f",
+  "#f80",
+  "#80f",
+  "#0ff",
+  "#f0f",
+  "#ff0",
+];
+
+const groupColorForIndex = (i: number, lighterMode: boolean) => {
+  if (!lighterMode) {
+    return groupColors[i % groupColors.length];
+  } else {
+    return lighterGroupColors[i % lighterGroupColors.length];
+  }
 };
 
 export default PSTHUnitWidget;

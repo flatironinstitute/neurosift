@@ -920,9 +920,9 @@ type ViewInNeurosiftLinkProps = {
   job: DendroJob;
 };
 
-export const ViewInNeurosiftLink: FunctionComponent<ViewInNeurosiftLinkProps> = ({
-  job,
-}) => {
+export const ViewInNeurosiftLink: FunctionComponent<
+  ViewInNeurosiftLinkProps
+> = ({ job }) => {
   const { route } = useRoute();
   if (route.page !== "nwb") {
     throw Error("Unexpected: route.page is not nwb");
@@ -1032,7 +1032,10 @@ type ExpanderProps = {
   onClick: () => void;
 };
 
-export const Expander: FunctionComponent<ExpanderProps> = ({ expanded, onClick }) => {
+export const Expander: FunctionComponent<ExpanderProps> = ({
+  expanded,
+  onClick,
+}) => {
   return (
     <td>
       <SmallIconButton

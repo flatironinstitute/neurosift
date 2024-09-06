@@ -191,6 +191,7 @@ viewPlugins.push({
   checkEnabled: async () => {
     return false;
   },
+  usesState: true,
   isTimeView: false,
 });
 

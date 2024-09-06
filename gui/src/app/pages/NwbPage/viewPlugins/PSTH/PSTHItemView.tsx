@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { Hyperlink } from "@fi-sci/misc";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import { RemoteH5FileX } from "@remote-h5-file/index";
-import { Button } from "@mui/material";
 import pako from "pako";
 import {
   FunctionComponent,
@@ -23,8 +23,9 @@ import { useGroup } from "../../NwbMainView/NwbMainView";
 import { DirectSpikeTrainsClient } from "../Units/DirectRasterPlotUnitsItemView";
 import IfHasBeenVisible from "./IfHasBeenVisible";
 import PSTHUnitWidget from "./PSTHUnitWidget";
-import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
-import { Edit } from "@mui/icons-material";
+import { RoiClient, useRoiClient } from "./ROIClient";
+
+export type PSTHTimeAlignedSeriesMode = "psth" | "time-aligned-series";
 
 type Props = {
   width: number;
@@ -34,6 +35,7 @@ type Props = {
   condensed?: boolean;
   initialStateString?: string;
   setStateString?: (x: string) => void;
+  mode?: PSTHTimeAlignedSeriesMode;
 };
 
 const PSTHItemView: FunctionComponent<Props> = ({
@@ -43,6 +45,7 @@ const PSTHItemView: FunctionComponent<Props> = ({
   additionalPaths,
   initialStateString,
   setStateString,
+  mode,
 }) => {
   const [unitSelection, unitSelectionDispatch] = useReducer(
     unitSelectionReducer,
@@ -59,6 +62,7 @@ const PSTHItemView: FunctionComponent<Props> = ({
         additionalPaths={additionalPaths}
         initialStateString={initialStateString}
         setStateString={setStateString}
+        mode={mode || "psth"}
       />
     </UnitSelectionContext.Provider>
   );
@@ -105,17 +109,29 @@ export const defaultPSTHPrefs: PSTHPrefs = {
   numBins: 30,
 };
 
-const PSTHItemViewChild: FunctionComponent<Props> = ({
+type PSTHItemViewChildProps = {
+  width: number;
+  height: number;
+  path: string;
+  additionalPaths?: string[];
+  initialStateString?: string;
+  setStateString?: (x: string) => void;
+  mode: PSTHTimeAlignedSeriesMode;
+};
+
+const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
   width,
   height,
   path,
   additionalPaths,
   initialStateString,
   setStateString,
+  mode,
 }) => {
   const nwbFile = useNwbFile();
   if (!nwbFile) throw Error("Unexpected: no nwbFile");
 
+  // psth mode
   const { selectedUnitIds: selectedUnitIdsSet, unitIdSelectionDispatch } =
     useSelectedUnitIds();
   const setSelectedUnitIds = useCallback(
@@ -131,6 +147,9 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
     return sortIds([...selectedUnitIdsSet]);
   }, [selectedUnitIdsSet]);
 
+  // time-aligned-series mode
+  const [selectedRoiIndices, setSelectedRoiIndices] = useState<number[]>([]);
+
   const unitsPath = useMemo(
     () =>
       (additionalPaths || []).length === 0
@@ -144,6 +163,10 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
   >(undefined);
   useEffect(() => {
     let canceled = false;
+    if (mode === "time-aligned-series") {
+      setSpikeTrainsClient(undefined);
+      return;
+    }
     const load = async () => {
       const client = await DirectSpikeTrainsClient.create(nwbFile, unitsPath);
       if (canceled) return;
@@ -153,7 +176,13 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
     return () => {
       canceled = true;
     };
-  }, [nwbFile, unitsPath]);
+  }, [nwbFile, unitsPath, mode]);
+
+  const roiClient = useRoiClient(
+    nwbFile,
+    mode === "time-aligned-series" ? path : undefined,
+    additionalPaths,
+  );
 
   const unitIds = useMemo(() => {
     if (!spikeTrainsClient) return undefined;
@@ -167,9 +196,6 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
   const [groupByVariableCategories, setGroupByVariableCategories] = useState<
     string[] | undefined
   >([]);
-  useEffect(() => {
-    setGroupByVariableCategories(undefined);
-  }, [groupByVariable]);
   const [sortUnitsByVariable, setSortUnitsByVariable] = useState<
     [string, "asc" | "desc"] | undefined
   >(undefined);
@@ -217,20 +243,31 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
   const [windowRangeStr, setWindowRangeStr] = useState<{
     start: string;
     end: string;
-  }>({ start: "-0.5", end: "1" });
+  }>(mode === "psth" ? { start: "-0.5", end: "1" } : { start: "-2", end: "4" });
   const windowRange = useMemo(() => {
     const t1 = parseFloat(windowRangeStr.start);
     const t2 = parseFloat(windowRangeStr.end);
     if (isNaN(t1) || isNaN(t2)) return { start: 0, end: 1 };
     if (t1 >= t2) return { start: 0, end: 1 };
-    if (t2 - t1 > 20) return { start: 0, end: 1 };
+    if (mode === "psth") {
+      if (t2 - t1 > 20) return { start: 0, end: 1 };
+    } else if (mode === "time-aligned-series") {
+      if (t2 - t1 > 500) return { start: 0, end: 1 };
+    }
     return {
       start: t1,
       end: t2,
     };
-  }, [windowRangeStr]);
+  }, [windowRangeStr, mode]);
 
   const [prefs, prefsDispatch] = useReducer(psthPrefsReducer, defaultPSTHPrefs);
+  useEffect(() => {
+    // never show hist or smoothed for mode time-aligned-series
+    if (mode === "time-aligned-series") {
+      prefsDispatch({ type: "SET_PREF", key: "showHist", value: false });
+      prefsDispatch({ type: "SET_PREF", key: "smoothedHist", value: false });
+    }
+  }, [mode]);
 
   useEffect(() => {
     if (!initialStateString) return;
@@ -248,6 +285,9 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
     } else if (a.selectedUnitIds) {
       const sortedSelectedUnitIds = [...a.selectedUnitIds].sort();
       setSelectedUnitIds(sortedSelectedUnitIds);
+    }
+    if (a.selectedRoiIndices) {
+      setSelectedRoiIndices(a.selectedRoiIndices);
     }
     if (a.alignToVariables) {
       setAlignToVariables(a.alignToVariables);
@@ -306,6 +346,7 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
     if (!setStateString) return;
     const state0: { [key: string]: any } = {
       selectedUnitIds,
+      selectedRoiIndices,
       alignToVariables,
       groupByVariable,
       groupByVariableCategories,
@@ -324,6 +365,7 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
     setStateString(encodeStateToString(state0));
   }, [
     selectedUnitIds,
+    selectedRoiIndices,
     sortedUnitIds,
     setStateString,
     alignToVariables,
@@ -335,15 +377,22 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
     prefs,
   ]);
 
-  const unitsTable = (
-    <UnitSelectionComponent
-      unitIds={sortedUnitIds}
-      selectedUnitIds={selectedUnitIds}
-      setSelectedUnitIds={setSelectedUnitIds}
-      sortUnitsByVariable={sortUnitsByVariable}
-      sortUnitsByValues={sortUnitsByValues}
-    />
-  );
+  const unitsTable =
+    mode === "psth" ? (
+      <UnitSelectionComponent
+        unitIds={sortedUnitIds}
+        selectedUnitIds={selectedUnitIds}
+        setSelectedUnitIds={setSelectedUnitIds}
+        sortUnitsByVariable={sortUnitsByVariable}
+        sortUnitsByValues={sortUnitsByValues}
+      />
+    ) : mode === "time-aligned-series" ? (
+      <RoiSelectionComponent
+        roiClient={roiClient}
+        selectedRoiIndices={selectedRoiIndices}
+        setSelectedRoiIndices={setSelectedRoiIndices}
+      />
+    ) : null;
 
   const alignToSelectionComponent = (
     <AlignToSelectionComponent
@@ -363,20 +412,26 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
   const groupBySelectionComponent = (
     <GroupBySelectionComponent
       groupByVariable={groupByVariable}
-      setGroupByVariable={setGroupByVariable}
+      setGroupByVariable={(v) => {
+        setGroupByVariable(v);
+        setGroupByVariableCategories(undefined);
+      }}
       path={path}
       groupByVariableCategories={groupByVariableCategories}
       setGroupByVariableCategories={setGroupByVariableCategories}
     />
   );
 
-  const sortUnitsBySelectionComponent = (
-    <SortUnitsBySelectionComponent
-      sortUnitsByVariable={sortUnitsByVariable}
-      setSortUnitsByVariable={setSortUnitsByVariable}
-      unitsPath={unitsPath}
-    />
-  );
+  const sortUnitsBySelectionComponent =
+    mode === "psth" ? (
+      <SortUnitsBySelectionComponent
+        sortUnitsByVariable={sortUnitsByVariable}
+        setSortUnitsByVariable={setSortUnitsByVariable}
+        unitsPath={unitsPath}
+      />
+    ) : (
+      <></>
+    );
 
   const trialsFilterComponent = (
     <TrialsFilterComponent
@@ -385,18 +440,21 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
     />
   );
 
-  const selectUnitsComponent = (
-    <SelectUnitsComponent
-      unitIds={sortedUnitIds}
-      selectedUnitIds={selectedUnitIds}
-      setSelectedUnitIds={setSelectedUnitIds}
-      sortUnitsByVariable={sortUnitsByVariable}
-      sortUnitsByValues={sortUnitsByValues}
-    />
-  );
+  const selectUnitsComponent =
+    mode === "psth" ? (
+      <SelectUnitsComponent
+        unitIds={sortedUnitIds}
+        selectedUnitIds={selectedUnitIds}
+        setSelectedUnitIds={setSelectedUnitIds}
+        sortUnitsByVariable={sortUnitsByVariable}
+        sortUnitsByValues={sortUnitsByValues}
+      />
+    ) : (
+      <></>
+    );
 
   const prefsComponent = (
-    <PrefsComponent prefs={prefs} prefsDispatch={prefsDispatch} />
+    <PrefsComponent prefs={prefs} prefsDispatch={prefsDispatch} mode={mode} />
   );
 
   const unitsTableWidth = 200;
@@ -427,6 +485,20 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
   const sep = <>&nbsp;&bull;&nbsp;</>;
 
   const trialIndices = useTrialsFilterIndices(trialsFilter, nwbFile, path);
+
+  const sortedSelectedRoiIndices = useMemo(() => {
+    return selectedRoiIndices.sort();
+  }, [selectedRoiIndices]);
+
+  const unitIdsOrRoiIndicesToPlot = useMemo(() => {
+    if (mode === "psth") {
+      return sortedSelectedUnitIds;
+    } else if (mode === "time-aligned-series") {
+      return sortedSelectedRoiIndices;
+    } else {
+      return [];
+    }
+  }, [mode, sortedSelectedUnitIds, sortedSelectedRoiIndices]);
 
   return (
     <div
@@ -476,38 +548,43 @@ const PSTHItemViewChild: FunctionComponent<Props> = ({
           overflowX: "hidden",
         }}
       >
-        {spikeTrainsClient &&
-          sortedSelectedUnitIds.map((unitId, i) => (
-            <div
-              key={unitId}
-              style={{
-                position: "absolute",
-                top: i * unitWidgetHeight,
-                width: width - unitsTableWidth,
-                height: unitWidgetHeight,
-              }}
+        {unitIdsOrRoiIndicesToPlot.map((unitIdOrRoiIndex, i) => (
+          <div
+            key={unitIdOrRoiIndex}
+            style={{
+              position: "absolute",
+              top: i * unitWidgetHeight,
+              width: width - unitsTableWidth,
+              height: unitWidgetHeight,
+            }}
+          >
+            <IfHasBeenVisible
+              width={width - unitsTableWidth}
+              height={unitWidgetHeight}
             >
-              <IfHasBeenVisible
-                width={width - unitsTableWidth}
+              <PSTHUnitWidget
+                width={width - unitsTableWidth - 20} // leave some room for scrollbar
                 height={unitWidgetHeight}
-              >
-                <PSTHUnitWidget
-                  width={width - unitsTableWidth - 20} // leave some room for scrollbar
-                  height={unitWidgetHeight}
-                  path={path}
-                  spikeTrainsClient={spikeTrainsClient}
-                  unitId={unitId}
-                  trialIndices={trialIndices}
-                  alignToVariables={alignToVariables}
-                  groupByVariable={groupByVariable}
-                  groupByVariableCategories={groupByVariableCategories}
-                  windowRange={windowRange}
-                  prefs={prefs}
-                />
-              </IfHasBeenVisible>
-            </div>
-          ))}
-        {selectedUnitIds.length === 0 && <div>Select one or more units</div>}
+                path={path}
+                spikeTrainsClient={spikeTrainsClient}
+                roiClient={roiClient || undefined}
+                unitId={unitIdOrRoiIndex}
+                trialIndices={trialIndices}
+                alignToVariables={alignToVariables}
+                groupByVariable={groupByVariable}
+                groupByVariableCategories={groupByVariableCategories}
+                windowRange={windowRange}
+                prefs={prefs}
+                mode={mode}
+              />
+            </IfHasBeenVisible>
+          </div>
+        ))}
+        {unitIdsOrRoiIndicesToPlot.length === 0 && (
+          <div>
+            Select one or more {mode === "psth" ? "units" : "ROIs"} to plot
+          </div>
+        )}
       </div>
       <div className="psth-bottom-area">
         <div
@@ -733,6 +810,73 @@ const UnitSelectionComponent: FunctionComponent<
   );
 };
 
+type RoiSelectionComponentProps = {
+  roiClient: RoiClient | null;
+  selectedRoiIndices: number[];
+  setSelectedRoiIndices: (x: number[]) => void;
+};
+
+const RoiSelectionComponent: FunctionComponent<RoiSelectionComponentProps> = ({
+  roiClient,
+  selectedRoiIndices,
+  setSelectedRoiIndices,
+}) => {
+  const roiIndices = useMemo(() => {
+    if (!roiClient) return [];
+    const roiIndices = roiClient.getRoiIndices();
+    return roiIndices;
+  }, [roiClient]);
+  return (
+    <table className="nwb-table">
+      <thead>
+        <tr>
+          <th>
+            <input
+              type="checkbox"
+              checked={
+                roiIndices.length > 0 &&
+                selectedRoiIndices.length === roiIndices.length
+              }
+              onChange={() => {}}
+              onClick={() => {
+                if (selectedRoiIndices.length > 0) {
+                  setSelectedRoiIndices([]);
+                } else {
+                  setSelectedRoiIndices(roiIndices);
+                }
+              }}
+            />
+          </th>
+          <th>ROI Index</th>
+        </tr>
+      </thead>
+      <tbody>
+        {roiIndices.map((roiIndex) => (
+          <tr key={roiIndex}>
+            <td>
+              <input
+                type="checkbox"
+                checked={selectedRoiIndices.includes(roiIndex)}
+                onChange={() => {}}
+                onClick={() => {
+                  if (selectedRoiIndices.includes(roiIndex)) {
+                    setSelectedRoiIndices(
+                      selectedRoiIndices.filter((x) => x !== roiIndex),
+                    );
+                  } else {
+                    setSelectedRoiIndices([...selectedRoiIndices, roiIndex]);
+                  }
+                }}
+              />
+            </td>
+            <td>{roiIndex}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
 type GroupBySelectionComponentProps = {
   groupByVariable: string;
   setGroupByVariable: (x: string) => void;
@@ -853,7 +997,7 @@ const GroupByVariableCategoriesComponent: FunctionComponent<
   return (
     <>
       {options.map((option) => (
-        <>
+        <span key={option}>
           <input
             type="checkbox"
             checked={
@@ -881,7 +1025,7 @@ const GroupByVariableCategoriesComponent: FunctionComponent<
             }}
           />
           {option}
-        </>
+        </span>
       ))}
     </>
   );
@@ -1120,11 +1264,13 @@ const TrialsFilterEditWindow: FunctionComponent<
 type PrefsComponentProps = {
   prefs: PSTHPrefs;
   prefsDispatch: (x: PSTHPrefsAction) => void;
+  mode: "psth" | "time-aligned-series";
 };
 
 const PrefsComponent: FunctionComponent<PrefsComponentProps> = ({
   prefs,
   prefsDispatch,
+  mode,
 }) => {
   const handleSetNumBins = useCallback(
     (numBins: number) => {
@@ -1151,24 +1297,32 @@ const PrefsComponent: FunctionComponent<PrefsComponentProps> = ({
       />{" "}
       Show raster
       <br />
-      <input
-        type="checkbox"
-        checked={prefs.showHist}
-        onChange={() => {}}
-        onClick={handleToggleShowHist}
-      />{" "}
-      Show histogram
-      <br />
+      {mode === "psth" && (
+        <>
+          <input
+            type="checkbox"
+            checked={prefs.showHist}
+            onChange={() => {}}
+            onClick={handleToggleShowHist}
+          />{" "}
+          Show histogram
+          <br />
+        </>
+      )}
       <NumBinsComponent numBins={prefs.numBins} setNumBins={handleSetNumBins} />
       <br />
-      <input
-        type="checkbox"
-        checked={prefs.smoothedHist}
-        onChange={() => {}}
-        onClick={handleToggleSmoothedHist}
-      />{" "}
-      Smoothed
-      <br />
+      {mode === "psth" && (
+        <>
+          <input
+            type="checkbox"
+            checked={prefs.smoothedHist}
+            onChange={() => {}}
+            onClick={handleToggleSmoothedHist}
+          />{" "}
+          Smoothed
+          <br />
+        </>
+      )}
       Height:&nbsp;
       <select
         value={prefs.height}

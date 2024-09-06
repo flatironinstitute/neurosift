@@ -120,11 +120,16 @@ const PSTHRasterWidget: FunctionComponent<PSTHWidgetProps> = ({
     ctx.lineTo(width - margins.right, height - margins.bottom);
     ctx.stroke();
 
+    const colorsByGroup: { [key: number | string]: string } = {};
+    for (const g of groups) {
+      colorsByGroup[g.group] = g.color;
+    }
+
     // trials
     trials.forEach((trial, iTrial) => {
-      const group = groups.find((g) => g.group === trial.group);
-      if (!group) return;
-      ctx.fillStyle = group.color;
+      const groupColor = colorsByGroup[trial.group];
+      if (!groupColor) return;
+      ctx.fillStyle = groupColor;
       for (let i = 0; i < trial.times.length; i++) {
         const p = coordToPixel(trial.times[i], iTrial);
         ctx.fillRect(p.x - 1, p.y - 1, 2, 2);
@@ -140,6 +145,7 @@ const PSTHRasterWidget: FunctionComponent<PSTHWidgetProps> = ({
     margins,
     alignmentVariableName,
     groups,
+    showXAxisLabels,
   ]);
 
   return (

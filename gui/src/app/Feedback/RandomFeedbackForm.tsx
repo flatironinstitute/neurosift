@@ -24,7 +24,10 @@ localStorage.setItem(
   "numPageViewsSinceLastFeedback",
   numPageViewsSinceLastFeedback.toString(),
 );
-if (numPageViewsSinceLastFeedback >= NUM && enteredSpecialCode !== specialCode) {
+if (
+  numPageViewsSinceLastFeedback >= NUM &&
+  enteredSpecialCode !== specialCode
+) {
   showIt = true;
   localStorage.setItem("numPageViewsSinceLastFeedback", "0");
 }

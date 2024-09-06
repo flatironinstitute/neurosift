@@ -1,9 +1,22 @@
 import { useNwbFile } from "app/pages/NwbPage/NwbFileContext";
 import { FunctionComponent, useMemo, useReducer, useState } from "react";
-import { AllJobsTreeRow, CreateJobComponent, Expander, ViewInNeurosiftLink, expandedJobIdsReducer, isStagingUrl, parameterElementForJob, rowIsVisible } from "../../ElectricalSeriesItemView/SpikeSortingView/SpikeSortingView";
+import {
+  AllJobsTreeRow,
+  CreateJobComponent,
+  Expander,
+  ViewInNeurosiftLink,
+  expandedJobIdsReducer,
+  isStagingUrl,
+  parameterElementForJob,
+  rowIsVisible,
+} from "../../ElectricalSeriesItemView/SpikeSortingView/SpikeSortingView";
 import { useAllJobs, useJob } from "../../CEBRA/DendroHelpers";
 import { JobInfoView } from "../../CEBRA/DendroItemView";
-import { DendroJob, DendroJobDefinition, DendroJobRequiredResources } from "app/dendro/dendro-types";
+import {
+  DendroJob,
+  DendroJobDefinition,
+  DendroJobRequiredResources,
+} from "app/dendro/dendro-types";
 import InputChoices from "../../ElectricalSeriesItemView/SpikeSortingView/InputChoices";
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import { OpenInNew, Refresh } from "@mui/icons-material";
@@ -76,19 +89,15 @@ const UnitsCEBRAView: FunctionComponent<UnitsCEBRAViewProps> = ({
         }}
       />
       <hr />
-      {
-        selectedJobId && selectedJob && (
-          selectedJob.tags.includes("UnitsCEBRA") ? (
-            <UnitsCEBRAJobView
-              jobId={selectedJobId}
-              nwbUrl={nwbUrl}
-            />
-          ) : (
-            <div>Unexpected job type: {selectedJob.tags.join(", ")}</div>
-          ))
-      }
+      {selectedJobId &&
+        selectedJob &&
+        (selectedJob.tags.includes("UnitsCEBRA") ? (
+          <UnitsCEBRAJobView jobId={selectedJobId} nwbUrl={nwbUrl} />
+        ) : (
+          <div>Unexpected job type: {selectedJob.tags.join(", ")}</div>
+        ))}
     </div>
-  )
+  );
 };
 
 const useAllUnitsCEBRAJobs = (nwbUrl: string) => {
@@ -102,7 +111,7 @@ const useAllUnitsCEBRAJobs = (nwbUrl: string) => {
     jobFilter: undefined,
   });
   return { allJobs, refreshAllJobs };
-}
+};
 
 type CreateUnitsCEBRAJobComponentProps = {
   nwbUrl: string;
@@ -110,14 +119,10 @@ type CreateUnitsCEBRAJobComponentProps = {
   onNewJobId: (jobId: string) => void;
 };
 
-const CreateUnitsCEBRAJobComponent: FunctionComponent<CreateUnitsCEBRAJobComponentProps> = ({
-  nwbUrl,
-  path,
-  onNewJobId,
-}) => {
-  const [opts, setOpts] = useState<UnitsCEBRAOpts>(
-    defaultUnitsCEBRAOpts
-  )
+const CreateUnitsCEBRAJobComponent: FunctionComponent<
+  CreateUnitsCEBRAJobComponentProps
+> = ({ nwbUrl, path, onNewJobId }) => {
+  const [opts, setOpts] = useState<UnitsCEBRAOpts>(defaultUnitsCEBRAOpts);
   const requiredResources: DendroJobRequiredResources = useMemo(() => {
     return {
       numCpus: 4,
@@ -134,7 +139,11 @@ const CreateUnitsCEBRAJobComponent: FunctionComponent<CreateUnitsCEBRAJobCompone
       inputFiles: [
         {
           name: "input",
-          fileBaseName: nwbUrl.endsWith('.lindi.tar') ? "input.nwb.lindi.tar" : nwbUrl.endsWith('.lindi.json') ? "input.nwb.lindi.json" : "input.nwb",
+          fileBaseName: nwbUrl.endsWith(".lindi.tar")
+            ? "input.nwb.lindi.tar"
+            : nwbUrl.endsWith(".lindi.json")
+              ? "input.nwb.lindi.json"
+              : "input.nwb",
           url: nwbUrl,
         },
       ],
@@ -147,42 +156,40 @@ const CreateUnitsCEBRAJobComponent: FunctionComponent<CreateUnitsCEBRAJobCompone
       parameters: [
         {
           name: "units_path",
-          value: path
+          value: path,
         },
         {
           name: "max_iterations",
-          value: opts.max_iterations
+          value: opts.max_iterations,
         },
         {
           name: "batch_size",
-          value: opts.batch_size
+          value: opts.batch_size,
         },
         {
           name: "bin_size_msec",
-          value: opts.bin_size_msec
+          value: opts.bin_size_msec,
         },
         {
           name: "output_dimensions",
-          value: opts.output_dimensions
-        }
-      ]
-    }
+          value: opts.output_dimensions,
+        },
+      ],
+    };
   }, [nwbUrl, path, opts]);
 
-  const tagsUnitsCEBRA_2 = useMemo(() => [
-    ...tagsUnitsCEBRA, `nwb:${nwbUrl}`
-  ], [nwbUrl]);
+  const tagsUnitsCEBRA_2 = useMemo(
+    () => [...tagsUnitsCEBRA, `nwb:${nwbUrl}`],
+    [nwbUrl],
+  );
 
   const jobDependencies = useMemo(() => {
     return [];
   }, []);
 
   const selectOptsComponent = (
-    <SelectUnitsCEBRAOpts
-      opts={opts}
-      setOpts={setOpts}
-    />
-  )
+    <SelectUnitsCEBRAOpts opts={opts} setOpts={setOpts} />
+  );
 
   if (!jobDefinition) return <div>No job definition</div>;
   return (
@@ -196,8 +203,8 @@ const CreateUnitsCEBRAJobComponent: FunctionComponent<CreateUnitsCEBRAJobCompone
       onNewJobId={onNewJobId}
       staging={isStagingUrl(nwbUrl)}
     />
-  )
-}
+  );
+};
 
 type UnitsCEBRAJobViewProps = {
   jobId: string;
@@ -208,7 +215,7 @@ const parameterNamesForUnitsCEBRAJob = [
   "max_iterations",
   "batch_size",
   "bin_size_msec",
-  "output_dimensions"
+  "output_dimensions",
 ];
 
 const UnitsCEBRAJobView: FunctionComponent<UnitsCEBRAJobViewProps> = ({
@@ -226,8 +233,8 @@ const UnitsCEBRAJobView: FunctionComponent<UnitsCEBRAJobViewProps> = ({
       />
       <ViewInNeurosiftLink job={job} />
     </div>
-  )
-}
+  );
+};
 
 type SelectUnitsCEBRAOptsProps = {
   opts: UnitsCEBRAOpts;
@@ -248,7 +255,9 @@ const SelectUnitsCEBRAOpts: FunctionComponent<SelectUnitsCEBRAOptsProps> = ({
               <InputChoices
                 value={opts.max_iterations}
                 choices={[100, 500, 1000, 5000, 10000]}
-                onChange={(value) => setOpts({ ...opts, max_iterations: value as number })}
+                onChange={(value) =>
+                  setOpts({ ...opts, max_iterations: value as number })
+                }
               />
             </td>
           </tr>
@@ -258,7 +267,9 @@ const SelectUnitsCEBRAOpts: FunctionComponent<SelectUnitsCEBRAOptsProps> = ({
               <InputChoices
                 value={opts.batch_size}
                 choices={[1000]}
-                onChange={(value) => setOpts({ ...opts, batch_size: value as number })}
+                onChange={(value) =>
+                  setOpts({ ...opts, batch_size: value as number })
+                }
               />
             </td>
           </tr>
@@ -268,7 +279,9 @@ const SelectUnitsCEBRAOpts: FunctionComponent<SelectUnitsCEBRAOptsProps> = ({
               <InputChoices
                 value={opts.bin_size_msec}
                 choices={[20]}
-                onChange={(value) => setOpts({ ...opts, bin_size_msec: value as number })}
+                onChange={(value) =>
+                  setOpts({ ...opts, bin_size_msec: value as number })
+                }
               />
             </td>
           </tr>
@@ -278,15 +291,17 @@ const SelectUnitsCEBRAOpts: FunctionComponent<SelectUnitsCEBRAOptsProps> = ({
               <InputChoices
                 value={opts.output_dimensions}
                 choices={[3, 5, 10]}
-                onChange={(value) => setOpts({ ...opts, output_dimensions: value as number })}
+                onChange={(value) =>
+                  setOpts({ ...opts, output_dimensions: value as number })
+                }
               />
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-  )
-}
+  );
+};
 
 type AllJobsTreeProps = {
   allJobs: DendroJob[] | undefined;
@@ -301,7 +316,7 @@ export const AllJobsTree: FunctionComponent<AllJobsTreeProps> = ({
   refreshAllJobs,
   selectedJobId,
   setSelectedJobId,
-  unitsPath
+  unitsPath,
 }) => {
   const [expandedJobIds, dispatchExpandedJobIds] = useReducer(
     expandedJobIdsReducer,
@@ -312,8 +327,10 @@ export const AllJobsTree: FunctionComponent<AllJobsTreeProps> = ({
     const handleUnitsCEBRAJobs = () => {
       for (const job of allJobs || []) {
         if (job.tags.includes("UnitsCEBRA")) {
-          const pp = job.jobDefinition.parameters.find(p => p.name === "units_path");
-          if ((pp) && (pp.value === unitsPath)) {
+          const pp = job.jobDefinition.parameters.find(
+            (p) => p.name === "units_path",
+          );
+          if (pp && pp.value === unitsPath) {
             const row: AllJobsTreeRow = { job, indent: 0 };
             ret.push(row);
           }

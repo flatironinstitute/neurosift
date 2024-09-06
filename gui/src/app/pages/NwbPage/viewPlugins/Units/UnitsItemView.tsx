@@ -78,19 +78,9 @@ const UnitsItemView: FunctionComponent<Props> = ({
         }}
       />
       {showDendroViews && (
-        <UnitsSummaryItemView
-          width={0}
-          height={0}
-          path={path}
-        />
+        <UnitsSummaryItemView width={0} height={0} path={path} />
       )}
-      {showDendroViews && (
-        <UnitsCEBRAView
-          width={0}
-          height={0}
-          path={path}
-        />
-      )}
+      {showDendroViews && <UnitsCEBRAView width={0} height={0} path={path} />}
     </TabWidget>
   );
 };
