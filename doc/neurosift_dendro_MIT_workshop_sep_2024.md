@@ -15,16 +15,23 @@ September, 2024
 
 It is highly recommended that you bring your own laptop so you can follow along with the examples. You have a couple options
 
-* Run things on your local machine
-  - Works with Linux, Mac OS, maybe Windows Subsystem for Linux (WSL), and maybe Windows
-  - You should install apptainer if you want to run the Dendro processing
-* Run things on Dandihub (recommended)
+* Option 1: Run things on Dandihub (recommended)
   - Go to [https://hub.dandiarchive.org](https://hub.dandiarchive.org)
   - **Important:** You'll need to sign up ahead of time because it might take a bit of time to get approved. Please include "Neurosift+Dendro workshop" in the DANDI sign up form.
   - It is recommended that you select the "Base" server option.
-  - Apptainer is already installed, but you'll need to `pip install --upgrade neurosift dendro`
+  - Apptainer is already installed, but you'll need to neurosift and dendro as shown below.
 
 ![image](https://github.com/user-attachments/assets/2ebf70f2-d774-4b78-8bc9-75febc8bca78)
+
+* Option 2: Run things on your local machine
+  - Works with Linux, Mac OS, maybe Windows Subsystem for Linux (WSL), and maybe Windows
+  - You should install apptainer if you want to run the Dendro processing
+
+Whichever method you are using, you should install Neurosift and Dendro as follows:
+
+```bash
+pip install --upgrade neurosift dendro
+```
 
 Let's get started!
 
@@ -75,7 +82,7 @@ You can try this out by downloading one of [these relatively small NWB files](ht
 
 ## Neurosift as DANDI Browser
 
-The DANDI REST API is open, so Neurosift can also function as an alternative DANDI Archive explorer.
+The DANDI REST API is open to the public, so Neurosift can also function as an alternative DANDI Archive explorer!
 
 [https://neurosift.app](https://neurosift.app)
 
@@ -100,7 +107,7 @@ The DANDI REST API is open, so Neurosift can also function as an alternative DAN
 
 * NWB files can be very large > 100 GB, so it's important to be able to loazy-load individual objects without downloading the entire file.
 * However, HDF5 was designed to be read locally, so it's not particularly cloud-friendly - inefficient loading of metadata
-* Neurosift uses a WebAssembly/Web Worker trick to load remote files relatively efficiently via the browser.
+* Neurosift uses a WebAssembly/Web Worker method to load remote files relatively efficiently via the browser.
 * But what really speeds things up is the pre-indexing of all the public Dandisets using LINDI.
 
 For more information, see the [LINDI project](https://github.com/neurodatawithoutborders/lindi).
@@ -115,7 +122,7 @@ You can load NWB objects using Python.
 
 * Go to [our example NWB file](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/25b641ae-5a56-49c2-893c-7dd19d039912/download/&dandisetId=000552&dandisetVersion=0.230630.2304).
 * Click on processing/behavior -> SleepStates
-* Click on "Load in Python". You will get a Python script you can run to lazy load the data using LINDI.
+* In the left panel, click on "Load in Python". You will get a Python script you can run to lazy load the data using LINDI.
 
 ![image](https://github.com/user-attachments/assets/3f8670f3-280f-4755-a494-d3762b95d400)
 
@@ -139,6 +146,7 @@ print(f'Shape of id: {id.shape}')
 print(f'Shape of start_time: {start_time.shape}')
 print(f'Shape of stop_time: {stop_time.shape}')
 
+# This line was added
 print(label[()])
 
 # Output:
@@ -153,7 +161,7 @@ print(label[()])
 #  'Non-REM' 'REM' 'Awake' 'Non-REM' 'Awake']
 ```
 
-# Neurosift tabs
+## Neurosift tabs
 
 What are the different Neurosift tabs?
 
@@ -168,13 +176,13 @@ The NWB tab gives a hierarchical layout of the Neurodata objects in the NWB file
 What are the checkboxes for?
 
 * Clicking a Neurodata object directly will open the default visualization plugin for that Neurodata type.
-* To get a synchronized composite view, tick more than one checkbox and then click the "View xx items" button on the left panel.
+* To get a synchronized composite view for selected items, tick two or more checkboxes and then click the "View xx items" button on the left panel.
 
 ## RAW Tab
 
 The RAW tab shows the raw HDF5 structure: groups, datasets, attributes, etc.
 
-Pro tip: to inspect the contents of a larger dataset, open the browser developer console and click on the CIRCLE icon. The contents of the dataset will be printed to the console.
+(Tip: to inspect the contents of a larger dataset, open the browser developer console and click on the CIRCLE icon. The contents of the dataset will be printed to the console.)
 
 ![image](https://github.com/user-attachments/assets/1be63ee1-d6ee-4b4c-98d7-b28bfb50e696)
 
@@ -200,11 +208,11 @@ Finally, the ANNOTATIONS tab is an advanced feature that lets you add annotation
 
 Note: this is an experimental feature and is subject to change / deletion.
 
-# Advanced DANDI Queries
+## Advanced DANDI Queries
 
 Click on “advanced query” in the upper-right corner of the [main neurosift page](https://neurosift.app).
 
-You can filter by neurodata types. For example, in this screenshots, I searched for all Dandisets that have an object of type Units AND an object of type ElectricalSeries. This is based on a pre-indexing of DANDI that includes only the first 100 assets of each Dandiset.
+You can filter by neurodata types. For example, in this screenshot, I searched for all Dandisets that have an object of type Units AND an object of type ElectricalSeries. This is based on a pre-indexing of public DANDI that includes only the first 100 assets of each Dandiset.
 
 ![image](https://github.com/user-attachments/assets/0595132d-cbc0-4d6e-8dd1-f896996f5922)
 
@@ -219,13 +227,13 @@ You can then select a subset of these Dandisets and perform a SPECIAL query usin
 
 ![image](https://github.com/user-attachments/assets/e68abab0-62ff-48ca-b126-c369f5356b34)
 
-# Example: Dandiset 000458
+## Example: Dandiset 000458
 
 On DANDI Archive: [000458](https://dandiarchive.org/dandiset/000458?search=000458&pos=1)
 
 Here's a [thorough description of the dataset](https://github.com/catalystneuro/dandi.github.io/blob/reuse_blog/_posts/data_reuse_000458.md) for purpose of reanalysis.
 
-This notebook shows how to use the DANDI API to summarize all of the sessions: [001_summarize_contents.ipynb](https://github.com/magland/example-notebooks/blob/000458/000458/FlatironInstitute/001_summarize_contents.ipynb)
+This notebook shows how to use the DANDI API to summarize all of the sessions: [001_summarize_contents.ipynb](https://github.com/dandi/example-notebooks/blob/master/000458/FlatironInstitute/001_summarize_contents.ipynb)
 
 Here's one of the examples in Neurosift: [sub-551397/sub-551397_ses-20210211_behavior+ecephys.nwb](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/d966b247-2bac-4ef0-8b80-aae010f50c98/download/&dandisetId=000458&dandisetVersion=0.230317.0039)
 
@@ -233,9 +241,16 @@ Here's one of the examples in Neurosift: [sub-551397/sub-551397_ses-20210211_beh
 
 As you can see we have EEG, LFP, epochs, trials, running speed, and units.
 
+In the Units section click on "Raster Plot" and then adjust the number of visible units.
+
+![image](https://github.com/user-attachments/assets/79da7344-60c8-411a-b2e6-d99af1928edb)
+
+## Peri-Stimulus Time Histograms (PSTH)
+
 Let's explore the Peri-Stimulus Time Histograms (PSTH)!
 
-* In Neurosift, open the "Intervals" panel and then click "PSTH" for the "trials" table.
+* [Open the above example from 000458 in Neurosift](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/d966b247-2bac-4ef0-8b80-aae010f50c98/download/&dandisetId=000458&dandisetVersion=0.230317.0039)
+* Open the "Intervals" panel and then click "PSTH" for the "trials" table.
 * Select "Group trials by: behavioral_epoch" and "Sort units by: location".
 * Select "Trials filter" in the bottom right and enter `is_valid === 1 && is_running === 0 && stimulus_type === "electrical"`. This will restrict the trials to those that are valid, not running, and have an electrical stimulus.
 * Scroll down on the units table and click to select some units in the MOs region. You can also use the "Select units" link at the bottom to select all MOs units.
@@ -245,4 +260,109 @@ Let's explore the Peri-Stimulus Time Histograms (PSTH)!
 * Try selecting units at other locations.
 * You can also adjust other settings.
 * To share your view, use the "Share this tab" on the left panel of Neurosift. [Here's a link with the predefined state intact](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/d966b247-2bac-4ef0-8b80-aae010f50c98/download/&dandisetId=000458&dandisetVersion=0.230317.0039&tab=view:PSTH|/intervals/trials^/units&tab-state=H4sIAAAAAAAAA03SvW7bMBSG4VsxOGRSC%2FE3dgAvGYJk7d%2BSFIYiMRIBiTREKkEQ%2BN77SkGLDt%2Bgw8f00Qd9iOxH3xbf%2FYyhPHRZ3Dyag6zMQRFNDLHEkWuyJ4fK1jWRRBFNDLHEkWuyJziJkziJkziJkziJkziJkziFUziFUziFUziFUziFUziN0ziN0ziN0ziN0ziN0ziDMziDMziDMziDMziDMziLsziLsziLsziLsziLsziHcziHcziHc7g953vOD5zTm6U3S2%2BW3iy9WXqz9Oboy9GVoytXm9%2BVaMbQxx%2FpVzOH5nn0a%2FEil2YupxImLxD9nJbz7ftfIW7Esx%2Ba15DmZjz5c2oHUYnC4Zjvwlj8jAj59MrN3e54PO7k7upqx2ReYgyx32b1Osv8xTIu%2BVTez34bP4ntM5hD24xPgntzmsv6SeT%2FF3gUY2qbElJENLldt3wLsUtv35rY%2B%2B%2BFFT4%2B34JdvtRfLc7HjgcpLpU4z%2F4lb2RYf5K3ncu8%2BGqb3Idc%2Fj1PKZXBd5%2BzF96R4eBDP6xXT74Ly8TlcZluQ%2BROXV8ufwD179KNzQIAAA%3D%3D).
+
+## Dendro example: computing autocorrelograms
+
+Most Neurosift features are client-side only meaning that the raw data is pulled directly from the NWB file and all calculations are made on the local machine. However, more advanced features require pre-processing of the data (e.g., using Python scripts). This is where Dendro comes in.
+
+For example, suppose we want to view the Autocorrelograms for the units in the 000458 dataset. Sometimes this information is included in the Units table, but in this case it is not. We can use Dendro to calculate the Autocorrelograms and then view them in Neurosift.
+
+Again [go to our 000458 example](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/d966b247-2bac-4ef0-8b80-aae010f50c98/download/&dandisetId=000458&dandisetVersion=0.230317.0039). Open the Units panel and click on the "Units" link. Then click on the "Units Summary" tab.
+
+![image](https://github.com/user-attachments/assets/1dddee66-07a3-4620-a5b7-e252a009473c)
+
+We notice that somebody has already run the Dendro job to calculate the units summary, and so we can already see the Autocorrelograms.
+
+Click on the job ID link to get more information on the job that what executed.
+
+![image](https://github.com/user-attachments/assets/a293417e-c3c9-47bf-81ed-89b171dbd868)
+
+We see that this was completed 3 days ago with an elapsed time of 41 seconds.
+
+Scroll down to see more information.
+
+![image](https://github.com/user-attachments/assets/ec6e9ed6-b4a6-4247-b64d-60ada36abc1f)
+
+We can see the URLs of the input and output files as well as the values of the parameters that were used. You can also see the console output of the job and resource utilization graphs.
+
+## Computing autocorrelograms for a new dataset
+
+Suppose you navigate to an NWB file that does not have the Autocorrelograms pre-computed. You can run a new Dendro job yourself.
+
+[Select a different 000458 example from here](https://neurosift.app/?p=/dandiset&dandisetId=000458&dandisetVersion=0.230317.0039) (note, some of them don't have a Units table)
+
+As above, click on the "Units" link, click on the "Units" link and then the "Units Summary" tab.
+
+Maybe it will say "no jobs found". You can specify your desired parameters and then click "SUBMIT JOB".
+
+![image](https://github.com/user-attachments/assets/a3108973-08dc-4dd6-a895-b497f57811a4)
+
+Here's where you have a choice. You can:
+
+* Submit to the default publicly available computation network (might take a while to be picked up by a worker)
+* Host your own Dendro compute client (e.g., on Dandihub) and submit the job specifically to that client.
+
+Let's focus on the second option since it's more interesting and will illuminate how the Dendro system works!
+
+## Hosting your own Dendro compute client
+
+First you'll need to send your Github user name to Jeremy so he can give you permission to fulfill jobs for Neurosift.
+
+The following can be done either on Dandihub or on your local machine (see above for setup).
+
+Create a new directory for your compute client
+
+```
+mkdir dendro_compute_client
+cd dendro_compute_client
+```
+
+Create the compute client
+
+```
+dendro register-compute-client
+```
+
+* You will be prompted to enter the name of the dendro service. Enter "hello_world_service" (this is the one Neurosift uses).
+* For the name of the client, you can choose a simple descriptive name such as "magland_dandihub" if your user name is magland.
+* Visit the link that is provided to complete the registration process. You will need to Log in with GitHub and you may need to follow a link after login to get back to the registration page.
+* Follow the instructions. You will get a registration code which you will need to paste back to your terminal.
+* Follow the link to configure your compute resource
+
+![image](https://github.com/user-attachments/assets/200f4859-9071-462c-92df-f92135438f05)
+
+
+You can restrict to particular users or not. If you do not restrict, then your compute client is added to the public network and can be used by all Neurosift users.
+
+You can also adjust the available CPU/GPU/RAM resources to match your machine.
+
+Now run your compute client!
+
+```bash
+CONTAINER_METHOD=apptainer dendro start-compute-client
+```
+
+Note: If you don't specify `CONTAINER_MEthod=apptainer` the default is to use docker (which is not available on Dandihub).
+
+Leave your terminal open. You can use tmux or screen if you are worried about closing the terminal or losing connection.
+
+## Back to computing autocorrelograms
+
+Now that you have your compute client running, you can go back to Neurosift and submit the job to your compute client.
+
+Enter your compute client ID in the "Compute client (optional)" field and click "SUBMIT JOB".
+
+You should see some activity in your terminal where the compute client is running. It does the following
+
+* Pulls the job information from the Dendro server
+* Pulls the relevant docker image from dockerhub
+* Builds the apptainer container
+* Runs the job reporting the status and console output to Dendro
+* Uploads the results to Dendro
+
+You can use the refresh button in Neurosift to see the status of the job or click on the job ID to see more details such as the console output.
+
+When the job is complete, you'll see the Autocorrelograms! And in the future, anyone who views this NWB file in Neurosift will see the Autocorrelograms without needing to recompute them.
+
+For those in this workshop, if you did not restrict your compute client to only your user, we now have a shared pool of compute resources that can be used for everyone's Neurosift jobs, making efficient use of idle CPU/GPU resources.
 
