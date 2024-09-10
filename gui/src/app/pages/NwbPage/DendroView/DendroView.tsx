@@ -1,9 +1,11 @@
 import { DendroJob } from "app/dendro/dendro-types";
-import { FunctionComponent, useEffect, useState } from "react";
+import { timeAgoString } from "app/timeStrings";
+import useRoute, { Route } from "app/useRoute";
+import { FunctionComponent, useCallback, useEffect, useState } from "react";
 import { useNwbFile } from "../NwbFileContext";
-import JobView from "./JobView";
 import {
   getJobProducingOutput,
+  useDownstreamJobsForInput,
   useJobProducingOutput,
 } from "./useJobProducingOutput";
 
@@ -15,15 +17,33 @@ type DendroViewProps = {
 const DendroView: FunctionComponent<DendroViewProps> = ({ width, height }) => {
   const nwbFile = useNwbFile();
   const nwbFileUrl = (nwbFile.sourceUrls || [])[0];
-  const job = useJobProducingOutput(nwbFileUrl);
+  const { job: jobProducingFile, refresh: refreshJobProducingOutput } =
+    useJobProducingOutput(nwbFileUrl);
+  const { jobs: downstreamJobs, refresh: refreshDownstreamJobs } =
+    useDownstreamJobsForInput(nwbFileUrl);
+
+  const { route } = useRoute();
+
+  const handleRefresh = useCallback(() => {
+    refreshJobProducingOutput();
+    refreshDownstreamJobs();
+  }, [refreshJobProducingOutput, refreshDownstreamJobs]);
 
   if (!nwbFile) return <div>No NWB file</div>;
   if (!nwbFileUrl) return <div>No NWB URL</div>;
-  if (job === undefined) {
-    return <div>Loading...</div>;
+  if (jobProducingFile === undefined) {
+    return <div>Loading job producing output...</div>;
   }
-  if (job === null) {
-    return <div>No Dendro provenance for this file.</div>;
+  if (downstreamJobs === undefined) {
+    return <div>Loading downstream jobs...</div>;
+  }
+  if (jobProducingFile === null && downstreamJobs.length === 0) {
+    return (
+      <div>
+        No Dendro provenance for this file.{" "}
+        <button onClick={handleRefresh}>Refresh</button>
+      </div>
+    );
   }
   return (
     <div
@@ -36,12 +56,82 @@ const DendroView: FunctionComponent<DendroViewProps> = ({ width, height }) => {
         overflow: "auto",
       }}
     >
-      <h3>This file was produced by a Dendro job</h3>
-      <JobProvenanceList job={job} />
+      <div style={{ paddingTop: 15 }}>
+        <button onClick={handleRefresh}>Refresh</button>
+      </div>
+      {jobProducingFile && (
+        <div>
+          <h3>This file was produced by a Dendro job</h3>
+          <JobProvenanceList job={jobProducingFile} />
+        </div>
+      )}
       <hr />
-      <JobView job={job} refreshJob={undefined} />
+      {downstreamJobs.length > 0 && (
+        <div>
+          <h3>This file was used as input for the following Dendro jobs</h3>
+          {downstreamJobs.map((job) => (
+            <div key={job.jobId}>
+              <a
+                href={`https://dendro.vercel.app/job/${job.jobId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {job.jobDefinition.processorName}
+              </a>{" "}
+              ({job.status} -{" "}
+              {timeAgoString(
+                job.timestampFinishedSec || job.timestampCreatedSec,
+              )}
+              )
+              <div style={{ paddingLeft: 20 }}>
+                {job.outputFileResults.map((outputFile) => (
+                  <span key={outputFile.name}>
+                    {job.status === "completed" &&
+                    outputFile.fileBaseName.endsWith(".nwb.lindi.tar") ? (
+                      <>
+                        <a
+                          href={createNeurosiftLinkForJobOutput(
+                            route,
+                            outputFile.url,
+                            outputFile.fileBaseName,
+                          )}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {outputFile.name}
+                        </a>
+                      </>
+                    ) : (
+                      <>{outputFile.name}</>
+                    )}{" "}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
+};
+
+const createNeurosiftLinkForJobOutput = (
+  route: Route,
+  url: string,
+  name: string,
+) => {
+  if (route.page !== "nwb") throw new Error("Unexpected route");
+  let ret = `https://neurosift.app/?p=/nwb&url=${url}`;
+  if (route.dandisetId) {
+    ret = `${ret}&dandisetId=${route.dandisetId}`;
+  }
+  if (route.dandisetVersion) {
+    ret = `${ret}&dandisetVersion=${route.dandisetVersion}`;
+  }
+  if (name.endsWith(".lindi.tar") || name.endsWith(".lindi.json")) {
+    ret = `${ret}&st=lindi`;
+  }
+  return ret;
 };
 
 type JobProvenanceListProps = {

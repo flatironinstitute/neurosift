@@ -3,11 +3,15 @@ import {
   FindJobsRequest,
   isFindJobsResponse,
 } from "app/dendro/dendro-types";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiPostDendroRequest } from "./apiPostDendroRequest";
 
 export const useJobProducingOutput = (nwbFileUrl: string | undefined) => {
   const [job, setJob] = useState<DendroJob | null | undefined>(undefined);
+  const [refreshCode, setRefreshCode] = useState(0);
+  const refresh = useCallback(() => {
+    setRefreshCode((c) => c + 1);
+  }, []);
   useEffect(() => {
     let canceled = false;
     setJob(undefined);
@@ -22,8 +26,8 @@ export const useJobProducingOutput = (nwbFileUrl: string | undefined) => {
     return () => {
       canceled = true;
     };
-  }, [nwbFileUrl]);
-  return job;
+  }, [nwbFileUrl, refreshCode]);
+  return { job, refresh };
 };
 
 export const getJobProducingOutput = async (nwbFileUrl: string) => {
@@ -42,4 +46,39 @@ export const getJobProducingOutput = async (nwbFileUrl: string) => {
     return null;
   }
   return jobs[0];
+};
+
+export const useDownstreamJobsForInput = (nwbFileUrl: string) => {
+  const [jobs, setJobs] = useState<DendroJob[]>([]);
+  const [refreshCode, setRefreshCode] = useState(0);
+  const refresh = useCallback(() => {
+    setRefreshCode((c) => c + 1);
+  }, []);
+  useEffect(() => {
+    let canceled = false;
+    setJobs([]);
+    (async () => {
+      const j = await getDownstreamJobsForInput(nwbFileUrl);
+      if (!canceled) {
+        setJobs(j);
+      }
+    })();
+    return () => {
+      canceled = true;
+    };
+  }, [nwbFileUrl, refreshCode]);
+  return { jobs, refresh };
+};
+
+export const getDownstreamJobsForInput = async (nwbFileUrl: string) => {
+  const req: FindJobsRequest = {
+    type: "findJobsRequest",
+    inputFileUrl: nwbFileUrl,
+  };
+  const resp = await apiPostDendroRequest("findJobs", req);
+  if (!isFindJobsResponse(resp)) {
+    console.error("Invalid response", resp);
+    return [];
+  }
+  return resp.jobs;
 };
