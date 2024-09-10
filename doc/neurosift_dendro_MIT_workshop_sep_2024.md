@@ -461,6 +461,9 @@ That's a remote .nwb.lindi.tar file that has embedded references to the remote H
 
 DANDI supports uploading of .avi files, but currently there is no way to preview/stream those files in the browser. Neurosift provides a workaround by using Dendro to precompute .mp4 files associated with portions of those .avi files. [Here is an example](https://neurosift.app/?p=/avi&url=https://api.dandiarchive.org/api/assets/3d760886-c1ac-467d-bd87-3dfd71a5cb65/download/&dandisetId=001084&dandisetVersion=draft).
 
+![image](https://github.com/user-attachments/assets/d0fb4e5f-7a10-4b05-a9a9-f654ced566cb)
+
+
 ## "Hello world" Dendro examples
 
 [Here's an introduction on submitting simple "hello world" jobs and pipelines to Dendro](https://github.com/magland/dendro/blob/main/README.md).
