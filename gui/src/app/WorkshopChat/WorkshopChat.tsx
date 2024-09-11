@@ -99,11 +99,6 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
   useEffect(() => {
     if (!hchatClient) return;
     const handleCommentMessage = (m: PubsubMessage) => {
-      const ttt = getCaughtUpTimestamp();
-      if (m.timestamp < ttt) {
-        // don't accept messages that come before the caught up timestamp
-        return;
-      }
       chatCommentsDispatch({ type: "add", commentPubsubMessage: m });
     };
     hchatClient.onMessage((m: PubsubMessage) => {
@@ -135,6 +130,11 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
         }
       } else if (msg.type === "history") {
         msg.comments.forEach((c: PubsubMessage) => {
+          const ttt = getCaughtUpTimestamp();
+          if (c.timestamp < ttt) {
+            // don't accept history messages that come before the caught up timestamp
+            return;
+          }
           handleCommentMessage(c);
         });
       }
