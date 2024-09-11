@@ -143,7 +143,7 @@ See [remfile](https://github.com/magland/remfile) for more information on loadin
 
 ${backtics}bash
 # Prerequisites:
-pip install lindi
+pip install lindi==0.4.0a2
 ${backtics}
 
 ${backtics}python

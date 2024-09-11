@@ -1,7 +1,8 @@
-import { Key, Note, QuestionMark } from "@mui/icons-material";
+import { Chat, Key, Note, QuestionMark } from "@mui/icons-material";
 import { AppBar, Toolbar } from "@mui/material";
 import {
   FunctionComponent,
+  PropsWithChildren,
   useCallback,
   useEffect,
   useMemo,
@@ -11,9 +12,10 @@ import useRoute from "./useRoute";
 import ApiKeysWindow from "./ApiKeysWindow/ApiKeysWindow";
 import { SmallIconButton } from "@fi-sci/misc";
 import ModalWindow from "@fi-sci/modal-window";
+import PopupChatWindow from "./PopupChatWindow/PopupChatWindow";
 
 type Props = {
-  // none
+  onWorkshopChat: () => void;
 };
 
 export const applicationBarHeight = 50;
@@ -23,7 +25,7 @@ const logoUrl = window.location.hostname.includes("github.io")
   ? `/neurosift/neurosift-logo.png`
   : `/neurosift-logo.png`;
 
-const ApplicationBar: FunctionComponent<Props> = () => {
+const ApplicationBar: FunctionComponent<Props> = ({ onWorkshopChat }) => {
   const { setRoute } = useRoute();
 
   const onHome = useCallback(() => {
@@ -82,6 +84,14 @@ const ApplicationBar: FunctionComponent<Props> = () => {
               icon={<QuestionMark />}
               onClick={() => setRoute({ page: "about" })}
               title={`About Neurosift`}
+            />
+          </span>
+          &nbsp;&nbsp;&nbsp;&nbsp;
+          <span style={{ color: "white" }}>
+            <SmallIconButton
+              icon={<Chat />}
+              onClick={onWorkshopChat}
+              title={`Open the workshop chat window`}
             />
           </span>
           &nbsp;&nbsp;&nbsp;&nbsp;

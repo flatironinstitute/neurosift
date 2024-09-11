@@ -19,6 +19,9 @@ import PluginPage from "./pages/PluginPage/PluginPage";
 import AviPage from "./pages/AviPage/AviPage";
 import { Analytics } from "@vercel/analytics/react";
 import RandomFeedbackForm from "./Feedback/RandomFeedbackForm";
+import { useModalWindow } from "@fi-sci/modal-window";
+import PopupChatWindow from "./PopupChatWindow/PopupChatWindow";
+import WorkshopChat from "./WorkshopChat/WorkshopChat";
 
 type Props = {
   // none
@@ -32,6 +35,11 @@ const MainWindow: FunctionComponent<Props> = () => {
   useEffect(() => {
     setCustomStatusBarElement("route", <NotUsingCookiesNotice />);
   }, [setCustomStatusBarElement]);
+  const {
+    visible: workshopChatVisible,
+    handleOpen: openWorkshopChat,
+    handleClose: closeWorkshopChat,
+  } = useModalWindow();
   return (
     <div
       className="MainWindow"
@@ -46,7 +54,12 @@ const MainWindow: FunctionComponent<Props> = () => {
           overflow: "hidden",
         }}
       >
-        <ApplicationBar />
+        <ApplicationBar
+          onWorkshopChat={() => {
+            if (workshopChatVisible) closeWorkshopChat();
+            else openWorkshopChat();
+          }}
+        />
       </div>
       <div
         className="MainWindowContent"
@@ -109,6 +122,9 @@ const MainWindow: FunctionComponent<Props> = () => {
       )}
       <Analytics />
       <RandomFeedbackForm />
+      <PopupChatWindow visible={workshopChatVisible}>
+        <WorkshopChat width={width} height={height} />
+      </PopupChatWindow>
     </div>
   );
 };
