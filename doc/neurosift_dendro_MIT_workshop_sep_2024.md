@@ -366,3 +366,109 @@ When the job is complete, you'll see the Autocorrelograms! And in the future, an
 
 For those in this workshop, if you did not restrict your compute client to only your user, we now have a shared pool of compute resources that can be used for everyone's Neurosift jobs, making efficient use of idle CPU/GPU resources.
 
+## Dendro Provenance Tab in Neurosift
+
+Let's [go back to our 000458 example](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/d966b247-2bac-4ef0-8b80-aae010f50c98/download/&dandisetId=000458&dandisetVersion=0.230317.0039) and click on the Dendro tab.
+
+![image](https://github.com/user-attachments/assets/f83cb41e-1e83-4844-b0f1-797efc0be7cd)
+
+You can see that this file was used as input for two Dendro jobs. You can click on those to see the job details.
+
+Now check out [this example which is the result of spike sorting](https://neurosift.app/?p=/nwb&url=https://tempory.net/f/dendro/f/hello_world_service/hello_neurosift/spike_sorting_post_processing/JVSA4wyX1YGz7SQdesmM/output/post.nwb.lindi.tar&dandisetId=000409&dandisetVersion=draft&st=lindi). Click on the Dendro tab to see the provenance pipeline of the files that were used to generate this output.
+
+![image](https://github.com/user-attachments/assets/36d2f729-44e9-4c90-8e87-b1ea1e721c56)
+
+## CEBRA embedding example
+
+[CEBRA](https://cebra.ai/) is a machine-learning method that can be used to compress time series in a way that reveals otherwise hidden structures in the variability of the data.
+
+Let's take a look at
+
+> [Dandiset 000140](https://dandiarchive.org/dandiset/000140/draft) -- MC_Maze_Small: macaque primary motor and dorsal premotor cortex spiking activity during delayed reaching
+
+[Open the one session in Neurosift](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/7821971e-c6a4-4568-8773-1bfa205c13f8/download/&dandisetId=000140&dandisetVersion=draft)
+
+![image](https://github.com/user-attachments/assets/d4182bdf-5abe-4dd4-8f57-0e6656f06dbe)
+
+We've got a trials table (100 trials), three SpatialSeries objects (cursor_pos, eye_pos, hand_pos), and 142 neural Units.
+
+Click on the "Units" link and then the "CEBRA" tab. Here you can queue up a job to compute a CEBRA embedding for the Units.
+
+![image](https://github.com/user-attachments/assets/a7fe1fa7-2299-4e9a-9447-d444ee29cabd)
+
+This produces a new NWB file with the CEBRA embedding added on as a new TimeSeries object. Click on the "View output in Neurosift" link to view the output file.
+
+![image](https://github.com/user-attachments/assets/31d7a591-f783-45e3-87e2-aef71f3e1672)
+
+Notice there is a new object at processing/CEBRA/embedding.
+
+Tick the checkboxes for "trials and "embedding" and then click "View 2 items" in the left panel to get a synchronized view of the trials and the CEBRA embedding.
+
+![image](https://github.com/user-attachments/assets/abf98469-e680-40f6-af9f-7e6eff60b228)
+
+You can see that the embedding has periodic structure that matches the trial structure! This is significant because in this case we did not provide the trial structure or the behavioral data to the CEBRA process. It was able to infer the trial structure from the neural data alone.
+
+## LINDI - output NWB files contain references to the input NWB files
+
+In that last CEBRA example, the input was an NWB file from DANDI, and the output was a new NWB file containing all the information and data from the input file plus the CEBRA embedding. This was a relatively small file, but what happens when the input file is very large (e.g., contains raw electrophysiology data)? That's where LINDI comes in.
+
+[Read more about LINDI here](https://github.com/NeurodataWithoutBorders/lindi/tree/additional-url-resolver). Note that this link points to a development branch of LINDI that describes the features that Dendro uses. It is not yet agreed upon and settled. Hopefully this will merge into the main branch soon.
+
+Still to figure out: whether we will have LINDI/Dandi integration and what that will look like.
+
+For now you can use the lindi Python package to read .lindi.json and .lindi.tar files as though they were HDF5 files, and you can even use pynwb!
+
+For example, to load that embedding object in Python, do the following.
+* [Open it in Neurosift](https://neurosift.app/?p=/nwb&url=https://tempory.net/f/dendro/f/hello_world_service/hello_cebra/cebra_nwb_embedding_6/ujOk88BJmLM1zjGH4Xwr/output/output.nwb.lindi.tar&dandisetId=000140&dandisetVersion=draft&st=lindi&tab=neurodata-item:/processing/CEBRA/embedding|TimeSeries)
+* Click on the "Load in Python" link in the left panel.
+
+You should see something like this:
+
+```python
+import lindi
+
+url = 'https://tempory.net/f/dendro/f/hello_world_service/hello_cebra/cebra_nwb_embedding_6/ujOk88BJmLM1zjGH4Xwr/output/output.nwb.lindi.tar'
+
+# Load the remote file
+f = lindi.LindiH5pyFile.from_lindi_file(url)
+
+# load the neurodata object
+X = f['/processing/CEBRA/embedding']
+
+starting_time = X['starting_time'][()]
+rate = X['starting_time'].attrs['rate']
+data = X['data']
+
+print(f'starting_time: {starting_time}')
+print(f'rate: {rate}')
+print(f'data shape: {data.shape}')
+```
+
+You can then do this using pynwb:
+
+```python
+import pynwb
+
+io = pynwb.NWBHDF5IO(file=f, mode='r')
+nwbfile = io.read()
+embedding = nwbfile.processing['CEBRA']['embedding']
+print(embedding)]
+```
+
+That's a remote .nwb.lindi.tar file that has embedded references to the remote HDF5 .nwb file on DANDI, and we are able to load it as though it were a local .nwb file!
+
+## Viewing DANDI .avi video files
+
+DANDI supports uploading of .avi files, but currently there is no way to preview/stream those files in the browser. Neurosift provides a workaround by using Dendro to precompute .mp4 files associated with portions of those .avi files. [Here is an example](https://neurosift.app/?p=/avi&url=https://api.dandiarchive.org/api/assets/3d760886-c1ac-467d-bd87-3dfd71a5cb65/download/&dandisetId=001084&dandisetVersion=draft).
+
+![image](https://github.com/user-attachments/assets/d0fb4e5f-7a10-4b05-a9a9-f654ced566cb)
+
+
+## "Hello world" Dendro examples
+
+[Here's an introduction on submitting simple "hello world" jobs and pipelines to Dendro](https://github.com/magland/dendro/blob/main/README.md).
+
+For creating your own containerized Dendro apps, [check out these examples](https://github.com/magland/dendro/tree/main/apps).
+
+## Spike sorting
+
