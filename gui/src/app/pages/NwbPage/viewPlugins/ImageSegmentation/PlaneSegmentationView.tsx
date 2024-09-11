@@ -61,7 +61,10 @@ class PlaneSegmentationClient {
   get shape() {
     if (this.#imageMaskDataset) return this.#imageMaskDataset.shape;
     else if (this.#pixelMaskDataset) {
-      if (!this.#pixelMaskImageSize) throw Error(`No pixel mask image size`);
+      if (!this.#pixelMaskImageSize) {
+        console.error(`No pixel mask image size`);
+        return [0, 0, 0]; // see comment above
+      }
       return [
         this.#pixelMaskIndex!.length,
         this.#pixelMaskImageSize[0],
