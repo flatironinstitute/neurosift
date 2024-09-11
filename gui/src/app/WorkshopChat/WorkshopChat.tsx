@@ -46,6 +46,8 @@ type ChatCommentAction =
       type: "clear";
     };
 
+const expireTimeMsec = 1000 * 60 * 60 * 1; // 1 hour
+
 const chatCommentsReducer = (
   state: ChatComment[],
   action: ChatCommentAction,
@@ -53,6 +55,10 @@ const chatCommentsReducer = (
   switch (action.type) {
     case "add": {
       const m = action.commentPubsubMessage;
+
+      // Do not add messages that have expired
+      if (m.timestamp < Date.now() - expireTimeMsec) return state;
+
       const msg = JSON.parse(m.messageJson);
       const comment: ChatComment = {
         commentId: m.systemSignature,
