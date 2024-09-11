@@ -99,6 +99,11 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
   useEffect(() => {
     if (!hchatClient) return;
     const handleCommentMessage = (m: PubsubMessage) => {
+      const ttt = getCaughtUpTimestamp();
+      if (m.timestamp < ttt) {
+        // don't accept messages that come before the caught up timestamp
+        return;
+      }
       chatCommentsDispatch({ type: "add", commentPubsubMessage: m });
     };
     hchatClient.onMessage((m: PubsubMessage) => {
