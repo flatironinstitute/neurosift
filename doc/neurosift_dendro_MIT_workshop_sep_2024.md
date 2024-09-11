@@ -1,15 +1,26 @@
-# Neurosift / Dendro Workshop
+# Exploring and Analyzing NWB Datasets on DANDI with Neurosift and Dendro
 
-September, 2024
+**Workshop, McGovern Institute for Brain Research, MIT, September 13th, 2024**
+
+Jeremy Magland
 
 ## Workshop Goals
 
 - Learn how to use Neurosift and Dendro with hands-on examples
-- Plan future projects / extensions
+- Encourage use of NWB and DANDI
+- Plan future development to meet the needs of the neurophysiology community
 
-## Goals of Neurosift and Dendro
+## Overview of Neurosift and Dendro
 
-* Advance cloud visualization and analysis of NWB files on DANDI
+The goal of Neurosift/Dendro is to provide a user-friendly interface for exploring and analyzing DANDI NWB files in a shared and collaborative environment.
+
+* [Neurosift](https://neurosift.app/) is a browser-based tool designed for the visualization of NWB (Neurodata Without Borders) files, especially those hosted on the [DANDI Archive](https://dandiarchive.org/).
+* Neurosift also enables interactive exploration of DANDI.
+* Dendro is a data analysis system that runs containerized jobs on remote or local compute resources.
+* Dendro jobs can be launched either from within Neurosift or using Python scripts.
+* Neurosift, Dendro, and DANDI are integrated to provide a seamless user experience for exploring and analyzing NWB files.
+
+These tools are still at an early stage of development.
 
 ## Setup for workshop
 
@@ -18,8 +29,8 @@ It is highly recommended that you bring your own laptop so you can follow along 
 * Option 1: Run things on Dandihub (recommended)
   - Go to [https://hub.dandiarchive.org](https://hub.dandiarchive.org)
   - **Important:** You'll need to sign up ahead of time because it might take a bit of time to get approved. Please include "Neurosift+Dendro workshop" in the DANDI sign up form.
-  - It is recommended that you select the "Base" server option.
-  - Apptainer is already installed, but you'll need to neurosift and dendro as shown below.
+  - It is recommended that you select the "Base" server option or if it is available **"MIT workshop (tmp)"**
+  - Apptainer is already installed on Dandihub, but you'll need to neurosift and dendro as shown below.
 
 ![image](https://github.com/user-attachments/assets/2ebf70f2-d774-4b78-8bc9-75febc8bca78)
 
@@ -27,10 +38,10 @@ It is highly recommended that you bring your own laptop so you can follow along 
   - Works with Linux, Mac OS, maybe Windows Subsystem for Linux (WSL), and maybe Windows
   - You should install apptainer if you want to run the Dendro processing
 
-Whichever method you are using, you should install Neurosift and Dendro as follows:
+Whichever method you are using, you should install neurosift, dendro, and lindi as follows:
 
 ```bash
-pip install --upgrade neurosift dendro
+pip install --upgrade neurosift dendro lindi==0.4.0a2
 ```
 
 Let's get started!
@@ -105,7 +116,7 @@ The DANDI REST API is open to the public, so Neurosift can also function as an a
 
 ## Efficient streaming of NWB files
 
-* NWB files can be very large > 100 GB, so it's important to be able to loazy-load individual objects without downloading the entire file.
+* NWB files can be very large > 100 GB, so it's important to be able to lazy-load individual objects without downloading the entire file.
 * However, HDF5 was designed to be read locally, so it's not particularly cloud-friendly - inefficient loading of metadata
 * Neurosift uses a WebAssembly/Web Worker method to load remote files relatively efficiently via the browser.
 * But what really speeds things up is the pre-indexing of all the public Dandisets using LINDI.
@@ -302,7 +313,7 @@ Here's where you have a choice. You can:
 * Submit to the default publicly available computation network (might take a while to be picked up by a worker)
 * Host your own Dendro compute client (e.g., on Dandihub) and submit the job specifically to that client.
 
-Let's focus on the second option since it's more interesting and will illuminate how the Dendro system works!
+Let's focus on the second option since it's more interesting and will illustrate how the Dendro system works!
 
 ## Hosting your own Dendro compute client
 
