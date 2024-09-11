@@ -31,11 +31,11 @@ def test1():
     d = np.load('data.npy')
     sample_rate = estimate_sample_rate(ts)
     print(f'Estimated sample rate: {sample_rate} Hz')
-    
+
     # Keep only one channel
     behavior_trace = d[:, 1]
-    
-    # [optional but recommended] Bandpass filter the data 
+
+    # [optional but recommended] Bandpass filter the data
     signal_class = 'jaw_movement'
     settings = BehaviorFun.signal_settings.get(signal_class, BehaviorFun.signal_settings['default'])
     band_pass_cutoffs = settings['band_pass_cutoffs']
@@ -47,12 +47,18 @@ def test1():
     # Compute phase
     phase = BehaviorFun.compute_phase_for_movement(filtered_trace, sample_rate=sample_rate, movement_mask=movement_mask)[0]
 
-    # %%    
+    print(ts[~np.isnan(phase)][:1000])
+    ts_masked = ts[~np.isnan(phase)]
+    phase_masked = phase[~np.isnan(phase)]
+
+    max_t = ts_masked[10_000]
+
+    # %%
     # Plot the data
-    n = 2_500
+    n = 22_500
     fig, ax = plt.subplots()
-    ax.plot(ts[:n], filtered_trace[:n], label='Behavior Trace')
-    ax.plot(ts[:n], phase[:n], label='Phase Trace')
+    ax.plot(ts[ts < max_t], filtered_trace[ts < max_t], label='Behavior Trace')
+    ax.plot(ts_masked[ts_masked < max_t], phase_masked[ts_masked < max_t], label='Phase Trace')
     ax.legend()
     ax.set_xlabel('Time (s)')
     ax.set_ylabel('Signal/Phase')
