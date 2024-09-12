@@ -1,7 +1,13 @@
 import { DendroJob } from "app/dendro/dendro-types";
 import { timeAgoString } from "app/timeStrings";
 import useRoute, { Route } from "app/useRoute";
-import { FunctionComponent, useCallback, useEffect, useState } from "react";
+import {
+  FunctionComponent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useNwbFile } from "../NwbFileContext";
 import {
   getJobProducingOutput,
@@ -69,71 +75,7 @@ const DendroView: FunctionComponent<DendroViewProps> = ({ width, height }) => {
       {downstreamJobs.length > 0 && (
         <div>
           <h3>This file was used as input for the following Dendro jobs</h3>
-          {downstreamJobs.map((job) => (
-            <div key={job.jobId}>
-              <a
-                href={`https://dendro.vercel.app/job/${job.jobId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {job.jobDefinition.processorName}
-              </a>{" "}
-              ({job.status} -{" "}
-              {timeAgoString(
-                job.timestampFinishedSec || job.timestampCreatedSec,
-              )}
-              )
-              <div style={{ paddingRight: 20 }}>
-                {job.jobDefinition.inputFiles.map((inputFile) => (
-                  <span key={inputFile.url}>
-                    {job.isRunnable &&
-                    (inputFile.fileBaseName.endsWith(".nwb") ||
-                      inputFile.fileBaseName.endsWith(".nwb.lindi.tar")) ? (
-                      <>
-                        <a
-                          href={createNeurosiftLinkForJobInputOrOutput(
-                            route,
-                            inputFile.url,
-                            inputFile.fileBaseName,
-                          )}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {inputFile.name}
-                        </a>
-                      </>
-                    ) : (
-                      <>{inputFile.name}</>
-                    )}{" "}
-                  </span>
-                ))}
-              </div>
-              <div style={{ paddingLeft: 20 }}>
-                {job.outputFileResults.map((outputFile) => (
-                  <span key={outputFile.name}>
-                    {job.status === "completed" &&
-                    outputFile.fileBaseName.endsWith(".nwb.lindi.tar") ? (
-                      <>
-                        <a
-                          href={createNeurosiftLinkForJobInputOrOutput(
-                            route,
-                            outputFile.url,
-                            outputFile.fileBaseName,
-                          )}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {outputFile.name}
-                        </a>
-                      </>
-                    ) : (
-                      <>{outputFile.name}</>
-                    )}{" "}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
+          <ProvenanceJobsView jobList={downstreamJobs} />
         </div>
       )}
     </div>
@@ -169,71 +111,116 @@ type JobProvenanceListProps = {
 const JobProvenanceList: FunctionComponent<JobProvenanceListProps> = ({
   job,
 }) => {
-  const { route } = useRoute();
   const jobList = useJobProvenanceList(job);
+  return <ProvenanceJobsView jobList={jobList} />;
+};
+
+type ProvenanceJobsViewProps = {
+  jobList: DendroJob[];
+};
+
+const ProvenanceJobsView: FunctionComponent<ProvenanceJobsViewProps> = ({
+  jobList,
+}) => {
+  const { route } = useRoute();
+  const nwbFile = useNwbFile();
+  if (!nwbFile)
+    throw Error("Unexpected: nwbFile is undefined (no context provider)");
+
+  const nwbUrl = useMemo(() => {
+    return (nwbFile.sourceUrls || [])[0];
+  }, [nwbFile]);
   return (
     <div>
-      {jobList
-        .slice()
-        .reverse()
-        .map((job, i) => (
-          <div key={job.jobId}>
-            <div>
-              <a
-                href={`https://dendro.vercel.app/job/${job.jobId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {job.jobDefinition.processorName}
-              </a>
-            </div>
-            {job.jobDefinition.inputFiles.map((inputFile) => (
-              <div key={inputFile.url} style={{ paddingLeft: 20 }}>
-                {job.isRunnable &&
-                (inputFile.fileBaseName.endsWith(".nwb") ||
-                  inputFile.fileBaseName.endsWith(".nwb.lindi.tar")) ? (
-                  <>
-                    <a
-                      href={createNeurosiftLinkForJobInputOrOutput(
-                        route,
-                        inputFile.url,
-                        inputFile.fileBaseName,
-                      )}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {inputFile.name}
-                    </a>
-                  </>
-                ) : (
-                  <>{inputFile.name}</>
-                )}{" "}
-              </div>
+      <table className="nwb-table" style={{maxWidth: 800}}>
+        <thead>
+          <tr>
+            <th>Processor</th>
+            <th>Status</th>
+            <th>Submitted</th>
+            <th>Inputs</th>
+            <th>Outputs</th>
+          </tr>
+        </thead>
+        <tbody>
+          {jobList
+            .slice()
+            .reverse()
+            .map((job, i) => (
+              <tr key={job.jobId}>
+                <td>
+                  <a
+                    href={`https://dendro.vercel.app/job/${job.jobId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {job.jobDefinition.processorName}
+                  </a>
+                </td>
+                <td>{job.status}</td>
+                <td>{timeAgoString(job.timestampCreatedSec)}</td>
+                <td>
+                  {job.jobDefinition.inputFiles.map((inputFile) => (
+                    <span key={inputFile.url}>
+                      {inputFile.url === nwbUrl ? (
+                        <>{inputFile.name} (this file)</>
+                      ) : job.isRunnable &&
+                        (inputFile.fileBaseName.endsWith(".nwb") ||
+                          inputFile.fileBaseName.endsWith(".nwb.lindi.tar")) ? (
+                        <>
+                          <a
+                            href={createNeurosiftLinkForJobInputOrOutput(
+                              route,
+                              inputFile.url,
+                              inputFile.fileBaseName,
+                            )}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {inputFile.name}
+                          </a>
+                        </>
+                      ) : (
+                        <>{inputFile.name}</>
+                      )}{" "}
+                    </span>
+                  ))}
+                </td>
+                <td>
+                  {job.outputFileResults.map((outputFile) => (
+                    <span key={outputFile.name}>
+                      {job.status === "completed" &&
+                      outputFile.fileBaseName.endsWith(".nwb.lindi.tar") ? (
+                        <>
+                          {outputFile.url === nwbUrl ? (
+                            <>
+                              {outputFile.name}
+                              {" (this file)"}
+                            </>
+                          ) : (
+                            <a
+                              href={createNeurosiftLinkForJobInputOrOutput(
+                                route,
+                                outputFile.url,
+                                outputFile.fileBaseName,
+                              )}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {outputFile.name}
+                            </a>
+                          )}
+                        </>
+                      ) : (
+                        <>{outputFile.name}</>
+                      )}{" "}
+                    </span>
+                  ))}
+                </td>
+              </tr>
             ))}
-            {job.outputFileResults.map((outputFile) => (
-              <div key={outputFile.name} style={{ paddingLeft: 20 }}>
-                {job.status === "completed" &&
-                outputFile.fileBaseName.endsWith(".nwb.lindi.tar") ? (
-                  <>
-                    <a
-                      href={createNeurosiftLinkForJobInputOrOutput(
-                        route,
-                        outputFile.url,
-                        outputFile.fileBaseName,
-                      )}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {outputFile.name}
-                    </a>
-                  </>
-                ) : (
-                  <>{outputFile.name}</>
-                )}{" "}
-              </div>
-            ))}
-          </div>
-        ))}
+        </tbody>
+      </table>
     </div>
   );
 };

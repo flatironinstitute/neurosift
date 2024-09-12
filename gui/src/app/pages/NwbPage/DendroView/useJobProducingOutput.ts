@@ -73,6 +73,7 @@ export const useDownstreamJobsForInput = (nwbFileUrl: string) => {
 export const getDownstreamJobsForInput = async (nwbFileUrl: string) => {
   const req: FindJobsRequest = {
     type: "findJobsRequest",
+    serviceName: "hello_world_service",
     inputFileUrl: nwbFileUrl,
   };
   const resp = await apiPostDendroRequest("findJobs", req);
