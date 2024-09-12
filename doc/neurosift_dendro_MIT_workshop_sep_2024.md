@@ -636,4 +636,54 @@ If we succeed, Neurosift/Dendro will:
 * **Provide visualization tools**: Facilitate comparison of results from different algorithms and parameter settings.
 * **Enable online web-based curation**: Allow for transparent curation processes and easy sharing with collaborators via links.
 
-> Will finish this section shortly
+## Spike sorting example 000463
+
+Let's head over to [Dandiset 000463 - Electrophysiological Recordings in Anesthetized Rats in the Primary Somatosensory Cortex with Phased Ultrasound Array Stimulation](https://neurosift.app/?p=/dandiset&dandisetId=000463&dandisetVersion=draft)
+
+Open the [first session in Neurosift](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/2e6b590a-a2a4-4455-bb9b-45cc3d7d7cc0/download/&dandisetId=000463&dandisetVersion=draft).
+
+We've got an ElectricalSeries with 32 channels for 9 minutes. Good to start small.
+
+![image](https://github.com/user-attachments/assets/54a8577a-9495-459a-b24c-401958f7d882)
+
+Click to open this ElectricalSeries, set number of visible channels to 32, increase the spacing between the channels, and zoom in to see the traces.
+
+![image](https://github.com/user-attachments/assets/0f685a96-7d80-4ff6-8b94-8166b2e4abe0)
+
+Next head over to the "Ephys Summary" tab. It looks like a Dendro job has already been executed there, so you should see estimated firing rates and power spectra for the electrodes. This will give an idea of which channels to include in the sorting.
+
+![image](https://github.com/user-attachments/assets/32761df2-51c4-46e7-bac6-f4a8a225ef9f)
+
+Now click on the "Spike Sorting (WIP)" tab. There are three steps in the spike sorting pipeline:
+
+* Prepare dataset (preprocessing)
+  - Limit the duration (for testing)
+  - Select a subset of channels
+  - Specify bandpass filter parameters
+  - Specify a lossy compression ratio (efficient storage)
+* Spike sorting
+  - Choose algorithm (for now Kilosort 4 or MountainSort 5). Note that Kilosort requires a GPU which is not always convenient. That's why we provide MountainSort as an option, because this is a CPU-based sorter.
+  - Select sorting parameters. For now during testing these are very limited. The plan is to have presets based on the type of data.
+  - Uses SpikeInterface wrappers to algorithms.
+* Post-processing
+  - Populates the Units table with average waveforms, autocorrelograms, and a bunch of quality metrics from SpikeInterface.
+
+![image](https://github.com/user-attachments/assets/efe132fb-b7a6-48cd-92d5-c9bfb98808e3)
+
+The interface is pretty clunky at this point and difficult to navigate. That should improve over time.
+
+Drill down to one of the post processing results and click "View output in Neurosift".
+
+You will see a new units table in `processing/ecephys/units_mountainsort5`. This has the spike trains, quality metrics, and other data needed to visualize autocorrelograms and average waveforms.
+
+![image](https://github.com/user-attachments/assets/692242ad-cf31-4e4e-8d9a-addb0a91ec33)
+
+In this particular example, Neurosift only finds two units, and Kilosort 4 crashes (I think it can't handle fewer than 64 electrodes). As mentioned, spike sorting is a challenging business.
+
+## Spike sorting with neuropixels: Dandiset 000409
+
+> Will finish this section soon.
+
+
+
+
