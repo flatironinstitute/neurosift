@@ -177,6 +177,8 @@ const DynamicTableView: FunctionComponent<Props> = ({
     const load = async () => {
       if (!colnames) return;
       setLoading(true);
+      let timer = Date.now();
+      let toDispatch: { key: string; data: any[] }[] = [];
       for (const colname of colnames) {
         const ds0 = await nwbFile.getDataset(path + "/" + colname);
         if (!ds0) {
@@ -237,7 +239,18 @@ const DynamicTableView: FunctionComponent<Props> = ({
             }
           }
         }
-        dataDispatch({ type: "set", key: colname, data: Array.from(d as any) });
+        toDispatch.push({ key: colname, data: Array.from(d as any) });
+        const elapsed = Date.now() - timer;
+        if (elapsed > 500) {
+          timer = Date.now();
+          for (const { key, data } of toDispatch) {
+            dataDispatch({ type: "set", key, data });
+          }
+          toDispatch = [];
+        }
+      }
+      for (const { key, data } of toDispatch) {
+        dataDispatch({ type: "set", key, data });
       }
       setLoading(false);
     };
@@ -314,6 +327,8 @@ const DynamicTableView: FunctionComponent<Props> = ({
       const valB = b.columnValues[primaryColIndex];
       if (valA === undefined) return 1;
       if (valB === undefined) return -1;
+      if (isNaN(valA)) return 1;
+      if (isNaN(valB)) return -1;
       if (valA < valB) return primary.ascending ? -1 : 1;
       if (valA > valB) return primary.ascending ? 1 : -1;
       if (secondaryColIndex >= 0 && secondary) {
@@ -347,8 +362,10 @@ const DynamicTableView: FunctionComponent<Props> = ({
     }
   }, [colnames, group]);
 
+  const [maxNumCellsToView, setMaxNumCellsToView] = useState(20_000);
+
   const sortedRowItemsAbbreviated = useMemo(() => {
-    const maxLength = 20_000 / (colnames?.length || 1);
+    const maxLength = maxNumCellsToView / (colnames?.length || 1);
     if (sortedRowItems.length < maxLength) {
       return sortedRowItems;
     }
@@ -357,7 +374,7 @@ const DynamicTableView: FunctionComponent<Props> = ({
       ret.push(sortedRowItems[i]);
     }
     return ret;
-  }, [sortedRowItems, colnames]);
+  }, [sortedRowItems, colnames, maxNumCellsToView]);
 
   const handleExportAsCsv = useCallback(() => {
     if (!validColumnNames) return;
@@ -479,6 +496,19 @@ const DynamicTableView: FunctionComponent<Props> = ({
               ))}
             </tr>
           ))}
+          {sortedRowItemsAbbreviated.length < sortedRowItems.length && (
+            <tr>
+              <td colSpan={colnames.length}>
+                <div style={{ textAlign: "left" }}>
+                  <button
+                    onClick={() => setMaxNumCellsToView((x) => x + 20_000)}
+                  >
+                    Show more
+                  </button>
+                </div>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
       <ModalWindow visible={columnInfoVisible} onClose={closeColumnInfo}>
