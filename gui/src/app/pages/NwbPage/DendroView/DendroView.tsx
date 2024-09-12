@@ -91,7 +91,7 @@ const DendroView: FunctionComponent<DendroViewProps> = ({ width, height }) => {
                       inputFile.fileBaseName.endsWith(".nwb.lindi.tar")) ? (
                       <>
                         <a
-                          href={createNeurosiftLinkForJobOutput(
+                          href={createNeurosiftLinkForJobInputOrOutput(
                             route,
                             inputFile.url,
                             inputFile.fileBaseName,
@@ -115,7 +115,7 @@ const DendroView: FunctionComponent<DendroViewProps> = ({ width, height }) => {
                     outputFile.fileBaseName.endsWith(".nwb.lindi.tar") ? (
                       <>
                         <a
-                          href={createNeurosiftLinkForJobOutput(
+                          href={createNeurosiftLinkForJobInputOrOutput(
                             route,
                             outputFile.url,
                             outputFile.fileBaseName,
@@ -140,10 +140,10 @@ const DendroView: FunctionComponent<DendroViewProps> = ({ width, height }) => {
   );
 };
 
-const createNeurosiftLinkForJobOutput = (
+const createNeurosiftLinkForJobInputOrOutput = (
   route: Route,
   url: string,
-  name: string,
+  fileBaseName: string,
 ) => {
   if (route.page !== "nwb") throw new Error("Unexpected route");
   let ret = `https://neurosift.app/?p=/nwb&url=${url}`;
@@ -153,7 +153,10 @@ const createNeurosiftLinkForJobOutput = (
   if (route.dandisetVersion) {
     ret = `${ret}&dandisetVersion=${route.dandisetVersion}`;
   }
-  if (name.endsWith(".lindi.tar") || name.endsWith(".lindi.json")) {
+  if (
+    fileBaseName.endsWith(".lindi.tar") ||
+    fileBaseName.endsWith(".lindi.json")
+  ) {
     ret = `${ret}&st=lindi`;
   }
   return ret;
@@ -166,6 +169,7 @@ type JobProvenanceListProps = {
 const JobProvenanceList: FunctionComponent<JobProvenanceListProps> = ({
   job,
 }) => {
+  const { route } = useRoute();
   const jobList = useJobProvenanceList(job);
   return (
     <div>
@@ -190,7 +194,11 @@ const JobProvenanceList: FunctionComponent<JobProvenanceListProps> = ({
                   inputFile.fileBaseName.endsWith(".nwb.lindi.tar")) ? (
                   <>
                     <a
-                      href={inputFile.url}
+                      href={createNeurosiftLinkForJobInputOrOutput(
+                        route,
+                        inputFile.url,
+                        inputFile.fileBaseName,
+                      )}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -208,7 +216,11 @@ const JobProvenanceList: FunctionComponent<JobProvenanceListProps> = ({
                 outputFile.fileBaseName.endsWith(".nwb.lindi.tar") ? (
                   <>
                     <a
-                      href={outputFile.url}
+                      href={createNeurosiftLinkForJobInputOrOutput(
+                        route,
+                        outputFile.url,
+                        outputFile.fileBaseName,
+                      )}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
