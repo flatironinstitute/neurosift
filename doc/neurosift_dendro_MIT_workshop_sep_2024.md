@@ -6,13 +6,13 @@ Jeremy Magland
 
 ## Workshop Goals
 
-- Learn how to use Neurosift and Dendro with hands-on examples
+- Learn Neurosift and Dendro with hands-on examples
 - Encourage use of NWB and DANDI
 - Plan future development to meet the needs of the neurophysiology community
 
-## Overview of Neurosift and Dendro
+## Objectives of Neurosift and Dendro
 
-The goal of Neurosift/Dendro is to provide a user-friendly interface for exploring and analyzing DANDI NWB files in a shared and collaborative environment.
+The main goal of Neurosift/Dendro is to provide a user-friendly interface for exploring and analyzing DANDI NWB files in a shared and collaborative environment.
 
 * [Neurosift](https://neurosift.app/) is a browser-based tool designed for the visualization of NWB (Neurodata Without Borders) files, especially those hosted on the [DANDI Archive](https://dandiarchive.org/).
 * Neurosift also enables interactive exploration of DANDI.
@@ -20,7 +20,9 @@ The goal of Neurosift/Dendro is to provide a user-friendly interface for explori
 * Dendro jobs can be launched either from within Neurosift or using Python scripts.
 * Neurosift, Dendro, and DANDI are integrated to provide a seamless user experience for exploring and analyzing NWB files.
 
-These tools are still at an early stage of development.
+Developed in collaboration with [CatalystNeuro](https://catalystneuro.com/).
+
+Note: These tools are still at an early stage of development.
 
 ## Setup for workshop
 
@@ -28,7 +30,7 @@ It is highly recommended that you bring your own laptop so you can follow along 
 
 * Option 1: Run things on Dandihub (recommended)
   - Go to [https://hub.dandiarchive.org](https://hub.dandiarchive.org)
-  - **Important:** You'll need to sign up ahead of time because it might take a bit of time to get approved. Please include "Neurosift+Dendro workshop" in the DANDI sign up form.
+  - **Important:** You'll need to sign up ahead of time because it might take a bit of time to get approved. **Please include the "dendro+mit" code in the DANDI sign up form.**
   - It is recommended that you select the "Base" server option or if it is available **"MIT workshop (tmp)"**
   - Apptainer is already installed on Dandihub, but you'll need to neurosift and dendro as shown below.
 
@@ -381,13 +383,13 @@ For those in this workshop, if you did not restrict your compute client to only 
 
 Let's [go back to our 000458 example](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/d966b247-2bac-4ef0-8b80-aae010f50c98/download/&dandisetId=000458&dandisetVersion=0.230317.0039) and click on the Dendro tab.
 
-![image](https://github.com/user-attachments/assets/f83cb41e-1e83-4844-b0f1-797efc0be7cd)
+![image](https://github.com/user-attachments/assets/f4d3ca3e-0fa1-46dc-8cde-7f3954a3ea35)
 
 You can see that this file was used as input for two Dendro jobs. You can click on those to see the job details.
 
 Now check out [this example which is the result of spike sorting](https://neurosift.app/?p=/nwb&url=https://tempory.net/f/dendro/f/hello_world_service/hello_neurosift/spike_sorting_post_processing/JVSA4wyX1YGz7SQdesmM/output/post.nwb.lindi.tar&dandisetId=000409&dandisetVersion=draft&st=lindi). Click on the Dendro tab to see the provenance pipeline of the files that were used to generate this output.
 
-![image](https://github.com/user-attachments/assets/36d2f729-44e9-4c90-8e87-b1ea1e721c56)
+![image](https://github.com/user-attachments/assets/680b518a-29b4-41b2-89e4-27d38aa4259a)
 
 ## CEBRA embedding example
 
@@ -480,6 +482,139 @@ DANDI supports uploading of .avi files, but currently there is no way to preview
 [Here's an introduction on submitting simple "hello world" jobs and pipelines to Dendro](https://github.com/magland/dendro/blob/main/README.md).
 
 For creating your own containerized Dendro apps, [check out these examples](https://github.com/magland/dendro/tree/main/apps).
+
+## Example: Dandiset 000363
+
+[000363: Mesoscale Activity Map Dataset](https://dandiarchive.org/dandiset/000363/0.231012.2129)
+
+[View Dandiset in Neurosift](https://neurosift.app/?p=/dandiset&dandisetId=000363&dandisetVersion=draft)
+
+Let's explore this example session: [sub-440956/sub-440956_ses-20190208T133600_behavior+ecephys+ogen.nwb](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/0eab806c-c5c3-4d01-bd7c-15e328a7e923/download/&dandisetId=000363&dandisetVersion=draft)
+
+Behavior timeseries from DeepLabCut: Jaw tracking, Nose tracking, and Tongue tracking:
+
+![image](https://github.com/user-attachments/assets/1bf9ef88-e887-437d-bb17-7238d84752c4)
+
+![image](https://github.com/user-attachments/assets/9623375e-3bc2-4bc9-a11c-5df5a88707d5)
+
+
+Table of trials:
+
+![image](https://github.com/user-attachments/assets/7af887f4-2aaf-4e33-a806-80e5b0afc4a1)
+
+1735 Units:
+
+![image](https://github.com/user-attachments/assets/b9eca106-13a0-4ff7-b037-eb3737d4b4ce)
+
+Task from Vincent Prevosto:
+
+* Create a phase timeseries for each behavior and add to the NWB file
+* Generate phase tuning curves for each unit and record tuned phase and p-value in the Units table.
+
+We created a special Dendro function to do perform these tasks. [Here is the source code](https://github.com/magland/dendro/blob/main/apps/hello_neurosift/TuningAnalysis000363/TuningAnalysis000363.py).
+
+We then submitted this custom job using the following Python script:
+
+```python
+from dendro.client import submit_job, DendroJobDefinition, DendroJobRequiredResources, DendroJobInputFile, DendroJobOutputFile, DendroJobParameter
+
+# https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/0eab806c-c5c3-4d01-bd7c-15e328a7e923/download/&dandisetId=000363&dandisetVersion=draft
+input_url = 'https://api.dandiarchive.org/api/assets/0eab806c-c5c3-4d01-bd7c-15e328a7e923/download/'
+
+service_name = 'hello_world_service'
+app_name = 'hello_neurosift'
+processor_name = 'tuning_analysis_000363'
+job_definition = DendroJobDefinition(
+    appName=app_name,
+    processorName=processor_name,
+    inputFiles=[
+        DendroJobInputFile(
+            name='input',
+            url=input_url,
+            fileBaseName='input.nwb'
+        )
+    ],
+    outputFiles=[
+        DendroJobOutputFile(
+            name='output',
+            fileBaseName='output.nwb.lindi.tar'
+        )
+    ],
+    parameters=[
+        DendroJobParameter(
+            name='units_path',
+            value='/units'
+        ),
+        DendroJobParameter(
+            name='behavior_paths',
+            value=[
+                '/acquisition/BehavioralTimeSeries/Camera0_side_JawTracking',
+                '/acquisition/BehavioralTimeSeries/Camera0_side_NoseTracking',
+                '/acquisition/BehavioralTimeSeries/Camera0_side_TongueTracking'
+            ]
+        ),
+        DendroJobParameter(
+            name='behavior_dimensions',
+            value=[
+                1,
+                1,
+                1
+            ]
+        ),
+        DendroJobParameter(
+            name='behavior_output_prefixes',
+            value=[
+                'jaw',
+                'nose',
+                'tongue'
+            ]
+        )
+    ]
+)
+required_resources = DendroJobRequiredResources(
+    numCpus=4,
+    numGpus=0,
+    memoryGb=4,
+    timeSec=60 * 50
+)
+
+job = submit_job(
+    service_name=service_name,
+    job_definition=job_definition,
+    required_resources=required_resources,
+    target_compute_client_ids=None,
+    tags=[],
+    skip_cache=False,
+    rerun_failing=True,
+    delete_failing=True
+)
+
+print(job.job_url, job.status)
+```
+
+To see the results, go to the DENDRO tab [in our example](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/0eab806c-c5c3-4d01-bd7c-15e328a7e923/download/&dandisetId=000363&dandisetVersion=draft).
+
+![image](https://github.com/user-attachments/assets/db11af70-5391-4ceb-9a1a-5222ac2a350d)
+
+Click on the "output" for the tuning_analysis_000363 job.
+
+It's the same NWB file but with some additional objects
+
+![image](https://github.com/user-attachments/assets/bc974e3b-9aaa-4129-b0a8-d95d525d8211)
+
+Tick the two checkboxes shown in the screenshot, then "View 2 items", and you'll be able to see the computed phase compared with the position of the jaw.
+
+![image](https://github.com/user-attachments/assets/115dee03-de66-4021-ace5-7f41998e49b5)
+
+If you open the Units table and scroll to the right, you'll see new columns for the tuned phase, including the p-values.
+
+![image](https://github.com/user-attachments/assets/3148e99b-5551-48b7-be1c-cc77908f6a6c)
+
+Next steps
+
+* Add a custom phase tuning plot view in Neurosift.
+* Once satisfied with the results, apply this processing to the entire Dandiset.
+* Create tools for aggregating and visualizing the results across the entire Dandiset.
 
 ## Spike sorting
 
