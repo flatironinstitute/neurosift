@@ -132,7 +132,7 @@ const ProvenanceJobsView: FunctionComponent<ProvenanceJobsViewProps> = ({
   }, [nwbFile]);
   return (
     <div>
-      <table className="nwb-table" style={{maxWidth: 800}}>
+      <table className="nwb-table" style={{ maxWidth: 800 }}>
         <thead>
           <tr>
             <th>Processor</th>
