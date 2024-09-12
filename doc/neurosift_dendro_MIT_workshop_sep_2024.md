@@ -678,12 +678,47 @@ You will see a new units table in `processing/ecephys/units_mountainsort5`. This
 
 ![image](https://github.com/user-attachments/assets/692242ad-cf31-4e4e-8d9a-addb0a91ec33)
 
-In this particular example, Neurosift only finds two units, and Kilosort 4 crashes (I think it can't handle fewer than 64 electrodes). As mentioned, spike sorting is a challenging business.
+In this particular example, Neurosift only finds two units, and Kilosort 4 crashes (I think it can't handle fewer than 64 electrodes). As mentioned, spike sorting is a challenging business!
 
 ## Spike sorting with neuropixels: Dandiset 000409
 
-> Will finish this section soon.
+Let's head over to [Dandiset 000409 - IBL - Brain Wide Map](https://neurosift.app/?p=/dandiset&dandisetId=000409&dandisetVersion=draft)
+
+Navigate to sub-CSHL045 and the [first session](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/c04f6b30-82bf-40e1-9210-34f0bcd8be24/download/&dandisetId=000409&dandisetVersion=draft).
+
+Click on Acquisition/ElectricalSeriesAp and go to the "Spike Sorting (WIP)" tab.
+
+I selected a 20 minute segment and 64 channels. This time Kilosort 4 worked and found 85 units!
+
+Click on the spike_sorting_post_processing for kilosort4 and then click "View output in Neurosift". Then go to processing/ecephys/units_kilosort4. We can see the autocorrelograms, average waveforms, unit locations, and quality metrics.
+
+![image](https://github.com/user-attachments/assets/5ec96393-e7a6-42ce-a87c-0d49f2422d77)
 
 
+![image](https://github.com/user-attachments/assets/8cbba000-8d5c-4973-9b72-5fc2f6d35aff)
 
 
+![image](https://github.com/user-attachments/assets/32a4578c-3ec2-4ce1-903d-133700bedcff)
+
+
+![image](https://github.com/user-attachments/assets/6f6b41c9-cc84-4e0a-88d7-43aa1eebe494)
+
+To see the spike trains overlaid on top of the electrical series, click on the EphysAndUnits link next to acquisition/ElectricalSeriesAp_pre, and then "EphysAndUnits: /processing/ecephys/units_kilosort4".
+
+![image](https://github.com/user-attachments/assets/3e021f95-0dfc-4db7-8f27-167bbe1cc758)
+
+Increase the number of visible channels, increase the channel separation, sort by number of spikes, select some units, and zoom in.
+
+![image](https://github.com/user-attachments/assets/7c52786b-be50-43b4-9eb3-de01a7106ea9)
+
+So there we have a proof-of-concept for spike sorting with neuropixels data in Neurosift/Dendro!
+
+## Spike sorting: next steps
+
+I'd like to work directly with a lab to see if we can get this working on a larger scale. Please reach out if you are interested.
+
+## Neurosift / Dendro next steps
+
+* Work directly with labs to develop custom processing pipelines and visualizations.
+* Work toward LINDI support in DANDI.
+* Enable convenient upload of downstream results to DANDI.
