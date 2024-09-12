@@ -618,4 +618,4 @@ Next steps
 
 ## Spike sorting
 
-WIP
+I will fill in this section shortly.
