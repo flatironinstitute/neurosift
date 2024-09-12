@@ -30,7 +30,7 @@ It is highly recommended that you bring your own laptop so you can follow along 
 
 * Option 1: Run things on Dandihub (recommended)
   - Go to [https://hub.dandiarchive.org](https://hub.dandiarchive.org)
-  - **Important:** You'll need to sign up ahead of time because it might take a bit of time to get approved. Please include "Neurosift+Dendro workshop" in the DANDI sign up form.
+  - **Important:** You'll need to sign up ahead of time because it might take a bit of time to get approved. **Please include the "dendro+mit" code in the DANDI sign up form.**
   - It is recommended that you select the "Base" server option or if it is available **"MIT workshop (tmp)"**
   - Apptainer is already installed on Dandihub, but you'll need to neurosift and dendro as shown below.
 
