@@ -1,5 +1,11 @@
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
-import { Cancel, Help, QuestionMarkSharp } from "@mui/icons-material";
+import {
+  Cancel,
+  Close,
+  Help,
+  QuestionMarkSharp,
+  Settings,
+} from "@mui/icons-material";
 import { timeAgoString } from "app/timeStrings";
 import {
   generateKeyPair,
@@ -20,6 +26,7 @@ import {
 type WorkshopChatProps = {
   width: number;
   height: number;
+  onClose: () => void;
 };
 
 const channelName = "neurosift.workshop";
@@ -89,6 +96,7 @@ const chatCommentsReducer = (
 const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
   width,
   height,
+  onClose,
 }) => {
   const inputBarHeight = 30;
   const settingsBarHeight = 20;
@@ -242,6 +250,18 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
             window.open(url, "_blank");
           }}
         />
+      </div>
+      <div
+        className="close-button"
+        style={{
+          position: "absolute",
+          width: topBarHeight,
+          height: topBarHeight,
+          top: -3,
+          left: width - topBarHeight,
+        }}
+      >
+        <SmallIconButton icon={<Close />} onClick={onClose} />
       </div>
       <div
         ref={chatContainerRef}
@@ -416,12 +436,11 @@ const SettingsBar: FunctionComponent<SettingsBarProps> = ({
       </Hyperlink>
       &nbsp;&nbsp;&nbsp;&nbsp;
       {
-        <Hyperlink
+        <SmallIconButton
+          icon={<Settings />}
           title="Open advanced settings"
           onClick={() => setAdvancedSettingsVisible((v) => !v)}
-        >
-          ...
-        </Hyperlink>
+        />
       }
       {advancedSettingsVisible && (
         <>

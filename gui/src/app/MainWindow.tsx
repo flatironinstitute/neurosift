@@ -123,7 +123,11 @@ const MainWindow: FunctionComponent<Props> = () => {
       <Analytics />
       <RandomFeedbackForm />
       <PopupChatWindow visible={workshopChatVisible}>
-        <WorkshopChat width={width} height={height} />
+        <WorkshopChat
+          width={width}
+          height={height}
+          onClose={closeWorkshopChat}
+        />
       </PopupChatWindow>
     </div>
   );
