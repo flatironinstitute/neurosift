@@ -483,3 +483,22 @@ For creating your own containerized Dendro apps, [check out these examples](http
 
 ## Spike sorting
 
+Spike sorting is CHALLENGING due to several factors:
+
+* **Resource-intensive**: CPU, GPU, time, and storage.
+* **Parameter uncertainty**: Many parameters must be configured, and there is often no clear guidance on the optimal choices for different types of datasets.
+* **Quality assessment**: Evaluating and demonstrating the quality of the results can be difficult and non-intuitive.
+
+Despite these challenges, we are excited to tackle this problem with Dendro! (It's actually our motivating example.)
+
+Currently in the early proof-of-concept stage, we are looking for labs willing to test it as we continue to refine and develop its capabilities.
+
+If we succeed, Neurosift/Dendro will:
+
+* **Streamline the process**: Easily upload data to DANDI, initiate spike sorting with a single click, and save the output back to DANDI.
+* **Integrate with neurophysiology tools**: Seamlessly connect with tools in the NWB/DANDI ecosystem.
+* **Track provenance**: Ensure complete tracking of data and processing history.
+* **Provide visualization tools**: Facilitate comparison of results from different algorithms and parameter settings.
+* **Enable online web-based curation**: Allow for transparent curation processes and easy sharing with collaborators via links.
+
+> Will finish this section shortly

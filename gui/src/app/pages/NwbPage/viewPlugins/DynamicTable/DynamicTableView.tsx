@@ -387,8 +387,12 @@ const DynamicTableView: FunctionComponent<Props> = ({
           if (val === undefined) return "";
           if (typeof val === "string") {
             return `"${val.replace(/"/g, '""')}"`;
+          } else if (typeof val === "number") {
+            return val;
+          } else {
+            // not supported for now. Note that if this is a list and we naively return the value then there's a problem with commas
+            return "";
           }
-          return val;
         })
         .join(",");
       lines.push(line);
