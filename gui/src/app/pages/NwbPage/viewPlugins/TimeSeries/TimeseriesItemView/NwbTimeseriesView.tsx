@@ -411,6 +411,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
   useEffect(() => {
     if (!worker) return;
     if (!dataSeries) return;
+    console.log(dataSeries);
     worker.postMessage({
       dataSeries,
     });

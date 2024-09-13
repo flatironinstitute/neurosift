@@ -36,9 +36,14 @@ const TimeSeriesViewToolbar: FunctionComponent<Props> = ({
       <NumVisibleChannelsSelector
         totalNumChannels={numChannels}
         value={timeSeriesViewOpts.numVisibleChannels}
-        setValue={(numVisibleChannels) =>
-          setTimeSeriesViewOpts({ ...timeSeriesViewOpts, numVisibleChannels })
+        setValue={(numVisibleChannels, visibleStartChannel) =>
+          setTimeSeriesViewOpts({
+            ...timeSeriesViewOpts,
+            numVisibleChannels,
+            visibleStartChannel,
+          })
         }
+        visibleStartChannel={timeSeriesViewOpts.visibleStartChannel}
       />
       &nbsp;&nbsp;&nbsp;&nbsp;
       <VisibleStartChannelSelector
@@ -95,12 +100,13 @@ const ColorChannelsSelector: FunctionComponent<ColorChannelsSelectorProps> = ({
 type NumVisibleChannelsSelectorProps = {
   totalNumChannels?: number;
   value: number;
-  setValue: (value: number) => void;
+  setValue: (value: number, visibleStartChannel: number) => void;
+  visibleStartChannel: number;
 };
 
 const NumVisibleChannelsSelector: FunctionComponent<
   NumVisibleChannelsSelectorProps
-> = ({ totalNumChannels, value, setValue }) => {
+> = ({ totalNumChannels, value, setValue, visibleStartChannel }) => {
   const opts = [1, 2, 5, 10, 20, 30, 40, 50, 60, 70, 80, 100].filter(
     (x) => !totalNumChannels || x <= totalNumChannels,
   );
@@ -114,7 +120,17 @@ const NumVisibleChannelsSelector: FunctionComponent<
   return (
     <div>
       <span># visible chans:</span>&nbsp;
-      <select value={value} onChange={(e) => setValue(Number(e.target.value))}>
+      <select
+        value={value}
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          let v2 = visibleStartChannel;
+          if (v2 + v > totalNumChannels) {
+            v2 = totalNumChannels - v;
+          }
+          setValue(v, v2);
+        }}
+      >
         {opts.map((opt) => (
           <option key={opt} value={opt}>
             {opt}

@@ -45,7 +45,12 @@ class TimeseriesDatasetChunkingClient {
     }
     const n1 = sum(chunks.map((ch) => (ch[0] || []).length));
     const concatenatedChunk: number[][] = [];
-    const N1 = this.dataset.shape[1] || 1;
+    const N1 =
+      this.dataset.shape.length === 1
+        ? 1
+        : this.o.visibleChannelsRange
+          ? this.o.visibleChannelsRange[1] - this.o.visibleChannelsRange[0]
+          : this.dataset.shape[1] || 1;
     for (let i = 0; i < N1; i++) {
       const x: number[] = [];
       for (let j = 0; j < n1; j++) {
