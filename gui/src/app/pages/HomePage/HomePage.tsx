@@ -19,6 +19,16 @@ const HomePage: FunctionComponent<Props> = ({ width, height }) => {
         remotely, and enables interactive exploration of the DANDI Archive.
       </p>
       <p>
+        <a
+          href="https://github.com/flatironinstitute/neurosift/blob/main/doc/neurosift_dendro_MIT_workshop_sep_2024.md"
+          target="_blank"
+          rel="noreferrer"
+        >
+          MIT Workshop: Exploring and Analyzing NWB Datasets on DANDI with
+          Neurosift and Dendro
+        </a>
+      </p>
+      <p>
         <Hyperlink href="https://github.com/flatironinstitute/neurosift">
           Read more
         </Hyperlink>
