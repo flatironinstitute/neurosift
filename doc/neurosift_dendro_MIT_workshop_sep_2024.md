@@ -12,7 +12,7 @@ Jeremy Magland
 
 ## Objectives of Neurosift and Dendro
 
-The main goal of Neurosift/Dendro is to provide a user-friendly interface for exploring and analyzing DANDI NWB files in a shared and collaborative environment.
+The goal of Neurosift/Dendro is to provide a user-friendly interface for exploring and analyzing DANDI NWB files in a shared and collaborative environment.
 
 * [Neurosift](https://neurosift.app/) is a browser-based tool designed for the visualization of NWB (Neurodata Without Borders) files, especially those hosted on the [DANDI Archive](https://dandiarchive.org/).
 * Neurosift also enables interactive exploration of DANDI.
@@ -31,26 +31,45 @@ It is highly recommended that you bring your own laptop so you can follow along 
 * Option 1: Run things on Dandihub (recommended)
   - Go to [https://hub.dandiarchive.org](https://hub.dandiarchive.org)
   - **Important:** You'll need to sign up ahead of time because it might take a bit of time to get approved. **Please include the "dendro+mit" code in the DANDI sign up form.**
-  - It is recommended that you select the "Base" server option or if it is available **"MIT workshop (tmp)"**
+  - It is recommended that you select the **"MIT workshop (tmp)"** server option if it is available, or the "Base" option.
   - Apptainer is already installed on Dandihub, but you'll need to neurosift and dendro as shown below.
 
-![image](https://github.com/user-attachments/assets/2ebf70f2-d774-4b78-8bc9-75febc8bca78)
+![image](https://github.com/user-attachments/assets/ec224b65-ac05-496b-9d28-c51e2d8cc753)
 
 * Option 2: Run things on your local machine
   - Works with Linux, Mac OS, maybe Windows Subsystem for Linux (WSL), and maybe Windows
   - You should install apptainer if you want to run the Dendro processing
 
-Whichever method you are using, you should install neurosift, dendro, and lindi as follows:
+Whichever method you are using, you should install neurosift, dendro, and lindi. Open a terminal (on Dandihub File -> New -> Terminal) and run the following command.
 
 ```bash
-pip install --upgrade neurosift dendro lindi==0.4.0a2
+pip install --upgrade neurosift dendro lindi==0.4.0a2 pubnub
 ```
 
 Let's get started!
 
+## What is DANDI Archive?
+
+![image](https://github.com/user-attachments/assets/afd803c8-3463-4bb9-960e-dc68f433f2e0)
+
+
+The following is from the [DANDI Archive website](https://www.dandiarchive.org/)
+
+DANDI: Distributed Archives for Neurophysiology Data Integration
+The DANDI platform is supported by the BRAIN Initiative for **publishing, sharing, and processing neurophysiology data**. The archive accepts cellular neurophysiology data including electrophysiology, optophysiology, and behavioral time-series, and images from immunostaining experiments. The platform is now available for data upload and distribution. The storage of data in the archive is also **supported by the Amazon Opendata program**.
+
+As an exercise, **let’s assume you lose all the data in your lab. What would you want from the archive?** Our hope is that your answer to this question, the necessary data and metadata that you need, is at least what we should be storing.
+
+1. A cloud-based platform to store, process, and disseminate data. You can use DANDI to collaborate and publish datasets.
+1. Open access to data to enable secondary uses of data outside the intent of the study.
+1. Optimize data storage and access through partnerships, compression and accessibility technologies.
+1. Enables reproducible practices and publications through data standards such as NWB and BIDS, which provide extensive metadata.
+1. **The platform is not just an endpoint to dump data, it is intended as a living repository that enables collaboration within and across labs, and for others, the entry point for research**.
+
+
 ## What is Neurosift?
 
-* DANDI Archive exploration
+* Alternative DANDI Archive exploration
 * NWB file visualization (remote and local)
 * Runs in browser - no installation required
 * No server backend required (client-only - except for Dendro integration)
@@ -70,6 +89,8 @@ Let's get started!
 
 ![image](https://github.com/user-attachments/assets/28a2d17e-8020-4b1f-9ea6-fc62c828749e)
 
+Click around to explore this file.
+
 ## Neurosift URL
 
 Let's examine the above Neurosift URL
@@ -81,10 +102,10 @@ The `url` query parameter points to the DANDI Archive API. You can point that to
 
 ## Opening local NWB files
 
-You can also view local NWB files
+You can also view local NWB files. This would be on your local machine -- it's not easy to do this on Dandihub.
 
 ```bash
-# One-time install of neurosift
+# One-time install of neurosift (already installed above)
 pip install --upgrade neurosift
 
 # Open the local file (will open a browser window)
@@ -125,9 +146,11 @@ The DANDI REST API is open to the public, so Neurosift can also function as an a
 
 For more information, see the [LINDI project](https://github.com/neurodatawithoutborders/lindi).
 
-For example [open this file](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/25b641ae-5a56-49c2-893c-7dd19d039912/download/&dandisetId=000552&dandisetVersion=0.230630.2304). There is a "Using LINDI" indicator on the left panel meaning that it found the pre-indexed .nwb.lindi.json file in the cloud and used that instead of the .nwb. The .json file efficiently stores all the meta information and references the original file for the data chunks.
+For example [open this 137 GB file](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/8e55b7ac-a085-43c0-9dc9-c577bcbe1824/download/&dandisetId=000409&dandisetVersion=draft). There is a "Using LINDI" indicator on the left panel meaning that it found the pre-indexed .nwb.lindi.json file in the cloud and used that instead of the .nwb. The .json file efficiently stores all the meta information and references the original file for the data chunks.
 
-Here's an example LINDI JSON file for inspection: https://lindi.neurosift.org/dandi/dandisets/000552/assets/47be899c-27a8-4864-a1e9-d7a3f92e522e/nwb.lindi.json
+Here's the corresponding LINDI JSON file for inspection: https://lindi.neurosift.org/dandi/dandisets/000409/assets/8e55b7ac-a085-43c0-9dc9-c577bcbe1824/nwb.lindi.json
+
+LINDI uses a JSON representation of Zarr with external references to large binary chunks.
 
 ## Streaming objects from NWB files using Python
 
@@ -174,6 +197,14 @@ print(label[()])
 #  'Non-REM' 'REM' 'Awake' 'Non-REM' 'Awake']
 ```
 
+Open a Jupyter notebook. In Dandihub this would be File -> New -> Notebook and select Python 3 kernel. Then paste in this code for the first cell and run the cell.
+
+Then run the following line to see the labels data
+
+```python
+print(label[()])
+```
+
 ## Neurosift tabs
 
 What are the different Neurosift tabs?
@@ -195,9 +226,9 @@ What are the checkboxes for?
 
 The RAW tab shows the raw HDF5 structure: groups, datasets, attributes, etc.
 
-(Tip: to inspect the contents of a larger dataset, open the browser developer console and click on the CIRCLE icon. The contents of the dataset will be printed to the console.)
-
 ![image](https://github.com/user-attachments/assets/1be63ee1-d6ee-4b4c-98d7-b28bfb50e696)
+
+Tip: to inspect the contents of a larger dataset, open the browser developer console and click on the CIRCLE icon. The contents of the dataset will be printed to the console. For example in [this example](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/ffcb1836-587e-42f4-887b-50b02948b779/download/&dandisetId=000623&dandisetVersion=0.240227.2023) go to the RAW tab and navigate to processing -> behavior -> Blink -> TimeSeries -> data. Open the browser developer console and click the CIRCLE icon.
 
 ## WIDGETS Tab
 
@@ -219,7 +250,7 @@ Will discuss later.
 
 Finally, the ANNOTATIONS tab is an advanced feature that lets you add annotations (notes) to Dandisets, NWB files, and individual Neurodata objects. Other users will be able to see your annotations.
 
-Note: this is an experimental feature and is subject to change / deletion.
+Note: this is an experimental feature and is subject to change / deletion. We are not going to cover it in this tutorial.
 
 ## Advanced DANDI Queries
 

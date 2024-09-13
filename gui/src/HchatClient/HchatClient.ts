@@ -232,7 +232,7 @@ const solveChallenge = async (
   while (true) {
     const elapsed2 = Date.now() - timer2;
     if (elapsed2 > 100) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 20));
       timer2 = Date.now();
     }
     const overallElapsed = Date.now() - overallTimer;
@@ -249,7 +249,7 @@ const solveChallenge = async (
     ) {
       if (o.verbose) {
         console.info(
-          `Challenge with difficulty ${difficulty} solved in ${overallElapsed}ms`,
+          `Challenge with difficulty ${difficulty} solved in ${Date.now() - overallTimer}ms`,
         );
       }
       if (Date.now() - overallTimer < delay) {

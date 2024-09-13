@@ -120,14 +120,17 @@ const DandiQueryPageChild: FunctionComponent<DandiQueryPageChildProps> = ({
   }, [neurodataTypesIndex, selectedNeurodataTypes, allNeurodataTypes]);
 
   useEffect(() => {
-    // unselect any dandisets that are not in the results
-    setSelectedDandisetIdVersions(
-      selectedDandisetIdVersions.filter((dandisetIdVersion) =>
+    const newSelectedDandisetIdVersions = selectedDandisetIdVersions.filter(
+      (dandisetIdVersion) =>
         results?.matchingDandisets.some(
           (x) => x.dandisetId === dandisetIdVersion.split("@")[0],
         ),
-      ),
     );
+    if (
+      newSelectedDandisetIdVersions.length !== selectedDandisetIdVersions.length
+    ) {
+      setSelectedDandisetIdVersions(newSelectedDandisetIdVersions);
+    }
   }, [selectedDandisetIdVersions, results, setSelectedDandisetIdVersions]);
 
   if (route.staging) {
