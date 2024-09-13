@@ -354,7 +354,7 @@ First you'll need to send your Github user name to Jeremy so he can give you per
 
 The following can be done either on Dandihub or on your local machine (see above for setup).
 
-Create a new directory for your compute client
+Create a new directory for your compute client (on Dandihub open a new terminal using File -> New -> Terminal)
 
 ```
 mkdir dendro_compute_client
@@ -388,7 +388,7 @@ CONTAINER_METHOD=apptainer dendro start-compute-client
 
 Note: If you don't specify `CONTAINER_MEthod=apptainer` the default is to use docker (which is not available on Dandihub).
 
-Leave your terminal open. You can use tmux or screen if you are worried about closing the terminal or losing connection.
+**Make a note of the compute client ID and leave your terminal open.** You can use tmux or screen if you are worried about closing the terminal or losing connection.
 
 ## Back to computing autocorrelograms
 
@@ -404,11 +404,11 @@ You should see some activity in your terminal where the compute client is runnin
 * Runs the job reporting the status and console output to Dendro
 * Uploads the results to Dendro
 
-You can use the refresh button in Neurosift to see the status of the job or click on the job ID to see more details such as the console output.
+You can use the refresh button in Neurosift to see the status of the job or click on the job ID to see more details such as the console output. It might be in "starting" status for a bit while the docker image is downloaded and the apptainer container is built. Subsequent runs will be faster because the container is cached.
 
 When the job is complete, you'll see the Autocorrelograms! And in the future, anyone who views this NWB file in Neurosift will see the Autocorrelograms without needing to recompute them.
 
-For those in this workshop, if you did not restrict your compute client to only your user, we now have a shared pool of compute resources that can be used for everyone's Neurosift jobs, making efficient use of idle CPU/GPU resources.
+For those in this workshop, if you did not restrict your compute client to only your user, we now have a shared pool of compute resources that can be used for everyone's Neurosift jobs, making efficient use of idle CPU/GPU resources. This has not really been tested yet with a large number of users, so we'll see how it goes!
 
 ## Dendro Provenance Tab in Neurosift
 
@@ -458,15 +458,15 @@ In that last CEBRA example, the input was an NWB file from DANDI, and the output
 
 [Read more about LINDI here](https://github.com/NeurodataWithoutBorders/lindi/tree/additional-url-resolver). Note that this link points to a development branch of LINDI that describes the features that Dendro uses. It is not yet agreed upon and settled. Hopefully this will merge into the main branch soon.
 
-Still to figure out: whether we will have LINDI/Dandi integration and what that will look like.
+The newest features of LINDI are not yet merged into the main branch and it's not clear how the future of LINDI/Dandi integration will look.
 
-For now you can use the lindi Python package to read .lindi.json and .lindi.tar files as though they were HDF5 files, and you can even use pynwb!
+For now you can use the lindi Python package (version 0.4.0a2) to read .lindi.json and .lindi.tar files as though they were HDF5 files, and you can even use pynwb!
 
 For example, to load that embedding object in Python, do the following.
 * [Open it in Neurosift](https://neurosift.app/?p=/nwb&url=https://tempory.net/f/dendro/f/hello_world_service/hello_cebra/cebra_nwb_embedding_6/ujOk88BJmLM1zjGH4Xwr/output/output.nwb.lindi.tar&dandisetId=000140&dandisetVersion=draft&st=lindi&tab=neurodata-item:/processing/CEBRA/embedding|TimeSeries)
 * Click on the "Load in Python" link in the left panel.
 
-You should see something like this:
+You should see something like this (copy it into your Jupyter notebook, e.g, on Dandihub):
 
 ```python
 import lindi
@@ -496,7 +496,7 @@ import pynwb
 io = pynwb.NWBHDF5IO(file=f, mode='r')
 nwbfile = io.read()
 embedding = nwbfile.processing['CEBRA']['embedding']
-print(embedding)]
+print(embedding)
 ```
 
 That's a remote .nwb.lindi.tar file that has embedded references to the remote HDF5 .nwb file on DANDI, and we are able to load it as though it were a local .nwb file!
@@ -509,6 +509,8 @@ DANDI supports uploading of .avi files, but currently there is no way to preview
 
 
 ## "Hello world" Dendro examples
+
+Note to self: determine at the time of the workshop whether we will have time to work through these examples.
 
 [Here's an introduction on submitting simple "hello world" jobs and pipelines to Dendro](https://github.com/magland/dendro/blob/main/README.md).
 
@@ -544,7 +546,7 @@ Task from Vincent Prevosto:
 
 We created a special Dendro function to do perform these tasks. [Here is the source code](https://github.com/magland/dendro/blob/main/apps/hello_neurosift/TuningAnalysis000363/TuningAnalysis000363.py).
 
-We then submitted this custom job using the following Python script:
+We then submitted this custom job using the following Python script (you need to set your DENDRO_API_KEY environment variable as in the hello world example above):
 
 ```python
 from dendro.client import submit_job, DendroJobDefinition, DendroJobRequiredResources, DendroJobInputFile, DendroJobOutputFile, DendroJobParameter
@@ -655,7 +657,7 @@ Spike sorting is CHALLENGING due to several factors:
 * **Parameter uncertainty**: Many parameters must be configured, and there is often no clear guidance on the optimal choices for different types of datasets.
 * **Quality assessment**: Evaluating and demonstrating the quality of the results can be difficult and non-intuitive.
 
-Despite these challenges, we are excited to tackle this problem with Dendro! (It's actually our motivating example.)
+Despite these challenges, we are still excited to tackle this problem with Dendro! (It's actually our motivating example.)
 
 Currently in the early proof-of-concept stage, we are looking for labs willing to test it as we continue to refine and develop its capabilities.
 
@@ -701,7 +703,7 @@ Now click on the "Spike Sorting (WIP)" tab. There are three steps in the spike s
 
 ![image](https://github.com/user-attachments/assets/efe132fb-b7a6-48cd-92d5-c9bfb98808e3)
 
-The interface is pretty clunky at this point and difficult to navigate. That should improve over time.
+The interface is a bit difficult to navigate at this point. What will improve over time.
 
 Drill down to one of the post processing results and click "View output in Neurosift".
 
@@ -746,10 +748,11 @@ So there we have a proof-of-concept for spike sorting with neuropixels data in N
 
 ## Spike sorting: next steps
 
-I'd like to work directly with a lab to see if we can get this working on a larger scale. Please reach out if you are interested.
+I'd like to work directly with labs to see if we can get this working on a larger scale. Please reach out if you are interested.
 
 ## Neurosift / Dendro next steps
 
-* Work directly with labs to develop custom processing pipelines and visualizations.
+* Work directly with labs to develop custom processing pipelines and visualizations, for all types of neurophysiology data.
 * Work toward LINDI support in DANDI.
 * Enable convenient upload of downstream results to DANDI.
+* Attract additional developers to the project.
