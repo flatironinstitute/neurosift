@@ -4,6 +4,8 @@
 
 Jeremy Magland
 
+[View a rendered version of this document](https://doc.figurl.org/gh/flatironinstitute/neurosift/blob/main/doc/neurosift_dendro_MIT_workshop_sep_2024.md)
+
 ## Workshop Goals
 
 - Learn Neurosift and Dendro with hands-on examples
