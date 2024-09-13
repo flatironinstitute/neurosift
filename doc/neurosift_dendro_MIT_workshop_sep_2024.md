@@ -424,6 +424,8 @@ Now check out [this example which is the result of spike sorting](https://neuros
 
 ![image](https://github.com/user-attachments/assets/680b518a-29b4-41b2-89e4-27d38aa4259a)
 
+Tip: you can also generate a Python script to resubmit the job (or modify the parameters). Click to open the job in Dendro and then click the "Python Script" button.
+
 ## CEBRA embedding example
 
 [CEBRA](https://cebra.ai/) is a machine-learning method that can be used to compress time series in a way that reveals otherwise hidden structures in the variability of the data.
