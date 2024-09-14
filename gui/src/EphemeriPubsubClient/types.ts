@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // initiatePublish
 export type InitiatePublishRequest = {
   type: "initiatePublishRequest";
@@ -8,7 +9,7 @@ export type InitiatePublishRequest = {
 };
 
 export const isInitiatePublishRequest = (
-  x: any,
+  x: any
 ): x is InitiatePublishRequest => {
   return (
     x &&
@@ -28,7 +29,7 @@ export type InitiatePublishResponse = {
 };
 
 export const isInitiatePublishResponse = (
-  x: any,
+  x: any
 ): x is InitiatePublishResponse => {
   return (
     x &&
@@ -81,7 +82,7 @@ export type InitiateSubscribeRequest = {
 };
 
 export const isInitiateSubscribeRequest = (
-  x: any,
+  x: any
 ): x is InitiateSubscribeRequest => {
   return (
     x &&
@@ -99,7 +100,7 @@ export type InitiateSubscribeResponse = {
 };
 
 export const isInitiateSubscribeResponse = (
-  x: any,
+  x: any
 ): x is InitiateSubscribeResponse => {
   return (
     x &&
@@ -110,6 +111,7 @@ export const isInitiateSubscribeResponse = (
   );
 };
 
+// subscribe request
 // subscribe
 export type SubscribeRequest = {
   type: "subscribeRequest";
@@ -134,39 +136,17 @@ export const isSubscribeRequest = (x: any): x is SubscribeRequest => {
 
 export type SubscribeResponse = {
   type: "subscribeResponse";
-  pubnubSubscribeKey: string;
-  pubnubToken: string;
 };
 
 export const isSubscribeResponse = (x: any): x is SubscribeResponse => {
   return (
     x &&
     typeof x === "object" &&
-    x.type === "subscribeResponse" &&
-    typeof x.pubnubSubscribeKey === "string" &&
-    typeof x.pubnubToken === "string"
+    x.type === "subscribeResponse"
   );
 };
 
-export type SubscribeTokenObject = {
-  timestamp: number;
-  difficulty: number;
-  delay: number;
-  channels: string[];
-};
-
-export const isSubscribeTokenObject = (x: any): x is SubscribeTokenObject => {
-  return (
-    x &&
-    typeof x === "object" &&
-    typeof x.timestamp === "number" &&
-    typeof x.difficulty === "number" &&
-    typeof x.delay === "number" &&
-    Array.isArray(x.channels) &&
-    x.channels.every((c: any) => typeof c === "string")
-  );
-};
-
+// publish token object
 export type PublishTokenObject = {
   timestamp: number;
   difficulty: number;
@@ -191,8 +171,30 @@ export const isPublishTokenObject = (x: any): x is PublishTokenObject => {
   );
 };
 
+// subscribe token object
+export type SubscribeTokenObject = {
+  timestamp: number;
+  difficulty: number;
+  delay: number;
+  channels: string[];
+};
+
+export const isSubscribeTokenObject = (x: any): x is SubscribeTokenObject => {
+  return (
+    x &&
+    typeof x === "object" &&
+    typeof x.timestamp === "number" &&
+    typeof x.difficulty === "number" &&
+    typeof x.delay === "number" &&
+    Array.isArray(x.channels) &&
+    x.channels.every((c: any) => typeof c === "string")
+  );
+};
+
+// pubsub message
 export type PubsubMessage = {
   type: "message";
+  channel: string;
   senderPublicKey: string;
   timestamp: number;
   messageJson: string;
@@ -207,6 +209,7 @@ export const isPubsubMessage = (x: any): x is PubsubMessage => {
     x &&
     typeof x === "object" &&
     x.type === "message" &&
+    typeof x.channel === "string" &&
     typeof x.senderPublicKey === "string" &&
     typeof x.timestamp === "number" &&
     typeof x.messageJson === "string" &&

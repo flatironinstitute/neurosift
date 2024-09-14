@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   InitiatePublishRequest,
   InitiateSubscribeRequest,
@@ -13,16 +14,19 @@ import {
   isSubscribeTokenObject,
 } from "./types";
 
-import PubNub from "pubnub";
+// const baseUrl = "http://localhost:8080";
+// const websocketUrl = "ws://localhost:8080";
 
-export class HchatClient {
-  #pubnubClient: PubNub | undefined = undefined;
-  #pubnubListener: any | undefined = undefined;
+const baseUrl = "https://ephemeri-pubsub-1-a3c7d458bccb.herokuapp.com"
+const websocketUrl = "wss://ephemeri-pubsub-1-a3c7d458bccb.herokuapp.com"
+
+export class EphemeriPubsubClient {
   #onMessageHandlers: ((m: PubsubMessage) => void)[] = [];
+  #websocketConnection: WebSocket | undefined = undefined;
   constructor(
     public publicKey: string,
     private privateKey: string,
-    private o: { verbose?: boolean } = {},
+    private o: { verbose?: boolean } = {}
   ) {}
   onMessage(callback: (m: PubsubMessage) => void) {
     this.#onMessageHandlers.push(callback);
@@ -30,7 +34,7 @@ export class HchatClient {
   userId() {
     return userIdFromPublicKey(this.publicKey);
   }
-  async publish(channel: string, message: any) {
+  async publish(channel: string, message: object | string) {
     const messageJson = JSON.stringify(message);
     const messageSignature = await signMessage(messageJson, this.privateKey);
     const req: InitiatePublishRequest = {
@@ -54,7 +58,7 @@ export class HchatClient {
       resp.publishToken,
       difficulty,
       delay,
-      { verbose: this.o.verbose },
+      { verbose: this.o.verbose }
     );
     const req2: PublishRequest = {
       type: "publishRequest",
@@ -72,6 +76,10 @@ export class HchatClient {
     }
   }
   async subscribeToChannels(channels: string[]) {
+    if (this.#websocketConnection) {
+      this.#websocketConnection.close();
+      this.#websocketConnection = undefined;
+    }
     const req: InitiateSubscribeRequest = {
       type: "initiateSubscribeRequest",
       channels: channels,
@@ -92,101 +100,126 @@ export class HchatClient {
       delay,
       {
         verbose: this.o.verbose,
-      },
+      }
     );
-    const req2: SubscribeRequest = {
+    const initialMessage: SubscribeRequest = {
       type: "subscribeRequest",
       channels,
       subscribeToken: subscribeToken,
       tokenSignature: tokenSignature,
       challengeResponse: challengeResponse,
     };
-    const resp2 = await postApiRequest("subscribe", req2);
-    if (!isSubscribeResponse(resp2)) {
-      throw new Error("Invalid response");
-    }
-    const { pubnubSubscribeKey, pubnubToken } = resp2;
-    console.log("Subscribed to channels", channels, pubnubToken);
-    if (this.#pubnubClient) {
-      this.#pubnubClient.removeListener(this.#pubnubListener);
-      this.#pubnubClient.unsubscribeAll();
-      this.#pubnubClient.stop();
-      this.#pubnubClient = undefined;
-    }
-    this.#pubnubClient = new PubNub({
-      subscribeKey: pubnubSubscribeKey,
-      userId: "default",
-    });
-
-    this.#pubnubClient.setToken(pubnubToken);
-
-    this.#pubnubListener = {
-      message: (messageEvent: any) => {
-        (async () => {
-          const channel = messageEvent.channel;
-          const a = messageEvent.message;
-          if (!isPubsubMessage(a)) {
-            console.warn(a);
-            throw Error("Invalid message");
-          }
-          const {
-            senderPublicKey,
-            timestamp,
-            messageJson,
-            messageSignature,
-            systemSignaturePayload,
-            systemSignature,
-            systemPublicKey,
-          } = a;
-          const okay1 = await verifySignature(
-            senderPublicKey,
-            messageJson,
-            messageSignature,
+    const onWebsocketMessage = async (wsMessage: any) => {
+      try {
+        if (typeof wsMessage !== "object") {
+          throw new Error("Invalid message, not an object");
+        }
+        const type0 = wsMessage.type;
+        if (type0 !== "pubsubMessage") {
+          throw new Error("Invalid message type");
+        }
+        const channel0 = wsMessage.channel;
+        if (!channel0) {
+          throw new Error("No channel");
+        }
+        if (!channels.includes(channel0)) {
+          throw new Error("Invalid channel");
+        }
+        const message = wsMessage.message;
+        if (!isPubsubMessage(message)) {
+          throw new Error("Not a pubsub message");
+        }
+        const {
+          senderPublicKey,
+          timestamp,
+          messageJson,
+          messageSignature,
+          systemSignaturePayload,
+          systemSignature,
+          systemPublicKey,
+        } = message;
+        const okay1 = await verifySignature(
+          senderPublicKey,
+          messageJson,
+          messageSignature
+        );
+        if (!okay1) {
+          throw Error("Invalid message signature");
+        }
+        const okay2 = await verifySignature(
+          systemPublicKey,
+          systemSignaturePayload,
+          systemSignature
+        );
+        if (!okay2) {
+          throw Error("Invalid system signature");
+        }
+        const systemSignaturePayloadObject = JSON.parse(systemSignaturePayload);
+        if (systemSignaturePayloadObject.channel !== channel0) {
+          throw Error("Inconsistent channel in system signature payload");
+        }
+        if (systemSignaturePayloadObject.senderPublicKey !== senderPublicKey) {
+          throw Error(
+            "Inconsistent senderPublicKey in system signature payload"
           );
-          if (!okay1) {
-            throw Error("Invalid message signature");
-          }
-          const okay2 = await verifySignature(
-            systemPublicKey,
-            systemSignaturePayload,
-            systemSignature,
+        }
+        if (systemSignaturePayloadObject.timestamp !== timestamp) {
+          throw Error("Inconsistent timestamp in system signature payload");
+        }
+        if (
+          systemSignaturePayloadObject.messageSignature !== messageSignature
+        ) {
+          throw Error(
+            "Inconsistent messageSignature in system signature payload"
           );
-          if (!okay2) {
-            throw Error("Invalid system signature");
-          }
-          const systemSignaturePayloadObject = JSON.parse(
-            systemSignaturePayload,
-          );
-          if (systemSignaturePayloadObject.channel !== channel) {
-            throw Error("Inconsistent channel in system signature payload");
-          }
-          if (
-            systemSignaturePayloadObject.senderPublicKey !== senderPublicKey
-          ) {
-            throw Error(
-              "Inconsistent senderPublicKey in system signature payload",
-            );
-          }
-          if (systemSignaturePayloadObject.timestamp !== timestamp) {
-            throw Error("Inconsistent timestamp in system signature payload");
-          }
-          if (
-            systemSignaturePayloadObject.messageSignature !== messageSignature
-          ) {
-            throw Error(
-              "Inconsistent messageSignature in system signature payload",
-            );
-          }
-          this.#onMessageHandlers.forEach((h) => h(a));
-        })();
-      },
+        }
+        this.#onMessageHandlers.forEach((h) => h(message));
+      } catch (e) {
+        console.error("Failed to handle message", e);
+        this.#websocketConnection?.close();
+      }
     };
-    this.#pubnubClient.addListener(this.#pubnubListener);
-    this.#pubnubClient.subscribe({
-      channels,
-    });
+    this.#websocketConnection = await openWebsocketConnection(
+      initialMessage,
+      onWebsocketMessage
+    );
   }
 }
+
+const openWebsocketConnection = async (
+  initialMessage: SubscribeRequest,
+  onWebsocketMessage: (message: object) => void
+) => {
+  const ws = new WebSocket(websocketUrl);
+  let gotFirstMessage = false;
+  const timeoutDuration = 2000;
+  return new Promise<WebSocket>((resolve, reject) => {
+    ws.onopen = () => {
+      ws.send(JSON.stringify(initialMessage));
+    };
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      if (!gotFirstMessage) {
+        if (!isSubscribeResponse(msg)) {
+          reject(new Error("Invalid initial message"));
+          ws.close();
+          return;
+        }
+        gotFirstMessage = true;
+        resolve(ws);
+        return;
+      }
+      // subsequent messages
+      onWebsocketMessage(msg);
+    };
+    setTimeout(() => {
+      if (!gotFirstMessage) {
+        reject(new Error("Timeout"));
+        ws.close();
+      }
+    }, timeoutDuration);
+  });
+};
 
 export const generateKeyPair = async () => {
   const keyPair = await window.crypto.subtle.generateKey(
@@ -197,7 +230,7 @@ export const generateKeyPair = async () => {
       hash: { name: "SHA-256" },
     },
     true,
-    ["sign", "verify"],
+    ["sign", "verify"]
   );
 
   return {
@@ -212,7 +245,8 @@ export const isValidKeyPair = async (publicKey: string, privateKey: string) => {
     const signature = await signMessage(message, privateKey);
     const okay = await verifySignature(publicKey, message, signature);
     return okay;
-  } catch (e) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (err: any) {
     return false;
   }
 };
@@ -221,14 +255,13 @@ const solveChallenge = async (
   prefix: string,
   difficulty: number,
   delay: number,
-  o: { verbose?: boolean } = {},
+  o: { verbose?: boolean } = {}
 ): Promise<string> => {
   if (o.verbose) {
     console.info(`Solving challenge with difficulty ${difficulty}`);
   }
   const overallTimer = Date.now();
   let timer2 = Date.now();
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const elapsed2 = Date.now() - timer2;
     if (elapsed2 > 100) {
@@ -242,20 +275,24 @@ const solveChallenge = async (
     const challengeResponse = Math.random().toString().slice(2);
     const challengeResponseStringToHash = `${prefix}${challengeResponse}`;
     const challengeResponseSha1Bits = await sha1Bits(
-      challengeResponseStringToHash,
+      challengeResponseStringToHash
     );
     if (
       challengeResponseSha1Bits.slice(0, difficulty) === "0".repeat(difficulty)
     ) {
       if (o.verbose) {
         console.info(
-          `Challenge with difficulty ${difficulty} solved in ${Date.now() - overallTimer}ms`,
+          `Challenge with difficulty ${difficulty} solved in ${
+            Date.now() - overallTimer
+          }ms`
         );
       }
       if (Date.now() - overallTimer < delay) {
         if (o.verbose) {
           console.info(
-            `Waiting ${delay - (Date.now() - overallTimer)}ms for delay ${delay}ms to pass`,
+            `Waiting ${
+              delay - (Date.now() - overallTimer)
+            }ms for delay ${delay}ms to pass`
           );
         }
         // wait for delay to pass
@@ -267,8 +304,6 @@ const solveChallenge = async (
     }
   }
 };
-
-const baseUrl = "https://hchat-five.vercel.app/api";
 
 const postApiRequest = async (endpoint: string, req: any) => {
   const response = await fetch(`${baseUrl}/${endpoint}`, {
@@ -315,7 +350,7 @@ const privateKeyFromBase64 = async (base64: string) => {
       hash: "SHA-256",
     },
     false,
-    ["sign"],
+    ["sign"]
   );
   return privateKey;
 };
@@ -331,11 +366,11 @@ const signMessage = async (message: string, privateKey: string) => {
       name: "RSASSA-PKCS1-v1_5",
     },
     pk,
-    data,
+    data
   );
 
   const signatureBase64 = btoa(
-    String.fromCharCode(...new Uint8Array(signature)),
+    String.fromCharCode(...new Uint8Array(signature))
   );
   return signatureBase64;
 };
@@ -354,7 +389,7 @@ const publicKeyFromBase64 = async (base64: string) => {
       hash: "SHA-256",
     },
     true,
-    ["verify"],
+    ["verify"]
   );
   return publicKey;
 };
@@ -371,7 +406,7 @@ const signatureFromBase64 = async (base64: string) => {
 const verifySignature = async (
   publicKeyBase64: string,
   message: string,
-  signatureBase64: string,
+  signatureBase64: string
 ) => {
   const publicKey = await publicKeyFromBase64(publicKeyBase64);
   const signature = await signatureFromBase64(signatureBase64);
@@ -382,14 +417,14 @@ const verifySignature = async (
     },
     publicKey,
     signature,
-    data,
+    data
   );
 };
 
 const publicKeyToBase64 = async (publicKey: CryptoKey) => {
   const exported = await window.crypto.subtle.exportKey(
     "spki", // Export format for public key
-    publicKey,
+    publicKey
   );
   return btoa(String.fromCharCode(...new Uint8Array(exported)));
 };
@@ -397,7 +432,7 @@ const publicKeyToBase64 = async (publicKey: CryptoKey) => {
 const privateKeyToBase64 = async (privateKey: CryptoKey) => {
   const exported = await window.crypto.subtle.exportKey(
     "pkcs8", // Export format for private key
-    privateKey,
+    privateKey
   );
   return btoa(String.fromCharCode(...new Uint8Array(exported)));
 };

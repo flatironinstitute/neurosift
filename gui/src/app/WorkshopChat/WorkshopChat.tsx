@@ -9,11 +9,11 @@ import {
 import { timeAgoString } from "app/timeStrings";
 import {
   generateKeyPair,
-  HchatClient,
+  EphemeriPubsubClient,
   isValidKeyPair,
   userIdFromPublicKey,
-} from "HchatClient/HchatClient";
-import { PubsubMessage } from "HchatClient/types";
+} from "EphemeriPubsubClient/EphemeriPubsubClient";
+import { PubsubMessage } from "EphemeriPubsubClient/types";
 import {
   FunctionComponent,
   useCallback,
@@ -109,13 +109,13 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
   const [userName, setUserName] = useState(
     localStorage.getItem("workshop-chat-user-name") || "Anonymous",
   );
-  const hchatClient = useHchatClient();
+  const ephemeriPubsubClient = useEphemeriPubsubClient();
   useEffect(() => {
-    if (!hchatClient) return;
+    if (!ephemeriPubsubClient) return;
     const handleCommentMessage = (m: PubsubMessage) => {
       chatCommentsDispatch({ type: "add", commentPubsubMessage: m });
     };
-    hchatClient.onMessage((m: PubsubMessage) => {
+    ephemeriPubsubClient.onMessage((m: PubsubMessage) => {
       const msg = JSON.parse(m.messageJson);
       if (msg.type === "comment") {
         handleCommentMessage(m);
@@ -136,7 +136,7 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
           }
           if (toSend.length > 0) {
             console.log(`Sending history of size ${toSend.length}`);
-            hchatClient.publish(channelName, {
+            ephemeriPubsubClient.publish(channelName, {
               type: "history",
               comments: toSend,
             });
@@ -153,13 +153,13 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
         });
       }
     });
-  }, [hchatClient, chatComments]);
+  }, [ephemeriPubsubClient, chatComments]);
 
   // just to be careful that we never send a request-history message repeatedly
   const initialLoadComplete = useRef(false);
   const hasSentRequestHistory = useRef(false);
   useEffect(() => {
-    if (!hchatClient) return;
+    if (!ephemeriPubsubClient) return;
     let canceled = false;
     (async () => {
       try {
@@ -173,7 +173,7 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
       if (!hasSentRequestHistory.current) {
         const startTimestamp = getCaughtUpTimestamp();
         console.log("Requesting history", startTimestamp);
-        hchatClient.publish(channelName, {
+        ephemeriPubsubClient.publish(channelName, {
           type: "request-history",
           startTimestamp,
         });
@@ -184,7 +184,7 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
     return () => {
       canceled = true;
     };
-  }, [hchatClient]);
+  }, [ephemeriPubsubClient]);
 
   useEffect(() => {
     if (!initialLoadComplete.current) return;
@@ -200,14 +200,14 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
 
   const handleComment = useCallback(
     (comment: string) => {
-      if (!hchatClient) return;
-      hchatClient.publish(channelName, {
+      if (!ephemeriPubsubClient) return;
+      ephemeriPubsubClient.publish(channelName, {
         type: "comment",
         userName,
         comment,
       });
     },
-    [hchatClient, userName],
+    [ephemeriPubsubClient, userName],
   );
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -217,7 +217,7 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
     if (lastCommentRef.current) {
       lastCommentRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [chatComments, hchatClient]);
+  }, [chatComments, ephemeriPubsubClient]);
 
   const handleClearAllComments = useCallback(() => {
     indexedDB.deleteDatabase("workshop-chat");
@@ -302,7 +302,7 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
           left: 0,
         }}
       >
-        {hchatClient ? (
+        {ephemeriPubsubClient ? (
           <InputBar
             width={width}
             height={inputBarHeight}
@@ -333,23 +333,23 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
   );
 };
 
-const useHchatClient = () => {
-  const [hchatClient, setHchatClient] = useState<HchatClient | null>(null);
+const useEphemeriPubsubClient = () => {
+  const [ephemeriPubsubClient, setEphemeriPubsubClient] = useState<EphemeriPubsubClient | null>(null);
 
   useEffect(() => {
     let canceled = false;
     (async () => {
       const { publicKey, privateKey } = await getPersistentKeyPair();
       if (canceled) return;
-      const x = new HchatClient(publicKey, privateKey, { verbose: true });
+      const x = new EphemeriPubsubClient(publicKey, privateKey, { verbose: true });
       await x.subscribeToChannels([channelName]);
-      setHchatClient(x);
+      setEphemeriPubsubClient(x);
     })();
     return () => {
       canceled = true;
     };
   }, []);
-  return hchatClient;
+  return ephemeriPubsubClient;
 };
 
 const getPersistentKeyPair = async () => {
