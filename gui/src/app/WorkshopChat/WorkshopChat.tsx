@@ -334,14 +334,17 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
 };
 
 const useEphemeriPubsubClient = () => {
-  const [ephemeriPubsubClient, setEphemeriPubsubClient] = useState<EphemeriPubsubClient | null>(null);
+  const [ephemeriPubsubClient, setEphemeriPubsubClient] =
+    useState<EphemeriPubsubClient | null>(null);
 
   useEffect(() => {
     let canceled = false;
     (async () => {
       const { publicKey, privateKey } = await getPersistentKeyPair();
       if (canceled) return;
-      const x = new EphemeriPubsubClient(publicKey, privateKey, { verbose: true });
+      const x = new EphemeriPubsubClient(publicKey, privateKey, {
+        verbose: true,
+      });
       await x.subscribeToChannels([channelName]);
       setEphemeriPubsubClient(x);
     })();

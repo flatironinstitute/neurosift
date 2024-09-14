@@ -17,8 +17,8 @@ import {
 // const baseUrl = "http://localhost:8080";
 // const websocketUrl = "ws://localhost:8080";
 
-const baseUrl = "https://ephemeri-pubsub-1-a3c7d458bccb.herokuapp.com"
-const websocketUrl = "wss://ephemeri-pubsub-1-a3c7d458bccb.herokuapp.com"
+const baseUrl = "https://ephemeri-pubsub-1-a3c7d458bccb.herokuapp.com";
+const websocketUrl = "wss://ephemeri-pubsub-1-a3c7d458bccb.herokuapp.com";
 
 export class EphemeriPubsubClient {
   #onMessageHandlers: ((m: PubsubMessage) => void)[] = [];
@@ -26,7 +26,7 @@ export class EphemeriPubsubClient {
   constructor(
     public publicKey: string,
     private privateKey: string,
-    private o: { verbose?: boolean } = {}
+    private o: { verbose?: boolean } = {},
   ) {}
   onMessage(callback: (m: PubsubMessage) => void) {
     this.#onMessageHandlers.push(callback);
@@ -58,7 +58,7 @@ export class EphemeriPubsubClient {
       resp.publishToken,
       difficulty,
       delay,
-      { verbose: this.o.verbose }
+      { verbose: this.o.verbose },
     );
     const req2: PublishRequest = {
       type: "publishRequest",
@@ -100,7 +100,7 @@ export class EphemeriPubsubClient {
       delay,
       {
         verbose: this.o.verbose,
-      }
+      },
     );
     const initialMessage: SubscribeRequest = {
       type: "subscribeRequest",
@@ -141,7 +141,7 @@ export class EphemeriPubsubClient {
         const okay1 = await verifySignature(
           senderPublicKey,
           messageJson,
-          messageSignature
+          messageSignature,
         );
         if (!okay1) {
           throw Error("Invalid message signature");
@@ -149,7 +149,7 @@ export class EphemeriPubsubClient {
         const okay2 = await verifySignature(
           systemPublicKey,
           systemSignaturePayload,
-          systemSignature
+          systemSignature,
         );
         if (!okay2) {
           throw Error("Invalid system signature");
@@ -160,7 +160,7 @@ export class EphemeriPubsubClient {
         }
         if (systemSignaturePayloadObject.senderPublicKey !== senderPublicKey) {
           throw Error(
-            "Inconsistent senderPublicKey in system signature payload"
+            "Inconsistent senderPublicKey in system signature payload",
           );
         }
         if (systemSignaturePayloadObject.timestamp !== timestamp) {
@@ -170,7 +170,7 @@ export class EphemeriPubsubClient {
           systemSignaturePayloadObject.messageSignature !== messageSignature
         ) {
           throw Error(
-            "Inconsistent messageSignature in system signature payload"
+            "Inconsistent messageSignature in system signature payload",
           );
         }
         this.#onMessageHandlers.forEach((h) => h(message));
@@ -181,14 +181,14 @@ export class EphemeriPubsubClient {
     };
     this.#websocketConnection = await openWebsocketConnection(
       initialMessage,
-      onWebsocketMessage
+      onWebsocketMessage,
     );
   }
 }
 
 const openWebsocketConnection = async (
   initialMessage: SubscribeRequest,
-  onWebsocketMessage: (message: object) => void
+  onWebsocketMessage: (message: object) => void,
 ) => {
   const ws = new WebSocket(websocketUrl);
   let gotFirstMessage = false;
@@ -230,7 +230,7 @@ export const generateKeyPair = async () => {
       hash: { name: "SHA-256" },
     },
     true,
-    ["sign", "verify"]
+    ["sign", "verify"],
   );
 
   return {
@@ -245,7 +245,7 @@ export const isValidKeyPair = async (publicKey: string, privateKey: string) => {
     const signature = await signMessage(message, privateKey);
     const okay = await verifySignature(publicKey, message, signature);
     return okay;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err: any) {
     return false;
   }
@@ -255,7 +255,7 @@ const solveChallenge = async (
   prefix: string,
   difficulty: number,
   delay: number,
-  o: { verbose?: boolean } = {}
+  o: { verbose?: boolean } = {},
 ): Promise<string> => {
   if (o.verbose) {
     console.info(`Solving challenge with difficulty ${difficulty}`);
@@ -275,7 +275,7 @@ const solveChallenge = async (
     const challengeResponse = Math.random().toString().slice(2);
     const challengeResponseStringToHash = `${prefix}${challengeResponse}`;
     const challengeResponseSha1Bits = await sha1Bits(
-      challengeResponseStringToHash
+      challengeResponseStringToHash,
     );
     if (
       challengeResponseSha1Bits.slice(0, difficulty) === "0".repeat(difficulty)
@@ -284,7 +284,7 @@ const solveChallenge = async (
         console.info(
           `Challenge with difficulty ${difficulty} solved in ${
             Date.now() - overallTimer
-          }ms`
+          }ms`,
         );
       }
       if (Date.now() - overallTimer < delay) {
@@ -292,7 +292,7 @@ const solveChallenge = async (
           console.info(
             `Waiting ${
               delay - (Date.now() - overallTimer)
-            }ms for delay ${delay}ms to pass`
+            }ms for delay ${delay}ms to pass`,
           );
         }
         // wait for delay to pass
@@ -350,7 +350,7 @@ const privateKeyFromBase64 = async (base64: string) => {
       hash: "SHA-256",
     },
     false,
-    ["sign"]
+    ["sign"],
   );
   return privateKey;
 };
@@ -366,11 +366,11 @@ const signMessage = async (message: string, privateKey: string) => {
       name: "RSASSA-PKCS1-v1_5",
     },
     pk,
-    data
+    data,
   );
 
   const signatureBase64 = btoa(
-    String.fromCharCode(...new Uint8Array(signature))
+    String.fromCharCode(...new Uint8Array(signature)),
   );
   return signatureBase64;
 };
@@ -389,7 +389,7 @@ const publicKeyFromBase64 = async (base64: string) => {
       hash: "SHA-256",
     },
     true,
-    ["verify"]
+    ["verify"],
   );
   return publicKey;
 };
@@ -406,7 +406,7 @@ const signatureFromBase64 = async (base64: string) => {
 const verifySignature = async (
   publicKeyBase64: string,
   message: string,
-  signatureBase64: string
+  signatureBase64: string,
 ) => {
   const publicKey = await publicKeyFromBase64(publicKeyBase64);
   const signature = await signatureFromBase64(signatureBase64);
@@ -417,14 +417,14 @@ const verifySignature = async (
     },
     publicKey,
     signature,
-    data
+    data,
   );
 };
 
 const publicKeyToBase64 = async (publicKey: CryptoKey) => {
   const exported = await window.crypto.subtle.exportKey(
     "spki", // Export format for public key
-    publicKey
+    publicKey,
   );
   return btoa(String.fromCharCode(...new Uint8Array(exported)));
 };
@@ -432,7 +432,7 @@ const publicKeyToBase64 = async (publicKey: CryptoKey) => {
 const privateKeyToBase64 = async (privateKey: CryptoKey) => {
   const exported = await window.crypto.subtle.exportKey(
     "pkcs8", // Export format for private key
-    privateKey
+    privateKey,
   );
   return btoa(String.fromCharCode(...new Uint8Array(exported)));
 };

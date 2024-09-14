@@ -9,7 +9,7 @@ export type InitiatePublishRequest = {
 };
 
 export const isInitiatePublishRequest = (
-  x: any
+  x: any,
 ): x is InitiatePublishRequest => {
   return (
     x &&
@@ -29,7 +29,7 @@ export type InitiatePublishResponse = {
 };
 
 export const isInitiatePublishResponse = (
-  x: any
+  x: any,
 ): x is InitiatePublishResponse => {
   return (
     x &&
@@ -82,7 +82,7 @@ export type InitiateSubscribeRequest = {
 };
 
 export const isInitiateSubscribeRequest = (
-  x: any
+  x: any,
 ): x is InitiateSubscribeRequest => {
   return (
     x &&
@@ -100,7 +100,7 @@ export type InitiateSubscribeResponse = {
 };
 
 export const isInitiateSubscribeResponse = (
-  x: any
+  x: any,
 ): x is InitiateSubscribeResponse => {
   return (
     x &&
@@ -139,11 +139,7 @@ export type SubscribeResponse = {
 };
 
 export const isSubscribeResponse = (x: any): x is SubscribeResponse => {
-  return (
-    x &&
-    typeof x === "object" &&
-    x.type === "subscribeResponse"
-  );
+  return x && typeof x === "object" && x.type === "subscribeResponse";
 };
 
 // publish token object
