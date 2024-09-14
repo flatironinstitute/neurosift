@@ -4,6 +4,10 @@
 
 Jeremy Magland
 
+[View a rendered version of this document](https://doc.figurl.org/gh/flatironinstitute/neurosift/blob/main/doc/neurosift_dendro_MIT_workshop_sep_2024.md)
+
+### Go to https://neurosift.app
+
 ## Workshop Goals
 
 - Learn Neurosift and Dendro with hands-on examples
@@ -421,6 +425,8 @@ You can see that this file was used as input for two Dendro jobs. You can click 
 Now check out [this example which is the result of spike sorting](https://neurosift.app/?p=/nwb&url=https://tempory.net/f/dendro/f/hello_world_service/hello_neurosift/spike_sorting_post_processing/JVSA4wyX1YGz7SQdesmM/output/post.nwb.lindi.tar&dandisetId=000409&dandisetVersion=draft&st=lindi). Click on the Dendro tab to see the provenance pipeline of the files that were used to generate this output.
 
 ![image](https://github.com/user-attachments/assets/680b518a-29b4-41b2-89e4-27d38aa4259a)
+
+Tip: you can also generate a Python script to resubmit the job (or modify the parameters). Click to open the job in Dendro and then click the "Python Script" button.
 
 ## CEBRA embedding example
 
