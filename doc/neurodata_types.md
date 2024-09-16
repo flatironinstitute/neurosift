@@ -27,11 +27,13 @@ The goal is to eventually support all data types with plugins.
 |FeatureExtraction|NWBDataInterface|||
 |FilteredEphys|NWBDataInterface|||
 |Fluorescence|NWBDataInterface|||
+|MicroscopyResponseSeriesContainer|NWBDataInterface||[example](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/fc5fca29-4c8f-444b-bbc1-4b8cd369d4ab/download/&dandisetId=001075&dandisetVersion=draft&tab=neurodata-item:/processing/ophys/GreenSignals|MicroscopyResponseSeriesContainer)|
 |GrayscaleImage|Image|||
 |Image|NWBData|||
 |ImageMaskSeries|ImageSeries|From ImageSeries||
 |Images|NWBDataInterface|Images|[example](https://neurosift.app/?p=/nwb&dandisetId=000957&dandisetVersion=0.240407.0142&url=https://api.dandiarchive.org/api/assets/ce047d88-95b3-4169-a63b-e30a4f35d86e/download/&tab=neurodata-item:/stimulus/templates/template_118_images\|Images)|
 |ImageSegmentation|NWBDataInterface|ImageSegmentation|[example](https://neurosift.app/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/368/fa7/368fa71e-4c93-4f7e-af15-06776ca07f34&tab=neurodata-item:/processing/ophys/ImageSegmentation%7CImageSegmentation)|
+|MicroscopySegmentations|NWBDataInterface|ImageSegmentation|[example](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/fc5fca29-4c8f-444b-bbc1-4b8cd369d4ab/download/&dandisetId=001075&dandisetVersion=draft&tab=neurodata-item:/processing/ophys/PumpProbeGreenSegmentations|MicroscopySegmentations)|
 |ImageSeries|TimeSeries|||
 |ImagingPlane|NWBContainer|||
 |ImagingRetinotopy|NWBDataInterface|||
@@ -60,6 +62,7 @@ The goal is to eventually support all data types with plugins.
 |RGBAImage|Image|||
 |RGBImage|Image|||
 |RoiResponseSeries|TimeSeries|From TimeSeries||
+|MicroscopyResponseSeries|TimeSeries|From TimeSeries|[example](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/fc5fca29-4c8f-444b-bbc1-4b8cd369d4ab/download/&dandisetId=001075&dandisetVersion=draft&tab=neurodata-item:/processing/ophys/GreenSignals/GreenSignal\|MicroscopyResponseSeries)|
 |ScratchData|NWBData|||
 |SpatialSeries|TimeSeries|SpatialSeries and SpatialSeriesXYView|[example](https://neurosift.app/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/c86/cdf/c86cdfba-e1af-45a7-8dfd-d243adc20ced&tab=neurodata-items:neurodata-item:/acquisition/position_sensor0%7CSpatialSeries@view:X/Y%7C/acquisition/position_sensor0&tab-time=0,384,117.50619637750238)|
 |SpikeEventSeries|ElectricalSeries|From ElectricalSeries||
@@ -68,6 +71,7 @@ The goal is to eventually support all data types with plugins.
 |TimeIntervals|DynamicTable|TimeIntervals, PSTH, TrialAlignedSeries|[time-intervals-example](https://neurosift.app/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/cae/e8f/caee8f64-ebeb-439d-a3f4-e3380699b49f&tab=neurodata-item:/intervals/trials%7CTimeIntervals), [psth-example](https://neurosift.app/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/df3/e3f/df3e3f73-50ab-42b4-8827-82664ddd474a&tab=view:PSTH%7C/intervals/trials)|
 |TimeSeries|NWBDataInterface|TimeSeries|[example](https://neurosift.app/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/c86/cdf/c86cdfba-e1af-45a7-8dfd-d243adc20ced&tab=neurodata-item:/acquisition/ch_SsolL%7CTimeSeries&tab-time=43.82871078730636,95.27484222730642,72.51887941685835)|
 |TwoPhotonSeries|ImageSeries|TwoPhotonSeries|[example](https://neurosift.app/?p=/nwb&dandisetId=000951&dandisetVersion=0.240418.2218&url=https://api.dandiarchive.org/api/assets/7f4fbb15-ff41-4eb9-b556-39000f259dcf/download/&tab=neurodata-item:/acquisition/TwoPhotonSeries\|TwoPhotonSeries)|
+|VariableDepthMicroscopySeries|ImageSeries|TwoPhotonSeries|[example](https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/e6263508-26a0-4db0-ac0a-76a994f303a1/download/&dandisetId=001075&dandisetVersion=draft&tab=neurodata-item:/acquisition/PumpProbeImagingGreen\|VariableDepthMicroscopySeries)|
 |Units|DynamicTable|Units, RasterPlot, AverageWaveforms, Autocorrelograms|[raster-plot-example](https://neurosift.app/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/a63/6de/a636de8b-7c90-4a41-94be-9da3de53cf82&tab=view:DirectRasterPlot\|/units), [average-waveforms-example](https://neurosift.app/?p=/nwb&url=https://neurosift.org/dendro-outputs/d02200fd.e19adcf8/output&dandisetId=000939&dandisetVersion=0.240327.2229&dandiAssetId=56d875d6-a705-48d3-944c-53394a389c85&st=lindi&tab=view:AverageWaveforms\|/units), [autocorrelograms-example](https://neurosift.app/?p=/nwb&url=https://neurosift.org/dendro-outputs/d02200fd.e19adcf8/output&dandisetId=000939&dandisetVersion=0.240327.2229&dandiAssetId=56d875d6-a705-48d3-944c-53394a389c85&st=lindi&tab=view:Autocorrelograms\|/units)|
 |VoltageClampSeries|PatchClampSeries|||
 |VoltageClampStimulusSeries|PatchClampSeries|||
