@@ -8,7 +8,7 @@ type RandomFeedbackFormProps = {
 const specialCode = "3363";
 const enteredSpecialCode = localStorage.getItem("enteredSpecialCode") || "";
 
-const NUM = 20;
+const NUM = 50;
 
 let showIt = false;
 const numPageViewsSinceLastFeedbackString =

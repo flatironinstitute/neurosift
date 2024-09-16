@@ -3,13 +3,13 @@ import {
   InitiatePublishRequest,
   InitiateSubscribeRequest,
   PublishRequest,
-  PubsubMessage,
+  ChatMessage,
   SubscribeRequest,
   isInitiatePublishResponse,
   isInitiateSubscribeResponse,
   isPublishResponse,
   isPublishTokenObject,
-  isPubsubMessage,
+  isChatMessage,
   isSubscribeResponse,
   isSubscribeTokenObject,
 } from "./types";
@@ -17,18 +17,18 @@ import {
 // const baseUrl = "http://localhost:8080";
 // const websocketUrl = "ws://localhost:8080";
 
-const baseUrl = "https://ephemeri-pubsub-1-a3c7d458bccb.herokuapp.com";
-const websocketUrl = "wss://ephemeri-pubsub-1-a3c7d458bccb.herokuapp.com";
+const baseUrl = "https://ephemeri-chat-1-a4193b4085cc.herokuapp.com";
+const websocketUrl = "wss://ephemeri-chat-1-a4193b4085cc.herokuapp.com";
 
-export class EphemeriPubsubClient {
-  #onMessageHandlers: ((m: PubsubMessage) => void)[] = [];
+export class EphemeriChatClient {
+  #onMessageHandlers: ((m: ChatMessage) => void)[] = [];
   #websocketConnection: WebSocket | undefined = undefined;
   constructor(
     public publicKey: string,
     private privateKey: string,
     private o: { verbose?: boolean } = {},
   ) {}
-  onMessage(callback: (m: PubsubMessage) => void) {
+  onMessage(callback: (m: ChatMessage) => void) {
     this.#onMessageHandlers.push(callback);
   }
   userId() {
@@ -115,7 +115,7 @@ export class EphemeriPubsubClient {
           throw new Error("Invalid message, not an object");
         }
         const type0 = wsMessage.type;
-        if (type0 !== "pubsubMessage") {
+        if (type0 !== "chatMessage") {
           throw new Error("Invalid message type");
         }
         const channel0 = wsMessage.channel;
@@ -126,8 +126,8 @@ export class EphemeriPubsubClient {
           throw new Error("Invalid channel");
         }
         const message = wsMessage.message;
-        if (!isPubsubMessage(message)) {
-          throw new Error("Not a pubsub message");
+        if (!isChatMessage(message)) {
+          throw new Error("Not a chat message");
         }
         const {
           senderPublicKey,

@@ -9,11 +9,11 @@ import {
 import { timeAgoString } from "app/timeStrings";
 import {
   generateKeyPair,
-  EphemeriPubsubClient,
+  EphemeriChatClient,
   isValidKeyPair,
   userIdFromPublicKey,
-} from "EphemeriPubsubClient/EphemeriPubsubClient";
-import { PubsubMessage } from "EphemeriPubsubClient/types";
+} from "EphemeriChatClient/EphemeriChatClient";
+import { ChatMessage } from "EphemeriChatClient/types";
 import {
   FunctionComponent,
   useCallback,
@@ -37,17 +37,17 @@ type ChatComment = {
   userName: string;
   timestamp: number;
   comment: string;
-  pubsubMessage: PubsubMessage;
+  chatMessage: ChatMessage;
 };
 
 type ChatCommentAction =
   | {
       type: "add";
-      commentPubsubMessage: PubsubMessage;
+      commentChatMessage: ChatMessage;
     }
   | {
       type: "addMultiple";
-      commentPubsubMessages: PubsubMessage[];
+      commentChatMessages: ChatMessage[];
     }
   | {
       type: "clear";
@@ -61,7 +61,7 @@ const chatCommentsReducer = (
 ): ChatComment[] => {
   switch (action.type) {
     case "add": {
-      const m = action.commentPubsubMessage;
+      const m = action.commentChatMessage;
 
       // Do not add messages that have expired
       if (m.timestamp < Date.now() - expireTimeMsec) return state;
@@ -73,7 +73,7 @@ const chatCommentsReducer = (
         userName: msg.userName,
         timestamp: m.timestamp,
         comment: msg.comment,
-        pubsubMessage: m,
+        chatMessage: m,
       };
       const existing = state.find((c) => c.commentId === comment.commentId);
       if (existing) return state;
@@ -81,8 +81,8 @@ const chatCommentsReducer = (
     }
     case "addMultiple": {
       let s = state;
-      for (const m of action.commentPubsubMessages) {
-        s = chatCommentsReducer(s, { type: "add", commentPubsubMessage: m });
+      for (const m of action.commentChatMessages) {
+        s = chatCommentsReducer(s, { type: "add", commentChatMessage: m });
       }
       return s;
     }
@@ -109,13 +109,13 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
   const [userName, setUserName] = useState(
     localStorage.getItem("workshop-chat-user-name") || "Anonymous",
   );
-  const ephemeriPubsubClient = useEphemeriPubsubClient();
+  const ephemeriChatClient = useEphemeriChatClient();
   useEffect(() => {
-    if (!ephemeriPubsubClient) return;
-    const handleCommentMessage = (m: PubsubMessage) => {
-      chatCommentsDispatch({ type: "add", commentPubsubMessage: m });
+    if (!ephemeriChatClient) return;
+    const handleCommentMessage = (m: ChatMessage) => {
+      chatCommentsDispatch({ type: "add", commentChatMessage: m });
     };
-    ephemeriPubsubClient.onMessage((m: PubsubMessage) => {
+    ephemeriChatClient.onMessage((m: ChatMessage) => {
       const msg = JSON.parse(m.messageJson);
       if (msg.type === "comment") {
         handleCommentMessage(m);
@@ -125,9 +125,9 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
         let i = 0;
         while (i < chatComments.length) {
           let size0 = 0;
-          const toSend: PubsubMessage[] = [];
+          const toSend: ChatMessage[] = [];
           while (size0 < 10000 && i < chatComments.length) {
-            const mm = chatComments[i].pubsubMessage;
+            const mm = chatComments[i].chatMessage;
             if (mm.timestamp > startTimestamp) {
               toSend.push(mm);
               size0 += JSON.stringify(mm).length;
@@ -136,14 +136,14 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
           }
           if (toSend.length > 0) {
             console.log(`Sending history of size ${toSend.length}`);
-            ephemeriPubsubClient.publish(channelName, {
+            ephemeriChatClient.publish(channelName, {
               type: "history",
               comments: toSend,
             });
           }
         }
       } else if (msg.type === "history") {
-        msg.comments.forEach((c: PubsubMessage) => {
+        msg.comments.forEach((c: ChatMessage) => {
           const ttt = getCaughtUpTimestamp();
           if (c.timestamp < ttt) {
             // don't accept history messages that come before the caught up timestamp
@@ -153,27 +153,27 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
         });
       }
     });
-  }, [ephemeriPubsubClient, chatComments]);
+  }, [ephemeriChatClient, chatComments]);
 
   // just to be careful that we never send a request-history message repeatedly
   const initialLoadComplete = useRef(false);
   const hasSentRequestHistory = useRef(false);
   useEffect(() => {
-    if (!ephemeriPubsubClient) return;
+    if (!ephemeriChatClient) return;
     let canceled = false;
     (async () => {
       try {
-        const commentPubsubMessages =
-          await loadCommentPubsubMessagesFromIndexedDB();
+        const commentChatMessages =
+          await loadCommentChatMessagesFromIndexedDB();
         if (canceled) return;
-        chatCommentsDispatch({ type: "addMultiple", commentPubsubMessages });
+        chatCommentsDispatch({ type: "addMultiple", commentChatMessages });
       } catch (e) {
         console.error(e);
       }
       if (!hasSentRequestHistory.current) {
         const startTimestamp = getCaughtUpTimestamp();
         console.log("Requesting history", startTimestamp);
-        ephemeriPubsubClient.publish(channelName, {
+        ephemeriChatClient.publish(channelName, {
           type: "request-history",
           startTimestamp,
         });
@@ -184,7 +184,7 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
     return () => {
       canceled = true;
     };
-  }, [ephemeriPubsubClient]);
+  }, [ephemeriChatClient]);
 
   useEffect(() => {
     if (!initialLoadComplete.current) return;
@@ -193,21 +193,19 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
         setCaughtUpTimestamp(c.timestamp);
       }
     }
-    saveCommentPubsubMessagesToIndexedDB(
-      chatComments.map((c) => c.pubsubMessage),
-    );
+    saveCommentChatMessagesToIndexedDB(chatComments.map((c) => c.chatMessage));
   }, [chatComments]);
 
   const handleComment = useCallback(
     (comment: string) => {
-      if (!ephemeriPubsubClient) return;
-      ephemeriPubsubClient.publish(channelName, {
+      if (!ephemeriChatClient) return;
+      ephemeriChatClient.publish(channelName, {
         type: "comment",
         userName,
         comment,
       });
     },
-    [ephemeriPubsubClient, userName],
+    [ephemeriChatClient, userName],
   );
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -217,7 +215,7 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
     if (lastCommentRef.current) {
       lastCommentRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [chatComments, ephemeriPubsubClient]);
+  }, [chatComments, ephemeriChatClient]);
 
   const handleClearAllComments = useCallback(() => {
     indexedDB.deleteDatabase("workshop-chat");
@@ -239,7 +237,7 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
           fontSize: 12,
         }}
       >
-        Workshop chat (ephemeral peer-to-peer){" "}
+        Workshop chat (ephemeral){" "}
         <SmallIconButton
           icon={<Help />}
           title="Learn more about the workshop chat"
@@ -302,7 +300,7 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
           left: 0,
         }}
       >
-        {ephemeriPubsubClient ? (
+        {ephemeriChatClient ? (
           <InputBar
             width={width}
             height={inputBarHeight}
@@ -333,26 +331,26 @@ const WorkshopChat: FunctionComponent<WorkshopChatProps> = ({
   );
 };
 
-const useEphemeriPubsubClient = () => {
-  const [ephemeriPubsubClient, setEphemeriPubsubClient] =
-    useState<EphemeriPubsubClient | null>(null);
+const useEphemeriChatClient = () => {
+  const [ephemeriChatClient, setEphemeriChatClient] =
+    useState<EphemeriChatClient | null>(null);
 
   useEffect(() => {
     let canceled = false;
     (async () => {
       const { publicKey, privateKey } = await getPersistentKeyPair();
       if (canceled) return;
-      const x = new EphemeriPubsubClient(publicKey, privateKey, {
+      const x = new EphemeriChatClient(publicKey, privateKey, {
         verbose: true,
       });
       await x.subscribeToChannels([channelName]);
-      setEphemeriPubsubClient(x);
+      setEphemeriChatClient(x);
     })();
     return () => {
       canceled = true;
     };
   }, []);
-  return ephemeriPubsubClient;
+  return ephemeriChatClient;
 };
 
 const getPersistentKeyPair = async () => {
@@ -518,9 +516,7 @@ const openDatabase = async () => {
   });
 };
 
-const saveCommentPubsubMessagesToIndexedDB = async (
-  messages: PubsubMessage[],
-) => {
+const saveCommentChatMessagesToIndexedDB = async (messages: ChatMessage[]) => {
   const db = await openDatabase();
   const tx = db.transaction("chatMessages", "readwrite");
   const store = tx.objectStore("chatMessages");
@@ -532,13 +528,13 @@ const saveCommentPubsubMessagesToIndexedDB = async (
   });
 };
 
-const loadCommentPubsubMessagesFromIndexedDB = async (): Promise<
-  PubsubMessage[]
+const loadCommentChatMessagesFromIndexedDB = async (): Promise<
+  ChatMessage[]
 > => {
   const db = await openDatabase();
   const tx = db.transaction("chatMessages", "readonly");
   const store = tx.objectStore("chatMessages");
-  const messages: PubsubMessage[] = [];
+  const messages: ChatMessage[] = [];
   const cursor = store.openCursor();
   await new Promise<void>((resolve, reject) => {
     cursor.onsuccess = (e) => {
