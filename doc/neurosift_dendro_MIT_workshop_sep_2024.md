@@ -462,11 +462,9 @@ You can see that the embedding has periodic structure that matches the trial str
 
 In that last CEBRA example, the input was an NWB file from DANDI, and the output was a new NWB file containing all the information and data from the input file plus the CEBRA embedding. This was a relatively small file, but what happens when the input file is very large (e.g., contains raw electrophysiology data)? That's where LINDI comes in.
 
-[Read more about LINDI here](https://github.com/NeurodataWithoutBorders/lindi/tree/additional-url-resolver). Note that this link points to a development branch of LINDI that describes the features that Dendro uses. It is not yet agreed upon and settled. Hopefully this will merge into the main branch soon.
+[Read more about LINDI here](https://github.com/NeurodataWithoutBorders/lindi).
 
-The newest features of LINDI are not yet merged into the main branch and it's not clear how the future of LINDI/Dandi integration will look.
-
-For now you can use the lindi Python package (version 0.4.0a2) to read .lindi.json and .lindi.tar files as though they were HDF5 files, and you can even use pynwb!
+You can use the lindi Python package to read .lindi.json and .lindi.tar files as though they were HDF5 files, and you can even use pynwb!
 
 For example, to load that embedding object in Python, do the following.
 * [Open it in Neurosift](https://neurosift.app/?p=/nwb&url=https://tempory.net/f/dendro/f/hello_world_service/hello_cebra/cebra_nwb_embedding_6/ujOk88BJmLM1zjGH4Xwr/output/output.nwb.lindi.tar&dandisetId=000140&dandisetVersion=draft&st=lindi&tab=neurodata-item:/processing/CEBRA/embedding|TimeSeries)
