@@ -47,7 +47,7 @@ It is highly recommended that you bring your own laptop so you can follow along 
 Whichever method you are using, you should install neurosift, dendro, and lindi. Open a terminal (on Dandihub File -> New -> Terminal) and run the following command.
 
 ```bash
-pip install --upgrade neurosift dendro lindi==0.4.0a2 pubnub
+pip install --upgrade neurosift dendro lindi pubnub
 ```
 
 Let's get started!
