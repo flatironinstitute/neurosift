@@ -248,6 +248,18 @@ viewPlugins.push({
   ],
 });
 
+// MicroscopySeries
+viewPlugins.push({
+  name: "MicroscopySeries",
+  neurodataType: "MicroscopySeries",
+  defaultForNeurodataType: true,
+  component: ImageSeriesItemView,
+  isTimeView: false,
+  testLinks: [
+    "https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/e6263508-26a0-4db0-ac0a-76a994f303a1/download/&dandisetId=001075&dandisetVersion=draft&tab=neurodata-item:/acquisition/PumpProbeImagingGreen|VariableDepthMicroscopySeries",
+  ],
+});
+
 // Units
 viewPlugins.push({
   name: "Units",

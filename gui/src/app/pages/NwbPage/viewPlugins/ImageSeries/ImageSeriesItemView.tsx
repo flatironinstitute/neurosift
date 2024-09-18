@@ -30,13 +30,13 @@ const ImageSeriesItemView: FunctionComponent<Props> = ({
     setErrorString(null);
     (async () => {
       const dataDataset = await nwbFile.getDataset(path + "/data");
-      const startingTimeDataset = await nwbFile.getDataset(
-        path + "/starting_time",
-      );
-      const startingTimeData = await nwbFile.getDatasetData(
-        path + "/starting_time",
-        {},
-      );
+      // const startingTimeDataset = await nwbFile.getDataset(
+      //   path + "/starting_time",
+      // );
+      // const startingTimeData = await nwbFile.getDatasetData(
+      //   path + "/starting_time",
+      //   {},
+      // );
       if (canceled) {
         return;
       }
@@ -44,14 +44,14 @@ const ImageSeriesItemView: FunctionComponent<Props> = ({
         setErrorString("No data dataset found");
         return;
       }
-      if (!startingTimeDataset) {
-        setErrorString("No starting time dataset found");
-        return;
-      }
-      if (startingTimeData === undefined) {
-        setErrorString("No starting time data found");
-        return;
-      }
+      // if (!startingTimeDataset) {
+      //   setErrorString("No starting time dataset found");
+      //   return;
+      // }
+      // if (startingTimeData === undefined) {
+      //   setErrorString("No starting time data found");
+      //   return;
+      // }
       if (dataDataset.shape.length < 3) {
         setErrorString("Data dataset must have at least 3 dimensions");
         return;
@@ -60,12 +60,10 @@ const ImageSeriesItemView: FunctionComponent<Props> = ({
         setErrorString("Data dataset must have at most 4 dimensions");
         return;
       }
-      const startingTime = startingTimeData as any as number;
+      // const startingTime = startingTimeData as any as number;
       const client = new ImageSeriesClient({
         nwbFile,
         dataDataset,
-        startingTime,
-        rate: startingTimeDataset.attrs.rate as number,
       });
       setImageSeriesClient(client);
     })();
@@ -101,8 +99,6 @@ const ImageSeriesWidget: FunctionComponent<ImageSeriesWidgetProps> = ({
 }) => {
   const H = client.imageWidth;
   const W = client.imageHeight;
-
-  console.log("---- W, H:", W, H);
 
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(
     null,
@@ -227,6 +223,10 @@ const ImageSeriesWidget: FunctionComponent<ImageSeriesWidgetProps> = ({
     client.isGrayscale,
   ]);
 
+  if (!data) {
+    return <div>Loading data...</div>;
+  }
+
   return (
     <div>
       <canvas ref={(elmt) => setCanvasElement(elmt)} width={W} height={H} />
@@ -251,8 +251,6 @@ class ImageSeriesClient {
     private o: {
       nwbFile: RemoteH5FileX;
       dataDataset: RemoteH5Dataset;
-      startingTime: number;
-      rate: number;
     },
   ) {}
   get numFrames() {
@@ -315,6 +313,7 @@ const FrameSelector: FunctionComponent<FrameSelectorProps> = ({
       <input
         type="range"
         min={0}
+        title="Frame"
         max={numFrames - 1}
         value={currentFrameIndex}
         onChange={(e) => onChange(parseInt(e.target.value))}
