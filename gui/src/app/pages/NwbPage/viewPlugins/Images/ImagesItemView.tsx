@@ -210,7 +210,7 @@ type BrightnessSelectorProps = {
   onChange: (value: number) => void;
 };
 
-const BrightnessSelector: FunctionComponent<BrightnessSelectorProps> = ({
+export const BrightnessSelector: FunctionComponent<BrightnessSelectorProps> = ({
   value,
   onChange,
 }) => {
@@ -232,7 +232,7 @@ type ContrastSelectorProps = {
   onChange: (value: number) => void;
 };
 
-const ContrastSelector: FunctionComponent<ContrastSelectorProps> = ({
+export const ContrastSelector: FunctionComponent<ContrastSelectorProps> = ({
   value,
   onChange,
 }) => {

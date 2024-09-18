@@ -74,6 +74,7 @@ export const qfcDecompress = async (
     decompressed_buf.byteLength !==
     num_samples * num_channels * (compressor.dtype === "float32" ? 4 : 2)
   ) {
+    console.warn("compressor", compressor);
     throw Error(
       `Unexpected decompressed buffer length. Expected ${num_samples * num_channels * (compressor.dtype === "float32" ? 4 : 2)}, got ${decompressed_buf.byteLength}`,
     );

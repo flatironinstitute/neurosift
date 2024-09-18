@@ -32,6 +32,7 @@ import {
   getCustomPythonCodeForTimeSeries,
   getCustomPythonCodeForUnits,
 } from "./customPythonCode";
+import ImageSeriesItemView from "./ImageSeries/ImageSeriesItemView";
 
 type Props = {
   width: number;
@@ -235,14 +236,17 @@ viewPlugins.push({
 // See https://flatironinstitute.github.io/neurosift/#/nwb?url=https://dandiarchive.s3.amazonaws.com/blobs/8cf/38e/8cf38e36-6cd8-4c10-9d74-c2e6be70f019
 // for an example that has a LabeledEvents object inside processing/behavior
 
-// // ImageSeries
-// viewPlugins.push({
-//     name: 'ImageSeries',
-//     neurodataType: 'ImageSeries',
-//     defaultForNeurodataType: true,
-//     component: ImageSeriesItemView,
-//     isTimeView: false
-// })
+// ImageSeries
+viewPlugins.push({
+  name: "ImageSeries",
+  neurodataType: "ImageSeries",
+  defaultForNeurodataType: true,
+  component: ImageSeriesItemView,
+  isTimeView: false,
+  testLinks: [
+    "https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/fdaa72ee-403c-4dbf-be35-64e7f31c4c1e/download/&dandisetId=000363&dandisetVersion=0.231012.2129&tab=neurodata-item:/acquisition/SC038_111919_side_face_1-0000|ImageSeries",
+  ],
+});
 
 // Units
 viewPlugins.push({
