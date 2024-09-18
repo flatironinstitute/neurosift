@@ -60,7 +60,7 @@ const getRequiredResources = (): DendroJobRequiredResources => {
     numCpus: 2,
     numGpus: 0,
     memoryGb: 4,
-    timeSec: 60 * 50,
+    timeSec: 60 * 60 * 4,
   };
 };
 
