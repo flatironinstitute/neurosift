@@ -14,10 +14,6 @@ const zarrDecodeChunkArray = async (
   if (compressor) {
     if (compressor.id === "blosc") {
       ret = await new Blosc().decode(chunk);
-      // check if Uint8Array
-      if (ret instanceof Uint8Array) {
-        ret = ret.buffer;
-      }
     } else if (compressor.id === "gzip") {
       ret = pako.inflate(chunk);
     } else if (compressor.id === "neurosift.mp4") {
@@ -31,6 +27,10 @@ const zarrDecodeChunkArray = async (
     } else {
       throw Error("Unhandled compressor " + compressor.id);
     }
+  }
+  // check if Uint8Array
+  if (ret instanceof Uint8Array) {
+    ret = ret.buffer;
   }
   if (dtype === "|O") {
     if (!shape) throw Error("No shape for |O");

@@ -21,7 +21,6 @@ import {
 import { useCustomStatusBarElements } from "../../StatusBar";
 import useRoute, { StorageType } from "../../useRoute";
 import {
-  AssociatedDendroProject,
   DandiAssetContext,
   DandiAssetContextType,
   defaultDandiAssetContext,
@@ -145,33 +144,12 @@ const NwbPageChild1: FunctionComponent<NwbPageChild1Props> = ({
         assetId,
         assetPath,
       });
-      const url = "https://dendro.vercel.app/api/gui/find_projects";
-      const data = {
-        fileUrl: assetUrl,
-      };
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      if (!resp.ok) return;
-      const obj = await resp.json();
-      if (canceled) return;
-      const associatedDendroProjects: AssociatedDendroProject[] =
-        obj.projects.map((p: any) => ({
-          projectId: p.projectId,
-          name: p.name,
-          ownerId: p.ownerId,
-        }));
       setDandiAssetContextValue({
         assetUrl,
         dandisetId,
         dandisetVersion,
         assetId,
-        assetPath,
-        associatedDendroProjects,
+        assetPath
       });
     })();
     return () => {

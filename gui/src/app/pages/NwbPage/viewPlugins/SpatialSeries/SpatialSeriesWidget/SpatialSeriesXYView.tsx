@@ -95,6 +95,9 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
       nwbFile,
       dataset,
       chunkSize,
+      {
+        ignoreConversion: false
+      }
     );
     setDatasetChunkingClient(client);
   }, [dataset, nwbFile, chunkSize]);

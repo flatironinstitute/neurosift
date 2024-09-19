@@ -381,56 +381,6 @@ export const useDandisetInfo = (
   return dandisetInfo;
 };
 
-// type AssociatedDendroProjectsComponentProps = {
-//     assetUrl: string
-// }
-
-// const AssociatedDendroProjectsComponent: FunctionComponent<AssociatedDendroProjectsComponentProps> = ({assetUrl}) => {
-//     const {associatedDendroProjects} = useDandiAssetContext()
-//     const [expanded, setExpanded] = useState(false)
-//     const initialNumProjectsToShow = 6
-//     const projectsFiltered = useMemo(() => {
-//         if (!associatedDendroProjects) return undefined
-//         if (expanded) return associatedDendroProjects
-//         else return associatedDendroProjects.slice(0, initialNumProjectsToShow)
-//     }, [associatedDendroProjects, expanded])
-//     if (!projectsFiltered) return <span>...</span>
-//     if (projectsFiltered.length === 0) return <span />
-//     return (
-//         <div>
-//             <span>Associated Dendro projects:&nbsp; </span>
-//             {
-//                 projectsFiltered.map((project, i) => (
-//                     <span key={project.projectId}>
-//                         <span style={{whiteSpace: 'nowrap'}}>
-//                             <Hyperlink
-//                                 href={`https://dendro.vercel.app/project/${project.projectId}`}
-//                                 target="_blank"
-//                             >
-//                                 {project.name}
-//                                 &nbsp;({formatUserId(project.ownerId)})
-//                             </Hyperlink>
-//                         </span>
-//                         {
-//                             i < projectsFiltered.length - 1 && <span>&nbsp;|&nbsp; </span>
-//                         }
-//                     </span>
-//                 ))
-//             }
-//             {
-//                 !expanded && associatedDendroProjects && associatedDendroProjects.length > initialNumProjectsToShow && (
-//                     <span>
-//                         &nbsp;|&nbsp;...&nbsp;
-//                         <span style={{whiteSpace: 'nowrap'}}>
-//                             <Hyperlink onClick={() => setExpanded(true)}>Show all</Hyperlink>
-//                         </span>
-//                     </span>
-//                 )
-//             }
-//         </div>
-//     )
-// }
-
 export const formatUserId = (userId: string) => {
   if (userId.startsWith("github|")) {
     return userId.slice("github|".length);

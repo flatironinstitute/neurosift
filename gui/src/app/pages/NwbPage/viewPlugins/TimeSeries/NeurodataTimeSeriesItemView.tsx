@@ -52,6 +52,7 @@ const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({
           visibleChannelsRange={visibleChannelsRange}
           autoChannelSeparation={timeSeriesViewOpts.autoChannelSeparation}
           colorChannels={timeSeriesViewOpts.colorChannels}
+          applyConversion={timeSeriesViewOpts.applyConversion}
           spikeTrainsClient={spikeTrainsClient}
           startZoomedOut={true}
         />

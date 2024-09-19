@@ -15,6 +15,7 @@ class TimeseriesDatasetChunkingClient {
     private o: {
       visibleChannelsRange?: [number, number];
       autoChannelSeparation?: number;
+      ignoreConversion?: boolean;
     } = {},
   ) {}
   async getConcatenatedChunk(
@@ -89,6 +90,12 @@ class TimeseriesDatasetChunkingClient {
     if (isNaN(offset)) {
       offset = 0;
     }
+
+    if (this.o.ignoreConversion) {
+      conversion = 1;
+      offset = 0;
+    }
+
     const i1 = chunkIndex * this.chunkSize;
     const i2 = Math.min(i1 + this.chunkSize, shape[0]);
     let channelSlice: [number, number] = [0, Math.min(shape[1] || 1, 15)]; // for now limit to 15 columns when no channel slice is specified

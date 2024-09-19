@@ -34,6 +34,7 @@ type Props = {
   visibleChannelsRange?: [number, number];
   autoChannelSeparation?: number;
   colorChannels?: boolean;
+  applyConversion?: boolean;
   spikeTrainsClient?: SpikeTrainsClient;
   startZoomedOut?: boolean;
 };
@@ -52,6 +53,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
   visibleChannelsRange,
   autoChannelSeparation,
   colorChannels,
+  applyConversion,
   spikeTrainsClient,
   startZoomedOut,
 }) => {
@@ -152,8 +154,16 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
       nwbFile,
       dataset,
       chunkSize,
-      { visibleChannelsRange, autoChannelSeparation },
+      {
+        visibleChannelsRange,
+        autoChannelSeparation,
+        ignoreConversion: !applyConversion
+      },
     );
+    setTimeout(async () => {
+      const chunk = await client.getConcatenatedChunk(0, 1, { onCancel: [] });
+      const dataDatasetData = await nwbFile.getDatasetData(dataset.path, { slice: [[0, 1000], [0, 1]] });
+    }, 1000);
     setDatasetChunkingClient(client);
   }, [
     dataset,
@@ -161,6 +171,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
     chunkSize,
     visibleChannelsRange,
     autoChannelSeparation,
+    applyConversion,
   ]);
 
   // Set startChunkIndex and endChunkIndex
@@ -323,6 +334,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
   const [valueRange, setValueRange] = useState<
     { min: number; max: number } | undefined
   >(undefined);
+  const [refreshValueRangeCode, setRefreshValueRangeCode] = useState<number>(0);
   useEffect(() => {
     if (!dataSeries) return;
     let min = 0;
@@ -341,7 +353,16 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
       const max2 = old ? Math.max(old.max, max) : max;
       return { min: min2, max: max2 };
     });
-  }, [dataSeries]);
+  }, [dataSeries, refreshValueRangeCode]);
+  useEffect(() => {
+    // refresh the value range when applyConversion changes
+    setValueRange(undefined);
+    setDataSeries(undefined);
+    setTimeout(() => {
+      // not ideal
+      setRefreshValueRangeCode((old) => old + 1);
+    }, 100);
+  }, [applyConversion]);
 
   useEffect(() => {
     // reset the value range
@@ -411,7 +432,6 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
   useEffect(() => {
     if (!worker) return;
     if (!dataSeries) return;
-    console.log(dataSeries);
     worker.postMessage({
       dataSeries,
     });
@@ -507,7 +527,6 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
   useEffect(() => {
     // post zoomInRequiredForSpikeTrains to worker
     if (!worker) return;
-    console.log(zoomInRequiredForSpikeTrains);
     worker.postMessage({
       zoomInRequiredForSpikeTrains,
     });
@@ -540,9 +559,9 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
 
   const yLabel = useMemo(() => {
     if (!dataset) return "";
-    const yLabel = dataset.attrs["unit"] || "";
+    const yLabel = applyConversion ? (dataset.attrs["unit"] || "") : "";
     return yLabel;
-  }, [dataset]);
+  }, [dataset, applyConversion]);
 
   const yAxisInfo = useMemo(
     () => ({
