@@ -157,12 +157,17 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
       {
         visibleChannelsRange,
         autoChannelSeparation,
-        ignoreConversion: !applyConversion
+        ignoreConversion: !applyConversion,
       },
     );
     setTimeout(async () => {
       const chunk = await client.getConcatenatedChunk(0, 1, { onCancel: [] });
-      const dataDatasetData = await nwbFile.getDatasetData(dataset.path, { slice: [[0, 1000], [0, 1]] });
+      const dataDatasetData = await nwbFile.getDatasetData(dataset.path, {
+        slice: [
+          [0, 1000],
+          [0, 1],
+        ],
+      });
     }, 1000);
     setDatasetChunkingClient(client);
   }, [
@@ -559,7 +564,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
 
   const yLabel = useMemo(() => {
     if (!dataset) return "";
-    const yLabel = applyConversion ? (dataset.attrs["unit"] || "") : "";
+    const yLabel = applyConversion ? dataset.attrs["unit"] || "" : "";
     return yLabel;
   }, [dataset, applyConversion]);
 

@@ -110,10 +110,9 @@ type ApplyConversionSelectorProps = {
   setValue: (value: boolean) => void;
 };
 
-const ApplyConversionSelector: FunctionComponent<ApplyConversionSelectorProps> = ({
-  value,
-  setValue,
-}) => {
+const ApplyConversionSelector: FunctionComponent<
+  ApplyConversionSelectorProps
+> = ({ value, setValue }) => {
   return (
     <div>
       <input

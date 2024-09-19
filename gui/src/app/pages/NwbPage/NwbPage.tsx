@@ -149,7 +149,7 @@ const NwbPageChild1: FunctionComponent<NwbPageChild1Props> = ({
         dandisetId,
         dandisetVersion,
         assetId,
-        assetPath
+        assetPath,
       });
     })();
     return () => {
