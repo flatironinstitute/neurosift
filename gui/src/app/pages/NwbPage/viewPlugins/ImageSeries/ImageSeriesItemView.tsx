@@ -25,7 +25,7 @@ const ImageSeriesItemView: FunctionComponent<Props> = ({
       path={path}
       rgb={true}
     />
-  )
+  );
 };
 
 export const ImageSeriesItemViewOtherAttempt: FunctionComponent<Props> = ({

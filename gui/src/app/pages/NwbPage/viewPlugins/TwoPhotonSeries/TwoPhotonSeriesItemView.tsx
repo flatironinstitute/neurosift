@@ -76,7 +76,7 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
   width,
   height,
   path,
-  rgb
+  rgb,
 }) => {
   const nwbFile = useNwbFile();
   const [useMp4, setUseMp4] = useState<boolean | undefined>(undefined);
@@ -100,7 +100,12 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
     );
   } else {
     return (
-      <TwoPhotonSeriesItemViewChild width={width} height={height} path={path} rgb={rgb} />
+      <TwoPhotonSeriesItemViewChild
+        width={width}
+        height={height}
+        path={path}
+        rgb={rgb}
+      />
     );
   }
 };
@@ -109,7 +114,7 @@ export const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
   width,
   height,
   path,
-  rgb
+  rgb,
 }) => {
   const nwbFile = useNwbFile();
   if (!nwbFile) throw Error("Unexpected: nwbFile is null");
@@ -356,7 +361,7 @@ export const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
           />
         </div>
         &nbsp;&nbsp;
-        {! rgb && (
+        {!rgb && (
           <PlaneSelector
             currentPlane={currentPlane}
             setCurrentPlane={setCurrentPlane}
@@ -392,7 +397,7 @@ type ImageDataViewProps = {
   width: number;
   height: number;
   imageData: ImageData;
-  currentPlane: number;  // -1 means rgb
+  currentPlane: number; // -1 means rgb
   minValue: number;
   maxValue: number;
 };
@@ -440,14 +445,22 @@ const ImageDataView: FunctionComponent<ImageDataViewProps> = ({
         buf[4 * i + 2] = v;
         buf[4 * i + 3] = 255;
       }
-    }
-    else {
+    } else {
       // rgb
       for (let i = 0; i < W * H; i++) {
         const iii = i * numPlanes;
-        buf[4 * i + 0] = Math.min(255, Math.round(transformValue(data[iii]) * 255));
-        buf[4 * i + 1] = Math.min(255, Math.round(transformValue(data[iii + 1]) * 255));
-        buf[4 * i + 2] = Math.min(255, Math.round(transformValue(data[iii + 2]) * 255));
+        buf[4 * i + 0] = Math.min(
+          255,
+          Math.round(transformValue(data[iii]) * 255),
+        );
+        buf[4 * i + 1] = Math.min(
+          255,
+          Math.round(transformValue(data[iii + 1]) * 255),
+        );
+        buf[4 * i + 2] = Math.min(
+          255,
+          Math.round(transformValue(data[iii + 2]) * 255),
+        );
         buf[4 * i + 3] = 255;
       }
     }
