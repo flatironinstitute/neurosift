@@ -33,6 +33,7 @@ type Props = {
   height: number;
   path: string;
   condensed?: boolean;
+  rgb?: boolean;
 };
 
 type ImageData = {
@@ -75,6 +76,7 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
   width,
   height,
   path,
+  rgb
 }) => {
   const nwbFile = useNwbFile();
   const [useMp4, setUseMp4] = useState<boolean | undefined>(undefined);
@@ -98,15 +100,16 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
     );
   } else {
     return (
-      <TwoPhotonSeriesItemViewChild width={width} height={height} path={path} />
+      <TwoPhotonSeriesItemViewChild width={width} height={height} path={path} rgb={rgb} />
     );
   }
 };
 
-const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
+export const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
   width,
   height,
   path,
+  rgb
 }) => {
   const nwbFile = useNwbFile();
   if (!nwbFile) throw Error("Unexpected: nwbFile is null");
@@ -128,7 +131,7 @@ const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
     setCurrentTime(timeseriesDataClient.startTime!);
   }, [timeseriesDataClient, setCurrentTime, setVisibleTimeRange]);
 
-  const [currentPlane, setCurrentPlane] = useState<number>(0);
+  const [currentPlane, setCurrentPlane] = useState<number>(0); // -1 means RGB
   const [currentMinValue, setCurrentMinValue] = useState<number | undefined>(
     undefined,
   );
@@ -139,8 +142,15 @@ const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
   const [planeTransform, setPlaneTransform] = useState(defaultPlaneTransform);
 
   useEffect(() => {
+    if (rgb) return;
     setCurrentPlane(Math.floor((dataDataset?.shape[3] || 1) / 2));
-  }, [dataDataset]);
+  }, [dataDataset, rgb]);
+
+  useEffect(() => {
+    if (rgb) {
+      setCurrentPlane(-1);
+    }
+  }, [rgb]);
 
   const [loading, setLoading] = useState(false);
 
@@ -346,11 +356,13 @@ const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
           />
         </div>
         &nbsp;&nbsp;
-        <PlaneSelector
-          currentPlane={currentPlane}
-          setCurrentPlane={setCurrentPlane}
-          numPlanes={dataDataset?.shape[3] || 1}
-        />
+        {! rgb && (
+          <PlaneSelector
+            currentPlane={currentPlane}
+            setCurrentPlane={setCurrentPlane}
+            numPlanes={dataDataset?.shape[3] || 1}
+          />
+        )}
         &nbsp;&nbsp;
         <ValueRangeSelector
           min={0}
@@ -380,7 +392,7 @@ type ImageDataViewProps = {
   width: number;
   height: number;
   imageData: ImageData;
-  currentPlane: number;
+  currentPlane: number;  // -1 means rgb
   minValue: number;
   maxValue: number;
 };
@@ -419,13 +431,25 @@ const ImageDataView: FunctionComponent<ImageDataViewProps> = ({
 
     const imgData = ctx.createImageData(W, H);
     const buf = imgData.data;
-    for (let i = 0; i < W * H; i++) {
-      const iii = i * numPlanes + currentPlane;
-      const v = Math.min(255, Math.round(transformValue(data[iii]) * 255));
-      buf[4 * i + 0] = v;
-      buf[4 * i + 1] = v;
-      buf[4 * i + 2] = v;
-      buf[4 * i + 3] = 255;
+    if (currentPlane >= 0) {
+      for (let i = 0; i < W * H; i++) {
+        const iii = i * numPlanes + currentPlane;
+        const v = Math.min(255, Math.round(transformValue(data[iii]) * 255));
+        buf[4 * i + 0] = v;
+        buf[4 * i + 1] = v;
+        buf[4 * i + 2] = v;
+        buf[4 * i + 3] = 255;
+      }
+    }
+    else {
+      // rgb
+      for (let i = 0; i < W * H; i++) {
+        const iii = i * numPlanes;
+        buf[4 * i + 0] = Math.min(255, Math.round(transformValue(data[iii]) * 255));
+        buf[4 * i + 1] = Math.min(255, Math.round(transformValue(data[iii + 1]) * 255));
+        buf[4 * i + 2] = Math.min(255, Math.round(transformValue(data[iii + 2]) * 255));
+        buf[4 * i + 3] = 255;
+      }
     }
     const offscreenCanvas = document.createElement("canvas");
     offscreenCanvas.width = W;

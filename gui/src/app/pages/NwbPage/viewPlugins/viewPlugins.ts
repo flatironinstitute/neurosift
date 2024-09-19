@@ -191,6 +191,7 @@ viewPlugins.push({
   secondaryNeurodataType: [
     "RoiResponseSeries",
     "FiberPhotometryResponseSeries",
+    "MicroscopyResponseSeries",
   ],
   component: TrialAlignedSeriesItemView,
   usesState: true,
@@ -242,7 +243,7 @@ viewPlugins.push({
   neurodataType: "ImageSeries",
   defaultForNeurodataType: true,
   component: ImageSeriesItemView,
-  isTimeView: false,
+  isTimeView: true,
   testLinks: [
     "https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/fdaa72ee-403c-4dbf-be35-64e7f31c4c1e/download/&dandisetId=000363&dandisetVersion=0.231012.2129&tab=neurodata-item:/acquisition/SC038_111919_side_face_1-0000|ImageSeries",
   ],
@@ -254,7 +255,7 @@ viewPlugins.push({
   neurodataType: "MicroscopySeries",
   defaultForNeurodataType: true,
   component: ImageSeriesItemView,
-  isTimeView: false,
+  isTimeView: true,
   testLinks: [
     "https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/e6263508-26a0-4db0-ac0a-76a994f303a1/download/&dandisetId=001075&dandisetVersion=draft&tab=neurodata-item:/acquisition/PumpProbeImagingGreen|VariableDepthMicroscopySeries",
   ],
