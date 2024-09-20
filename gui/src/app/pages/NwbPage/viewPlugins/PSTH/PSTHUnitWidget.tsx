@@ -592,12 +592,33 @@ const PSTHGroupLegend: FunctionComponent<PSTHGroupLegendProps> = ({
               fontSize: 12,
             }}
           >
-            {g.group}
+            {<GroupLabel group={g} />}
           </div>
         </div>
       ))}
     </div>
   );
+};
+
+type GroupLabelProps = {
+  group: { group: any; color: string };
+};
+
+const GroupLabel: FunctionComponent<GroupLabelProps> = ({ group }) => {
+  if (!group) return <></>;
+  else if (typeof group.group === "number") {
+    return <>{group.group}</>;
+  } else if (typeof group.group === "string") {
+    return <>{group.group}</>;
+  } else if (typeof group.group === "object") {
+    if (group.group._REFERENCE) {
+      return <>_REF</>;
+    } else {
+      return <>_OBJ</>;
+    }
+  } else {
+    return <>?</>;
+  }
 };
 
 const groupColors = [
