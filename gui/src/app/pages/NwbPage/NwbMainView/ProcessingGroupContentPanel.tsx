@@ -101,6 +101,8 @@ const ProcessingGroupContentPanel: FunctionComponent<Props> = ({
         // BehavioralTimeSeries holds TimeSeries
         // EyeTracking holds SpatialSeries
         // Position holds SpatialSeries
+        // MicroscopySegmentations holds MicroscopyPlaneSegmentation https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/fc5fca29-4c8f-444b-bbc1-4b8cd369d4ab/download/&dandisetId=001075&dandisetVersion=draft
+        // MicroscopyResponseSeriesContainer holds MicroscopyResponseSeries (same example link)
         let isContainerType = false;
         for (const ndt of [
           "LFP",
@@ -112,6 +114,8 @@ const ProcessingGroupContentPanel: FunctionComponent<Props> = ({
           "Position",
           "PupilTracking",
           "CompassDirection",
+          "MicroscopySegmentations",
+          "MicroscopyResponseSeriesContainer",
         ]) {
           if (
             neurodataTypeInheritsFrom(
