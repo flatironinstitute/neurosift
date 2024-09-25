@@ -1,5 +1,8 @@
 /* eslint-disable no-constant-condition */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
+import { OpenWithOutlined, SquareSharp } from "@mui/icons-material";
+import { reportRecentlyViewedDandiset } from "app/pages/DandiPage/DandiBrowser/DandiBrowser";
 import {
   FunctionComponent,
   useCallback,
@@ -8,19 +11,19 @@ import {
   useReducer,
   useState,
 } from "react";
+import useRoute from "../../../useRoute";
+import getAuthorizationHeaderForUrl from "../../NwbPage/getAuthorizationHeaderForUrl";
+import ViewObjectAnalysesIconThing from "../../NwbPage/ObjectNote/ViewObjectAnalysesIconThing";
+import ViewObjectNotesIconThing from "../../NwbPage/ObjectNote/ViewObjectNotesIconThing";
+import formatByteCount from "./formatByteCount";
 import {
   AssetsResponse,
   AssetsResponseItem,
   DandisetSearchResultItem,
   DandisetVersionInfo,
 } from "./types";
-import getAuthorizationHeaderForUrl from "../../NwbPage/getAuthorizationHeaderForUrl";
-import formatByteCount from "./formatByteCount";
-import { Hyperlink } from "@fi-sci/misc";
-import useRoute from "../../../useRoute";
-import ViewObjectNotesIconThing from "../../NwbPage/ObjectNote/ViewObjectNotesIconThing";
-import ViewObjectAnalysesIconThing from "../../NwbPage/ObjectNote/ViewObjectAnalysesIconThing";
-import { reportRecentlyViewedDandiset } from "app/pages/DandiPage/DandiBrowser/DandiBrowser";
+import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
+import AdvancedAssetOptionsWindow from "./AdvancedAssetOptionsWindow";
 
 const applicationBarColorDarkened = "#546"; // from dendro
 
@@ -129,6 +132,12 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
     });
   }, [dandisetVersionInfo, route.staging]);
 
+  const {
+    visible: advancedOptionsVisible,
+    handleOpen: openAdvancedOptions,
+    handleClose: closeAdvancedOptions,
+  } = useModalWindow();
+
   if (!dandisetResponse) return <div>Loading dandiset...</div>;
   if (!dandisetVersionInfo) return <div>Loading dandiset info...</div>;
 
@@ -138,7 +147,7 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
 
   const dendroViewsEnabled = true;
 
-  const topBarHeight = onOpenAssets ? 30 : 0;
+  const topBarHeight = dendroViewsEnabled ? 30 : 0;
   return (
     <div style={{ position: "absolute", width, height, overflowY: "hidden" }}>
       <div
@@ -150,22 +159,6 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
           borderBottom: "solid 1px #ccc",
         }}
       >
-        {onOpenAssets && (
-          <button
-            disabled={selectedAssets.assetPaths.length === 0}
-            onClick={() => {
-              onOpenAssets(
-                selectedAssets.assetPaths.map((p) =>
-                  assetUrlForPath(p, allAssets || [], useStaging),
-                ),
-                selectedAssets.assetPaths,
-              );
-            }}
-          >
-            Open selected assets
-          </button>
-        )}
-        &nbsp;&nbsp;&nbsp;&nbsp;
         {dendroViewsEnabled && (
           <Hyperlink
             onClick={() =>
@@ -215,6 +208,29 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
             <ViewObjectNotesIconThing />
             &nbsp;
             <ViewObjectAnalysesIconThing />
+            &nbsp;
+            {onOpenAssets && selectedAssets.assetPaths.length > 0 && (
+              <SmallIconButton
+                icon={<OpenWithOutlined />}
+                title="Open selected assets"
+                onClick={() => {
+                  onOpenAssets(
+                    selectedAssets.assetPaths.map((p) =>
+                      assetUrlForPath(p, allAssets || [], useStaging),
+                    ),
+                    selectedAssets.assetPaths,
+                  );
+                }}
+              />
+            )}
+            &nbsp;
+            {selectedAssets.assetPaths.length > 0 && (
+              <SmallIconButton
+                icon={<SquareSharp />}
+                title="Advanced options"
+                onClick={openAdvancedOptions}
+              />
+            )}
           </div>
           {
             <div style={{ fontSize: 14, padding: 5 }}>
@@ -253,6 +269,17 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
           )}
         </div>
       </div>
+      <ModalWindow
+        visible={advancedOptionsVisible}
+        onClose={closeAdvancedOptions}
+      >
+        <AdvancedAssetOptionsWindow
+          selectedAssets={selectedAssets}
+          dandisetId={dandisetId}
+          dandisetVersion={dandisetVersion || "draft"}
+          useStaging={useStaging || false}
+        />
+      </ModalWindow>
     </div>
   );
 };
@@ -677,8 +704,10 @@ const AssetItemRow: FunctionComponent<AssetItemRowProps> = ({
 
   const label = path.split("/").slice(1).join("/");
 
+  const [showAssetInfo, setShowAssetInfo] = useState(false);
+
   const lindiAssetInfo = useLindiAssetInfo({
-    dandisetId,
+    dandisetId: showAssetInfo ? dandisetId : undefined,
     assetId: assetItem.asset_id,
   });
 
@@ -694,7 +723,17 @@ const AssetItemRow: FunctionComponent<AssetItemRowProps> = ({
       </td>
       <td>{formatTime2(modified)}</td>
       <td>{formatByteCount(size)}</td>
-      <td>{lindiAssetInfo ? lindiAssetInfo.neurodataTypes.join(", ") : ""}</td>
+      <td>
+        {showAssetInfo ? (
+          lindiAssetInfo ? (
+            lindiAssetInfo.neurodataTypes.join(", ")
+          ) : (
+            ""
+          )
+        ) : (
+          <Hyperlink onClick={() => setShowAssetInfo(true)}>info</Hyperlink>
+        )}
+      </td>
     </tr>
   );
 };

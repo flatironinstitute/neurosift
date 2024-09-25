@@ -183,12 +183,14 @@ export const isDendroJobInputFile = (x: any): x is DendroJobInputFile => {
 export type DendroJobOutputFile = {
   name: string;
   fileBaseName: string;
+  urlDeterminedAtRuntime?: boolean;
 };
 
 export const isDendroJobOutputFile = (x: any): x is DendroJobOutputFile => {
   return validateObject(x, {
     name: isString,
     fileBaseName: isString,
+    urlDeterminedAtRuntime: optional(isBoolean),
   });
 };
 
@@ -402,6 +404,7 @@ export const isDendroAppProcessorInputFile = (
 export type DendroAppProcessorOutputFile = {
   name: string;
   description: string;
+  urlDeterminedAtRuntime?: boolean;
 };
 
 export const isDendroAppProcessorOutputFile = (
@@ -410,6 +413,7 @@ export const isDendroAppProcessorOutputFile = (
   return validateObject(x, {
     name: isString,
     description: isString,
+    urlDeterminedAtRuntime: optional(isBoolean),
   });
 };
 
@@ -1055,6 +1059,37 @@ export const isGetSignedUploadUrlResponse = (
   });
 };
 
+// getSignedDownloadUrl
+export type GetSignedDownloadUrlRequest = {
+  type: "getSignedDownloadUrlRequest";
+  jobId: string;
+  url: string;
+};
+
+export const isGetSignedDownloadUrlRequest = (
+  x: any,
+): x is GetSignedDownloadUrlRequest => {
+  return validateObject(x, {
+    type: isEqualTo("getSignedDownloadUrlRequest"),
+    jobId: isString,
+    url: isString,
+  });
+};
+
+export type GetSignedDownloadUrlResponse = {
+  type: "getSignedDownloadUrlResponse";
+  signedUrl: string;
+};
+
+export const isGetSignedDownloadUrlResponse = (
+  x: any,
+): x is GetSignedDownloadUrlResponse => {
+  return validateObject(x, {
+    type: isEqualTo("getSignedDownloadUrlResponse"),
+    signedUrl: isString,
+  });
+};
+
 // finalizeMultipartUpload
 
 export type FinalizeMultipartUploadRequest = {
@@ -1435,6 +1470,7 @@ export const isGetServiceAppsResponse = (
 export type GetPubsubSubscriptionRequest = {
   type: "getPubsubSubscriptionRequest";
   computeClientId?: string;
+  protocolVersion?: string;
 };
 
 export const isGetPubsubSubscriptionRequest = (
@@ -1443,6 +1479,7 @@ export const isGetPubsubSubscriptionRequest = (
   return validateObject(x, {
     type: isEqualTo("getPubsubSubscriptionRequest"),
     computeClientId: optional(isString),
+    protocolVersion: optional(isString),
   });
 };
 
@@ -1599,5 +1636,68 @@ export const isComputeUserStatsResponse = (
   return validateObject(x, {
     type: isEqualTo("computeUserStatsResponse"),
     userStats: isUserStats,
+  });
+};
+
+// getDandiApiKey
+// For now, we can get the DANDI API key, but only in restricted
+// circumstances. In the future the API key will remain secret on the
+// server.
+export type GetDandiApiKeyRequest = {
+  type: "getDandiApiKeyRequest";
+  jobId: string;
+  outputName: string;
+};
+
+export const isGetDandiApiKeyRequest = (x: any): x is GetDandiApiKeyRequest => {
+  return validateObject(x, {
+    type: isEqualTo("getDandiApiKeyRequest"),
+    jobId: isString,
+    outputName: isString,
+  });
+};
+
+export type GetDandiApiKeyResponse = {
+  type: "getDandiApiKeyResponse";
+  dandiApiKey: string;
+};
+
+export const isGetDandiApiKeyResponse = (
+  x: any,
+): x is GetDandiApiKeyResponse => {
+  return validateObject(x, {
+    type: isEqualTo("getDandiApiKeyResponse"),
+    dandiApiKey: isString,
+  });
+};
+
+// setOutputFileUrl
+export type setOutputFileUrlRequest = {
+  type: "setOutputFileUrlRequest";
+  jobId: string;
+  outputName: string;
+  url: string;
+};
+
+export const issetOutputFileUrlRequest = (
+  x: any,
+): x is setOutputFileUrlRequest => {
+  return validateObject(x, {
+    type: isEqualTo("setOutputFileUrlRequest"),
+    jobId: isString,
+    outputName: isString,
+    url: isString,
+  });
+};
+
+export type setOutputFileUrlResponse = {
+  type: "setOutputFileUrlResponse";
+};
+
+export const issetOutputFileUrlResponse = (
+  x: any,
+): x is setOutputFileUrlResponse => {
+  return validateObject(x, {
+    type: isEqualTo("setOutputFileUrlResponse"),
   });
 };

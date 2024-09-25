@@ -14,6 +14,7 @@ import {
   useDownstreamJobsForInput,
   useJobProducingOutput,
 } from "./useJobProducingOutput";
+import UploadToDandiView from "./UploadToDandiView";
 
 type DendroViewProps = {
   width: number;
@@ -76,6 +77,12 @@ const DendroView: FunctionComponent<DendroViewProps> = ({ width, height }) => {
         <div>
           <h3>This file was used as input for the following Dendro jobs</h3>
           <ProvenanceJobsView jobList={downstreamJobs} />
+        </div>
+      )}
+      <hr />
+      {nwbFileUrl.endsWith(".nwb.lindi.tar") && (
+        <div>
+          <UploadToDandiView nwbFileUrl={nwbFileUrl} />
         </div>
       )}
     </div>
