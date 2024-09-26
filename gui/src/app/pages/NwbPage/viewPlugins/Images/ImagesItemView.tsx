@@ -147,6 +147,10 @@ const RegularImageItem: FunctionComponent<RegularImageItemProps> = ({
   if (dataset.shape.length === 2) {
     // I guess this is just a grayscale image
     return <GrayscaleImageItem dataset={dataset} data={data} />;
+  }
+  else if ((dataset.shape.length === 3) && (dataset.shape[2] === 3)) {
+    // I guess this is an RGB image
+    return <RGBImageItem dataset={dataset} data={data} />;
   } else {
     return (
       <div>Image not supported with shape: {dataset.shape.join(", ")}</div>
