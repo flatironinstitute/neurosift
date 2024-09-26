@@ -7,11 +7,12 @@ type AdvancedAssetOptionsWindowProps = {
   dandisetId: string;
   dandisetVersion: string;
   useStaging: boolean;
+  onClose: () => void;
 };
 
 const AdvancedAssetOptionsWindow: FunctionComponent<
   AdvancedAssetOptionsWindowProps
-> = ({ selectedAssets, dandisetId, dandisetVersion, useStaging }) => {
+> = ({ selectedAssets, dandisetId, dandisetVersion, useStaging, onclose }) => {
   const [deleting, setDeleting] = useState(false);
   return (
     <div>
@@ -45,7 +46,10 @@ const AdvancedAssetOptionsWindow: FunctionComponent<
             dandisetId={dandisetId}
             dandisetVersion={dandisetVersion}
             useStaging={useStaging}
-            onClose={() => setDeleting(false)}
+            onClose={() => {
+              setDeleting(false);
+              onclose();
+            }}
           />
         ) : useStaging ? (
           dandisetVersion === "draft" ? (
@@ -107,7 +111,7 @@ const DeleteSelectedAssetsComponent: FunctionComponent<
       <table>
         <tbody>
           <tr>
-            <td>DANDI API key:</td>
+            <td>DANDI API key{useStaging ? " (staging)" : ""}</td>
             <td>
               <input
                 type="text"

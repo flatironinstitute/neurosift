@@ -278,6 +278,7 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
           dandisetId={dandisetId}
           dandisetVersion={dandisetVersion || "draft"}
           useStaging={useStaging || false}
+          onClose={closeAdvancedOptions}
         />
       </ModalWindow>
     </div>
