@@ -29,6 +29,16 @@ const HomePage: FunctionComponent<Props> = ({ width, height }) => {
         </a>
       </p>
       <p>
+        <a
+          href="Leveraging LINDI for efficient and non-redundant NWB access on DANDI"
+          target="_blank"
+          rel="noreferrer"
+        >
+          INCF Workshop: Leveraging LINDI for efficient and non-redundant NWB
+          access on DANDI
+        </a>
+      </p>
+      <p>
         <Hyperlink href="https://github.com/flatironinstitute/neurosift">
           Read more
         </Hyperlink>

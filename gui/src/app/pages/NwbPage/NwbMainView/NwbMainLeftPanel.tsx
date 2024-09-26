@@ -25,7 +25,7 @@ type Props = {
   usingLindi: boolean;
 };
 
-const labelMap: {
+export const leftPanelLabelMap: {
   name: string;
   newName: string;
   renderer?: (val: any) => string;
@@ -70,7 +70,7 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
       renderer?: (val: any) => string;
     }[] = [];
     rootGroup?.datasets.forEach((ds) => {
-      const mm = labelMap.find((x) => x.name === ds.name);
+      const mm = leftPanelLabelMap.find((x) => x.name === ds.name);
       const newName = mm?.newName || ds.name;
       ret.push({
         name: newName || ds.name,
@@ -79,7 +79,7 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
       });
     });
     generalGroup?.datasets.forEach((ds) => {
-      const mm = labelMap.find((x) => x.name === ds.name);
+      const mm = leftPanelLabelMap.find((x) => x.name === ds.name);
       const newName = mm?.newName || ds.name;
       ret.push({
         name: newName || ds.name,
@@ -93,8 +93,8 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
   const itemsSorted = useMemo(() => {
     const ret = [...items];
     ret.sort((a, b) => {
-      const ind1 = labelMap.findIndex((x) => x.newName === a.name);
-      const ind2 = labelMap.findIndex((x) => x.newName === b.name);
+      const ind1 = leftPanelLabelMap.findIndex((x) => x.newName === a.name);
+      const ind2 = leftPanelLabelMap.findIndex((x) => x.newName === b.name);
       if (ind1 >= 0) {
         if (ind2 < 0) return -1;
         return ind1 - ind2;
@@ -200,7 +200,7 @@ const DatasetDataView: FunctionComponent<DatasetDataViewProps> = ({
   );
 };
 
-const valueToString2 = (val: any): string => {
+export const valueToString2 = (val: any): string => {
   // same as valueToString, but don't include the brackets for arrays
   if (typeof val === "string") {
     return val;

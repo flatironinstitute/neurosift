@@ -7,6 +7,7 @@ import DefaultNwbFileView from "./DefaultNwbFileView";
 import SpecificationsView from "../SpecificationsView/SpecificationsView";
 import WidgetsView from "../WidgetsView/WidgetsView";
 import DendroView from "../DendroView/DendroView";
+import InfoView from "./InfoView";
 
 type Props = {
   width: number;
@@ -24,7 +25,8 @@ type ViewMode =
   | "specifications"
   | "widgets"
   | "dendro"
-  | "annotations";
+  | "annotations"
+  | "info";
 
 const NwbMainViewMainPanel: FunctionComponent<Props> = ({
   width,
@@ -146,6 +148,23 @@ const NwbMainViewMainPanel: FunctionComponent<Props> = ({
           </div>
         )}
       </div>
+      <div
+        style={{
+          position: "absolute",
+          width,
+          height: height - topBarHeight,
+          top: topBarHeight,
+          visibility: viewMode === "info" ? undefined : "hidden",
+        }}
+      >
+        {hasBeenVisibleViewModes.includes("info") && (
+          <InfoView
+            width={width}
+            height={height - topBarHeight}
+            nwbFile={nwbFile}
+          />
+        )}
+      </div>
     </div>
   );
 };
@@ -194,6 +213,9 @@ const ViewModeToggleButton: FunctionComponent<ViewModeToggleButtonProps> = ({
       </ToggleButton>
       <ToggleButton value="annotations" title="Neurosift annotations">
         Annotations
+      </ToggleButton>
+      <ToggleButton value="info" title="Info about the file">
+        Info
       </ToggleButton>
     </ToggleButtonGroup>
   );
