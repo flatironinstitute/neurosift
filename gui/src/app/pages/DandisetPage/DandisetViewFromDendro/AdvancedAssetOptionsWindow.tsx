@@ -12,7 +12,7 @@ type AdvancedAssetOptionsWindowProps = {
 
 const AdvancedAssetOptionsWindow: FunctionComponent<
   AdvancedAssetOptionsWindowProps
-> = ({ selectedAssets, dandisetId, dandisetVersion, useStaging, onclose }) => {
+> = ({ selectedAssets, dandisetId, dandisetVersion, useStaging, onClose }) => {
   const [deleting, setDeleting] = useState(false);
   return (
     <div>
@@ -48,7 +48,7 @@ const AdvancedAssetOptionsWindow: FunctionComponent<
             useStaging={useStaging}
             onClose={() => {
               setDeleting(false);
-              onclose();
+              onClose();
             }}
           />
         ) : useStaging ? (
