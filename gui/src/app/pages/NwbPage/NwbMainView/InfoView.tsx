@@ -20,12 +20,15 @@ type GeneralItem = {
 type NeurodataItem = {
   path: string;
   neurodataType: string;
+  description: string;
 };
 
 type DatasetItem = {
   path: string;
   shape: number[];
   dtype: string;
+  neurodataType?: string;
+  otherText: string;
 };
 
 type SpecificationItem = {
@@ -99,6 +102,8 @@ const InfoView: FunctionComponent<InfoViewProps> = ({
     const x: NeurodataItem[] = [];
     const y: DatasetItem[] = [];
     const processGroup = async (groupPath: string) => {
+      if (groupPath === "/specifications") return; // skip the specifications group
+      if (groupPath === "/general") return; // skip the general group
       const group = await nwbFile.getGroup(groupPath);
       if (canceled) return;
       if (!group) {
@@ -107,7 +112,8 @@ const InfoView: FunctionComponent<InfoViewProps> = ({
       if (group.attrs.neurodata_type) {
         x.push({
           path: groupPath,
-          neurodataType: group.attrs.neurodata_type,
+          neurodataType: group.attrs.neurodata_type || undefined,
+          description: group.attrs.description || "",
         });
         setNeurodataItems([...x]);
       }
@@ -115,19 +121,31 @@ const InfoView: FunctionComponent<InfoViewProps> = ({
         await processGroup(subGroup.path);
         if (canceled) return;
       }
-      for (const ds of group.datasets) {
-        await processDataset(ds.path);
-        if (canceled) return;
+      if (groupPath !== "/") {
+        // skip the datasets in the root group
+        for (const ds of group.datasets) {
+          await processDataset(ds.path);
+          if (canceled) return;
+        }
       }
     };
     const processDataset = async (datasetPath: string) => {
       const ds = await nwbFile.getDataset(datasetPath);
       if (!ds) return;
       if (canceled) return;
+      const otherText: string[] = [];
+      if (ds.attrs.neurodata_type) {
+        otherText.push(`neurodata_type: ${ds.attrs.neurodata_type}`);
+      }
+      if (ds.attrs.description) {
+        otherText.push(`description: ${ds.attrs.description}`);
+      }
       y.push({
         path: datasetPath,
         shape: ds.shape,
         dtype: ds.dtype,
+        neurodataType: ds.attrs.neurodata_type || undefined,
+        otherText: otherText.join(" | "),
       });
       setDatasetItems([...y]);
     };
@@ -141,7 +159,14 @@ const InfoView: FunctionComponent<InfoViewProps> = ({
     if (!specifications) return;
     const ntUsed = new Set<string>();
     for (const item of neurodataItems) {
-      ntUsed.add(item.neurodataType);
+      if (item.neurodataType) {
+        ntUsed.add(item.neurodataType);
+      }
+    }
+    for (const ds of datasetItems) {
+      if (ds.neurodataType) {
+        ntUsed.add(ds.neurodataType);
+      }
     }
     const x: SpecificationItem[] = [];
     for (const sgrp of specifications.allGroups) {
@@ -151,8 +176,15 @@ const InfoView: FunctionComponent<InfoViewProps> = ({
         doc: sgrp.doc,
       });
     }
+    for (const sds of specifications.allDatasets) {
+      if (!ntUsed.has(sds.neurodata_type_def)) continue;
+      x.push({
+        neurodataType: sds.neurodata_type_def,
+        doc: sds.doc,
+      });
+    }
     setSpecificationItems([...x]);
-  }, [neurodataItems, specifications]);
+  }, [neurodataItems, specifications, datasetItems]);
 
   const text = useMemo(() => {
     const txtLines1 = generalItems.map((item) => {
@@ -160,10 +192,10 @@ const InfoView: FunctionComponent<InfoViewProps> = ({
       return `${item.name}: ${renderer(item.datasetData)}`;
     });
     const txtLines2 = neurodataItems.map((item) => {
-      return `${item.path}: ${item.neurodataType}`;
+      return `${item.path} (${item.neurodataType}): ${item.description}`;
     });
     const txtLines3 = datasetItems.map((item) => {
-      return `${item.path}: ${item.shape.join("x")} ${item.dtype}`;
+      return `Dataset ${item.path} (${item.dtype}) | shape [${item.shape.join(" x ")}] | ${item.otherText}`;
     });
     const txtLinesSpec: string[] = [];
     if (specificationItems.length > 0) {
