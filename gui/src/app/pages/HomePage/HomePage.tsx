@@ -30,7 +30,7 @@ const HomePage: FunctionComponent<Props> = ({ width, height }) => {
       </p>
       <p>
         <a
-          href="Leveraging LINDI for efficient and non-redundant NWB access on DANDI"
+          href="https://github.com/flatironinstitute/neurosift/blob/main/doc/lindi_INCF_assembly_sep_2024.md"
           target="_blank"
           rel="noreferrer"
         >
