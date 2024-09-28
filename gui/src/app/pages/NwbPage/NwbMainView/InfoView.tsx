@@ -16,6 +16,7 @@ const InfoView: FunctionComponent<InfoViewProps> = ({
   height,
   nwbFile,
 }) => {
+  const [responseGptModel, setResponseGptModel] = useState("");
   const [response, setResponse] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const W = width / 2;
@@ -26,6 +27,7 @@ const InfoView: FunctionComponent<InfoViewProps> = ({
           submitting={submitting}
           setSubmitting={setSubmitting}
           setResponse={setResponse}
+          setResponseGptModel={setResponseGptModel}
           nwbFile={nwbFile}
           width={W}
           height={height}
@@ -42,7 +44,21 @@ const InfoView: FunctionComponent<InfoViewProps> = ({
       >
         {submitting && <div>Submitting...</div>}
         {!submitting && (
-          <OutputWindow response={response} width={width - W} height={height} />
+          <>
+            {responseGptModel === "prompt" ? (
+              <OutputPromptWindow
+                response={response}
+                width={width - W}
+                height={height}
+              />
+            ) : (
+              <OutputWindow
+                response={response}
+                width={width - W}
+                height={height}
+              />
+            )}
+          </>
         )}
       </div>
     </div>
@@ -51,6 +67,7 @@ const InfoView: FunctionComponent<InfoViewProps> = ({
 
 type InputWindowProps = {
   setResponse: (response: string) => void;
+  setResponseGptModel: (gptModel: string) => void;
   submitting: boolean;
   setSubmitting: (submitting: boolean) => void;
   nwbFile: RemoteH5FileX;
@@ -62,7 +79,7 @@ const promptChoices = [
   {
     label: "overview",
     prompt:
-      "Provide a detailed overview of the experiment in paragraph style based on both the metadata and the data in this NWB file.",
+      "Provide a detailed overview of the experiment in narrative form drawing on both the metadata and the data in this NWB file.",
   },
   {
     label: "purpose",
@@ -79,6 +96,7 @@ const InputWindow: FunctionComponent<InputWindowProps> = ({
   submitting,
   setSubmitting,
   setResponse,
+  setResponseGptModel,
   nwbFile,
   width,
   height,
@@ -108,6 +126,7 @@ const InputWindow: FunctionComponent<InputWindowProps> = ({
         fullPrompt,
       } = await client.chatQuery(prompt, nwbFileInfo, gptModel);
       setResponse(r);
+      setResponseGptModel(gptModel);
       setEstimatedCost(estimatedCost);
       setFullPrompt(fullPrompt);
     } catch (e: any) {
@@ -115,7 +134,15 @@ const InputWindow: FunctionComponent<InputWindowProps> = ({
     } finally {
       setSubmitting(false);
     }
-  }, [client, prompt, nwbFileInfo, gptModel, setResponse, setSubmitting]);
+  }, [
+    client,
+    prompt,
+    nwbFileInfo,
+    gptModel,
+    setResponse,
+    setResponseGptModel,
+    setSubmitting,
+  ]);
   useEffect(() => {
     console.info("FULL PROMPT");
     console.info(fullPrompt);
@@ -198,8 +225,14 @@ const InputWindow: FunctionComponent<InputWindowProps> = ({
                 {errorMessage && (
                   <span style={{ color: "red" }}>{errorMessage}</span>
                 )}
-                Estimated cost based on last request: one doller per{" "}
-                {numRequestsPerDollar.toFixed(0)} requests
+                {numRequestsPerDollar ? (
+                  <>
+                    Estimated cost based on last request: one doller per{" "}
+                    {numRequestsPerDollar.toFixed(0)} requests
+                  </>
+                ) : (
+                  <></>
+                )}
               </span>
             )}
           </div>
@@ -236,7 +269,7 @@ const OutputWindow: FunctionComponent<OutputWindowProps> = ({
   );
 };
 
-const gptModelChoices = ["gpt-4o-mini", "gpt-4o"];
+const gptModelChoices = ["gpt-4o-mini", "gpt-4o", "prompt"];
 
 type GptModelSelectorProps = {
   value: string;
@@ -286,6 +319,51 @@ const useNwbFileInfo = (nwbFile: RemoteH5FileX): NwbFileInfo | undefined => {
   }, [nwbFile]);
 
   return nwbFileInfo;
+};
+
+type OutputPromptWindowProps = {
+  response: string;
+  width: number;
+  height: number;
+};
+
+const OutputPromptWindow: FunctionComponent<OutputPromptWindowProps> = ({
+  response,
+  width,
+  height,
+}) => {
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    setCopied(false);
+  }, [response]);
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: 20,
+        top: 20,
+        width: width - 40,
+        height: height - 40,
+        overflowY: "auto",
+      }}
+    >
+      <div>
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(response);
+            setCopied(true);
+          }}
+        >
+          copy prompt
+        </button>
+        &nbsp;
+        {copied && <span>Copied</span>}
+      </div>
+      <div>
+        <pre>{response}</pre>
+      </div>
+    </div>
+  );
 };
 
 export default InfoView;
