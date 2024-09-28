@@ -17,12 +17,14 @@ const InfoView: FunctionComponent<InfoViewProps> = ({
   nwbFile,
 }) => {
   const [response, setResponse] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
   const W = width / 2;
   return (
     <div style={{ position: "absolute", top: 0, left: 0, width, height }}>
       <div style={{ position: "absolute", left: 0, top: 0, width: W, height }}>
         <InputWindow
-          response={response}
+          submitting={submitting}
+          setSubmitting={setSubmitting}
           setResponse={setResponse}
           nwbFile={nwbFile}
           width={W}
@@ -38,25 +40,44 @@ const InfoView: FunctionComponent<InfoViewProps> = ({
           height,
         }}
       >
-        <OutputWindow response={response} width={width - W} height={height} />
+        {submitting && <div>Submitting...</div>}
+        {!submitting && (
+          <OutputWindow response={response} width={width - W} height={height} />
+        )}
       </div>
     </div>
   );
 };
 
 type InputWindowProps = {
-  response: string;
   setResponse: (response: string) => void;
+  submitting: boolean;
+  setSubmitting: (submitting: boolean) => void;
   nwbFile: RemoteH5FileX;
   width: number;
   height: number;
 };
 
-const defaultPrompt =
-  "Give a detailed overview of the experiment and provide a detailed description of the data contained in the NWB file.";
+const promptChoices = [
+  {
+    label: "overview",
+    prompt:
+      "Provide a detailed overview of the experiment in paragraph style based on both the metadata and the data in this NWB file.",
+  },
+  {
+    label: "purpose",
+    prompt:
+      "Given the information in the file, what do you think is the purpose of this experiment?",
+  },
+  {
+    label: "data",
+    prompt: "Provide a detailed overview of the data in this NWB file.",
+  },
+];
 
 const InputWindow: FunctionComponent<InputWindowProps> = ({
-  response,
+  submitting,
+  setSubmitting,
   setResponse,
   nwbFile,
   width,
@@ -64,10 +85,9 @@ const InputWindow: FunctionComponent<InputWindowProps> = ({
 }) => {
   const [client, setClient] = useState<NwbchatClient | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [prompt, setPrompt] = useState(defaultPrompt);
+  const [prompt, setPrompt] = useState("");
   const [estimatedCost, setEstimatedCost] = useState(0);
-  const [submitting, setSubmitting] = useState(false);
-  const [gptModel, setGptModel] = useState("gpt-4o-mini");
+  const [gptModel, setGptModel] = useState("gpt-4o");
   const [fullPrompt, setFullPrompt] = useState("");
   const nwbFileInfo = useNwbFileInfo(nwbFile);
   useEffect(() => {
@@ -95,15 +115,15 @@ const InputWindow: FunctionComponent<InputWindowProps> = ({
     } finally {
       setSubmitting(false);
     }
-  }, [client, prompt, nwbFileInfo, gptModel, setResponse]);
+  }, [client, prompt, nwbFileInfo, gptModel, setResponse, setSubmitting]);
   useEffect(() => {
     console.info("FULL PROMPT");
     console.info(fullPrompt);
   }, [fullPrompt]);
   const numRequestsPerDollar = estimatedCost ? 1 / estimatedCost : 0;
-  const submitEnabled = !!client && !!nwbFileInfo && !submitting;
-  const topBarHeight = 30;
-  const bottomBarHeight = 80;
+  const submitEnabled = !!client && !!nwbFileInfo && !submitting && !!prompt;
+  const topBarHeight = 50;
+  const bottomBarHeight = 50;
   const inputHeight = height - topBarHeight - bottomBarHeight;
   return (
     <div style={{ position: "absolute", left: 0, top: 0, width, height }}>
@@ -115,10 +135,22 @@ const InputWindow: FunctionComponent<InputWindowProps> = ({
             top: 10,
             width,
             height: topBarHeight,
-            fontWeight: "bold",
           }}
         >
-          Provide a prompt to get information about this NWB file:
+          <div style={{ fontWeight: "bold" }}>
+            Provide a prompt to get information about this NWB file
+          </div>
+          <div style={{ marginTop: 8 }}>
+            Predefined prompts:{" "}
+            {promptChoices.map((x) => (
+              <>
+                <button key={x.label} onClick={() => setPrompt(x.prompt)}>
+                  {x.label}
+                </button>
+                &nbsp;
+              </>
+            ))}
+          </div>
         </div>
         <div
           style={{
@@ -163,58 +195,14 @@ const InputWindow: FunctionComponent<InputWindowProps> = ({
           <div style={{ paddingLeft: 10 }}>
             {!submitting && (
               <span>
-                Estimated pricing based on last request:{" "}
-                {numRequestsPerDollar.toFixed(2)} requests per dollar
+                {errorMessage && (
+                  <span style={{ color: "red" }}>{errorMessage}</span>
+                )}
+                Estimated cost based on last request: one doller per{" "}
+                {numRequestsPerDollar.toFixed(0)} requests
               </span>
             )}
           </div>
-          <div style={{ padding: 20 }}>
-            {errorMessage && (
-              <span style={{ color: "red" }}>{errorMessage}</span>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-  return (
-    <div style={{ padding: 20 }}>
-      <div>
-        <div>
-          <textarea
-            style={{ width: "100%", height: "200px" }}
-            value={prompt}
-            onChange={(e) => {
-              setPrompt(e.target.value || "");
-            }}
-            disabled={submitting}
-          />
-        </div>
-        <div>
-          <GptModelSelector
-            value={gptModel}
-            onChange={setGptModel}
-            disabled={submitting}
-          />
-        </div>
-        <div>
-          <button onClick={handleSubmit} disabled={!submitEnabled}>
-            Submit
-          </button>
-        </div>
-        <div>
-          {errorMessage && <span style={{ color: "red" }}>{errorMessage}</span>}
-        </div>
-        <div>
-          {!submitting && (
-            <span>
-              Estimated pricing based on last request:{" "}
-              {numRequestsPerDollar.toFixed(2)} requests per dollar
-            </span>
-          )}
-        </div>
-        <div>
-          <Markdown source={response} />
         </div>
       </div>
     </div>
