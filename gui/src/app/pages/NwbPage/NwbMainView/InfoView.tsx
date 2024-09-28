@@ -1,7 +1,9 @@
-import { RemoteH5Dataset, RemoteH5FileX } from "@remote-h5-file/index";
-import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import { leftPanelLabelMap, valueToString2 } from "./NwbMainLeftPanel";
-import { useNwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
+import { RemoteH5FileX } from "@remote-h5-file/index";
+import Markdown from "app/Markdown/Markdown";
+import { NwbFileInfo } from "NwbchatClient/nwbchat-types";
+import { NwbchatClient } from "NwbchatClient/NwbchatClient";
+import { FunctionComponent, useCallback, useEffect, useState } from "react";
+import getNwbFileInfo from "./getNwbFileInfo";
 
 type InfoViewProps = {
   width: number;
@@ -9,233 +11,287 @@ type InfoViewProps = {
   nwbFile: RemoteH5FileX;
 };
 
-type GeneralItem = {
-  name: string;
-  path: string;
-  renderer?: (val: any) => string;
-  dataset?: RemoteH5Dataset;
-  datasetData: any;
-};
-
-type NeurodataItem = {
-  path: string;
-  neurodataType: string;
-  description: string;
-};
-
-type DatasetItem = {
-  path: string;
-  shape: number[];
-  dtype: string;
-  neurodataType?: string;
-  otherText: string;
-};
-
-type SpecificationItem = {
-  neurodataType: string;
-  doc: string;
-};
-
 const InfoView: FunctionComponent<InfoViewProps> = ({
   width,
   height,
   nwbFile,
 }) => {
-  const [generalItems, setGeneralItems] = useState<GeneralItem[]>([]);
-  const [neurodataItems, setNeurodataItems] = useState<NeurodataItem[]>([]);
-  const [datasetItems, setDatasetItems] = useState<DatasetItem[]>([]);
-  const [specificationItems, setSpecificationItems] = useState<
-    SpecificationItem[]
-  >([]);
-  const specifications = useNwbFileSpecifications();
+  const [response, setResponse] = useState<string>("");
+  const W = width / 2;
+  return (
+    <div style={{ position: "absolute", top: 0, left: 0, width, height }}>
+      <div style={{ position: "absolute", left: 0, top: 0, width: W, height }}>
+        <InputWindow
+          response={response}
+          setResponse={setResponse}
+          nwbFile={nwbFile}
+          width={W}
+          height={height}
+        />
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          left: W,
+          top: 0,
+          width: width - W,
+          height,
+        }}
+      >
+        <OutputWindow response={response} width={width - W} height={height} />
+      </div>
+    </div>
+  );
+};
+
+type InputWindowProps = {
+  response: string;
+  setResponse: (response: string) => void;
+  nwbFile: RemoteH5FileX;
+  width: number;
+  height: number;
+};
+
+const defaultPrompt =
+  "Describe the experiment and data available in this NWB file.";
+
+const InputWindow: FunctionComponent<InputWindowProps> = ({
+  response,
+  setResponse,
+  nwbFile,
+  width,
+  height,
+}) => {
+  const [client, setClient] = useState<NwbchatClient | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [prompt, setPrompt] = useState(defaultPrompt);
+  const [estimatedCost, setEstimatedCost] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [gptModel, setGptModel] = useState("gpt-4o-mini");
+  const nwbFileInfo = useNwbFileInfo(nwbFile);
+  useEffect(() => {
+    (async () => {
+      const client = new NwbchatClient({ verbose: true });
+      setClient(client);
+    })();
+  }, []);
+  const handleSubmit = useCallback(async () => {
+    if (!client) return;
+    if (!nwbFileInfo) return;
+    setSubmitting(true);
+    setErrorMessage("");
+    try {
+      const { response: r, estimatedCost } = await client.chatQuery(
+        prompt,
+        nwbFileInfo,
+        gptModel,
+      );
+      setResponse(r);
+      setEstimatedCost(estimatedCost);
+    } catch (e: any) {
+      setErrorMessage(e.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }, [client, prompt, nwbFileInfo, gptModel, setResponse]);
+  const numRequestsPerDollar = estimatedCost ? 1 / estimatedCost : 0;
+  const submitEnabled = !!client && !!nwbFileInfo && !submitting;
+  const topBarHeight = 30;
+  const bottomBarHeight = 80;
+  const inputHeight = height - topBarHeight - bottomBarHeight;
+  return (
+    <div style={{ position: "absolute", left: 0, top: 0, width, height }}>
+      <div>
+        <div
+          style={{
+            position: "absolute",
+            left: 10,
+            top: 10,
+            width,
+            height: topBarHeight,
+            fontWeight: "bold",
+          }}
+        >
+          Provide a prompt to get information about this NWB file:
+        </div>
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: topBarHeight,
+            width,
+            height: inputHeight,
+          }}
+        >
+          <div style={{ padding: 10 }}>
+            <textarea
+              style={{ width: width - 20, height: inputHeight - 20 }}
+              value={prompt}
+              onChange={(e) => {
+                setPrompt(e.target.value || "");
+              }}
+              disabled={submitting}
+            />
+          </div>
+        </div>
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: topBarHeight + inputHeight,
+            width,
+            height: bottomBarHeight,
+          }}
+        >
+          <div style={{ paddingLeft: 10 }}>
+            <GptModelSelector
+              value={gptModel}
+              onChange={setGptModel}
+              disabled={submitting}
+            />
+            &nbsp;
+            <button onClick={handleSubmit} disabled={!submitEnabled}>
+              Submit
+            </button>
+          </div>
+          <div style={{ paddingLeft: 10 }}>
+            {!submitting && (
+              <span>
+                Estimated pricing based on last request:{" "}
+                {numRequestsPerDollar.toFixed(2)} requests per dollar
+              </span>
+            )}
+          </div>
+          <div style={{ padding: 20 }}>
+            {errorMessage && (
+              <span style={{ color: "red" }}>{errorMessage}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  return (
+    <div style={{ padding: 20 }}>
+      <div>
+        <div>
+          <textarea
+            style={{ width: "100%", height: "200px" }}
+            value={prompt}
+            onChange={(e) => {
+              setPrompt(e.target.value || "");
+            }}
+            disabled={submitting}
+          />
+        </div>
+        <div>
+          <GptModelSelector
+            value={gptModel}
+            onChange={setGptModel}
+            disabled={submitting}
+          />
+        </div>
+        <div>
+          <button onClick={handleSubmit} disabled={!submitEnabled}>
+            Submit
+          </button>
+        </div>
+        <div>
+          {errorMessage && <span style={{ color: "red" }}>{errorMessage}</span>}
+        </div>
+        <div>
+          {!submitting && (
+            <span>
+              Estimated pricing based on last request:{" "}
+              {numRequestsPerDollar.toFixed(2)} requests per dollar
+            </span>
+          )}
+        </div>
+        <div>
+          <Markdown source={response} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+type OutputWindowProps = {
+  response: string;
+  width: number;
+  height: number;
+};
+
+const OutputWindow: FunctionComponent<OutputWindowProps> = ({
+  response,
+  width,
+  height,
+}) => {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: 20,
+        top: 20,
+        width: width - 40,
+        height: height - 40,
+        overflowY: "auto",
+      }}
+    >
+      <Markdown source={response} />
+    </div>
+  );
+};
+
+const gptModelChoices = ["gpt-4o-mini", "gpt-4o"];
+
+type GptModelSelectorProps = {
+  value: string;
+  onChange: (value: string) => void;
+  disabled: boolean;
+};
+
+const GptModelSelector: FunctionComponent<GptModelSelectorProps> = ({
+  value,
+  onChange,
+  disabled,
+}) => {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+    >
+      {gptModelChoices.map((x) => (
+        <option key={x} value={x}>
+          {x}
+        </option>
+      ))}
+    </select>
+  );
+};
+
+const useNwbFileInfo = (nwbFile: RemoteH5FileX): NwbFileInfo | undefined => {
+  const [nwbFileInfo, setNwbFileInfo] = useState<NwbFileInfo | undefined>(
+    undefined,
+  );
+
   useEffect(() => {
     let canceled = false;
-    setGeneralItems([]);
     (async () => {
-      const rootGroup = await nwbFile.getGroup("/");
-      if (!rootGroup) {
-        console.warn("Root group not found");
-        return;
-      }
-      const x: GeneralItem[] = [];
-      for (const ds of rootGroup.datasets) {
-        const mm = leftPanelLabelMap.find((x) => x.name === ds.name);
-        const newName = mm?.newName || ds.name;
-        x.push({
-          name: newName || ds.name,
-          path: ds.path,
-          renderer: mm?.renderer,
-          dataset: await nwbFile.getDataset(ds.path),
-          datasetData: await nwbFile.getDatasetData(ds.path, {}),
-        });
+      try {
+        const x = await getNwbFileInfo(nwbFile);
         if (canceled) return;
-        setGeneralItems([...x]);
+        setNwbFileInfo(x);
+      } catch (e) {
+        console.error(e);
       }
-      const generalGroup = await nwbFile.getGroup("/general");
-      if (generalGroup) {
-        for (const ds of generalGroup.datasets) {
-          const mm = leftPanelLabelMap.find((x) => x.name === ds.name);
-          const newName = mm?.newName || ds.name;
-          x.push({
-            name: newName || ds.name,
-            path: ds.path,
-            renderer: mm?.renderer,
-            dataset: await nwbFile.getDataset(ds.path),
-            datasetData: await nwbFile.getDatasetData(ds.path, {}),
-          });
-        }
-        if (canceled) return;
-        setGeneralItems([...x]);
-      }
-      if (canceled) return;
-      setGeneralItems([...x]);
     })();
     return () => {
       canceled = true;
     };
   }, [nwbFile]);
 
-  useEffect(() => {
-    let canceled = false;
-    setNeurodataItems([]);
-    setDatasetItems([]);
-    const x: NeurodataItem[] = [];
-    const y: DatasetItem[] = [];
-    const processGroup = async (groupPath: string) => {
-      if (groupPath === "/specifications") return; // skip the specifications group
-      if (groupPath === "/general") return; // skip the general group
-      const group = await nwbFile.getGroup(groupPath);
-      if (canceled) return;
-      if (!group) {
-        return;
-      }
-      if (group.attrs.neurodata_type) {
-        x.push({
-          path: groupPath,
-          neurodataType: group.attrs.neurodata_type || undefined,
-          description: group.attrs.description || "",
-        });
-        setNeurodataItems([...x]);
-      }
-      for (const subGroup of group.subgroups) {
-        await processGroup(subGroup.path);
-        if (canceled) return;
-      }
-      if (groupPath !== "/") {
-        // skip the datasets in the root group
-        for (const ds of group.datasets) {
-          await processDataset(ds.path);
-          if (canceled) return;
-        }
-      }
-    };
-    const processDataset = async (datasetPath: string) => {
-      const ds = await nwbFile.getDataset(datasetPath);
-      if (!ds) return;
-      if (canceled) return;
-      const otherText: string[] = [];
-      if (ds.attrs.neurodata_type) {
-        otherText.push(`neurodata_type: ${ds.attrs.neurodata_type}`);
-      }
-      if (ds.attrs.description) {
-        otherText.push(`description: ${ds.attrs.description}`);
-      }
-      y.push({
-        path: datasetPath,
-        shape: ds.shape,
-        dtype: ds.dtype,
-        neurodataType: ds.attrs.neurodata_type || undefined,
-        otherText: otherText.join(" | "),
-      });
-      setDatasetItems([...y]);
-    };
-    processGroup("/");
-    return () => {
-      canceled = true;
-    };
-  }, [nwbFile]);
-
-  useEffect(() => {
-    if (!specifications) return;
-    const ntUsed = new Set<string>();
-    for (const item of neurodataItems) {
-      if (item.neurodataType) {
-        ntUsed.add(item.neurodataType);
-      }
-    }
-    for (const ds of datasetItems) {
-      if (ds.neurodataType) {
-        ntUsed.add(ds.neurodataType);
-      }
-    }
-    const x: SpecificationItem[] = [];
-    for (const sgrp of specifications.allGroups) {
-      if (!ntUsed.has(sgrp.neurodata_type_def)) continue;
-      x.push({
-        neurodataType: sgrp.neurodata_type_def,
-        doc: sgrp.doc,
-      });
-    }
-    for (const sds of specifications.allDatasets) {
-      if (!ntUsed.has(sds.neurodata_type_def)) continue;
-      x.push({
-        neurodataType: sds.neurodata_type_def,
-        doc: sds.doc,
-      });
-    }
-    setSpecificationItems([...x]);
-  }, [neurodataItems, specifications, datasetItems]);
-
-  const text = useMemo(() => {
-    const txtLines1 = generalItems.map((item) => {
-      const renderer = item.renderer || ((val: any) => valueToString2(val));
-      return `${item.name}: ${renderer(item.datasetData)}`;
-    });
-    const txtLines2 = neurodataItems.map((item) => {
-      return `${item.path} (${item.neurodataType}): ${item.description}`;
-    });
-    const txtLines3 = datasetItems.map((item) => {
-      return `Dataset ${item.path} (${item.dtype}) | shape [${item.shape.join(" x ")}] | ${item.otherText}`;
-    });
-    const txtLinesSpec: string[] = [];
-    if (specificationItems.length > 0) {
-      txtLinesSpec.push(
-        "The following are descriptions of the various neurodata types:",
-      );
-      for (const item of specificationItems) {
-        txtLinesSpec.push(`${item.neurodataType}: ${item.doc}`);
-      }
-    }
-    const preamble = `The following is an auto-generated summary of the contents of an NWB file. Please tell me about the experiment represented by this NWB file and what data are available.`;
-    return [
-      preamble,
-      ...txtLines1,
-      ...txtLines2,
-      ...txtLines3,
-      ...txtLinesSpec,
-    ].join("\n\n");
-  }, [generalItems, neurodataItems, specificationItems, datasetItems]);
-
-  const [message, setMessage] = useState("");
-
-  return (
-    <div style={{ position: "absolute", width, height, overflowY: "auto" }}>
-      <p>
-        The following is a summary of the contents of this NWB file suitable for
-        entering as a prompt to a chatbot:
-      </p>
-      <button
-        onClick={() => {
-          navigator.clipboard.writeText(text);
-          setMessage("copied");
-        }}
-      >
-        copy
-      </button>
-      &nbsp;{message}
-      <textarea style={{ width: "100%", height: 500 }} value={text} readOnly />
-    </div>
-  );
+  return nwbFileInfo;
 };
 
 export default InfoView;
