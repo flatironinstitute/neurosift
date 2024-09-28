@@ -131,7 +131,7 @@ const getNwbFileInfo = async (nwbFile: RemoteH5FileX): Promise<NwbFileInfo> => {
       otherText: otherText.join(" | "),
     });
   };
-  processGroup("/");
+  await processGroup("/");
   const ret: NwbFileInfo = {
     metaFields: [],
     neurodataGroups: [],
