@@ -53,7 +53,7 @@ type InputWindowProps = {
 };
 
 const defaultPrompt =
-  "Describe the experiment and data available in this NWB file.";
+  "Give a detailed overview of the experiment and provide a detailed description of the data contained in the NWB file.";
 
 const InputWindow: FunctionComponent<InputWindowProps> = ({
   response,
@@ -68,6 +68,7 @@ const InputWindow: FunctionComponent<InputWindowProps> = ({
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [gptModel, setGptModel] = useState("gpt-4o-mini");
+  const [fullPrompt, setFullPrompt] = useState("");
   const nwbFileInfo = useNwbFileInfo(nwbFile);
   useEffect(() => {
     (async () => {
@@ -81,19 +82,24 @@ const InputWindow: FunctionComponent<InputWindowProps> = ({
     setSubmitting(true);
     setErrorMessage("");
     try {
-      const { response: r, estimatedCost } = await client.chatQuery(
-        prompt,
-        nwbFileInfo,
-        gptModel,
-      );
+      const {
+        response: r,
+        estimatedCost,
+        fullPrompt,
+      } = await client.chatQuery(prompt, nwbFileInfo, gptModel);
       setResponse(r);
       setEstimatedCost(estimatedCost);
+      setFullPrompt(fullPrompt);
     } catch (e: any) {
       setErrorMessage(e.message);
     } finally {
       setSubmitting(false);
     }
   }, [client, prompt, nwbFileInfo, gptModel, setResponse]);
+  useEffect(() => {
+    console.info("FULL PROMPT");
+    console.info(fullPrompt);
+  }, [fullPrompt]);
   const numRequestsPerDollar = estimatedCost ? 1 / estimatedCost : 0;
   const submitEnabled = !!client && !!nwbFileInfo && !submitting;
   const topBarHeight = 30;

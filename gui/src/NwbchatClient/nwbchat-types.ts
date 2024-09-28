@@ -70,6 +70,7 @@ export type ChatQueryResponse = {
   type: "chatQueryResponse";
   response: string;
   estimatedCost: number;
+  fullPrompt: string;
 };
 
 export const isChatQueryResponse = (x: any): x is ChatQueryResponse => {
@@ -78,7 +79,8 @@ export const isChatQueryResponse = (x: any): x is ChatQueryResponse => {
     typeof x === "object" &&
     x.type === "chatQueryResponse" &&
     typeof x.response === "string" &&
-    typeof x.estimatedCost === "number"
+    typeof x.estimatedCost === "number" &&
+    typeof x.fullPrompt === "string"
   );
 };
 
