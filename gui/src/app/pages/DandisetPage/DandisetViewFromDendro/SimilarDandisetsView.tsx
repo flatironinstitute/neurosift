@@ -151,7 +151,8 @@ export const SimilarDandisetView: FunctionComponent<
   SimilarDandisetViewProps
 > = ({ dandisetId }) => {
   const { route } = useRoute();
-  if ((route.page !== "dandiset") && (route.page !== 'dandi-query')) throw Error("Unexpected page: " + route.page);
+  if (route.page !== "dandiset" && route.page !== "dandi-query")
+    throw Error("Unexpected page: " + route.page);
   const { staging } = route;
   const dandisetResponse: DandisetSearchResultItem | null = useQueryDandiset(
     dandisetId,

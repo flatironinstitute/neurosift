@@ -58,20 +58,20 @@ const SearchByAbstractWindow: FunctionComponent<
     if (searching) return;
     setSearching(true);
     try {
-        setSimilarDandisetIds(undefined);
-        const modelName = "text-embedding-3-large";
-        const embedding = await computeEmbeddingForAbstractText(
+      setSimilarDandisetIds(undefined);
+      const modelName = "text-embedding-3-large";
+      const embedding = await computeEmbeddingForAbstractText(
         abstractText,
         modelName,
-        );
-        const dandisetIds = findSimilarDandisetIds(
+      );
+      const dandisetIds = findSimilarDandisetIds(
         embeddings,
         embedding,
         modelName,
-        );
-        setSimilarDandisetIds(dandisetIds);
+      );
+      setSimilarDandisetIds(dandisetIds);
     } finally {
-        setSearching(false);
+      setSearching(false);
     }
   }, [abstractText, embeddings, searching]);
 
@@ -102,9 +102,7 @@ const SearchByAbstractWindow: FunctionComponent<
           overflowY: "auto",
         }}
       >
-        {similarDandisetIds === undefined && (
-          <span />
-        )}
+        {similarDandisetIds === undefined && <span />}
         {similarDandisetIds === null && (
           <div>Problem finding similar Dandisets</div>
         )}
