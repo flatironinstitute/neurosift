@@ -79,7 +79,7 @@ const promptChoices = [
   {
     label: "overview",
     prompt:
-      "Provide a detailed overview of the experiment in narrative form drawing on both the metadata and the data in this NWB file.",
+      "Provide a detailed overview of this experiment in narrative form drawing on both the metadata and the data in this NWB file.",
   },
   {
     label: "purpose",

@@ -1,0 +1,231 @@
+import { FunctionComponent, useEffect, useState } from "react";
+import { useDandisetVersionInfo, useQueryDandiset } from "./DandisetView";
+import useRoute from "app/useRoute";
+import { DandisetSearchResultItem } from "./types";
+import { Hyperlink } from "@fi-sci/misc";
+import {
+  applicationBarColorDarkened,
+  formatTime,
+} from "app/pages/DandiPage/DandiBrowser/SearchResults";
+import formatByteCount from "./formatByteCount";
+
+type SimilarDandisetsViewProps = {
+  dandisetId: string;
+};
+
+let globalEmbeddings:
+  | {
+      [dandisetId: string]: {
+        [modelName: string]: number[];
+      };
+    }
+  | null
+  | undefined = undefined;
+let loadingEmbeddings = false;
+
+const loadEmbeddings = async () => {
+  while (loadingEmbeddings) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  if (globalEmbeddings) {
+    return globalEmbeddings;
+  }
+  if (globalEmbeddings === null) {
+    return null;
+  }
+  loadingEmbeddings = true;
+  try {
+    const url =
+      "https://raw.githubusercontent.com/magland/ai_generated_dandiset_summaries/refs/heads/main/embeddings.json";
+    const response = await fetch(url);
+    globalEmbeddings = await response.json();
+  } catch (err) {
+    console.error("Problem loading embeddings");
+    console.error(err);
+    globalEmbeddings = null;
+  }
+  loadingEmbeddings = false;
+  return globalEmbeddings;
+};
+
+const modelName = "text-embedding-3-large";
+
+const SimilarDandisetsView: FunctionComponent<SimilarDandisetsViewProps> = ({
+  dandisetId,
+}) => {
+  const [orderedDandisets, setOrderedDandisets] = useState<
+    string[] | undefined | null
+  >(undefined);
+  useEffect(() => {
+    let canceled = false;
+    (async () => {
+      const embeddings = await loadEmbeddings();
+      if (canceled) return;
+      if (embeddings === null) {
+        setOrderedDandisets(null);
+        return;
+      }
+      if (embeddings === undefined) {
+        setOrderedDandisets(undefined);
+        return;
+      }
+      const thisEmbedding = (embeddings[dandisetId] || {})[modelName];
+      if (!thisEmbedding) {
+        console.info(`Embedding not found for ${dandisetId}`);
+        setOrderedDandisets(null);
+        return;
+      }
+      const similarities: { dandisetId: string; similarity: number }[] = [];
+      for (const dandisetId2 in embeddings) {
+        if (dandisetId2 === dandisetId) continue;
+        const embedding2 = embeddings[dandisetId2][modelName];
+        if (!embedding2) continue;
+        const similarity = cosineSimilarity(thisEmbedding, embedding2);
+        similarities.push({ dandisetId: dandisetId2, similarity });
+      }
+      similarities.sort((a, b) => b.similarity - a.similarity);
+      setOrderedDandisets(similarities.map((s) => s.dandisetId));
+    })();
+    return () => {
+      canceled = true;
+    };
+  }, [dandisetId]);
+
+  return (
+    <div>
+      <h3>Similar dandisets</h3>
+      {orderedDandisets === undefined ? (
+        <div>Loading...</div>
+      ) : orderedDandisets === null ? (
+        <div>Problem loading embeddings</div>
+      ) : (
+        <div>
+          {orderedDandisets.slice(0, 6).map((dandisetId2) => (
+            <SimilarDandisetView key={dandisetId2} dandisetId={dandisetId2} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const cosineSimilarity = (a: number[], b: number[]) => {
+  let sum = 0;
+  let sum_a = 0;
+  let sum_b = 0;
+  for (let i = 0; i < a.length; i++) {
+    sum += a[i] * b[i];
+    sum_a += a[i] * a[i];
+    sum_b += b[i] * b[i];
+  }
+  return sum / Math.sqrt(sum_a) / Math.sqrt(sum_b);
+};
+
+type SimilarDandisetViewProps = {
+  dandisetId: string;
+};
+
+const SimilarDandisetView: FunctionComponent<SimilarDandisetViewProps> = ({
+  dandisetId,
+}) => {
+  const { route } = useRoute();
+  if (route.page !== "dandiset") throw Error("Unexpected page");
+  const { staging } = route;
+  const dandisetResponse: DandisetSearchResultItem | null = useQueryDandiset(
+    dandisetId,
+    staging,
+  );
+  const X = useDandisetVersionInfo(dandisetId, "", staging, dandisetResponse);
+  if (!X) return <div>Loading {dandisetId}</div>;
+  return (
+    <div style={{ padding: 10, borderBottom: "solid 1px #ccc" }}>
+      <div style={{ fontSize: 18, fontWeight: "bold" }}>
+        <Hyperlink
+          color={applicationBarColorDarkened}
+          onClick={() => {
+            // onOpenItem(identifier, X.version);
+          }}
+        >
+          {/* {identifier} ({X.version}): {X.name} */}
+          {dandisetId}: {X.name}
+        </Hyperlink>
+      </div>
+      <div style={{ fontSize: 14, color: "#666" }}>
+        Contact: {X.contact_person}
+      </div>
+      <div style={{ fontSize: 14, color: "#666" }}>
+        Created {formatTime(X.created)} | Modified {formatTime(X.modified)}
+      </div>
+      {X && (
+        <div style={{ fontSize: 14, color: "#666" }}>
+          {X.asset_count} assets, {formatByteCount(X.size)}, status: {X.status}
+        </div>
+      )}
+    </div>
+  );
+};
+
+type SearchResultItemProps = {
+  result: DandisetSearchResultItem;
+  width: number;
+  onOpenItem: (dandisetId: string, dandisetVersion: string) => void;
+};
+
+const SearchResultItem: FunctionComponent<SearchResultItemProps> = ({
+  result,
+  width,
+  onOpenItem,
+}) => {
+  const {
+    identifier,
+    contact_person,
+    most_recent_published_version,
+    draft_version,
+  } = result;
+  // const X = most_recent_published_version || draft_version
+  const X = draft_version || most_recent_published_version;
+  if (!X) return <div>Unexpected error: no version</div>;
+
+  return (
+    <div style={{ padding: 10, borderBottom: "solid 1px #ccc" }}>
+      <div style={{ fontSize: 18, fontWeight: "bold" }}>
+        <Hyperlink
+          color={applicationBarColorDarkened}
+          onClick={() => {
+            onOpenItem(identifier, X.version);
+          }}
+        >
+          {/* {identifier} ({X.version}): {X.name} */}
+          {identifier}: {X.name}
+        </Hyperlink>
+        {X === draft_version && most_recent_published_version && (
+          <span>
+            &nbsp;(published as&nbsp;
+            <Hyperlink
+              color={applicationBarColorDarkened}
+              onClick={() => {
+                onOpenItem(identifier, most_recent_published_version.version);
+              }}
+            >
+              {most_recent_published_version.version}
+            </Hyperlink>
+            )
+          </span>
+        )}
+      </div>
+      <div style={{ fontSize: 14, color: "#666" }}>
+        Contact: {contact_person}
+      </div>
+      <div style={{ fontSize: 14, color: "#666" }}>
+        Created {formatTime(X.created)} | Modified {formatTime(X.modified)}
+      </div>
+      {X && (
+        <div style={{ fontSize: 14, color: "#666" }}>
+          {X.asset_count} assets, {formatByteCount(X.size)}, status: {X.status}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SimilarDandisetsView;

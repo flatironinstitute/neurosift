@@ -24,6 +24,8 @@ import {
 } from "./types";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import AdvancedAssetOptionsWindow from "./AdvancedAssetOptionsWindow";
+import SimilarDandisetsView from "./SimilarDandisetsView";
+import { Expandable } from "app/pages/NwbPage/viewPlugins/Ephys/EphysSummaryItemView";
 
 const applicationBarColorDarkened = "#546"; // from dendro
 
@@ -267,6 +269,11 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
               <pre>{changesContent}</pre>
             </div>
           )}
+        </div>
+        <div style={{ paddingLeft: 20 }}>
+          <Expandable title="Similar dandisets" defaultExpanded={false}>
+            <SimilarDandisetsView dandisetId={dandisetId} />
+          </Expandable>
         </div>
       </div>
       <ModalWindow
