@@ -57,9 +57,12 @@ const SimilarDandisetsView: FunctionComponent<SimilarDandisetsViewProps> = ({
   const [orderedDandisets, setOrderedDandisets] = useState<
     string[] | undefined | null
   >(undefined);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   useEffect(() => {
     let canceled = false;
     (async () => {
+      setOrderedDandisets(undefined);
+      setErrorMessage(null);
       const embeddings = await loadEmbeddings();
       if (canceled) return;
       if (embeddings === null) {
@@ -72,7 +75,7 @@ const SimilarDandisetsView: FunctionComponent<SimilarDandisetsViewProps> = ({
       }
       const thisEmbedding = (embeddings[dandisetId] || {})[modelName];
       if (!thisEmbedding) {
-        console.info(`Embedding not found for ${dandisetId}`);
+        setErrorMessage("Embedding not found for this dandiset");
         setOrderedDandisets(null);
         return;
       }
@@ -94,7 +97,7 @@ const SimilarDandisetsView: FunctionComponent<SimilarDandisetsViewProps> = ({
       {orderedDandisets === undefined ? (
         <div>Loading...</div>
       ) : orderedDandisets === null ? (
-        <div>Problem loading embeddings</div>
+        <div>Problem loading embeddings: {errorMessage}</div>
       ) : (
         <div>
           {orderedDandisets.slice(0, 6).map((dandisetId2) => (
@@ -150,7 +153,7 @@ type SimilarDandisetViewProps = {
 export const SimilarDandisetView: FunctionComponent<
   SimilarDandisetViewProps
 > = ({ dandisetId }) => {
-  const { route } = useRoute();
+  const { route, setRoute } = useRoute();
   if (route.page !== "dandiset" && route.page !== "dandi-query")
     throw Error("Unexpected page: " + route.page);
   const { staging } = route;
@@ -166,7 +169,7 @@ export const SimilarDandisetView: FunctionComponent<
         <Hyperlink
           color={applicationBarColorDarkened}
           onClick={() => {
-            // onOpenItem(identifier, X.version);
+            setRoute({ page: "dandiset", dandisetId, staging });
           }}
         >
           {/* {identifier} ({X.version}): {X.name} */}

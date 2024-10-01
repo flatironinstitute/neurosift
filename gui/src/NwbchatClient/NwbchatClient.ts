@@ -53,8 +53,8 @@ export class NwbchatClient {
     if (!isChatQueryResponse(resp2)) {
       throw new Error("Invalid response");
     }
-    const { response, estimatedCost } = resp2;
-    return { response, estimatedCost };
+    const { response, estimatedCost, fullPrompt } = resp2;
+    return { response, estimatedCost, fullPrompt };
   }
 }
 
