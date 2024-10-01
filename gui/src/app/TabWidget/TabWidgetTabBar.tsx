@@ -11,7 +11,7 @@ type Props = {
   }[];
   currentTabIndex: number | undefined;
   onCurrentTabIndexChanged: (i: number) => void;
-  onCloseTab: (id: string) => void;
+  onCloseTab?: (id: string) => void;
 };
 
 const TabWidgetTabBar: FunctionComponent<Props> = ({
@@ -51,7 +51,7 @@ const TabWidgetTabBar: FunctionComponent<Props> = ({
                 {tab.label}
               </span>
               &nbsp;&nbsp;
-              {tab.closeable && (
+              {tab.closeable && onCloseTab && (
                 <span
                   onClick={() => {
                     onCloseTab(tab.id);

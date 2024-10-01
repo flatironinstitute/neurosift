@@ -5,6 +5,11 @@ import {
   isChatQueryResponse,
   isChatQueryTokenObject,
   NwbFileInfo,
+  InitiateEmbeddingRequest,
+  isInitiateEmbeddingResponse,
+  isEmbeddingResponse,
+  isEmbeddingTokenObject,
+  EmbeddingRequest,
 } from "./nwbchat-types";
 
 export class NwbchatClient {
@@ -48,8 +53,8 @@ export class NwbchatClient {
     if (!isChatQueryResponse(resp2)) {
       throw new Error("Invalid response");
     }
-    const { response, estimatedCost, fullPrompt } = resp2;
-    return { response, estimatedCost, fullPrompt };
+    const { response, estimatedCost } = resp2;
+    return { response, estimatedCost };
   }
 }
 
@@ -134,3 +139,45 @@ const sha1Bits = async (input: string) => {
   const expectedLength = hash.length * 4;
   return bits.padStart(expectedLength, "0");
 };
+
+export class EmbeddingClient {
+  constructor(private o: { verbose?: boolean } = {}) {}
+  async embedding(text: string, modelName: string) {
+    const req: InitiateEmbeddingRequest = {
+      type: "initiateEmbeddingRequest",
+      textLength: text.length,
+      modelName,
+    };
+    const resp = await postApiRequest("initiateEmbedding", req);
+    if (!isInitiateEmbeddingResponse(resp)) {
+      throw new Error("Invalid response");
+    }
+    const { embeddingToken, tokenSignature } = resp;
+    const tokenObject = JSON.parse(embeddingToken);
+    if (!isEmbeddingTokenObject(tokenObject)) {
+      throw new Error("Invalid embedding token");
+    }
+    const { difficulty, delay } = tokenObject;
+    const challengeResponse = await solveChallenge(
+      resp.embeddingToken,
+      difficulty,
+      delay,
+      { verbose: this.o.verbose },
+    );
+    const req2: EmbeddingRequest = {
+      type: "embeddingRequest",
+      embeddingToken: resp.embeddingToken,
+      tokenSignature,
+      textLength: text.length,
+      text,
+      challengeResponse: challengeResponse,
+      modelName,
+    };
+    const resp2 = await postApiRequest("embedding", req2);
+    if (!isEmbeddingResponse(resp2)) {
+      throw new Error("Invalid response");
+    }
+    const { embedding } = resp2;
+    return { embedding };
+  }
+}

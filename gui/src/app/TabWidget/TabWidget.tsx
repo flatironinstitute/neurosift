@@ -18,7 +18,7 @@ type Props = {
   }[];
   currentTabId: string | undefined;
   setCurrentTabId: (id: string) => void;
-  onCloseTab: (id: string) => void;
+  onCloseTab?: (id: string) => void;
   width: number;
   height: number;
 };

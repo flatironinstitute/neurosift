@@ -14,15 +14,15 @@ const NeurodataTypesSelector: FunctionComponent<
   selectedNeurodataTypes,
   setSelectedNeurodataTypes,
 }) => {
-  const handleDelete = (chipToDelete: string) => {
-    setSelectedNeurodataTypes(
-      selectedNeurodataTypes.filter((chip) => chip !== chipToDelete),
-    );
-  };
+  // const handleDelete = (chipToDelete: string) => {
+  //   setSelectedNeurodataTypes(
+  //     selectedNeurodataTypes.filter((chip) => chip !== chipToDelete),
+  //   );
+  // };
 
-  const handleAddition = (chipToAdd: string) => {
-    setSelectedNeurodataTypes([...selectedNeurodataTypes, chipToAdd]);
-  };
+  // const handleAddition = (chipToAdd: string) => {
+  //   setSelectedNeurodataTypes([...selectedNeurodataTypes, chipToAdd]);
+  // };
 
   return (
     <div>
@@ -41,6 +41,7 @@ const NeurodataTypesSelector: FunctionComponent<
               variant="outlined"
               label={option}
               {...getTagProps({ index })}
+              key={option}
             />
           ))
         }

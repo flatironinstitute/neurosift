@@ -8,6 +8,7 @@ import {
   formatTime,
 } from "app/pages/DandiPage/DandiBrowser/SearchResults";
 import formatByteCount from "./formatByteCount";
+import { EmbeddingClient } from "NwbchatClient/NwbchatClient";
 
 type SimilarDandisetsViewProps = {
   dandisetId: string;
@@ -23,7 +24,7 @@ let globalEmbeddings:
   | undefined = undefined;
 let loadingEmbeddings = false;
 
-const loadEmbeddings = async () => {
+export const loadEmbeddings = async () => {
   while (loadingEmbeddings) {
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
@@ -75,16 +76,12 @@ const SimilarDandisetsView: FunctionComponent<SimilarDandisetsViewProps> = ({
         setOrderedDandisets(null);
         return;
       }
-      const similarities: { dandisetId: string; similarity: number }[] = [];
-      for (const dandisetId2 in embeddings) {
-        if (dandisetId2 === dandisetId) continue;
-        const embedding2 = embeddings[dandisetId2][modelName];
-        if (!embedding2) continue;
-        const similarity = cosineSimilarity(thisEmbedding, embedding2);
-        similarities.push({ dandisetId: dandisetId2, similarity });
-      }
-      similarities.sort((a, b) => b.similarity - a.similarity);
-      setOrderedDandisets(similarities.map((s) => s.dandisetId));
+      const dandisetIds = findSimilarDandisetIds(
+        embeddings,
+        thisEmbedding,
+        modelName,
+      );
+      setOrderedDandisets(dandisetIds);
     })();
     return () => {
       canceled = true;
@@ -109,6 +106,31 @@ const SimilarDandisetsView: FunctionComponent<SimilarDandisetsViewProps> = ({
   );
 };
 
+export const computeEmbeddingForAbstractText = async (
+  abstractText: string,
+  modelName: string,
+): Promise<number[]> => {
+  const client = new EmbeddingClient({ verbose: true });
+  const embedding = await client.embedding(abstractText, modelName);
+  return embedding.embedding;
+};
+
+export const findSimilarDandisetIds = (
+  embeddings: { [dandisetId: string]: { [modelName: string]: number[] } },
+  embedding: number[],
+  modelName: string,
+) => {
+  const similarities: { dandisetId: string; similarity: number }[] = [];
+  for (const dandisetId in embeddings) {
+    const embedding2 = embeddings[dandisetId][modelName];
+    if (!embedding2) continue;
+    const similarity = cosineSimilarity(embedding, embedding2);
+    similarities.push({ dandisetId, similarity });
+  }
+  similarities.sort((a, b) => b.similarity - a.similarity);
+  return similarities.map((s) => s.dandisetId);
+};
+
 const cosineSimilarity = (a: number[], b: number[]) => {
   let sum = 0;
   let sum_a = 0;
@@ -125,11 +147,11 @@ type SimilarDandisetViewProps = {
   dandisetId: string;
 };
 
-const SimilarDandisetView: FunctionComponent<SimilarDandisetViewProps> = ({
-  dandisetId,
-}) => {
+export const SimilarDandisetView: FunctionComponent<
+  SimilarDandisetViewProps
+> = ({ dandisetId }) => {
   const { route } = useRoute();
-  if (route.page !== "dandiset") throw Error("Unexpected page");
+  if ((route.page !== "dandiset") && (route.page !== 'dandi-query')) throw Error("Unexpected page: " + route.page);
   const { staging } = route;
   const dandisetResponse: DandisetSearchResultItem | null = useQueryDandiset(
     dandisetId,
@@ -152,69 +174,6 @@ const SimilarDandisetView: FunctionComponent<SimilarDandisetViewProps> = ({
       </div>
       <div style={{ fontSize: 14, color: "#666" }}>
         Contact: {X.contact_person}
-      </div>
-      <div style={{ fontSize: 14, color: "#666" }}>
-        Created {formatTime(X.created)} | Modified {formatTime(X.modified)}
-      </div>
-      {X && (
-        <div style={{ fontSize: 14, color: "#666" }}>
-          {X.asset_count} assets, {formatByteCount(X.size)}, status: {X.status}
-        </div>
-      )}
-    </div>
-  );
-};
-
-type SearchResultItemProps = {
-  result: DandisetSearchResultItem;
-  width: number;
-  onOpenItem: (dandisetId: string, dandisetVersion: string) => void;
-};
-
-const SearchResultItem: FunctionComponent<SearchResultItemProps> = ({
-  result,
-  width,
-  onOpenItem,
-}) => {
-  const {
-    identifier,
-    contact_person,
-    most_recent_published_version,
-    draft_version,
-  } = result;
-  // const X = most_recent_published_version || draft_version
-  const X = draft_version || most_recent_published_version;
-  if (!X) return <div>Unexpected error: no version</div>;
-
-  return (
-    <div style={{ padding: 10, borderBottom: "solid 1px #ccc" }}>
-      <div style={{ fontSize: 18, fontWeight: "bold" }}>
-        <Hyperlink
-          color={applicationBarColorDarkened}
-          onClick={() => {
-            onOpenItem(identifier, X.version);
-          }}
-        >
-          {/* {identifier} ({X.version}): {X.name} */}
-          {identifier}: {X.name}
-        </Hyperlink>
-        {X === draft_version && most_recent_published_version && (
-          <span>
-            &nbsp;(published as&nbsp;
-            <Hyperlink
-              color={applicationBarColorDarkened}
-              onClick={() => {
-                onOpenItem(identifier, most_recent_published_version.version);
-              }}
-            >
-              {most_recent_published_version.version}
-            </Hyperlink>
-            )
-          </span>
-        )}
-      </div>
-      <div style={{ fontSize: 14, color: "#666" }}>
-        Contact: {contact_person}
       </div>
       <div style={{ fontSize: 14, color: "#666" }}>
         Created {formatTime(X.created)} | Modified {formatTime(X.modified)}

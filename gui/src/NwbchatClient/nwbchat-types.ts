@@ -175,3 +175,98 @@ export const isNwbFileInfo = (x: any): x is NwbFileInfo => {
     x.neurodataDatasets.every(isNwbFileInfoNeurodataDataset)
   );
 };
+
+export type InitiateEmbeddingRequest = {
+  type: "initiateEmbeddingRequest";
+  textLength: number;
+  modelName: string;
+};
+
+export const isInitiateEmbeddingRequest = (
+  x: any,
+): x is InitiateEmbeddingRequest => {
+  return (
+    x &&
+    typeof x === "object" &&
+    x.type === "initiateEmbeddingRequest" &&
+    typeof x.textLength === "number" &&
+    typeof x.modelName === "string"
+  );
+};
+
+export type InitiateEmbeddingResponse = {
+  type: "initiateEmbeddingResponse";
+  embeddingToken: string;
+  tokenSignature: string;
+};
+
+export const isInitiateEmbeddingResponse = (
+  x: any,
+): x is InitiateEmbeddingResponse => {
+  return (
+    x &&
+    typeof x === "object" &&
+    x.type === "initiateEmbeddingResponse" &&
+    typeof x.embeddingToken === "string" &&
+    typeof x.tokenSignature === "string"
+  );
+};
+
+export type EmbeddingRequest = {
+  type: "embeddingRequest";
+  embeddingToken: string;
+  tokenSignature: string;
+  challengeResponse: string;
+  textLength: number;
+  text: string;
+  modelName: string;
+};
+
+export const isEmbeddingRequest = (x: any): x is EmbeddingRequest => {
+  return (
+    x &&
+    typeof x === "object" &&
+    x.type === "embeddingRequest" &&
+    typeof x.embeddingToken === "string" &&
+    typeof x.tokenSignature === "string" &&
+    typeof x.challengeResponse === "string" &&
+    typeof x.textLength === "number" &&
+    typeof x.text === "string" &&
+    typeof x.modelName === "string"
+  );
+};
+
+export type EmbeddingResponse = {
+  type: "embeddingResponse";
+  embedding: number[];
+};
+
+export const isEmbeddingResponse = (x: any): x is EmbeddingResponse => {
+  return (
+    x &&
+    typeof x === "object" &&
+    x.type === "embeddingResponse" &&
+    Array.isArray(x.embedding) &&
+    x.embedding.every((y: any) => typeof y === "number")
+  );
+};
+
+export type EmbeddingTokenObject = {
+  timestamp: number;
+  difficulty: number;
+  delay: number;
+  textLength: number;
+  modelName: string;
+};
+
+export const isEmbeddingTokenObject = (x: any): x is EmbeddingTokenObject => {
+  return (
+    x &&
+    typeof x === "object" &&
+    typeof x.timestamp === "number" &&
+    typeof x.difficulty === "number" &&
+    typeof x.delay === "number" &&
+    typeof x.textLength === "number" &&
+    typeof x.modelName === "string"
+  );
+};
