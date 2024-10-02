@@ -17,6 +17,8 @@ import getAuthorizationHeaderForUrl from "../getAuthorizationHeaderForUrl";
 import { useDatasetData, useGroup } from "./NwbMainView";
 import SelectedNeurodataItemsWidget from "./SelectedNeurodataItemsWidget";
 import DendroView from "../DendroView/DendroView";
+import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
+import LoadInPynwbWindow from "./LoadInPynwbWindow";
 
 type Props = {
   width: number;
@@ -108,6 +110,12 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
     return ret;
   }, [items]);
 
+  const {
+    visible: loadInPynwbVisible,
+    handleOpen: openLoadInPynwb,
+    handleClose: closeLoadInPynwb,
+  } = useModalWindow();
+
   const bottomBarHeight = 23;
   return (
     <div className="LeftPanel" style={{ position: "absolute", width, height }}>
@@ -166,7 +174,18 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
         >
           View timeseries alignment
         </button>
+        &nbsp;
+        <button
+          onClick={() => {
+            openLoadInPynwb();
+          }}
+        >
+          Load in pynwb
+        </button>
       </div>
+      <ModalWindow visible={loadInPynwbVisible} onClose={closeLoadInPynwb}>
+        <LoadInPynwbWindow />
+      </ModalWindow>
     </div>
   );
 };
