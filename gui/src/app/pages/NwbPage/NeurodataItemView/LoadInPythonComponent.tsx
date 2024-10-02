@@ -109,36 +109,7 @@ const createSource = (
     viewPlugin && viewPlugin.getCustomPythonCode
       ? viewPlugin.getCustomPythonCode(group)
       : "";
-  if (urlType === "hdf5") {
-    return `
-## Loading ${backtic}${path}${backtic} (${backtic}${group.attrs.neurodata_type}${backtic}).
-
-${backtics}bash
-# Prerequisites:
-pip install h5py remfile
-${backtics}
-
-${backtics}python
-import h5py
-import remfile
-
-url = '${url}'
-
-# open the remote file
-f = h5py.File(remfile.File(url), 'r')
-
-# load the neurodata object
-X = f['${path}']
-${customCode}
-${backtics}
-
-## Notes
-
-See [remfile](https://github.com/magland/remfile) for more information on loading remote files.
-
-`;
-  } else if (urlType === "lindi") {
-    return `
+  return `
 ## Loading ${backtic}${path}${backtic} (${backtic}${group.attrs.neurodata_type}${backtic}).
 
 ${backtics}bash
@@ -152,7 +123,7 @@ import lindi
 url = '${url}'
 
 # Load the remote file
-f = lindi.LindiH5pyFile.from_lindi_file(url)
+${urlType === "lindi" ? "f = lindi.LindiH5pyFile.from_lindi_file(url)" : "f = lindi.LindiH5pyFile.from_hdf5_file(url)"}
 
 # load the neurodata object
 X = f['${path}']
@@ -163,9 +134,6 @@ ${backtics}
 
 See [lindi](https://github.com/neurodatawithoutborders/lindi) for more information on LINDI files.
 `;
-  } else {
-    return `Unexpected urlType: ${urlType}`;
-  }
 };
 
 export default LoadInPythonComponent;
