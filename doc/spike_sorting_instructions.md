@@ -84,3 +84,5 @@ CONTAINER_METHOD=apptainer  srun [slurm-opts] dendro run-pending-job <job-id>
 ```
 
 where `[slurm-opts]` are the options you would normally use with `srun` to specify the resources you want to allocate.
+
+The prepare_new_dataset job and the postprocessing job do **not** require a GPU, but the kilosort4 job does.
