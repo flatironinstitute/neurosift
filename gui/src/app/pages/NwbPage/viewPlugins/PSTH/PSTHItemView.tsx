@@ -24,6 +24,7 @@ import { DirectSpikeTrainsClient } from "../Units/DirectRasterPlotUnitsItemView"
 import IfHasBeenVisible from "./IfHasBeenVisible";
 import PSTHUnitWidget from "./PSTHUnitWidget";
 import { RoiClient, useRoiClient } from "./ROIClient";
+import { useContextChat } from "app/ContextChat/ContextChat";
 
 export type PSTHTrialAlignedSeriesMode = "psth" | "time-aligned-series";
 
@@ -499,6 +500,37 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
       return [];
     }
   }, [mode, sortedSelectedUnitIds, sortedSelectedRoiIndices]);
+
+  const { setContextString } = useContextChat();
+  useEffect(() => {
+    let x = "";
+    x += `User is viewing a PSTH item view for path: ${path}.\n`;
+    x += `This is an interactive peri-stimulus time histogram (PSTH).\n`;
+    x += `User can select one or more units. There are ${unitIds?.length} units available.\n`;
+    x += `User can select variables to align to.\n`;
+    x += `User can choose whether to show raster plots and histograms.\n`;
+    x += `User can choose the number of bins, window range.\n`;
+    if ((groupByVariableCategories || []).length > 0) {
+      x += `User can optionally group trials by a variable. The available variables are: ${groupByVariableCategories?.join(", ")}\n.`;
+    } else {
+      x += `There are no variables available for grouping trials.\n`;
+    }
+    x += `User can optionally sort units by a variable.\n`;
+    x += `User can click to set a trials filter, which is an advanced option.\n`;
+
+    setContextString("psth-item-view", x);
+    return () => {
+      setContextString("psth-item-view", x);
+    };
+  }, [
+    setContextString,
+    path,
+    unitIds,
+    alignToVariables,
+    groupByVariableCategories,
+    groupByVariable,
+    sortUnitsByVariable,
+  ]);
 
   return (
     <div

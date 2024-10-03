@@ -25,8 +25,8 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
       `
 The user is viewing a particular Dandiset, which contains a list of assets, or NWB files.
 This is Dandiset ${route.dandisetId} version ${route.dandisetVersion}.
-The user can expand the folder tree to see the assets in each folder.
-Use can click on an asset link to view the contents of that particular NWB file.
+User can expand the folder tree to see the assets in each folder.
+User can click on an asset link to view the contents of that particular NWB file.
 If user clicks on the main link, which is the title of the Dandiset, they are taken to that Dandiset's page on the main DANDI Archive site (https://dandiarchive.org).
 There is also a "Similar dandisets" section which shows other Dandisets that are similar to the current one.
 `,
