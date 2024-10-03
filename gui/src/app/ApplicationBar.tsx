@@ -15,7 +15,7 @@ import ModalWindow from "@fi-sci/modal-window";
 import PopupChatWindow from "./PopupChatWindow/PopupChatWindow";
 
 type Props = {
-  onWorkshopChat: () => void;
+  onContextChat: () => void;
 };
 
 export const applicationBarHeight = 50;
@@ -25,7 +25,7 @@ const logoUrl = window.location.hostname.includes("github.io")
   ? `/neurosift/neurosift-logo.png`
   : `/neurosift-logo.png`;
 
-const ApplicationBar: FunctionComponent<Props> = ({ onWorkshopChat }) => {
+const ApplicationBar: FunctionComponent<Props> = ({ onContextChat }) => {
   const { setRoute } = useRoute();
 
   const onHome = useCallback(() => {
@@ -90,7 +90,7 @@ const ApplicationBar: FunctionComponent<Props> = ({ onWorkshopChat }) => {
           <span style={{ color: "white" }}>
             <SmallIconButton
               icon={<Chat />}
-              onClick={onWorkshopChat}
+              onClick={onContextChat}
               title={`Open the workshop chat window`}
             />
           </span>

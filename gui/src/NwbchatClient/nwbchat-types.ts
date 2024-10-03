@@ -270,3 +270,107 @@ export const isEmbeddingTokenObject = (x: any): x is EmbeddingTokenObject => {
     typeof x.modelName === "string"
   );
 };
+
+// initiateNeurosiftCompletion
+
+export type InitiateNeurosiftCompletionRequest = {
+  type: "initiateNeurosiftCompletionRequest";
+  messagesJsonLength: number;
+  modelName: string;
+};
+
+export const isInitiateNeurosiftCompletionRequest = (
+  x: any,
+): x is InitiateNeurosiftCompletionRequest => {
+  return (
+    x &&
+    typeof x === "object" &&
+    x.type === "initiateNeurosiftCompletionRequest" &&
+    typeof x.messagesJsonLength === "number" &&
+    typeof x.modelName === "string"
+  );
+};
+
+export type InitiateNeurosiftCompletionResponse = {
+  type: "initiateNeurosiftCompletionResponse";
+  neurosiftCompletionToken: string;
+  tokenSignature: string;
+};
+
+export const isInitiateNeurosiftCompletionResponse = (
+  x: any,
+): x is InitiateNeurosiftCompletionResponse => {
+  return (
+    x &&
+    typeof x === "object" &&
+    x.type === "initiateNeurosiftCompletionResponse" &&
+    typeof x.neurosiftCompletionToken === "string" &&
+    typeof x.tokenSignature === "string"
+  );
+};
+
+// neurosiftCompletion
+
+export type NeurosiftCompletionRequest = {
+  type: "neurosiftCompletionRequest";
+  neurosiftCompletionToken: string;
+  tokenSignature: string;
+  challengeResponse: string;
+  messagesJsonLength: number;
+  messagesJson: string;
+  modelName: string;
+};
+
+export const isNeurosiftCompletionRequest = (
+  x: any,
+): x is NeurosiftCompletionRequest => {
+  return (
+    x &&
+    typeof x === "object" &&
+    x.type === "neurosiftCompletionRequest" &&
+    typeof x.neurosiftCompletionToken === "string" &&
+    typeof x.tokenSignature === "string" &&
+    typeof x.challengeResponse === "string" &&
+    typeof x.messagesJsonLength === "number" &&
+    typeof x.messagesJson === "string" &&
+    typeof x.modelName === "string"
+  );
+};
+
+export type NeurosiftCompletionResponse = {
+  type: "neurosiftCompletionResponse";
+  response: string;
+};
+
+export const isNeurosiftCompletionResponse = (
+  x: any,
+): x is NeurosiftCompletionResponse => {
+  return (
+    x &&
+    typeof x === "object" &&
+    x.type === "neurosiftCompletionResponse" &&
+    typeof x.response === "string"
+  );
+};
+
+export type NeurosiftCompletionTokenObject = {
+  timestamp: number;
+  difficulty: number;
+  delay: number;
+  messagesJsonLength: number;
+  modelName: string;
+};
+
+export const isNeurosiftCompletionTokenObject = (
+  x: any,
+): x is NeurosiftCompletionTokenObject => {
+  return (
+    x &&
+    typeof x === "object" &&
+    typeof x.timestamp === "number" &&
+    typeof x.difficulty === "number" &&
+    typeof x.delay === "number" &&
+    typeof x.messagesJsonLength === "number" &&
+    typeof x.modelName === "string"
+  );
+};

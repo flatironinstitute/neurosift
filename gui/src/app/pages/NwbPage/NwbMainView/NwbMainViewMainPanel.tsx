@@ -1,13 +1,12 @@
-import { RemoteH5FileX } from "@remote-h5-file/index";
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { RemoteH5FileX } from "@remote-h5-file/index";
 import { FunctionComponent, useEffect, useState } from "react";
 import BrowseNwbView from "../BrowseNwbView/BrowseNwbView";
+import DendroView from "../DendroView/DendroView";
 import NeurosiftAnnotationsView from "../NeurosiftAnnotationsView/NeurosiftAnnotationsView";
-import DefaultNwbFileView from "./DefaultNwbFileView";
 import SpecificationsView from "../SpecificationsView/SpecificationsView";
 import WidgetsView from "../WidgetsView/WidgetsView";
-import DendroView from "../DendroView/DendroView";
-import InfoView from "./InfoView";
+import DefaultNwbFileView from "./DefaultNwbFileView";
 
 type Props = {
   width: number;
@@ -25,8 +24,7 @@ type ViewMode =
   | "specifications"
   | "widgets"
   | "dendro"
-  | "annotations"
-  | "info";
+  | "annotations";
 
 const NwbMainViewMainPanel: FunctionComponent<Props> = ({
   width,
@@ -146,23 +144,6 @@ const NwbMainViewMainPanel: FunctionComponent<Props> = ({
               height={height - topBarHeight}
             />
           </div>
-        )}
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          width,
-          height: height - topBarHeight,
-          top: topBarHeight,
-          visibility: viewMode === "info" ? undefined : "hidden",
-        }}
-      >
-        {hasBeenVisibleViewModes.includes("info") && (
-          <InfoView
-            width={width}
-            height={height - topBarHeight}
-            nwbFile={nwbFile}
-          />
         )}
       </div>
     </div>

@@ -21,7 +21,7 @@ import { Analytics } from "@vercel/analytics/react";
 import RandomFeedbackForm from "./Feedback/RandomFeedbackForm";
 import { useModalWindow } from "@fi-sci/modal-window";
 import PopupChatWindow from "./PopupChatWindow/PopupChatWindow";
-import WorkshopChat from "./WorkshopChat/WorkshopChat";
+import ContextChat from "./ContextChat/ContextChat";
 
 type Props = {
   // none
@@ -36,9 +36,9 @@ const MainWindow: FunctionComponent<Props> = () => {
     setCustomStatusBarElement("route", <NotUsingCookiesNotice />);
   }, [setCustomStatusBarElement]);
   const {
-    visible: workshopChatVisible,
-    handleOpen: openWorkshopChat,
-    handleClose: closeWorkshopChat,
+    visible: contextChatVisible,
+    handleOpen: openContextChat,
+    handleClose: closeContextChat,
   } = useModalWindow();
   return (
     <div
@@ -55,9 +55,9 @@ const MainWindow: FunctionComponent<Props> = () => {
         }}
       >
         <ApplicationBar
-          onWorkshopChat={() => {
-            if (workshopChatVisible) closeWorkshopChat();
-            else openWorkshopChat();
+          onContextChat={() => {
+            if (contextChatVisible) closeContextChat();
+            else openContextChat();
           }}
         />
       </div>
@@ -122,12 +122,8 @@ const MainWindow: FunctionComponent<Props> = () => {
       )}
       <Analytics />
       <RandomFeedbackForm />
-      <PopupChatWindow visible={workshopChatVisible}>
-        <WorkshopChat
-          width={width}
-          height={height}
-          onClose={closeWorkshopChat}
-        />
+      <PopupChatWindow visible={contextChatVisible}>
+        <ContextChat width={width} height={height} onClose={closeContextChat} />
       </PopupChatWindow>
     </div>
   );

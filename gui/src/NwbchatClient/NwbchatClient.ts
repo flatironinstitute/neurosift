@@ -10,6 +10,11 @@ import {
   isEmbeddingResponse,
   isEmbeddingTokenObject,
   EmbeddingRequest,
+  InitiateNeurosiftCompletionRequest,
+  NeurosiftCompletionRequest,
+  isInitiateNeurosiftCompletionResponse,
+  isNeurosiftCompletionResponse,
+  isNeurosiftCompletionTokenObject,
 } from "./nwbchat-types";
 
 export class NwbchatClient {
@@ -179,5 +184,51 @@ export class EmbeddingClient {
     }
     const { embedding } = resp2;
     return { embedding };
+  }
+}
+
+export class NeurosiftCompletionClient {
+  constructor(private o: { verbose?: boolean } = {}) {}
+  async completion(
+    messages: { role: string; content: string }[],
+    modelName: string,
+  ) {
+    const messagesJson = JSON.stringify(messages);
+    const req: InitiateNeurosiftCompletionRequest = {
+      type: "initiateNeurosiftCompletionRequest",
+      messagesJsonLength: messagesJson.length,
+      modelName,
+    };
+    const resp = await postApiRequest("initiateNeurosiftCompletion", req);
+    if (!isInitiateNeurosiftCompletionResponse(resp)) {
+      throw new Error("Invalid response");
+    }
+    const { neurosiftCompletionToken, tokenSignature } = resp;
+    const tokenObject = JSON.parse(neurosiftCompletionToken);
+    if (!isNeurosiftCompletionTokenObject(tokenObject)) {
+      throw new Error("Invalid neurosift completion token");
+    }
+    const { difficulty, delay } = tokenObject;
+    const challengeResponse = await solveChallenge(
+      neurosiftCompletionToken,
+      difficulty,
+      delay,
+      { verbose: this.o.verbose },
+    );
+    const req2: NeurosiftCompletionRequest = {
+      type: "neurosiftCompletionRequest",
+      neurosiftCompletionToken,
+      tokenSignature,
+      messagesJsonLength: messagesJson.length,
+      messagesJson,
+      challengeResponse,
+      modelName,
+    };
+    const resp2 = await postApiRequest("neurosiftCompletion", req2);
+    if (!isNeurosiftCompletionResponse(resp2)) {
+      throw new Error("Invalid response");
+    }
+    const { response } = resp2;
+    return { response };
   }
 }

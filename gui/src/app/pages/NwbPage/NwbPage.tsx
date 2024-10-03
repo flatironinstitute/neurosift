@@ -11,6 +11,7 @@ import {
   globalRemoteH5FileStats,
 } from "@remote-h5-file/index";
 import { track } from "@vercel/analytics/react";
+import { useContextChat } from "app/ContextChat/ContextChat";
 import {
   FunctionComponent,
   useEffect,
@@ -35,7 +36,9 @@ import {
 } from "./SelectedItemViewsContext";
 import { SetupNwbFileSpecificationsProvider } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
 import getAuthorizationHeaderForUrl from "./getAuthorizationHeaderForUrl";
-import { string } from "mathjs";
+import getNwbFileInfoForChat, {
+  NwbFileInfoForChat,
+} from "./getNwbFileInfoForChat";
 
 type Props = {
   width: number;
@@ -63,12 +66,40 @@ const NwbPage: FunctionComponent<Props> = ({ width, height }) => {
   //     return () => {canceled = true}
   // }, [route.page, route, setRoute])
 
+  const { setContextString } = useContextChat();
+
+  if (route.page !== "nwb")
+    throw Error("Unexpected route for NwbPage: " + route.page);
+
+  useEffect(() => {
+    let x = `
+The user is viewing the contents of an NWB file.
+In the left panel is metadata about the file, such as the title, description, asset path, institution, session description, etc.
+`;
+    if ((route.tab || "main") === "main") {
+      x += `
+The user is viewing the main tab of the NWB file. Which has subtabs: NWB, RAW, WIDGETS, SPECIFICATIONS, DENDRO, ANNOTATIONS, INFO.
+For NWB: The user can view the contents of the NWB file in a tree structure.
+For RAW: The user can view the raw contents of the NWB file, the HDF5 Group and Dataset structure.
+For WIDGETS: The user can see a list of widgets that can be used to visualize the data in this particular NWB file.
+For SPECIFICATIONS: The user can view the specifications in the NWB file. These are not specific to the data in the file, but are general specifications about the file format.
+For DENDRO: The user can view the Dendro provenance of the NWB file. Dendro is a tool for running containerized jobs on NWB files in the cloud or on compute clusters.
+For ANNOTATIONS: This is an experimental feature that allows the user to view and edit annotations on the NWB file.
+`;
+    }
+    setContextString("nwb-page", x);
+    return () => {
+      setContextString("nwb-page", undefined);
+    };
+  }, [setContextString, route.tab]);
+
   if (route.page === "nwb" && !route.url) {
     // if (route.dandiAssetUrl) {
     //     return <div style={{paddingLeft: 20}}>Obtaining asset blob URL from {route.dandiAssetUrl}</div>
     // }
     return <div style={{ paddingLeft: 20 }}>No url query parameter</div>;
   }
+
   return <NwbPageChild1 width={width} height={height} />;
 };
 
@@ -347,6 +378,75 @@ const NwbPageChild3: FunctionComponent<NwbPageChild3Props> = ({
     };
   }, [nwbFile, neurodataItems]);
 
+  const nwbFileInfoForChat = useNwbFileInfoForChat(nwbFile);
+  const { setContextString } = useContextChat();
+  useEffect(() => {
+    if (nwbFileInfoForChat) {
+      setContextString(
+        "nwb-file-info",
+        nwbFileInfoForChatToText(nwbFileInfoForChat),
+      );
+    }
+    return () => {
+      setContextString("nwb-file-info", undefined);
+    };
+  }, [nwbFileInfoForChat, setContextString]);
+
+  useEffect(() => {
+    if (!nwbFile) return;
+    let nwbFileUrl: string;
+    let urlType: "hdf5" | "lindi";
+    if (nwbFile instanceof MergedRemoteH5File) {
+      const f = nwbFile.getFiles()[0];
+      if (f instanceof RemoteH5FileLindi) {
+        nwbFileUrl = f.url;
+        urlType = "lindi";
+      } else if (f instanceof RemoteH5File) {
+        nwbFileUrl = f.url;
+        urlType = "hdf5";
+      } else {
+        nwbFileUrl = "unknown";
+        urlType = "hdf5";
+      }
+    } else {
+      if (nwbFile instanceof RemoteH5FileLindi) {
+        nwbFileUrl = nwbFile.url;
+        urlType = "lindi";
+      } else {
+        nwbFileUrl = nwbFile.url;
+        urlType = "hdf5";
+      }
+    }
+    const a = `
+Here are instructions for loading this NWB file into pynwb:
+
+# Prerequisites:
+pip install --upgrade lindi pynwb
+
+\`\`\`python
+import pynwb
+import lindi
+
+url = '${nwbFileUrl}'
+
+# Load the remote NWB file
+${urlType === "lindi" ? "f = lindi.LindiH5pyFile.from_lindi_file(url)" : "f = lindi.LindiH5pyFile.from_hdf5_file(url)"}
+io = pynwb.NWBHDF5IO(file=f, mode='r')
+nwbfile = io.read()
+
+# Access the data
+print(nwbfile)
+
+# Close the file
+io.close()
+\`\`\`
+`;
+    setContextString("nwb-file-pynwb", a);
+    return () => {
+      setContextString("nwb-file-pynwb", undefined);
+    };
+  }, [setContextString, nwbFile]);
+
   if (!nwbFile || !nwbFileContextValue) return <div>Loading {urlList}</div>;
 
   if (loadedSuccessfully === false) {
@@ -377,6 +477,36 @@ const NwbPageChild3: FunctionComponent<NwbPageChild3Props> = ({
 const computeTotalBytesFetched = () => {
   // how to calculate this?
   return 0;
+};
+
+const useNwbFileInfoForChat = (
+  nwbFile?: RemoteH5FileX,
+): NwbFileInfoForChat | undefined => {
+  const [nwbFileInfo, setNwbFileInfo] = useState<
+    NwbFileInfoForChat | undefined
+  >(undefined);
+
+  useEffect(() => {
+    let canceled = false;
+    if (!nwbFile) {
+      setNwbFileInfo(undefined);
+      return;
+    }
+    (async () => {
+      try {
+        const x = await getNwbFileInfoForChat(nwbFile);
+        if (canceled) return;
+        setNwbFileInfo(x);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+    return () => {
+      canceled = true;
+    };
+  }, [nwbFile]);
+
+  return nwbFileInfo;
 };
 
 export const headRequest = async (url: string, headers?: any) => {
@@ -558,6 +688,30 @@ const determineCORSIssueLikely = (url: string) => {
   if (url.startsWith("http://localhost")) return false;
   if (url.startsWith("https://api.dandiarchive.org")) return false;
   return true;
+};
+
+const nwbFileInfoForChatToText = (nwbFileInfo: NwbFileInfoForChat) => {
+  const nwbSummaryLines: string[] = [];
+  for (const x of nwbFileInfo.metaFields) {
+    nwbSummaryLines.push(`${x.name}: ${x.value}`);
+  }
+  for (const x of nwbFileInfo.neurodataGroups) {
+    nwbSummaryLines.push(
+      `Group ${x.path} (${x.neurodataType}): ${x.description}`,
+    );
+  }
+  for (const x of nwbFileInfo.neurodataDatasets) {
+    nwbSummaryLines.push(
+      `Dataset ${x.path} (${x.neurodataType}): ${x.description} | shape = ${x.shape.join(" x ")} | dtype = ${x.dtype}`,
+    );
+  }
+
+  return `
+Here's a summary of the contents of the NWB file:
+
+${nwbSummaryLines.join("\n")}
+
+`;
 };
 
 export default NwbPage;
