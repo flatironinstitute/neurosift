@@ -440,6 +440,8 @@ print(nwbfile)
 # Close the file
 io.close()
 \`\`\`
+
+Tip: when using Timeseries objects with pynwb it's better to use the x.get_timestamps() method rather than x.timestamps, because sometimes start_time and rate is used instead.
 `;
     setContextString("nwb-file-pynwb", a);
     return () => {
@@ -710,8 +712,51 @@ const nwbFileInfoForChatToText = (nwbFileInfo: NwbFileInfoForChat) => {
 Here's a summary of the contents of the NWB file:
 
 ${nwbSummaryLines.join("\n")}
-
 `;
 };
+
+// Having trouble with getting chatbot to understand pynapple. This was my attempt but it didn't really work.
+// ~~~
+// Here's some information about loading neurodata objects into Pynapple.
+// Let's use Pynapple whenever it makes sense to do so.
+
+// \`\`\`python
+// import pynapple as nap
+
+// # suppose we have loaded the NWB file via pynwb into a variable called 'nwbfile'
+// nwbp = nap.NWBFile()
+
+// # Load Units objects as TsGroup
+// # Note that it's under the "units" key no matter where the object is in the NWB file
+// units = nwbp["units"]
+
+// # TimeIntervals can be loaded as pynapple's IntervalSet
+// # Note that it's under the "name_of_time_intervals" key which is the base name, not including e.g., processing/
+// intervals = nwbp["name_of_time_intervals"]
+
+// # Similar for DynamicTable as pynapple's Ts
+// dtable = nwbp["name_of_dynamic_table"]
+
+// # Similar for AnnotationSeries as pynapple's Ts
+// annotations = nwbp["name_of_annotations"]
+
+// # Similar for Timeseries, but the pynapple type depends on the dimensions:
+// # 1D: Ts
+// # 2D: TsdFrame
+// # 3D or more: TsdTensor
+// \`\`\`
+
+// In pynapple, if you've got units as a TsGroup and position as a TsdFrame, you can compute 2D tuning curves like this:
+// tc, binsxy = nap.compute_2d_tuning_curves(units, position, 20)
+// plt.figure(figsize=(15, 7))
+// for i in tc.keys():
+//     plt.subplot(2, 4, i + 1)
+//     plt.imshow(tc[i], origin="lower", aspect="auto")
+//     plt.title("Unit {}".format(i))
+// plt.tight_layout()
+// plt.show()
+
+// position has position["x"] and position["y"] 1D Ts objects.
+// ~~~
 
 export default NwbPage;

@@ -524,7 +524,7 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
     x += `User can choose whether to show raster plots and histograms.\n`;
     x += `User can choose the number of bins, window range.\n`;
     if ((groupByVariableCategories || []).length > 0) {
-      x += `User can optionally group trials by a variable. The available variables are: ${groupByVariableCategories?.join(", ")}\n.`;
+      x += `User can optionally group trials by a variable.\n.`;
     } else {
       x += `There are no variables available for grouping trials.\n`;
     }
