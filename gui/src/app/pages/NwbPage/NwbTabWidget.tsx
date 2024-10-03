@@ -145,6 +145,7 @@ const TabChild: FunctionComponent<TabChildProps> = ({
             width={width}
             height={height}
             usingLindi={usingLindi}
+            hidden={hidden}
           />
         ) : tabName.startsWith("neurodata-item:") ||
           tabName.startsWith("view:") ? (
@@ -170,6 +171,7 @@ const TabChild: FunctionComponent<TabChildProps> = ({
                 height={height}
                 items={items}
                 tabName={tabName}
+                hidden={hidden}
               />
             );
           })()
@@ -178,6 +180,7 @@ const TabChild: FunctionComponent<TabChildProps> = ({
             key={tabName}
             width={width}
             height={height}
+            hidden={hidden}
           />
         ) : (
           <div key={tabName}>Not implemented</div>

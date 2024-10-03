@@ -14,6 +14,7 @@ type Props = {
   width: number;
   height: number;
   usingLindi: boolean;
+  hidden?: boolean;
 };
 
 const NwbMainView: FunctionComponent<Props> = ({

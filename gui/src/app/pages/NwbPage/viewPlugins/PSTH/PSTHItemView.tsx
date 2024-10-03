@@ -34,6 +34,7 @@ type Props = {
   path: string;
   additionalPaths?: string[];
   condensed?: boolean;
+  hidden?: boolean;
   initialStateString?: string;
   setStateString?: (x: string) => void;
   mode?: PSTHTrialAlignedSeriesMode;
@@ -46,6 +47,7 @@ const PSTHItemView: FunctionComponent<Props> = ({
   additionalPaths,
   initialStateString,
   setStateString,
+  hidden,
   mode,
 }) => {
   const [unitSelection, unitSelectionDispatch] = useReducer(
@@ -63,6 +65,7 @@ const PSTHItemView: FunctionComponent<Props> = ({
         additionalPaths={additionalPaths}
         initialStateString={initialStateString}
         setStateString={setStateString}
+        hidden={hidden}
         mode={mode || "psth"}
       />
     </UnitSelectionContext.Provider>
@@ -117,6 +120,7 @@ type PSTHItemViewChildProps = {
   additionalPaths?: string[];
   initialStateString?: string;
   setStateString?: (x: string) => void;
+  hidden?: boolean;
   mode: PSTHTrialAlignedSeriesMode;
 };
 
@@ -128,6 +132,7 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
   initialStateString,
   setStateString,
   mode,
+  hidden,
 }) => {
   const nwbFile = useNwbFile();
   if (!nwbFile) throw Error("Unexpected: no nwbFile");
@@ -503,10 +508,18 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
 
   const { setContextString } = useContextChat();
   useEffect(() => {
+    console.log("---------------- effect", hidden);
+    if (hidden) return;
     let x = "";
-    x += `User is viewing a PSTH item view for path: ${path}.\n`;
-    x += `This is an interactive peri-stimulus time histogram (PSTH).\n`;
-    x += `User can select one or more units. There are ${unitIds?.length} units available.\n`;
+    if (mode === "psth") {
+      x += `User is viewing a PSTH item view for path: ${path}.\n`;
+      x += `This is an interactive peri-stimulus time histogram (PSTH).\n`;
+      x += `User can select one or more units. There are ${unitIds?.length} units available.\n`;
+    } else if (mode === "time-aligned-series") {
+      x += `User is viewing a time-aligned series item view for path: ${path}.\n`;
+      x += `This is an interactive time-aligned series.\n`;
+      x += `User can select one or more ROIs.\n`;
+    }
     x += `User can select variables to align to.\n`;
     x += `User can choose whether to show raster plots and histograms.\n`;
     x += `User can choose the number of bins, window range.\n`;
@@ -520,7 +533,7 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
 
     setContextString("psth-item-view", x);
     return () => {
-      setContextString("psth-item-view", x);
+      setContextString("psth-item-view", undefined);
     };
   }, [
     setContextString,
@@ -530,6 +543,7 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
     groupByVariableCategories,
     groupByVariable,
     sortUnitsByVariable,
+    hidden,
   ]);
 
   return (

@@ -16,6 +16,7 @@ import { useNwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpec
 type Props = {
   width: number;
   height: number;
+  hidden?: boolean;
 };
 
 type TAItem = {

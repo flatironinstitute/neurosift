@@ -18,6 +18,7 @@ type Props = {
   height: number;
   items: string[];
   tabName?: string;
+  hidden?: boolean;
 };
 
 const NeurodataItemsView: FunctionComponent<Props> = ({

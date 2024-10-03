@@ -10,6 +10,7 @@ type Props = {
   condensed?: boolean;
   initialStateString?: string;
   setStateString?: (x: string) => void;
+  hidden?: boolean;
 };
 
 const TrialAlignedSeriesItemView: FunctionComponent<Props> = ({
@@ -19,6 +20,7 @@ const TrialAlignedSeriesItemView: FunctionComponent<Props> = ({
   additionalPaths,
   initialStateString,
   setStateString,
+  hidden,
 }) => {
   return (
     <PSTHItemView
@@ -29,6 +31,7 @@ const TrialAlignedSeriesItemView: FunctionComponent<Props> = ({
       initialStateString={initialStateString}
       setStateString={setStateString}
       mode={"time-aligned-series"}
+      hidden={hidden}
     />
   );
 };
