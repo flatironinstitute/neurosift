@@ -1,5 +1,8 @@
 import { SmallIconButton } from "@fi-sci/misc";
-import { Cancel, Close, Help, Settings } from "@mui/icons-material";
+import { Cancel, Close, Help } from "@mui/icons-material";
+import Markdown from "app/Markdown/Markdown";
+import useRoute from "app/useRoute";
+import { NeurosiftCompletionClient } from "NwbchatClient/NwbchatClient";
 import {
   createContext,
   FunctionComponent,
@@ -11,10 +14,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { ORMessage, ORNonStreamingChoice, ORResponse } from "./openRouterTypes";
-import useRoute, { Route } from "app/useRoute";
-import { NeurosiftCompletionClient } from "NwbchatClient/NwbchatClient";
-import Markdown from "app/Markdown/Markdown";
+import { ORMessage } from "./openRouterTypes";
 
 type ContextChatProps = {
   width: number;
@@ -34,6 +34,8 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
   const { route } = useRoute();
 
   const [messages, setMessages] = useState<ORMessage[]>([]);
+
+  const [modelName, setModelName] = useState("openai/gpt-4o-mini");
 
   const handleUserMessage = useCallback(
     (message: string) => {
@@ -55,14 +57,19 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
     if (!lastMessage) return;
     if (lastMessage.role === "user") {
       const totalContextString = Object.values(contextStrings).join("\n");
-      sendChatRequest(messages, totalContextString).then((responseMessage) => {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: responseMessage },
-        ]);
-      });
+      setTimeout(() => {
+        // timeout to get the UI to update from the state change
+        sendChatRequest(messages, totalContextString, modelName).then(
+          (responseMessage) => {
+            setMessages((prev) => [
+              ...prev,
+              { role: "assistant", content: responseMessage },
+            ]);
+          },
+        );
+      }, 10);
     }
-  }, [messages, contextStrings]);
+  }, [messages, contextStrings, modelName]);
 
   const lastMessageIsUser = useMemo(() => {
     return messages[messages.length - 1]?.role === "user";
@@ -175,6 +182,7 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
           height={inputBarHeight}
           onMessage={handleUserMessage}
           disabled={lastMessageIsUser}
+          waitingForResponse={lastMessageIsUser}
         />
       </div>
       <div
@@ -190,6 +198,8 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
           width={width}
           height={settingsBarHeight}
           onClearAllMessages={handleClearAllMessages}
+          modelName={modelName}
+          setModelName={setModelName}
         />
       </div>
     </div>
@@ -201,6 +211,7 @@ type InputBarProps = {
   height: number;
   onMessage: (message: string) => void;
   disabled?: boolean;
+  waitingForResponse?: boolean;
 };
 
 const InputBar: FunctionComponent<InputBarProps> = ({
@@ -208,6 +219,7 @@ const InputBar: FunctionComponent<InputBarProps> = ({
   height,
   onMessage,
   disabled,
+  waitingForResponse,
 }) => {
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -228,7 +240,9 @@ const InputBar: FunctionComponent<InputBarProps> = ({
       <input
         style={{ width: width - 8, height: height - 7 }}
         onKeyDown={handleKeyDown}
-        placeholder="Enter a message..."
+        placeholder={
+          waitingForResponse ? "Waiting for response..." : "Type a message..."
+        }
         disabled={disabled}
       />
     </div>
@@ -239,35 +253,44 @@ type SettingsBarProps = {
   width: number;
   height: number;
   onClearAllMessages: () => void;
+  modelName: string;
+  setModelName: (name: string) => void;
 };
+
+const modelOptions = [
+  "openai/gpt-4o-mini",
+  "openai/gpt-4o",
+  // 'anthropic/claude-3.5-sonnet',
+  // 'anthropic/claude-3-haiku',
+  // 'google/gemini-flash-1.5',
+  // 'google/gemini-pro-1.5'
+];
 
 const SettingsBar: FunctionComponent<SettingsBarProps> = ({
   onClearAllMessages,
+  modelName,
+  setModelName,
 }) => {
-  const [advancedSettingsVisible, setAdvancedSettingsVisible] = useState(false);
   return (
     <span style={{ fontSize: 12, padding: 5 }}>
-      {
-        <SmallIconButton
-          icon={<Settings />}
-          title="Open advanced settings"
-          onClick={() => setAdvancedSettingsVisible((v) => !v)}
-        />
-      }
-      {advancedSettingsVisible && (
-        <>
-          &nbsp;&nbsp;&nbsp;
-          <SmallIconButton
-            icon={<Cancel />}
-            onClick={() => {
-              if (confirm("Clear all messages?")) {
-                onClearAllMessages();
-              }
-            }}
-            title="Clear all messages"
-          />
-        </>
-      )}
+      &nbsp;&nbsp;&nbsp;
+      <SmallIconButton
+        icon={<Cancel />}
+        onClick={() => {
+          if (confirm("Clear all messages?")) {
+            onClearAllMessages();
+          }
+        }}
+        title="Clear all messages"
+      />
+      &nbsp;
+      <select value={modelName} onChange={(e) => setModelName(e.target.value)}>
+        {modelOptions.map((x) => (
+          <option key={x} value={x}>
+            {x}
+          </option>
+        ))}
+      </select>
     </span>
   );
 };
@@ -312,6 +335,7 @@ const MessageDisplay: FunctionComponent<MessageDisplayProps> = ({
 const sendChatRequest = async (
   messages: ORMessage[],
   contextString: string,
+  modelName: string,
 ) => {
   const systemLines: string[] = [];
   systemLines.push(
@@ -345,7 +369,7 @@ Neurosift is a browser-based tool designed for the visualization of NWB (Neuroda
       role: x.role as string,
       content: x.content as string,
     })),
-    "openai/gpt-4o-mini",
+    modelName,
   );
 
   return response;

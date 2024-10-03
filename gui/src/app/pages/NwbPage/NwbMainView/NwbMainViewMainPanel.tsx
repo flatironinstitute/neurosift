@@ -195,9 +195,6 @@ const ViewModeToggleButton: FunctionComponent<ViewModeToggleButtonProps> = ({
       <ToggleButton value="annotations" title="Neurosift annotations">
         Annotations
       </ToggleButton>
-      <ToggleButton value="info" title="Info about the file">
-        Info
-      </ToggleButton>
     </ToggleButtonGroup>
   );
 };
