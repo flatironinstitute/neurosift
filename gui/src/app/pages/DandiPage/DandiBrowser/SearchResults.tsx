@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useCallback } from "react";
 import { Hyperlink } from "@fi-sci/misc";
-import { Splitter } from "@fi-sci/splitter";
+import Splitter from "app/Splitter/Splitter";
 import formatByteCount from "./formatByteCount";
 import { DandisetSearchResultItem } from "./types";
 import DandisetView from "../../DandisetPage/DandisetViewFromDendro/DandisetView";

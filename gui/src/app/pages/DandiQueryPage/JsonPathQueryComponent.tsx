@@ -13,7 +13,7 @@ import { Hyperlink } from "@fi-sci/misc";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import QueryHintsView from "./QueryHintsView";
 import useRoute from "../../useRoute";
-import { Splitter } from "@fi-sci/splitter";
+import Splitter from "app/Splitter/Splitter";
 
 type JsonPathQueryComponentProps = {
   width: number;

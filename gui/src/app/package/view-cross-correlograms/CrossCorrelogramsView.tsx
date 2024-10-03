@@ -13,7 +13,7 @@ import {
   CrossCorrelogramData,
   CrossCorrelogramsViewData,
 } from "./CrossCorrelogramsViewData";
-import { Splitter } from "@fi-sci/splitter";
+import Splitter from "app/Splitter/Splitter";
 
 type Props = {
   data: CrossCorrelogramsViewData;

@@ -1,7 +1,7 @@
 import { FunctionComponent, useMemo } from "react";
 import NeurodataTimeSeriesItemView from "../TimeSeries/NeurodataTimeSeriesItemView";
 import UnitsItemView from "../Units/UnitsItemView";
-import { Splitter } from "@fi-sci/splitter";
+import Splitter from "app/Splitter/Splitter";
 import {
   SpikeTrainsClient,
   useDirectSpikeTrainsClientUnitSlice,

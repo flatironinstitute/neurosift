@@ -1,5 +1,5 @@
 import { RemoteH5FileX } from "@remote-h5-file/index";
-import { Splitter } from "@fi-sci/splitter";
+import Splitter from "app/Splitter/Splitter";
 import { FunctionComponent, useMemo } from "react";
 import { useNeurodataItems, useNwbFile } from "../NwbFileContext";
 import TimeseriesSelectionWidget from "../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget";

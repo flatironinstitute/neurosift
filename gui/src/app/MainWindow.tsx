@@ -27,6 +27,13 @@ type Props = {
   // none
 };
 
+type Position =
+  | "top-left"
+  | "top-right"
+  | "bottom-left"
+  | "bottom-right"
+  | "full";
+
 const MainWindow: FunctionComponent<Props> = () => {
   const { route } = useRoute();
   const { width, height } = useWindowDimensions();
@@ -40,6 +47,8 @@ const MainWindow: FunctionComponent<Props> = () => {
     handleOpen: openContextChat,
     handleClose: closeContextChat,
   } = useModalWindow();
+  const [contextChatPosition, setContextChatPosition] =
+    useState<Position>("bottom-left");
   return (
     <div
       className="MainWindow"
@@ -122,8 +131,18 @@ const MainWindow: FunctionComponent<Props> = () => {
       )}
       <Analytics />
       <RandomFeedbackForm />
-      <PopupChatWindow visible={contextChatVisible}>
-        <ContextChat width={width} height={height} onClose={closeContextChat} />
+      <PopupChatWindow
+        visible={contextChatVisible}
+        position={contextChatPosition}
+        setPosition={setContextChatPosition}
+      >
+        <ContextChat
+          width={width}
+          height={height}
+          onClose={closeContextChat}
+          position={contextChatPosition}
+          onSetPosition={setContextChatPosition}
+        />
       </PopupChatWindow>
     </div>
   );

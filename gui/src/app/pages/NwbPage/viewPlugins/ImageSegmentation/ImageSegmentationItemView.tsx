@@ -1,5 +1,5 @@
 import { RemoteH5FileX, RemoteH5Group } from "@remote-h5-file/index";
-import { Splitter } from "@fi-sci/splitter";
+import Splitter from "app/Splitter/Splitter";
 import { FunctionComponent, useEffect, useState } from "react";
 import { useNwbFile } from "../../NwbFileContext";
 import { useGroup } from "../../NwbMainView/NwbMainView";

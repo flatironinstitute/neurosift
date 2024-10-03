@@ -14,18 +14,30 @@ import {
   useRef,
   useState,
 } from "react";
+import { FaWindowMaximize, FaWindowRestore } from "react-icons/fa";
 import { ORMessage } from "./openRouterTypes";
+
+type Position =
+  | "top-left"
+  | "top-right"
+  | "bottom-left"
+  | "bottom-right"
+  | "full";
 
 type ContextChatProps = {
   width: number;
   height: number;
   onClose: () => void;
+  position: Position;
+  onSetPosition: (position: Position) => void;
 };
 
 const ContextChat: FunctionComponent<ContextChatProps> = ({
   width,
   height,
   onClose,
+  position,
+  onSetPosition,
 }) => {
   const inputBarHeight = 30;
   const settingsBarHeight = 20;
@@ -93,6 +105,18 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
     setMessages([]);
   }, [route.page]);
 
+  const initialMessage = useMemo(() => {
+    if (route.page === "dandi") {
+      return `You can me questions about Neurosift.`;
+    } else if (route.page === "dandiset") {
+      return "You can ask me questions about Neurosift or this Dandiset.";
+    } else if (route.page === "nwb") {
+      return "You can ask me questions about Neurosift or this NWB file.";
+    } else {
+      return "You can ask me questions about Neurosift.";
+    }
+  }, [route.page]);
+
   return (
     <div style={{ position: "absolute", width, height }}>
       <div
@@ -105,6 +129,7 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
           background: "gray",
           color: "white",
           fontSize: 12,
+          userSelect: "none",
         }}
       >
         Context Chat{" "}
@@ -120,6 +145,44 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
           }}
         />
       </div>
+      {position !== "full" && (
+        <div
+          className="maximize-button"
+          style={{
+            position: "absolute",
+            width: topBarHeight,
+            height: topBarHeight,
+            top: -3,
+            left: width - 60,
+          }}
+        >
+          <SmallIconButton
+            icon={<FaWindowMaximize />}
+            onClick={() => {
+              onSetPosition("full");
+            }}
+            title="Maximize window"
+          />
+        </div>
+      )}
+      {position === "full" && (
+        <div
+          className="restore-button"
+          style={{
+            position: "absolute",
+            width: topBarHeight,
+            height: topBarHeight,
+            top: -3,
+            left: width - 60,
+          }}
+        >
+          <SmallIconButton
+            icon={<FaWindowRestore />}
+            onClick={() => onSetPosition("bottom-left")}
+            title="Restore window"
+          />
+        </div>
+      )}
       <div
         className="close-button"
         style={{
@@ -127,21 +190,30 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
           width: topBarHeight,
           height: topBarHeight,
           top: -3,
-          left: width - topBarHeight,
+          left: width - 30,
         }}
       >
-        <SmallIconButton icon={<Close />} onClick={onClose} />
+        <SmallIconButton
+          icon={<Close />}
+          onClick={onClose}
+          title="Close window"
+        />
       </div>
+
       <div
         ref={chatContainerRef}
         style={{
           position: "absolute",
-          width,
+          left: 5,
+          width: width - 10,
           top: topBarHeight,
           height: height - topBarHeight - inputBarHeight - settingsBarHeight,
           overflow: "auto",
         }}
       >
+        <span style={{ color: "black" }}>
+          <Markdown source={initialMessage} />
+        </span>
         {messages.map((c, index) => (
           <div
             key={index}
@@ -273,16 +345,6 @@ const SettingsBar: FunctionComponent<SettingsBarProps> = ({
 }) => {
   return (
     <span style={{ fontSize: 12, padding: 5 }}>
-      &nbsp;&nbsp;&nbsp;
-      <SmallIconButton
-        icon={<Cancel />}
-        onClick={() => {
-          if (confirm("Clear all messages?")) {
-            onClearAllMessages();
-          }
-        }}
-        title="Clear all messages"
-      />
       &nbsp;
       <select value={modelName} onChange={(e) => setModelName(e.target.value)}>
         {modelOptions.map((x) => (
@@ -291,6 +353,15 @@ const SettingsBar: FunctionComponent<SettingsBarProps> = ({
           </option>
         ))}
       </select>
+      &nbsp;
+      <SmallIconButton
+        icon={<Cancel />}
+        onClick={() => {
+          onClearAllMessages();
+        }}
+        title="Clear all messages"
+      />
+      <span>&nbsp;AI chatbots may be inaccurate.</span>
     </span>
   );
 };
@@ -349,7 +420,16 @@ const sendChatRequest = async (
     "You should stick to answering questions related to the software and its usage as well as the data being analyzed and visualized.",
   );
   systemLines.push(
-    "If you don't know the answer you can invite the user to use the question mark icon at the top to get more information.",
+    "In your answer you can reference the following external resourcs as relevant. Reference them as markdown links.",
+  );
+  systemLines.push(
+    "[Overview of Neurosift](https://github.com/flatironinstitute/neurosift)",
+  );
+  systemLines.push(
+    "[Supported neurodata types](https://github.com/flatironinstitute/neurosift/blob/main/doc/neurodata_types.md)",
+  );
+  systemLines.push(
+    "[Workshop: Exploring and Analyzing NWB Datasets on DANDI with Neurosift and Dendro](https://github.com/flatironinstitute/neurosift/blob/main/doc/neurosift_dendro_MIT_workshop_sep_2024.md)",
   );
 
   systemLines.push(`

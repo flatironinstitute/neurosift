@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // import "katex/dist/katex.min.css";
-import { FunctionComponent, useMemo } from "react";
+import { FunctionComponent, useMemo, useState } from "react";
 import { ReactMarkdown } from "react-markdown/lib/react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { darcula as highlighterStyle } from "react-syntax-highlighter/dist/esm/styles/prism";
@@ -12,6 +12,8 @@ import rehypeMathJaxSvg from "rehype-mathjax";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import remarkMathPlugin from "remark-math";
+import { SmallIconButton } from "@fi-sci/misc";
+import { CopyAll } from "@mui/icons-material";
 
 type Props = {
   source: string;
@@ -23,16 +25,31 @@ const Markdown: FunctionComponent<Props> = ({ source }) => {
   > = useMemo(
     () => ({
       code: ({ inline, className, children, ...props }) => {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const [copied, setCopied] = useState<boolean>(false);
         const match = /language-(\w+)/.exec(className || "");
         return !inline && match ? (
-          <SyntaxHighlighter
-            // eslint-disable-next-line react/no-children-prop
-            children={String(children).replace(/\n$/, "")}
-            style={highlighterStyle as any}
-            language={match[1]}
-            PreTag="div"
-            {...props}
-          />
+          <>
+            <div>
+              <SmallIconButton
+                icon={<CopyAll />}
+                title="Copy code"
+                onClick={() => {
+                  navigator.clipboard.writeText(String(children));
+                  setCopied(true);
+                }}
+              />
+              {copied && <>&nbsp;copied</>}
+            </div>
+            <SyntaxHighlighter
+              // eslint-disable-next-line react/no-children-prop
+              children={String(children).replace(/\n$/, "")}
+              style={highlighterStyle as any}
+              language={match[1]}
+              PreTag="div"
+              {...props}
+            />
+          </>
         ) : (
           <code className={className} {...props}>
             {children}
@@ -75,7 +92,7 @@ const Markdown: FunctionComponent<Props> = ({ source }) => {
     [],
   );
   return (
-    <div className="markdown-body" style={{ fontSize: 13 }}>
+    <div className="markdown-body" style={{ fontSize: 16 }}>
       <ReactMarkdown
         // eslint-disable-next-line react/no-children-prop
         children={source}

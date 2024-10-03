@@ -5,7 +5,7 @@ import pako from "pako";
 import NeurodataTypesSelector from "./NeurodataTypesSelector";
 import { Hyperlink } from "@fi-sci/misc";
 import JsonPathQueryComponent from "./JsonPathQueryComponent";
-import { Splitter } from "@fi-sci/splitter";
+import Splitter from "app/Splitter/Splitter";
 import TabWidget from "app/TabWidget/TabWidget";
 import SearchByNeurodataTypeWindow from "./SearchByNeurodataTypeWindow";
 import SearchByAbstractWindow from "./SearchByAbstractWindow";

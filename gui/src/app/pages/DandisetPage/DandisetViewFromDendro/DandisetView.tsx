@@ -26,6 +26,7 @@ import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import AdvancedAssetOptionsWindow from "./AdvancedAssetOptionsWindow";
 import SimilarDandisetsView from "./SimilarDandisetsView";
 import { Expandable } from "app/pages/NwbPage/viewPlugins/Ephys/EphysSummaryItemView";
+import { useContextChat } from "app/ContextChat/ContextChat";
 
 const applicationBarColorDarkened = "#546"; // from dendro
 
@@ -139,6 +140,21 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
     handleOpen: openAdvancedOptions,
     handleClose: closeAdvancedOptions,
   } = useModalWindow();
+
+  const { setContextString } = useContextChat();
+  useEffect(() => {
+    const x = `
+This is Dandiset ${dandisetId} version ${dandisetVersionInfo?.version}.
+The title of Dandiset ${dandisetId} is: ${dandisetVersionInfo?.name}.
+The description of Dandiset ${dandisetId} is: ${dandisetVersionInfo?.metadata.description}.
+Dandiset ${dandisetId} has ${allAssets?.length} assets.
+The contributors to Dandiset ${dandisetId} are: ${dandisetVersionInfo?.metadata.contributor.map((c) => c.name).join(", ")}.
+`;
+    setContextString("dandiset-details", x);
+    return () => {
+      setContextString("dandiset-details", undefined);
+    };
+  }, [dandisetId, dandisetVersionInfo, setContextString, allAssets]);
 
   if (!dandisetResponse) return <div>Loading dandiset...</div>;
   if (!dandisetVersionInfo) return <div>Loading dandiset info...</div>;

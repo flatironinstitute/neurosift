@@ -1,4 +1,4 @@
-import { Splitter } from "@fi-sci/splitter";
+import Splitter from "app/Splitter/Splitter";
 import { FunctionComponent, useState } from "react";
 import { useNwbFile } from "../NwbFileContext";
 import { useGroup } from "../NwbMainView/NwbMainView";

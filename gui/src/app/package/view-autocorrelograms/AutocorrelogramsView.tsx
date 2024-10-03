@@ -18,7 +18,7 @@ import {
 } from "../ViewToolbar";
 import { AutocorrelogramsViewData } from "./AutocorrelogramsViewData";
 import CorrelogramPlot from "./CorrelogramPlot";
-import { Splitter } from "@fi-sci/splitter";
+import Splitter from "app/Splitter/Splitter";
 
 const viewToolbarWidth = 45;
 

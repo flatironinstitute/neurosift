@@ -493,13 +493,6 @@
     "@mui/icons-material" "^5.14.19"
     "@mui/material" "^5.14.20"
 
-"@fi-sci/splitter@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@fi-sci/splitter/-/splitter-0.0.3.tgz#b296c2091f229b33f7c0176bcc10decce84d8733"
-  integrity sha512-kr79gCEsdUA2DWTcUD7gyS0Wp3dgkqQHzMKmFnIfFc62HxC8HmjcWLO9UGE/Vs7iB02ySlM0/PMzYrH9WLIQXw==
-  dependencies:
-    react-draggable "^4.4.6"
-
 "@fortawesome/fontawesome-common-types@6.6.0":
   version "6.6.0"
   resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-common-types/-/fontawesome-common-types-6.6.0.tgz#31ab07ca6a06358c5de4d295d4711b675006163f"
