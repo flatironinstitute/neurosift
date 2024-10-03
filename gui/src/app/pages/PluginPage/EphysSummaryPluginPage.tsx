@@ -1,10 +1,10 @@
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
+import { OpenInNew } from "@mui/icons-material";
 import {
   RemoteH5FileLindi,
   RemoteH5FileX,
   RemoteH5Group,
 } from "@remote-h5-file/index";
-import { OpenInNew } from "@mui/icons-material";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import useRoute from "../../useRoute";
 import {
@@ -18,7 +18,7 @@ import {
   useQueryAssets,
   useQueryDandiset,
 } from "../DandisetPage/DandisetViewFromDendro/DandisetView";
-import { NwbFileContext, useNeurodataItems } from "../NwbPage/NwbFileContext";
+import { NwbFileContext } from "../NwbPage/NwbFileContext";
 import { tryGetLindiUrl } from "../NwbPage/NwbPage";
 import { LazyPlotlyPlotContext } from "../NwbPage/viewPlugins/CEBRA/LazyPlotlyPlot";
 import EphysSummaryItemView, {
