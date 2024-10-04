@@ -9,7 +9,7 @@ type DandiPageProps = {
 };
 
 const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
-  const { setContextString } = useContextChat();
+  const { setContextItem } = useContextChat();
   const { route } = useRoute();
   if (route.page !== "dandi")
     throw Error("Unexpected route for DandiPage: " + route.page);
@@ -31,11 +31,11 @@ This type of view can also be seen at https://dandiarchive.org.
     } else {
       x += `The user is viewing the main site of the DANDI Archive. They can switch to the staging site by clicking the "use staging site" link.`;
     }
-    setContextString("dandi-page", x);
+    setContextItem("dandi-page", { content: x });
     return () => {
-      setContextString("dandi-page", undefined);
+      setContextItem("dandi-page", undefined);
     };
-  }, [setContextString, route.staging]);
+  }, [setContextItem, route.staging]);
   return <DandiBrowser width={width} height={height} />;
 };
 

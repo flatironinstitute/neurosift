@@ -141,7 +141,7 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
     handleClose: closeAdvancedOptions,
   } = useModalWindow();
 
-  const { setContextString } = useContextChat();
+  const { setContextItem } = useContextChat();
   useEffect(() => {
     const x = `
 This is Dandiset ${dandisetId} version ${dandisetVersionInfo?.version}.
@@ -150,11 +150,11 @@ The description of Dandiset ${dandisetId} is: ${dandisetVersionInfo?.metadata.de
 Dandiset ${dandisetId} has ${allAssets?.length} assets.
 The contributors to Dandiset ${dandisetId} are: ${dandisetVersionInfo?.metadata.contributor.map((c) => c.name).join(", ")}.
 `;
-    setContextString("dandiset-details", x);
+    setContextItem("dandiset-details", { content: x });
     return () => {
-      setContextString("dandiset-details", undefined);
+      setContextItem("dandiset-details", undefined);
     };
-  }, [dandisetId, dandisetVersionInfo, setContextString, allAssets]);
+  }, [dandisetId, dandisetVersionInfo, setContextItem, allAssets]);
 
   if (!dandisetResponse) return <div>Loading dandiset...</div>;
   if (!dandisetVersionInfo) return <div>Loading dandiset info...</div>;

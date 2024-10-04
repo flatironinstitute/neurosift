@@ -45,9 +45,11 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
 
   const { route } = useRoute();
 
-  const [messages, setMessages] = useState<ORMessage[]>([]);
+  const [messages, setMessages] = useState<
+    (ORMessage | { role: "client-side-only"; content: string })[]
+  >([]);
 
-  const [modelName, setModelName] = useState("openai/gpt-4o-mini");
+  const [modelName, setModelName] = useState("openai/gpt-4o");
 
   const handleUserMessage = useCallback(
     (message: string) => {
@@ -62,17 +64,87 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
     [setMessages],
   );
 
-  const { contextStrings } = useContextChat();
+  const { contextItems } = useContextChat();
+  const [includedResourceDocs, setIncludedResourceDocs] = useState<string[]>(
+    [],
+  );
 
   useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
+    const messages2: ORMessage[] = [
+      ...messages.filter((x) => x.role !== "client-side-only"),
+    ]; // important to make a copy
+    const lastMessage = messages2[messages2.length - 1];
     if (!lastMessage) return;
     if (lastMessage.role === "user") {
-      const totalContextString = Object.values(contextStrings).join("\n");
+      let totalContextString = Object.values(contextItems)
+        .map((c) => c.content)
+        .join("\n");
+      const allIncludedResourceDocs: {
+        fileName: string;
+        description: string;
+        content: string;
+      }[] = [];
+      const allExcludedResourceDocs: {
+        fileName: string;
+        description: string;
+        content: string;
+      }[] = [];
+      for (const item of Object.values(contextItems)) {
+        if (item.resourceDocs) {
+          for (const doc of item.resourceDocs) {
+            if (includedResourceDocs.includes(doc.fileName)) {
+              allIncludedResourceDocs.push(doc);
+            } else {
+              allExcludedResourceDocs.push(doc);
+            }
+          }
+        }
+      }
+      for (const doc of allIncludedResourceDocs) {
+        if (includedResourceDocs.includes(doc.fileName)) {
+          totalContextString += "\n" + doc.content;
+        }
+      }
+      const newLastMessage: ORMessage = {
+        role: "user",
+        content: lastMessage.content,
+      };
+      if (allExcludedResourceDocs.length > 0) {
+        newLastMessage.content +=
+          "\nIMPORTANT: The following resources are available. If one or more are required to my question, please ask about them specifically instead of responding directly. My follow-up context will then include the relevant resource(s). Do not include them if not directly necessary for your response, and if you do reference them, do not also respond to the prompt.\n";
+        for (const doc of allExcludedResourceDocs) {
+          newLastMessage.content += `${doc.fileName} - ${doc.description}\n`;
+        }
+      }
+      console.info("USER: ", newLastMessage.content);
+      messages2[messages2.length - 1] = newLastMessage;
       setTimeout(() => {
         // timeout to get the UI to update from the state change
-        sendChatRequest(messages, totalContextString, modelName).then(
+        sendChatRequest(messages2, totalContextString, modelName).then(
           (responseMessage) => {
+            console.info("ASSISTANT: ", responseMessage);
+            const allReferencedResourceDocs: {
+              fileName: string;
+              description: string;
+              content: string;
+            }[] = [];
+            for (const doc of allExcludedResourceDocs) {
+              if (responseMessage.includes(doc.fileName)) {
+                allReferencedResourceDocs.push(doc);
+              }
+            }
+            if (allReferencedResourceDocs.length > 0) {
+              const xx = `Consulting: ${allReferencedResourceDocs.map((x) => x.fileName).join(", ")}`;
+              setIncludedResourceDocs((prev) => [
+                ...prev,
+                ...allReferencedResourceDocs.map((x) => x.fileName),
+              ]);
+              setMessages((prev) => [
+                ...prev,
+                { role: "client-side-only", content: xx },
+              ]);
+              return;
+            }
             setMessages((prev) => [
               ...prev,
               { role: "assistant", content: responseMessage },
@@ -81,7 +153,7 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
         );
       }, 10);
     }
-  }, [messages, contextStrings, modelName]);
+  }, [messages, contextItems, includedResourceDocs, modelName]);
 
   const lastMessageIsUser = useMemo(() => {
     return messages[messages.length - 1]?.role === "user";
@@ -233,6 +305,10 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
                 <span style={{ color: "black" }}>
                   <MessageDisplay message={c.content as string} />
                 </span>
+              </>
+            ) : c.role === "client-side-only" ? (
+              <>
+                <span style={{ color: "blue" }}>{c.content}</span>
               </>
             ) : (
               <span>Unknown role: {c.role}</span>
@@ -410,7 +486,7 @@ const sendChatRequest = async (
 ) => {
   const systemLines: string[] = [];
   systemLines.push(
-    "You are a helpful assistant that provides concise answers to technical questions.",
+    "You are a helpful assistant that provides answers to technical questions.",
   );
   systemLines.push("Avoid lengthy explanations unless specifically asked.");
   systemLines.push(
@@ -426,7 +502,7 @@ const sendChatRequest = async (
     "[Overview of Neurosift](https://github.com/flatironinstitute/neurosift)",
   );
   systemLines.push(
-    "[Supported neurodata types](https://github.com/flatironinstitute/neurosift/blob/main/doc/neurodata_types.md)",
+    "[Neurodata types supported in Neurosift](https://github.com/flatironinstitute/neurosift/blob/main/doc/neurodata_types.md)",
   );
   systemLines.push(
     "[Workshop: Exploring and Analyzing NWB Datasets on DANDI with Neurosift and Dendro](https://github.com/flatironinstitute/neurosift/blob/main/doc/neurosift_dendro_MIT_workshop_sep_2024.md)",
@@ -440,7 +516,7 @@ Neurosift is a browser-based tool designed for the visualization of NWB (Neuroda
     role: "system",
     content: systemLines.join("\n") + "\n" + contextString,
   };
-  console.info(systemMessage.content);
+  console.info("CONTEXT:", { system_context: systemMessage.content });
   const messages2 = [systemMessage, ...messages];
 
   const client = new NeurosiftCompletionClient({ verbose: true });
@@ -455,9 +531,14 @@ Neurosift is a browser-based tool designed for the visualization of NWB (Neuroda
   return response;
 };
 
+type ContextItem = {
+  content: string;
+  resourceDocs?: { fileName: string; description: string; content: string }[];
+};
+
 type ContextChatContextValue = {
-  contextStrings: { [key: string]: string };
-  setContextString: (key: string, value: string | undefined) => void;
+  contextItems: { [key: string]: ContextItem };
+  setContextItem: (key: string, value: ContextItem | undefined) => void;
 };
 
 const ContextChatContext = createContext<ContextChatContextValue | null>(null);
@@ -472,25 +553,25 @@ export const useContextChat = () => {
 export const SetupContextChatContext: FunctionComponent<PropsWithChildren> = ({
   children,
 }) => {
-  const [contextStrings, setContextStrings] = useState<{
-    [key: string]: string;
+  const [contextItems, setContextItems] = useState<{
+    [key: string]: ContextItem;
   }>({});
-  const setContextString = useCallback(
-    (key: string, value: string | undefined) => {
-      setContextStrings((prev) => {
-        if (!value) {
+  const setContextItem = useCallback(
+    (key: string, v: ContextItem | undefined) => {
+      setContextItems((prev) => {
+        if (!v) {
           if (!prev[key]) return prev;
           const new_prev = { ...prev };
           delete new_prev[key];
           return new_prev;
         }
-        return { ...prev, [key]: value };
+        return { ...prev, [key]: v };
       });
     },
     [],
   );
   return (
-    <ContextChatContext.Provider value={{ contextStrings, setContextString }}>
+    <ContextChatContext.Provider value={{ contextItems, setContextItem }}>
       {children}
     </ContextChatContext.Provider>
   );

@@ -18,11 +18,10 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
   if (route.page !== "dandiset")
     throw Error("Unexpected route for DandisetPage: " + route.page);
 
-  const { setContextString } = useContextChat();
+  const { setContextItem } = useContextChat();
   useEffect(() => {
-    setContextString(
-      "dandiset-page",
-      `
+    setContextItem("dandiset-page", {
+      content: `
 The user is viewing a particular Dandiset, which contains a list of assets, or NWB files.
 This is Dandiset ${route.dandisetId} version ${route.dandisetVersion}.
 User can expand the folder tree to see the assets in each folder.
@@ -30,11 +29,11 @@ User can click on an asset link to view the contents of that particular NWB file
 If user clicks on the main link, which is the title of the Dandiset, they are taken to that Dandiset's page on the main DANDI Archive site (https://dandiarchive.org).
 There is also a "Similar dandisets" section which shows other Dandisets that are similar to the current one.
 `,
-    );
+    });
     return () => {
-      setContextString("dandiset-page", undefined);
+      setContextItem("dandiset-page", undefined);
     };
-  }, [setContextString, route.dandisetId, route.dandisetVersion]);
+  }, [setContextItem, route.dandisetId, route.dandisetVersion]);
 
   const handleOpenAssets = useCallback(
     (assetUrls: string[], assetPaths: string[]) => {

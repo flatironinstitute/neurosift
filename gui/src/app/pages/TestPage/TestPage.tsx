@@ -14,7 +14,7 @@ type TestPageProps = {
 };
 
 const TestPage: FunctionComponent<TestPageProps> = () => {
-  const { setContextString } = useContextChat();
+  const { setContextItem } = useContextChat();
   useEffect(() => {
     const x = `
 If the user asks questions about pynapple, refer them to the following resources. Refer to as many as are relevant to the user's question.
@@ -56,8 +56,8 @@ Power spectral density
 [tutorial_pynapple_wavelets.py](https://github.com/pynapple-org/pynapple/blob/main/docs/api_guide/tutorial_pynapple_wavelets.py):
 This tutorial covers the use of nap.compute_wavelet_transform to do continuous wavelet transform. By default, pynapple uses Morlet wavelets.
 `;
-    setContextString("test-page", x);
-  }, [setContextString]);
+    setContextItem("test-page", { content: x });
+  }, [setContextItem]);
   return (
     <div style={{ padding: 20 }}>
       <p>

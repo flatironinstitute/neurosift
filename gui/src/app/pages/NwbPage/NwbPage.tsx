@@ -66,7 +66,7 @@ const NwbPage: FunctionComponent<Props> = ({ width, height }) => {
   //     return () => {canceled = true}
   // }, [route.page, route, setRoute])
 
-  const { setContextString } = useContextChat();
+  const { setContextItem } = useContextChat();
 
   if (route.page !== "nwb")
     throw Error("Unexpected route for NwbPage: " + route.page);
@@ -87,11 +87,11 @@ For DENDRO: The user can view the Dendro provenance of the NWB file. Dendro is a
 For ANNOTATIONS: This is an experimental feature that allows the user to view and edit annotations on the NWB file.
 `;
     }
-    setContextString("nwb-page", x);
+    setContextItem("nwb-page", { content: x });
     return () => {
-      setContextString("nwb-page", undefined);
+      setContextItem("nwb-page", undefined);
     };
-  }, [setContextString, route.tab]);
+  }, [setContextItem, route.tab]);
 
   if (route.page === "nwb" && !route.url) {
     // if (route.dandiAssetUrl) {
@@ -379,18 +379,18 @@ const NwbPageChild3: FunctionComponent<NwbPageChild3Props> = ({
   }, [nwbFile, neurodataItems]);
 
   const nwbFileInfoForChat = useNwbFileInfoForChat(nwbFile);
-  const { setContextString } = useContextChat();
+  const { setContextItem } = useContextChat();
   useEffect(() => {
     if (nwbFileInfoForChat) {
-      setContextString(
-        "nwb-file-info",
-        nwbFileInfoForChatToText(nwbFileInfoForChat),
-      );
+      setContextItem("nwb-file-info", {
+        content: nwbFileInfoForChatToText(nwbFileInfoForChat),
+        resourceDocs,
+      });
     }
     return () => {
-      setContextString("nwb-file-info", undefined);
+      setContextItem("nwb-file-info", undefined);
     };
-  }, [nwbFileInfoForChat, setContextString]);
+  }, [nwbFileInfoForChat, setContextItem]);
 
   useEffect(() => {
     if (!nwbFile) return;
@@ -443,11 +443,11 @@ io.close()
 
 Tip: when using Timeseries objects with pynwb it's better to use the x.get_timestamps() method rather than x.timestamps, because sometimes start_time and rate is used instead.
 `;
-    setContextString("nwb-file-pynwb", a);
+    setContextItem("nwb-file-pynwb", { content: a });
     return () => {
-      setContextString("nwb-file-pynwb", undefined);
+      setContextItem("nwb-file-pynwb", undefined);
     };
-  }, [setContextString, nwbFile]);
+  }, [setContextItem, nwbFile]);
 
   if (!nwbFile || !nwbFileContextValue) return <div>Loading {urlList}</div>;
 
@@ -708,12 +708,44 @@ const nwbFileInfoForChatToText = (nwbFileInfo: NwbFileInfoForChat) => {
     );
   }
 
-  return `
+  const ret = `
 Here's a summary of the contents of the NWB file:
 
-${nwbSummaryLines.join("\n")}
+${nwbSummaryLines.join("\n")}\n
 `;
+  return ret;
 };
+
+const resourceDocs = [
+  {
+    fileName: "loading_nwb_objects_using_pynapple.md",
+    description: "Loading NWB objects using Pynapple",
+    content: `
+To load an NWB Units object into Pynapple, do the following:
+\`\`\`python
+import pynapple as nap
+# ... get the pynwb file object 'nwbfile' ...
+nwbp = nap.NWBFile(nwbfile)
+units = nwbp["units"]  # TsGroup
+print(units)
+\`\`\`
+However this is not be a good idea if there are a very large number of spikes.
+
+To load an NWB timeseries object into Pynapple, do the following:
+Suppose the object is at path "/processing/name_of_timeseries"
+and suppose we have already loaded the NWB file into a variable called 'nwbfile'.
+\`\`\`python
+import pynapple as nap
+nwbp = nap.NWBFile(nwbfile)
+ts = nwbp["name_of_timeseries"]
+\`\`\`
+Note that this is referenced by "name_of_timeseries" and not the full path.
+This will be a Ts object if the timeseries is 1D, a TsdFrame object if it is 2D, and a TsdTensor object if it is 3D or more.
+
+Similarly, NWB AnnotationsSeries objects can be loaded as Pynapple Ts objects, and NWB TimeIntervals objects can be loaded as Pynapple IntervalSet objects.
+`,
+  },
+];
 
 // Having trouble with getting chatbot to understand pynapple. This was my attempt but it didn't really work.
 // ~~~
@@ -724,7 +756,7 @@ ${nwbSummaryLines.join("\n")}
 // import pynapple as nap
 
 // # suppose we have loaded the NWB file via pynwb into a variable called 'nwbfile'
-// nwbp = nap.NWBFile()
+// nwbp = nap.NWBFile(nwbfile)
 
 // # Load Units objects as TsGroup
 // # Note that it's under the "units" key no matter where the object is in the NWB file

@@ -506,9 +506,8 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
     }
   }, [mode, sortedSelectedUnitIds, sortedSelectedRoiIndices]);
 
-  const { setContextString } = useContextChat();
+  const { setContextItem } = useContextChat();
   useEffect(() => {
-    console.log("---------------- effect", hidden);
     if (hidden) return;
     let x = "";
     if (mode === "psth") {
@@ -531,12 +530,12 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
     x += `User can optionally sort units by a variable.\n`;
     x += `User can click to set a trials filter, which is an advanced option.\n`;
 
-    setContextString("psth-item-view", x);
+    setContextItem("psth-item-view", { content: x });
     return () => {
-      setContextString("psth-item-view", undefined);
+      setContextItem("psth-item-view", undefined);
     };
   }, [
-    setContextString,
+    setContextItem,
     path,
     unitIds,
     alignToVariables,
@@ -544,6 +543,7 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
     groupByVariable,
     sortUnitsByVariable,
     hidden,
+    mode,
   ]);
 
   return (
