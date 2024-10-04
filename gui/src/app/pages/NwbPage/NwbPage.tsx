@@ -745,6 +745,29 @@ This will be a Ts object if the timeseries is 1D, a TsdFrame object if it is 2D,
 Similarly, NWB AnnotationsSeries objects can be loaded as Pynapple Ts objects, and NWB TimeIntervals objects can be loaded as Pynapple IntervalSet objects.
 `,
   },
+  {
+    fileName: "using_pynapple_to_create_2d_tuning_curves.md",
+    description: "Using Pynapple to create 2D tuning curves",
+    content: `
+Here's an example of how to create 2D tuning curves using Pynapple:
+\`\`\`python
+import pynapple as nap
+# ... get the pynwb file object 'nwbfile' ...
+nwbp = nap.NWBFile(nwbfile)
+units = nwbp["units"]
+position = nwbp["position"]
+tc, binsxy = nap.compute_2d_tuning_curves(units, position, 20)
+
+import matplotlib.pyplot as plt
+plt.figure(figsize=(15, 7))
+for i in tc.keys():
+    plt.subplot(2, 4, i + 1)
+    plt.imshow(tc[i], origin="lower", aspect="auto")
+    plt.title("Unit {}".format(i))
+plt.tight_layout()
+plt.show()
+\`\`\``,
+  },
 ];
 
 // Having trouble with getting chatbot to understand pynapple. This was my attempt but it didn't really work.
