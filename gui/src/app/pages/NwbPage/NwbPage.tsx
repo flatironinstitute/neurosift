@@ -718,7 +718,7 @@ ${nwbSummaryLines.join("\n")}\n
 
 const resourceDocs = [
   {
-    fileName: "loading_nwb_objects_using_pynapple.md",
+    name: "loading_nwb_objects_using_pynapple",
     description: "Loading NWB objects using Pynapple",
     content: `
 To load an NWB Units object into Pynapple, do the following:
@@ -746,7 +746,7 @@ Similarly, NWB AnnotationsSeries objects can be loaded as Pynapple Ts objects, a
 `,
   },
   {
-    fileName: "using_pynapple_to_create_2d_tuning_curves.md",
+    name: "using_pynapple_to_create_2d_tuning_curves",
     description: "Using Pynapple to create 2D tuning curves",
     content: `
 Here's an example of how to create 2D tuning curves using Pynapple:

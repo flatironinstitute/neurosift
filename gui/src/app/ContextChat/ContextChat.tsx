@@ -76,82 +76,109 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
     const lastMessage = messages2[messages2.length - 1];
     if (!lastMessage) return;
     if (lastMessage.role === "user") {
-      let totalContextString = Object.values(contextItems)
-        .map((c) => c.content)
-        .join("\n");
-      const allIncludedResourceDocs: {
-        fileName: string;
-        description: string;
-        content: string;
-      }[] = [];
-      const allExcludedResourceDocs: {
-        fileName: string;
-        description: string;
-        content: string;
-      }[] = [];
-      for (const item of Object.values(contextItems)) {
-        if (item.resourceDocs) {
-          for (const doc of item.resourceDocs) {
-            if (includedResourceDocs.includes(doc.fileName)) {
-              allIncludedResourceDocs.push(doc);
-            } else {
-              allExcludedResourceDocs.push(doc);
+      (async () => {
+        for (let pass = 1; pass <= 2; pass++) {
+          if (pass === 1) {
+            // the selective loading of resources is not working well
+            // so I am disabling it for now
+            // for now we will just load all available resources
+            continue;
+          }
+          let totalContextString = Object.values(contextItems)
+            .map((c) => c.content)
+            .join("\n");
+          const allIncludedResourceDocs: {
+            name: string;
+            description: string;
+            content: string;
+          }[] = [];
+          const allExcludedResourceDocs: {
+            name: string;
+            description: string;
+            content: string;
+          }[] = [];
+          for (const item of Object.values(contextItems)) {
+            if (item.resourceDocs) {
+              for (const doc of item.resourceDocs) {
+                if (includedResourceDocs.includes(doc.name)) {
+                  allIncludedResourceDocs.push(doc);
+                } else {
+                  allExcludedResourceDocs.push(doc);
+                }
+              }
             }
           }
-        }
-      }
-      for (const doc of allIncludedResourceDocs) {
-        if (includedResourceDocs.includes(doc.fileName)) {
-          totalContextString += "\n" + doc.content;
-        }
-      }
-      const newLastMessage: ORMessage = {
-        role: "user",
-        content: lastMessage.content,
-      };
-      if (allExcludedResourceDocs.length > 0) {
-        newLastMessage.content +=
-          "\nIMPORTANT: The following resources are available. If one or more are required to my question, please ask about them specifically instead of responding directly. My follow-up context will then include the relevant resource(s). Do not include them if not directly necessary for your response, and if you do reference them, do not also respond to the prompt.\n";
-        for (const doc of allExcludedResourceDocs) {
-          newLastMessage.content += `${doc.fileName} - ${doc.description}\n`;
-        }
-      }
-      console.info("USER: ", newLastMessage.content);
-      messages2[messages2.length - 1] = newLastMessage;
-      setTimeout(() => {
-        // timeout to get the UI to update from the state change
-        sendChatRequest(messages2, totalContextString, modelName).then(
-          (responseMessage) => {
-            console.info("ASSISTANT: ", responseMessage);
+          // for (const doc of allIncludedResourceDocs) { // see note above
+          for (const doc of [
+            ...allIncludedResourceDocs,
+            ...allExcludedResourceDocs,
+          ]) {
+            // see note above
+            totalContextString += "\n" + doc.content;
+          }
+          if (pass === 1 && allExcludedResourceDocs.length > 0) {
+            let newLastMessageContent =
+              'The following resources are available. List by name those that are relevant to be able to response to the below prompt. Or if none of them are relevant, you should response with "none are relevant". I will then follow up with any relevant resources in my next message.\n';
+            for (const doc of allExcludedResourceDocs) {
+              newLastMessageContent += `${doc.name} - ${doc.description}\n`;
+            }
+            newLastMessageContent += "\n\nHere is the user's prompt:\n";
+            newLastMessageContent += lastMessage.content;
+            newLastMessageContent += "\n";
+            newLastMessageContent +=
+              'Now, as I said, please list by name the resources that are relevant to be able to respond to the that prompt. Or if none are relevant, you should respond with "none are relevant". Do not respond to the prompt at this time.';
+            const newLastMessage: ORMessage = {
+              role: "user",
+              content: newLastMessageContent,
+            };
+            console.info("USER: ", newLastMessage.content);
+            const messages3 = [...messages2.slice(0, -1), newLastMessage];
+            const responseMessage1 = await sendChatRequest(
+              messages3,
+              totalContextString,
+              modelName,
+            );
+            console.info("ASSISTANT: ", responseMessage1);
             const allReferencedResourceDocs: {
-              fileName: string;
+              name: string;
               description: string;
               content: string;
             }[] = [];
             for (const doc of allExcludedResourceDocs) {
-              if (responseMessage.includes(doc.fileName)) {
+              if (responseMessage1.includes(doc.name)) {
                 allReferencedResourceDocs.push(doc);
               }
             }
             if (allReferencedResourceDocs.length > 0) {
-              const xx = `Consulting: ${allReferencedResourceDocs.map((x) => x.fileName).join(", ")}`;
+              const xx = `Loading ${allReferencedResourceDocs.map((x) => x.name).join(", ")}`;
               setIncludedResourceDocs((prev) => [
                 ...prev,
-                ...allReferencedResourceDocs.map((x) => x.fileName),
+                ...allReferencedResourceDocs.map((x) => x.name),
               ]);
               setMessages((prev) => [
                 ...prev,
                 { role: "client-side-only", content: xx },
               ]);
-              return;
+              // timeout to get the UI to update from the state change
+              await new Promise((resolve) => setTimeout(resolve, 10));
             }
+          } else if (pass === 2) {
+            console.info("");
+            console.info("CONTEXT: ", totalContextString);
+            const responseMessage2 = await sendChatRequest(
+              messages2,
+              totalContextString,
+              modelName,
+            );
+            console.info("ASSISTANT: ", responseMessage2);
+
             setMessages((prev) => [
               ...prev,
-              { role: "assistant", content: responseMessage },
+              { role: "assistant", content: responseMessage2 },
             ]);
-          },
-        );
-      }, 10);
+          }
+        }
+      })();
     }
   }, [messages, contextItems, includedResourceDocs, modelName]);
 
@@ -490,9 +517,11 @@ const sendChatRequest = async (
   );
   systemLines.push("Avoid lengthy explanations unless specifically asked.");
   systemLines.push(
+    // This is required as is in order for the message to be accepted
     "The user is chatting with you in a chat window of software called Neurosift",
   );
   systemLines.push(
+    // This is required as is in order for the message to be accepted
     "You should stick to answering questions related to the software and its usage as well as the data being analyzed and visualized.",
   );
   systemLines.push(
@@ -516,7 +545,6 @@ Neurosift is a browser-based tool designed for the visualization of NWB (Neuroda
     role: "system",
     content: systemLines.join("\n") + "\n" + contextString,
   };
-  console.info("CONTEXT:", { system_context: systemMessage.content });
   const messages2 = [systemMessage, ...messages];
 
   const client = new NeurosiftCompletionClient({ verbose: true });
@@ -533,7 +561,7 @@ Neurosift is a browser-based tool designed for the visualization of NWB (Neuroda
 
 type ContextItem = {
   content: string;
-  resourceDocs?: { fileName: string; description: string; content: string }[];
+  resourceDocs?: { name: string; description: string; content: string }[];
 };
 
 type ContextChatContextValue = {
