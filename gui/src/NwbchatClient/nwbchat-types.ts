@@ -319,6 +319,8 @@ export type NeurosiftCompletionRequest = {
   messagesJsonLength: number;
   messagesJson: string;
   modelName: string;
+  toolsJson?: string;
+  toolChoice?: string;
 };
 
 export const isNeurosiftCompletionRequest = (
@@ -333,13 +335,20 @@ export const isNeurosiftCompletionRequest = (
     typeof x.challengeResponse === "string" &&
     typeof x.messagesJsonLength === "number" &&
     typeof x.messagesJson === "string" &&
-    typeof x.modelName === "string"
+    typeof x.modelName === "string" &&
+    (x.toolsJson === undefined || typeof x.toolsJson === "string") &&
+    (x.toolChoice === undefined || typeof x.toolChoice === "string")
   );
 };
 
 export type NeurosiftCompletionResponse = {
   type: "neurosiftCompletionResponse";
   response: string;
+  toolCalls?: {
+    id: string;
+    type: "function";
+    function: { name: string; arguments: string };
+  }[];
 };
 
 export const isNeurosiftCompletionResponse = (
@@ -349,7 +358,18 @@ export const isNeurosiftCompletionResponse = (
     x &&
     typeof x === "object" &&
     x.type === "neurosiftCompletionResponse" &&
-    typeof x.response === "string"
+    typeof x.response === "string" &&
+    (x.toolCalls === undefined ||
+      (Array.isArray(x.toolCalls) &&
+        x.toolCalls.every(
+          (y: any) =>
+            typeof y === "object" &&
+            typeof y.id === "string" &&
+            typeof y.type === "string" &&
+            typeof y.function === "object" &&
+            typeof y.function.name === "string" &&
+            typeof y.function.arguments === "string",
+        )))
   );
 };
 

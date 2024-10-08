@@ -82,6 +82,12 @@ export type ORMessage =
       content: string;
       tool_call_id: string;
       name?: string;
+    }
+  | {
+      // this one is not included in the openrouter documentation, but it seems it should be there: https://openrouter.ai/docs/requests
+      role: "assistant";
+      content: null;
+      tool_calls: ORToolCall[];
     };
 
 export type ORFunctionDescription = {

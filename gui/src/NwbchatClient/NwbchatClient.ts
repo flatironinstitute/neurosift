@@ -1,3 +1,4 @@
+import { ORMessage, ORTool } from "app/ContextChat/openRouterTypes";
 import {
   InitiateChatQueryRequest,
   ChatQueryRequest,
@@ -189,10 +190,7 @@ export class EmbeddingClient {
 
 export class NeurosiftCompletionClient {
   constructor(private o: { verbose?: boolean } = {}) {}
-  async completion(
-    messages: { role: string; content: string }[],
-    modelName: string,
-  ) {
+  async completion(messages: ORMessage[], modelName: string, tools?: ORTool[]) {
     const messagesJson = JSON.stringify(messages);
     const req: InitiateNeurosiftCompletionRequest = {
       type: "initiateNeurosiftCompletionRequest",
@@ -223,12 +221,14 @@ export class NeurosiftCompletionClient {
       messagesJson,
       challengeResponse,
       modelName,
+      toolsJson: tools ? JSON.stringify(tools) : undefined,
+      toolChoice: tools ? "auto" : undefined,
     };
     const resp2 = await postApiRequest("neurosiftCompletion", req2);
     if (!isNeurosiftCompletionResponse(resp2)) {
       throw new Error("Invalid response");
     }
-    const { response } = resp2;
-    return { response };
+    const { response, toolCalls } = resp2;
+    return { response, toolCalls };
   }
 }

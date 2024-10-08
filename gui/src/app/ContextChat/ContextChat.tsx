@@ -1,5 +1,5 @@
 import { SmallIconButton } from "@fi-sci/misc";
-import { Cancel, Close, Help } from "@mui/icons-material";
+import { Cancel, Close, Help, Send } from "@mui/icons-material";
 import Markdown from "app/Markdown/Markdown";
 import useRoute from "app/useRoute";
 import { NeurosiftCompletionClient } from "NwbchatClient/NwbchatClient";
@@ -15,7 +15,7 @@ import {
   useState,
 } from "react";
 import { FaWindowMaximize, FaWindowRestore } from "react-icons/fa";
-import { ORMessage } from "./openRouterTypes";
+import { ORMessage, ORTool } from "./openRouterTypes";
 
 type Position =
   | "top-left"
@@ -43,7 +43,7 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
   const settingsBarHeight = 20;
   const topBarHeight = 20;
 
-  const { route } = useRoute();
+  const { route, setRoute } = useRoute();
 
   const [messages, setMessages] = useState<
     (ORMessage | { role: "client-side-only"; content: string })[]
@@ -64,10 +64,58 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
     [setMessages],
   );
 
-  const { contextItems } = useContextChat();
+  const { contextItems, setContextItem } = useContextChat();
   const [includedResourceDocs, setIncludedResourceDocs] = useState<string[]>(
     [],
   );
+
+  useEffect(() => {
+    const x = ``;
+    const dandisets_list_func = async (args: {
+      search_term: string;
+      page: number;
+      page_size: number;
+    }) => {
+      const { search_term, page, page_size } = args;
+      const url = `https://api.dandiarchive.org/api/dandisets/?search=${search_term || ""}&page=${page || 1}&page_size=${page_size || 10}`;
+      const response = await fetch(url);
+      const json = await response.json();
+      return JSON.stringify(json);
+    };
+    const dandisets_list_tool: ORTool = {
+      type: "function",
+      function: {
+        description: "Get a list of Dandisets",
+        name: "dandisets_list",
+        parameters: {
+          type: "object",
+          properties: {
+            search_term: {
+              type: "string",
+              description: "Search term for lexical search",
+            },
+            page: {
+              type: "integer",
+              description:
+                "A page number within the paginated result set, 1-indexed",
+            },
+            page_size: {
+              type: "integer",
+              description:
+                "The number of results to return per page (you should limit this to 20 or less)",
+            },
+          },
+        },
+      },
+    };
+    const tools: { tool: ORTool; func: (args: any) => Promise<any> }[] = [
+      { tool: dandisets_list_tool, func: dandisets_list_func },
+    ];
+    setContextItem("main", { content: x, tools });
+    return () => {
+      setContextItem("main", undefined);
+    };
+  }, [setContextItem]);
 
   useEffect(() => {
     const messages2: ORMessage[] = [
@@ -75,108 +123,100 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
     ]; // important to make a copy
     const lastMessage = messages2[messages2.length - 1];
     if (!lastMessage) return;
-    if (lastMessage.role === "user") {
+    if (lastMessage.role === "user" || lastMessage.role === "tool") {
       (async () => {
-        for (let pass = 1; pass <= 2; pass++) {
-          if (pass === 1) {
-            // the selective loading of resources is not working well
-            // so I am disabling it for now
-            // for now we will just load all available resources
-            continue;
-          }
-          let totalContextString = Object.values(contextItems)
-            .map((c) => c.content)
-            .join("\n");
-          const allIncludedResourceDocs: {
-            name: string;
-            description: string;
-            content: string;
-          }[] = [];
-          const allExcludedResourceDocs: {
-            name: string;
-            description: string;
-            content: string;
-          }[] = [];
-          for (const item of Object.values(contextItems)) {
-            if (item.resourceDocs) {
-              for (const doc of item.resourceDocs) {
-                if (includedResourceDocs.includes(doc.name)) {
-                  allIncludedResourceDocs.push(doc);
-                } else {
-                  allExcludedResourceDocs.push(doc);
-                }
+        let totalContextString = Object.values(contextItems)
+          .map((c) => c.content)
+          .join("\n");
+        const allIncludedResourceDocs: {
+          name: string;
+          description: string;
+          content: string;
+        }[] = [];
+        const allExcludedResourceDocs: {
+          name: string;
+          description: string;
+          content: string;
+        }[] = [];
+        const allTools: {
+          tool: ORTool;
+          func: (args: { [paramName: string]: any }) => Promise<any>;
+        }[] = [];
+        console.log("--- ci", contextItems);
+        for (const item of Object.values(contextItems)) {
+          if (item.resourceDocs) {
+            for (const doc of item.resourceDocs) {
+              if (includedResourceDocs.includes(doc.name)) {
+                allIncludedResourceDocs.push(doc);
+              } else {
+                allExcludedResourceDocs.push(doc);
               }
             }
           }
-          // for (const doc of allIncludedResourceDocs) { // see note above
-          for (const doc of [
-            ...allIncludedResourceDocs,
-            ...allExcludedResourceDocs,
-          ]) {
-            // see note above
-            totalContextString += "\n" + doc.content;
+          if (item.tools) {
+            allTools.push(...item.tools);
           }
-          if (pass === 1 && allExcludedResourceDocs.length > 0) {
-            let newLastMessageContent =
-              'The following resources are available. List by name those that are relevant to be able to response to the below prompt. Or if none of them are relevant, you should response with "none are relevant". I will then follow up with any relevant resources in my next message.\n';
-            for (const doc of allExcludedResourceDocs) {
-              newLastMessageContent += `${doc.name} - ${doc.description}\n`;
-            }
-            newLastMessageContent += "\n\nHere is the user's prompt:\n";
-            newLastMessageContent += lastMessage.content;
-            newLastMessageContent += "\n";
-            newLastMessageContent +=
-              'Now, as I said, please list by name the resources that are relevant to be able to respond to the that prompt. Or if none are relevant, you should respond with "none are relevant". Do not respond to the prompt at this time.';
-            const newLastMessage: ORMessage = {
-              role: "user",
-              content: newLastMessageContent,
-            };
-            console.info("USER: ", newLastMessage.content);
-            const messages3 = [...messages2.slice(0, -1), newLastMessage];
-            const responseMessage1 = await sendChatRequest(
-              messages3,
-              totalContextString,
-              modelName,
-            );
-            console.info("ASSISTANT: ", responseMessage1);
-            const allReferencedResourceDocs: {
-              name: string;
-              description: string;
-              content: string;
-            }[] = [];
-            for (const doc of allExcludedResourceDocs) {
-              if (responseMessage1.includes(doc.name)) {
-                allReferencedResourceDocs.push(doc);
-              }
-            }
-            if (allReferencedResourceDocs.length > 0) {
-              const xx = `Loading ${allReferencedResourceDocs.map((x) => x.name).join(", ")}`;
-              setIncludedResourceDocs((prev) => [
-                ...prev,
-                ...allReferencedResourceDocs.map((x) => x.name),
-              ]);
-              setMessages((prev) => [
-                ...prev,
-                { role: "client-side-only", content: xx },
-              ]);
-              // timeout to get the UI to update from the state change
-              await new Promise((resolve) => setTimeout(resolve, 10));
-            }
-          } else if (pass === 2) {
-            console.info("");
-            console.info("CONTEXT: ", totalContextString);
-            const responseMessage2 = await sendChatRequest(
-              messages2,
-              totalContextString,
-              modelName,
-            );
-            console.info("ASSISTANT: ", responseMessage2);
+        }
 
-            setMessages((prev) => [
-              ...prev,
-              { role: "assistant", content: responseMessage2 },
-            ]);
+        // for now we just include all the resource docs
+        // maybe will figure out a way to include only the ones that are relevant
+        // for (const doc of allIncludedResourceDocs) {
+        for (const doc of [
+          ...allIncludedResourceDocs,
+          ...allExcludedResourceDocs,
+        ]) {
+          // see note above
+          totalContextString += "\n" + doc.content;
+        }
+
+        console.info("");
+        console.info("CONTEXT: ", totalContextString);
+        const { response: responseMessage2, toolCalls } = await sendChatRequest(
+          messages2,
+          totalContextString,
+          modelName,
+          allTools.map((x) => x.tool),
+        );
+        if (toolCalls) {
+          if (responseMessage2) {
+            console.warn(
+              "Both responseMessage2 and toolCalls are present. Ignoring responseMessage2.",
+            );
           }
+          const newMessages: ORMessage[] = [];
+          newMessages.push({
+            role: "assistant",
+            content: null,
+            tool_calls: toolCalls,
+          });
+          for (const toolCall of toolCalls) {
+            const tool = allTools.find(
+              (x) => x.tool.function.name === toolCall.function.name,
+            );
+            if (!tool) {
+              console.warn(
+                `Tool not found for tool call: ${toolCall.function.name}`,
+              );
+              continue;
+            }
+            const args = JSON.parse(toolCall.function.arguments);
+            const func = tool.func;
+            console.info("TOOL CALL: ", tool.tool.function.name, args);
+            const response = await func(args);
+            console.info("TOOL RESPONSE: ", response);
+            newMessages.push({
+              role: "tool",
+              content: JSON.stringify(response),
+              tool_call_id: toolCall.id,
+            });
+          }
+          setMessages((prev) => [...prev, ...newMessages]);
+        } else {
+          console.info("ASSISTANT: ", responseMessage2);
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: responseMessage2 },
+          ]);
         }
       })();
     }
@@ -215,6 +255,25 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
       return "You can ask me questions about Neurosift.";
     }
   }, [route.page]);
+
+  const handleSpecialLinkClick = useCallback(
+    (link: string) => {
+      if (link.startsWith("?")) {
+        const parts = link.slice(1).split("&");
+        const params: { [key: string]: string } = {};
+        for (const part of parts) {
+          const vv = part.split("=");
+          if (vv.length === 2) {
+            params[vv[0]] = vv[1];
+          }
+        }
+        if (params.page === "dandi") {
+          setRoute({ page: "dandi" });
+        }
+      }
+    },
+    [setRoute],
+  );
 
   return (
     <div style={{ position: "absolute", width, height }}>
@@ -313,35 +372,49 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
         <span style={{ color: "black" }}>
           <Markdown source={initialMessage} />
         </span>
-        {messages.map((c, index) => (
-          <div
-            key={index}
-            ref={index === messages.length - 1 ? lastMessageRef : null}
-            style={{
-              color: colorForString(c.role),
-            }}
-          >
-            <hr />
-            {c.role === "assistant" ? (
-              <>
-                <Markdown source={c.content as string} />
-              </>
-            ) : c.role === "user" ? (
-              <>
-                <span>you: </span>
-                <span style={{ color: "black" }}>
-                  <MessageDisplay message={c.content as string} />
-                </span>
-              </>
-            ) : c.role === "client-side-only" ? (
-              <>
-                <span style={{ color: "blue" }}>{c.content}</span>
-              </>
-            ) : (
-              <span>Unknown role: {c.role}</span>
-            )}
-          </div>
-        ))}
+        {messages
+          .filter((m) => m.role !== "tool")
+          .map((c, index) => (
+            <div
+              key={index}
+              ref={index === messages.length - 1 ? lastMessageRef : null}
+              style={{
+                color: colorForString(c.role),
+              }}
+            >
+              <hr />
+              {c.role === "assistant" && c.content !== null ? (
+                <>
+                  <Markdown
+                    source={c.content as string}
+                    onSpecialLinkClick={handleSpecialLinkClick}
+                  />
+                </>
+              ) : c.role === "assistant" &&
+                c.content === null &&
+                c.tool_calls ? (
+                <>
+                  <span>
+                    Running{" "}
+                    {c.tool_calls.map((x) => x.function.name).join(", ")}
+                  </span>
+                </>
+              ) : c.role === "user" ? (
+                <>
+                  <span>you: </span>
+                  <span style={{ color: "black" }}>
+                    <MessageDisplay message={c.content as string} />
+                  </span>
+                </>
+              ) : c.role === "client-side-only" ? (
+                <>
+                  <span style={{ color: "blue" }}>{c.content}</span>
+                </>
+              ) : (
+                <span>Unknown role: {c.role}</span>
+              )}
+            </div>
+          ))}
       </div>
       <div
         style={{
@@ -396,30 +469,47 @@ const InputBar: FunctionComponent<InputBarProps> = ({
   disabled,
   waitingForResponse,
 }) => {
+  const [messageText, setMessageText] = useState("");
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
-        const messageString = e.currentTarget.value.trim();
-        if (messageString.length > 1000) {
+      if (e.key === "Enter" || e.key === "NumpadEnter" || e.key === "Return") {
+        // not sure about this
+        if (messageText.length > 1000) {
           alert("Message is too long");
           return;
         }
-        onMessage(messageString);
-        e.currentTarget.value = "";
+        onMessage(messageText);
+        setMessageText("");
       }
     },
-    [onMessage],
+    [messageText, onMessage],
   );
   return (
     <div style={{ position: "absolute", width, height }}>
       <input
-        style={{ width: width - 8, height: height - 7 }}
+        value={messageText}
+        onChange={(e) => setMessageText(e.target.value)}
+        style={{ width: width - 8 - 20, height: height - 7 }}
         onKeyDown={handleKeyDown}
         placeholder={
           waitingForResponse ? "Waiting for response..." : "Type a message..."
         }
         disabled={disabled}
       />
+      <span style={{ position: "relative", top: "-5px" }}>
+        <SmallIconButton
+          icon={<Send />}
+          title="Submit"
+          onClick={() => {
+            if (messageText.length > 1000) {
+              alert("Message is too long");
+              return;
+            }
+            onMessage(messageText);
+            setMessageText("");
+          }}
+        />
+      </span>
     </div>
   );
 };
@@ -510,6 +600,7 @@ const sendChatRequest = async (
   messages: ORMessage[],
   contextString: string,
   modelName: string,
+  tools?: ORTool[],
 ) => {
   const systemLines: string[] = [];
   systemLines.push(
@@ -525,7 +616,7 @@ const sendChatRequest = async (
     "You should stick to answering questions related to the software and its usage as well as the data being analyzed and visualized.",
   );
   systemLines.push(
-    "In your answer you can reference the following external resourcs as relevant. Reference them as markdown links.",
+    "In your responses you can reference the following external resourcs as relevant. Reference them as markdown links.",
   );
   systemLines.push(
     "[Overview of Neurosift](https://github.com/flatironinstitute/neurosift)",
@@ -541,6 +632,11 @@ const sendChatRequest = async (
 Neurosift is a browser-based tool designed for the visualization of NWB (Neurodata Without Borders) files, whether stored locally or hosted remotely, and enables interactive exploration of the DANDI Archive.
 `);
 
+  systemLines.push(`
+In your responses you can also reference the following special links which will trigger special functionality in the UI:
+[Show recent Dandisets](?page=dandi)
+`);
+
   const systemMessage: ORMessage = {
     role: "system",
     content: systemLines.join("\n") + "\n" + contextString,
@@ -548,20 +644,22 @@ Neurosift is a browser-based tool designed for the visualization of NWB (Neuroda
   const messages2 = [systemMessage, ...messages];
 
   const client = new NeurosiftCompletionClient({ verbose: true });
-  const { response } = await client.completion(
-    messages2.map((x) => ({
-      role: x.role as string,
-      content: x.content as string,
-    })),
+  const { response, toolCalls } = await client.completion(
+    messages2,
     modelName,
+    tools,
   );
 
-  return response;
+  return { response, toolCalls };
 };
 
 type ContextItem = {
   content: string;
   resourceDocs?: { name: string; description: string; content: string }[];
+  tools?: {
+    tool: ORTool;
+    func: (args: { [paramName: string]: any }) => Promise<any>;
+  }[];
 };
 
 type ContextChatContextValue = {

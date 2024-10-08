@@ -12,14 +12,15 @@ import rehypeMathJaxSvg from "rehype-mathjax";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import remarkMathPlugin from "remark-math";
-import { SmallIconButton } from "@fi-sci/misc";
+import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import { CopyAll } from "@mui/icons-material";
 
 type Props = {
   source: string;
+  onSpecialLinkClick?: (link: string) => void;
 };
 
-const Markdown: FunctionComponent<Props> = ({ source }) => {
+const Markdown: FunctionComponent<Props> = ({ source, onSpecialLinkClick }) => {
   const components: Partial<
     Omit<NormalComponents, keyof SpecialComponents> & SpecialComponents
   > = useMemo(
@@ -79,14 +80,26 @@ const Markdown: FunctionComponent<Props> = ({ source }) => {
       // 		return <div className={className} {...props}>{children}</div>
       // 	}
       // },
-      // a: ({node, children, href, ...props}) => {
-      // 	if ((href) && (href.startsWith('#'))) {
-      // 		return <MarkdownLink href={href}>{children}</MarkdownLink>
-      // 	}
-      // 	else {
-      // 		return <a href={href} {...props}>{children}</a>
-      // 	}
-
+      a: ({ node, children, href, ...props }) => {
+        console.log("- href: ", href);
+        if (href && href.startsWith("?") && onSpecialLinkClick) {
+          return (
+            <Hyperlink
+              onClick={() => {
+                onSpecialLinkClick(href);
+              }}
+            >
+              {children}
+            </Hyperlink>
+          );
+        } else {
+          return (
+            <a href={href} {...props}>
+              {children}
+            </a>
+          );
+        }
+      },
       // }
     }),
     [],
