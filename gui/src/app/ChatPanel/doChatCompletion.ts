@@ -284,7 +284,7 @@ The user is viewing Dandiset ${route.dandisetId} version ${route.dandisetVersion
 
 If the user asks about this dandiset you should first get information about it using the tool "dandiset_info". However, don't call that tool more than once in the conversation.
 
-If the user asks about the NWB assets in this dandiset you should use the tool "nwb_files_for_dandiset".
+If you need to know about the NWB assets in this dandiset you should use the tool "nwb_files_for_dandiset".
 `;
   } else {
     return `
