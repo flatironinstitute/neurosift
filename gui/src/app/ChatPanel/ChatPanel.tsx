@@ -276,7 +276,7 @@ const ChatPanel: FunctionComponent<ChatPanelProps> = ({
   );
 
   return (
-    <div style={{ position: "absolute", width, height }}>
+    <div style={{ position: "relative", width, height }}>
       <div
         style={{
           position: "absolute",

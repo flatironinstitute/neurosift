@@ -245,6 +245,8 @@ const getToolsForRoute = (route: Route): ORTool[] => {
     return [toolDandisetsList];
   } else if (route.page === "dandiset") {
     return [toolDandisetInfo, toolNwbFilesForDandiset, toolNwbFileInfo];
+  } else if (route.page === "nwb") {
+    return [toolDandisetInfo, toolNwbFileInfo];
   } else {
     return [];
   }
@@ -338,6 +340,22 @@ If you need to know about the NWB assets in this dandiset you should use the too
 
 If you need to know about the neurodata types in this dandiset then you should sample one or more of the NWB files by using the tool "nwb_file_info". This requires that you know the URL of the NWB file, and that comes from the "nwb_files_for_dandiset" tool.
 `;
+  } else if (route.page === "nwb") {
+    return `
+${introText}
+
+${aboutDandiText}
+
+This user is viewing an NWB file.
+
+${route.dandisetId ? `The NWB file is part of Dandiset ${route.dandisetId}.` : ""}
+
+The URL for this NWB file is ${route.url}.
+
+If the user asks about this NWB file you should use the tool "nwb_file_info".
+
+${route.dandisetId ? `You can also get information of this file in the context of its Dandiset by using the tool "dandiset_info".` : ""}
+`;
   } else {
     return `
 ${introText}
@@ -355,6 +373,11 @@ export const getSuggestedQuestionsForRoute = (route: Route): string[] => {
       "Provide an overview of this Dandiset",
       "Summarize the NWB files in this Dandiset",
       "What are the Neurodata types in this Dandiset?",
+    ];
+  } else if (route.page === "nwb") {
+    return [
+      "What is the likely purpose of this experiment?",
+      "What data do we have here?",
     ];
   } else {
     return [];

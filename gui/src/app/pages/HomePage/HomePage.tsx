@@ -20,7 +20,7 @@ const HomePage: FunctionComponent<Props> = ({ width, height }) => {
       </p>
       <p>
         <a
-          href="https://magland.github.io/neurosift/"
+          href="https://magland.github.io/neurosift-blog/"
           target="_blank"
           rel="noreferrer"
         >

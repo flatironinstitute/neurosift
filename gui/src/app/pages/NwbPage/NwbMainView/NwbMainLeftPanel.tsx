@@ -19,6 +19,9 @@ import SelectedNeurodataItemsWidget from "./SelectedNeurodataItemsWidget";
 import DendroView from "../DendroView/DendroView";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import LoadInPynwbWindow from "./LoadInPynwbWindow";
+import TabWidget from "app/TabWidget/TabWidget";
+import ChatPanel, { Chat, emptyChat } from "app/ChatPanel/ChatPanel";
+import { Chat as ChatIcon, Folder, ListAlt } from "@mui/icons-material";
 
 type Props = {
   width: number;
@@ -54,11 +57,43 @@ export const leftPanelLabelMap: {
   { name: "file_create_date", newName: "File creation" },
 ];
 
+const tabs = [
+  { id: "main", label: <ListAlt />, closeable: false },
+  { id: "chat", label: <ChatIcon />, closeable: false },
+];
+
 const NwbMainLeftPanel: FunctionComponent<Props> = ({
   width,
   height,
   nwbFile,
   usingLindi,
+}) => {
+  const [currentTabId, setCurrentTabId] = useState<string>("main");
+  const [chat, setChat] = useState<Chat>(emptyChat);
+  return (
+    <TabWidget
+      tabs={tabs}
+      width={width}
+      height={height}
+      currentTabId={currentTabId}
+      setCurrentTabId={setCurrentTabId}
+    >
+      <MainContent
+        width={0}
+        height={0}
+        nwbFile={nwbFile}
+        usingLindi={usingLindi}
+      />
+      <ChatPanel width={0} height={0} chat={chat} setChat={setChat} />
+    </TabWidget>
+  );
+};
+
+const MainContent: FunctionComponent<Props> = ({
+  width,
+  height,
+  usingLindi,
+  nwbFile,
 }) => {
   const rootGroup = useGroup(nwbFile, "/");
   const generalGroup = useGroup(nwbFile, "/general");

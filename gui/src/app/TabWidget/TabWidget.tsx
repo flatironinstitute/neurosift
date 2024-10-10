@@ -11,7 +11,7 @@ import TabWidgetTabBar from "./TabWidgetTabBar";
 type Props = {
   tabs: {
     id: string;
-    label: string;
+    label: any;
     title?: string;
     closeable: boolean;
     icon?: any;
@@ -96,29 +96,39 @@ const TabWidget: FunctionComponent<PropsWithChildren<Props>> = ({
           onCloseTab={onCloseTab}
         />
       </div>
-      {children2.map((c, i) => {
-        const visible = i === currentTabIndex;
-        return (
-          <div
-            key={`child-${i}`}
-            style={{
-              display: visible ? undefined : "none",
-              overflowY: "hidden",
-              overflowX: "hidden",
-              position: "absolute",
-              left: 0,
-              top: tabBarHeight,
-              width: W,
-              height: H,
-              background: "white",
-            }}
-          >
-            {(visible || hasBeenVisible.includes(i)) && (
-              <c.type {...c.props} width={W} height={H - tabBarHeight} />
-            )}
-          </div>
-        );
-      })}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: tabBarHeight,
+          width: W,
+          height: H - tabBarHeight,
+        }}
+      >
+        {children2.map((c, i) => {
+          const visible = i === currentTabIndex;
+          return (
+            <div
+              key={`child-${i}`}
+              style={{
+                display: visible ? undefined : "none",
+                overflowY: "hidden",
+                overflowX: "hidden",
+                position: "absolute",
+                left: 0,
+                top: 0,
+                width: W,
+                height: H - tabBarHeight,
+                background: "white",
+              }}
+            >
+              {(visible || hasBeenVisible.includes(i)) && (
+                <c.type {...c.props} width={W} height={H - tabBarHeight} />
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
