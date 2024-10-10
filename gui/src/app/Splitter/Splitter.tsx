@@ -19,6 +19,7 @@ interface Props {
   adjustable?: boolean;
   direction?: "horizontal" | "vertical";
   hideSecondChild?: boolean;
+  hideFirstChild?: boolean;
 }
 
 const defaultGripThickness = 10;
@@ -39,6 +40,7 @@ const Splitter: FunctionComponent<PropsWithChildren<Props>> = (props) => {
     positionFromRight = false,
     direction = "horizontal",
     hideSecondChild,
+    hideFirstChild,
   } = props;
 
   const size1 = direction === "horizontal" ? width : height;
@@ -90,6 +92,8 @@ const Splitter: FunctionComponent<PropsWithChildren<Props>> = (props) => {
     : gripPosition;
   if (hideSecondChild) {
     gripPositionFromLeft = size1;
+  } else if (hideFirstChild) {
+    gripPositionFromLeft = 0;
   }
 
   const gripThickness = adjustable
@@ -185,7 +189,7 @@ const Splitter: FunctionComponent<PropsWithChildren<Props>> = (props) => {
           height={direction === "horizontal" ? height : size1A}
         />
       </div>
-      {adjustable && !hideSecondChild && (
+      {adjustable && !hideSecondChild && !hideFirstChild && (
         <Draggable1
           // nodeRef={draggableNodeRef} // this was actually causing an error with Draggable
           key="drag"

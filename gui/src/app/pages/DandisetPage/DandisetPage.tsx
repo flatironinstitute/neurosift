@@ -17,11 +17,13 @@ import Splitter from "app/Splitter/Splitter";
 type DandisetPageProps = {
   width: number;
   height: number;
+  showChat?: boolean;
 };
 
 const DandisetPage: FunctionComponent<DandisetPageProps> = ({
   width,
   height,
+  showChat,
 }) => {
   const { route, setRoute } = useRoute();
   if (route.page !== "dandiset")
@@ -82,6 +84,7 @@ There is also a "Similar dandisets" section which shows other Dandisets that are
           width={width}
           height={height}
           initialPosition={initialSideChatWidth}
+          hideFirstChild={!showChat}
         >
           <ChatPanel width={0} height={0} chat={chat} setChat={setChat} />
           <DandisetView

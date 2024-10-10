@@ -8,9 +8,14 @@ import ChatPanel, { Chat, emptyChat } from "app/ChatPanel/ChatPanel";
 type DandiPageProps = {
   width: number;
   height: number;
+  showChat?: boolean;
 };
 
-const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
+const DandiPage: FunctionComponent<DandiPageProps> = ({
+  width,
+  height,
+  showChat,
+}) => {
   const { setContextItem } = useContextChat();
   const { route } = useRoute();
   if (route.page !== "dandi")
@@ -45,6 +50,7 @@ This type of view can also be seen at https://dandiarchive.org.
       width={width}
       height={height}
       initialPosition={initialSideChatWidth}
+      hideFirstChild={!showChat}
     >
       <ChatPanel width={0} height={0} chat={chat} setChat={setChat} />
       <DandiBrowser width={0} height={0} />;

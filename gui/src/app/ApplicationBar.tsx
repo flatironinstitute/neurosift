@@ -26,7 +26,7 @@ const logoUrl = window.location.hostname.includes("github.io")
   : `/neurosift-logo.png`;
 
 const ApplicationBar: FunctionComponent<Props> = ({ onContextChat }) => {
-  const { setRoute } = useRoute();
+  const { route, setRoute } = useRoute();
 
   const onHome = useCallback(() => {
     setRoute({ page: "home" });
@@ -86,14 +86,20 @@ const ApplicationBar: FunctionComponent<Props> = ({ onContextChat }) => {
               title={`About Neurosift`}
             />
           </span>
-          &nbsp;&nbsp;&nbsp;&nbsp;
-          <span style={{ color: "white" }}>
-            <SmallIconButton
-              icon={<Chat />}
-              onClick={onContextChat}
-              title={`Open the workshop chat window`}
-            />
-          </span>
+          {(route.page === "nwb" ||
+            route.page === "dandi" ||
+            route.page === "dandiset") && (
+            <>
+              &nbsp;&nbsp;&nbsp;&nbsp;
+              <span style={{ color: "white" }}>
+                <SmallIconButton
+                  icon={<Chat />}
+                  onClick={onContextChat}
+                  title={`Open the workshop chat window`}
+                />
+              </span>
+            </>
+          )}
           &nbsp;&nbsp;&nbsp;&nbsp;
           <span style={{ color: "white" }}>
             <SmallIconButton

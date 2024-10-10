@@ -49,6 +49,7 @@ const MainWindow: FunctionComponent<Props> = () => {
   } = useModalWindow();
   const [contextChatPosition, setContextChatPosition] =
     useState<Position>("bottom-left");
+  const [showDandiPageChat, setShowDandiPageChat] = useState(false);
   return (
     <div
       className="MainWindow"
@@ -65,8 +66,12 @@ const MainWindow: FunctionComponent<Props> = () => {
       >
         <ApplicationBar
           onContextChat={() => {
-            if (contextChatVisible) closeContextChat();
-            else openContextChat();
+            if (route.page === "dandi") setShowDandiPageChat(true);
+            else if (route.page === "dandiset") setShowDandiPageChat(true);
+            else if (route.page === "nwb") {
+              if (contextChatVisible) closeContextChat();
+              else openContextChat();
+            }
           }}
         />
       </div>
@@ -97,9 +102,9 @@ const MainWindow: FunctionComponent<Props> = () => {
         route.page === "avi" ? (
           <AviPage width={width} height={H} />
         ) : route.page === "dandiset" ? (
-          <DandisetPage width={width} height={H} />
+          <DandisetPage width={width} height={H} showChat={showDandiPageChat} />
         ) : route.page === "dandi" ? (
-          <DandiPage width={width} height={H} />
+          <DandiPage width={width} height={H} showChat={showDandiPageChat} />
         ) : route.page === "dandi-query" ? (
           <DandiQueryPage width={width} height={H} />
         ) : route.page === "annotations" ? (

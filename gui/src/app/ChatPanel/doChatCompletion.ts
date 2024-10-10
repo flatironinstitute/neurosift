@@ -347,7 +347,7 @@ ${aboutDandiText}
 
 export const getSuggestedQuestionsForRoute = (route: Route): string[] => {
   if (route.page === "dandi") {
-    return ["What is the DANDI Archive?", "What is Neurosift?"];
+    return ["What is Neurosift?", "What is the DANDI Archive?"];
   } else if (route.page === "dandiset") {
     return [
       "Provide an overview of this Dandiset",
@@ -361,7 +361,7 @@ export const getSuggestedQuestionsForRoute = (route: Route): string[] => {
 
 export const getChatTitleForRoute = (route: Route): string => {
   if (route.page === "dandi") {
-    return "Ask about DANDI and Neurosift";
+    return "Ask about Neurosift and DANDI";
   } else if (route.page === "dandi-query") {
     return `Ask about querying DANDI`;
   } else if (route.page === "dandiset") {

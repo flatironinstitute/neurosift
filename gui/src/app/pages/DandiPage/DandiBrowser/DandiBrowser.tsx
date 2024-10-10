@@ -1,5 +1,5 @@
 import { Hyperlink, SmallIconButton, VBoxLayout } from "@fi-sci/misc";
-import { Search } from "@mui/icons-material";
+import { Chat, Search } from "@mui/icons-material";
 import { FunctionComponent, useCallback, useEffect, useState } from "react";
 import SearchResults, { applicationBarColorDarkened } from "./SearchResults";
 import { DandisetSearchResultItem, DandisetsResponse } from "./types";
