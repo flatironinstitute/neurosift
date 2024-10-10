@@ -24,6 +24,11 @@ export const useNwbFile = () => {
   return a.nwbFile;
 };
 
+export const useNwbFileSafe = () => {
+  const a = useContext(NwbFileContext);
+  return a.nwbFile;
+};
+
 export const useNeurodataItems = () => {
   const a = useContext(NwbFileContext);
   if (!a.nwbFile) throw Error("No NwbFileContext");

@@ -13,16 +13,18 @@ import { tryGetLindiUrl } from "app/pages/NwbPage/NwbPage";
 import { Route } from "app/useRoute";
 import { NeurosiftCompletionClient } from "NwbchatClient/NwbchatClient";
 
-const doChatComplation = async (a: {
+const doChatCompletion = async (a: {
   messages: ORMessage[];
   route: Route;
   modelName: string;
+  nwbFileUrl?: string;
+  urlType?: string;
 }) => {
-  const { messages, route, modelName } = a;
+  const { messages, route, modelName, nwbFileUrl, urlType } = a;
   const client = new NeurosiftCompletionClient({ verbose: true });
   const initialSystemMessage: ORMessage = {
     role: "system",
-    content: getInitialSystemMessageForRoute(route),
+    content: getInitialSystemMessageForRoute(route, { nwbFileUrl, urlType }),
   };
   const tools = getToolsForRoute(route);
   for (const t of allTools) {
@@ -211,6 +213,22 @@ const toolNwbFileInfoFunc = async (args: {
   return JSON.stringify(info);
 };
 
+const toolGetPynappleDocs: ORTool = {
+  type: "function",
+  function: {
+    description: "Get Pynapple documentation",
+    name: "get_pynapple_docs",
+    parameters: {
+      type: "object",
+      properties: {},
+    },
+  },
+};
+
+const toolGetPynappleDocsFunc = async () => {
+  return pynappleDocs;
+};
+
 export const allTools: {
   tool: ORTool;
   func: (args: any) => Promise<any>;
@@ -231,6 +249,10 @@ export const allTools: {
     tool: toolNwbFileInfo,
     func: toolNwbFileInfoFunc,
   },
+  {
+    tool: toolGetPynappleDocs,
+    func: toolGetPynappleDocsFunc,
+  },
 ];
 
 export const allToolFunctions: {
@@ -246,7 +268,7 @@ const getToolsForRoute = (route: Route): ORTool[] => {
   } else if (route.page === "dandiset") {
     return [toolDandisetInfo, toolNwbFilesForDandiset, toolNwbFileInfo];
   } else if (route.page === "nwb") {
-    return [toolDandisetInfo, toolNwbFileInfo];
+    return [toolDandisetInfo, toolNwbFileInfo, toolGetPynappleDocs];
   } else {
     return [];
   }
@@ -293,7 +315,62 @@ When you mention the DANDI Archive, you should use the following link:
 You can also mention the [DANDI data portal](https://dandiarchive.org) which is where you can browse Dandisets.
 `;
 
-const getInitialSystemMessageForRoute = (route: Route): string => {
+const loadInPynwbInstructions = (nwbFileUrl: string, urlType: string) => `
+Here are instructions for loading this NWB file into pynwb:
+
+# Prerequisites:
+pip install --upgrade lindi pynwb
+
+\`\`\`python
+import pynwb
+import lindi
+
+url = '${nwbFileUrl}'
+
+# Load the remote NWB file
+${urlType === "lindi" ? "f = lindi.LindiH5pyFile.from_lindi_file(url)" : "f = lindi.LindiH5pyFile.from_hdf5_file(url)"}
+io = pynwb.NWBHDF5IO(file=f, mode='r')
+nwbfile = io.read()
+
+# Access the data
+print(nwbfile)
+
+# Close the file
+io.close()
+\`\`\`
+
+Tip: when using Timeseries objects with pynwb it's better to use the x.get_timestamps() method rather than x.timestamps, because sometimes start_time and rate is used instead.
+`;
+
+const pynappleDocs = `
+To load an NWB Units object into Pynapple, do the following:
+\`\`\`python
+import pynapple as nap
+# ... get the pynwb file object 'nwbfile' ...
+nwbp = nap.NWBFile(nwbfile)
+units = nwbp["units"]  # TsGroup
+print(units)
+\`\`\`
+However this is not be a good idea if there are a very large number of spikes.
+
+To load an NWB timeseries object into Pynapple, do the following:
+Suppose the object is at path "/processing/name_of_timeseries"
+and suppose we have already loaded the NWB file into a variable called 'nwbfile'.
+\`\`\`python
+import pynapple as nap
+nwbp = nap.NWBFile(nwbfile)
+ts = nwbp["name_of_timeseries"]
+\`\`\`
+Note that this is referenced by "name_of_timeseries" and not the full path.
+This will be a Ts object if the timeseries is 1D, a TsdFrame object if it is 2D, and a TsdTensor object if it is 3D or more.
+
+Similarly, NWB AnnotationsSeries objects can be loaded as Pynapple Ts objects, and NWB TimeIntervals objects can be loaded as Pynapple IntervalSet objects.
+`;
+
+const getInitialSystemMessageForRoute = (
+  route: Route,
+  o: { nwbFileUrl?: string; urlType?: string },
+): string => {
   if (route.page === "dandi") {
     return `
 ${introText}
@@ -355,6 +432,14 @@ The URL for this NWB file is ${route.url}.
 If the user asks about this NWB file you should use the tool "nwb_file_info".
 
 ${route.dandisetId ? `You can also get information of this file in the context of its Dandiset by using the tool "dandiset_info".` : ""}
+
+${o.nwbFileUrl ? loadInPynwbInstructions(o.nwbFileUrl || "", o.urlType || "") : ""}
+
+Whenever possible, provide complete Python scripts that the user can copy and paste into their own Python environment. This will usually involve loading the NWB file using the above instructions and then accessing the data of interest.
+
+If you want to load objects into Pynapple, you should load the Pynapple docs using the tool "get_pynapple_docs".
+
+When creating a script, it's best if you have already examined the structure of the NWB using the "nwb_file_info" tool.
 `;
   } else {
     return `
@@ -378,6 +463,7 @@ export const getSuggestedQuestionsForRoute = (route: Route): string[] => {
     return [
       "What is the likely purpose of this experiment?",
       "What data do we have here?",
+      "Provide a Python script for loading these data.",
     ];
   } else {
     return [];
@@ -398,4 +484,4 @@ export const getChatTitleForRoute = (route: Route): string => {
   }
 };
 
-export default doChatComplation;
+export default doChatCompletion;

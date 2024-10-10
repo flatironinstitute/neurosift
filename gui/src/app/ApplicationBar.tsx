@@ -86,9 +86,7 @@ const ApplicationBar: FunctionComponent<Props> = ({ onContextChat }) => {
               title={`About Neurosift`}
             />
           </span>
-          {(route.page === "nwb" ||
-            route.page === "dandi" ||
-            route.page === "dandiset") && (
+          {(route.page === "dandi" || route.page === "dandiset") && (
             <>
               &nbsp;&nbsp;&nbsp;&nbsp;
               <span style={{ color: "white" }}>

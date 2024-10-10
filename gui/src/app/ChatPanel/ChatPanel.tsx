@@ -17,6 +17,13 @@ import doChatCompletion, {
   getSuggestedQuestionsForRoute,
 } from "./doChatCompletion";
 import useRoute, { Route } from "app/useRoute";
+import { useNwbFile, useNwbFileSafe } from "app/pages/NwbPage/NwbFileContext";
+import {
+  MergedRemoteH5File,
+  RemoteH5File,
+  RemoteH5FileLindi,
+  RemoteH5FileX,
+} from "@remote-h5-file/index";
 
 export type Chat = {
   messages: (ORMessage | { role: "client-side-only"; content: string })[];
@@ -76,6 +83,7 @@ const ChatPanel: FunctionComponent<ChatPanelProps> = ({
   setChat,
 }) => {
   const { route, setRoute } = useRoute();
+  const nwbFile = useNwbFileSafe();
   const inputBarHeight = 30;
   const settingsBarHeight = 20;
   const topBarHeight = 24;
@@ -132,10 +140,13 @@ const ChatPanel: FunctionComponent<ChatPanelProps> = ({
     if (!lastMessage) return;
     if (lastMessage.role === "user" || lastMessage.role === "tool") {
       (async () => {
+        const { nwbFileUrl, urlType } = getNwbFileUrlAndType(nwbFile);
         const { assistantMessage, toolCalls } = await doChatCompletion({
           messages: messages2,
           modelName,
           route,
+          nwbFileUrl,
+          urlType,
         });
         if (canceled) return;
         if (!toolCalls) {
@@ -214,7 +225,7 @@ const ChatPanel: FunctionComponent<ChatPanelProps> = ({
     return () => {
       canceled = true;
     };
-  }, [messages, modelName, route, setChat]);
+  }, [messages, modelName, route, setChat, nwbFile]);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -542,6 +553,36 @@ const MessageDisplay: FunctionComponent<MessageDisplayProps> = ({
       ))}
     </>
   );
+};
+
+const getNwbFileUrlAndType = (nwbFile: RemoteH5FileX | null) => {
+  if (!nwbFile) {
+    return { nwbFileUrl: undefined, urlType: undefined };
+  }
+  let nwbFileUrl: string;
+  let urlType: "hdf5" | "lindi";
+  if (nwbFile instanceof MergedRemoteH5File) {
+    const f = nwbFile.getFiles()[0];
+    if (f instanceof RemoteH5FileLindi) {
+      nwbFileUrl = f.url;
+      urlType = "lindi";
+    } else if (f instanceof RemoteH5File) {
+      nwbFileUrl = f.url;
+      urlType = "hdf5";
+    } else {
+      nwbFileUrl = "unknown";
+      urlType = "hdf5";
+    }
+  } else {
+    if (nwbFile instanceof RemoteH5FileLindi) {
+      nwbFileUrl = nwbFile.url;
+      urlType = "lindi";
+    } else {
+      nwbFileUrl = nwbFile.url;
+      urlType = "hdf5";
+    }
+  }
+  return { nwbFileUrl, urlType };
 };
 
 export default ChatPanel;
