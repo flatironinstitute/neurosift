@@ -359,25 +359,38 @@ export const useDandisetVersionInfo = (
         dandisetResponse || {};
       const V = most_recent_published_version || draft_version;
       const dsVersion = dandisetVersion || (V ? V.version : "draft");
-      const stagingStr = useStaging ? "-staging" : "";
-      const url = `https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}/versions/${dsVersion}/info/`;
-      const authorizationHeader = getAuthorizationHeaderForUrl(url);
-      const headers = authorizationHeader
-        ? { Authorization: authorizationHeader }
-        : undefined;
-      const response = await fetch(url, { headers });
+      const dvi = await fetchDandisetVersionInfo(
+        dandisetId || "",
+        dsVersion,
+        useStaging,
+      );
       if (canceled) return;
-      if (response.status === 200) {
-        const json = await response.json();
-        const dandisetVersionInfo = json as DandisetVersionInfo;
-        setDandisetVersionInfo(dandisetVersionInfo);
-      }
+      if (dvi) setDandisetVersionInfo(dvi);
     })();
     return () => {
       canceled = true;
     };
   }, [dandisetId, dandisetResponse, dandisetVersion, useStaging]);
   return dandisetVersionInfo;
+};
+
+export const fetchDandisetVersionInfo = async (
+  dandisetId: string,
+  dandisetVersion: string,
+  useStaging: boolean | undefined,
+) => {
+  const stagingStr = useStaging ? "-staging" : "";
+  const url = `https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}/versions/${dandisetVersion || "draft"}/info/`;
+  const authorizationHeader = getAuthorizationHeaderForUrl(url);
+  const headers = authorizationHeader
+    ? { Authorization: authorizationHeader }
+    : undefined;
+  const response = await fetch(url, { headers });
+  if (response.status === 200) {
+    const json = await response.json();
+    return json as DandisetVersionInfo;
+  }
+  return null;
 };
 
 export const useQueryAssets = (

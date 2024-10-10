@@ -9,10 +9,30 @@ import Splitter from "app/Splitter/Splitter";
 import TabWidget from "app/TabWidget/TabWidget";
 import SearchByNeurodataTypeWindow from "./SearchByNeurodataTypeWindow";
 import SearchByAbstractWindow from "./SearchByAbstractWindow";
+import { getInitialSideChatWidth } from "../DandiPage/DandiPage";
+import ChatPanel, { Chat, emptyChat } from "app/ChatPanel/ChatPanel";
 
 type DandiQueryPageProps = {
   width: number;
   height: number;
+};
+
+const DandiQueryPage: FunctionComponent<DandiQueryPageProps> = ({
+  width,
+  height,
+}) => {
+  const initialSideChatWidth = getInitialSideChatWidth(width);
+  const [chat, setChat] = useState<Chat>(emptyChat);
+  return (
+    <Splitter
+      width={width}
+      height={height}
+      initialPosition={initialSideChatWidth}
+    >
+      <ChatPanel width={0} height={0} chat={chat} setChat={setChat} />
+      <DandiQueryPageContent width={0} height={0} />;
+    </Splitter>
+  );
 };
 
 const tabs = [
@@ -28,7 +48,7 @@ const tabs = [
   },
 ];
 
-const DandiQueryPage: FunctionComponent<DandiQueryPageProps> = ({
+const DandiQueryPageContent: FunctionComponent<DandiQueryPageProps> = ({
   width,
   height,
 }) => {

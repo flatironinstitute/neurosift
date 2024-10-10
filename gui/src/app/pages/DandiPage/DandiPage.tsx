@@ -1,7 +1,9 @@
-import { FunctionComponent, useEffect } from "react";
+import { FunctionComponent, useEffect, useState } from "react";
 import DandiBrowser from "./DandiBrowser/DandiBrowser";
 import { useContextChat } from "app/ContextChat/ContextChat";
 import useRoute from "app/useRoute";
+import Splitter from "app/Splitter/Splitter";
+import ChatPanel, { Chat, emptyChat } from "app/ChatPanel/ChatPanel";
 
 type DandiPageProps = {
   width: number;
@@ -36,7 +38,24 @@ This type of view can also be seen at https://dandiarchive.org.
       setContextItem("dandi-page", undefined);
     };
   }, [setContextItem, route.staging]);
-  return <DandiBrowser width={width} height={height} />;
+  const initialSideChatWidth = getInitialSideChatWidth(width);
+  const [chat, setChat] = useState<Chat>(emptyChat);
+  return (
+    <Splitter
+      width={width}
+      height={height}
+      initialPosition={initialSideChatWidth}
+    >
+      <ChatPanel width={0} height={0} chat={chat} setChat={setChat} />
+      <DandiBrowser width={0} height={0} />;
+    </Splitter>
+  );
+};
+
+export const getInitialSideChatWidth = (width: number) => {
+  if (width > 600) return Math.min(300, width / 3);
+  if (width > 400) return Math.min(150, width / 2);
+  return 0;
 };
 
 export default DandiPage;

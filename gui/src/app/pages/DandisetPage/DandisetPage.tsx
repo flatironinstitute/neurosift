@@ -1,9 +1,18 @@
 import { useContextChat } from "app/ContextChat/ContextChat";
-import { FunctionComponent, useCallback, useEffect, useMemo } from "react";
+import {
+  FunctionComponent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import useRoute from "../../useRoute";
 import { DandiAssetContext } from "../NwbPage/DandiAssetContext";
 import { SetupContextAnnotationsProvider } from "../NwbPage/NeurosiftAnnotations/useContextAnnotations";
 import DandisetView from "./DandisetViewFromDendro/DandisetView";
+import { getInitialSideChatWidth } from "../DandiPage/DandiPage";
+import ChatPanel, { Chat, emptyChat } from "app/ChatPanel/ChatPanel";
+import Splitter from "app/Splitter/Splitter";
 
 type DandisetPageProps = {
   width: number;
@@ -64,20 +73,39 @@ There is also a "Similar dandisets" section which shows other Dandisets that are
     }),
     [route.dandisetId, route.dandisetVersion],
   );
+  const initialSideChatWidth = getInitialSideChatWidth(width);
+  const [chat, setChat] = useState<Chat>(emptyChat);
   return (
-    <DandiAssetContext.Provider value={dandiAssetContextValue}>
-      <SetupContextAnnotationsProvider>
-        <DandisetView
-          width={width}
-          height={height}
-          dandisetId={route.dandisetId}
-          dandisetVersion={route.dandisetVersion}
-          useStaging={!!route.staging}
-          onOpenAssets={handleOpenAssets}
-        />
-      </SetupContextAnnotationsProvider>
-    </DandiAssetContext.Provider>
+    <DandisetView
+      width={width}
+      height={height}
+      dandisetId={route.dandisetId}
+      dandisetVersion={route.dandisetVersion}
+      useStaging={!!route.staging}
+      onOpenAssets={handleOpenAssets}
+    />
   );
+  // return (
+  //   <DandiAssetContext.Provider value={dandiAssetContextValue}>
+  //     <SetupContextAnnotationsProvider>
+  //       <Splitter
+  //         width={width}
+  //         height={height}
+  //         initialPosition={initialSideChatWidth}
+  //       >
+  //         <ChatPanel width={0} height={0} chat={chat} setChat={setChat} />
+  //         <DandisetView
+  //           width={0}
+  //           height={0}
+  //           dandisetId={route.dandisetId}
+  //           dandisetVersion={route.dandisetVersion}
+  //           useStaging={!!route.staging}
+  //           onOpenAssets={handleOpenAssets}
+  //         />
+  //       </Splitter>
+  //     </SetupContextAnnotationsProvider>
+  //   </DandiAssetContext.Provider>
+  // );
 };
 
 // type DandisetInfoTableProps = {
