@@ -73,7 +73,7 @@ export type NwbFileInfoForChat = {
   }[];
 };
 
-const getNwbFileInfoForChat = async (
+export const getNwbFileInfoForChat = async (
   nwbFile: RemoteH5FileX,
 ): Promise<NwbFileInfoForChat> => {
   const rootGroup = await nwbFile.getGroup("/");

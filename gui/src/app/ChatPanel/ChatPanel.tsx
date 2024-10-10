@@ -45,6 +45,10 @@ type PendingMessagesAction =
     }
   | {
       type: "clear";
+    }
+  | {
+      type: "replace-last";
+      message: ORMessage | { role: "client-side-only"; content: string };
     };
 
 const pendingMesagesReducer = (
@@ -55,6 +59,11 @@ const pendingMesagesReducer = (
     return [...state, action.message];
   } else if (action.type === "clear") {
     return [];
+  } else if (action.type === "replace-last") {
+    if (state.length === 0) {
+      return state;
+    }
+    return [...state.slice(0, state.length - 1), action.message];
   } else {
     return state;
   }
@@ -165,7 +174,7 @@ const ChatPanel: FunctionComponent<ChatPanelProps> = ({
             }
             const msg0: { role: "client-side-only"; content: string } = {
               role: "client-side-only",
-              content: tc.function.name,
+              content: "calling " + tc.function.name + "...",
             };
             newMessages.push(msg0);
             pendingMessagesDispatch({
@@ -176,6 +185,11 @@ const ChatPanel: FunctionComponent<ChatPanelProps> = ({
             console.info("TOOL CALL: ", tc.function.name, args);
             const response = await func(args);
             if (canceled) return;
+            msg0.content = "called " + tc.function.name;
+            pendingMessagesDispatch({
+              type: "replace-last",
+              message: msg0,
+            });
             console.info("TOOL RESPONSE: ", response);
             const msg1: ORMessage = {
               role: "tool",
@@ -339,7 +353,7 @@ const ChatPanel: FunctionComponent<ChatPanelProps> = ({
                 </>
               ) : c.role === "client-side-only" ? (
                 <>
-                  <span style={{ color: "#6a6" }}>[ calling {c.content} ]</span>
+                  <span style={{ color: "#6a6" }}>{c.content}</span>
                 </>
               ) : (
                 <span>Unknown role: {c.role}</span>

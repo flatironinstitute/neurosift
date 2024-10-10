@@ -692,7 +692,7 @@ const determineCORSIssueLikely = (url: string) => {
   return true;
 };
 
-const nwbFileInfoForChatToText = (nwbFileInfo: NwbFileInfoForChat) => {
+export const nwbFileInfoForChatToText = (nwbFileInfo: NwbFileInfoForChat) => {
   const nwbSummaryLines: string[] = [];
   for (const x of nwbFileInfo.metaFields) {
     nwbSummaryLines.push(`${x.name}: ${x.value}`);

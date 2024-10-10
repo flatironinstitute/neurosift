@@ -1,10 +1,17 @@
+import {
+  RemoteH5File,
+  RemoteH5FileLindi,
+  RemoteH5FileX,
+} from "@remote-h5-file/index";
 import { ORMessage, ORTool } from "app/ContextChat/openRouterTypes";
-import { NeurosiftCompletionClient } from "NwbchatClient/NwbchatClient";
-import { Route } from "app/useRoute";
 import {
   fetchDandisetVersionInfo,
   fetchNwbFilesForDandiset,
 } from "app/pages/DandisetPage/DandisetViewFromDendro/DandisetView";
+import getNwbFileInfoForChat from "app/pages/NwbPage/getNwbFileInfoForChat";
+import { tryGetLindiUrl } from "app/pages/NwbPage/NwbPage";
+import { Route } from "app/useRoute";
+import { NeurosiftCompletionClient } from "NwbchatClient/NwbchatClient";
 
 const doChatComplation = async (a: {
   messages: ORMessage[];
@@ -166,6 +173,44 @@ const toolNwbFilesForDandisetFunc = async (args: {
   );
 };
 
+const toolNwbFileInfo: ORTool = {
+  type: "function",
+  function: {
+    description:
+      "Get information about an NWB file. It's important to supply both the URL and the Dandiset ID.",
+    name: "nwb_file_info",
+    parameters: {
+      type: "object",
+      properties: {
+        url: {
+          type: "string",
+          description:
+            "The URL of the NWB file obtained from nwb_files_for_dandiset tool",
+        },
+        dandiset_id: {
+          type: "string",
+          description: "The Dandiset ID (required for Lindi URLs)",
+        },
+      },
+    },
+  },
+};
+
+const toolNwbFileInfoFunc = async (args: {
+  url: string;
+  dandiset_id: string;
+}) => {
+  const urlLindi = await tryGetLindiUrl(args.url, args.dandiset_id);
+  let nwbFile: RemoteH5FileX;
+  if (urlLindi) {
+    nwbFile = await RemoteH5FileLindi.create(urlLindi);
+  } else {
+    nwbFile = new RemoteH5File(args.url, {});
+  }
+  const info = await getNwbFileInfoForChat(nwbFile);
+  return JSON.stringify(info);
+};
+
 export const allTools: {
   tool: ORTool;
   func: (args: any) => Promise<any>;
@@ -182,6 +227,10 @@ export const allTools: {
     tool: toolNwbFilesForDandiset,
     func: toolNwbFilesForDandisetFunc,
   },
+  {
+    tool: toolNwbFileInfo,
+    func: toolNwbFileInfoFunc,
+  },
 ];
 
 export const allToolFunctions: {
@@ -195,9 +244,8 @@ const getToolsForRoute = (route: Route): ORTool[] => {
   if (route.page === "dandi" || route.page === "dandi-query") {
     return [toolDandisetsList];
   } else if (route.page === "dandiset") {
-    return [toolDandisetInfo, toolNwbFilesForDandiset];
-  }
-  {
+    return [toolDandisetInfo, toolNwbFilesForDandiset, toolNwbFileInfo];
+  } else {
     return [];
   }
 };
@@ -285,6 +333,8 @@ The user is viewing Dandiset ${route.dandisetId} version ${route.dandisetVersion
 If the user asks about this dandiset you should first get information about it using the tool "dandiset_info". However, don't call that tool more than once in the conversation.
 
 If you need to know about the NWB assets in this dandiset you should use the tool "nwb_files_for_dandiset".
+
+If you need to know about the neurodata types in this dandiset then you should sample one or more of the NWB files by using the tool "nwb_file_info". This requires that you know the URL of the NWB file, and that comes from the "nwb_files_for_dandiset" tool.
 `;
   } else {
     return `
@@ -300,8 +350,9 @@ export const getSuggestedQuestionsForRoute = (route: Route): string[] => {
     return ["What is the DANDI Archive?", "What is Neurosift?"];
   } else if (route.page === "dandiset") {
     return [
-      `Provide an overview of this Dandiset`,
-      `Summarize the NWB files in this Dandiset`,
+      "Provide an overview of this Dandiset",
+      "Summarize the NWB files in this Dandiset",
+      "What are the Neurodata types in this Dandiset?",
     ];
   } else {
     return [];
