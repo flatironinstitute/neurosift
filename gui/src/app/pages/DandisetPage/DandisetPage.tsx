@@ -76,36 +76,26 @@ There is also a "Similar dandisets" section which shows other Dandisets that are
   const initialSideChatWidth = getInitialSideChatWidth(width);
   const [chat, setChat] = useState<Chat>(emptyChat);
   return (
-    <DandisetView
-      width={width}
-      height={height}
-      dandisetId={route.dandisetId}
-      dandisetVersion={route.dandisetVersion}
-      useStaging={!!route.staging}
-      onOpenAssets={handleOpenAssets}
-    />
+    <DandiAssetContext.Provider value={dandiAssetContextValue}>
+      <SetupContextAnnotationsProvider>
+        <Splitter
+          width={width}
+          height={height}
+          initialPosition={initialSideChatWidth}
+        >
+          <ChatPanel width={0} height={0} chat={chat} setChat={setChat} />
+          <DandisetView
+            width={0}
+            height={0}
+            dandisetId={route.dandisetId}
+            dandisetVersion={route.dandisetVersion}
+            useStaging={!!route.staging}
+            onOpenAssets={handleOpenAssets}
+          />
+        </Splitter>
+      </SetupContextAnnotationsProvider>
+    </DandiAssetContext.Provider>
   );
-  // return (
-  //   <DandiAssetContext.Provider value={dandiAssetContextValue}>
-  //     <SetupContextAnnotationsProvider>
-  //       <Splitter
-  //         width={width}
-  //         height={height}
-  //         initialPosition={initialSideChatWidth}
-  //       >
-  //         <ChatPanel width={0} height={0} chat={chat} setChat={setChat} />
-  //         <DandisetView
-  //           width={0}
-  //           height={0}
-  //           dandisetId={route.dandisetId}
-  //           dandisetVersion={route.dandisetVersion}
-  //           useStaging={!!route.staging}
-  //           onOpenAssets={handleOpenAssets}
-  //         />
-  //       </Splitter>
-  //     </SetupContextAnnotationsProvider>
-  //   </DandiAssetContext.Provider>
-  // );
 };
 
 // type DandisetInfoTableProps = {

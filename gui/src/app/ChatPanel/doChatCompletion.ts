@@ -1,7 +1,10 @@
 import { ORMessage, ORTool } from "app/ContextChat/openRouterTypes";
 import { NeurosiftCompletionClient } from "NwbchatClient/NwbchatClient";
 import { Route } from "app/useRoute";
-import { fetchDandisetVersionInfo } from "app/pages/DandisetPage/DandisetViewFromDendro/DandisetView";
+import {
+  fetchDandisetVersionInfo,
+  fetchNwbFilesForDandiset,
+} from "app/pages/DandisetPage/DandisetViewFromDendro/DandisetView";
 
 const doChatComplation = async (a: {
   messages: ORMessage[];
@@ -108,6 +111,61 @@ const toolDandisetInfoFunc = async (args: {
   return JSON.stringify(dandisetVersionInfo);
 };
 
+const toolNwbFilesForDandiset: ORTool = {
+  type: "function",
+  function: {
+    description:
+      "Get a list of NWB files for a Dandiset. Returns the path, URL, size, created date, and modified date for each file.",
+    name: "nwb_files_for_dandiset",
+    parameters: {
+      type: "object",
+      properties: {
+        dandiset_id: {
+          type: "string",
+          description: "The Dandiset ID",
+        },
+        dandiset_version: {
+          type: "string",
+          description:
+            "The Dandiset version (defaults to draft if empty string)",
+        },
+        staging: {
+          type: "boolean",
+          description: "Whether to use the staging server",
+        },
+        max_num_assets: {
+          type: "integer",
+          description:
+            "The maximum number of assets to return. Defaults to 100.",
+        },
+      },
+    },
+  },
+};
+
+const toolNwbFilesForDandisetFunc = async (args: {
+  dandiset_id: string;
+  dandiset_version?: string;
+  staging?: boolean;
+  max_num_assets?: number;
+}) => {
+  const x = await fetchNwbFilesForDandiset({
+    dandisetId: args.dandiset_id,
+    dandisetVersion: args.dandiset_version || "draft",
+    useStaging: args.staging || false,
+    maxNumAssets: args.max_num_assets || 100,
+  });
+  return JSON.stringify(
+    x.map((y) => ({
+      path: y.path,
+      url: `https://${args.staging ? "api-staging" : "api"}.dandiarchive.org/api/assets/${y.asset_id}/download/`,
+      size: y.size,
+      created: y.created,
+      modified: y.modified,
+    })),
+  );
+};
+
 export const allTools: {
   tool: ORTool;
   func: (args: any) => Promise<any>;
@@ -119,6 +177,10 @@ export const allTools: {
   {
     tool: toolDandisetInfo,
     func: toolDandisetInfoFunc,
+  },
+  {
+    tool: toolNwbFilesForDandiset,
+    func: toolNwbFilesForDandisetFunc,
   },
 ];
 
@@ -133,8 +195,9 @@ const getToolsForRoute = (route: Route): ORTool[] => {
   if (route.page === "dandi" || route.page === "dandi-query") {
     return [toolDandisetsList];
   } else if (route.page === "dandiset") {
-    return [toolDandisetInfo];
-  } else {
+    return [toolDandisetInfo, toolNwbFilesForDandiset];
+  }
+  {
     return [];
   }
 };
@@ -220,6 +283,8 @@ ${aboutDandiText}
 The user is viewing Dandiset ${route.dandisetId} version ${route.dandisetVersion || "draft"}.
 
 If the user asks about this dandiset you should first get information about it using the tool "dandiset_info". However, don't call that tool more than once in the conversation.
+
+If the user asks about the NWB assets in this dandiset you should use the tool "nwb_files_for_dandiset".
 `;
   } else {
     return `
@@ -234,7 +299,10 @@ export const getSuggestedQuestionsForRoute = (route: Route): string[] => {
   if (route.page === "dandi") {
     return ["What is the DANDI Archive?", "What is Neurosift?"];
   } else if (route.page === "dandiset") {
-    return [`Provide an overview of Dandiset ${route.dandisetId}`];
+    return [
+      `Provide an overview of this Dandiset`,
+      `Summarize the NWB files in this Dandiset`,
+    ];
   } else {
     return [];
   }

@@ -455,6 +455,40 @@ export const useQueryAssets = (
   return { incomplete, assetsResponses };
 };
 
+export const fetchNwbFilesForDandiset = async (a: {
+  dandisetId: string;
+  dandisetVersion: string;
+  useStaging: boolean;
+  maxNumAssets: number;
+}) => {
+  const stagingStr = a.useStaging ? "-staging" : "";
+  let uu: string | null =
+    `https://api${stagingStr}.dandiarchive.org/api/dandisets/${a.dandisetId}/versions/${a.dandisetVersion || "draft"}/assets/?page_size=${a.maxNumAssets}&glob=*.nwb*`;
+  const authorizationHeader = uu ? getAuthorizationHeaderForUrl(uu) : "";
+  const headers = authorizationHeader
+    ? { Authorization: authorizationHeader }
+    : undefined;
+  let count = 0;
+  let rr: AssetsResponse[] = [];
+  while (uu) {
+    if (count >= a.maxNumAssets) {
+      break;
+    }
+    const rrr: any = await fetch(uu, { headers });
+    if (rrr.status === 200) {
+      const json = await rrr.json();
+      rr = [...rr, json]; // important to make a copy of rr
+      uu = json.next;
+    } else uu = null;
+    count += 1;
+  }
+  const allResponseItems: AssetsResponseItem[] = [];
+  rr.forEach((r) => {
+    allResponseItems.push(...r.results);
+  });
+  return allResponseItems;
+};
+
 export const assetUrlForPath = (
   path: string,
   allAssets: AssetsResponseItem[],
