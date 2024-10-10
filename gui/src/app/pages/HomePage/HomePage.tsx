@@ -20,27 +20,16 @@ const HomePage: FunctionComponent<Props> = ({ width, height }) => {
       </p>
       <p>
         <a
-          href="https://github.com/flatironinstitute/neurosift/blob/main/doc/neurosift_dendro_MIT_workshop_sep_2024.md"
+          href="https://magland.github.io/neurosift/"
           target="_blank"
           rel="noreferrer"
         >
-          MIT Workshop: Exploring and Analyzing NWB Datasets on DANDI with
-          Neurosift and Dendro
-        </a>
-      </p>
-      <p>
-        <a
-          href="https://github.com/flatironinstitute/neurosift/blob/main/doc/lindi_INCF_assembly_sep_2024.md"
-          target="_blank"
-          rel="noreferrer"
-        >
-          INCF Workshop: Leveraging LINDI for efficient and non-redundant NWB
-          access on DANDI
+          Neurosift Blog
         </a>
       </p>
       <p>
         <Hyperlink href="https://github.com/flatironinstitute/neurosift">
-          Read more
+          Neurosift GitHub repository
         </Hyperlink>
       </p>
       <p>
@@ -60,11 +49,11 @@ const HomePage: FunctionComponent<Props> = ({ width, height }) => {
         </Hyperlink>
       </div>
       <hr />
-      <p>
+      {/* <p>
         <Hyperlink href="https://github.com/flatironinstitute/neurosift/blob/main/changelog.md">
           CHANGELOG
         </Hyperlink>
-      </p>
+      </p> */}
       <p>
         <Hyperlink href="https://github.com/flatironinstitute/neurosift/issues">
           Request a feature or report a bug
