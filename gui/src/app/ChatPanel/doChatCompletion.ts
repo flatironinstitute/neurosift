@@ -306,6 +306,8 @@ They can also click the "advanced query" link to search for Dandisets by neuroda
 
 They can also toggle between the main and staging site using a link.
 
+IMPORTANT: Whenever you refer to a Dandiset by its ID, use a link like the following [000000](?page=dandiset&dandisetId=000000).
+
 ${route.staging ? "They are currently viewing the staging site." : "They are currently viewing the main site."}
 `;
   } else if (route.page === "dandi-query") {

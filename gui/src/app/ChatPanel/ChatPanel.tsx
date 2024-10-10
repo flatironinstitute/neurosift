@@ -75,7 +75,7 @@ const ChatPanel: FunctionComponent<ChatPanelProps> = ({
   chat,
   setChat,
 }) => {
-  const { route } = useRoute();
+  const { route, setRoute } = useRoute();
   const inputBarHeight = 30;
   const settingsBarHeight = 20;
   const topBarHeight = 24;
@@ -231,22 +231,25 @@ const ChatPanel: FunctionComponent<ChatPanelProps> = ({
     });
   }, [setChat]);
 
-  const handleSpecialLinkClick = useCallback((link: string) => {
-    console.info(link);
-    //   if (link.startsWith("?")) {
-    //     const parts = link.slice(1).split("&");
-    //     const params: { [key: string]: string } = {};
-    //     for (const part of parts) {
-    //       const vv = part.split("=");
-    //       if (vv.length === 2) {
-    //         params[vv[0]] = vv[1];
-    //       }
-    //     }
-    //     if (params.page === "dandi") {
-    //       setRoute({ page: "dandi" });
-    //     }
-    //   }
-  }, []);
+  const handleSpecialLinkClick = useCallback(
+    (link: string) => {
+      console.info("Special link clicked:", link);
+      if (link.startsWith("?")) {
+        const parts = link.slice(1).split("&");
+        const params: { [key: string]: string } = {};
+        for (const part of parts) {
+          const vv = part.split("=");
+          if (vv.length === 2) {
+            params[vv[0]] = vv[1];
+          }
+        }
+        if (params.page === "dandiset" && params.dandisetId) {
+          setRoute({ page: "dandiset", dandisetId: params.dandisetId });
+        }
+      }
+    },
+    [setRoute],
+  );
 
   const initialMessage = useMemo(() => {
     return getChatTitleForRoute(route);

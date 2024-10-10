@@ -81,7 +81,6 @@ const Markdown: FunctionComponent<Props> = ({ source, onSpecialLinkClick }) => {
       // 	}
       // },
       a: ({ node, children, href, ...props }) => {
-        console.log("- href: ", href);
         if (href && href.startsWith("?") && onSpecialLinkClick) {
           return (
             <Hyperlink
