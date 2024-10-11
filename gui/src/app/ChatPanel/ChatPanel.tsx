@@ -38,6 +38,7 @@ type ChatPanelProps = {
   height: number;
   chat: Chat;
   setChat: (chat: Chat) => void;
+  availableResourceUrls?: string[];
 };
 
 type PendingMessages = (
@@ -81,6 +82,7 @@ const ChatPanel: FunctionComponent<ChatPanelProps> = ({
   height,
   chat,
   setChat,
+  availableResourceUrls,
 }) => {
   const { route, setRoute } = useRoute();
   const nwbFile = useNwbFileSafe();
@@ -130,6 +132,10 @@ const ChatPanel: FunctionComponent<ChatPanelProps> = ({
       : false;
   }, [lastMessage]);
 
+  const [selectedResourceUrls, setSelectedResourceUrls] = useState<string[]>(
+    [],
+  );
+
   useEffect(() => {
     // submit user message or tool results
     let canceled = false;
@@ -141,12 +147,16 @@ const ChatPanel: FunctionComponent<ChatPanelProps> = ({
     if (lastMessage.role === "user" || lastMessage.role === "tool") {
       (async () => {
         const { nwbFileUrl, urlType } = getNwbFileUrlAndType(nwbFile);
+        const resourceUrls = (availableResourceUrls || []).filter((url) =>
+          selectedResourceUrls.includes(url),
+        );
         const { assistantMessage, toolCalls } = await doChatCompletion({
           messages: messages2,
           modelName,
           route,
           nwbFileUrl,
           urlType,
+          resourceUrls,
         });
         if (canceled) return;
         if (!toolCalls) {
@@ -225,7 +235,15 @@ const ChatPanel: FunctionComponent<ChatPanelProps> = ({
     return () => {
       canceled = true;
     };
-  }, [messages, modelName, route, setChat, nwbFile]);
+  }, [
+    messages,
+    modelName,
+    route,
+    setChat,
+    nwbFile,
+    availableResourceUrls,
+    selectedResourceUrls,
+  ]);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -312,6 +330,23 @@ const ChatPanel: FunctionComponent<ChatPanelProps> = ({
           overflow: "auto",
         }}
       >
+        {(availableResourceUrls || []).map((url) => (
+          <div key={url}>
+            <ResourceUrlSelectComponent
+              selected={selectedResourceUrls.includes(url)}
+              url={url}
+              setSelected={(selected) => {
+                if (selected) {
+                  setSelectedResourceUrls([...selectedResourceUrls, url]);
+                } else {
+                  setSelectedResourceUrls(
+                    selectedResourceUrls.filter((x) => x !== url),
+                  );
+                }
+              }}
+            />
+          </div>
+        ))}
         {suggestedQuestions.length > 0 && (
           <div style={{ marginTop: 5, marginBottom: 5 }}>
             {suggestedQuestions.map((question, index) => (
@@ -583,6 +618,31 @@ const getNwbFileUrlAndType = (nwbFile: RemoteH5FileX | null) => {
     }
   }
   return { nwbFileUrl, urlType };
+};
+
+type ResourceUrlSelectComponentProps = {
+  url: string;
+  selected: boolean;
+  setSelected: (selected: boolean) => void;
+};
+
+const ResourceUrlSelectComponent: FunctionComponent<
+  ResourceUrlSelectComponentProps
+> = ({ url, selected, setSelected }) => {
+  return (
+    <div>
+      <input
+        type="checkbox"
+        checked={selected}
+        onChange={(e) => setSelected(e.target.checked)}
+      />
+      <span>
+        <a href={url} target="_blank" rel="noreferrer">
+          {url}
+        </a>
+      </span>
+    </div>
+  );
 };
 
 export default ChatPanel;

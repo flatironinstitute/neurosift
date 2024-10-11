@@ -19,6 +19,7 @@ const doChatCompletion = async (a: {
   modelName: string;
   nwbFileUrl?: string;
   urlType?: string;
+  resourceUrls?: string[];
 }) => {
   const { messages, route, modelName, nwbFileUrl, urlType } = a;
   const client = new NeurosiftCompletionClient({ verbose: true });
@@ -26,13 +27,30 @@ const doChatCompletion = async (a: {
     role: "system",
     content: getInitialSystemMessageForRoute(route, { nwbFileUrl, urlType }),
   };
+  const resourceSystemMessages: ORMessage[] = [];
+  if (a.resourceUrls) {
+    for (const url of a.resourceUrls) {
+      const text = await loadResource(url);
+      if (text) {
+        console.info(`Using resource at ${url} (length = ${text.length})`);
+        resourceSystemMessages.push({
+          role: "system",
+          content: `Here is the resource at ${url}:\n\n${text}\n`,
+        });
+      }
+    }
+  }
   const tools = getToolsForRoute(route);
   for (const t of allTools) {
     if (!(t.tool.function.name in allToolFunctions)) {
       throw new Error(`Tool function ${t.tool.function.name} not found`);
     }
   }
-  const messages2: ORMessage[] = [initialSystemMessage, ...messages];
+  const messages2: ORMessage[] = [
+    initialSystemMessage,
+    ...resourceSystemMessages,
+    ...messages,
+  ];
   const { response, toolCalls } = await client.completion(
     messages2,
     modelName,
@@ -479,11 +497,7 @@ export const getSuggestedQuestionsForRoute = (route: Route): string[] => {
       "What are the Neurodata types in this Dandiset?",
     ];
   } else if (route.page === "nwb") {
-    return [
-      "What is the likely purpose of this experiment?",
-      "What data do we have here?",
-      "Provide a Python script for loading these data.",
-    ];
+    return ["Provide a Python script for loading these data."];
   } else {
     return [];
   }
@@ -501,6 +515,59 @@ export const getChatTitleForRoute = (route: Route): string => {
   } else {
     return "";
   }
+};
+
+const loadResourceCache: { [url: string]: string } = {};
+
+const loadResource = async (url: string) => {
+  if (url in loadResourceCache) {
+    return loadResourceCache[url];
+  }
+  const url2 = resolveRawGithubUrl(url);
+  const response = await fetch(url2);
+  if (!response.ok) {
+    console.warn(`Unable to load resource: ${url2}`);
+    loadResourceCache[url] = "";
+    return "";
+  }
+  let text = await response.text();
+  if (url.endsWith(".ipynb")) {
+    // strip the outputs - because this may include large binary data
+    let json = JSON.parse(text);
+    json = {
+      ...json,
+      cells: json.cells.map((cell: any) => {
+        if (cell.cell_type === "code") {
+          return {
+            ...cell,
+            outputs: [],
+          };
+        }
+        return cell;
+      }),
+    };
+    text = JSON.stringify(json);
+  }
+  loadResourceCache[url] = text;
+  return text;
+};
+
+const resolveRawGithubUrl = (url: string) => {
+  // https://github.com/magland/dandiset-notes/blob/main/dandisets/001037/001037.ipynb -> https://raw.githubusercontent.com/magland/dandiset-notes/main/dandisets/001037/001037.ipynb
+  const parts = url.split("/");
+  if (
+    parts.length >= 8 &&
+    parts[0] === "https:" &&
+    parts[1] === "" &&
+    parts[2] === "github.com"
+  ) {
+    const user = parts[3];
+    const repo = parts[4];
+    const branch = parts[6];
+    const path = parts.slice(7).join("/");
+    return `https://raw.githubusercontent.com/${user}/${repo}/${branch}/${path}`;
+  }
+  return url;
 };
 
 export default doChatCompletion;

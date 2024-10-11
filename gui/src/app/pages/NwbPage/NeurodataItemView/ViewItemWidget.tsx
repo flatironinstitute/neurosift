@@ -35,7 +35,6 @@ const ViewItemWidget: FunctionComponent<Props> = ({
 
   const [stateString, setStateString] = useState<string | undefined>(undefined);
 
-  console.log("--------------- a", viewPlugin, hidden);
   const content = viewPlugin ? (
     <viewPlugin.component
       width={width}

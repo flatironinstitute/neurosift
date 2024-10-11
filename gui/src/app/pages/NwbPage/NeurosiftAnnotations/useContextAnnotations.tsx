@@ -221,4 +221,52 @@ export const SetupContextAnnotationsProvider: FunctionComponent<
   );
 };
 
+export const useContextAnnotationsForDandiset = (dandisetId?: string) => {
+  const [contextAnnotations, setContextAnnotations] =
+    useState<NeurosiftAnnotation[]>();
+
+  useEffect(() => {
+    let canceled = false;
+    setContextAnnotations(undefined);
+    (async () => {
+      if (!dandisetId) {
+        return;
+      }
+      const url = `${neurosiftAnnotationsApiUrl}/api/getAnnotations`;
+      const req: GetAnnotationsRequest = {
+        dandiInstanceName: "dandi",
+        dandisetId,
+        assetId: "<undefined>", // query for those that are not associated with any asset
+      };
+      const r = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(req),
+      });
+      if (r.status !== 200) {
+        console.error("Error fetching annotations", r);
+        return;
+      }
+      const data = await r.json();
+      if (canceled) {
+        return;
+      }
+      if (!isGetAnnotationsResponse(data)) {
+        console.warn(data);
+        console.error("Unexpected response");
+        return;
+      }
+      const annotations: NeurosiftAnnotation[] = data.annotations;
+      setContextAnnotations(annotations);
+    })();
+    return () => {
+      canceled = true;
+    };
+  }, [dandisetId]);
+
+  return contextAnnotations;
+};
+
 export default useContextAnnotations;

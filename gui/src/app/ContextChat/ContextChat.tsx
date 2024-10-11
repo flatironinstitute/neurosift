@@ -142,7 +142,6 @@ const ContextChat: FunctionComponent<ContextChatProps> = ({
           tool: ORTool;
           func: (args: { [paramName: string]: any }) => Promise<any>;
         }[] = [];
-        console.log("--- ci", contextItems);
         for (const item of Object.values(contextItems)) {
           if (item.resourceDocs) {
             for (const doc of item.resourceDocs) {
