@@ -519,8 +519,8 @@ type SettingsBarProps = {
 const modelOptions = [
   "openai/gpt-4o-mini",
   "openai/gpt-4o",
-  // 'anthropic/claude-3.5-sonnet',
-  // 'anthropic/claude-3-haiku',
+  'anthropic/claude-3.5-sonnet',
+  'anthropic/claude-3-haiku',
   // 'google/gemini-flash-1.5',
   // 'google/gemini-pro-1.5'
 ];
