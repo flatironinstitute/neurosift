@@ -253,21 +253,21 @@ const toolLoadExternalResourceFunc = async (args: { url: string }) => {
   return await loadResource(args.url);
 };
 
-// const toolGetPynappleDocs: ORTool = {
-//   type: "function",
-//   function: {
-//     description: "Get Pynapple documentation",
-//     name: "get_pynapple_docs",
-//     parameters: {
-//       type: "object",
-//       properties: {},
-//     },
-//   },
-// };
+const toolGetPynappleDocs: ORTool = {
+  type: "function",
+  function: {
+    description: "Get Pynapple documentation",
+    name: "get_pynapple_docs",
+    parameters: {
+      type: "object",
+      properties: {},
+    },
+  },
+};
 
-// const toolGetPynappleDocsFunc = async () => {
-//   return pynappleDocs;
-// };
+const toolGetPynappleDocsFunc = async () => {
+  return pynappleDocs;
+};
 
 export const allTools: {
   tool: ORTool;
@@ -289,10 +289,10 @@ export const allTools: {
     tool: toolNwbFileInfo,
     func: toolNwbFileInfoFunc,
   },
-  // {
-  //   tool: toolGetPynappleDocs,
-  //   func: toolGetPynappleDocsFunc,
-  // },
+  {
+    tool: toolGetPynappleDocs,
+    func: toolGetPynappleDocsFunc,
+  },
   {
     tool: toolLoadExternalResource,
     func: toolLoadExternalResourceFunc,
@@ -314,13 +314,15 @@ const getToolsForRoute = (route: Route): ORTool[] => {
       toolDandisetInfo,
       toolNwbFilesForDandiset,
       toolNwbFileInfo,
+      toolGetPynappleDocs,
       toolLoadExternalResource,
     ];
   } else if (route.page === "nwb") {
     return [
       toolDandisetInfo,
       toolNwbFileInfo,
-      /* toolGetPynappleDocs */ toolLoadExternalResource,
+      toolGetPynappleDocs,
+      toolLoadExternalResource,
     ];
   } else {
     return [];
@@ -418,25 +420,6 @@ Note that this is referenced by "name_of_timeseries" and not the full path.
 This will be a Ts object if the timeseries is 1D, a TsdFrame object if it is 2D, and a TsdTensor object if it is 3D or more.
 
 Similarly, NWB AnnotationsSeries objects can be loaded as Pynapple Ts objects, and NWB TimeIntervals objects can be loaded as Pynapple IntervalSet objects.
-
-Here's an example of how to create 2D tuning curves using Pynapple:
-\`\`\`python
-import pynapple as nap
-# ... get the pynwb file object 'nwbfile' ...
-nwbp = nap.NWBFile(nwbfile)
-units = nwbp["units"]
-position = nwbp["position"]
-tc, binsxy = nap.compute_2d_tuning_curves(units, position, 20)
-
-import matplotlib.pyplot as plt
-plt.figure(figsize=(15, 7))
-for i in tc.keys():
-    plt.subplot(2, 4, i + 1)
-    plt.imshow(tc[i], origin="lower", aspect="auto")
-    plt.title("Unit {}".format(i))
-plt.tight_layout()
-plt.show()
-\`\`\`
 `;
 
 const getInitialSystemMessageForRoute = (
