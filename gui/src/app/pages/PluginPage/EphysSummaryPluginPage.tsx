@@ -44,16 +44,14 @@ const EphysSummaryPluginPage: FunctionComponent<
     throw Error("Unexpected plugin for PluginPage: " + route.plugin);
   const { dandisetId, dandisetVersion, staging: useStaging } = route;
 
-  const dandisetResponse: DandisetSearchResultItem | null = useQueryDandiset(
-    dandisetId,
-    useStaging,
-  );
+  const dandisetResponse: DandisetSearchResultItem | null | undefined =
+    useQueryDandiset(dandisetId, useStaging);
   const dandisetVersionInfo: DandisetVersionInfo | null =
     useDandisetVersionInfo(
       dandisetId,
       dandisetVersion || "",
       useStaging,
-      dandisetResponse,
+      dandisetResponse || null,
     );
   useEffect(() => {
     // put the version in the route
@@ -75,7 +73,7 @@ const EphysSummaryPluginPage: FunctionComponent<
   const { assetsResponses, incomplete } = useQueryAssets(
     dandisetId,
     maxNumPages,
-    dandisetResponse,
+    dandisetResponse || null,
     dandisetVersionInfo,
     useStaging,
   );

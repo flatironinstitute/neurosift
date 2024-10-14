@@ -157,11 +157,14 @@ export const SimilarDandisetView: FunctionComponent<
   if (route.page !== "dandiset" && route.page !== "dandi-query")
     throw Error("Unexpected page: " + route.page);
   const { staging } = route;
-  const dandisetResponse: DandisetSearchResultItem | null = useQueryDandiset(
+  const dandisetResponse: DandisetSearchResultItem | null | undefined =
+    useQueryDandiset(dandisetId, staging);
+  const X = useDandisetVersionInfo(
     dandisetId,
+    "",
     staging,
+    dandisetResponse || null,
   );
-  const X = useDandisetVersionInfo(dandisetId, "", staging, dandisetResponse);
   if (!X) return <div>Loading {dandisetId}</div>;
   return (
     <div style={{ padding: 10, borderBottom: "solid 1px #ccc" }}>
