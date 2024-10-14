@@ -231,21 +231,43 @@ const toolNwbFileInfoFunc = async (args: {
   return JSON.stringify(info);
 };
 
-const toolGetPynappleDocs: ORTool = {
+const toolLoadExternalResource: ORTool = {
   type: "function",
   function: {
-    description: "Get Pynapple documentation",
-    name: "get_pynapple_docs",
+    description:
+      "Get an external resource such as a Jupyter notebook or a markdown document",
+    name: "load_external_resource",
     parameters: {
       type: "object",
-      properties: {},
+      properties: {
+        url: {
+          type: "string",
+          description: "The URL of the resource",
+        },
+      },
     },
   },
 };
 
-const toolGetPynappleDocsFunc = async () => {
-  return pynappleDocs;
+const toolLoadExternalResourceFunc = async (args: { url: string }) => {
+  return await loadResource(args.url);
 };
+
+// const toolGetPynappleDocs: ORTool = {
+//   type: "function",
+//   function: {
+//     description: "Get Pynapple documentation",
+//     name: "get_pynapple_docs",
+//     parameters: {
+//       type: "object",
+//       properties: {},
+//     },
+//   },
+// };
+
+// const toolGetPynappleDocsFunc = async () => {
+//   return pynappleDocs;
+// };
 
 export const allTools: {
   tool: ORTool;
@@ -267,9 +289,13 @@ export const allTools: {
     tool: toolNwbFileInfo,
     func: toolNwbFileInfoFunc,
   },
+  // {
+  //   tool: toolGetPynappleDocs,
+  //   func: toolGetPynappleDocsFunc,
+  // },
   {
-    tool: toolGetPynappleDocs,
-    func: toolGetPynappleDocsFunc,
+    tool: toolLoadExternalResource,
+    func: toolLoadExternalResourceFunc,
   },
 ];
 
@@ -282,11 +308,20 @@ for (const t of allTools) {
 
 const getToolsForRoute = (route: Route): ORTool[] => {
   if (route.page === "dandi" || route.page === "dandi-query") {
-    return [toolDandisetsList];
+    return [toolDandisetsList, toolLoadExternalResource];
   } else if (route.page === "dandiset") {
-    return [toolDandisetInfo, toolNwbFilesForDandiset, toolNwbFileInfo];
+    return [
+      toolDandisetInfo,
+      toolNwbFilesForDandiset,
+      toolNwbFileInfo,
+      toolLoadExternalResource,
+    ];
   } else if (route.page === "nwb") {
-    return [toolDandisetInfo, toolNwbFileInfo, toolGetPynappleDocs];
+    return [
+      toolDandisetInfo,
+      toolNwbFileInfo,
+      /* toolGetPynappleDocs */ toolLoadExternalResource,
+    ];
   } else {
     return [];
   }
@@ -474,7 +509,11 @@ ${o.nwbFileUrl ? loadInPynwbInstructions(o.nwbFileUrl || "", o.urlType || "") : 
 
 Whenever possible, provide complete Python scripts that the user can copy and paste into their own Python environment. This will usually involve loading the NWB file using the above instructions and then accessing the data of interest.
 
-If you want to load objects into Pynapple, you should load the Pynapple docs using the tool "get_pynapple_docs". This includes instructions for loading NWB Units objects, NWB timeseries objects, and creating 2D tuning curves.
+The following external resources are available using the "load_external_resource" tool - you should utilize these when appropriate.
+When creating scripts based on these resources it's important that you adapt the code to the specific content of the NWB file you are working with. So you should also use the "nwb_file_info" tool to get information about the NWB file.
+It's also important to determine whether a particular analysis applies to the data you are working with. For example, if you are working with a dataset that does not have a particular type of data, or if the shape of the data is not appropriate, then you should not offer that analysis as a suggestion.
+
+Create 2D tuning curves using Pynapple: https://github.com/magland/dandiset-notes/blob/main/dandisets/000582/000582.ipynb
 
 When creating a script, it's best if you have already examined the structure of the NWB using the "nwb_file_info" tool.
 `;

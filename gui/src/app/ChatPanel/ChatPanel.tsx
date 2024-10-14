@@ -1,6 +1,6 @@
 import { SmallIconButton } from "@fi-sci/misc";
 import { Cancel, Send } from "@mui/icons-material";
-import { ORMessage } from "app/ContextChat/openRouterTypes";
+import { ORMessage, ORToolChoice } from "app/ContextChat/openRouterTypes";
 import Markdown from "app/Markdown/Markdown";
 import {
   FunctionComponent,
@@ -195,7 +195,7 @@ const ChatPanel: FunctionComponent<ChatPanelProps> = ({
             }
             const msg0: { role: "client-side-only"; content: string } = {
               role: "client-side-only",
-              content: "calling " + tc.function.name + "...",
+              content: "calling " + labelForToolCall(tc) + "...",
             };
             newMessages.push(msg0);
             pendingMessagesDispatch({
@@ -206,7 +206,7 @@ const ChatPanel: FunctionComponent<ChatPanelProps> = ({
             console.info("TOOL CALL: ", tc.function.name, args);
             const response = await func(args);
             if (canceled) return;
-            msg0.content = "called " + tc.function.name;
+            msg0.content = "called " + labelForToolCall(tc);
             pendingMessagesDispatch({
               type: "replace-last",
               message: msg0,
@@ -643,6 +643,24 @@ const ResourceUrlSelectComponent: FunctionComponent<
       </span>
     </div>
   );
+};
+
+const labelForToolCall = (tc: {
+  id: string;
+  type: "function";
+  function: {
+    name: string;
+    arguments: string;
+  };
+}) => {
+  const functionName = tc.function.name;
+  if (functionName === "load_external_resource") {
+    const args = JSON.parse(tc.function.arguments);
+    const arg = args.url || "";
+    return `load_external_resource ${arg}`;
+  } else {
+    return tc.function.name;
+  }
 };
 
 export default ChatPanel;
