@@ -51,16 +51,14 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
   if (route.page !== "dandiset" && route.page !== "dandi")
     throw Error("Unexpected route for DandisetView: " + route.page);
   const stagingStr2 = useStaging ? "gui-staging." : "";
-  const dandisetResponse: DandisetSearchResultItem | null = useQueryDandiset(
-    dandisetId,
-    useStaging,
-  );
+  const dandisetResponse: DandisetSearchResultItem | undefined | null =
+    useQueryDandiset(dandisetId, useStaging);
   const dandisetVersionInfo: DandisetVersionInfo | null =
     useDandisetVersionInfo(
       dandisetId,
       dandisetVersion || "",
       useStaging,
-      dandisetResponse,
+      dandisetResponse || null,
     );
   useEffect(() => {
     // put the version in the route
@@ -84,7 +82,7 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
   const { assetsResponses, incomplete } = useQueryAssets(
     dandisetId,
     maxNumPages,
-    dandisetResponse,
+    dandisetResponse || null,
     dandisetVersionInfo,
     useStaging,
   );
@@ -156,7 +154,18 @@ The contributors to Dandiset ${dandisetId} are: ${dandisetVersionInfo?.metadata.
     };
   }, [dandisetId, dandisetVersionInfo, setContextItem, allAssets]);
 
-  if (!dandisetResponse) return <div>Loading dandiset...</div>;
+  if (dandisetResponse === null)
+    return (
+      <div>
+        Error loading dandiset {dandisetId} {useStaging ? "staging" : ""}
+      </div>
+    );
+  if (!dandisetResponse)
+    return (
+      <div>
+        Loading dandiset {dandisetId} {useStaging ? "staging" : ""}
+      </div>
+    );
   if (!dandisetVersionInfo) return <div>Loading dandiset info...</div>;
 
   const X = dandisetVersionInfo;
@@ -312,11 +321,12 @@ export const useQueryDandiset = (
   dandisetId: string | undefined,
   useStaging: boolean | undefined,
 ) => {
-  const [dandisetResponse, setDandisetResponse] =
-    useState<DandisetSearchResultItem | null>(null);
+  const [dandisetResponse, setDandisetResponse] = useState<
+    DandisetSearchResultItem | undefined | null
+  >(null);
   useEffect(() => {
     let canceled = false;
-    setDandisetResponse(null);
+    setDandisetResponse(undefined);
     if (!dandisetId) return;
     (async () => {
       const stagingStr = useStaging ? "-staging" : "";
@@ -325,14 +335,22 @@ export const useQueryDandiset = (
       const headers = authorizationHeader
         ? { Authorization: authorizationHeader }
         : undefined;
-      const response = await fetch(url, {
-        headers,
-      });
-      if (canceled) return;
-      if (response.status === 200) {
-        const json = await response.json();
-        const dandisetResponse = json as DandisetSearchResultItem;
-        setDandisetResponse(dandisetResponse);
+      try {
+        const response = await fetch(url, {
+          headers,
+        });
+        if (canceled) return;
+        if (response.status === 200) {
+          const json = await response.json();
+          const dandisetResponse = json as DandisetSearchResultItem;
+          setDandisetResponse(dandisetResponse);
+        } else {
+          console.error("Error fetching dandiset", response);
+          setDandisetResponse(null);
+        }
+      } catch (e) {
+        console.error("Error fetching dandiset", e);
+        setDandisetResponse(null);
       }
     })();
     return () => {
