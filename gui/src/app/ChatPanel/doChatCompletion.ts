@@ -253,22 +253,6 @@ const toolLoadExternalResourceFunc = async (args: { url: string }) => {
   return await loadResource(args.url);
 };
 
-const toolGetPynappleDocs: ORTool = {
-  type: "function",
-  function: {
-    description: "Get Pynapple documentation",
-    name: "get_pynapple_docs",
-    parameters: {
-      type: "object",
-      properties: {},
-    },
-  },
-};
-
-const toolGetPynappleDocsFunc = async () => {
-  return pynappleDocs;
-};
-
 export const allTools: {
   tool: ORTool;
   func: (args: any) => Promise<any>;
@@ -288,10 +272,6 @@ export const allTools: {
   {
     tool: toolNwbFileInfo,
     func: toolNwbFileInfoFunc,
-  },
-  {
-    tool: toolGetPynappleDocs,
-    func: toolGetPynappleDocsFunc,
   },
   {
     tool: toolLoadExternalResource,
@@ -314,16 +294,10 @@ const getToolsForRoute = (route: Route): ORTool[] => {
       toolDandisetInfo,
       toolNwbFilesForDandiset,
       toolNwbFileInfo,
-      toolGetPynappleDocs,
       toolLoadExternalResource,
     ];
   } else if (route.page === "nwb") {
-    return [
-      toolDandisetInfo,
-      toolNwbFileInfo,
-      toolGetPynappleDocs,
-      toolLoadExternalResource,
-    ];
+    return [toolDandisetInfo, toolNwbFileInfo, toolLoadExternalResource];
   } else {
     return [];
   }
@@ -422,6 +396,39 @@ This will be a Ts object if the timeseries is 1D, a TsdFrame object if it is 2D,
 Similarly, NWB AnnotationsSeries objects can be loaded as Pynapple Ts objects, and NWB TimeIntervals objects can be loaded as Pynapple IntervalSet objects.
 `;
 
+const spikeSortingDocs = `
+Instructions for assistant if the user asks about spike sorting:
+
+For each ElectricalSeries object in an NWB file, you can run spike sorting using Dendro. If there are no ElectricalSeries objects, tell the user that there are no ElectricalSeries objects in the NWB file.
+
+To run spike sorting on an ElectricalSeries object, do the following:
+* Navigate to the ElectricalSeries object in the NWB file using the NWB panel. You should tell them the path of the choices for these.
+* Click on the "Spike sorting (WIP)" tab
+* You will see a list of jobs that have already been submitted, and you can submit new jobs.
+
+There are three steps in the spike sorting pipeline. You shouldn't give the user all these details. They are mainly provided in case they ask follow-up questions.
+
+* Prepare dataset (preprocessing)
+  - Limit the duration (for testing)
+  - Select a subset of channels
+  - Specify bandpass filter parameters
+  - Specify a lossy compression ratio (efficient storage)
+* Spike sorting
+  - Choose algorithm (for now Kilosort 4 or MountainSort 5). Note that Kilosort requires a GPU which is not always convenient. That's why we provide MountainSort as an option, because this is a CPU-based sorter.
+  - Select sorting parameters. For now during testing these are very limited. The plan is to have presets based on the type of data.
+  - Uses SpikeInterface wrappers to algorithms.
+* Post-processing
+  - Populates the Units table with average waveforms, autocorrelograms, and a bunch of quality metrics from SpikeInterface.
+
+The user can create a new Dendro pipeline by clicking "PREPARE NEW DATASET" and then queue up the three Dendro jobs.
+
+They will need to get a DANDI API key and permission to submit jobs on the Neurosift service.
+
+They can then monitor the status of the job using the refresh button.
+
+Finally they can view the results by clicking the "View output in Neurosift" link.
+`;
+
 const getInitialSystemMessageForRoute = (
   route: Route,
   o: { nwbFileUrl?: string; urlType?: string },
@@ -496,7 +503,9 @@ The following external resources are available using the "load_external_resource
 When creating scripts based on these resources it's important that you adapt the code to the specific content of the NWB file you are working with. So you should also use the "nwb_file_info" tool to get information about the NWB file.
 It's also important to determine whether a particular analysis applies to the data you are working with. For example, if you are working with a dataset that does not have a particular type of data, or if the shape of the data is not appropriate, then you should not offer that analysis as a suggestion.
 
-Create 2D tuning curves using Pynapple: https://github.com/magland/dandiset-notes/blob/main/dandisets/000582/000582.ipynb
+* Create 2D tuning curves using Pynapple: https://github.com/magland/dandiset-notes/blob/main/dandisets/000582/000582.ipynb
+* Load data objects from an NWB file using Pynapple: ./pynapple-docs.md
+* Run spike sorting on data from this NWB file: ./spike-sorting-docs.md
 
 When creating a script, it's best if you have already examined the structure of the NWB using the "nwb_file_info" tool.
 `;
@@ -544,6 +553,15 @@ const loadResourceCache: { [url: string]: string } = {};
 const loadResource = async (url: string) => {
   if (url in loadResourceCache) {
     return loadResourceCache[url];
+  }
+  if (url.startsWith("./")) {
+    if (url === "./pynapple-docs.md") {
+      return pynappleDocs;
+    } else if (url === "./spike-sorting-docs.md") {
+      return spikeSortingDocs;
+    } else {
+      throw new Error(`Unsupported resource: ${url}`);
+    }
   }
   const url2 = resolveRawGithubUrl(url);
   const response = await fetch(url2);
