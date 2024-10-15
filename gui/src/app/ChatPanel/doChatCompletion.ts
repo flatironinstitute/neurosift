@@ -51,11 +51,14 @@ const doChatCompletion = async (a: {
     ...resourceSystemMessages,
     ...messages,
   ];
+  console.info("messages", messages2);
   const { response, toolCalls } = await client.completion(
     messages2,
     modelName,
     tools,
   );
+
+  console.info("response", { response });
 
   return { assistantMessage: response, toolCalls };
 };
@@ -432,6 +435,17 @@ You should provide the following link to the user for more information:
 [spike sorting example](https://magland.github.io/neurosift-blog/talks/dendro_INCF_assembly_sep_2024.html#spike-sorting-example-000463).
 `;
 
+const availableResourcesText = `
+The following external resources are available using the "load_external_resource" tool - you should utilize these when appropriate.
+When creating scripts based on these resources it's important that you adapt the code to the specific content of the NWB file you are working with. So you should also use the "nwb_file_info" tool to get information about the NWB file.
+It's also important to determine whether a particular analysis applies to the data you are working with. For example, if you are working with a dataset that does not have a particular type of data, or if the shape of the data is not appropriate, then you should not offer that analysis as a suggestion.
+
+* Create 2D tuning curves using Pynapple: https://github.com/magland/dandiset-notes/blob/main/dandisets/000582/000582.ipynb
+* Load data objects from an NWB file using Pynapple: ./pynapple-docs.md
+* Run spike sorting on data from this NWB file: ./spike-sorting-docs.md
+* Iterate through the NWB files in a Dandiset: https://github.com/magland/dandiset-notes/blob/main/howto/dandi/iterate_through_nwb_files_in_dandiset.ipynb
+`
+
 const getInitialSystemMessageForRoute = (
   route: Route,
   o: { nwbFileUrl?: string; urlType?: string },
@@ -453,6 +467,8 @@ They can also toggle between the main and staging site using a link.
 IMPORTANT: Whenever you refer to a Dandiset by its ID, use a link like the following [000000](?page=dandiset&dandisetId=000000).
 
 ${route.staging ? "They are currently viewing the staging site." : "They are currently viewing the main site."}
+
+${availableResourcesText}
 `;
   } else if (route.page === "dandi-query") {
     return `
@@ -467,6 +483,8 @@ They can search for Dandisets by neurodata type using the "Search by Neurodata T
 They can search for Dandisets by semantic similarity by pasting in relevant text or a scientific abstract using the "Search by abstract" tab.
 
 To to a standard lexical search, they can return to the main page by clicking the Neurosift logo in the upper left corner.
+
+${availableResourcesText}
 `;
   } else if (route.page === "dandiset") {
     return `
@@ -481,6 +499,8 @@ If the user asks about this dandiset you should first get information about it u
 If you need to know about the NWB assets in this dandiset you should use the tool "nwb_files_for_dandiset".
 
 If you need to know about the neurodata types in this dandiset then you should sample one or more of the NWB files by using the tool "nwb_file_info". This requires that you know the URL of the NWB file, and that comes from the "nwb_files_for_dandiset" tool.
+
+${availableResourcesText}
 `;
   } else if (route.page === "nwb") {
     return `
@@ -502,13 +522,7 @@ ${o.nwbFileUrl ? loadInPynwbInstructions(o.nwbFileUrl || "", o.urlType || "") : 
 
 Whenever possible, provide complete Python scripts that the user can copy and paste into their own Python environment. This will usually involve loading the NWB file using the above instructions and then accessing the data of interest.
 
-The following external resources are available using the "load_external_resource" tool - you should utilize these when appropriate.
-When creating scripts based on these resources it's important that you adapt the code to the specific content of the NWB file you are working with. So you should also use the "nwb_file_info" tool to get information about the NWB file.
-It's also important to determine whether a particular analysis applies to the data you are working with. For example, if you are working with a dataset that does not have a particular type of data, or if the shape of the data is not appropriate, then you should not offer that analysis as a suggestion.
-
-* Create 2D tuning curves using Pynapple: https://github.com/magland/dandiset-notes/blob/main/dandisets/000582/000582.ipynb
-* Load data objects from an NWB file using Pynapple: ./pynapple-docs.md
-* Run spike sorting on data from this NWB file: ./spike-sorting-docs.md
+${availableResourcesText}
 
 When creating a script, it's best if you have already examined the structure of the NWB using the "nwb_file_info" tool.
 `;
@@ -517,6 +531,8 @@ When creating a script, it's best if you have already examined the structure of 
 ${introText}
 
 ${aboutDandiText}
+
+${availableResourcesText}
 `;
   }
 };
