@@ -244,7 +244,7 @@ const lindiDatasetDataLoader = async (o: {
       if (ndims > 4) {
         throw Error("Case not yet supported: C2");
       }
-      if (ndims === 4) {
+      while (macroChunkShape.length < 4) {
         macroChunkShape.push(1);
       }
       const retList = [];

@@ -57,6 +57,8 @@ const ImageItem: FunctionComponent<ImageItemProps> = ({
     return <RegularImageItem dataset={dataset} data={data} />;
   } else if (neurodataType === "RGBImage") {
     return <RGBImageItem dataset={dataset} data={data} />;
+  } else if (neurodataType === "RGBAImage") {
+    return <RGBAImageItem dataset={dataset} data={data} />;
   } else {
     return <div>Unexpected neurodata_type: {neurodataType}</div>;
   }
@@ -200,6 +202,58 @@ const RGBImageItem: FunctionComponent<RGBImageItemProps> = ({
         buf[ind + 1] = v2;
         buf[ind + 2] = v3;
         buf[ind + 3] = 255;
+      }
+    }
+    ctx.putImageData(imageData, 0, 0);
+  }, [canvasElement, W, H, dataset, data]);
+
+  return <canvas ref={(elmt) => setCanvasElement(elmt)} width={W} height={H} />;
+};
+
+type RGBAImageItemProps = {
+  dataset: RemoteH5Dataset;
+  data: DatasetDataType;
+};
+
+const RGBAImageItem: FunctionComponent<RGBAImageItemProps> = ({
+  dataset,
+  data,
+}) => {
+  const H = dataset.shape[0];
+  const W = dataset.shape[1];
+
+  const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (dataset.shape.length !== 3) {
+      console.error("Unexpected dataset shape for RGBA image: ", dataset.shape);
+      return;
+    }
+    if (dataset.shape[2] !== 4) {
+      console.error(
+        "Unexpected number of channels for RGBA image: ",
+        dataset.shape[2],
+      );
+      return;
+    }
+    if (!canvasElement) return;
+    const ctx = canvasElement.getContext("2d");
+    if (!ctx) return;
+    const imageData = ctx.createImageData(W, H);
+    const buf = imageData.data;
+    for (let j = 0; j < H; j++) {
+      for (let i = 0; i < W; i++) {
+        const v1 = data[(i + j * W) * 4 + 0];
+        const v2 = data[(i + j * W) * 4 + 1];
+        const v3 = data[(i + j * W) * 4 + 2];
+        const v4 = data[(i + j * W) * 4 + 3];
+        const ind = (i + j * W) * 4;
+        buf[ind + 0] = v1;
+        buf[ind + 1] = v2;
+        buf[ind + 2] = v3;
+        buf[ind + 3] = v4;
       }
     }
     ctx.putImageData(imageData, 0, 0);
