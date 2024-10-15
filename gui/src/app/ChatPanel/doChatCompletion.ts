@@ -427,6 +427,9 @@ They will need to get a DANDI API key and permission to submit jobs on the Neuro
 They can then monitor the status of the job using the refresh button.
 
 Finally they can view the results by clicking the "View output in Neurosift" link.
+
+You should provide the following link to the user for more information:
+[spike sorting example](https://magland.github.io/neurosift-blog/talks/dendro_INCF_assembly_sep_2024.html#spike-sorting-example-000463).
 `;
 
 const getInitialSystemMessageForRoute = (
