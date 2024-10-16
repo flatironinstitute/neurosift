@@ -102,7 +102,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
       overrideMaxVisibleDuration ||
       (dataClient
         ? Math.max(
-            1e5 /
+            8e6 /
               (numVisibleChannels || 1) /
               (dataClient.estimatedSamplingFrequency || 1),
             0.2,
@@ -113,7 +113,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
 
   // Set chunkSize
   const chunkSize = useMemo(
-    () => (dataset ? Math.floor(3e3 / (numVisibleChannels || 1)) : 0),
+    () => (dataset ? Math.floor(3e4 / (numVisibleChannels || 1)) : 0),
     [dataset, numVisibleChannels],
   );
 
@@ -131,7 +131,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
         ? endTime
         : Math.min(
             startTime +
-              (chunkSize / dataClient.estimatedSamplingFrequency!) * 3,
+              (chunkSize / dataClient.estimatedSamplingFrequency!) * 10,
             endTime,
           ),
     );
@@ -160,15 +160,15 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
         ignoreConversion: !applyConversion,
       },
     );
-    setTimeout(async () => {
-      const chunk = await client.getConcatenatedChunk(0, 1, { onCancel: [] });
-      const dataDatasetData = await nwbFile.getDatasetData(dataset.path, {
-        slice: [
-          [0, 1000],
-          [0, 1],
-        ],
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   const chunk = await client.getConcatenatedChunk(0, 1, { onCancel: [] });
+    //   const dataDatasetData = await nwbFile.getDatasetData(dataset.path, {
+    //     slice: [
+    //       [0, 1000],
+    //       [0, 1],
+    //     ],
+    //   });
+    // }, 1000);
     setDatasetChunkingClient(client);
   }, [
     dataset,
@@ -201,9 +201,9 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
     }
     let canceled = false;
     const load = async () => {
-      const zoomInRequired =
+      const zoomInRequired0 =
         visibleEndTimeSec - visibleStartTimeSec > maxVisibleDuration;
-      if (zoomInRequired) {
+      if (zoomInRequired0) {
         setStartChunkIndex(undefined);
         setEndChunkIndex(undefined);
         setZoomInRequired(true);
@@ -222,7 +222,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
       const endChunkIndex = Math.floor(iEnd / chunkSize) + 1;
       setStartChunkIndex(startChunkIndex);
       setEndChunkIndex(endChunkIndex);
-      setZoomInRequired(zoomInRequired);
+      setZoomInRequired(zoomInRequired0);
     };
     load();
     return () => {
@@ -261,6 +261,24 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
     },
     [colorChannels],
   );
+
+  const renderSubsampleFactor = useMemo(() => {
+    // estimate the render subsample factor so that we have about width pixels being rendered
+    if (visibleStartTimeSec === undefined) return 1;
+    if (visibleEndTimeSec === undefined) return 1;
+    if (!dataClient) return 1;
+    const sampleingRateHz = dataClient.estimatedSamplingFrequency || 1;
+    const spanSec = visibleEndTimeSec - visibleStartTimeSec;
+    const numSamples = spanSec * sampleingRateHz;
+    const targetSubsampleFactor = Math.floor(numSamples / width);
+    // we're going to subsample by a power of 2 so that it doesn't change very often
+    // because we need to send new data to the worker when it changes
+    const subsampleFactor = Math.pow(
+      2,
+      Math.floor(Math.log2(targetSubsampleFactor)),
+    );
+    return subsampleFactor;
+  }, [visibleStartTimeSec, visibleEndTimeSec, dataClient, width]);
 
   // Set dataSeries
   const [dataSeries, setDataSeries] = useState<DataSeries[] | undefined>(
@@ -301,12 +319,19 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
           if (canceled) return;
           const dataSeries: DataSeries[] = [];
           for (let i = 0; i < concatenatedChunk.length; i++) {
+            let dataT = Array.from(tt);
+            let dataY = concatenatedChunk[i];
+            if (renderSubsampleFactor > 1) {
+              // this will include min/max for each subsample
+              dataT = subsampleT(dataT, renderSubsampleFactor);
+              dataY = subsampleY(dataY, renderSubsampleFactor);
+            }
             dataSeries.push({
               type: dataseriesMode,
               title: `ch${i}`,
               attributes: { color: colorForChannel(i) },
-              t: Array.from(tt),
-              y: concatenatedChunk[i],
+              t: dataT,
+              y: dataY,
             });
           }
           setDataSeries(dataSeries);
@@ -333,6 +358,8 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
     zoomInRequired,
     dataseriesMode,
     colorForChannel,
+    width,
+    renderSubsampleFactor,
   ]);
 
   // Set valueRange
@@ -668,6 +695,55 @@ const HelpWindow: FunctionComponent = () => {
       </ul>
     </div>
   );
+};
+
+const subsampleT = (tt: number[], renderSubsampleFactor: number) => {
+  if (renderSubsampleFactor <= 1) return tt;
+  const y = [];
+  for (let i = 0; i < tt.length; i += renderSubsampleFactor) {
+    // include min/max for each subsample
+    y.push(tt[i]);
+    if (i < tt.length - 1) {
+      y.push((tt[i] + tt[i + 1]) / 2);
+    } else {
+      y.push(tt[i]);
+    }
+  }
+  return y;
+};
+
+const subsampleY = (yy: number[], renderSubsampleFactor: number) => {
+  if (renderSubsampleFactor <= 1) return yy;
+  const y = [];
+  for (let i = 0; i < yy.length; i += renderSubsampleFactor) {
+    const minVal = minIgnoringNaN(yy.slice(i, i + renderSubsampleFactor));
+    const maxVal = maxIgnoringNaN(yy.slice(i, i + renderSubsampleFactor));
+    y.push(minVal);
+    y.push(maxVal);
+  }
+  return y;
+};
+
+const minIgnoringNaN = (y: number[]) => {
+  let minVal = Infinity;
+  for (let i = 0; i < y.length; i++) {
+    if (!isNaN(y[i])) {
+      minVal = Math.min(minVal, y[i]);
+    }
+  }
+  if (minVal === Infinity) return NaN;
+  return minVal;
+};
+
+const maxIgnoringNaN = (y: number[]) => {
+  let maxVal = -Infinity;
+  for (let i = 0; i < y.length; i++) {
+    if (!isNaN(y[i])) {
+      maxVal = Math.max(maxVal, y[i]);
+    }
+  }
+  if (maxVal === -Infinity) return NaN;
+  return maxVal;
 };
 
 export default NwbTimeseriesView;

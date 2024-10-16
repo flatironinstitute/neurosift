@@ -444,7 +444,7 @@ It's also important to determine whether a particular analysis applies to the da
 * Load data objects from an NWB file using Pynapple: ./pynapple-docs.md
 * Run spike sorting on data from this NWB file: ./spike-sorting-docs.md
 * Iterate through the NWB files in a Dandiset: https://github.com/magland/dandiset-notes/blob/main/howto/dandi/iterate_through_nwb_files_in_dandiset.ipynb
-`
+`;
 
 const getInitialSystemMessageForRoute = (
   route: Route,

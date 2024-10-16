@@ -4,6 +4,9 @@ import TimeSeriesViewToolbar, {
   TimeSeriesViewOpts,
 } from "./TimeSeriesViewToolbar";
 import { SpikeTrainsClient } from "../Units/DirectRasterPlotUnitsItemView";
+import TabWidget from "app/TabWidget/TabWidget";
+import { useNwbFile } from "../../NwbFileContext";
+import MultiscaleTimeSeriesView from "./MultiscaleTimeSeriesView";
 
 type Props = {
   width: number;
@@ -12,6 +15,64 @@ type Props = {
   condensed?: boolean;
 
   spikeTrainsClient?: SpikeTrainsClient;
+};
+
+const tabs = [
+  {
+    id: "timeseries",
+    label: "TimeSeries",
+    closeable: false,
+  },
+  {
+    id: "multiscale",
+    label: "Multiscale (WIP)",
+    closeable: false,
+  },
+];
+
+// for future possibly
+export const NeurodataTimeSeriesItemViewNext: FunctionComponent<Props> = ({
+  width,
+  height,
+  path,
+  spikeTrainsClient,
+}) => {
+  const [currentTabId, setCurrentTabId] = useState("timeseries");
+
+  const nwbFile = useNwbFile();
+  if (!nwbFile)
+    throw Error("Unexpected: nwbFile is undefined (no context provider)");
+
+  const nwbUrl = useMemo(() => {
+    return (nwbFile.sourceUrls || [])[0];
+  }, [nwbFile]);
+
+  return (
+    <TabWidget
+      width={width}
+      height={height}
+      tabs={tabs}
+      currentTabId={currentTabId}
+      setCurrentTabId={setCurrentTabId}
+    >
+      <NeurodataTimeSeriesItemView
+        width={0}
+        height={0}
+        path={path}
+        spikeTrainsClient={spikeTrainsClient}
+      />
+      {nwbUrl ? (
+        <MultiscaleTimeSeriesView
+          width={0}
+          height={0}
+          path={path}
+          nwbUrl={nwbUrl}
+        />
+      ) : (
+        <div />
+      )}
+    </TabWidget>
+  );
 };
 
 const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({
