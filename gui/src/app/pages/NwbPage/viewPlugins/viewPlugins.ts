@@ -33,6 +33,7 @@ import {
   getCustomPythonCodeForUnits,
 } from "./customPythonCode";
 import ImageSeriesItemView from "./ImageSeries/ImageSeriesItemView";
+import SpikeDensityPlotUnitsItemView from "./Units/SpikeDensityPlot/SpikeDensityPlotUnitsItemView";
 
 type Props = {
   width: number;
@@ -280,6 +281,18 @@ viewPlugins.push({
   getCustomPythonCode: getCustomPythonCodeForUnits,
   testLinks: [
     "https://neurosift.app/?p=/nwb&dandisetId=000946&dandisetVersion=draft&url=https://api.dandiarchive.org/api/assets/3764f5c5-0d06-4f24-9bf2-d2849b1e9d0c/download/&tab=view:RasterPlot|/units",
+  ],
+});
+viewPlugins.push({
+  name: "SpikeDensityPlot",
+  neurodataType: "Units",
+  defaultForNeurodataType: false,
+  buttonLabel: "spike density",
+  component: SpikeDensityPlotUnitsItemView,
+  isTimeView: true,
+  getCustomPythonCode: getCustomPythonCodeForUnits,
+  testLinks: [
+    "https://neurosift.app/?p=/nwb&dandisetId=000946&dandisetVersion=draft&url=https://api.dandiarchive.org/api/assets/3764f5c5-0d06-4f24-9bf2-d2849b1e9d0c/download/&tab=view:SpikeDensityPlot|/units",
   ],
 });
 // CEBRA

@@ -449,11 +449,11 @@ export const JobInfoView: FunctionComponent<JobInfoViewProps> = ({
   return (
     <div>
       <div>
-        Job: {job.jobDefinition.processorName} (
+        {job.jobDefinition.processorName} (
         <Hyperlink href={jobUrl} target="_blank">
-          {job.jobId}
+          {job.status}
         </Hyperlink>
-        ) - {job.status}
+        )&nbsp;
         <SmallIconButton icon={<Refresh />} onClick={onRefreshJob} />
       </div>
       <table className="table" style={{ maxWidth: 300 }}>
