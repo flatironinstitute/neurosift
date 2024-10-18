@@ -48,11 +48,11 @@ const ElectricalSeriesItemView: FunctionComponent<Props> = ({
         id: "spike-sorting",
         closeable: false,
       });
-      tabs.push({
-        label: "Preprocessing (WIP)",
-        id: "preprocessing",
-        closeable: false,
-      });
+      // tabs.push({
+      //   label: "Preprocessing (WIP)",
+      //   id: "preprocessing",
+      //   closeable: false,
+      // });
     }
     return tabs;
   }, [showDendroViews]);
@@ -80,9 +80,9 @@ const ElectricalSeriesItemView: FunctionComponent<Props> = ({
         />
       )}
       {showDendroViews && <SpikeSortingView width={0} height={0} path={path} />}
-      {showDendroViews && (
+      {/* {showDendroViews && (
         <EphysPreprocessingView width={0} height={0} path={path} />
-      )}
+      )} */}
     </TabWidget>
   );
 };
