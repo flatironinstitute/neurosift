@@ -8,6 +8,8 @@ Neurosift is a browser-based tool designed for the visualization of NWB (Neuroda
 
 [Visit the live site!](https://neurosift.app)
 
+[Learn about the latest updates on the Neurosift blog](https://magland.github.io/neurosift-blog)
+
 Capabilities of Neurosift include:
 - View DANDI NWB files - use the integrated menu of DANDI Archive to launch Neurosift from any NWB file asset within a public or embargoed DANDIset.
 - Visualize remote NWB files hosted on non-DANDI web servers or cloud storage.
