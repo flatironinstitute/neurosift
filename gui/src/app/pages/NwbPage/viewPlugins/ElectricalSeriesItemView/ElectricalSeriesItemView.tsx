@@ -5,7 +5,6 @@ import EphysSummaryItemView from "../Ephys/EphysSummaryItemView";
 import { checkUrlIsLocal } from "../viewPlugins";
 import { useNwbFile } from "../../NwbFileContext";
 import SpikeSortingView from "./SpikeSortingView/SpikeSortingView";
-import EphysPreprocessingView from "./EphysPreprocessingView";
 
 type Props = {
   width: number;

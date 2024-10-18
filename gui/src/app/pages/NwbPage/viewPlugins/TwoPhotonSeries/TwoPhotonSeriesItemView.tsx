@@ -25,6 +25,8 @@ import PlaneTransformSelector, {
   defaultPlaneTransform,
 } from "./PlaneTransformSelector";
 import TwoPhotonSeriesItemViewMp4 from "./TwoPhotonSeriesItemViewMp4";
+import TabWidget from "app/TabWidget/TabWidget";
+import TwoPhotonSeriesMovieView from "./TwoPhotonSeriesMovieView";
 
 // const queryParams = parseQuery(window.location.href)
 
@@ -78,36 +80,59 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
   path,
   rgb,
 }) => {
-  const nwbFile = useNwbFile();
-  const [useMp4, setUseMp4] = useState<boolean | undefined>(undefined);
-  useEffect(() => {
-    (async () => {
-      if (!nwbFile) return;
-      if (nwbFile instanceof RemoteH5FileLindi) {
-        const zarray = await nwbFile.getLindiZarray(path + "/data");
-        if (zarray?.compressor?.id === "mp4avc") {
-          setUseMp4(true);
-          return;
-        }
-      }
-      setUseMp4(false);
-    })();
-  }, [nwbFile, path]);
-  if (useMp4 === undefined) return <div>determining type...</div>;
-  if (useMp4) {
-    return (
-      <TwoPhotonSeriesItemViewMp4 width={width} height={height} path={path} />
-    );
-  } else {
-    return (
+  // const nwbFile = useNwbFile();
+  // const [useMp4, setUseMp4] = useState<boolean | undefined>(undefined);
+  // useEffect(() => {
+  //   (async () => {
+  //     if (!nwbFile) return;
+  //     if (nwbFile instanceof RemoteH5FileLindi) {
+  //       const zarray = await nwbFile.getLindiZarray(path + "/data");
+  //       if (zarray?.compressor?.id === "mp4avc") {
+  //         setUseMp4(true);
+  //         return;
+  //       }
+  //     }
+  //     setUseMp4(false);
+  //   })();
+  // }, [nwbFile, path]);
+  // if (useMp4 === undefined) return <div>determining type...</div>;
+  // if (useMp4) {
+  //   return (
+  //     <TwoPhotonSeriesItemViewMp4 width={width} height={height} path={path} />
+  //   );
+  // } else {
+  const tabs = useMemo(() => {
+    return [
+      {
+        id: "array",
+        label: "Array",
+        closeable: false,
+      },
+      {
+        id: "movie",
+        label: "Movie",
+        closeable: false,
+      },
+    ];
+  }, []);
+  const [currentTabId, setCurrentTabId] = useState("array");
+  return (
+    <TabWidget
+      tabs={tabs}
+      width={width}
+      height={height}
+      currentTabId={currentTabId}
+      setCurrentTabId={setCurrentTabId}
+    >
       <TwoPhotonSeriesItemViewChild
-        width={width}
-        height={height}
+        width={0}
+        height={0}
         path={path}
         rgb={rgb}
       />
-    );
-  }
+      <TwoPhotonSeriesMovieView width={0} height={0} path={path} />
+    </TabWidget>
+  );
 };
 
 export const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
