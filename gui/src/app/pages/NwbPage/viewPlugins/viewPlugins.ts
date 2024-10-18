@@ -22,6 +22,7 @@ import { default as NeurodataTimeSeriesItemView } from "./TimeSeries/NeurodataTi
 import TimeSeriesLeftPanelComponent from "./TimeSeries/TimeSeriesLeftPanelComponent";
 import { getTimeseriesInfo } from "./TimeSeries/useTimeseriesInfo";
 import TwoPhotonSeriesItemView from "./TwoPhotonSeries/TwoPhotonSeriesItemView";
+import TwoPhotonSeriesMovieView from "./TwoPhotonSeries/TwoPhotonSeriesMovieView";
 import AutocorrelogramsUnitsItemView from "./Units/AutocorrelogramsUnitsItemView";
 import AverageWaveformsUnitsItemView from "./Units/AverageWaveformsUnitsItemView";
 import DirectRasterPlotUnitsItemView from "./Units/DirectRasterPlotUnitsItemView";
@@ -125,6 +126,14 @@ viewPlugins.push({
   isTimeView: true,
 });
 
+viewPlugins.push({
+  name: "TwoPhotonSeriesMovie",
+  neurodataType: "TwoPhotonSeries",
+  defaultForNeurodataType: false,
+  buttonLabel: "movie",
+  component: TwoPhotonSeriesMovieView
+})
+
 // TwoPhotonSeries
 viewPlugins.push({
   name: "OnePhotonSeries",
@@ -134,6 +143,14 @@ viewPlugins.push({
   leftPanelComponent: TimeSeriesLeftPanelComponent,
   isTimeView: true,
 });
+
+viewPlugins.push({
+  name: "OnePhotonSeriesMovie",
+  neurodataType: "OnePhotonSeries",
+  defaultForNeurodataType: false,
+  buttonLabel: "movie",
+  component: TwoPhotonSeriesMovieView
+})
 
 // TimeSeries
 viewPlugins.push({
