@@ -131,8 +131,8 @@ viewPlugins.push({
   neurodataType: "TwoPhotonSeries",
   defaultForNeurodataType: false,
   buttonLabel: "movie",
-  component: TwoPhotonSeriesMovieView
-})
+  component: TwoPhotonSeriesMovieView,
+});
 
 // TwoPhotonSeries
 viewPlugins.push({
@@ -149,8 +149,8 @@ viewPlugins.push({
   neurodataType: "OnePhotonSeries",
   defaultForNeurodataType: false,
   buttonLabel: "movie",
-  component: TwoPhotonSeriesMovieView
-})
+  component: TwoPhotonSeriesMovieView,
+});
 
 // TimeSeries
 viewPlugins.push({

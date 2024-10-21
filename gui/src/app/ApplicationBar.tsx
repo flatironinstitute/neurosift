@@ -86,14 +86,16 @@ const ApplicationBar: FunctionComponent<Props> = ({ onContextChat }) => {
               title={`About Neurosift`}
             />
           </span>
-          {(route.page === "dandi" || route.page === "dandiset") && (
+          {(route.page === "dandi" ||
+            route.page === "dandiset" ||
+            route.page === "dandi-query") && (
             <>
               &nbsp;&nbsp;&nbsp;&nbsp;
               <span style={{ color: "white" }}>
                 <SmallIconButton
                   icon={<Chat />}
                   onClick={onContextChat}
-                  title={`Open the workshop chat window`}
+                  title={`Toggle the assistant chat window`}
                 />
               </span>
             </>

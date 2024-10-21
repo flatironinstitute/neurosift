@@ -1,25 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import useRoute from "../../useRoute";
-import pako from "pako";
-import NeurodataTypesSelector from "./NeurodataTypesSelector";
-import { Hyperlink } from "@fi-sci/misc";
-import JsonPathQueryComponent from "./JsonPathQueryComponent";
+import ChatPanel, { Chat, emptyChat } from "app/ChatPanel/ChatPanel";
 import Splitter from "app/Splitter/Splitter";
 import TabWidget from "app/TabWidget/TabWidget";
-import SearchByNeurodataTypeWindow from "./SearchByNeurodataTypeWindow";
-import SearchByAbstractWindow from "./SearchByAbstractWindow";
+import { FunctionComponent, useState } from "react";
 import { getInitialSideChatWidth } from "../DandiPage/DandiPage";
-import ChatPanel, { Chat, emptyChat } from "app/ChatPanel/ChatPanel";
+import SearchByAbstractWindow from "./SearchByAbstractWindow";
+import SearchByNeurodataTypeWindow from "./SearchByNeurodataTypeWindow";
 
 type DandiQueryPageProps = {
   width: number;
   height: number;
+  showChat?: boolean;
 };
 
 const DandiQueryPage: FunctionComponent<DandiQueryPageProps> = ({
   width,
   height,
+  showChat,
 }) => {
   const initialSideChatWidth = getInitialSideChatWidth(width);
   const [chat, setChat] = useState<Chat>(emptyChat);
@@ -28,6 +25,7 @@ const DandiQueryPage: FunctionComponent<DandiQueryPageProps> = ({
       width={width}
       height={height}
       initialPosition={initialSideChatWidth}
+      hideFirstChild={!showChat}
     >
       <ChatPanel width={0} height={0} chat={chat} setChat={setChat} />
       <DandiQueryPageContent width={0} height={0} />;

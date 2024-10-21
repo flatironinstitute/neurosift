@@ -180,7 +180,12 @@ const Splitter: FunctionComponent<PropsWithChildren<Props>> = (props) => {
     >
       <div
         key="child1"
-        style={{ ...style1, position: "absolute", overflow: "hidden" }}
+        style={{
+          ...style1,
+          position: "absolute",
+          overflow: "hidden",
+          visibility: hideFirstChild ? "hidden" : undefined,
+        }}
         className="SplitterChild"
       >
         <child1.type
@@ -221,7 +226,12 @@ const Splitter: FunctionComponent<PropsWithChildren<Props>> = (props) => {
 
       <div
         key="child2"
-        style={{ ...style2, position: "absolute", overflow: "hidden" }}
+        style={{
+          ...style2,
+          position: "absolute",
+          overflow: "hidden",
+          visibility: hideSecondChild ? "hidden" : undefined,
+        }}
         className="SplitterChild"
       >
         {/* <child2.type ref={ref} {...child2.props} width={direction === 'horizontal' ? size1B : width} height={direction === 'horizontal' ? height : size1B} /> */}

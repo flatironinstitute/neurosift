@@ -66,8 +66,10 @@ const MainWindow: FunctionComponent<Props> = () => {
       >
         <ApplicationBar
           onContextChat={() => {
-            if (route.page === "dandi") setShowDandiPageChat(true);
-            else if (route.page === "dandiset") setShowDandiPageChat(true);
+            if (route.page === "dandi") setShowDandiPageChat((v) => !v);
+            else if (route.page === "dandiset") setShowDandiPageChat((v) => !v);
+            else if (route.page === "dandi-query")
+              setShowDandiPageChat((v) => !v);
             else if (route.page === "nwb") {
               if (contextChatVisible) closeContextChat();
               else openContextChat();
@@ -106,7 +108,11 @@ const MainWindow: FunctionComponent<Props> = () => {
         ) : route.page === "dandi" ? (
           <DandiPage width={width} height={H} showChat={showDandiPageChat} />
         ) : route.page === "dandi-query" ? (
-          <DandiQueryPage width={width} height={H} />
+          <DandiQueryPage
+            width={width}
+            height={H}
+            showChat={showDandiPageChat}
+          />
         ) : route.page === "annotations" ? (
           <AnnotationsPage width={width} height={H} />
         ) : route.page === "tests" ? (
