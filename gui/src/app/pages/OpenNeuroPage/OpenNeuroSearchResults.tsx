@@ -13,11 +13,9 @@ type OpenNeuroSearchResultsProps = {
   searchResults?: OpenNeuroDataset[];
 };
 
-const OpenNeuroSearchResults: FunctionComponent<OpenNeuroSearchResultsProps> = ({
-  width,
-  height,
-  searchResults,
-}) => {
+const OpenNeuroSearchResults: FunctionComponent<
+  OpenNeuroSearchResultsProps
+> = ({ width, height, searchResults }) => {
   if (!searchResults) {
     return <div style={{ padding: 20 }}>Querying OpenNeuro...</div>;
   }
@@ -47,11 +45,9 @@ type OpenNeuroSearchResultItemProps = {
   onOpenItem: (datasetId: string) => void;
 };
 
-const OpenNeuroSearchResultItem: FunctionComponent<OpenNeuroSearchResultItemProps> = ({
-  dataset,
-  width,
-  onOpenItem,
-}) => {
+const OpenNeuroSearchResultItem: FunctionComponent<
+  OpenNeuroSearchResultItemProps
+> = ({ dataset, width, onOpenItem }) => {
   return (
     <div style={{ padding: 10, borderBottom: "solid 1px #ccc" }}>
       <div style={{ fontSize: 18, fontWeight: "bold" }}>
@@ -71,7 +67,8 @@ const OpenNeuroSearchResultItem: FunctionComponent<OpenNeuroSearchResultItemProp
         Created {dataset.created}
       </div>
       <div style={{ fontSize: 14, color: "#666" }}>
-        {dataset.latestSnapshot.summary.subjects.length} subjects, {formatByteCount(dataset.latestSnapshot.size)}
+        {dataset.latestSnapshot.summary.subjects.length} subjects,{" "}
+        {formatByteCount(dataset.latestSnapshot.size)}
       </div>
     </div>
   );

@@ -175,7 +175,10 @@ type GraphQLResponse = {
 const fetchONDatasets = async (
   searchText: string,
 ): Promise<OpenNeuroDataset[]> => {
-  const keywords = searchText.split(" ").map((keyword) => keyword.trim()).filter((keyword) => keyword.length > 0);
+  const keywords = searchText
+    .split(" ")
+    .map((keyword) => keyword.trim())
+    .filter((keyword) => keyword.length > 0);
   const queryExample = `query advancedSearchDatasets($query: JSON!, $cursor: String, $allDatasets: Boolean, $datasetType: String, $datasetStatus: String, $sortBy: JSON) {\\n  datasets: advancedSearch(\\n    query: $query\\n    allDatasets: $allDatasets\\n    datasetType: $datasetType\\n    datasetStatus: $datasetStatus\\n    sortBy: $sortBy\\n    first: 25\\n    after: $cursor\\n  ) {\\n    edges {\\n      id\\n      node {\\n        id\\n        created\\n        uploader {\\n          id\\n          name\\n          orcid\\n          __typename\\n        }\\n        public\\n        permissions {\\n          id\\n          userPermissions {\\n            userId\\n            level\\n            access: level\\n            user {\\n              id\\n              name\\n              email\\n              provider\\n              __typename\\n            }\\n            __typename\\n          }\\n          __typename\\n        }\\n        metadata {\\n          ages\\n          __typename\\n        }\\n        latestSnapshot {\\n          size\\n          summary {\\n            modalities\\n            secondaryModalities\\n            sessions\\n            subjects\\n            subjectMetadata {\\n              participantId\\n              age\\n              sex\\n              group\\n              __typename\\n            }\\n            tasks\\n            size\\n            totalFiles\\n            dataProcessed\\n            pet {\\n              BodyPart\\n              ScannerManufacturer\\n              ScannerManufacturersModelName\\n              TracerName\\n              TracerRadionuclide\\n              __typename\\n            }\\n            __typename\\n          }\\n          issues {\\n            severity\\n            __typename\\n          }\\n          description {\\n            Name\\n            Authors\\n            __typename\\n          }\\n          __typename\\n        }\\n        analytics {\\n          views\\n          downloads\\n          __typename\\n        }\\n        stars {\\n          userId\\n          datasetId\\n          __typename\\n        }\\n        followers {\\n          userId\\n          datasetId\\n          __typename\\n        }\\n        snapshots {\\n          id\\n          created\\n          tag\\n          __typename\\n        }\\n        __typename\\n      }\\n      __typename\\n    }\\n    pageInfo {\\n      startCursor\\n      endCursor\\n      hasPreviousPage\\n      hasNextPage\\n      count\\n      __typename\\n    }\\n    __typename\\n  }\\n}`;
   let query = `query advancedSearchDatasets(
   $query: JSON!,
@@ -304,23 +307,28 @@ const fetchONDatasets = async (
 }`;
   query = query.split("\n").join("\\n");
 
-  const qq = keywords.length > 0 ? {
-    bool: {
-      must: [{
-        simple_query_string: {
-          query: keywords.join(" + ") + "~",
-          fields: [
-            "id^20",
-            "latestSnapshot.readme",
-            "latestSnapshot.description.Name^6",
-            "latestSnapshot.description.Authors^3",
-          ],
-        },
-      }]
-    },
-  } : {
-    bool: {}
-  }
+  const qq =
+    keywords.length > 0
+      ? {
+          bool: {
+            must: [
+              {
+                simple_query_string: {
+                  query: keywords.join(" + ") + "~",
+                  fields: [
+                    "id^20",
+                    "latestSnapshot.readme",
+                    "latestSnapshot.description.Name^6",
+                    "latestSnapshot.description.Authors^3",
+                  ],
+                },
+              },
+            ],
+          },
+        }
+      : {
+          bool: {},
+        };
 
   const resp = await fetch("https://openneuro.org/crn/graphql", {
     headers: {

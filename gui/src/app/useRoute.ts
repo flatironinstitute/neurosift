@@ -212,8 +212,7 @@ const useRoute = () => {
       return {
         page: "openneuro",
       };
-    }
-    else {
+    } else {
       return {
         page: "home",
       };
