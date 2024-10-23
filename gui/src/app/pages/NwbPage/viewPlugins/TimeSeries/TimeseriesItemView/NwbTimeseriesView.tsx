@@ -163,6 +163,7 @@ type NwbTimeseriesViewChildProps = {
   height: number;
   autoChannelSeparation?: number;
   colorChannels?: boolean;
+  channelIndicesForColor?: number[];
   applyConversion?: boolean;
   spikeTrainsClient?: SpikeTrainsClient;
   startZoomedOut?: boolean;
@@ -180,6 +181,7 @@ export const NwbTimeseriesViewChild: FunctionComponent<
   height,
   autoChannelSeparation,
   colorChannels,
+  channelIndicesForColor,
   applyConversion,
   spikeTrainsClient,
   startZoomedOut,
@@ -408,7 +410,11 @@ export const NwbTimeseriesViewChild: FunctionComponent<
             dataSeries.push({
               type: dataseriesMode,
               title: `ch${i}`,
-              attributes: { color: colorForChannel(i) },
+              attributes: {
+                color: colorForChannel(
+                  channelIndicesForColor ? channelIndicesForColor[i] : i,
+                ),
+              },
               t: dataT,
               y: dataY,
             });
@@ -465,14 +471,14 @@ export const NwbTimeseriesViewChild: FunctionComponent<
     });
   }, [dataSeries, refreshValueRangeCode]);
   useEffect(() => {
-    // refresh the value range when applyConversion changes
+    // refresh the value range when applyConversion or datasetChunkingClient changes
     setValueRange(undefined);
     setDataSeries(undefined);
     setTimeout(() => {
       // not ideal
       setRefreshValueRangeCode((old) => old + 1);
     }, 100);
-  }, [applyConversion]);
+  }, [applyConversion, datasetChunkingClient]);
 
   useEffect(() => {
     // reset the value range

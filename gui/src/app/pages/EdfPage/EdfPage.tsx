@@ -31,11 +31,13 @@ const EdfPage: FunctionComponent<EdfPageProps> = ({ width, height }) => {
   const [selectedChannelIndices, setSelectedChannelIndices] = useState<
     number[]
   >([]);
+  const [channelSeparation, setChannelSeparation] = useState<number>(0);
   const timeseriesTimestampsClient =
     useTimeseriesTimestampsClientForEdfReader(edfReader);
   const datasetChunkingClient = useDatasetChunkingClientForEdfReader(
     edfReader,
     selectedChannelIndices,
+    channelSeparation,
   );
   const yLabel = "";
   useTimeseriesSelectionInitialization(0, 1);
@@ -70,12 +72,15 @@ const EdfPage: FunctionComponent<EdfPageProps> = ({ width, height }) => {
           selectedChannelIndices={selectedChannelIndices}
           setSelectedChannelIndices={setSelectedChannelIndices}
           edfUrl={edfUrl}
+          channelSeparation={channelSeparation}
+          setChannelSeparation={setChannelSeparation}
         />
         <NwbTimeseriesViewChild
           width={0}
           height={0}
           autoChannelSeparation={undefined}
           colorChannels={true}
+          channelIndicesForColor={selectedChannelIndices}
           applyConversion={true}
           spikeTrainsClient={undefined}
           startZoomedOut={undefined}
@@ -97,6 +102,8 @@ type LeftPanelProps = {
   selectedChannelIndices: number[];
   setSelectedChannelIndices: (indices: number[]) => void;
   edfUrl: string;
+  channelSeparation: number;
+  setChannelSeparation: (channelSeparation: number) => void;
 };
 
 const LeftPanel: FunctionComponent<LeftPanelProps> = ({
@@ -106,6 +113,8 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({
   selectedChannelIndices,
   setSelectedChannelIndices,
   edfUrl,
+  channelSeparation,
+  setChannelSeparation,
 }) => {
   const openNeuroEDFInfo = useOpenNeuroInfo(edfUrl);
   return (
@@ -125,6 +134,10 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({
         edfReader={edfReader}
         selectedChannelIndices={selectedChannelIndices}
         setSelectedChannelIndices={setSelectedChannelIndices}
+      />
+      <ChannelSeparationSelector
+        channelSeparation={channelSeparation}
+        setChannelSeparation={setChannelSeparation}
       />
       <div>
         {openNeuroEDFInfo && (
@@ -165,6 +178,33 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+type ChannelSeparationSelectorProps = {
+  channelSeparation: number;
+  setChannelSeparation: (channelSeparation: number) => void;
+};
+
+const channelSeparationChoices = [0, 2, 5, 10, 20, 50, 100];
+
+const ChannelSeparationSelector: FunctionComponent<
+  ChannelSeparationSelectorProps
+> = ({ channelSeparation, setChannelSeparation }) => {
+  return (
+    <div>
+      Chan. sep (stdev)&nbsp;
+      <select
+        value={channelSeparation}
+        onChange={(e) => setChannelSeparation(Number(e.target.value))}
+      >
+        {channelSeparationChoices.map((val) => (
+          <option key={val} value={val}>
+            {val}
+          </option>
+        ))}
+      </select>
     </div>
   );
 };
@@ -366,6 +406,7 @@ const useTimeseriesTimestampsClientForEdfReader = (
 const useDatasetChunkingClientForEdfReader = (
   edfReader: EDFReader | null,
   selectedChannelIndices: number[],
+  channelSeparation: number,
 ) => {
   const [datasetChunkingClient, setDatasetChunkingClient] =
     useState<DatasetChunkingClientInterface | null>(null);
@@ -441,6 +482,28 @@ const useDatasetChunkingClientForEdfReader = (
       getConcatenatedChunk,
     });
   }, [edfReader]);
+  const [estimatedChannelStdevs, setEstimatedChannelStdevs] = useState<
+    number[]
+  >([]);
+  useEffect(() => {
+    if (!datasetChunkingClient) return;
+    (async () => {
+      const initialChunk = await datasetChunkingClient.getConcatenatedChunk(
+        0,
+        1,
+        { onCancel: [] },
+      );
+      const concatenatedChunk = initialChunk.concatenatedChunk;
+      const channelStdevs = concatenatedChunk.map((x) => {
+        if (!x.length) return 0;
+        const sum = x.reduce((a, b) => a + b, 0);
+        const mean = sum / x.length;
+        const sum2 = x.reduce((a, b) => a + (b - mean) ** 2, 0);
+        return Math.sqrt(sum2 / x.length);
+      });
+      setEstimatedChannelStdevs(channelStdevs);
+    })();
+  }, [datasetChunkingClient]);
   const datasetChunkingClient2 = useMemo(() => {
     if (!datasetChunkingClient) return null;
     return {
@@ -469,7 +532,45 @@ const useDatasetChunkingClientForEdfReader = (
       },
     };
   }, [datasetChunkingClient, selectedChannelIndices]);
-  return datasetChunkingClient2;
+  const absoluteChannelSeparation = useMemo(() => {
+    if (!channelSeparation) return 0;
+    if (!estimatedChannelStdevs.length) return 0;
+    const medianStdev = computeMedian(
+      selectedChannelIndices.map((i) => estimatedChannelStdevs[i]),
+    );
+    return channelSeparation * medianStdev;
+  }, [channelSeparation, estimatedChannelStdevs, selectedChannelIndices]);
+  const datasetChunkingClient3 = useMemo(() => {
+    if (!datasetChunkingClient2) return null;
+    if (!absoluteChannelSeparation) return datasetChunkingClient2;
+    return {
+      chunkSize: datasetChunkingClient2.chunkSize,
+      getConcatenatedChunk: async (
+        startChunkIndex: number,
+        endChunkIndex: number,
+        canceler: { onCancel: (() => void)[] },
+      ) => {
+        const chunk = await datasetChunkingClient2.getConcatenatedChunk(
+          startChunkIndex,
+          endChunkIndex,
+          canceler,
+        );
+        // apply channel separation
+        const concatenatedChunk = chunk.concatenatedChunk.map((x, aa) => {
+          // caution: this is an in-place operation
+          for (let i = 0; i < x.length; i++) {
+            x[i] += aa * absoluteChannelSeparation;
+          }
+          return x;
+        });
+        return {
+          concatenatedChunk,
+          completed: chunk.completed,
+        };
+      },
+    };
+  }, [datasetChunkingClient2, absoluteChannelSeparation]);
+  return datasetChunkingClient3;
 };
 
 type OpenNeuroEDFInfo = {
@@ -495,6 +596,15 @@ const useOpenNeuroInfo = (url: string): OpenNeuroEDFInfo | null => {
     }
   }
   return null;
+};
+
+const computeMedian = (x: number[]) => {
+  if (x.length === 0) return 0;
+  const y = x.slice().sort((a, b) => a - b);
+  if (y.length % 2 === 1) {
+    return y[Math.floor(y.length / 2)];
+  }
+  return (y[y.length / 2 - 1] + y[y.length / 2]) / 2;
 };
 
 export default EdfPage;
