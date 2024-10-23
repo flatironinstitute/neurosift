@@ -1,0 +1,500 @@
+import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import useRoute from "../../useRoute";
+import {
+  DatasetChunkingClientInterface,
+  NwbTimeseriesViewChild,
+} from "../NwbPage/viewPlugins/TimeSeries/TimeseriesItemView/NwbTimeseriesView";
+import { TimeseriesTimestampsClient } from "../NwbPage/viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesTimestampsClient";
+import EDFReader from "./EDFReader";
+import {
+  SetupTimeseriesSelection,
+  useTimeseriesSelectionInitialization,
+} from "app/package/context-timeseries-selection";
+import Splitter from "app/Splitter/Splitter";
+
+type EdfPageProps = {
+  width: number;
+  height: number;
+};
+
+// small number of channels:
+// https://neurosift.app/?p=/edf&url=%22https://s3.amazonaws.com/openneuro.org/ds003374/sub-01/ses-01/ieeg/sub-01_ses-01_task-jokeit_run-01_ieeg.edf?versionId=fmme9zou6CJaupJWGNfKx54PzDIruE1f%22
+
+// 95 channels, with one not shown because it has a different sampling rate:
+// https://neurosift.app/?p=/edf&url=%22https://s3.amazonaws.com/openneuro.org/ds005523/sub-R1032D/ses-0/ieeg/sub-R1032D_ses-0_task-YC2_acq-bipolar_ieeg.edf?versionId=456bC8NDUApR25BVpvdVrut7sur0Nk_o%22
+
+const EdfPage: FunctionComponent<EdfPageProps> = ({ width, height }) => {
+  const { route } = useRoute();
+  if (route.page !== "edf") throw Error('Unexpected: route.page is not "edf"');
+  const edfUrl = route.url;
+  const { edfReader } = useEdfReader(edfUrl);
+  const [selectedChannelIndices, setSelectedChannelIndices] = useState<
+    number[]
+  >([]);
+  const timeseriesTimestampsClient =
+    useTimeseriesTimestampsClientForEdfReader(edfReader);
+  const datasetChunkingClient = useDatasetChunkingClientForEdfReader(
+    edfReader,
+    selectedChannelIndices,
+  );
+  const yLabel = "";
+  useTimeseriesSelectionInitialization(0, 1);
+  const maxVisibleDuration = useMemo(() => {
+    const nChannels = edfReader?.getNSignals() || 1;
+    const nSamplesPerSec = edfReader?.getSignalFreqs()[0] || 1;
+    return 5e6 / (nSamplesPerSec * nChannels);
+  }, [edfReader]);
+  const initialLeftPanelPosition = width < 800 ? Math.min(200, width / 2) : 300;
+  useEffect(() => {
+    // select all the channels to start
+    setSelectedChannelIndices(
+      edfReader?.getSignalTextLabels().map((_, i) => i) || [],
+    );
+  }, [edfReader]);
+  if (!edfReader) return <div>Loading EDF file...</div>;
+  if (!timeseriesTimestampsClient)
+    return <div>Loading timestamps client...</div>;
+  if (!datasetChunkingClient) return <div>Loading chunking client...</div>;
+  return (
+    <SetupTimeseriesSelection initialTimeSelection={undefined}>
+      <Splitter
+        width={width}
+        height={height}
+        direction="horizontal"
+        initialPosition={initialLeftPanelPosition}
+      >
+        <LeftPanel
+          width={0}
+          height={0}
+          edfReader={edfReader}
+          selectedChannelIndices={selectedChannelIndices}
+          setSelectedChannelIndices={setSelectedChannelIndices}
+          edfUrl={edfUrl}
+        />
+        <NwbTimeseriesViewChild
+          width={0}
+          height={0}
+          autoChannelSeparation={undefined}
+          colorChannels={true}
+          applyConversion={true}
+          spikeTrainsClient={undefined}
+          startZoomedOut={undefined}
+          timeseriesTimestampsClient={timeseriesTimestampsClient}
+          datasetChunkingClient={datasetChunkingClient}
+          numVisibleChannels={undefined}
+          yLabel={yLabel}
+          maxVisibleDuration={maxVisibleDuration}
+        />
+      </Splitter>
+    </SetupTimeseriesSelection>
+  );
+};
+
+type LeftPanelProps = {
+  width: number;
+  height: number;
+  edfReader: EDFReader;
+  selectedChannelIndices: number[];
+  setSelectedChannelIndices: (indices: number[]) => void;
+  edfUrl: string;
+};
+
+const LeftPanel: FunctionComponent<LeftPanelProps> = ({
+  width,
+  height,
+  edfReader,
+  selectedChannelIndices,
+  setSelectedChannelIndices,
+  edfUrl,
+}) => {
+  const openNeuroEDFInfo = useOpenNeuroInfo(edfUrl);
+  return (
+    <div
+      style={{
+        position: "relative",
+        left: 10,
+        top: 10,
+        width: width - 20,
+        height: height - 20,
+        overflowY: "auto",
+      }}
+    >
+      <EDFChannelSelectionComponent
+        width={width - 20}
+        height={Math.max(200, height / 2)}
+        edfReader={edfReader}
+        selectedChannelIndices={selectedChannelIndices}
+        setSelectedChannelIndices={setSelectedChannelIndices}
+      />
+      <div>
+        {openNeuroEDFInfo && (
+          <div>
+            <h4>OpenNeuro</h4>
+            <table className="nwb-table">
+              <tbody>
+                <tr>
+                  <td>Dataset</td>
+                  <td>
+                    <a
+                      href={`https://openneuro.org/datasets/${openNeuroEDFInfo.datasetId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {openNeuroEDFInfo.datasetId}
+                    </a>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Subject</td>
+                  <td>{openNeuroEDFInfo.subjectId}</td>
+                </tr>
+                <tr>
+                  <td>Session</td>
+                  <td>{openNeuroEDFInfo.sessionId}</td>
+                </tr>
+                <tr>
+                  <td>Modality</td>
+                  <td>{openNeuroEDFInfo.modality}</td>
+                </tr>
+                <tr>
+                  <td>File</td>
+                  <td>{openNeuroEDFInfo.fileName}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+type EDFChannelSelectionComponentProps = {
+  width: number;
+  height: number;
+  edfReader: EDFReader;
+  selectedChannelIndices: number[];
+  setSelectedChannelIndices: (indices: number[]) => void;
+};
+
+const EDFChannelSelectionComponent: FunctionComponent<
+  EDFChannelSelectionComponentProps
+> = ({
+  width,
+  height,
+  edfReader,
+  selectedChannelIndices,
+  setSelectedChannelIndices,
+}) => {
+  const channelLabels = useMemo(() => {
+    return edfReader.getSignalTextLabels();
+  }, [edfReader]);
+
+  const channelSamplingFrequencies = useMemo(() => {
+    return edfReader.getSignalFreqs();
+  }, [edfReader]);
+
+  return (
+    <div style={{ width, height, overflowY: "auto" }}>
+      <table className="nwb-table">
+        <thead>
+          <tr>
+            <th>
+              <input
+                type="checkbox"
+                checked={selectedChannelIndices.length === channelLabels.length}
+                onChange={() => {}}
+                onClick={() => {
+                  if (selectedChannelIndices.length === channelLabels.length) {
+                    setSelectedChannelIndices([]);
+                  } else {
+                    setSelectedChannelIndices(channelLabels.map((_, i) => i));
+                  }
+                }}
+              />
+            </th>
+            <th>Channel</th>
+            <th>Rate (Hz)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {channelLabels.map((label, i) => (
+            <tr key={i}>
+              <td>
+                <input
+                  type="checkbox"
+                  checked={selectedChannelIndices.includes(i)}
+                  onChange={() => {}}
+                  onClick={() => {
+                    if (selectedChannelIndices.includes(i)) {
+                      setSelectedChannelIndices(
+                        selectedChannelIndices.filter((x) => x !== i),
+                      );
+                    } else {
+                      setSelectedChannelIndices(
+                        [...selectedChannelIndices, i].sort(),
+                      );
+                    }
+                  }}
+                />
+              </td>
+              <td>{label}</td>
+              <td>{channelSamplingFrequencies[i] || ""}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+// const UnitSelectionComponent: FunctionComponent<
+//   UnitsSelectionComponentProps
+// > = ({
+//   unitIds,
+//   selectedUnitIds,
+//   setSelectedUnitIds,
+//   sortUnitsByVariable,
+//   sortUnitsByValues,
+// }) => {
+//   if (!unitIds) return <div>Loading unit IDs...</div>;
+//   return (
+//     <table className="nwb-table">
+//       <thead>
+//         <tr>
+//           <th>
+//             <input
+//               type="checkbox"
+//               checked={
+//                 (unitIds || []).length > 0 &&
+//                 selectedUnitIds.length === (unitIds || []).length
+//               }
+//               onChange={() => {}}
+//               onClick={() => {
+//                 if (selectedUnitIds.length > 0) {
+//                   setSelectedUnitIds([]);
+//                 } else {
+//                   setSelectedUnitIds(unitIds || []);
+//                 }
+//               }}
+//             />
+//           </th>
+//           <th>Unit ID</th>
+//           {sortUnitsByVariable && <th>{sortUnitsByVariable[0]}</th>}
+//         </tr>
+//       </thead>
+//       <tbody>
+//         {(unitIds || []).map((unitId) => (
+//           <tr key={unitId}>
+//             <td>
+//               <input
+//                 type="checkbox"
+//                 checked={selectedUnitIds.includes(unitId)}
+//                 onChange={() => {}}
+//                 onClick={() => {
+//                   if (selectedUnitIds.includes(unitId)) {
+//                     setSelectedUnitIds(
+//                       selectedUnitIds.filter((x) => x !== unitId),
+//                     );
+//                   } else {
+//                     setSelectedUnitIds([...selectedUnitIds, unitId]);
+//                   }
+//                 }}
+//               />
+//             </td>
+//             <td>{unitId}</td>
+//             {sortUnitsByVariable && (
+//               <td>{sortUnitsByValues ? sortUnitsByValues[unitId] : ""}</td>
+//             )}
+//           </tr>
+//         ))}
+//       </tbody>
+//     </table>
+//   );
+// };
+
+const useEdfReader = (edfUrl: string) => {
+  const [edfReader, setEdfReader] = useState<EDFReader | null>(null);
+  useEffect(() => {
+    let canceled = false;
+    const load = async () => {
+      const reader = await EDFReader.fromURL(edfUrl);
+      if (canceled) return;
+      setEdfReader(reader);
+    };
+    load();
+    return () => {
+      canceled = true;
+    };
+  }, [edfUrl]);
+  return { edfReader };
+};
+
+const useTimeseriesTimestampsClientForEdfReader = (
+  edfReader: EDFReader | null,
+) => {
+  const [timeseriesTimestampsClient, setTimeseriesTimestampsClient] =
+    useState<TimeseriesTimestampsClient | null>(null);
+  useEffect(() => {
+    if (!edfReader) return;
+    setTimeseriesTimestampsClient(null);
+    if (edfReader.getNSignals() === 0) return;
+    // the problem is that different signals can have different sample rates
+    const sampleRateHz = edfReader.getSignalFreqs()[0];
+    const nSamples = edfReader.getNSamples()[0];
+    setTimeseriesTimestampsClient({
+      startTime: 0,
+      endTime: nSamples / sampleRateHz,
+      estimatedSamplingFrequency: sampleRateHz,
+      getDataIndexForTime: async (time: number) => {
+        const i = Math.floor(time * sampleRateHz);
+        return i;
+      },
+      getTimestampsForDataIndices: async (i1: number, i2: number) => {
+        const timestamps: number[] = [];
+        for (let i = i1; i < i2; i++) {
+          timestamps.push(i / sampleRateHz);
+        }
+        // important to return a Float64Array so it can be compatible with Float64Array to handle large timestamps
+        return new Float64Array(timestamps);
+      },
+    });
+  }, [edfReader]);
+  return timeseriesTimestampsClient;
+};
+
+const useDatasetChunkingClientForEdfReader = (
+  edfReader: EDFReader | null,
+  selectedChannelIndices: number[],
+) => {
+  const [datasetChunkingClient, setDatasetChunkingClient] =
+    useState<DatasetChunkingClientInterface | null>(null);
+  useEffect(() => {
+    if (!edfReader) return;
+    setDatasetChunkingClient(null);
+    if (edfReader.getNSignals() === 0) return;
+    // const sampleRateHz = edfReader.getSignalFreqs()[0];
+    const nSamples = edfReader.getNSamples()[0];
+    const nChannels = edfReader.getNSignals();
+    const chunkSize = 5000;
+    const getConcatenatedChunk = async (
+      startChunkIndex: number,
+      endChunkIndex: number,
+      canceler: { onCancel: (() => void)[] },
+    ) => {
+      let canceled = false;
+      canceler.onCancel.push(() => {
+        canceled = true;
+      });
+      const i1 = startChunkIndex * chunkSize;
+      let i2 = endChunkIndex * chunkSize;
+      if (i2 > nSamples) {
+        i2 = nSamples;
+      }
+      // initializeWith NaNs
+      const ret: number[][] = [];
+      for (let i = 0; i < nChannels; i++) {
+        ret.push(new Array(i2 - i1).fill(NaN));
+      }
+      const timer = Date.now();
+      let incomplete = false;
+      for (let iChunk = startChunkIndex; iChunk < endChunkIndex; iChunk++) {
+        if (canceled)
+          return {
+            concatenatedChunk: [],
+            completed: false,
+          };
+        const jj1 = iChunk * chunkSize;
+        let jj2 = (iChunk + 1) * chunkSize;
+        if (jj2 > nSamples) {
+          jj2 = nSamples;
+        }
+        for (let iChannel = 0; iChannel < nChannels; iChannel++) {
+          if (edfReader.getNSamples()[iChannel] !== nSamples) {
+            // skip this channel because it has a different sampling rate than the first channel
+            console.warn(
+              "Skipping channel because it has a different sampling rate than the first channel: " +
+                iChannel,
+            );
+            break;
+          }
+          const xx = await edfReader.readSamples(iChannel, jj1, jj2);
+          for (let j = 0; j < xx.length; j++) {
+            ret[iChannel][jj1 - i1 + j] = xx[j];
+          }
+        }
+        const elapsedSec = (Date.now() - timer) / 1000;
+        if (elapsedSec > 2) {
+          if (iChunk < endChunkIndex - 1) {
+            incomplete = true;
+          }
+          break;
+        }
+      }
+      return {
+        concatenatedChunk: ret,
+        completed: !incomplete,
+      };
+    };
+    setDatasetChunkingClient({
+      chunkSize,
+      getConcatenatedChunk,
+    });
+  }, [edfReader]);
+  const datasetChunkingClient2 = useMemo(() => {
+    if (!datasetChunkingClient) return null;
+    return {
+      chunkSize: datasetChunkingClient.chunkSize,
+      getConcatenatedChunk: async (
+        startChunkIndex: number,
+        endChunkIndex: number,
+        canceler: { onCancel: (() => void)[] },
+      ) => {
+        if (!datasetChunkingClient) {
+          throw Error("Unexpected: datasetChunkingClient is null");
+        }
+        const chunk = await datasetChunkingClient.getConcatenatedChunk(
+          startChunkIndex,
+          endChunkIndex,
+          canceler,
+        );
+        // return only the selected channels
+        const chunk2 = {
+          concatenatedChunk: selectedChannelIndices.map(
+            (i) => chunk.concatenatedChunk[i],
+          ),
+          completed: chunk.completed,
+        };
+        return chunk2;
+      },
+    };
+  }, [datasetChunkingClient, selectedChannelIndices]);
+  return datasetChunkingClient2;
+};
+
+type OpenNeuroEDFInfo = {
+  datasetId: string;
+  subjectId: string;
+  sessionId: string;
+  modality: string;
+  fileName: string;
+};
+
+const useOpenNeuroInfo = (url: string): OpenNeuroEDFInfo | null => {
+  if (!url) return null;
+  if (url.startsWith("https://s3.amazonaws.com/openneuro.org/")) {
+    const parts = url.split("?")[0].split("/");
+    if (parts.length === 9) {
+      return {
+        datasetId: parts[4],
+        subjectId: parts[5],
+        sessionId: parts[6],
+        modality: parts[7],
+        fileName: parts[8],
+      };
+    }
+  }
+  return null;
+};
+
+export default EdfPage;

@@ -11,7 +11,7 @@ class TimeseriesDatasetChunkingClient {
   constructor(
     private nwbFile: RemoteH5FileX,
     private dataset: RemoteH5Dataset,
-    private chunkSize: number,
+    public chunkSize: number,
     private o: {
       visibleChannelsRange?: [number, number];
       autoChannelSeparation?: number;

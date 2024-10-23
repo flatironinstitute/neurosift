@@ -22,6 +22,7 @@ import RandomFeedbackForm from "./Feedback/RandomFeedbackForm";
 import { useModalWindow } from "@fi-sci/modal-window";
 import PopupChatWindow from "./PopupChatWindow/PopupChatWindow";
 import ContextChat from "./ContextChat/ContextChat";
+import EdfPage from "./pages/EdfPage/EdfPage";
 
 type Props = {
   // none
@@ -103,6 +104,8 @@ const MainWindow: FunctionComponent<Props> = () => {
         //     />
         route.page === "avi" ? (
           <AviPage width={width} height={H} />
+        ) : route.page === "edf" ? (
+          <EdfPage width={width} height={H} />
         ) : route.page === "dandiset" ? (
           <DandisetPage width={width} height={H} showChat={showDandiPageChat} />
         ) : route.page === "dandi" ? (

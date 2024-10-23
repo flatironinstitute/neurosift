@@ -34,6 +34,10 @@ export type Route =
       dandiAssetId?: string;
     }
   | {
+      page: "edf";
+      url: string;
+    }
+  | {
       page: "dandiset";
       dandisetId: string;
       dandisetVersion?: string;
@@ -144,6 +148,11 @@ const useRoute = () => {
           ? (query.dandiAssetId as string)
           : undefined,
       };
+    } else if (p === "/edf") {
+      return {
+        page: "edf",
+        url: query.url as string,
+      };
     } else if (p === "/dandiset") {
       return {
         page: "dandiset",
@@ -241,6 +250,9 @@ const useRoute = () => {
         if (r.dandiAssetId) {
           newQuery.dandiAssetId = r.dandiAssetId;
         }
+      } else if (r.page === "edf") {
+        newQuery.p = "/edf";
+        newQuery.url = r.url;
       } else if (r.page === "dandiset") {
         newQuery.p = "/dandiset";
         newQuery.dandisetId = r.dandisetId;

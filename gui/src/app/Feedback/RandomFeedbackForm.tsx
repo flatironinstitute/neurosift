@@ -5,32 +5,34 @@ type RandomFeedbackFormProps = {
   // none
 };
 
-const specialCode = "3363";
-const enteredSpecialCode = localStorage.getItem("enteredSpecialCode") || "";
+const showIt = false; // for now never show it -- nobody was filling out the form anyway
 
-const NUM = 50;
+// const specialCode = "3363";
+// const enteredSpecialCode = localStorage.getItem("enteredSpecialCode") || "";
 
-let showIt = false;
-const numPageViewsSinceLastFeedbackString =
-  localStorage.getItem("numPageViewsSinceLastFeedback") || "";
-let numPageViewsSinceLastFeedback = parseInt(
-  numPageViewsSinceLastFeedbackString,
-);
-numPageViewsSinceLastFeedback = isNaN(numPageViewsSinceLastFeedback)
-  ? 0
-  : numPageViewsSinceLastFeedback;
-numPageViewsSinceLastFeedback++;
-localStorage.setItem(
-  "numPageViewsSinceLastFeedback",
-  numPageViewsSinceLastFeedback.toString(),
-);
-if (
-  numPageViewsSinceLastFeedback >= NUM &&
-  enteredSpecialCode !== specialCode
-) {
-  showIt = true;
-  localStorage.setItem("numPageViewsSinceLastFeedback", "0");
-}
+// const NUM = 50;
+
+// let showIt = false;
+// const numPageViewsSinceLastFeedbackString =
+//   localStorage.getItem("numPageViewsSinceLastFeedback") || "";
+// let numPageViewsSinceLastFeedback = parseInt(
+//   numPageViewsSinceLastFeedbackString,
+// );
+// numPageViewsSinceLastFeedback = isNaN(numPageViewsSinceLastFeedback)
+//   ? 0
+//   : numPageViewsSinceLastFeedback;
+// numPageViewsSinceLastFeedback++;
+// localStorage.setItem(
+//   "numPageViewsSinceLastFeedback",
+//   numPageViewsSinceLastFeedback.toString(),
+// );
+// if (
+//   numPageViewsSinceLastFeedback >= NUM &&
+//   enteredSpecialCode !== specialCode
+// ) {
+//   showIt = true;
+//   localStorage.setItem("numPageViewsSinceLastFeedback", "0");
+// }
 
 const RandomFeedbackForm: FunctionComponent<RandomFeedbackFormProps> = () => {
   const { visible, handleClose, handleOpen } = useModalWindow();

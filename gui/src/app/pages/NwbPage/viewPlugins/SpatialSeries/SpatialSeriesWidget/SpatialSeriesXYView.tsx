@@ -15,7 +15,7 @@ import {
 } from "../../../../../package/context-timeseries-selection";
 import { useNwbFile } from "../../../NwbFileContext";
 import { useDataset } from "../../../NwbMainView/NwbMainView";
-import { useNwbTimeseriesDataClient } from "../../TimeSeries/TimeseriesItemView/NwbTimeseriesDataClient";
+import { useTimeseriesTimestampsClient } from "../../TimeSeries/TimeseriesItemView/TimeseriesTimestampsClient";
 import TimeseriesDatasetChunkingClient from "../../TimeSeries/TimeseriesItemView/TimeseriesDatasetChunkingClient";
 import TimeseriesSelectionBar, {
   timeSelectionBarHeight,
@@ -48,7 +48,7 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
 
   const dataset = useDataset(nwbFile, `${path}/data`);
 
-  const dataClient = useNwbTimeseriesDataClient(nwbFile, path);
+  const dataClient = useTimeseriesTimestampsClient(nwbFile, path);
   const startTime = dataClient ? dataClient.startTime! : undefined;
   const endTime = dataClient ? dataClient.endTime! : undefined;
   useTimeseriesSelectionInitialization(startTime, endTime);

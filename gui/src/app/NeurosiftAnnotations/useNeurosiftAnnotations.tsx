@@ -60,6 +60,7 @@ export const SetupNeurosiftAnnotationsProvider = ({
       if (canceled) return;
       if (!response.ok) {
         console.error("Failed to fetch user info", response);
+        localStorage.setItem("neurosift-annotations-access-token", "");
         return;
       }
       const resp = await response.json();

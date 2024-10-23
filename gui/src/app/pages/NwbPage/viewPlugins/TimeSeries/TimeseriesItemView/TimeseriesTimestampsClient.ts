@@ -80,7 +80,7 @@ class TimestampFinder {
   }
 }
 
-class IrregularTimeseriesDataClient {
+class IrregularTimeseriesTimestampsClient {
   #estimatedSamplingFrequency: number | undefined = undefined;
   #startTime: number | undefined = undefined;
   #endTime: number | undefined = undefined;
@@ -156,7 +156,7 @@ class IrregularTimeseriesDataClient {
   }
 }
 
-class RegularTimeseriesDataClient {
+class RegularTimeseriesTimestampsClient {
   #samplingFrequency: number | undefined = undefined;
   #startTime: number | undefined = undefined;
   #endTime: number | undefined = undefined;
@@ -215,8 +215,7 @@ class RegularTimeseriesDataClient {
   }
 }
 
-interface NwbTimeseriesDataClient {
-  initialize: () => Promise<void>;
+export interface TimeseriesTimestampsClient {
   startTime: number | undefined;
   endTime: number | undefined;
   estimatedSamplingFrequency: number | undefined;
@@ -227,24 +226,30 @@ interface NwbTimeseriesDataClient {
   ) => Promise<DatasetDataType | undefined>;
 }
 
-export const useNwbTimeseriesDataClient = (
+export const useTimeseriesTimestampsClient = (
   nwbFile: RemoteH5FileX,
   objectPath: string,
 ) => {
   const group = useGroup(nwbFile, objectPath);
-  const [dataClient, setDataClient] = useState<NwbTimeseriesDataClient>();
+  const [dataClient, setDataClient] = useState<TimeseriesTimestampsClient>();
   useEffect(() => {
     if (!nwbFile) return;
     if (!group) return;
     let canceled = false;
     const load = async () => {
       if (group.datasets.find((ds) => ds.name === "timestamps")) {
-        const client = new IrregularTimeseriesDataClient(nwbFile, objectPath);
+        const client = new IrregularTimeseriesTimestampsClient(
+          nwbFile,
+          objectPath,
+        );
         await client.initialize();
         if (canceled) return;
         setDataClient(client);
       } else {
-        const client = new RegularTimeseriesDataClient(nwbFile, objectPath);
+        const client = new RegularTimeseriesTimestampsClient(
+          nwbFile,
+          objectPath,
+        );
         await client.initialize();
         if (canceled) return;
         setDataClient(client);

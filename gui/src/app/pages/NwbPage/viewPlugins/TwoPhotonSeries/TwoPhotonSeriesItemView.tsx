@@ -15,7 +15,7 @@ import {
 } from "../../../../package/context-timeseries-selection";
 import { useNwbFile } from "../../NwbFileContext";
 import { useDataset } from "../../NwbMainView/NwbMainView";
-import { useNwbTimeseriesDataClient } from "../TimeSeries/TimeseriesItemView/NwbTimeseriesDataClient";
+import { useTimeseriesTimestampsClient } from "../TimeSeries/TimeseriesItemView/TimeseriesTimestampsClient";
 import TimeseriesSelectionBar, {
   timeSelectionBarHeight,
 } from "../TimeSeries/TimeseriesItemView/TimeseriesSelectionBar";
@@ -148,18 +148,21 @@ export const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
   const [currentImage, setCurrentImage] = useState<ImageData | undefined>(
     undefined,
   );
-  const timeseriesDataClient = useNwbTimeseriesDataClient(nwbFile, path);
+  const timeseriesTimestampsClient = useTimeseriesTimestampsClient(
+    nwbFile,
+    path,
+  );
 
   const { currentTime, setCurrentTime } = useTimeseriesSelection();
   const { setVisibleTimeRange } = useTimeRange();
   useTimeseriesSelectionInitialization(
-    timeseriesDataClient?.startTime,
-    timeseriesDataClient?.endTime,
+    timeseriesTimestampsClient?.startTime,
+    timeseriesTimestampsClient?.endTime,
   );
   useEffect(() => {
-    if (!timeseriesDataClient) return;
-    setCurrentTime(timeseriesDataClient.startTime!);
-  }, [timeseriesDataClient, setCurrentTime, setVisibleTimeRange]);
+    if (!timeseriesTimestampsClient) return;
+    setCurrentTime(timeseriesTimestampsClient.startTime!);
+  }, [timeseriesTimestampsClient, setCurrentTime, setVisibleTimeRange]);
 
   const [currentPlane, setCurrentPlane] = useState<number>(0); // -1 means RGB
   const [currentMinValue, setCurrentMinValue] = useState<number | undefined>(
@@ -187,17 +190,18 @@ export const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
   const [frameIndex, setFrameIndex] = useState<number | undefined>(undefined);
   useEffect(() => {
     if (currentTime === undefined) return undefined;
-    if (!timeseriesDataClient) return undefined;
+    if (!timeseriesTimestampsClient) return undefined;
     let canceled = false;
     (async () => {
-      const i1 = await timeseriesDataClient?.getDataIndexForTime(currentTime);
+      const i1 =
+        await timeseriesTimestampsClient?.getDataIndexForTime(currentTime);
       if (canceled) return;
       setFrameIndex(i1);
     })();
     return () => {
       canceled = true;
     };
-  }, [currentTime, timeseriesDataClient]);
+  }, [currentTime, timeseriesTimestampsClient]);
 
   const computedDataDatUrl = useComputedDataDatUrl(nwbFile, dataDataset?.path);
 
@@ -279,7 +283,7 @@ export const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
     nwbFile,
     computedDataDatUrl,
     frameIndex,
-    timeseriesDataClient,
+    timeseriesTimestampsClient,
     planeTransform,
   ]);
 
@@ -297,11 +301,11 @@ export const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
   const incrementFrame = useMemo(
     () => (inc: number) => {
       (async () => {
-        if (!timeseriesDataClient) return;
+        if (!timeseriesTimestampsClient) return;
         if (frameIndex === undefined) return;
         const i1 = frameIndex;
         const i2 = i1 + inc;
-        const tt = await timeseriesDataClient.getTimestampsForDataIndices(
+        const tt = await timeseriesTimestampsClient.getTimestampsForDataIndices(
           i2,
           i2 + 1,
         );
@@ -311,7 +315,7 @@ export const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
         setCurrentTime(tt[0]);
       })();
     },
-    [timeseriesDataClient, frameIndex, setCurrentTime],
+    [timeseriesTimestampsClient, frameIndex, setCurrentTime],
   );
 
   useEffect(() => {
@@ -372,14 +376,14 @@ export const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
         <div style={{ position: "relative", top: 3 }}>
           <SmallIconButton
             disabled={
-              (currentTime || 0) <= (timeseriesDataClient?.startTime || 0)
+              (currentTime || 0) <= (timeseriesTimestampsClient?.startTime || 0)
             }
             onClick={() => incrementFrame(-1)}
             icon={<ArrowLeft />}
           />
           <SmallIconButton
             disabled={
-              (currentTime || 0) >= (timeseriesDataClient?.endTime || 0)
+              (currentTime || 0) >= (timeseriesTimestampsClient?.endTime || 0)
             }
             onClick={() => incrementFrame(1)}
             icon={<ArrowRight />}

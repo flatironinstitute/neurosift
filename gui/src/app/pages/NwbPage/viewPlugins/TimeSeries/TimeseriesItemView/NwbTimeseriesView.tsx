@@ -20,7 +20,10 @@ import {
 } from "../../../../../package/context-timeseries-selection";
 import { useNwbFile } from "../../../NwbFileContext";
 import { useDataset } from "../../../NwbMainView/NwbMainView";
-import { useNwbTimeseriesDataClient } from "./NwbTimeseriesDataClient";
+import {
+  TimeseriesTimestampsClient,
+  useTimeseriesTimestampsClient,
+} from "./TimeseriesTimestampsClient";
 import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient";
 import { timeSelectionBarHeight } from "./TimeseriesSelectionBar";
 import { DataSeries, Opts, SpikeTrainsDataForWorker } from "./WorkerTypes";
@@ -57,96 +60,30 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
   spikeTrainsClient,
   startZoomedOut,
 }) => {
-  const [canvasElement, setCanvasElement] = useState<
-    HTMLCanvasElement | undefined
-  >();
-  const [worker, setWorker] = useState<Worker | null>(null);
   const nwbFile = useNwbFile();
   if (!nwbFile)
     throw Error("Unexpected: nwbFile is undefined (no context provider)");
-  const [datasetChunkingClient, setDatasetChunkingClient] = useState<
-    TimeseriesDatasetChunkingClient | undefined
-  >(undefined);
-  const { visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange } =
-    useTimeRange();
-
   const dataset = useDataset(nwbFile, `${objectPath}/data`);
-
-  const dataClient = useNwbTimeseriesDataClient(nwbFile, objectPath);
-  const startTime = dataClient ? dataClient.startTime! : undefined;
-  const endTime = dataClient ? dataClient.endTime! : undefined;
-  useTimeseriesSelectionInitialization(startTime, endTime);
-
-  const { canvasWidth, canvasHeight, margins } = useTimeScrollView2({
-    width,
-    height: height - timeSelectionBarHeight,
-    hideToolbar,
-  });
-
+  const numChannels = dataset ? dataset.shape[1] : 0;
+  const timeseriesTimestampsClient = useTimeseriesTimestampsClient(
+    nwbFile,
+    objectPath,
+  );
   const numVisibleChannels = useMemo(
     () =>
       visibleChannelsRange
         ? visibleChannelsRange[1] - visibleChannelsRange[0]
-        : dataset
-          ? dataset.shape[1]
-          : 0,
-    [visibleChannelsRange, dataset],
+        : numChannels,
+    [numChannels, visibleChannelsRange],
   );
-
-  const [overrideMaxVisibleDuration, setOverrideMaxVisibleDuration] = useState<
-    number | undefined
+  // Set the datasetChunkingClient
+  const [datasetChunkingClient, setDatasetChunkingClient] = useState<
+    TimeseriesDatasetChunkingClient | undefined
   >(undefined);
-
-  const maxVisibleDuration = useMemo(
-    () =>
-      overrideMaxVisibleDuration ||
-      (dataClient
-        ? Math.max(
-            8e6 /
-              (numVisibleChannels || 1) /
-              (dataClient.estimatedSamplingFrequency || 1),
-            0.2,
-          )
-        : 0),
-    [numVisibleChannels, dataClient, overrideMaxVisibleDuration],
-  );
-
-  // Set chunkSize
   const chunkSize = useMemo(
     () => (dataset ? Math.floor(3e4 / (numVisibleChannels || 1)) : 0),
     [dataset, numVisibleChannels],
   );
-
-  // set visible time range
-  useEffect(() => {
-    if (!chunkSize) return;
-    if (!dataClient) return;
-    if (startTime === undefined) return;
-    if (endTime === undefined) return;
-    if (visibleStartTimeSec !== undefined) return;
-    if (visibleEndTimeSec !== undefined) return;
-    setVisibleTimeRange(
-      startTime,
-      startZoomedOut
-        ? endTime
-        : Math.min(
-            startTime +
-              (chunkSize / dataClient.estimatedSamplingFrequency!) * 10,
-            endTime,
-          ),
-    );
-  }, [
-    chunkSize,
-    dataClient,
-    setVisibleTimeRange,
-    startTime,
-    endTime,
-    visibleStartTimeSec,
-    visibleEndTimeSec,
-    startZoomedOut,
-  ]);
-
-  // Set the datasetChunkingClient
   useEffect(() => {
     if (!nwbFile) return;
     if (!dataset) return;
@@ -160,15 +97,6 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
         ignoreConversion: !applyConversion,
       },
     );
-    // setTimeout(async () => {
-    //   const chunk = await client.getConcatenatedChunk(0, 1, { onCancel: [] });
-    //   const dataDatasetData = await nwbFile.getDatasetData(dataset.path, {
-    //     slice: [
-    //       [0, 1000],
-    //       [0, 1],
-    //     ],
-    //   });
-    // }, 1000);
     setDatasetChunkingClient(client);
   }, [
     dataset,
@@ -177,6 +105,147 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
     visibleChannelsRange,
     autoChannelSeparation,
     applyConversion,
+  ]);
+  const yLabel = useMemo(() => {
+    if (!dataset) return "";
+    const yLabel = applyConversion ? dataset.attrs["unit"] || "" : "";
+    return yLabel;
+  }, [dataset, applyConversion]);
+
+  const maxVisibleDuration = useMemo(
+    () =>
+      timeseriesTimestampsClient
+        ? Math.max(
+            8e6 /
+              (numVisibleChannels || 1) /
+              (timeseriesTimestampsClient.estimatedSamplingFrequency || 1),
+            0.2,
+          )
+        : 0,
+    [numVisibleChannels, timeseriesTimestampsClient],
+  );
+
+  if (dataset?.dtype === "|O") {
+    return <div>Unable to display timeseries dataset with dtype |O</div>;
+  }
+
+  if (!timeseriesTimestampsClient) return <div>Loading data client...</div>;
+
+  return (
+    <NwbTimeseriesViewChild
+      width={width}
+      height={height}
+      autoChannelSeparation={autoChannelSeparation}
+      colorChannels={colorChannels}
+      applyConversion={applyConversion}
+      spikeTrainsClient={spikeTrainsClient}
+      startZoomedOut={startZoomedOut}
+      timeseriesTimestampsClient={timeseriesTimestampsClient}
+      datasetChunkingClient={datasetChunkingClient!}
+      numVisibleChannels={numVisibleChannels}
+      yLabel={yLabel}
+      maxVisibleDuration={maxVisibleDuration}
+    />
+  );
+};
+
+export interface DatasetChunkingClientInterface {
+  chunkSize: number;
+  getConcatenatedChunk: (
+    startChunkIndex: number,
+    endChunkIndex: number,
+    canceler: { onCancel: (() => void)[] },
+  ) => Promise<{ concatenatedChunk: number[][]; completed: boolean }>;
+}
+
+type NwbTimeseriesViewChildProps = {
+  width: number;
+  height: number;
+  autoChannelSeparation?: number;
+  colorChannels?: boolean;
+  applyConversion?: boolean;
+  spikeTrainsClient?: SpikeTrainsClient;
+  startZoomedOut?: boolean;
+  timeseriesTimestampsClient: TimeseriesTimestampsClient;
+  datasetChunkingClient: DatasetChunkingClientInterface;
+  numVisibleChannels?: number;
+  yLabel: string;
+  maxVisibleDuration?: number;
+};
+
+export const NwbTimeseriesViewChild: FunctionComponent<
+  NwbTimeseriesViewChildProps
+> = ({
+  width,
+  height,
+  autoChannelSeparation,
+  colorChannels,
+  applyConversion,
+  spikeTrainsClient,
+  startZoomedOut,
+  timeseriesTimestampsClient,
+  numVisibleChannels,
+  datasetChunkingClient,
+  yLabel,
+  maxVisibleDuration,
+}) => {
+  const [worker, setWorker] = useState<Worker | null>(null);
+  const [canvasElement, setCanvasElement] = useState<
+    HTMLCanvasElement | undefined
+  >();
+
+  const chunkSize = datasetChunkingClient ? datasetChunkingClient.chunkSize : 0;
+
+  const { visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange } =
+    useTimeRange();
+
+  const startTime = timeseriesTimestampsClient
+    ? timeseriesTimestampsClient.startTime!
+    : undefined;
+  const endTime = timeseriesTimestampsClient
+    ? timeseriesTimestampsClient.endTime!
+    : undefined;
+  useTimeseriesSelectionInitialization(startTime, endTime);
+
+  const { canvasWidth, canvasHeight, margins } = useTimeScrollView2({
+    width,
+    height: height - timeSelectionBarHeight,
+    hideToolbar,
+  });
+
+  const [overrideMaxVisibleDuration, setOverrideMaxVisibleDuration] = useState<
+    number | undefined
+  >(undefined);
+
+  // set visible time range
+  useEffect(() => {
+    if (!chunkSize) return;
+    if (!timeseriesTimestampsClient) return;
+    if (startTime === undefined) return;
+    if (endTime === undefined) return;
+    if (visibleStartTimeSec !== undefined) return;
+    if (visibleEndTimeSec !== undefined) return;
+    setVisibleTimeRange(
+      startTime,
+      startZoomedOut
+        ? endTime
+        : Math.min(
+            startTime +
+              (chunkSize /
+                timeseriesTimestampsClient.estimatedSamplingFrequency!) *
+                10,
+            endTime,
+          ),
+    );
+  }, [
+    chunkSize,
+    timeseriesTimestampsClient,
+    setVisibleTimeRange,
+    startTime,
+    endTime,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    startZoomedOut,
   ]);
 
   // Set startChunkIndex and endChunkIndex
@@ -189,10 +258,9 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
   const [zoomInRequired, setZoomInRequired] = useState<boolean>(false);
   useEffect(() => {
     if (
-      !dataset ||
       visibleStartTimeSec === undefined ||
       visibleEndTimeSec === undefined ||
-      !dataClient
+      !timeseriesTimestampsClient
     ) {
       setStartChunkIndex(undefined);
       setEndChunkIndex(undefined);
@@ -202,6 +270,8 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
     let canceled = false;
     const load = async () => {
       const zoomInRequired0 =
+        maxVisibleDuration !== undefined &&
+        !overrideMaxVisibleDuration &&
         visibleEndTimeSec - visibleStartTimeSec > maxVisibleDuration;
       if (zoomInRequired0) {
         setStartChunkIndex(undefined);
@@ -209,9 +279,13 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
         setZoomInRequired(true);
         return;
       }
-      let iStart = await dataClient.getDataIndexForTime(visibleStartTimeSec);
+      let iStart =
+        await timeseriesTimestampsClient.getDataIndexForTime(
+          visibleStartTimeSec,
+        );
       if (canceled) return;
-      let iEnd = await dataClient.getDataIndexForTime(visibleEndTimeSec);
+      let iEnd =
+        await timeseriesTimestampsClient.getDataIndexForTime(visibleEndTimeSec);
       if (canceled) return;
 
       // give a buffer of one point on each side
@@ -229,13 +303,13 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
       canceled = true;
     };
   }, [
-    dataset,
     visibleStartTimeSec,
     visibleEndTimeSec,
     chunkSize,
-    dataClient,
+    timeseriesTimestampsClient,
     numVisibleChannels,
     maxVisibleDuration,
+    overrideMaxVisibleDuration,
   ]);
 
   const [dataseriesMode, setDataseriesMode] = useState<"line" | "marker">(
@@ -266,8 +340,9 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
     // estimate the render subsample factor so that we have about width pixels being rendered
     if (visibleStartTimeSec === undefined) return 1;
     if (visibleEndTimeSec === undefined) return 1;
-    if (!dataClient) return 1;
-    const sampleingRateHz = dataClient.estimatedSamplingFrequency || 1;
+    if (!timeseriesTimestampsClient) return 1;
+    const sampleingRateHz =
+      timeseriesTimestampsClient.estimatedSamplingFrequency || 1;
     const spanSec = visibleEndTimeSec - visibleStartTimeSec;
     const numSamples = spanSec * sampleingRateHz;
     const targetSubsampleFactor = Math.floor(numSamples / width);
@@ -278,26 +353,30 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
       Math.floor(Math.log2(targetSubsampleFactor)),
     );
     return subsampleFactor;
-  }, [visibleStartTimeSec, visibleEndTimeSec, dataClient, width]);
+  }, [
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    timeseriesTimestampsClient,
+    width,
+  ]);
 
   // Set dataSeries
   const [dataSeries, setDataSeries] = useState<DataSeries[] | undefined>(
     undefined,
   );
   useEffect(() => {
-    setLoading(true);
-    if (!datasetChunkingClient) return;
-    if (dataset === undefined) return;
     if (startChunkIndex === undefined) return;
     if (endChunkIndex === undefined) return;
-    if (dataClient === undefined) return;
+    if (timeseriesTimestampsClient === undefined) return;
     if (zoomInRequired) return;
+
+    setLoading(true);
 
     let canceler: { onCancel: (() => void)[] } | undefined = undefined;
     let canceled = false;
     const load = async () => {
       let finished = false;
-      const tt = await dataClient.getTimestampsForDataIndices(
+      const tt = await timeseriesTimestampsClient.getTimestampsForDataIndices(
         startChunkIndex * chunkSize,
         endChunkIndex * chunkSize,
       );
@@ -351,10 +430,9 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
   }, [
     chunkSize,
     datasetChunkingClient,
-    dataset,
     startChunkIndex,
     endChunkIndex,
-    dataClient,
+    timeseriesTimestampsClient,
     zoomInRequired,
     dataseriesMode,
     colorForChannel,
@@ -589,12 +667,6 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
     ];
   }, [handleOpenHelp]);
 
-  const yLabel = useMemo(() => {
-    if (!dataset) return "";
-    const yLabel = applyConversion ? dataset.attrs["unit"] || "" : "";
-    return yLabel;
-  }, [dataset, applyConversion]);
-
   const yAxisInfo = useMemo(
     () => ({
       showTicks: true,
@@ -621,8 +693,20 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
     [visibleStartTimeSec, visibleEndTimeSec],
   );
 
-  if (dataset?.dtype === "|O") {
-    return <div>Unable to display timeseries dataset with dtype |O</div>;
+  if (visibleStartTimeSec === undefined) {
+    return <div>visibleStartTimeSec is undefined</div>;
+  }
+  if (visibleEndTimeSec === undefined) {
+    return <div>visibleEndTimeSec is undefined</div>;
+  }
+  if (startChunkIndex === undefined && !zoomInRequired) {
+    return <div>startChunkIndex is undefined</div>;
+  }
+  if (endChunkIndex === undefined && !zoomInRequired) {
+    return <div>endChunkIndex is undefined</div>;
+  }
+  if (timeseriesTimestampsClient === undefined) {
+    return <div>timeseriesTimestampsClient is undefined</div>;
   }
 
   return (
