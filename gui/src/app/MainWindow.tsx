@@ -21,6 +21,7 @@ import PluginPage from "./pages/PluginPage/PluginPage";
 import TestPage from "./pages/TestPage/TestPage";
 import TestsPage from "./pages/TestsPage/TestsPage";
 import useRoute from "./useRoute";
+import OpenNeuroPage from "./pages/OpenNeuroPage/OpenNeuroPage";
 
 type Props = {
   // none
@@ -123,6 +124,8 @@ const MainWindow: FunctionComponent<Props> = () => {
           <NeurosiftAnnotationsLoginPage />
         ) : route.page === "plugin" ? (
           <PluginPage width={width} height={H} />
+        ) : route.page === "openneuro" ? (
+          <OpenNeuroPage width={width} height={H} />
         ) : (
           <div>404</div>
         )}

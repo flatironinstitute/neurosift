@@ -72,6 +72,9 @@ export type Route =
       dandisetId?: string;
       dandisetVersion?: string;
       staging?: boolean;
+    }
+  | {
+      page: "openneuro";
     };
 
 type PluginName = "EphysSummary";
@@ -205,7 +208,12 @@ const useRoute = () => {
           : undefined,
         staging: query.staging === "1",
       };
-    } else {
+    } else if (p === "/openneuro") {
+      return {
+        page: "openneuro",
+      };
+    }
+    else {
       return {
         page: "home",
       };
@@ -305,6 +313,10 @@ const useRoute = () => {
         if (r.staging) {
           newQuery.staging = "1";
         }
+      } else if (r.page === "openneuro") {
+        newQuery = {
+          p: "/openneuro",
+        };
       }
       // no longer supported
       // else if (r.page === 'avi') {

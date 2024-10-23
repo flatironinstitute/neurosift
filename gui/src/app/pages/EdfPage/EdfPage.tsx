@@ -11,6 +11,8 @@ import {
   useTimeseriesSelectionInitialization,
 } from "app/package/context-timeseries-selection";
 import Splitter from "app/Splitter/Splitter";
+import { SmallIconButton } from "@fi-sci/misc";
+import { Link, OpenInBrowser, OpenInFull } from "@mui/icons-material";
 
 type EdfPageProps = {
   width: number;
@@ -116,6 +118,8 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({
   channelSeparation,
   setChannelSeparation,
 }) => {
+  const { route } = useRoute();
+  if (route.page !== "edf") throw Error('Unexpected: route.page is not "edf"');
   const openNeuroEDFInfo = useOpenNeuroInfo(edfUrl);
   return (
     <div
@@ -135,6 +139,7 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({
         selectedChannelIndices={selectedChannelIndices}
         setSelectedChannelIndices={setSelectedChannelIndices}
       />
+      <hr />
       <ChannelSeparationSelector
         channelSeparation={channelSeparation}
         setChannelSeparation={setChannelSeparation}
@@ -142,6 +147,7 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({
       <div>
         {openNeuroEDFInfo && (
           <div>
+            <hr />
             <h4>OpenNeuro</h4>
             <table className="nwb-table">
               <tbody>
@@ -178,6 +184,22 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({
           </div>
         )}
       </div>
+      {route.embedded && (
+        <div>
+          <hr />
+          {/* If embedded we want to be able to open this in a new tab where it is not embedded. */}
+          <SmallIconButton
+            icon={<OpenInBrowser />}
+            onClick={() => {
+              window.open(
+                window.location.href.replace(/&embedded=1/, ""),
+                "_blank",
+              );
+            }}
+            title="Open in new tab"
+          />
+        </div>
+      )}
     </div>
   );
 };
