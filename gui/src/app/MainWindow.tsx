@@ -35,8 +35,11 @@ type Position =
 
 const MainWindow: FunctionComponent<Props> = () => {
   const { route } = useRoute();
+  const isEmbedded = (route as any).embedded;
   const { width, height } = useWindowDimensions();
-  const H = height - applicationBarHeight - statusBarHeight;
+  const applicationBarHeight2 = isEmbedded ? 0 : applicationBarHeight;
+  const statusBarHeight2 = isEmbedded ? 0 : statusBarHeight;
+  const H = height - applicationBarHeight2 - statusBarHeight2;
   const { setCustomStatusBarElement } = useCustomStatusBarElements();
   useEffect(() => {
     setCustomStatusBarElement("route", <NotUsingCookiesNotice />);
@@ -46,8 +49,6 @@ const MainWindow: FunctionComponent<Props> = () => {
     handleOpen: openContextChat,
     handleClose: closeContextChat,
   } = useModalWindow();
-  const [contextChatPosition, setContextChatPosition] =
-    useState<Position>("bottom-left");
   const [showDandiPageChat, setShowDandiPageChat] = useState(false);
   return (
     <div
@@ -59,7 +60,7 @@ const MainWindow: FunctionComponent<Props> = () => {
         style={{
           position: "absolute",
           width,
-          height: applicationBarHeight,
+          height: applicationBarHeight2,
           overflow: "hidden",
         }}
       >
@@ -80,7 +81,7 @@ const MainWindow: FunctionComponent<Props> = () => {
         className="MainWindowContent"
         style={{
           position: "absolute",
-          top: applicationBarHeight,
+          top: applicationBarHeight2,
           width,
           height: H,
           overflow: "hidden",
@@ -126,20 +127,22 @@ const MainWindow: FunctionComponent<Props> = () => {
           <div>404</div>
         )}
       </div>
-      {statusBarHeight && (
+      {statusBarHeight2 ? (
         <div
           className="MainWindowStatusBar"
           style={{
             position: "absolute",
             bottom: 0,
             width,
-            height: statusBarHeight,
+            height: statusBarHeight2,
             backgroundColor: "#eee",
             overflow: "hidden",
           }}
         >
-          <StatusBar width={width} height={statusBarHeight} />
+          <StatusBar width={width} height={statusBarHeight2} />
         </div>
+      ) : (
+        <span />
       )}
       <Analytics />
       <RandomFeedbackForm />

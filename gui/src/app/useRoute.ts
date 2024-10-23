@@ -25,6 +25,7 @@ export type Route =
       dandiAssetId?: string;
       storageType: StorageType[];
       tab?: string;
+      embedded?: boolean;
     }
   | {
       page: "avi";
@@ -36,6 +37,7 @@ export type Route =
   | {
       page: "edf";
       url: string;
+      embedded?: boolean;
     }
   | {
       page: "dandiset";
@@ -135,6 +137,7 @@ const useRoute = () => {
         dandiAssetId: (query.dandiAssetId || "") as string,
         storageType,
         tab: (query.tab as string) || undefined,
+        embedded: query.embedded === "1",
       };
     } else if (p === "/avi") {
       return {
@@ -152,6 +155,7 @@ const useRoute = () => {
       return {
         page: "edf",
         url: query.url as string,
+        embedded: query.embedded === "1",
       };
     } else if (p === "/dandiset") {
       return {
@@ -238,6 +242,9 @@ const useRoute = () => {
         if (r.tab) {
           newQuery.tab = r.tab;
         }
+        if (r.embedded) {
+          newQuery.embedded = "1";
+        }
       } else if (r.page === "avi") {
         newQuery.p = "/avi";
         newQuery.url = r.url;
@@ -253,6 +260,9 @@ const useRoute = () => {
       } else if (r.page === "edf") {
         newQuery.p = "/edf";
         newQuery.url = r.url;
+        if (r.embedded) {
+          newQuery.embedded = "1";
+        }
       } else if (r.page === "dandiset") {
         newQuery.p = "/dandiset";
         newQuery.dandisetId = r.dandisetId;
