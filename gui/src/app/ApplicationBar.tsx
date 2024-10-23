@@ -1,18 +1,16 @@
+import { SmallIconButton } from "@fi-sci/misc";
+import ModalWindow from "@fi-sci/modal-window";
 import { Chat, Key, Note, QuestionMark } from "@mui/icons-material";
 import { AppBar, Toolbar } from "@mui/material";
 import {
   FunctionComponent,
-  PropsWithChildren,
   useCallback,
   useEffect,
   useMemo,
-  useState,
+  useState
 } from "react";
-import useRoute from "./useRoute";
 import ApiKeysWindow from "./ApiKeysWindow/ApiKeysWindow";
-import { SmallIconButton } from "@fi-sci/misc";
-import ModalWindow from "@fi-sci/modal-window";
-import PopupChatWindow from "./PopupChatWindow/PopupChatWindow";
+import useRoute from "./useRoute";
 
 type Props = {
   onContextChat: () => void;

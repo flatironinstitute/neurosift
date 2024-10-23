@@ -1,28 +1,26 @@
 import { Hyperlink, useWindowDimensions } from "@fi-sci/misc";
+import { useModalWindow } from "@fi-sci/modal-window";
+import { Analytics } from "@vercel/analytics/react";
 import { FunctionComponent, useEffect, useState } from "react";
 import ApplicationBar, { applicationBarHeight } from "./ApplicationBar";
+import RandomFeedbackForm from "./Feedback/RandomFeedbackForm";
 import StatusBar, {
   statusBarHeight,
   useCustomStatusBarElements,
 } from "./StatusBar";
-import DandiPage from "./pages/DandiPage/DandiPage";
-import DandisetPage from "./pages/DandisetPage/DandisetPage";
-import HomePage from "./pages/HomePage/HomePage";
-import NwbPage from "./pages/NwbPage/NwbPage";
-import useRoute from "./useRoute";
-import TestPage from "./pages/TestPage/TestPage";
-import NeurosiftAnnotationsLoginPage from "./pages/NeurosiftAnnotationsLoginPage/NeurosiftAnnotationsLoginPage";
-import DandiQueryPage from "./pages/DandiQueryPage/DandiQueryPage";
-import TestsPage from "./pages/TestsPage/TestsPage";
 import AnnotationsPage from "./pages/AnnotationsPage/AnnotationsPage";
-import PluginPage from "./pages/PluginPage/PluginPage";
 import AviPage from "./pages/AviPage/AviPage";
-import { Analytics } from "@vercel/analytics/react";
-import RandomFeedbackForm from "./Feedback/RandomFeedbackForm";
-import { useModalWindow } from "@fi-sci/modal-window";
-import PopupChatWindow from "./PopupChatWindow/PopupChatWindow";
-import ContextChat from "./ContextChat/ContextChat";
+import DandiPage from "./pages/DandiPage/DandiPage";
+import DandiQueryPage from "./pages/DandiQueryPage/DandiQueryPage";
+import DandisetPage from "./pages/DandisetPage/DandisetPage";
 import EdfPage from "./pages/EdfPage/EdfPage";
+import HomePage from "./pages/HomePage/HomePage";
+import NeurosiftAnnotationsLoginPage from "./pages/NeurosiftAnnotationsLoginPage/NeurosiftAnnotationsLoginPage";
+import NwbPage from "./pages/NwbPage/NwbPage";
+import PluginPage from "./pages/PluginPage/PluginPage";
+import TestPage from "./pages/TestPage/TestPage";
+import TestsPage from "./pages/TestsPage/TestsPage";
+import useRoute from "./useRoute";
 
 type Props = {
   // none
@@ -145,19 +143,6 @@ const MainWindow: FunctionComponent<Props> = () => {
       )}
       <Analytics />
       <RandomFeedbackForm />
-      <PopupChatWindow
-        visible={contextChatVisible}
-        position={contextChatPosition}
-        setPosition={setContextChatPosition}
-      >
-        <ContextChat
-          width={width}
-          height={height}
-          onClose={closeContextChat}
-          position={contextChatPosition}
-          onSetPosition={setContextChatPosition}
-        />
-      </PopupChatWindow>
     </div>
   );
 };

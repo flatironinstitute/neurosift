@@ -7,7 +7,7 @@ type RandomFeedbackFormProps = {
 
 const showIt = false; // for now never show it -- nobody was filling out the form anyway
 
-// const specialCode = "3363";
+const specialCode = "3363";
 // const enteredSpecialCode = localStorage.getItem("enteredSpecialCode") || "";
 
 // const NUM = 50;
