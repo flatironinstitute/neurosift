@@ -75,10 +75,11 @@ export type Route =
     }
   | {
       page: "openneuro";
-    } | {
+    }
+  | {
       page: "openneuro-dataset";
       datasetId: string;
-    }
+    };
 
 type PluginName = "EphysSummary";
 
@@ -220,8 +221,7 @@ const useRoute = () => {
         page: "openneuro-dataset",
         datasetId: query.datasetId as string,
       };
-    }
-    else {
+    } else {
       return {
         page: "home",
       };

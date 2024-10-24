@@ -11,10 +11,9 @@ const OpenNeuroDatasetPage: FunctionComponent<OpenNeuroDatasetPageProps> = ({
   height,
 }) => {
   const { route } = useRoute();
-  if (route.page !== 'openneuro-dataset') throw new Error('Unexpected page in route');
-  return (
-    <div />
-  )
+  if (route.page !== "openneuro-dataset")
+    throw new Error("Unexpected page in route");
+  return <div />;
 };
 
 export default OpenNeuroDatasetPage;
