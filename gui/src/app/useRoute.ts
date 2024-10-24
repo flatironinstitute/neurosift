@@ -79,6 +79,7 @@ export type Route =
   | {
       page: "openneuro-dataset";
       datasetId: string;
+      datasetVersion?: string;
     };
 
 type PluginName = "EphysSummary";
@@ -220,6 +221,9 @@ const useRoute = () => {
       return {
         page: "openneuro-dataset",
         datasetId: query.datasetId as string,
+        datasetVersion: query.datasetVersion
+          ? (query.datasetVersion as string)
+          : undefined,
       };
     } else {
       return {
@@ -330,6 +334,9 @@ const useRoute = () => {
           p: "/openneuro-dataset",
           datasetId: r.datasetId,
         };
+        if (r.datasetVersion) {
+          newQuery.datasetVersion = r.datasetVersion;
+        }
       }
       // no longer supported
       // else if (r.page === 'avi') {
