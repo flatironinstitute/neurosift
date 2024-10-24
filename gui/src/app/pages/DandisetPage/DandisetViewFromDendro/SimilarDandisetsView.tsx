@@ -8,7 +8,14 @@ import {
   formatTime,
 } from "app/pages/DandiPage/DandiBrowser/SearchResults";
 import formatByteCount from "./formatByteCount";
-import { EmbeddingClient } from "NwbchatClient/NwbchatClient";
+import {
+  EmbeddingRequest,
+  InitiateEmbeddingRequest,
+  isEmbeddingResponse,
+  isEmbeddingTokenObject,
+  isInitiateEmbeddingResponse,
+} from "./nwbchat-types";
+import { EmbeddingClient } from "./NwbchatClient";
 
 type SimilarDandisetsViewProps = {
   dandisetId: string;

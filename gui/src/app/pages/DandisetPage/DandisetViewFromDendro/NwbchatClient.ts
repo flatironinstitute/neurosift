@@ -1,4 +1,4 @@
-import { ORMessage, ORTool } from "app/ContextChat/openRouterTypes";
+import { ORMessage, ORTool } from "./openRouterTypes";
 import {
   InitiateChatQueryRequest,
   ChatQueryRequest,

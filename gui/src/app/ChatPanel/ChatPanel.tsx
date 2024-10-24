@@ -1,6 +1,5 @@
 import { SmallIconButton } from "@fi-sci/misc";
 import { Cancel, Send } from "@mui/icons-material";
-import { ORMessage, ORToolChoice } from "app/ContextChat/openRouterTypes";
 import Markdown from "app/Markdown/Markdown";
 import {
   FunctionComponent,
@@ -24,6 +23,7 @@ import {
   RemoteH5FileLindi,
   RemoteH5FileX,
 } from "@remote-h5-file/index";
+import { ORMessage } from "app/pages/DandisetPage/DandisetViewFromDendro/openRouterTypes";
 
 export type Chat = {
   messages: (ORMessage | { role: "client-side-only"; content: string })[];

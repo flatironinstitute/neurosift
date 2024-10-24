@@ -3,15 +3,18 @@ import {
   RemoteH5FileLindi,
   RemoteH5FileX,
 } from "@remote-h5-file/index";
-import { ORMessage, ORTool } from "app/ContextChat/openRouterTypes";
 import {
   fetchDandisetVersionInfo,
   fetchNwbFilesForDandiset,
 } from "app/pages/DandisetPage/DandisetViewFromDendro/DandisetView";
+import { NeurosiftCompletionClient } from "app/pages/DandisetPage/DandisetViewFromDendro/NwbchatClient";
+import {
+  ORMessage,
+  ORTool,
+} from "app/pages/DandisetPage/DandisetViewFromDendro/openRouterTypes";
 import getNwbFileInfoForChat from "app/pages/NwbPage/getNwbFileInfoForChat";
 import { tryGetLindiUrl } from "app/pages/NwbPage/NwbPage";
 import { Route } from "app/useRoute";
-import { NeurosiftCompletionClient } from "NwbchatClient/NwbchatClient";
 
 const doChatCompletion = async (a: {
   messages: ORMessage[];
