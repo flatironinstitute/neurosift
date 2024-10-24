@@ -24,7 +24,6 @@ import { DirectSpikeTrainsClient } from "../Units/DirectRasterPlotUnitsItemView"
 import IfHasBeenVisible from "./IfHasBeenVisible";
 import PSTHUnitWidget from "./PSTHUnitWidget";
 import { RoiClient, useRoiClient } from "./ROIClient";
-import { useContextChat } from "app/ContextChat/ContextChat";
 
 export type PSTHTrialAlignedSeriesMode = "psth" | "time-aligned-series";
 
@@ -505,46 +504,6 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
       return [];
     }
   }, [mode, sortedSelectedUnitIds, sortedSelectedRoiIndices]);
-
-  const { setContextItem } = useContextChat();
-  useEffect(() => {
-    if (hidden) return;
-    let x = "";
-    if (mode === "psth") {
-      x += `User is viewing a PSTH item view for path: ${path}.\n`;
-      x += `This is an interactive peri-stimulus time histogram (PSTH).\n`;
-      x += `User can select one or more units. There are ${unitIds?.length} units available.\n`;
-    } else if (mode === "time-aligned-series") {
-      x += `User is viewing a time-aligned series item view for path: ${path}.\n`;
-      x += `This is an interactive time-aligned series.\n`;
-      x += `User can select one or more ROIs.\n`;
-    }
-    x += `User can select variables to align to.\n`;
-    x += `User can choose whether to show raster plots and histograms.\n`;
-    x += `User can choose the number of bins, window range.\n`;
-    if ((groupByVariableCategories || []).length > 0) {
-      x += `User can optionally group trials by a variable.\n.`;
-    } else {
-      x += `There are no variables available for grouping trials.\n`;
-    }
-    x += `User can optionally sort units by a variable.\n`;
-    x += `User can click to set a trials filter, which is an advanced option.\n`;
-
-    setContextItem("psth-item-view", { content: x });
-    return () => {
-      setContextItem("psth-item-view", undefined);
-    };
-  }, [
-    setContextItem,
-    path,
-    unitIds,
-    alignToVariables,
-    groupByVariableCategories,
-    groupByVariable,
-    sortUnitsByVariable,
-    hidden,
-    mode,
-  ]);
 
   return (
     <div

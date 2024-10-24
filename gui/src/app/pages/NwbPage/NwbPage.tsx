@@ -11,7 +11,6 @@ import {
   globalRemoteH5FileStats,
 } from "@remote-h5-file/index";
 import { track } from "@vercel/analytics/react";
-import { useContextChat } from "app/ContextChat/ContextChat";
 import {
   FunctionComponent,
   useEffect,
@@ -66,32 +65,8 @@ const NwbPage: FunctionComponent<Props> = ({ width, height }) => {
   //     return () => {canceled = true}
   // }, [route.page, route, setRoute])
 
-  const { setContextItem } = useContextChat();
-
   if (route.page !== "nwb")
     throw Error("Unexpected route for NwbPage: " + route.page);
-
-  useEffect(() => {
-    let x = `
-The user is viewing the contents of an NWB file.
-In the left panel is metadata about the file, such as the title, description, asset path, institution, session description, etc.
-`;
-    if ((route.tab || "main") === "main") {
-      x += `
-The user is viewing the main tab of the NWB file. Which has subtabs: NWB, RAW, WIDGETS, SPECIFICATIONS, DENDRO, ANNOTATIONS, INFO.
-For NWB: The user can view the contents of the NWB file in a tree structure.
-For RAW: The user can view the raw contents of the NWB file, the HDF5 Group and Dataset structure.
-For WIDGETS: The user can see a list of widgets that can be used to visualize the data in this particular NWB file.
-For SPECIFICATIONS: The user can view the specifications in the NWB file. These are not specific to the data in the file, but are general specifications about the file format.
-For DENDRO: The user can view the Dendro provenance of the NWB file. Dendro is a tool for running containerized jobs on NWB files in the cloud or on compute clusters.
-For ANNOTATIONS: This is an experimental feature that allows the user to view and edit annotations on the NWB file.
-`;
-    }
-    setContextItem("nwb-page", { content: x });
-    return () => {
-      setContextItem("nwb-page", undefined);
-    };
-  }, [setContextItem, route.tab]);
 
   if (route.page === "nwb" && !route.url) {
     // if (route.dandiAssetUrl) {
@@ -377,77 +352,6 @@ const NwbPageChild3: FunctionComponent<NwbPageChild3Props> = ({
       neurodataItems,
     };
   }, [nwbFile, neurodataItems]);
-
-  const nwbFileInfoForChat = useNwbFileInfoForChat(nwbFile);
-  const { setContextItem } = useContextChat();
-  useEffect(() => {
-    if (nwbFileInfoForChat) {
-      setContextItem("nwb-file-info", {
-        content: nwbFileInfoForChatToText(nwbFileInfoForChat),
-        resourceDocs,
-      });
-    }
-    return () => {
-      setContextItem("nwb-file-info", undefined);
-    };
-  }, [nwbFileInfoForChat, setContextItem]);
-
-  useEffect(() => {
-    if (!nwbFile) return;
-    let nwbFileUrl: string;
-    let urlType: "hdf5" | "lindi";
-    if (nwbFile instanceof MergedRemoteH5File) {
-      const f = nwbFile.getFiles()[0];
-      if (f instanceof RemoteH5FileLindi) {
-        nwbFileUrl = f.url;
-        urlType = "lindi";
-      } else if (f instanceof RemoteH5File) {
-        nwbFileUrl = f.url;
-        urlType = "hdf5";
-      } else {
-        nwbFileUrl = "unknown";
-        urlType = "hdf5";
-      }
-    } else {
-      if (nwbFile instanceof RemoteH5FileLindi) {
-        nwbFileUrl = nwbFile.url;
-        urlType = "lindi";
-      } else {
-        nwbFileUrl = nwbFile.url;
-        urlType = "hdf5";
-      }
-    }
-    const a = `
-Here are instructions for loading this NWB file into pynwb:
-
-# Prerequisites:
-pip install --upgrade lindi pynwb
-
-\`\`\`python
-import pynwb
-import lindi
-
-url = '${nwbFileUrl}'
-
-# Load the remote NWB file
-${urlType === "lindi" ? "f = lindi.LindiH5pyFile.from_lindi_file(url)" : "f = lindi.LindiH5pyFile.from_hdf5_file(url)"}
-io = pynwb.NWBHDF5IO(file=f, mode='r')
-nwbfile = io.read()
-
-# Access the data
-print(nwbfile)
-
-# Close the file
-io.close()
-\`\`\`
-
-Tip: when using Timeseries objects with pynwb it's better to use the x.get_timestamps() method rather than x.timestamps, because sometimes start_time and rate is used instead.
-`;
-    setContextItem("nwb-file-pynwb", { content: a });
-    return () => {
-      setContextItem("nwb-file-pynwb", undefined);
-    };
-  }, [setContextItem, nwbFile]);
 
   if (!nwbFile || !nwbFileContextValue) return <div>Loading {urlList}</div>;
 

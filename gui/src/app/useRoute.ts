@@ -75,7 +75,10 @@ export type Route =
     }
   | {
       page: "openneuro";
-    };
+    } | {
+      page: "openneuro-dataset";
+      datasetId: string;
+    }
 
 type PluginName = "EphysSummary";
 
@@ -212,7 +215,13 @@ const useRoute = () => {
       return {
         page: "openneuro",
       };
-    } else {
+    } else if (p === "/openneuro-dataset") {
+      return {
+        page: "openneuro-dataset",
+        datasetId: query.datasetId as string,
+      };
+    }
+    else {
       return {
         page: "home",
       };
@@ -315,6 +324,11 @@ const useRoute = () => {
       } else if (r.page === "openneuro") {
         newQuery = {
           p: "/openneuro",
+        };
+      } else if (r.page === "openneuro-dataset") {
+        newQuery = {
+          p: "/openneuro-dataset",
+          datasetId: r.datasetId,
         };
       }
       // no longer supported

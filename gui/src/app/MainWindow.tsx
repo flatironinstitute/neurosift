@@ -22,6 +22,7 @@ import TestPage from "./pages/TestPage/TestPage";
 import TestsPage from "./pages/TestsPage/TestsPage";
 import useRoute from "./useRoute";
 import OpenNeuroPage from "./pages/OpenNeuroPage/OpenNeuroPage";
+import OpenNeuroDatasetPage from "./pages/OpenNeuroDatasetPage/OpenNeuroDatasetPage";
 
 type Props = {
   // none
@@ -126,7 +127,10 @@ const MainWindow: FunctionComponent<Props> = () => {
           <PluginPage width={width} height={H} />
         ) : route.page === "openneuro" ? (
           <OpenNeuroPage width={width} height={H} />
-        ) : (
+        ) : route.page === "openneuro-dataset" ? (
+          <OpenNeuroDatasetPage width={width} height={H} />
+        ) :
+        (
           <div>404</div>
         )}
       </div>
