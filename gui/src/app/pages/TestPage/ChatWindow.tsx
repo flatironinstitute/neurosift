@@ -132,14 +132,49 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       : false;
   }, [lastMessage]);
 
-  const [selectedResourceUrls, setSelectedResourceUrls] = useState<string[]>(
-    [],
-  );
-
   const tools: {
     function: (args: any) => Promise<any>;
     tool: ORTool;
   }[] = useMemo(() => {
+    const relevantDandisetsTool = {
+      tool: {
+        type: "function",
+        function: {
+          name: "relevant_dandisets",
+          description:
+            "Returns a list of 6-digit Dandiset IDs most relevant to a given prompts, in descending order of relevance.",
+          parameters: {
+            type: "object",
+            properties: {
+              prompt: {
+                type: "string",
+                description: "The prompt to use to find relevant Dandisets.",
+              },
+            },
+          },
+        },
+      },
+      function: async (args: { prompt: string }) => {
+        const { prompt } = args;
+        const embeddings = await loadEmbeddings();
+        if (embeddings === null || embeddings === undefined) {
+          throw new Error("Problem loading embeddings");
+        }
+        const modelName = "text-embedding-3-large";
+        onLogMessage("relevant_dandisets query", prompt);
+        const embedding = await computeEmbeddingForAbstractText(
+          prompt,
+          modelName,
+        );
+        const dandisetIds = findSimilarDandisetIds(
+          embeddings,
+          embedding,
+          modelName,
+        ).slice(0, 20);
+        onLogMessage("relevant_dandisets response", dandisetIds.join(", "));
+        return dandisetIds.join(", ");
+      },
+    };
     const assistantTools = helperAssistants.map((helper) => {
       const functionDescription: ORFunctionDescription = {
         description: helper.description,
@@ -157,12 +192,13 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       return {
         function: async (args: { prompt: string }) => {
           const { prompt } = args;
-          onLogMessage(helper.name + " query", prompt);
+          const helperQueryNumber = globalHelperQueryNumber++;
+          onLogMessage(`${helper.name} query ${helperQueryNumber}`, prompt);
           const resp = await helper.inquire(prompt, {
             openRouterKey,
             modelName,
           });
-          onLogMessage(helper.name + " response", resp);
+          onLogMessage(`${helper.name} response ${helperQueryNumber}`, resp);
           return resp;
         },
         tool: {
@@ -224,7 +260,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
             message: msg,
           });
           // todo: do the tool calls here, instead of below, accumulate pending messages, and then set them all at once
-          for (const tc of toolCalls) {
+          const processToolCall = async (tc: any) => {
             const func = tools.find(
               (x) => x.tool.function.name === tc.function.name,
             )?.function;
@@ -266,6 +302,8 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
               message: msg1,
             });
           }
+          // run the tool calls in parallel
+          await Promise.all(toolCalls.map(processToolCall));
           setChat({
             messages: [...messages, ...newMessages],
           });
@@ -283,7 +321,6 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
     modelName,
     route,
     setChat,
-    selectedResourceUrls,
     openRouterKey,
     tools,
   ]);
@@ -427,6 +464,14 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
               )}
             </div>
           ))}
+          {
+            lastMessageIsUserOrTool || lastMessageIsToolCalls ? (
+              <div>
+                <hr />
+                <span style={{ color: "#6a6" }}>...</span>
+              </div>
+            ) : null
+          }
       </div>
       <div
         style={{
@@ -642,39 +687,6 @@ where of course the number 000409 is replaced with the actual Dandiset ID.
 Within one response, do not make excessive calls to the tools. Maybe up to around 5 is reasonable.
 `;
 
-const relevantDandisetsTool = {
-  tool: {
-    type: "function",
-    function: {
-      name: "relevant_dandisets",
-      description:
-        "Returns a list of 6-digit Dandiset IDs most relevant to a given prompts, in descending order of relevance.",
-      parameters: {
-        type: "object",
-        properties: {
-          prompt: {
-            type: "string",
-            description: "The prompt to use to find relevant Dandisets.",
-          },
-        },
-      },
-    },
-  },
-  function: async (args: { prompt: string }) => {
-    const { prompt } = args;
-    const embeddings = await loadEmbeddings();
-    if (embeddings === null || embeddings === undefined) {
-      throw new Error("Problem loading embeddings");
-    }
-    const modelName = "text-embedding-3-large";
-    const embedding = await computeEmbeddingForAbstractText(prompt, modelName);
-    const dandisetIds = findSimilarDandisetIds(
-      embeddings,
-      embedding,
-      modelName,
-    ).slice(0, 20);
-    return dandisetIds.join(", ");
-  },
-};
+let globalHelperQueryNumber = 1;
 
 export default ChatWindow;

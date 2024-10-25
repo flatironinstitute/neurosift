@@ -80,6 +80,7 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({
           openRouterKey={openRouterKey}
           setOpenRouterKey={setOpenRouterKey}
         />
+        <hr />
         {logMessages.map((m, i) => (
           <ExpandableLogMessage key={i} title={m.title} message={m.message} />
         ))}
@@ -98,15 +99,18 @@ const ExpandableLogMessage: FunctionComponent<ExpandableLogMessageProps> = ({
   message,
 }) => {
   const [expanded, setExpanded] = useState(false);
+  // a clickable triangle for expanding/collapsing the message
   return (
     <div>
       <div
-        onClick={() => setExpanded((prev) => !prev)}
         style={{ cursor: "pointer" }}
+        onClick={() => setExpanded((prev) => !prev)}
       >
-        <b>{title}</b>
+        {expanded ? "▼" : "▶"} {title}
       </div>
-      {expanded && <div style={{ paddingLeft: 20 }}>{message}</div>}
+      {expanded && (
+        <div style={{ marginLeft: 20, whiteSpace: "pre-wrap" }}>{message}</div>
+      )}
     </div>
   );
 };
@@ -135,7 +139,11 @@ const OpenRouterKeySelector: FunctionComponent<OpenRouterKeySelectorProps> = ({
 
   return (
     <div>
-      <label>Open Router Key</label>&nbsp;
+      <label>
+        <a href="https://openrouter.ai/" target="_blank" rel="noreferrer">
+          OpenRouter
+        </a>&nbsp;Key
+      </label>&nbsp;
       <input
         type="password"
         value={openRouterKey || ""}

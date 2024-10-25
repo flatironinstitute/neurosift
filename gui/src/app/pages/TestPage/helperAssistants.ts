@@ -67,8 +67,7 @@ class Assistant1 {
           tool_calls: toolCalls,
         };
         messages.push(msg);
-        // todo: do the tool calls here, instead of below, accumulate pending messages, and then set them all at once
-        for (const tc of toolCalls) {
+        const processToolCall = async (tc: any) => {
           const func = this.a.tools.find(
             (x) => x.tool.function.name === tc.function.name,
           )?.function;
@@ -91,6 +90,7 @@ class Assistant1 {
           };
           messages.push(msg1);
         }
+        await Promise.all(toolCalls.map(processToolCall));
       }
     }
   }
