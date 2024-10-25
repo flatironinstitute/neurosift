@@ -142,8 +142,10 @@ const OpenRouterKeySelector: FunctionComponent<OpenRouterKeySelectorProps> = ({
       <label>
         <a href="https://openrouter.ai/" target="_blank" rel="noreferrer">
           OpenRouter
-        </a>&nbsp;Key
-      </label>&nbsp;
+        </a>
+        &nbsp;Key
+      </label>
+      &nbsp;
       <input
         type="password"
         value={openRouterKey || ""}

@@ -181,20 +181,17 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
         name: helper.name,
         parameters: {
           type: "object",
-          properties: {
-            prompt: {
-              type: "string",
-              description: helper.promptParameterDescription,
-            },
-          },
+          properties: helper.parameters,
         },
       };
       return {
         function: async (args: { prompt: string }) => {
-          const { prompt } = args;
           const helperQueryNumber = globalHelperQueryNumber++;
-          onLogMessage(`${helper.name} query ${helperQueryNumber}`, prompt);
-          const resp = await helper.inquire(prompt, {
+          onLogMessage(
+            `${helper.name} query ${helperQueryNumber}`,
+            JSON.stringify(args),
+          );
+          const resp = await helper.inquire(args, {
             openRouterKey,
             modelName,
           });
@@ -301,7 +298,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
               type: "add",
               message: msg1,
             });
-          }
+          };
           // run the tool calls in parallel
           await Promise.all(toolCalls.map(processToolCall));
           setChat({
@@ -316,14 +313,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
     return () => {
       canceled = true;
     };
-  }, [
-    messages,
-    modelName,
-    route,
-    setChat,
-    openRouterKey,
-    tools,
-  ]);
+  }, [messages, modelName, route, setChat, openRouterKey, tools]);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -464,14 +454,12 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
               )}
             </div>
           ))}
-          {
-            lastMessageIsUserOrTool || lastMessageIsToolCalls ? (
-              <div>
-                <hr />
-                <span style={{ color: "#6a6" }}>...</span>
-              </div>
-            ) : null
-          }
+        {lastMessageIsUserOrTool || lastMessageIsToolCalls ? (
+          <div>
+            <hr />
+            <span style={{ color: "#6a6" }}>...</span>
+          </div>
+        ) : null}
       </div>
       <div
         style={{
@@ -685,6 +673,8 @@ Whenever you provide a 6-digit Dandiset ID in response to a question you should 
 where of course the number 000409 is replaced with the actual Dandiset ID.
 
 Within one response, do not make excessive calls to the tools. Maybe up to around 5 is reasonable.
+
+Assume that if the user is asking to find Dandisets, they also want to know more about those dandisets and how they are relevant to the user's query.
 `;
 
 let globalHelperQueryNumber = 1;

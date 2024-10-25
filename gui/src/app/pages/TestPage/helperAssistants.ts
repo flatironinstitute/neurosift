@@ -7,9 +7,14 @@ import chatCompletion from "./chatCompletion";
 interface HelperAssistant {
   name: string;
   description: string;
-  promptParameterDescription: string;
+  parameters: {
+    [pname: string]: {
+      type: string;
+      description: string;
+    };
+  };
   inquire: (
-    prompt: string,
+    args: any,
     a: { openRouterKey: string | null; modelName: string },
   ) => Promise<string>;
 }
@@ -19,8 +24,14 @@ class Assistant1 {
     private a: {
       name: string;
       description: string;
-      promptParameterDescription: string;
+      parameters: {
+        [pname: string]: {
+          type: string;
+          description: string;
+        };
+      };
       systemPrompt: string;
+      argumentsToPrompt: (a: any) => string;
       tools: {
         function: (args: any) => Promise<any>;
         tool: ORTool;
@@ -33,16 +44,16 @@ class Assistant1 {
   get description() {
     return this.a.description;
   }
-  get promptParameterDescription() {
-    return this.a.promptParameterDescription;
+  get parameters() {
+    return this.a.parameters;
   }
   async inquire(
-    prompt: string,
+    args: any,
     a: { openRouterKey: string | null; modelName: string },
   ) {
     const messages: ORMessage[] = [];
     messages.push({ role: "system", content: this.a.systemPrompt });
-    messages.push({ role: "user", content: prompt });
+    messages.push({ role: "user", content: this.a.argumentsToPrompt(args) });
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const rr = await chatCompletion({
@@ -89,7 +100,7 @@ class Assistant1 {
             tool_call_id: tc.id,
           };
           messages.push(msg1);
-        }
+        };
         await Promise.all(toolCalls.map(processToolCall));
       }
     }
@@ -130,19 +141,41 @@ const summarizeDandisetAssistant = new Assistant1({
   name: "summarize_dandiset",
   description:
     "Summarize a Dandiset based on its Dandiset ID and a request for what type of information is being queried. The user prompts should include the Dandiset ID and the information they are looking for.",
-  promptParameterDescription:
-    "A Dandiset ID and a request for the type of information being queried.",
+  parameters: {
+    dandiset_id: {
+      type: "string",
+      description: "The Dandiset ID to get the information for",
+    },
+    user_question: {
+      type: "string",
+      description: "The question the user is asking about the Dandiset",
+    },
+    instructions: {
+      type: "string",
+      description: "Other instructions for what should be returned",
+    },
+  },
   systemPrompt: `
-You are an assistant that responds concisely to prompts to summarize a Dandiset based on its Dandiset ID and a request for what type of information is being queried.
-The prompt should include a Dandiset ID, which is a 6-digit number, and a request for the type of information being queried.
+You are an assistant that responds to prompts to answer questions about a Dandiset based on its Dandiset ID and a question and instructions about how to respond.
+
+The Dandiset ID is a 6-digit number.
+
 If you can't parse out a Dandiset ID from the prompt, you should respond with a message that you couldn't find a Dandiset ID in the prompt.
 
-You should be concise in your response and provide only the relevant information that was requested.
+To help you with this, you should use the the dandi API to get the Dandiset metadata. This is done using the dandiset_meta tool. Be sure to use the full six digit Dandiset ID when calling the tool.
 
-To help you will this, you should use the the dandi API to get the Dandiset metadata. This is done using the dandiset_meta tool.
+Whenever it might be relevant, include paper references in the response.
 
-Unless asked for specific information, you should respond with human readable text and avoid lists of technical facts about the Dandisets.
+Avoid being too verbose with unnecessary information. If you can't find the information requested, respond with a message that you couldn't find the information.
 `,
+  argumentsToPrompt: (args: any) => {
+    const { dandiset_id, user_question, instructions } = args;
+    return `
+Dandiset ID: ${dandiset_id}
+Question: ${user_question}
+Instructions: ${instructions}
+`;
+  },
   tools: [dandisetApiCallTool],
 });
 
