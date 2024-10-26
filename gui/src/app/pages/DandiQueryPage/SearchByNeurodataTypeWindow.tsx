@@ -275,12 +275,22 @@ const ResultsView: FunctionComponent<ResultsViewProps> = ({
 };
 
 const useNeurodataTypesIndex = () => {
-  const url = "https://lindi.neurosift.org/dandi/neurodata_types_index.json.gz";
-  const neurodataTypesIndex = useFetchJsonGz(url);
-  return neurodataTypesIndex;
+  const [data, setData] = useState<NeurodataTypesIndex | undefined>(undefined);
+  useEffect(() => {
+    let canceled = false;
+    (async () => {
+      const x = await fetchNeurodataTypesIndex();
+      if (canceled) return;
+      setData(x);
+    })();
+    return () => {
+      canceled = true;
+    };
+  }, []);
+  return data;
 };
 
-type NeurodataTypesIndex = {
+export type NeurodataTypesIndex = {
   files: {
     dandiset_id: string;
     dandiset_version: string;
@@ -290,27 +300,23 @@ type NeurodataTypesIndex = {
   }[];
 };
 
-const useFetchJsonGz = (url: string) => {
-  const [data, setData] = useState<NeurodataTypesIndex | undefined>(undefined);
-  useEffect(() => {
-    let canceled = false;
-    (async () => {
-      setData(undefined);
-      const response = await fetch(url + "?cb=" + Date.now());
-      if (canceled) return;
-      const bufferGz = await response.arrayBuffer();
-      if (canceled) return;
-      const buffer = pako.inflate(bufferGz);
-      const text = new TextDecoder().decode(buffer);
-      const json = JSON.parse(text);
-      console.log("Neurodata types index", json);
-      setData(json);
-    })();
-    return () => {
-      canceled = true;
-    };
-  }, [url]);
-  return data;
+let cachedNeurodataTypesIndex: NeurodataTypesIndex | undefined = undefined;
+export const fetchNeurodataTypesIndex = async () => {
+  if (cachedNeurodataTypesIndex) return cachedNeurodataTypesIndex;
+  try {
+    const url =
+      "https://lindi.neurosift.org/dandi/neurodata_types_index.json.gz";
+    const response = await fetch(url + "?cb=" + Date.now());
+    const bufferGz = await response.arrayBuffer();
+    const buffer = pako.inflate(bufferGz);
+    const text = new TextDecoder().decode(buffer);
+    const json = JSON.parse(text);
+    cachedNeurodataTypesIndex = json;
+    return cachedNeurodataTypesIndex;
+  } catch (err) {
+    console.error(err);
+    return undefined;
+  }
 };
 
 type CheckboxProps = {

@@ -23,6 +23,10 @@ import {
   findSimilarDandisetIds,
   loadEmbeddings,
 } from "../DandisetPage/DandisetViewFromDendro/SimilarDandisetsView";
+import {
+  fetchNeurodataTypesIndex,
+  NeurodataTypesIndex,
+} from "../DandiQueryPage/SearchByNeurodataTypeWindow";
 
 export type Chat = {
   messages: (ORMessage | { role: "client-side-only"; content: string })[];
@@ -133,48 +137,12 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   }, [lastMessage]);
 
   const tools: {
-    function: (args: any) => Promise<any>;
+    function: (
+      args: any,
+      onLogMessage: (title: string, message: string) => void,
+    ) => Promise<any>;
     tool: ORTool;
   }[] = useMemo(() => {
-    const relevantDandisetsTool = {
-      tool: {
-        type: "function",
-        function: {
-          name: "relevant_dandisets",
-          description:
-            "Returns a list of 6-digit Dandiset IDs most relevant to a given prompts, in descending order of relevance.",
-          parameters: {
-            type: "object",
-            properties: {
-              prompt: {
-                type: "string",
-                description: "The prompt to use to find relevant Dandisets.",
-              },
-            },
-          },
-        },
-      },
-      function: async (args: { prompt: string }) => {
-        const { prompt } = args;
-        const embeddings = await loadEmbeddings();
-        if (embeddings === null || embeddings === undefined) {
-          throw new Error("Problem loading embeddings");
-        }
-        const modelName = "text-embedding-3-large";
-        onLogMessage("relevant_dandisets query", prompt);
-        const embedding = await computeEmbeddingForAbstractText(
-          prompt,
-          modelName,
-        );
-        const dandisetIds = findSimilarDandisetIds(
-          embeddings,
-          embedding,
-          modelName,
-        ).slice(0, 20);
-        onLogMessage("relevant_dandisets response", dandisetIds.join(", "));
-        return dandisetIds.join(", ");
-      },
-    };
     const assistantTools = helperAssistants.map((helper) => {
       const functionDescription: ORFunctionDescription = {
         description: helper.description,
@@ -185,7 +153,10 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
         },
       };
       return {
-        function: async (args: { prompt: string }) => {
+        function: async (
+          args: { prompt: string },
+          onLogMessage: (title: string, message: string) => void,
+        ) => {
           const helperQueryNumber = globalHelperQueryNumber++;
           onLogMessage(
             `${helper.name} query ${helperQueryNumber}`,
@@ -204,10 +175,18 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
         },
       };
     });
-    return [...assistantTools, relevantDandisetsTool];
-  }, [modelName, openRouterKey, onLogMessage]);
+    return [
+      ...assistantTools,
+      relevantDandisetsTool,
+      relevantDandisetsTool,
+      dandisetsWithNeurodataTypesTool,
+    ];
+  }, [modelName, openRouterKey]);
+
+  const systemMessage = useSystemMessage();
 
   useEffect(() => {
+    if (!systemMessage) return;
     // submit user message or tool results
     let canceled = false;
     const messages2: ORMessage[] = [
@@ -277,7 +256,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
             console.info("TOOL CALL: ", tc.function.name, args);
             let response: string;
             try {
-              response = await func(args);
+              response = await func(args, onLogMessage);
             } catch (e: any) {
               response = "Error: " + e.message;
             }
@@ -313,7 +292,16 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
     return () => {
       canceled = true;
     };
-  }, [messages, modelName, route, setChat, openRouterKey, tools]);
+  }, [
+    messages,
+    modelName,
+    route,
+    setChat,
+    openRouterKey,
+    tools,
+    onLogMessage,
+    systemMessage,
+  ]);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -659,24 +647,174 @@ const labelForToolCall = (tc: {
   }
 };
 
-const systemMessage = `
-You are a helpful assistant that is responding to questions about the DANDI Archive.
+const getSystemMessage = async () => {
+  const allNeurodataTypes = await getAllNeurodataTypes();
 
-You should make use of the tools provided to you to help answer questions.
+  const systemMessage = `
+  You are a helpful assistant that is responding to questions about the DANDI Archive.
 
-If the questions are irrelevant or inappropriate, you should respond with a message indicating that you are unable to help with that question.
+  You should make use of the tools provided to you to help answer questions.
 
-Whenever you provide a 6-digit Dandiset ID in response to a question you should use markdown notation for a link of the following format
+  If the questions are irrelevant or inappropriate, you should respond with a message indicating that you are unable to help with that question.
 
-[000409](https://dandiarchive.org/dandiset/000409?search=000409)
+  Whenever you provide a 6-digit Dandiset ID in response to a question you should use markdown notation for a link of the following format
 
-where of course the number 000409 is replaced with the actual Dandiset ID.
+  [000409](https://dandiarchive.org/dandiset/000409)
 
-Within one response, do not make excessive calls to the tools. Maybe up to around 5 is reasonable.
+  where of course the number 000409 is replaced with the actual Dandiset ID.
 
-Assume that if the user is asking to find Dandisets, they also want to know more about those dandisets and how they are relevant to the user's query.
-`;
+  Within one response, do not make excessive calls to the tools. Maybe up to around 5 is reasonable. But if you want to make more, you could ask the user if they would like you to do more work to find the answer.
+
+  Assume that if the user is asking to find Dandisets, they also want to know more about those dandisets and how they are relevant to the user's query.
+
+  If the user is looking for particular types of data, then you may want to use the dandisets_with_neurodata_types tool.
+  The full set of possible neurodata types is as follows:
+  ${(allNeurodataTypes || []).join(", ")}
+
+  If the user wants dandisets with particular data and also other criteria (like a prompt), then you should first find the dandisets with the data types using the dandisets_with_neurodata_types tool, and then use the relevant_dandisets tool with a restriction to the dandisets found in the previous step.
+  `;
+  return systemMessage;
+};
+
+const useSystemMessage = () => {
+  const [systemMessage, setSystemMessage] = useState<string | null>(null);
+  useEffect(() => {
+    getSystemMessage().then((msg) => {
+      setSystemMessage(msg);
+    });
+  }, []);
+  return systemMessage;
+};
 
 let globalHelperQueryNumber = 1;
+
+const relevantDandisetsTool = {
+  tool: {
+    type: "function",
+    function: {
+      name: "relevant_dandisets",
+      description:
+        "Returns a list of 6-digit Dandiset IDs most relevant to a given prompts, in descending order of relevance.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "The prompt to use to find relevant Dandisets.",
+          },
+          restrict_to_dandisets: {
+            type: "string",
+            description:
+              "An optional comma-separated list of 6-digit Dandiset IDs to restrict the search to.",
+          },
+        },
+      },
+    },
+  },
+  function: async (
+    args: { prompt: string; restrict_to_dandisets: string | null },
+    onLogMessage: (title: string, message: string) => void,
+  ) => {
+    const { prompt, restrict_to_dandisets } = args;
+    const embeddings = await loadEmbeddings();
+    if (embeddings === null || embeddings === undefined) {
+      throw new Error("Problem loading embeddings");
+    }
+    const modelName = "text-embedding-3-large";
+    onLogMessage(
+      "relevant_dandisets query",
+      prompt + " " + restrict_to_dandisets,
+    );
+    const embedding = await computeEmbeddingForAbstractText(prompt, modelName);
+    let dandisetIds = findSimilarDandisetIds(embeddings, embedding, modelName);
+    if (restrict_to_dandisets) {
+      const restrictToDandisetsSet = new Set(
+        restrict_to_dandisets.split(",").map((x) => x.trim()),
+      );
+      dandisetIds = dandisetIds.filter((id) => restrictToDandisetsSet.has(id));
+    }
+    dandisetIds = dandisetIds.slice(0, 20);
+    onLogMessage("relevant_dandisets response", dandisetIds.join(", "));
+    return dandisetIds.join(", ");
+  },
+};
+
+const getAllNeurodataTypes = async () => {
+  const neurodataTypesIndex: NeurodataTypesIndex | undefined =
+    await fetchNeurodataTypesIndex();
+  if (!neurodataTypesIndex) {
+    return [];
+  }
+  const neurodataTypes = new Set<string>();
+  for (const file of neurodataTypesIndex.files) {
+    for (const nt of file.neurodata_types) {
+      neurodataTypes.add(nt);
+    }
+  }
+  return Array.from(neurodataTypes).sort();
+};
+
+const dandisetsWithNeurodataTypesTool = {
+  tool: {
+    type: "function",
+    function: {
+      name: "dandisets_with_neurodata_types",
+      description: `
+Returns a comma-separated list of 6-digit Dandiset IDs that contain certain neurodata types.
+The input neurodata_query_function is the text of a javascript script function that will be evaluated on the set of neurodata types in each file.
+For example:
+function (neurodata_types) {
+      return neurodata_types.has("Units") && neurodata_types.has("TwoPhotonSeries");
+}
+`,
+      parameters: {
+        type: "object",
+        properties: {
+          neurodata_query_function: {
+            type: "string",
+            description:
+              "Boolean logic query for neurodata types in the form of a javascript function.",
+          },
+        },
+      },
+    },
+  },
+  function: async (
+    args: any,
+    onLogMessage: (title: string, message: string) => void,
+  ) => {
+    const neurodata_query_function: string = args.neurodata_query_function;
+    onLogMessage(
+      "dandisets_with_neurodata_types query",
+      neurodata_query_function,
+    );
+    const neurodataTypesIndex: NeurodataTypesIndex | undefined =
+      await fetchNeurodataTypesIndex();
+    if (!neurodataTypesIndex) {
+      throw new Error("Failed to fetch neurodata types index");
+    }
+    const dandisetIds = new Set<string>();
+    for (const file of neurodataTypesIndex.files) {
+      if (dandisetIds.has(file.dandiset_id)) {
+        continue;
+      }
+      const nt = file.neurodata_types;
+      const ntSet = new Set(nt);
+      const queryFunction = new Function(
+        "ntSet",
+        `return (${neurodata_query_function})(ntSet);`,
+      );
+      if (queryFunction(ntSet)) {
+        dandisetIds.add(file.dandiset_id);
+      }
+    }
+    onLogMessage(
+      "dandisets_with_neurodata_types response",
+      Array.from(dandisetIds).join(", "),
+    );
+    if (dandisetIds.size > 0) return Array.from(dandisetIds).sort().join(", ");
+    else return "No Dandisets found with the specified neurodata types."; // important to not return an empty string
+  },
+};
 
 export default ChatWindow;
