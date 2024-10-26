@@ -690,7 +690,7 @@ let globalHelperQueryNumber = 1;
 
 const relevantDandisetsTool = {
   tool: {
-    type: "function",
+    type: "function" as any,
     function: {
       name: "relevant_dandisets",
       description:
