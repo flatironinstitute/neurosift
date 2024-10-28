@@ -11,6 +11,7 @@ Each of these is now an object with the following attributes:
 
 ```python
 dandiset.dandiset_id # the 6-digit ID of the dandiset
+dandiset.dandiset_version # the version of the dandiset
 dandiset.url # the URL of the dandiset on the DANDI archive website
 ```
 

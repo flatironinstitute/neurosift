@@ -1,0 +1,44 @@
+// system stu/stu.md
+
+####################################################################################
+
+For each dandiset, prepare a JSON file providing all the neurodata objects by path.
+
+Limit to at most the first 10 nwb files for each dandiset.
+Process at most 400 dandisets.
+
+Write your output to a json file called output/neurodata_objects/<DANDISET_ID>.json (create directories of they don't exist) that would look like this:
+
+```json
+{
+    "files": [
+        {
+            "dandiset_id": "000000", // the unique identifier of the dandiset
+            "dandiset_version": "", // the version of the dandiset
+            "file_path": "path/of/file1.nwb",
+            "download_url": "https://api.dandiarchive.org/api/assets/00000000-0000-0000-0000-000000000000/download/",
+            "neurodata_objects": [
+                {
+                    "path": "/path/to/neurodata_object1",
+                    "neurodata_type": "object_type1"
+                },
+                ...
+            ]
+        },
+        ...
+    ]
+}
+```
+
+####################################################################################
+
+Print log statements along the way including time executed for each dandiset and the overall time executed. Show the progress throughout by showing how many dandisets have been processed out of the total number of dandisets.
+
+In addition to printing to stdout, print a log to output/neurodata_objects.log with the following information:
+* Time executed for each dandiset
+* Overall time executed
+
+####################################################################################
+
+Finally prompt the user if they would like to upload the result. If they answer yes "y", do the following:
+* Upload the resulting .json files to https://lindi.neurosift.org/tmp/dandi/neurodata_objects/<DANDISET_ID>.json

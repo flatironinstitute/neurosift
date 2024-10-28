@@ -9,7 +9,10 @@ Schema:
 {
     "files": [
         {
-            "file_path: "path/of/file1.nwb", // the path of the nwb file in the dandiset
+            "dandiset_id": "000000", // the unique identifier of the dandiset
+            "dandiset_version": "", // the version of the dandiset
+            "file_path": "path/of/file1.nwb", // the path of the nwb file in the dandiset
+            "download_url": "...", // the download url of the nwb file
             "neurodata_objects": [
                 {
                     "path": "/path/to/neurodata_object1", // the path to the neurodata object in the nwb file

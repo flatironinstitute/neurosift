@@ -697,6 +697,13 @@ and then use the relevant_dandisets tool with a restriction to the dandisets fou
 
 If the user wants to know about what column names are in units tables for various dandisets, you can use the probe_units_colnames tool.
 
+When you refer to a particular neurodata object (that is in an NWB file within a dandiset), you should use the following link to a visualization
+
+[label](https://neurosift.app/?p=/nwb&url=<download-url>&dandisetId=000000&dandisetVersion=xxxxxx&tab=neurodata-item:/processing/licking/licks|TimeSeries)
+
+where /processing/licking/licks would be replaced by the path of the object, and TimeSeries would be replaced by the neurodata type, and <download-url> would be replaced by the download url for the nwb file and the dandisetId and dandisetVersion would be filled in as appropriate.
+This information can all be obtained from the probe_dandiset_objects tool.
+
 ${additionalKnowledge}
 
   `;
