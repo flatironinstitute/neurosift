@@ -189,7 +189,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       relevantDandisetsTool,
       neurodataTypesTool,
       unitsColnamesTool,
-      dandisetObectsTool
+      dandisetObectsTool,
       // consultTool
     ];
   }, [modelName, openRouterKey]);

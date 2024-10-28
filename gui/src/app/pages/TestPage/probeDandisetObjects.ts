@@ -62,8 +62,7 @@ The query function takes one argument, which is a json object.
     const function_text: string = args.function_text;
     const dandiset_id: string = args.dandiset_id;
     onLogMessage(`probe_dandiset_objects query ${dandiset_id}`, function_text);
-    const dandisetObjectsObject =
-      await fetchDandisetObjectsObject(dandiset_id);
+    const dandisetObjectsObject = await fetchDandisetObjectsObject(dandiset_id);
     if (!dandisetObjectsObject) {
       throw new Error("Failed to fetch dandiset objects object");
     }
