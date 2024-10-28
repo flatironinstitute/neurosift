@@ -29,6 +29,7 @@ import {
 } from "../DandiQueryPage/SearchByNeurodataTypeWindow";
 import { neurodataTypesTool } from "./probeNeurodataTypes";
 import { unitsColnamesTool } from "./probeUnitsColnames";
+import { dandisetObectsTool } from "./probeDandisetObjects";
 
 export type Chat = {
   messages: (ORMessage | { role: "client-side-only"; content: string })[];
@@ -188,6 +189,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       relevantDandisetsTool,
       neurodataTypesTool,
       unitsColnamesTool,
+      dandisetObectsTool
       // consultTool
     ];
   }, [modelName, openRouterKey]);
