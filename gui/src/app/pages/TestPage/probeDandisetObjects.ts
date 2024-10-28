@@ -98,19 +98,21 @@ The query function takes one argument, which is a json object.
   },
 };
 
-let dandisetObjectsObjectCache: {
-  objects: {
-    dandiset_id: string;
-    dandiset_version: string;
-    file_path: string;
-    download_url: string;
-    object_path: string;
-    neurodata_type: string;
-  }[];
-} | null = null;
+const dandisetObjectsObjectCache: {
+  [dandiset_id: string]: {
+    objects: {
+      dandiset_id: string;
+      dandiset_version: string;
+      file_path: string;
+      download_url: string;
+      object_path: string;
+      neurodata_type: string;
+    }[];
+  };
+} = {};
 export const fetchDandisetObjectsObject = async (dandiset_id: string) => {
-  if (dandisetObjectsObjectCache) {
-    return dandisetObjectsObjectCache;
+  if (dandisetObjectsObjectCache[dandiset_id]) {
+    return dandisetObjectsObjectCache[dandiset_id];
   }
   const url = `https://lindi.neurosift.org/tmp/dandi/neurodata_objects/${dandiset_id}.json`;
   const resp = await fetch(url);
@@ -119,6 +121,6 @@ export const fetchDandisetObjectsObject = async (dandiset_id: string) => {
   }
   const rr = await resp.json();
 
-  dandisetObjectsObjectCache = rr;
+  dandisetObjectsObjectCache[dandiset_id] = rr;
   return rr;
 };

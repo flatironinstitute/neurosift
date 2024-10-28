@@ -463,6 +463,10 @@ const ImageDataView: FunctionComponent<ImageDataViewProps> = ({
     const offsetY =
       margins.top + (height - margins.top - margins.bottom - H * scale) / 2;
 
+    if (!W || !H) {
+      console.warn("Unexpected: W or H is zero");
+      return;
+    }
     const imgData = ctx.createImageData(W, H);
     const buf = imgData.data;
     if (currentPlane >= 0) {

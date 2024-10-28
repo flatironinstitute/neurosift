@@ -699,7 +699,7 @@ If the user wants to know about what column names are in units tables for variou
 
 When you refer to a particular neurodata object (that is in an NWB file within a dandiset), you should use the following link to a visualization
 
-[label](?action=view_item&dandiset=[dandiset_id]&file_path=[file_path]&object_path=[object_path]&neurodata_type=[neurodata_type])
+[label](https://neurosift.app/?p=/nwb&url=[download_url]&dandisetId=[dandiset_id]&dandisetVersion=[dandiseet_version]&tab=view:[neurodata_type]|[object_path])
 
 ${additionalKnowledge}
 
