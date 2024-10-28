@@ -1,0 +1,55 @@
+// system stu/stu.md
+
+####################################################################################
+
+Make a list of all neurodata types found in all the nwb files in public dandisets on dandi, along with counts for how many times they occur in each dandiset.
+
+Limit to at most the first 10 nwb files for each dandiset.
+Process at most 400 dandisets.
+
+Write your output to a json file called output/neurodata_types_with_counts.json (create directory if it doesn't exist) that would look like this:
+
+```json
+{
+    "neurodata_types": [
+        {
+            "neurodata_type": "TimeSeries",
+            "dandisets": [
+                {
+                    "dandiset_id": "000000",
+                    "count": 5
+                },
+                ...
+            ]
+        },
+        ...
+    ]
+}
+```
+
+Output should be sorted by neurodata_type.
+
+####################################################################################
+
+Print log statements along the way including time executed for each dandiset and the overall time executed. Show the progress throughout by showing how many dandisets have been processed out of the total number of dandisets.
+
+In addition to printing to stdout, print a log to output/neurodata_types_with_counts.log with the following information:
+* Time executed for each dandiset
+* Overall time executed
+
+At each iteration, write to the current state of the output to output/neurodata_types_with_counts.tmp.json.
+
+####################################################################################
+
+Create a description file called output/neurodata_types_with_counts_description.md that describes the output file.
+
+The description should go like this:
+"This is a json file that contains a list of all neurodata types found in all the nwb files in public dandisets on dandi,
+along with counts for how many times they occur in each dandiset."
+Then include a schema of the output json file with detailed comments.
+
+####################################################################################
+
+Finally prompt the user if they would like to upload the result. If they answer yes "y", do the following:
+* Upload the resulting .json file to https://lindi.neurosift.org/tmp/dandi/neurodata_types_with_counts.json
+* Upload the description .txt file to https://lindi.neurosift.org/tmp/dandi/neurodata_types_with_counts_description.md

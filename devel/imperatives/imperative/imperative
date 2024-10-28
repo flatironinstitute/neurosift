@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+
+import os
+import hashlib
+import click
+import openai
+
+
+@click.command()
+@click.argument('source_file_name')
+def run(source_file_name):
+    parent_dir = os.path.dirname(source_file_name)
+    py_fname = source_file_name + '.py'
+
+    with open(source_file_name, 'r') as f:
+        source_text = f.read()
+
+    system_source_files = []
+
+    source_lines = source_text.split('\n')
+    source_lines_to_use = []
+    for line in source_lines:
+        if line.startswith('//'):
+            if line.startswith('// system'):
+                system_source_file = line.split(' ')[2]
+                system_source_file = os.path.join(parent_dir, system_source_file)
+                system_source_files.append(system_source_file)
+            continue
+        source_lines_to_use.append(line)
+
+    system_text = ''
+    for system_file in system_source_files:
+        print('Using system file:', system_file)
+        with open(system_file, 'r') as f:
+            system_text += f.read()
+            system_text += '\n'
+
+    system_hash = sha1(system_text)
+    instructions = f'system hash: {system_hash}\n{source_text}'
+
+    if os.path.exists(py_fname):
+        instructions_to_compare = get_instructions_from_py_file(py_fname)
+        if instructions_to_compare == instructions:
+            print('Imperative instructions have not changed. Skipping code generation.')
+            print('Executing code...')
+            os.system(f'python {py_fname}')
+            print('Done!')
+            return
+
+    system_prompt = f'''
+You are a coding assitant that returns Python code based on the user's input.
+You should return a completely self-contained script that can be executed directly.
+You should not return anything other than the script, because your output will be excecuted directly.
+
+{system_text}
+'''
+
+    messages = [
+        {
+            "role": "system",
+            "content": system_prompt
+        },
+        {
+            "role": "user",
+            "content": '\n'.join(source_lines_to_use)
+        }
+    ]
+
+    print('Generating code...')
+    response = do_completion(messages)
+    response = remove_code_block_ticks(response)
+
+    code = insert_instructions_to_py_file(response, instructions)
+
+    with open(py_fname, 'w') as f:
+        print('Writing code to', py_fname)
+        f.write(code)
+
+    print('Executing code...')
+    os.system(f'python {py_fname}')
+
+    print('Done!')
+
+
+def do_completion(messages):
+    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+    if not OPENAI_API_KEY:
+        raise Exception("OPENAI_API_KEY environment variable not set.")
+    client = openai.Client(
+        api_key=OPENAI_API_KEY,
+    )
+    completion = client.chat.completions.create(
+        model="gpt-4o",
+        messages=messages,
+    )
+    resp = completion.choices[0].message.content
+    if resp is None:
+        raise Exception("Failed to generate response.")
+
+    return resp
+
+
+def remove_code_block_ticks(response):
+    lines = response.split('\n')
+    in_code_block = False
+    new_lines = []
+    for line in lines:
+        if line.startswith('```'):
+            in_code_block = not in_code_block
+        else:
+            if in_code_block:
+                new_lines.append(line)
+            else:
+                pass
+    if len(new_lines) == 0:
+        new_lines = lines
+    return '\n'.join(new_lines)
+
+
+def get_instructions_from_py_file(py_fname):
+    with open(py_fname, 'r') as f:
+        code = f.read()
+    lines = code.split('\n')
+    if len(lines) == 0:
+        return ''
+    if lines[0] != '"""':
+        return ''
+    instructions = []
+    for line in lines[1:]:
+        if line == '"""':
+            break
+        instructions.append(line)
+    return '\n'.join(instructions)
+
+
+def insert_instructions_to_py_file(response, instructions):
+    return f'"""\n{instructions}\n"""\n\n{response}'
+
+
+def sha1(text):
+    return hashlib.sha1(text.encode()).hexdigest()
+
+
+@click.group()
+def cli():
+    pass
+
+
+cli.add_command(run)
+
+if __name__ == '__main__':
+    cli()
