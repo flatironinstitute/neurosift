@@ -29,7 +29,7 @@ import {
 } from "../DandiQueryPage/SearchByNeurodataTypeWindow";
 import { neurodataTypesTool } from "./probeNeurodataTypes";
 import { unitsColnamesTool } from "./probeUnitsColnames";
-import { dandisetObectsTool } from "./probeDandisetObjects";
+import { dandisetObjectsTool } from "./probeDandisetObjects";
 
 export type Chat = {
   messages: (ORMessage | { role: "client-side-only"; content: string })[];
@@ -189,7 +189,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       relevantDandisetsTool,
       neurodataTypesTool,
       unitsColnamesTool,
-      dandisetObectsTool,
+      dandisetObjectsTool,
       // consultTool
     ];
   }, [modelName, openRouterKey]);
@@ -699,10 +699,7 @@ If the user wants to know about what column names are in units tables for variou
 
 When you refer to a particular neurodata object (that is in an NWB file within a dandiset), you should use the following link to a visualization
 
-[label](https://neurosift.app/?p=/nwb&url=<download-url>&dandisetId=000000&dandisetVersion=xxxxxx&tab=neurodata-item:/processing/licking/licks|TimeSeries)
-
-where /processing/licking/licks would be replaced by the path of the object, and TimeSeries would be replaced by the neurodata type, and <download-url> would be replaced by the download url for the nwb file and the dandisetId and dandisetVersion would be filled in as appropriate.
-This information can all be obtained from the probe_dandiset_objects tool.
+[label](?action=view_item&dandiset=[dandiset_id]&file_path=[file_path]&object_path=[object_path]&neurodata_type=[neurodata_type])
 
 ${additionalKnowledge}
 

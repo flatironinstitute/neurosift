@@ -24,6 +24,9 @@ nwb_files = dandiset.get_nwb_files(limit=10)
 Each of these nwb files has the following attributes:
 
 ```python
+nwb_file.file_path # the path to the nwb file in the dandiset
+nwb_file.asset_id # the asset ID of the nwb file
+nwb_file.size # the size of the nwb file in bytes
 nwb_file.download_url # the download URL of the nwb file
 nwb_file.lindi_json_url # the URL of the cached lindi file for the nwb file for efficient access
 ```
@@ -37,7 +40,7 @@ neurodata_objects = nwb_file.get_neurodata_objects()
 Each of these neurodata objects has the following attributes:
 
 ```python
-neurodata_object.path #the path to the neurodata object in the nwb file
+neurodata_object.object_path #the path to the neurodata object in the nwb file
 neurodata_object.neurodata_type # the type of the neurodata object
 ```
 

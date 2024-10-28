@@ -11,28 +11,47 @@ Schema:
         {
             "dandiset_id": "000000", // the unique identifier of the dandiset
             "dandiset_version": "", // the version of the dandiset
-            "file_path": "path/of/file1.nwb", // the path of the nwb file in the dandiset
-            "download_url": "...", // the download url of the nwb file
-            "neurodata_objects": [
-                {
-                    "path": "/path/to/neurodata_object1", // the path to the neurodata object in the nwb file
-                    "neurodata_type": "object_type1" // the type of the neurodata object
-                },
-                ...
-            ]
+            "file_path": "path/of/file1.nwb",
+            "download_url": "..." // the download url of the file
+        },
+        ...
+    ],
+    "objects": [
+        {
+            "dandiset_id": "000000", // the unique identifier of the dandiset
+            "dandiset_version": "", // the version of the dandiset
+            "file_path": "path/of/file1.nwb",
+            "download_url": "...",
+            "object_path": "/path/to/neurodata_object1",
+            "neurodata_type": "object_type1"
         },
         ...
     ]
 }
 
-For example, to find all objects of type "Units" in the dandiset:
+Here's an example where you return the files in a given Dandiset:
 
-function query(dandiset) {
-    return dandiset.files.flatMap(x => x.neurodata_objects.filter(y => y.neurodata_type === "Units"));
+function probe_dandiset_objects(dandiset_objects) {
+    return dandiset_objects.files;
+}
+
+Here's an example where you return the neurodata objects of type Units in a given Dandiset:
+
+function probe_dandiset_objects(dandiset_objects) {
+    return dandiset_objects.objects.filter(o => o.neurodata_type === "Units");
+}
+
+It's good to return the full objects in the response, so they can be used in future parts of the chat.
+
+Here's an example where you return the files that contain a Units object in a given Dandiset:
+
+function probe_dandiset_objects(dandiset_objects) {
+    const objects = dandiset_objects.objects.filter(o => o.neurodata_type === "Units");
+    return dandiset_objects.files.filter(f => objects.some(o => o.file_path === f.file_path));
 }
 `;
 
-export const dandisetObectsTool: ToolItem = {
+export const dandisetObjectsTool: ToolItem = {
   tool: {
     type: "function" as any,
     function: {
@@ -79,7 +98,16 @@ The query function takes one argument, which is a json object.
   },
 };
 
-let dandisetObjectsObjectCache: string | null = null;
+let dandisetObjectsObjectCache: {
+  objects: {
+    dandiset_id: string;
+    dandiset_version: string;
+    file_path: string;
+    download_url: string;
+    object_path: string;
+    neurodata_type: string;
+  }[];
+} | null = null;
 export const fetchDandisetObjectsObject = async (dandiset_id: string) => {
   if (dandisetObjectsObjectCache) {
     return dandisetObjectsObjectCache;
@@ -90,6 +118,7 @@ export const fetchDandisetObjectsObject = async (dandiset_id: string) => {
     throw new Error(`Failed to fetch from ${url}`);
   }
   const rr = await resp.json();
+
   dandisetObjectsObjectCache = rr;
   return rr;
 };

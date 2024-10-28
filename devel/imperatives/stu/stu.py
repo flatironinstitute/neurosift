@@ -23,12 +23,13 @@ class NWBFile:
         *,
         dandiset_id: str,
         asset_id: str,
-        path: str,
+        file_path: str,
         size: int,
         download_url: str,
     ):
+        self.asset_id = asset_id
         self.dandiset_id = dandiset_id
-        self.path = path
+        self.file_path = file_path
         self.size = size
         self.download_url = download_url
 
@@ -44,7 +45,7 @@ class NWBFile:
         groups = _get_neurodata_objects_recursively_for_group(f, [])
         return [
             NeurodataObject(
-                path=group.name,
+                object_path=group.name,
                 neurodata_type=group.attrs.get("neurodata_type", "Unknown"),
                 group=group,
             )
@@ -53,8 +54,8 @@ class NWBFile:
 
 
 class NeurodataObject:
-    def __init__(self, path, neurodata_type, group):
-        self.path = path
+    def __init__(self, object_path, neurodata_type, group):
+        self.object_path = object_path
         self.neurodata_type = neurodata_type
         self.group = group
 
@@ -131,8 +132,8 @@ def _fetch_nwb_files_for_dandiset(dandiset_id, dandiset_version, *, limit=10):
             x = NWBFile(
                 dandiset_id=dandiset_id,
                 asset_id=asset_obj.identifier,
-                path=asset_obj.path,
                 size=asset_obj.size,
+                file_path=asset_obj.path,
                 download_url=asset_obj.download_url,
             )
             nwb_files.append(x)
