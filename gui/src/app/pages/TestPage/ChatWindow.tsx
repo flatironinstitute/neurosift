@@ -27,6 +27,8 @@ import {
   fetchNeurodataTypesIndex,
   NeurodataTypesIndex,
 } from "../DandiQueryPage/SearchByNeurodataTypeWindow";
+import { neurodataTypesTool } from "./probeNeurodataTypes";
+import { unitsColnamesTool } from "./probeUnitsColnames";
 
 export type Chat = {
   messages: (ORMessage | { role: "client-side-only"; content: string })[];
@@ -43,6 +45,7 @@ type ChatWindowProps = {
   setChat: (chat: Chat) => void;
   openRouterKey: string | null;
   onLogMessage: (title: string, message: string) => void;
+  additionalKnowledge: string;
 };
 
 type PendingMessages = (
@@ -81,6 +84,15 @@ const pendingMesagesReducer = (
   }
 };
 
+export type ToolItem = {
+  function: (
+    args: any,
+    onLogMessage: (title: string, message: string) => void,
+  ) => Promise<any>;
+  detailedDescription?: string;
+  tool: ORTool;
+};
+
 const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   width,
   height,
@@ -88,13 +100,14 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   setChat,
   openRouterKey,
   onLogMessage,
+  additionalKnowledge,
 }) => {
   const { route, setRoute } = useRoute();
   const inputBarHeight = 30;
   const settingsBarHeight = 20;
   const topBarHeight = 24;
 
-  const [modelName, setModelName] = useState("openai/gpt-4o-mini");
+  const [modelName, setModelName] = useState("openai/gpt-4o");
 
   const handleUserMessage = useCallback(
     (message: string) => {
@@ -136,13 +149,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       : false;
   }, [lastMessage]);
 
-  const tools: {
-    function: (
-      args: any,
-      onLogMessage: (title: string, message: string) => void,
-    ) => Promise<any>;
-    tool: ORTool;
-  }[] = useMemo(() => {
+  const tools: ToolItem[] = useMemo(() => {
     const assistantTools = helperAssistants.map((helper) => {
       const functionDescription: ORFunctionDescription = {
         description: helper.description,
@@ -179,11 +186,13 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       ...assistantTools,
       relevantDandisetsTool,
       relevantDandisetsTool,
-      dandisetsWithNeurodataTypesTool,
+      neurodataTypesTool,
+      unitsColnamesTool,
+      // consultTool
     ];
   }, [modelName, openRouterKey]);
 
-  const systemMessage = useSystemMessage();
+  const systemMessage = useSystemMessage(tools, additionalKnowledge);
 
   useEffect(() => {
     if (!systemMessage) return;
@@ -349,7 +358,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   }, [lastMessageIsUserOrTool, lastMessageIsToolCalls]);
 
   const suggestedQuestions = useMemo(() => {
-    return [];
+    return ["What questions can I ask?"];
   }, []);
 
   const handleClickSuggestedQuestion = useCallback(
@@ -647,42 +656,76 @@ const labelForToolCall = (tc: {
   }
 };
 
-const getSystemMessage = async () => {
-  const allNeurodataTypes = await getAllNeurodataTypes();
+const getSystemMessage = async (
+  tools: ToolItem[],
+  additionalKnowledge: string,
+) => {
+  let allNeurodataTypes: string[];
+  try {
+    allNeurodataTypes = await getAllNeurodataTypes();
+  } catch (e) {
+    console.warn("Failed to get all neurodata types", e);
+    allNeurodataTypes = [];
+  }
 
-  const systemMessage = `
-  You are a helpful assistant that is responding to questions about the DANDI Archive.
+  let systemMessage = `
+You are a helpful assistant that is responding to questions about the DANDI Archive.
 
-  You should make use of the tools provided to you to help answer questions.
+You should make use of the tools provided to you to help answer questions.
 
-  If the questions are irrelevant or inappropriate, you should respond with a message indicating that you are unable to help with that question.
+If the questions are irrelevant or inappropriate, you should respond with a message indicating that you are unable to help with that question.
 
-  Whenever you provide a 6-digit Dandiset ID in response to a question you should use markdown notation for a link of the following format
+Whenever you provide a 6-digit Dandiset ID in response to a question you should use markdown notation for a link of the following format
 
-  [000409](https://dandiarchive.org/dandiset/000409)
+[000409](https://dandiarchive.org/dandiset/000409)
 
-  where of course the number 000409 is replaced with the actual Dandiset ID.
+where of course the number 000409 is replaced with the actual Dandiset ID.
 
-  Within one response, do not make excessive calls to the tools. Maybe up to around 5 is reasonable. But if you want to make more, you could ask the user if they would like you to do more work to find the answer.
+Within one response, do not make excessive calls to the tools. Maybe up to around 5 is reasonable. But if you want to make more, you could ask the user if they would like you to do more work to find the answer.
 
-  Assume that if the user is asking to find Dandisets, they also want to know more about those dandisets and how they are relevant to the user's query.
+Assume that if the user is asking to find Dandisets, they also want to know more about those dandisets and how they are relevant to the user's query.
 
-  If the user is looking for particular types of data, then you may want to use the dandisets_with_neurodata_types tool.
-  The full set of possible neurodata types is as follows:
-  ${(allNeurodataTypes || []).join(", ")}
+If the user is looking for particular types of data, you will want to probe the neurodata types in DANDI by submitting scripts
+to the probe_neurodata_types tool.
+The possible neurodata types are: ${allNeurodataTypes.join(", ")}.
 
-  If the user wants dandisets with particular data and also other criteria (like a prompt), then you should first find the dandisets with the data types using the dandisets_with_neurodata_types tool, and then use the relevant_dandisets tool with a restriction to the dandisets found in the previous step.
+If the user wants dandisets with particular data type and also other criteria (like a prompt),
+then you should first find the dandisets with the data types using the probe_neurodata_types tool,
+and then use the relevant_dandisets tool with a restriction to the dandisets found in the previous step.
+
+If the user wants to know about what column names are in units tables for various dandisets, you can use the probe_units_colnames tool.
+
+${additionalKnowledge}
+
   `;
+  for (const tool of tools) {
+    if (tool.detailedDescription) {
+      systemMessage += `
+========================
+Here's a detailed description of the ${tool.tool.function.name} tool:
+${tool.detailedDescription}
+========================
+`;
+    }
+  }
+
+  // But before you do anything you should use the consult tool one or more times to get information about the topics that the user is asking about.
+  // This will help you to understand the context of the user's query and to provide more relevant responses.
+  // The possible topics are:
+  // - units-tables: This corresponds to the Units neurodata type and contains neural spiking data - usually the output of spike sorting.
+  // - behavioral-events: This corresponds to the BehavioralEvents neurodata type and contains data about behavioral events.
+  // - optical-physiology: This corresponds to the OpticalPhysiology neurodata type and contains data about optical physiology experiments.
+
   return systemMessage;
 };
 
-const useSystemMessage = () => {
+const useSystemMessage = (tools: ToolItem[], additionalKnowledge: string) => {
   const [systemMessage, setSystemMessage] = useState<string | null>(null);
   useEffect(() => {
-    getSystemMessage().then((msg) => {
+    getSystemMessage(tools, additionalKnowledge).then((msg) => {
       setSystemMessage(msg);
     });
-  }, []);
+  }, [tools, additionalKnowledge]);
   return systemMessage;
 };
 
@@ -740,81 +783,49 @@ const relevantDandisetsTool = {
 };
 
 const getAllNeurodataTypes = async () => {
-  const neurodataTypesIndex: NeurodataTypesIndex | undefined =
-    await fetchNeurodataTypesIndex();
-  if (!neurodataTypesIndex) {
-    return [];
+  const a: any = await fetchNeurodataTypesIndex();
+  if (!a) {
+    throw new Error("Failed to fetch neurodata types index");
   }
-  const neurodataTypes = new Set<string>();
-  for (const file of neurodataTypesIndex.files) {
-    for (const nt of file.neurodata_types) {
-      neurodataTypes.add(nt);
-    }
-  }
-  return Array.from(neurodataTypes).sort();
+  return a.neurodata_types.map((x: any) => x.neurodata_type);
 };
 
-const dandisetsWithNeurodataTypesTool = {
-  tool: {
-    type: "function",
-    function: {
-      name: "dandisets_with_neurodata_types",
-      description: `
-Returns a comma-separated list of 6-digit Dandiset IDs that contain certain neurodata types.
-The input neurodata_query_function is the text of a javascript script function that will be evaluated on the set of neurodata types in each file.
-For example:
-function (neurodata_types) {
-      return neurodata_types.has("Units") && neurodata_types.has("TwoPhotonSeries");
-}
-`,
-      parameters: {
-        type: "object",
-        properties: {
-          neurodata_query_function: {
-            type: "string",
-            description:
-              "Boolean logic query for neurodata types in the form of a javascript function.",
-          },
-        },
-      },
-    },
-  },
-  function: async (
-    args: any,
-    onLogMessage: (title: string, message: string) => void,
-  ) => {
-    const neurodata_query_function: string = args.neurodata_query_function;
-    onLogMessage(
-      "dandisets_with_neurodata_types query",
-      neurodata_query_function,
-    );
-    const neurodataTypesIndex: NeurodataTypesIndex | undefined =
-      await fetchNeurodataTypesIndex();
-    if (!neurodataTypesIndex) {
-      throw new Error("Failed to fetch neurodata types index");
-    }
-    const dandisetIds = new Set<string>();
-    for (const file of neurodataTypesIndex.files) {
-      if (dandisetIds.has(file.dandiset_id)) {
-        continue;
-      }
-      const nt = file.neurodata_types;
-      const ntSet = new Set(nt);
-      const queryFunction = new Function(
-        "ntSet",
-        `return (${neurodata_query_function})(ntSet);`,
-      );
-      if (queryFunction(ntSet)) {
-        dandisetIds.add(file.dandiset_id);
-      }
-    }
-    onLogMessage(
-      "dandisets_with_neurodata_types response",
-      Array.from(dandisetIds).join(", "),
-    );
-    if (dandisetIds.size > 0) return Array.from(dandisetIds).sort().join(", ");
-    else return "No Dandisets found with the specified neurodata types."; // important to not return an empty string
-  },
-};
+// const topicInfo: { [key: string]: string } = {
+//   "units-tables": "Units tables are the boss",
+//   "behavioral-events": "Behavioral events are the boss",
+//   "optical-physiology": "Optical physiology is the boss",
+// };
+
+// const consultTool = {
+//   tool: {
+//     type: "function" as any,
+//     function: {
+//       name: "consult",
+//       description:
+//         "Consult documentation on a topic. The possible topics are: units-tables, behavioral-events, and optical-physiology.",
+//       parameters: {
+//         type: "object",
+//         properties: {
+//           topic: {
+//             type: "string",
+//             description:
+//               "The topic to consult. See description for possible values.",
+//           },
+//         },
+//       },
+//     },
+//   },
+//   function: async (
+//     args: { topic: string },
+//     onLogMessage: (title: string, message: string) => void,
+//   ) => {
+//     const { topic } = args;
+//     onLogMessage("consult query", topic);
+//     const ret =
+//       topicInfo[topic] || "No information found for the specified topic.";
+//     onLogMessage("consult response", ret);
+//     return ret;
+//   },
+// };
 
 export default ChatWindow;

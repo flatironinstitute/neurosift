@@ -5,9 +5,11 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import ChatWindow, { Chat } from "./ChatWindow";
+import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 
 type TestPageProps = {
   width: number;
@@ -17,6 +19,8 @@ type TestPageProps = {
 const TestPage: FunctionComponent<TestPageProps> = ({ width, height }) => {
   const [openRouterKey, setOpenRouterKey] = useState<string | null>(null);
   const [chat, setChat] = useState<Chat>({ messages: [] });
+  const [additionalKnowledge, setAdditionalKnowledge] = useState<string>("");
+  usePersistAdditionalKnowledge(additionalKnowledge, setAdditionalKnowledge);
   const logger = useMemo(() => new Logger(), []);
   const handleLogMessage = useCallback(
     (title: string, message: string) => {
@@ -37,6 +41,8 @@ const TestPage: FunctionComponent<TestPageProps> = ({ width, height }) => {
         openRouterKey={openRouterKey}
         setOpenRouterKey={setOpenRouterKey}
         logger={logger}
+        additionalKnowledge={additionalKnowledge}
+        setAdditionalKnowledge={setAdditionalKnowledge}
       />
       <ChatWindow
         width={0}
@@ -45,6 +51,7 @@ const TestPage: FunctionComponent<TestPageProps> = ({ width, height }) => {
         setChat={setChat}
         openRouterKey={openRouterKey}
         onLogMessage={handleLogMessage}
+        additionalKnowledge={additionalKnowledge}
       />
     </Splitter>
   );
@@ -56,6 +63,8 @@ type LeftPanelProps = {
   openRouterKey: string | null;
   setOpenRouterKey: (openRouterKey: string | null) => void;
   logger: Logger;
+  additionalKnowledge: string;
+  setAdditionalKnowledge: (additionalKnowledge: string) => void;
 };
 
 const LeftPanel: FunctionComponent<LeftPanelProps> = ({
@@ -64,6 +73,8 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({
   openRouterKey,
   setOpenRouterKey,
   logger,
+  additionalKnowledge,
+  setAdditionalKnowledge,
 }) => {
   const [logMessages, setLogMessages] = useState<
     { title: string; message: string }[]
@@ -73,6 +84,11 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({
       setLogMessages((prev) => [...prev, { title, message }]);
     });
   }, [logger]);
+  const {
+    handleOpen: openAdditionalKnowledge,
+    handleClose: closeAdditionalKnowledge,
+    visible: additionalKnowledgeVisible,
+  } = useModalWindow();
   return (
     <div style={{ position: "absolute", width, height, overflowY: "auto" }}>
       <div style={{ padding: 20 }}>
@@ -81,10 +97,23 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({
           setOpenRouterKey={setOpenRouterKey}
         />
         <hr />
+        <button onClick={openAdditionalKnowledge} style={{ marginBottom: 10 }}>
+          Additional knowledge ({additionalKnowledge.length})
+        </button>
+        <hr />
         {logMessages.map((m, i) => (
           <ExpandableLogMessage key={i} title={m.title} message={m.message} />
         ))}
       </div>
+      <ModalWindow
+        visible={additionalKnowledgeVisible}
+        onClose={closeAdditionalKnowledge}
+      >
+        <EditAdditionalKnowledge
+          additionalKnowledge={additionalKnowledge}
+          setAdditionalKnowledge={setAdditionalKnowledge}
+        />
+      </ModalWindow>
     </div>
   );
 };
@@ -166,5 +195,53 @@ export class Logger {
     this.#callbacks.push(cb);
   }
 }
+
+type EditAdditionalKnowledgeProps = {
+  additionalKnowledge: string;
+  setAdditionalKnowledge: (additionalKnowledge: string) => void;
+};
+
+const EditAdditionalKnowledge: FunctionComponent<
+  EditAdditionalKnowledgeProps
+> = ({ additionalKnowledge, setAdditionalKnowledge }) => {
+  // edit the additional knowledge in a text area of height 400
+  return (
+    <div style={{ padding: 20 }}>
+      <p>
+        You can add additional knowledge for the assistant here. This is a
+        convenient way to develop the assistant. Reach out to the Neurosift team
+        to propose adding this knowledge to the assistant.
+      </p>
+      <textarea
+        style={{ width: "100%", height: 400 }}
+        value={additionalKnowledge}
+        onChange={(e) => setAdditionalKnowledge(e.target.value)}
+      />
+    </div>
+  );
+};
+
+const usePersistAdditionalKnowledge = (
+  additionalKnowledge: string,
+  setAdditionalKnowledge: (additionalKnowledge: string) => void,
+) => {
+  const localStorageKey = "additionalKnowledge";
+  const didInitialLoad = useRef(false);
+  useEffect(() => {
+    if (!didInitialLoad.current) {
+      didInitialLoad.current = true;
+      const ak = localStorage.getItem(localStorageKey);
+      if (ak) {
+        setAdditionalKnowledge(ak);
+      }
+    }
+  }, [setAdditionalKnowledge]);
+  useEffect(() => {
+    if (!didInitialLoad.current) {
+      return;
+    }
+    localStorage.setItem(localStorageKey, additionalKnowledge);
+  }, [additionalKnowledge]);
+};
 
 export default TestPage;
