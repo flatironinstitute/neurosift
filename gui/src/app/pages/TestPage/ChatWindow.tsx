@@ -2,7 +2,6 @@ import { SmallIconButton } from "@fi-sci/misc";
 import { Cancel, Send } from "@mui/icons-material";
 import Markdown from "app/Markdown/Markdown";
 import {
-  ORFunctionDescription,
   ORMessage,
   ORTool,
 } from "app/pages/DandisetPage/DandisetViewFromDendro/openRouterTypes";
@@ -16,20 +15,17 @@ import {
   useRef,
   useState,
 } from "react";
-import chatCompletion from "./chatCompletion";
-import helperAssistants from "./helperAssistants";
+import { fetchNeurodataTypesIndex } from "../DandiQueryPage/SearchByNeurodataTypeWindow";
 import {
   computeEmbeddingForAbstractText,
   findSimilarDandisetIds,
   loadEmbeddings,
 } from "../DandisetPage/DandisetViewFromDendro/SimilarDandisetsView";
-import {
-  fetchNeurodataTypesIndex,
-  NeurodataTypesIndex,
-} from "../DandiQueryPage/SearchByNeurodataTypeWindow";
+import chatCompletion from "./chatCompletion";
+import { probeDandisetTool } from "./probeDandiset";
+import { dandisetObjectsTool } from "./probeDandisetObjects";
 import { neurodataTypesTool } from "./probeNeurodataTypes";
 import { unitsColnamesTool } from "./probeUnitsColnames";
-import { dandisetObjectsTool } from "./probeDandisetObjects";
 
 export type Chat = {
   messages: (ORMessage | { role: "client-side-only"; content: string })[];
@@ -89,6 +85,10 @@ export type ToolItem = {
   function: (
     args: any,
     onLogMessage: (title: string, message: string) => void,
+    o: {
+      modelName: string;
+      openRouterKey: string | null;
+    },
   ) => Promise<any>;
   detailedDescription?: string;
   tool: ORTool;
@@ -151,48 +151,16 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   }, [lastMessage]);
 
   const tools: ToolItem[] = useMemo(() => {
-    const assistantTools = helperAssistants.map((helper) => {
-      const functionDescription: ORFunctionDescription = {
-        description: helper.description,
-        name: helper.name,
-        parameters: {
-          type: "object",
-          properties: helper.parameters,
-        },
-      };
-      return {
-        function: async (
-          args: { prompt: string },
-          onLogMessage: (title: string, message: string) => void,
-        ) => {
-          const helperQueryNumber = globalHelperQueryNumber++;
-          onLogMessage(
-            `${helper.name} query ${helperQueryNumber}`,
-            JSON.stringify(args),
-          );
-          const resp = await helper.inquire(args, {
-            openRouterKey,
-            modelName,
-          });
-          onLogMessage(`${helper.name} response ${helperQueryNumber}`, resp);
-          return resp;
-        },
-        tool: {
-          type: "function" as any,
-          function: functionDescription,
-        },
-      };
-    });
     return [
-      ...assistantTools,
       relevantDandisetsTool,
       relevantDandisetsTool,
       neurodataTypesTool,
       unitsColnamesTool,
       dandisetObjectsTool,
+      probeDandisetTool,
       // consultTool
     ];
-  }, [modelName, openRouterKey]);
+  }, []);
 
   const systemMessage = useSystemMessage(tools, additionalKnowledge);
 
@@ -267,7 +235,10 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
             console.info("TOOL CALL: ", tc.function.name, args);
             let response: string;
             try {
-              response = await func(args, onLogMessage);
+              response = await func(args, onLogMessage, {
+                modelName,
+                openRouterKey,
+              });
             } catch (e: any) {
               response = "Error: " + e.message;
             }
@@ -685,7 +656,7 @@ where of course the number 000409 is replaced with the actual Dandiset ID.
 
 Within one response, do not make excessive calls to the tools. Maybe up to around 5 is reasonable. But if you want to make more, you could ask the user if they would like you to do more work to find the answer.
 
-Assume that if the user is asking to find Dandisets, they also want to know more about those dandisets and how they are relevant to the user's query.
+Assume that if the user is asking to find Dandisets, they also want to know more about those dandisets and how they are relevant to the user's query. So you should use the probe_dandiset tool for that.
 
 If the user is looking for particular types of data, you will want to probe the neurodata types in DANDI by submitting scripts
 to the probe_neurodata_types tool.
@@ -734,8 +705,6 @@ const useSystemMessage = (tools: ToolItem[], additionalKnowledge: string) => {
   }, [tools, additionalKnowledge]);
   return systemMessage;
 };
-
-let globalHelperQueryNumber = 1;
 
 const relevantDandisetsTool = {
   tool: {
