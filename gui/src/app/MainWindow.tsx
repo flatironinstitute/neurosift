@@ -99,7 +99,7 @@ const MainWindow: FunctionComponent<Props> = () => {
           <ChatPage width={width} height={H} />
         ) : route.page === "test" ? (
           <ChatPage width={width} height={H} />
-        ) : route.page === 'saved-chats' ? (
+        ) : route.page === "saved-chats" ? (
           <SavedChatsPage width={width} height={H} />
         ) : route.page === "nwb" ? (
           <NwbPage width={width} height={H} />

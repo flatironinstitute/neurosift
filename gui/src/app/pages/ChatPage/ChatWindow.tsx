@@ -28,6 +28,7 @@ import { neurodataTypesTool } from "./tools/probeNeurodataTypes";
 import { unitsColnamesTool } from "./tools/probeUnitsColnames";
 import { relevantDandisetsTool } from "./tools/relevantDandisets";
 import { lexicaltDandisetsTool } from "./tools/lexicalDandisets";
+import { timeseriesAlignmentViewTool } from "./tools/timeseriesAlignmentView";
 
 export type Chat = {
   messages: (ORMessage | { role: "client-side-only"; content: string })[];
@@ -160,6 +161,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       unitsColnamesTool,
       dandisetObjectsTool,
       probeDandisetTool,
+      timeseriesAlignmentViewTool,
       // consultTool
     ];
   }, []);
@@ -679,6 +681,8 @@ When you refer to a particular neurodata object (that is in an NWB file within a
 [label](https://neurosift.app/?p=/nwb&url=[download_url]&dandisetId=[dandiset_id]&dandisetVersion=[dandiseet_version]&tab=view:[neurodata_type]|[object_path])
 
 If the user asks for a random example, then use Math.random in the javascript to truly provide a random example... don't just use the first in the list.
+
+For the timeseries_alignment_view, when you get the URL, you should return it as is on a separate line of the response (don't put it in a markdown link), because then the chat interface will render it inline.
 
 ${additionalKnowledge}
 

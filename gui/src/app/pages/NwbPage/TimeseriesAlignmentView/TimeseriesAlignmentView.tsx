@@ -238,6 +238,10 @@ const TAItemView: FunctionComponent<TAItemViewProps> = ({
   if (item.startTime === undefined)
     return <div>item.startTime is undefined</div>;
   if (item.endTime === undefined) return <div>item.endTime is undefined</div>;
+  if (typeof item.startTime !== "number")
+    return <div>item.startTime is not a number</div>;
+  if (typeof item.endTime !== "number")
+    return <div>item.endTime is not a number</div>;
   return (
     <div style={{ position: "relative", width, height: h1 + h2 + h3 }}>
       <div

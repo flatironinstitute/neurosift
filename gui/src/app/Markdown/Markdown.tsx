@@ -101,13 +101,25 @@ const Markdown: FunctionComponent<Props> = ({ source, onSpecialLinkClick }) => {
       },
       // }
     }),
-    [],
+    [onSpecialLinkClick],
   );
+  const source2 = useMemo(() => {
+    const lines = source.split("\n").map((line) => {
+      if (line.trim().startsWith("https://figurl.org/f")) {
+        const sep = line.indexOf("?");
+        const part1 = line.slice(0, sep);
+        const part2 = encodeURI(line.slice(sep + 1) + "&hide=1");
+        const url = `${part1}?${part2}`;
+        return `<iframe src="${url}" width="100%" height="400" frameBorder="0"></iframe>`;
+      }
+    });
+    return lines.join("\n");
+  }, [source]);
   return (
     <div className="markdown-body" style={{ fontSize: 16 }}>
       <ReactMarkdown
         // eslint-disable-next-line react/no-children-prop
-        children={source}
+        children={source2}
         remarkPlugins={[remarkGfm, remarkMathPlugin]}
         rehypePlugins={[rehypeRaw, rehypeMathJaxSvg /*, rehypeKatexPlugin*/]}
         components={components}

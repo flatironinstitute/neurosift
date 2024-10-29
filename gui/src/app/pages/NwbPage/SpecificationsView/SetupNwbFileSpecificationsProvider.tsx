@@ -151,7 +151,7 @@ const compareVersions = (a: string, b: string) => {
   return 0;
 };
 
-const loadSpecifications = async (
+export const loadSpecifications = async (
   nwbFile: RemoteH5FileX,
 ): Promise<NwbFileSpecifications> => {
   const subgroups: SpecificationsSubgroup[] = [];
