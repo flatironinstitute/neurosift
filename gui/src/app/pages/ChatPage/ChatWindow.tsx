@@ -658,6 +658,8 @@ Within one response, do not make excessive calls to the tools. Maybe up to aroun
 
 Assume that if the user is asking to find Dandisets, they also want to know more about those dandisets and how they are relevant to the user's query. So you should use the probe_dandiset tool for that.
 
+When you use probe_dandiset, try to be specific based on the context. For example, instead of just saying "what's this dandiset about?" say "what's this dandiset about, especially relating to xyz".
+
 If the user is looking for particular types of data, you will want to probe the neurodata types in DANDI by submitting scripts
 to the probe_neurodata_types tool.
 The possible neurodata types are: ${allNeurodataTypes.join(", ")}.
