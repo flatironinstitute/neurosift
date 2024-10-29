@@ -22,10 +22,12 @@ import {
   loadEmbeddings,
 } from "../DandisetPage/DandisetViewFromDendro/SimilarDandisetsView";
 import chatCompletion from "./chatCompletion";
-import { probeDandisetTool } from "./probeDandiset";
-import { dandisetObjectsTool } from "./probeDandisetObjects";
-import { neurodataTypesTool } from "./probeNeurodataTypes";
-import { unitsColnamesTool } from "./probeUnitsColnames";
+import { probeDandisetTool } from "./tools/probeDandiset";
+import { dandisetObjectsTool } from "./tools/probeDandisetObjects";
+import { neurodataTypesTool } from "./tools/probeNeurodataTypes";
+import { unitsColnamesTool } from "./tools/probeUnitsColnames";
+import { relevantDandisetsTool } from "./tools/relevantDandisets";
+import { lexicaltDandisetsTool } from "./tools/lexicalDandisets";
 
 export type Chat = {
   messages: (ORMessage | { role: "client-side-only"; content: string })[];
@@ -153,7 +155,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   const tools: ToolItem[] = useMemo(() => {
     return [
       relevantDandisetsTool,
-      relevantDandisetsTool,
+      lexicaltDandisetsTool,
       neurodataTypesTool,
       unitsColnamesTool,
       dandisetObjectsTool,
@@ -321,9 +323,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   );
 
   const initialMessage = useMemo(() => {
-    return `
-  I can help you find information about Dandisets in the DANDI Archive. You can ask me about specific Dandisets, or I can help you locate relevant Dandisets based on a topic or query you're interested in. If you have a specific question or need information about a Dandiset, feel free to ask!
-  `;
+    return `I can help you find information about Dandisets in the DANDI Archive.`;
   }, []);
 
   const inputBarEnabled = useMemo(() => {
@@ -666,11 +666,17 @@ If the user wants dandisets with particular data type and also other criteria (l
 then you should first find the dandisets with the data types using the probe_neurodata_types tool,
 and then use the relevant_dandisets tool with a restriction to the dandisets found in the previous step.
 
+If the user wants to do a lexical search for dandisets, you can use the lexical_dandisets tool.
+The results of lexical_dandisets will be in descending order of modified date, so you can also
+use the with an empty search_text to get the most recently modified dandisets.
+
 If the user wants to know about what column names are in units tables for various dandisets, you can use the probe_units_colnames tool.
 
 When you refer to a particular neurodata object (that is in an NWB file within a dandiset), you should use the following link to a visualization
 
 [label](https://neurosift.app/?p=/nwb&url=[download_url]&dandisetId=[dandiset_id]&dandisetVersion=[dandiseet_version]&tab=view:[neurodata_type]|[object_path])
+
+If the user asks for a random example, then use Math.random in the javascript to truly provide a random example... don't just use the first in the list.
 
 ${additionalKnowledge}
 
@@ -704,57 +710,6 @@ const useSystemMessage = (tools: ToolItem[], additionalKnowledge: string) => {
     });
   }, [tools, additionalKnowledge]);
   return systemMessage;
-};
-
-const relevantDandisetsTool = {
-  tool: {
-    type: "function" as any,
-    function: {
-      name: "relevant_dandisets",
-      description:
-        "Returns a list of 6-digit Dandiset IDs most relevant to a given prompts, in descending order of relevance.",
-      parameters: {
-        type: "object",
-        properties: {
-          prompt: {
-            type: "string",
-            description: "The prompt to use to find relevant Dandisets.",
-          },
-          restrict_to_dandisets: {
-            type: "string",
-            description:
-              "An optional comma-separated list of 6-digit Dandiset IDs to restrict the search to.",
-          },
-        },
-      },
-    },
-  },
-  function: async (
-    args: { prompt: string; restrict_to_dandisets: string | null },
-    onLogMessage: (title: string, message: string) => void,
-  ) => {
-    const { prompt, restrict_to_dandisets } = args;
-    const embeddings = await loadEmbeddings();
-    if (embeddings === null || embeddings === undefined) {
-      throw new Error("Problem loading embeddings");
-    }
-    const modelName = "text-embedding-3-large";
-    onLogMessage(
-      "relevant_dandisets query",
-      prompt + " " + restrict_to_dandisets,
-    );
-    const embedding = await computeEmbeddingForAbstractText(prompt, modelName);
-    let dandisetIds = findSimilarDandisetIds(embeddings, embedding, modelName);
-    if (restrict_to_dandisets) {
-      const restrictToDandisetsSet = new Set(
-        restrict_to_dandisets.split(",").map((x) => x.trim()),
-      );
-      dandisetIds = dandisetIds.filter((id) => restrictToDandisetsSet.has(id));
-    }
-    dandisetIds = dandisetIds.slice(0, 20);
-    onLogMessage("relevant_dandisets response", dandisetIds.join(", "));
-    return dandisetIds.join(", ");
-  },
 };
 
 const getAllNeurodataTypes = async () => {

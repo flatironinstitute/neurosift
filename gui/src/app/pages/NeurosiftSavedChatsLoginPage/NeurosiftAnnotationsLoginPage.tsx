@@ -5,40 +5,40 @@ type Props = {
   //
 };
 
-const NeurosiftSavedChatsLoginPage: FunctionComponent<Props> = () => {
+const NeurosiftAnnotationsLoginPage: FunctionComponent<Props> = () => {
   const { route, setRoute } = useRoute();
-  if (route.page !== "neurosift-saved-chats-login")
+  if (route.page !== "neurosift-annotations-login")
     throw new Error("wrong page");
   useEffect(() => {
     if (route.accessToken) {
       localStorage.setItem(
-        "neurosift-saved-chats-access-token",
+        "neurosift-annotations-access-token",
         route.accessToken,
       );
-      setRoute({ page: "neurosift-saved-chats-login", accessToken: "" }, true);
+      setRoute({ page: "neurosift-annotations-login", accessToken: "" }, true);
     }
   }, [route, setRoute]);
 
   const savedAccessToken = localStorage.getItem(
-    "neurosift-saved-chats-access-token",
+    "neurosift-annotations-access-token",
   );
 
   if (savedAccessToken && !route.accessToken) {
     return (
       <div>
-        You are logged in to Neurosift Saved Chats. You may close this window.
+        You are logged in to Neurosift Annotations. You may close this window.
       </div>
     );
   } else if (route.accessToken) {
-    return <div>Logging in to Neurosift Saved Chats...</div>;
+    return <div>Logging in to Neurosift Annotations...</div>;
   } else {
     return (
       <div>
-        You are not logged in to Neurosift Saved Chats. Something probably went
+        You are not logged in to Neurosift Annotations. Something probably went
         wrong.
       </div>
     );
   }
 };
 
-export default NeurosiftSavedChatsLoginPage;
+export default NeurosiftAnnotationsLoginPage;

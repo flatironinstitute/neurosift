@@ -18,11 +18,13 @@ import HomePage from "./pages/HomePage/HomePage";
 import NeurosiftAnnotationsLoginPage from "./pages/NeurosiftAnnotationsLoginPage/NeurosiftAnnotationsLoginPage";
 import NwbPage from "./pages/NwbPage/NwbPage";
 import PluginPage from "./pages/PluginPage/PluginPage";
-import TestPage from "./pages/TestPage/TestPage";
+import ChatPage from "./pages/TestPage/TestPage";
 import TestsPage from "./pages/TestsPage/TestsPage";
 import useRoute from "./useRoute";
 import OpenNeuroPage from "./pages/OpenNeuroPage/OpenNeuroPage";
 import OpenNeuroDatasetPage from "./pages/OpenNeuroDatasetPage/OpenNeuroDatasetPage";
+import NeurosiftSavedChatsLoginPage from "./pages/NeurosiftAnnotationsLoginPage/NeurosiftAnnotationsLoginPage";
+import SavedChatsPage from "./pages/SavedChatsPage/SavedChatsPage";
 
 type Props = {
   // none
@@ -93,8 +95,12 @@ const MainWindow: FunctionComponent<Props> = () => {
           <HomePage width={width} height={H} />
         ) : route.page === "about" ? (
           <HomePage width={width} height={H} />
+        ) : route.page === "chat" ? (
+          <ChatPage width={width} height={H} />
         ) : route.page === "test" ? (
-          <TestPage width={width} height={H} />
+          <ChatPage width={width} height={H} />
+        ) : route.page === "saved-chats" ? (
+          <SavedChatsPage width={width} height={H} />
         ) : route.page === "nwb" ? (
           <NwbPage width={width} height={H} />
         ) : // ) : route.page === 'avi' ? (
@@ -123,6 +129,8 @@ const MainWindow: FunctionComponent<Props> = () => {
           <TestsPage width={width} height={H} />
         ) : route.page === "neurosift-annotations-login" ? (
           <NeurosiftAnnotationsLoginPage />
+        ) : route.page === "neurosift-saved-chats-login" ? (
+          <NeurosiftSavedChatsLoginPage />
         ) : route.page === "plugin" ? (
           <PluginPage width={width} height={H} />
         ) : route.page === "openneuro" ? (

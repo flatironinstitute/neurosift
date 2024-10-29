@@ -18,6 +18,13 @@ export type Route =
       page: "test";
     }
   | {
+      page: "chat";
+      chatId?: string;
+    }
+  | {
+      page: "saved-chats";
+    }
+  | {
       page: "nwb";
       url: string[];
       dandisetId?: string;
@@ -60,10 +67,17 @@ export type Route =
       page: "tests";
     }
   | {
+      page: "saved-chats";
+    }
+  | {
       page: "github-auth";
     }
   | {
       page: "neurosift-annotations-login";
+      accessToken: string;
+    }
+  | {
+      page: "neurosift-saved-chats-login";
       accessToken: string;
     }
   | {
@@ -120,6 +134,15 @@ const useRoute = () => {
     } else if (p === "/test") {
       return {
         page: "test",
+      };
+    } else if (p === "/chat") {
+      return {
+        page: "chat",
+        chatId: query.chatId as string,
+      };
+    } else if (p === "/saved-chats") {
+      return {
+        page: "saved-chats",
       };
     } else if (p === "/nwb") {
       const urlList = typeof query.url === "string" ? [query.url] : query.url; // actually a list of urls
@@ -203,6 +226,11 @@ const useRoute = () => {
         page: "neurosift-annotations-login",
         accessToken: query.access_token as string,
       };
+    } else if (p === "/neurosift-saved-chats-login") {
+      return {
+        page: "neurosift-saved-chats-login",
+        accessToken: query.access_token as string,
+      };
     } else if (p === "/plugin") {
       return {
         page: "plugin",
@@ -243,6 +271,13 @@ const useRoute = () => {
         newQuery.p = "/b/" + r.folder;
       } else if (r.page === "test") {
         newQuery.p = "/test";
+      } else if (r.page === "chat") {
+        newQuery.p = "/chat";
+        if (r.chatId) {
+          newQuery.chatId = r.chatId;
+        }
+      } else if (r.page === "saved-chats") {
+        newQuery.p = "/saved-chats";
       } else if (r.page === "nwb") {
         newQuery.p = "/nwb";
         newQuery.url = r.url;
@@ -309,6 +344,11 @@ const useRoute = () => {
       } else if (r.page === "neurosift-annotations-login") {
         newQuery = {
           p: "/neurosift-annotations-login",
+          access_token: r.accessToken,
+        };
+      } else if (r.page === "neurosift-saved-chats-login") {
+        newQuery = {
+          p: "/neurosift-saved-chats-login",
           access_token: r.accessToken,
         };
       } else if (r.page === "plugin") {

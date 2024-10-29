@@ -1,6 +1,6 @@
-import { ORMessage } from "../DandisetPage/DandisetViewFromDendro/openRouterTypes";
-import chatCompletion from "./chatCompletion";
-import { ToolItem } from "./ChatWindow";
+import { ORMessage } from "../../DandisetPage/DandisetViewFromDendro/openRouterTypes";
+import chatCompletion from "../chatCompletion";
+import { ToolItem } from "../ChatWindow";
 
 export const probeDandisetTool: ToolItem = {
   tool: {
@@ -76,7 +76,7 @@ export const probeDandisetTool: ToolItem = {
     });
     const { assistantMessage } = xx;
 
-    onLogMessage("probe_dandiset response" + dandiset_id, assistantMessage);
+    onLogMessage("probe_dandiset response " + dandiset_id, assistantMessage);
     return assistantMessage;
   },
 };
