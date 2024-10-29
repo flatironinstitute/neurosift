@@ -18,7 +18,7 @@ import HomePage from "./pages/HomePage/HomePage";
 import NeurosiftAnnotationsLoginPage from "./pages/NeurosiftAnnotationsLoginPage/NeurosiftAnnotationsLoginPage";
 import NwbPage from "./pages/NwbPage/NwbPage";
 import PluginPage from "./pages/PluginPage/PluginPage";
-import ChatPage from "./pages/TestPage/TestPage";
+import ChatPage from "./pages/ChatPage/ChatPage";
 import TestsPage from "./pages/TestsPage/TestsPage";
 import useRoute from "./useRoute";
 import OpenNeuroPage from "./pages/OpenNeuroPage/OpenNeuroPage";
@@ -99,7 +99,7 @@ const MainWindow: FunctionComponent<Props> = () => {
           <ChatPage width={width} height={H} />
         ) : route.page === "test" ? (
           <ChatPage width={width} height={H} />
-        ) : route.page === "saved-chats" ? (
+        ) : route.page === 'saved-chats' ? (
           <SavedChatsPage width={width} height={H} />
         ) : route.page === "nwb" ? (
           <NwbPage width={width} height={H} />
