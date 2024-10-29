@@ -369,7 +369,7 @@ const SaveChatDialog: FunctionComponent<SaveChatDialogProps> = ({
             if (!chatId) {
               alert("Failed to save chat");
             }
-            setChatLink("https://neurosift.app?p=/test&chatId=" + chatId);
+            setChatLink("https://neurosift.app?p=/chat&chatId=" + chatId);
           }}
           disabled={!chatTitle}
         >
