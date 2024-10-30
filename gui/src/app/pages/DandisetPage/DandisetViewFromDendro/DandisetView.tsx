@@ -72,6 +72,7 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
           dandisetId,
           dandisetVersion: dandisetVersionInfo.version,
           staging: (route as any)["staging"] || false,
+          chatId: (route as any)["chatId"],
         },
         true,
       );

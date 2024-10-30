@@ -545,6 +545,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
           chat={chat}
           onClose={closeSaveChat}
           openRouterKey={openRouterKey}
+          chatContext={chatContext}
         />
       </ModalWindow>
     </div>

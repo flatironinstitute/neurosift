@@ -116,10 +116,11 @@ export const getNeurodataTypeInheritanceRaw = (
 export const neurodataTypeInheritsFrom = (
   type: string | undefined,
   baseType: string,
-  specifications: NwbFileSpecifications,
+  specifications: NwbFileSpecifications | undefined,
 ) => {
   if (!type) return false;
   if (type === baseType) return true;
+  if (!specifications) return false;
   const inheritanceRaw = getNeurodataTypeInheritanceRaw(specifications);
   const inheritance: { [key: string]: string[] } = {};
   for (const key in inheritanceRaw) {

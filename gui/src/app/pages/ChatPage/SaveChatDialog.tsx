@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { Chat } from "./ChatWindow";
+import { Chat, ChatContext } from "./ChatWindow";
 import { useSavedChats } from "../SavedChatsPage/savedChatsApi";
 import useNeurosiftSavedChats from "app/NeurosiftSavedChats/useNeurosiftSavedChats";
 import useRoute from "app/useRoute";
@@ -12,12 +12,14 @@ type SaveChatDialogProps = {
   chat: Chat;
   onClose: () => void;
   openRouterKey: string | null;
+  chatContext: ChatContext;
 };
 
 const SaveChatDialog: FunctionComponent<SaveChatDialogProps> = ({
   chat,
   onClose,
   openRouterKey,
+  chatContext,
 }) => {
   const { addSavedChat } = useSavedChats({ load: false });
   const { neurosiftSavedChatsAccessToken, neurosiftSavedChatsUserId } =
@@ -71,12 +73,19 @@ const SaveChatDialog: FunctionComponent<SaveChatDialogProps> = ({
             const chatId = await addSavedChat({
               chatTitle,
               messages: chat.messages,
-              dandisetId: undefined,
+              dandisetId:
+                chatContext.type === "dandiset"
+                  ? chatContext.dandisetId
+                  : undefined,
             });
             if (!chatId) {
               alert("Failed to save chat");
             }
-            setChatLink("https://neurosift.app?p=/chat&chatId=" + chatId);
+            let chatLink = `https://neurosift.app?p=/chat&chatId=${chatId}`;
+            if (chatContext.type === "dandiset") {
+              chatLink += `&dandisetId=${chatContext.dandisetId}`;
+            }
+            setChatLink(chatLink);
           }}
           disabled={!chatTitle}
         >

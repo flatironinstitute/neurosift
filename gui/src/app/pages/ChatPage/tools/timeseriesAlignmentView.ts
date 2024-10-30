@@ -1,6 +1,9 @@
 import { RemoteH5File } from "@remote-h5-file/index";
 import { neurodataTypeInheritsFrom } from "app/pages/NwbPage/neurodataSpec";
-import { loadSpecifications } from "app/pages/NwbPage/SpecificationsView/SetupNwbFileSpecificationsProvider";
+import {
+  loadSpecifications,
+  NwbFileSpecifications,
+} from "app/pages/NwbPage/SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 export const timeseriesAlignmentViewTool = {
   tool: {
@@ -35,7 +38,7 @@ export const timeseriesAlignmentViewTool = {
 };
 
 const determineHeightFromNumItems = (numItems: number) => {
-  return Math.min(200, 70 * numItems, 600);
+  return Math.min(Math.max(200, 70 * numItems), 600);
 };
 
 const getTimeseriesAlignmentViewData = async (nwb_file_url: string) => {
@@ -47,11 +50,17 @@ const getTimeseriesAlignmentViewData = async (nwb_file_url: string) => {
     endTime: number;
     color: string;
   }[] = [];
+  let specifications: NwbFileSpecifications | undefined;
+  try {
+    specifications = await loadSpecifications(nwbFile);
+  } catch (err) {
+    console.warn("Problem loading specifications");
+    console.warn(err);
+  }
   const handleGroup = async (path: string) => {
     const gr = await nwbFile.getGroup(path);
     if (!gr) return;
     const nt = gr.attrs["neurodata_type"];
-    const specifications = await loadSpecifications(nwbFile);
     if (neurodataTypeInheritsFrom(nt, "TimeSeries", specifications)) {
       try {
         const timestampsSubdataset = gr.datasets.find(

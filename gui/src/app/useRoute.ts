@@ -51,6 +51,7 @@ export type Route =
       dandisetId: string;
       dandisetVersion?: string;
       staging?: boolean;
+      chatId?: string;
     }
   | {
       page: "dandi";
@@ -194,6 +195,7 @@ const useRoute = () => {
         dandisetId: query.dandisetId as string,
         dandisetVersion: (query.dandisetVersion || "") as string,
         staging: query.staging === "1",
+        chatId: (query.chatId || "") as string,
       };
     } else if (p === "/dandi") {
       return {
@@ -326,6 +328,9 @@ const useRoute = () => {
         }
         if (r.staging) {
           newQuery.staging = "1";
+        }
+        if (r.chatId) {
+          newQuery.chatId = r.chatId;
         }
       } else if (r.page === "dandi") {
         newQuery.p = "/dandi";

@@ -54,6 +54,14 @@ const MainWindow: FunctionComponent<Props> = () => {
     handleClose: closeContextChat,
   } = useModalWindow();
   const [showDandiPageChat, setShowDandiPageChat] = useState(false);
+
+  useEffect(() => {
+    // if we have a chatId in the route, we should show the chat to start
+    if (route.page === "dandiset" && route.chatId) {
+      setShowDandiPageChat(true);
+    }
+  }, [route]);
+
   return (
     <div
       className="MainWindow"

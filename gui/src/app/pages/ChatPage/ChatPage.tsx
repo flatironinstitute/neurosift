@@ -24,7 +24,7 @@ type ChatPageProps = {
 };
 
 const ChatPage: FunctionComponent<ChatPageProps> = ({ width, height }) => {
-  const { route } = useRoute();
+  const { route, setRoute } = useRoute();
   if (route.page !== "chat") throw Error("Unexpected route: " + route.page);
   const { chatId: chatIdFromRoute } = route;
 
@@ -33,17 +33,27 @@ const ChatPage: FunctionComponent<ChatPageProps> = ({ width, height }) => {
     chatId: chatIdFromRoute,
   });
 
+  const initialChat = chatIdFromRoute
+    ? savedChats?.find((c) => c.chatId === chatIdFromRoute) || null
+    : null;
+
+  useEffect(() => {
+    if (initialChat && initialChat.dandisetId) {
+      setRoute({
+        page: "dandiset",
+        dandisetId: initialChat.dandisetId,
+        chatId: initialChat.chatId,
+      });
+    }
+  }, [initialChat, setRoute]);
+
   if (chatIdFromRoute && !savedChats) {
     return <div>Loading...</div>;
-  } else if (chatIdFromRoute && savedChats) {
+  } else if (initialChat?.dandisetId) {
+    return <div>Redirecting to Dandiset page {initialChat.dandisetId}</div>;
+  } else if (initialChat) {
     return (
-      <ChatPageChild
-        width={width}
-        height={height}
-        initialChat={
-          savedChats.find((c) => c.chatId === chatIdFromRoute) || null
-        }
-      />
+      <ChatPageChild width={width} height={height} initialChat={initialChat} />
     );
   } else {
     return <ChatPageChild width={width} height={height} initialChat={null} />;

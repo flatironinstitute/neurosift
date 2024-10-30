@@ -13,6 +13,7 @@ import { getInitialSideChatWidth } from "../DandiPage/DandiPage";
 import ChatPanel, { Chat, emptyChat } from "app/ChatPanel/ChatPanel";
 import Splitter from "app/Splitter/Splitter";
 import ChatWindow, { ChatContext } from "../ChatPage/ChatWindow";
+import { useSavedChats } from "../SavedChatsPage/savedChatsApi";
 
 type DandisetPageProps = {
   width: number;
@@ -64,6 +65,22 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
     () => ({ type: "dandiset", dandisetId: route.dandisetId }),
     [route.dandisetId],
   );
+
+  const { savedChats } = useSavedChats({
+    load: route.chatId ? true : false,
+    chatId: route.chatId,
+  });
+
+  const initialChat = route.chatId
+    ? savedChats?.find((c) => c.chatId === route.chatId) || null
+    : null;
+  useEffect(() => {
+    if (initialChat) {
+      setChat(initialChat);
+    }
+  }, [initialChat]);
+
+  useEffect(() => {}, [route.chatId]);
   return (
     <DandiAssetContext.Provider value={dandiAssetContextValue}>
       <SetupContextAnnotationsProvider>
