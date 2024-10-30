@@ -4,8 +4,17 @@ import {
   loadSpecifications,
   NwbFileSpecifications,
 } from "app/pages/NwbPage/SpecificationsView/SetupNwbFileSpecificationsProvider";
+import { ToolItem } from "../ChatWindow";
 
-export const timeseriesAlignmentViewTool = {
+const detailedDescription = `
+This function returns a URL for a timeseries alignment visualization for a given NWB file.
+
+The visualization is a plot that shows the start and end times of all the timeseries objects in the NWB file.
+
+IMPORTANT: When you get the URL, you should return it as is on a separate line of the response (don't put it in a markdown link), because then the chat interface will render it inline.
+`;
+
+export const timeseriesAlignmentViewTool: ToolItem = {
   tool: {
     type: "function" as any,
     function: {
@@ -23,6 +32,7 @@ export const timeseriesAlignmentViewTool = {
       },
     },
   },
+  detailedDescription,
   function: async (
     args: { nwb_file_url: string },
     onLogMessage: (title: string, message: string) => void,
