@@ -43,7 +43,8 @@ export const timeseriesAlignmentViewTool: ToolItem = {
     const numItems = data.items.length;
     const height = determineHeightFromNumItems(numItems);
     onLogMessage("timeseries_alignment_view response", JSON.stringify(data));
-    return `https://figurl.org/f?v=https://tempory.net/ns-figurl-views/timeseries-alignment-view&d=${JSON.stringify(data)}&height=${height}`;
+    const dStr= JSON.stringify(data).split(' ').join('%20');
+    return `https://figurl.org/f?v=https://tempory.net/ns-figurl-views/timeseries-alignment-view&d=${dStr}&height=${height}`;
   },
 };
 

@@ -372,8 +372,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       return [
         "Provide an overview of this Dandiset",
         "Summarize the NWB files in this Dandiset",
-        "What are the Neurodata types in this Dandiset?",
-        "Show a time alignment graph for one of the NWB files",
+        "What are the Neurodata types in this Dandiset?"
       ];
     } else {
       return [];
@@ -507,14 +506,14 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       <div
         style={{
           position: "absolute",
-          width,
+          width: chatAreaWidth,
           height: inputBarHeight,
           top: height - inputBarHeight - settingsBarHeight,
           left: 0,
         }}
       >
         <InputBar
-          width={width}
+          width={chatAreaWidth}
           height={inputBarHeight}
           onMessage={handleUserMessage}
           disabled={!inputBarEnabled}
@@ -735,13 +734,13 @@ const getSystemMessage = async (
   chatContext: ChatContext,
   additionalKnowledge: string,
 ): Promise<string> => {
-  let allNeurodataTypes: string[];
-  try {
-    allNeurodataTypes = await getAllNeurodataTypes();
-  } catch (e) {
-    console.warn("Failed to get all neurodata types", e);
-    allNeurodataTypes = [];
-  }
+  // let allNeurodataTypes: string[];
+  // try {
+  //   allNeurodataTypes = await getAllNeurodataTypes();
+  // } catch (e) {
+  //   console.warn("Failed to get all neurodata types", e);
+  //   allNeurodataTypes = [];
+  // }
   let systemMessage: string = "";
   if (chatContext.type === "main") {
     systemMessage += `
@@ -762,13 +761,20 @@ When you use probe_dandiset, try to be specific based on the context. For exampl
 If the user is looking for particular types of data, you will want to probe the neurodata types in DANDI by submitting scripts
 to the probe_neurodata_types tool.
 
-Here are the most common neurodata types split into categories:
+Here are the Neurodata types organized by category:
 
-Extracellular electrophysiology: ElectricalSeries, LFP, ElectrodeGroup, Units
+Base data types: NWBData, TimeSeriesReferenceVectorData, Image, ImageReferences, NWBContainer, NWBDataInterface, TimeSeries, ProcessingModule, Images
+Devices: Device
 Epochs: TimeIntervals
-Behavior: SpatialSeries, BehavioralTimeSeries
-Optical physiology: OnePhotonSeries, TwoPhotonSeries, RoiResponseSeries, OpticalChannel, ImagingPlane, PlaneSegmentation, ImageSegmentation
-Image data: ImageSeries
+Image data: GrayscaleImage, RGBImage, RGBAImage, ImageSeries, ImageMaskSeries, OpticalSeries, IndexSeries
+NWB file: ScratchData, NWBFile, LabMetaData, Subject
+Miscellaneous neurodata_types: AbstractFeatureSeries, AnnotationSeries, IntervalSeries, DecompositionSeries, Units
+Behavior: SpatialSeries, BehavioralEpochs, BehavioralEvents, BehavioralTimeSeries, PupilTracking, EyeTracking, CompassDirection, Position
+Extracellular electrophysiology: ElectricalSeries, SpikeEventSeries, FeatureExtraction, EventDetection, EventWaveform, FilteredEphys, LFP, ElectrodeGroup, ClusterWaveforms, Clustering
+Intracellular electrophysiology: PatchClampSeries, CurrentClampSeries, IZeroClampSeries, CurrentClampStimulusSeries, VoltageClampSeries, VoltageClampStimulusSeries, IntracellularElectrode, SweepTable, IntracellularElectrodesTable, IntracellularStimuliTable, IntracellularResponsesTable, IntracellularRecordingsTable, SimultaneousRecordingsTable, SequentialRecordingsTable, RepetitionsTable, ExperimentalConditionsTable
+Optogenetics: OptogeneticSeries, OptogeneticStimulusSite
+Optical physiology: OnePhotonSeries, TwoPhotonSeries, RoiResponseSeries, DfOverF, Fluorescence, ImageSegmentation, PlaneSegmentation, ImagingPlane, OpticalChannel, MotionCorrection, CorrectedImageStack
+Retinotopy: ImagingRetinotopy
 
 If the user wants dandisets with particular data type and also other criteria (like a prompt),
 then you should first find the dandisets with the data types using the probe_neurodata_types tool,
