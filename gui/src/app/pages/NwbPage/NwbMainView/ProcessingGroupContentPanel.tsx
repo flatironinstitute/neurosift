@@ -117,20 +117,14 @@ const ProcessingGroupContentPanel: FunctionComponent<Props> = ({
             "MicroscopySegmentations",
             "MicroscopyResponseSeriesContainer",
             "MotionCorrection",
-            "CorrectedImageStack"
+            "CorrectedImageStack",
           ]) {
-            if (
-              neurodataTypeInheritsFrom(
-                neurodataType,
-                ndt,
-                specifications,
-              )
-            ) {
+            if (neurodataTypeInheritsFrom(neurodataType, ndt, specifications)) {
               return true;
             }
           }
           return false;
-        }
+        };
         const handleGroup = (groupPath: string) => {
           const ggg = loadedGroups.loaded[groupPath];
           if (!ggg) {
@@ -141,14 +135,13 @@ const ProcessingGroupContentPanel: FunctionComponent<Props> = ({
             for (const subgroup of ggg.subgroups) {
               handleGroup(subgroup.path);
             }
-          }
-          else {
+          } else {
             ret.push({
               name: ggg.path.slice(group.path.length + 1),
-              path: ggg.path
+              path: ggg.path,
             });
           }
-        }
+        };
         handleGroup(subgroup.path);
         // handleGroup(subgroup.path);
         // if (isContainerType(subgroup.attrs["neurodata_type"])) {

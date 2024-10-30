@@ -111,8 +111,7 @@ const Markdown: FunctionComponent<Props> = ({ source, onSpecialLinkClick }) => {
         const part2 = encodeURI(line.slice(sep + 1) + "&hide=1");
         const url = `${part1}?${part2}`;
         return `<iframe src="${url}" width="100%" height="400" frameBorder="0"></iframe>`;
-      }
-      else return line;
+      } else return line;
     });
     return lines.join("\n");
   }, [source]);
