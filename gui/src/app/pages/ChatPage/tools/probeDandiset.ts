@@ -39,10 +39,6 @@ export const probeDandisetTool: ToolItem = {
   ) => {
     const { dandiset_id, user_question, instructions } = args;
 
-    if (!o.openRouterKey) {
-      throw new Error("openRouterKey is required");
-    }
-
     onLogMessage(
       `probe_dandiset_objects query ${dandiset_id}`,
       `Q: ${user_question}\nI: ${instructions}`,

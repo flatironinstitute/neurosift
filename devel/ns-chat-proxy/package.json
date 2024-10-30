@@ -1,0 +1,57 @@
+{
+  "name": "ns-chat-proxy",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "prettier": {
+    "tabWidth": 2,
+    "semi": true,
+    "experimentalTernaries": false,
+    "bracketSameLine": false,
+    "arrowParens": "always"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "format": "prettier --write .",
+    "preview": "vite preview",
+    "deploy": "python devel/prepare_api_for_dev_prod.py prod && cp _vercel_prod.json vercel.json && vercel --prod && rm vercel.json && python devel/prepare_api_for_dev_prod.py dev"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "numcodecs": "^0.3.2",
+    "pako": "^2.1.0",
+    "pubnub": "^8.2.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^8",
+    "react-syntax-highlighter": "^15.5.0",
+    "rehype-mathjax": "^4.0.2",
+    "rehype-raw": "^6.1.1",
+    "remark-gfm": "^3.0.1",
+    "remark-math": "^5.1.1",
+    "github-markdown-css": "^5.5.0"
+  },
+  "devDependencies": {
+    "@types/pako": "^2.0.3",
+    "@types/pubnub": "^7.4.2",
+    "@types/react": "^18.2.56",
+    "@types/react-dom": "^18.2.19",
+    "@typescript-eslint/eslint-plugin": "^7.0.2",
+    "@typescript-eslint/parser": "^7.0.2",
+    "@vercel/node": "^3.0.20",
+    "@vitejs/plugin-react": "^4.2.1",
+    "aws-sdk": "^2.1691.0",
+    "eslint": "^8.56.0",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "mongodb": "^6.8.1",
+    "prettier": "^3.3.3",
+    "typescript": "^5.2.2",
+    "vite": "^5.1.4",
+    "@types/react-syntax-highlighter": "^15.5.13"
+  }
+}

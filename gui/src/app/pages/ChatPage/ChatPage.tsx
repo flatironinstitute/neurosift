@@ -68,12 +68,14 @@ const ChatPageChild: FunctionComponent<
     if (!initialChat) return;
     setChat(initialChat);
   }, [initialChat]);
+  const [leftPanelVisible, setLeftPanelVisible] = useState(false);
   return (
     <Splitter
       width={width}
       height={height}
       direction="horizontal"
       initialPosition={Math.min(300, width / 2)}
+      hideFirstChild={!leftPanelVisible}
     >
       <LeftPanel
         width={0}
@@ -93,6 +95,7 @@ const ChatPageChild: FunctionComponent<
         openRouterKey={openRouterKey}
         onLogMessage={handleLogMessage}
         additionalKnowledge={additionalKnowledge}
+        onToggleLeftPanel={() => setLeftPanelVisible((prev) => !prev)}
       />
     </Splitter>
   );
@@ -414,9 +417,6 @@ const useRecommendedChatTitle = (chat: Chat, openRouterKey: string | null) => {
   useEffect(() => {
     let canceled = false;
     const load = async () => {
-      if (!openRouterKey) {
-        return;
-      }
       const messages: ORMessage[] = [
         ...chat.messages.filter((m) => m.role !== "client-side-only"),
         {

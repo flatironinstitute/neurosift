@@ -1,5 +1,5 @@
 import { SmallIconButton } from "@fi-sci/misc";
-import { Cancel, Send } from "@mui/icons-material";
+import { Cancel, ForkLeft, Send } from "@mui/icons-material";
 import Markdown from "app/Markdown/Markdown";
 import {
   ORMessage,
@@ -46,6 +46,7 @@ type ChatWindowProps = {
   openRouterKey: string | null;
   onLogMessage: (title: string, message: string) => void;
   additionalKnowledge: string;
+  onToggleLeftPanel?: () => void;
 };
 
 type PendingMessages = (
@@ -105,6 +106,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   openRouterKey,
   onLogMessage,
   additionalKnowledge,
+  onToggleLeftPanel
 }) => {
   const { route, setRoute } = useRoute();
   const inputBarHeight = 30;
@@ -228,7 +230,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
             }
             const msg0: { role: "client-side-only"; content: string } = {
               role: "client-side-only",
-              content: "calling " + labelForToolCall(tc) + "...",
+              content: labelForToolCall(tc) + "...",
             };
             newMessages.push(msg0);
             pendingMessagesDispatch({
@@ -247,7 +249,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
               response = "Error: " + e.message;
             }
             if (canceled) return;
-            msg0.content = "called " + labelForToolCall(tc);
+            msg0.content = "✓ " + labelForToolCall(tc);
             pendingMessagesDispatch({
               type: "replace-last",
               message: msg0,
@@ -348,14 +350,31 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
     [messages, setChat, inputBarEnabled],
   );
 
+  const chatAreaWidth = Math.min(width, 1100);
+  const offsetLeft = (width - chatAreaWidth) / 2;
+
+  // when a new message comes, scroll to the bottom
+  useEffect(() => {
+    if (messages.length === 0) {
+      return;
+    }
+    const lastMessage = messages[messages.length - 1];
+    if (!["assistant", "client-side-only"].includes(lastMessage.role)) {
+      return;
+    }
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
+
   return (
-    <div style={{ position: "relative", width, height }}>
+    <div style={{ position: "relative", left: offsetLeft, width: chatAreaWidth, height }}>
       <div
         ref={chatContainerRef}
         style={{
           position: "absolute",
           left: 5,
-          width: width - 10,
+          width: chatAreaWidth - 10,
           top: topBarHeight,
           height: height - topBarHeight - inputBarHeight - settingsBarHeight,
           overflow: "auto",
@@ -402,7 +421,6 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
                 color: colorForString(c.role),
               }}
             >
-              <hr />
               {c.role === "assistant" && c.content !== null ? (
                 <>
                   <Markdown
@@ -412,14 +430,18 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
                 </>
               ) : c.role === "user" ? (
                 <>
-                  <span>you: </span>
-                  <span style={{ color: "black" }}>
+                  <hr />
+                  <span style={{color: "darkblue"}}>Q: </span>
+                  <span style={{ color: "darkblue" }}>
                     <MessageDisplay message={c.content as string} />
                   </span>
+                  <hr />
                 </>
               ) : c.role === "client-side-only" ? (
                 <>
-                  <span style={{ color: "#6a6" }}>{c.content}</span>
+                  <div style={{ color: "#6a6", paddingBottom: 10 }}>
+                    {c.content}
+                  </div>
                 </>
               ) : (
                 <span>Unknown role: {c.role}</span>
@@ -428,7 +450,6 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
           ))}
         {lastMessageIsUserOrTool || lastMessageIsToolCalls ? (
           <div>
-            <hr />
             <span style={{ color: "#6a6" }}>...</span>
           </div>
         ) : null}
@@ -465,6 +486,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
           onClearAllMessages={handleClearAllMessages}
           modelName={modelName}
           setModelName={setModelName}
+          onToggleLeftPanel={onToggleLeftPanel}
         />
       </div>
     </div>
@@ -537,6 +559,7 @@ type SettingsBarProps = {
   onClearAllMessages: () => void;
   modelName: string;
   setModelName: (name: string) => void;
+  onToggleLeftPanel?: () => void;
 };
 
 const modelOptions = [
@@ -552,6 +575,7 @@ const SettingsBar: FunctionComponent<SettingsBarProps> = ({
   onClearAllMessages,
   modelName,
   setModelName,
+  onToggleLeftPanel
 }) => {
   return (
     <span style={{ fontSize: 12, padding: 5 }}>
@@ -572,6 +596,15 @@ const SettingsBar: FunctionComponent<SettingsBarProps> = ({
         title="Clear all messages"
       />
       <span>&nbsp;AI can be inaccurate.</span>
+      {
+        onToggleLeftPanel && (
+          <SmallIconButton
+            icon={<ForkLeft />}
+            onClick={onToggleLeftPanel}
+            title="Toggle left panel"
+          />
+        )
+      }
     </span>
   );
 };
@@ -652,7 +685,7 @@ If the questions are irrelevant or inappropriate, you should respond with a mess
 
 Whenever you provide a 6-digit Dandiset ID in response to a question you should use markdown notation for a link of the following format
 
-[000409](https://dandiarchive.org/dandiset/000409)
+[000409](https://neurosift.app/?p=/dandiset&dandisetId=000409)
 
 where of course the number 000409 is replaced with the actual Dandiset ID.
 
@@ -683,6 +716,8 @@ When you refer to a particular neurodata object (that is in an NWB file within a
 If the user asks for a random example, then use Math.random in the javascript to truly provide a random example... don't just use the first in the list.
 
 For the timeseries_alignment_view, when you get the URL, you should return it as is on a separate line of the response (don't put it in a markdown link), because then the chat interface will render it inline.
+
+When asked about what questions can be asked, you should give a list of your capabilities... and don't deviate from the things you have been specifically told how to do.
 
 ${additionalKnowledge}
 
