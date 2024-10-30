@@ -103,49 +103,72 @@ const ProcessingGroupContentPanel: FunctionComponent<Props> = ({
         // Position holds SpatialSeries
         // MicroscopySegmentations holds MicroscopyPlaneSegmentation https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/fc5fca29-4c8f-444b-bbc1-4b8cd369d4ab/download/&dandisetId=001075&dandisetVersion=draft
         // MicroscopyResponseSeriesContainer holds MicroscopyResponseSeries (same example link)
-        let isContainerType = false;
-        for (const ndt of [
-          "LFP",
-          "FilteredEphys",
-          "Fluorescence",
-          "DfOverF",
-          "BehavioralTimeSeries",
-          "EyeTracking",
-          "Position",
-          "PupilTracking",
-          "CompassDirection",
-          "MicroscopySegmentations",
-          "MicroscopyResponseSeriesContainer",
-        ]) {
-          if (
-            neurodataTypeInheritsFrom(
-              subgroup.attrs["neurodata_type"],
-              ndt,
-              specifications,
-            )
-          ) {
-            isContainerType = true;
-            break;
-          }
-        }
-        if (isContainerType) {
-          const gg = loadedGroups.loaded[subgroup.path];
-          if (gg) {
-            for (const subsubgroup of gg.subgroups) {
-              ret.push({
-                name: subgroup.name + "/" + subsubgroup.name,
-                path: subsubgroup.path,
-              });
+        const isContainerType = (neurodataType: string) => {
+          for (const ndt of [
+            "LFP",
+            "FilteredEphys",
+            "Fluorescence",
+            "DfOverF",
+            "BehavioralTimeSeries",
+            "EyeTracking",
+            "Position",
+            "PupilTracking",
+            "CompassDirection",
+            "MicroscopySegmentations",
+            "MicroscopyResponseSeriesContainer",
+            "MotionCorrection",
+            "CorrectedImageStack"
+          ]) {
+            if (
+              neurodataTypeInheritsFrom(
+                neurodataType,
+                ndt,
+                specifications,
+              )
+            ) {
+              return true;
             }
-          } else {
-            dispatchLoadedGroups({ type: "request", path: subgroup.path });
           }
-        } else {
-          ret.push({
-            name: subgroup.name,
-            path: subgroup.path,
-          });
+          return false;
         }
+        const handleGroup = (groupPath: string) => {
+          const ggg = loadedGroups.loaded[groupPath];
+          if (!ggg) {
+            dispatchLoadedGroups({ type: "request", path: groupPath });
+            return;
+          }
+          if (isContainerType(ggg.attrs["neurodata_type"])) {
+            for (const subgroup of ggg.subgroups) {
+              handleGroup(subgroup.path);
+            }
+          }
+          else {
+            ret.push({
+              name: ggg.path.slice(group.path.length + 1),
+              path: ggg.path
+            });
+          }
+        }
+        handleGroup(subgroup.path);
+        // handleGroup(subgroup.path);
+        // if (isContainerType(subgroup.attrs["neurodata_type"])) {
+        //   const gg = loadedGroups.loaded[subgroup.path];
+        //   if (gg) {
+        //     for (const subsubgroup of gg.subgroups) {
+        //       ret.push({
+        //         name: subgroup.name + "/" + subsubgroup.name,
+        //         path: subsubgroup.path,
+        //       });
+        //     }
+        //   } else {
+        //     dispatchLoadedGroups({ type: "request", path: subgroup.path });
+        //   }
+        // } else {
+        //   ret.push({
+        //     name: subgroup.name,
+        //     path: subgroup.path,
+        //   });
+        // }
       }
     }
     return ret;

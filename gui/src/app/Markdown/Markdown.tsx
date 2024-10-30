@@ -112,6 +112,7 @@ const Markdown: FunctionComponent<Props> = ({ source, onSpecialLinkClick }) => {
         const url = `${part1}?${part2}`;
         return `<iframe src="${url}" width="100%" height="400" frameBorder="0"></iframe>`;
       }
+      else return line;
     });
     return lines.join("\n");
   }, [source]);
