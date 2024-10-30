@@ -84,9 +84,11 @@ const MainWindow: FunctionComponent<Props> = () => {
               });
             } else if (route.page === "dandiset")
               setShowDandiPageChat((v) => !v);
-            else if (route.page === "dandi-query")
-              setShowDandiPageChat((v) => !v);
-            else if (route.page === "nwb") {
+            else if (route.page === "dandi-query") {
+              setRoute({
+                page: "chat",
+              });
+            } else if (route.page === "nwb") {
               if (contextChatVisible) closeContextChat();
               else openContextChat();
             }
@@ -110,7 +112,7 @@ const MainWindow: FunctionComponent<Props> = () => {
         ) : route.page === "chat" ? (
           <ChatPage width={width} height={H} />
         ) : route.page === "test" ? (
-          <ChatPage width={width} height={H} />
+          <div>Test</div>
         ) : route.page === "saved-chats" ? (
           <SavedChatsPage width={width} height={H} />
         ) : route.page === "nwb" ? (
@@ -133,7 +135,7 @@ const MainWindow: FunctionComponent<Props> = () => {
           <DandiQueryPage
             width={width}
             height={H}
-            showChat={showDandiPageChat}
+            // showChat={showDandiPageChat}
           />
         ) : route.page === "annotations" ? (
           <AnnotationsPage width={width} height={H} />

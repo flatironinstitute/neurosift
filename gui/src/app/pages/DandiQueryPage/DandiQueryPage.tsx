@@ -10,27 +10,30 @@ import SearchByNeurodataTypeWindow from "./SearchByNeurodataTypeWindow";
 type DandiQueryPageProps = {
   width: number;
   height: number;
-  showChat?: boolean;
+  // showChat?: boolean;
 };
 
 const DandiQueryPage: FunctionComponent<DandiQueryPageProps> = ({
   width,
   height,
-  showChat,
+  // showChat,
 }) => {
-  const initialSideChatWidth = getInitialSideChatWidth(width);
-  const [chat, setChat] = useState<Chat>(emptyChat);
+  // const initialSideChatWidth = getInitialSideChatWidth(width);
+  // const [chat, setChat] = useState<Chat>(emptyChat);
   return (
-    <Splitter
-      width={width}
-      height={height}
-      initialPosition={initialSideChatWidth}
-      hideFirstChild={!showChat}
-    >
-      <ChatPanel width={0} height={0} chat={chat} setChat={setChat} />
-      <DandiQueryPageContent width={0} height={0} />;
-    </Splitter>
-  );
+    <DandiQueryPageContent width={width} height={height} />
+  )
+  // return (
+  //   <Splitter
+  //     width={width}
+  //     height={height}
+  //     initialPosition={initialSideChatWidth}
+  //     hideFirstChild={!showChat}
+  //   >
+  //     <ChatPanel width={0} height={0} chat={chat} setChat={setChat} />
+  //     <DandiQueryPageContent width={0} height={0} />;
+  //   </Splitter>
+  // );
 };
 
 const tabs = [
