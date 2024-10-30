@@ -353,7 +353,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
 
   const initialMessage = useMemo(() => {
     if (chatContext.type === "main") {
-      return `I can help you explore DANDI.`;
+      return `Neurosift chat`;
     } else if (chatContext.type === "dandiset") {
       return `I can help you find information about Dandiset ${chatContext.dandisetId}.`;
     } else {
@@ -367,7 +367,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
 
   const suggestedQuestions = useMemo(() => {
     if (chatContext.type === "main") {
-      return ["What are some ideas for prompts?"];
+      return ["What can you help with?"];
     } else if (chatContext.type === "dandiset") {
       return [
         "Provide an overview of this Dandiset",
@@ -761,7 +761,14 @@ When you use probe_dandiset, try to be specific based on the context. For exampl
 
 If the user is looking for particular types of data, you will want to probe the neurodata types in DANDI by submitting scripts
 to the probe_neurodata_types tool.
-The possible neurodata types are: ${allNeurodataTypes.join(", ")}.
+
+Here are the most common neurodata types split into categories:
+
+Extracellular electrophysiology: ElectricalSeries, LFP, ElectrodeGroup, Units
+Epochs: TimeIntervals
+Behavior: SpatialSeries, BehavioralTimeSeries
+Optical physiology: OnePhotonSeries, TwoPhotonSeries, RoiResponseSeries, OpticalChannel, ImagingPlane, PlaneSegmentation, ImageSegmentation
+Image data: ImageSeries
 
 If the user wants dandisets with particular data type and also other criteria (like a prompt),
 then you should first find the dandisets with the data types using the probe_neurodata_types tool,
