@@ -12,6 +12,7 @@ import DandisetView from "./DandisetViewFromDendro/DandisetView";
 import { getInitialSideChatWidth } from "../DandiPage/DandiPage";
 import ChatPanel, { Chat, emptyChat } from "app/ChatPanel/ChatPanel";
 import Splitter from "app/Splitter/Splitter";
+import ChatWindow, { ChatContext } from "../ChatPage/ChatWindow";
 
 type DandisetPageProps = {
   width: number;
@@ -59,6 +60,10 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
   );
   const initialSideChatWidth = getInitialSideChatWidth(width);
   const [chat, setChat] = useState<Chat>(emptyChat);
+  const chatContext: ChatContext = useMemo(
+    () => ({ type: "dandiset", dandisetId: route.dandisetId }),
+    [route.dandisetId],
+  );
   return (
     <DandiAssetContext.Provider value={dandiAssetContextValue}>
       <SetupContextAnnotationsProvider>
@@ -68,7 +73,16 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
           initialPosition={initialSideChatWidth}
           hideFirstChild={!showChat}
         >
-          <ChatPanel width={0} height={0} chat={chat} setChat={setChat} />
+          <ChatWindow
+            width={0}
+            height={0}
+            chat={chat}
+            setChat={setChat}
+            openRouterKey={null}
+            onLogMessage={() => {}}
+            additionalKnowledge=""
+            chatContext={chatContext}
+          />
           <DandisetView
             width={0}
             height={0}

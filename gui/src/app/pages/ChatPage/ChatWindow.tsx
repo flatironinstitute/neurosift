@@ -1,5 +1,5 @@
 import { SmallIconButton } from "@fi-sci/misc";
-import { Cancel, ForkLeft, Send } from "@mui/icons-material";
+import { Cancel, ForkLeft, Save, Send } from "@mui/icons-material";
 import Markdown from "app/Markdown/Markdown";
 import {
   ORMessage,
@@ -16,19 +16,16 @@ import {
   useState,
 } from "react";
 import { fetchNeurodataTypesIndex } from "../DandiQueryPage/SearchByNeurodataTypeWindow";
-import {
-  computeEmbeddingForAbstractText,
-  findSimilarDandisetIds,
-  loadEmbeddings,
-} from "../DandisetPage/DandisetViewFromDendro/SimilarDandisetsView";
 import chatCompletion from "./chatCompletion";
+import { lexicaltDandisetsTool } from "./tools/lexicalDandisets";
 import { probeDandisetTool } from "./tools/probeDandiset";
 import { dandisetObjectsTool } from "./tools/probeDandisetObjects";
 import { neurodataTypesTool } from "./tools/probeNeurodataTypes";
 import { unitsColnamesTool } from "./tools/probeUnitsColnames";
 import { relevantDandisetsTool } from "./tools/relevantDandisets";
-import { lexicaltDandisetsTool } from "./tools/lexicalDandisets";
 import { timeseriesAlignmentViewTool } from "./tools/timeseriesAlignmentView";
+import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
+import SaveChatDialog from "./SaveChatDialog";
 
 export type Chat = {
   messages: (ORMessage | { role: "client-side-only"; content: string })[];
@@ -37,6 +34,15 @@ export type Chat = {
 export const emptyChat: Chat = {
   messages: [],
 };
+
+export type ChatContext =
+  | {
+      type: "main";
+    }
+  | {
+      type: "dandiset";
+      dandisetId: string;
+    };
 
 type ChatWindowProps = {
   width: number;
@@ -47,6 +53,7 @@ type ChatWindowProps = {
   onLogMessage: (title: string, message: string) => void;
   additionalKnowledge: string;
   onToggleLeftPanel?: () => void;
+  chatContext: ChatContext;
 };
 
 type PendingMessages = (
@@ -106,7 +113,8 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   openRouterKey,
   onLogMessage,
   additionalKnowledge,
-  onToggleLeftPanel
+  onToggleLeftPanel,
+  chatContext,
 }) => {
   const { route, setRoute } = useRoute();
   const inputBarHeight = 30;
@@ -156,19 +164,33 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   }, [lastMessage]);
 
   const tools: ToolItem[] = useMemo(() => {
-    return [
-      relevantDandisetsTool,
-      lexicaltDandisetsTool,
-      neurodataTypesTool,
-      unitsColnamesTool,
-      dandisetObjectsTool,
-      probeDandisetTool,
-      timeseriesAlignmentViewTool,
-      // consultTool
-    ];
-  }, []);
+    const ret: ToolItem[] = [];
+    if (["main"].includes(chatContext.type)) {
+      ret.push(relevantDandisetsTool);
+      ret.push(lexicaltDandisetsTool);
+      ret.push(unitsColnamesTool);
+    }
+    if (["main", "dandiset"].includes(chatContext.type)) {
+      ret.push(probeDandisetTool);
+      ret.push(dandisetObjectsTool);
+      ret.push(neurodataTypesTool);
+      ret.push(probeDandisetTool);
+      ret.push(timeseriesAlignmentViewTool);
+    }
+    return ret;
+  }, [chatContext]);
 
-  const systemMessage = useSystemMessage(tools, additionalKnowledge);
+  const systemMessage = useSystemMessage(
+    tools,
+    chatContext,
+    additionalKnowledge,
+  );
+
+  const {
+    handleOpen: openSaveChat,
+    handleClose: closeSaveChat,
+    visible: saveChatVisible,
+  } = useModalWindow();
 
   useEffect(() => {
     if (!systemMessage) return;
@@ -257,7 +279,10 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
             console.info("TOOL RESPONSE: ", response);
             const msg1: ORMessage = {
               role: "tool",
-              content: JSON.stringify(response),
+              content:
+                typeof response === "object"
+                  ? JSON.stringify(response)
+                  : `${response}`,
               tool_call_id: tc.id,
             };
             newMessages.push(msg1);
@@ -327,16 +352,33 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   );
 
   const initialMessage = useMemo(() => {
-    return `I can help you find information about Dandisets in the DANDI Archive.`;
-  }, []);
+    if (chatContext.type === "main") {
+      return `I can help you explore DANDI.`;
+    } else if (chatContext.type === "dandiset") {
+      return `I can help you find information about Dandiset ${chatContext.dandisetId}.`;
+    } else {
+      return "";
+    }
+  }, [chatContext]);
 
   const inputBarEnabled = useMemo(() => {
     return !lastMessageIsUserOrTool && !lastMessageIsToolCalls;
   }, [lastMessageIsUserOrTool, lastMessageIsToolCalls]);
 
   const suggestedQuestions = useMemo(() => {
-    return ["What questions can I ask?"];
-  }, []);
+    if (chatContext.type === "main") {
+      return ["What are some ideas for prompts?"];
+    } else if (chatContext.type === "dandiset") {
+      return [
+        "Provide an overview of this Dandiset",
+        "Summarize the NWB files in this Dandiset",
+        "What are the Neurodata types in this Dandiset?",
+        "Show a time alignment graph for one of the NWB files",
+      ];
+    } else {
+      return [];
+    }
+  }, [chatContext]);
 
   const handleClickSuggestedQuestion = useCallback(
     (question: string) => {
@@ -363,12 +405,20 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       return;
     }
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
 
   return (
-    <div style={{ position: "relative", left: offsetLeft, width: chatAreaWidth, height }}>
+    <div
+      style={{
+        position: "relative",
+        left: offsetLeft,
+        width: chatAreaWidth,
+        height,
+      }}
+    >
       <div
         ref={chatContainerRef}
         style={{
@@ -390,7 +440,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
                 {index > 0 && <br />}
                 <span
                   style={{
-                    marginLeft: 5,
+                    marginLeft: 0,
                     marginRight: 5,
                     cursor: inputBarEnabled ? "pointer" : undefined,
                     color: inputBarEnabled ? "#aaf" : "lightgray",
@@ -431,7 +481,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
               ) : c.role === "user" ? (
                 <>
                   <hr />
-                  <span style={{color: "darkblue"}}>Q: </span>
+                  <span style={{ color: "darkblue" }}>Q: </span>
                   <span style={{ color: "darkblue" }}>
                     <MessageDisplay message={c.content as string} />
                   </span>
@@ -487,8 +537,16 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
           modelName={modelName}
           setModelName={setModelName}
           onToggleLeftPanel={onToggleLeftPanel}
+          onSaveChat={openSaveChat}
         />
       </div>
+      <ModalWindow visible={saveChatVisible} onClose={closeSaveChat}>
+        <SaveChatDialog
+          chat={chat}
+          onClose={closeSaveChat}
+          openRouterKey={openRouterKey}
+        />
+      </ModalWindow>
     </div>
   );
 };
@@ -560,6 +618,7 @@ type SettingsBarProps = {
   modelName: string;
   setModelName: (name: string) => void;
   onToggleLeftPanel?: () => void;
+  onSaveChat?: () => void;
 };
 
 const modelOptions = [
@@ -575,7 +634,8 @@ const SettingsBar: FunctionComponent<SettingsBarProps> = ({
   onClearAllMessages,
   modelName,
   setModelName,
-  onToggleLeftPanel
+  onToggleLeftPanel,
+  onSaveChat,
 }) => {
   return (
     <span style={{ fontSize: 12, padding: 5 }}>
@@ -595,16 +655,21 @@ const SettingsBar: FunctionComponent<SettingsBarProps> = ({
         }}
         title="Clear all messages"
       />
-      <span>&nbsp;AI can be inaccurate.</span>
-      {
-        onToggleLeftPanel && (
-          <SmallIconButton
-            icon={<ForkLeft />}
-            onClick={onToggleLeftPanel}
-            title="Toggle left panel"
-          />
-        )
-      }
+      {onToggleLeftPanel && (
+        <SmallIconButton
+          icon={<ForkLeft />}
+          onClick={onToggleLeftPanel}
+          title="Toggle left panel"
+        />
+      )}
+      {onSaveChat && (
+        <SmallIconButton
+          icon={<Save />}
+          onClick={onSaveChat}
+          title="Save chat"
+        />
+      )}
+      <span>&nbsp;&nbsp;AI can be inaccurate.</span>
     </span>
   );
 };
@@ -666,8 +731,9 @@ const labelForToolCall = (tc: {
 
 const getSystemMessage = async (
   tools: ToolItem[],
+  chatContext: ChatContext,
   additionalKnowledge: string,
-) => {
+): Promise<string> => {
   let allNeurodataTypes: string[];
   try {
     allNeurodataTypes = await getAllNeurodataTypes();
@@ -675,21 +741,16 @@ const getSystemMessage = async (
     console.warn("Failed to get all neurodata types", e);
     allNeurodataTypes = [];
   }
-
-  let systemMessage = `
+  let systemMessage: string = "";
+  if (chatContext.type === "main") {
+    systemMessage += `
 You are a helpful assistant that is responding to questions about the DANDI Archive.
-
-You should make use of the tools provided to you to help answer questions.
-
-If the questions are irrelevant or inappropriate, you should respond with a message indicating that you are unable to help with that question.
 
 Whenever you provide a 6-digit Dandiset ID in response to a question you should use markdown notation for a link of the following format
 
 [000409](https://neurosift.app/?p=/dandiset&dandisetId=000409)
 
 where of course the number 000409 is replaced with the actual Dandiset ID.
-
-Within one response, do not make excessive calls to the tools. Maybe up to around 5 is reasonable. But if you want to make more, you could ask the user if they would like you to do more work to find the answer.
 
 Assume that if the user is asking to find Dandisets, they also want to know more about those dandisets and how they are relevant to the user's query. So you should use the probe_dandiset tool for that.
 
@@ -709,6 +770,22 @@ use the with an empty search_text to get the most recently modified dandisets.
 
 If the user wants to know about what column names are in units tables for various dandisets, you can use the probe_units_colnames tool.
 
+`;
+  } else if (chatContext.type === "dandiset") {
+    systemMessage += `
+You are a helpful assistant that is responding to questions about Dandiset ${chatContext.dandisetId} in the DANDI Archive.
+
+You should use the probe_dandiset tool to get information about this Dandiset based on its metadata on DANDI Archive.
+
+`;
+
+    systemMessage += `
+You should make use of the tools provided to you to help answer questions.
+
+If the questions are irrelevant or inappropriate, you should respond with a message indicating that you are unable to help with that question.
+
+Within one response, do not make excessive calls to the tools. Maybe up to around 5 is reasonable. But if you want to make more, you could ask the user if they would like you to do more work to find the answer.
+
 When you refer to a particular neurodata object (that is in an NWB file within a dandiset), you should use the following link to a visualization
 
 [label](https://neurosift.app/?p=/nwb&url=[download_url]&dandisetId=[dandiset_id]&dandisetVersion=[dandiseet_version]&tab=view:[neurodata_type]|[object_path])
@@ -717,11 +794,12 @@ If the user asks for a random example, then use Math.random in the javascript to
 
 For the timeseries_alignment_view, when you get the URL, you should return it as is on a separate line of the response (don't put it in a markdown link), because then the chat interface will render it inline.
 
-When asked about what questions can be asked, you should give a list of your capabilities... and don't deviate from the things you have been specifically told how to do.
+When asked about prompt ideas, you should give a list of your capabilities... and don't deviate from the things you have been specifically told how to do.
 
 ${additionalKnowledge}
 
-  `;
+`;
+  }
   for (const tool of tools) {
     if (tool.detailedDescription) {
       systemMessage += `
@@ -743,13 +821,17 @@ ${tool.detailedDescription}
   return systemMessage;
 };
 
-const useSystemMessage = (tools: ToolItem[], additionalKnowledge: string) => {
+const useSystemMessage = (
+  tools: ToolItem[],
+  chatContext: ChatContext,
+  additionalKnowledge: string,
+) => {
   const [systemMessage, setSystemMessage] = useState<string | null>(null);
   useEffect(() => {
-    getSystemMessage(tools, additionalKnowledge).then((msg) => {
+    getSystemMessage(tools, chatContext, additionalKnowledge).then((msg) => {
       setSystemMessage(msg);
     });
-  }, [tools, additionalKnowledge]);
+  }, [tools, chatContext, additionalKnowledge]);
   return systemMessage;
 };
 

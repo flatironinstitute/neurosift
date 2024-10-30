@@ -57,29 +57,26 @@ const Markdown: FunctionComponent<Props> = ({ source, onSpecialLinkClick }) => {
           </code>
         );
       },
-      // div: ({node, className, children, ...props}) => {
-      // 	if (className === 'figurl-figure') {
-      // 		if (internalFigureMode) {
-      // 			return (
-      // 				<InternalFigurlFigure
-      // 					src={(props as any).src}
-      // 					height={(props as any).height}
-      // 				/>
-      // 			)
-      // 		}
-      // 		else {
-      // 			return (
-      // 				<ExternalFigurlFigure
-      // 					src={(props as any).src}
-      // 					height={(props as any).height}
-      // 				/>
-      // 			)
-      // 		}
-      // 	}
-      // 	else {
-      // 		return <div className={className} {...props}>{children}</div>
-      // 	}
-      // },
+      div: ({ node, className, children, ...props }) => {
+        if (className === "figurl-figure") {
+          // eslint-disable-next-line react/prop-types
+          const srcEncoded = (props as any).src64;
+          return (
+            <iframe
+              src={base64Decode(srcEncoded) + "&hide=1"}
+              width="100%"
+              height={determineHeightFromFigurlUrl(base64Decode(srcEncoded))}
+              frameBorder={0}
+            />
+          );
+        } else {
+          return (
+            <div className={className} {...props}>
+              {children}
+            </div>
+          );
+        }
+      },
       a: ({ node, children, href, ...props }) => {
         if (href && href.startsWith("?") && onSpecialLinkClick) {
           return (
@@ -106,11 +103,11 @@ const Markdown: FunctionComponent<Props> = ({ source, onSpecialLinkClick }) => {
   const source2 = useMemo(() => {
     const lines = source.split("\n").map((line) => {
       if (line.trim().startsWith("https://figurl.org/f")) {
-        const sep = line.indexOf("?");
-        const part1 = line.slice(0, sep);
-        const part2 = encodeURI(line.slice(sep + 1) + "&hide=1");
-        const url = `${part1}?${part2}`;
-        return `<iframe src="${url}" width="100%" height="400" frameBorder="0"></iframe>`;
+        const url64 = base64Encode(line.trim());
+        console.log("---line", line);
+        return `<div class="figurl-figure" src64="${url64}"></div>`;
+        // it's very difficult to the following to work - encoding issues with markdown
+        // return `<iframe src="${url}" width="100%" height="400" frameBorder="0"></iframe>`;
       } else return line;
     });
     return lines.join("\n");
@@ -127,6 +124,27 @@ const Markdown: FunctionComponent<Props> = ({ source, onSpecialLinkClick }) => {
       />
     </div>
   );
+};
+
+const base64Encode = (s: string) => {
+  return window.btoa(s);
+};
+
+const base64Decode = (s: string) => {
+  return window.atob(s);
+};
+
+const determineHeightFromFigurlUrl = (url: string) => {
+  const sep = url.indexOf("?");
+  if (sep < 0) return 400;
+  const params = url.substring(sep + 1).split("&");
+  for (const param of params) {
+    const [key, value] = param.split("=");
+    if (key === "height") {
+      return parseInt(value);
+    }
+  }
+  return 400;
 };
 
 export default Markdown;

@@ -38,7 +38,7 @@ type Position =
   | "full";
 
 const MainWindow: FunctionComponent<Props> = () => {
-  const { route } = useRoute();
+  const { route, setRoute } = useRoute();
   const isEmbedded = (route as any).embedded;
   const { width, height } = useWindowDimensions();
   const applicationBarHeight2 = isEmbedded ? 0 : applicationBarHeight;
@@ -70,8 +70,12 @@ const MainWindow: FunctionComponent<Props> = () => {
       >
         <ApplicationBar
           onContextChat={() => {
-            if (route.page === "dandi") setShowDandiPageChat((v) => !v);
-            else if (route.page === "dandiset") setShowDandiPageChat((v) => !v);
+            if (route.page === "dandi") {
+              setRoute({
+                page: "chat",
+              });
+            } else if (route.page === "dandiset")
+              setShowDandiPageChat((v) => !v);
             else if (route.page === "dandi-query")
               setShowDandiPageChat((v) => !v);
             else if (route.page === "nwb") {
@@ -116,7 +120,7 @@ const MainWindow: FunctionComponent<Props> = () => {
         ) : route.page === "dandiset" ? (
           <DandisetPage width={width} height={H} showChat={showDandiPageChat} />
         ) : route.page === "dandi" ? (
-          <DandiPage width={width} height={H} showChat={showDandiPageChat} />
+          <DandiPage width={width} height={H} />
         ) : route.page === "dandi-query" ? (
           <DandiQueryPage
             width={width}

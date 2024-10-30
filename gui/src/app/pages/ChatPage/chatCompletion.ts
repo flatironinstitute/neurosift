@@ -16,8 +16,8 @@ const chatCompletion = async (a: {
 
   const tool_choice: ORToolChoice = "auto";
 
-  let url: string
-  let options: RequestInit
+  let url: string;
+  let options: RequestInit;
 
   if (openRouterKey === null) {
     url = "https://ns-chat-proxy.vercel.app/api/completion";
@@ -35,8 +35,7 @@ const chatCompletion = async (a: {
         tool_choice,
       }),
     };
-  }
-  else {
+  } else {
     url = "https://openrouter.ai/api/v1/chat/completions";
 
     options = {

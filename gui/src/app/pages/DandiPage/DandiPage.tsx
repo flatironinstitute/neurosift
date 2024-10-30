@@ -7,30 +7,31 @@ import ChatPanel, { Chat, emptyChat } from "app/ChatPanel/ChatPanel";
 type DandiPageProps = {
   width: number;
   height: number;
-  showChat?: boolean;
+  // showChat?: boolean;
 };
 
 const DandiPage: FunctionComponent<DandiPageProps> = ({
   width,
   height,
-  showChat,
+  // showChat,
 }) => {
   const { route } = useRoute();
   if (route.page !== "dandi")
     throw Error("Unexpected route for DandiPage: " + route.page);
-  const initialSideChatWidth = getInitialSideChatWidth(width);
-  const [chat, setChat] = useState<Chat>(emptyChat);
-  return (
-    <Splitter
-      width={width}
-      height={height}
-      initialPosition={initialSideChatWidth}
-      hideFirstChild={!showChat}
-    >
-      <ChatPanel width={0} height={0} chat={chat} setChat={setChat} />
-      <DandiBrowser width={0} height={0} />;
-    </Splitter>
-  );
+  // const initialSideChatWidth = getInitialSideChatWidth(width);
+  // const [chat, setChat] = useState<Chat>(emptyChat);
+  return <DandiBrowser width={width} height={height} />;
+  // return (
+  //   <Splitter
+  //     width={width}
+  //     height={height}
+  //     initialPosition={initialSideChatWidth}
+  //     hideFirstChild={!showChat}
+  //   >
+  //     <ChatPanel width={0} height={0} chat={chat} setChat={setChat} />
+  //     <DandiBrowser width={0} height={0} />;
+  //   </Splitter>
+  // );
 };
 
 export const getInitialSideChatWidth = (width: number) => {

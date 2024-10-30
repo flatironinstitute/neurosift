@@ -27,9 +27,15 @@ export const timeseriesAlignmentViewTool = {
     const { nwb_file_url } = args;
     onLogMessage("timeseries_alignment_view query", nwb_file_url);
     const data = await getTimeseriesAlignmentViewData(nwb_file_url);
+    const numItems = data.items.length;
+    const height = determineHeightFromNumItems(numItems);
     onLogMessage("timeseries_alignment_view response", JSON.stringify(data));
-    return `https://figurl.org/f?v=https://tempory.net/ns-figurl-views/timeseries-alignment-view&d=${JSON.stringify(data)}&height=200`;
+    return `https://figurl.org/f?v=https://tempory.net/ns-figurl-views/timeseries-alignment-view&d=${JSON.stringify(data)}&height=${height}`;
   },
+};
+
+const determineHeightFromNumItems = (numItems: number) => {
+  return Math.min(200, 70 * numItems, 600);
 };
 
 const getTimeseriesAlignmentViewData = async (nwb_file_url: string) => {

@@ -14,7 +14,7 @@ import {
 import { ORMessage } from "../DandisetPage/DandisetViewFromDendro/openRouterTypes";
 import { useSavedChats } from "../SavedChatsPage/savedChatsApi";
 import chatCompletion from "./chatCompletion";
-import ChatWindow, { Chat } from "./ChatWindow";
+import ChatWindow, { Chat, ChatContext } from "./ChatWindow";
 import useRoute from "app/useRoute";
 import { Hyperlink } from "@fi-sci/misc";
 
@@ -69,6 +69,12 @@ const ChatPageChild: FunctionComponent<
     setChat(initialChat);
   }, [initialChat]);
   const [leftPanelVisible, setLeftPanelVisible] = useState(false);
+  const chatContext: ChatContext = useMemo(
+    () => ({
+      type: "main",
+    }),
+    [],
+  );
   return (
     <Splitter
       width={width}
@@ -96,6 +102,7 @@ const ChatPageChild: FunctionComponent<
         onLogMessage={handleLogMessage}
         additionalKnowledge={additionalKnowledge}
         onToggleLeftPanel={() => setLeftPanelVisible((prev) => !prev)}
+        chatContext={chatContext}
       />
     </Splitter>
   );
@@ -135,11 +142,6 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({
     handleClose: closeAdditionalKnowledge,
     visible: additionalKnowledgeVisible,
   } = useModalWindow();
-  const {
-    handleOpen: openSaveChat,
-    handleClose: closeSaveChat,
-    visible: saveChatVisible,
-  } = useModalWindow();
   return (
     <div style={{ position: "absolute", width, height, overflowY: "auto" }}>
       <div style={{ padding: 20 }}>
@@ -151,8 +153,6 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({
         <button onClick={openAdditionalKnowledge} style={{ marginBottom: 10 }}>
           Additional knowledge ({additionalKnowledge.length})
         </button>
-        &nbsp;
-        <button onClick={openSaveChat}>Save chat</button>
         <hr />
         {logMessages.map((m, i) => (
           <ExpandableLogMessage key={i} title={m.title} message={m.message} />
@@ -165,13 +165,6 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({
         <EditAdditionalKnowledge
           additionalKnowledge={additionalKnowledge}
           setAdditionalKnowledge={setAdditionalKnowledge}
-        />
-      </ModalWindow>
-      <ModalWindow visible={saveChatVisible} onClose={closeSaveChat}>
-        <SaveChatDialog
-          chat={chat}
-          onClose={closeSaveChat}
-          openRouterKey={openRouterKey}
         />
       </ModalWindow>
     </div>
@@ -302,162 +295,6 @@ const usePersistAdditionalKnowledge = (
     }
     localStorage.setItem(localStorageKey, additionalKnowledge);
   }, [additionalKnowledge]);
-};
-
-type SaveChatDialogProps = {
-  chat: Chat;
-  onClose: () => void;
-  openRouterKey: string | null;
-};
-
-const SaveChatDialog: FunctionComponent<SaveChatDialogProps> = ({
-  chat,
-  onClose,
-  openRouterKey,
-}) => {
-  const { addSavedChat } = useSavedChats({ load: false });
-  const { neurosiftSavedChatsAccessToken, neurosiftSavedChatsUserId } =
-    useNeurosiftSavedChats();
-  const [chatTitle, setChatTitle] = useState<string>("");
-  const [chatLink, setChatLink] = useState<string | null>(null);
-  const recommendedChatTitle = useRecommendedChatTitle(chat, openRouterKey);
-  useEffect(() => {
-    setChatTitle((c) => (!c ? recommendedChatTitle : c));
-  }, [recommendedChatTitle]);
-  const { setRoute } = useRoute();
-  if (!neurosiftSavedChatsAccessToken) {
-    return <NeurosiftSavedChatsLoginView />;
-  }
-  if (chatLink) {
-    return (
-      <div style={{ padding: 20 }}>
-        <h3>Chat saved</h3>
-        <p>
-          You can view your chat at {chatLink} <CopyButton text={chatLink} />
-        </p>
-        <button onClick={onClose}>Close</button>
-      </div>
-    );
-  }
-  if (!addSavedChat) {
-    return <div>Unexpected: addSavedChat is not available</div>;
-  }
-  return (
-    <div style={{ padding: 20 }}>
-      <h3>
-        Your chat will be publicly visible under your user ID:{" "}
-        {neurosiftSavedChatsUserId}
-      </h3>
-      <hr />
-      <div>
-        <EditChatTitleComponent
-          chatTitle={chatTitle}
-          setChatTitle={setChatTitle}
-        />
-      </div>
-      <div>
-        <button
-          onClick={async () => {
-            const ok = window.confirm(
-              "Are you sure you want to save this chat publicly?",
-            );
-            if (!ok) {
-              return;
-            }
-            const chatId = await addSavedChat({
-              chatTitle,
-              messages: chat.messages,
-              dandisetId: undefined,
-            });
-            if (!chatId) {
-              alert("Failed to save chat");
-            }
-            setChatLink("https://neurosift.app?p=/chat&chatId=" + chatId);
-          }}
-          disabled={!chatTitle}
-        >
-          Save chat
-        </button>
-        &nbsp;
-        <button onClick={onClose}>Cancel</button>
-      </div>
-      <hr />
-      <div>
-        <Hyperlink
-          onClick={() => {
-            setRoute({ page: "saved-chats" });
-          }}
-        >
-          View saved chats
-        </Hyperlink>
-      </div>
-    </div>
-  );
-};
-
-const EditChatTitleComponent: FunctionComponent<{
-  chatTitle: string;
-  setChatTitle: (chatTitle: string) => void;
-}> = ({ chatTitle, setChatTitle }) => {
-  return (
-    <div>
-      <label>Chat title&nbsp;</label>
-      <input
-        type="text"
-        value={chatTitle}
-        onChange={(e) => setChatTitle(e.target.value)}
-        style={{ width: "100%" }}
-      />
-    </div>
-  );
-};
-
-const useRecommendedChatTitle = (chat: Chat, openRouterKey: string | null) => {
-  const [recommendedChatTitle, setRecommendedChatTitle] = useState<string>("");
-  useEffect(() => {
-    let canceled = false;
-    const load = async () => {
-      const messages: ORMessage[] = [
-        ...chat.messages.filter((m) => m.role !== "client-side-only"),
-        {
-          role: "user",
-          content:
-            "What is a short recommended title for this chat? Respond with the chat title only.",
-        },
-      ];
-      const response = await chatCompletion({
-        messages,
-        modelName: "gpt-4o-mini",
-        openRouterKey,
-        tools: [],
-      });
-      if (canceled) return;
-      const x = response.assistantMessage;
-      // remove "" and strip
-      const y = x.replace(/^"(.*)"$/, "$1").trim();
-      setRecommendedChatTitle(y);
-    };
-    load();
-    return () => {
-      canceled = true;
-    };
-  }, [chat, openRouterKey]);
-  return recommendedChatTitle;
-};
-
-const CopyButton: FunctionComponent<{ text: string }> = ({ text }) => {
-  const [copied, setCopied] = useState(false);
-  return (
-    <button
-      onClick={() => {
-        navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }}
-    >
-      {copied ? "Copied" : "Copy"}
-    </button>
-  );
 };
 
 export default ChatPage;
