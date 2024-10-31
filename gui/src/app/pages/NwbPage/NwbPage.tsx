@@ -217,9 +217,9 @@ const NwbPageChild3: FunctionComponent<NwbPageChild3Props> = ({
           setLoadedSuccessfully(false);
           const CORSIssueLikely = determineCORSIssueLikely(urlList[0] || "");
           setInitialLoadError(
-            "Problem loading file. Unable to load root group." +
+            "Problem loading file. Unable to load root group. If this dandiset is embargoed, make sure to set your DANDI_API_KEY under the key icon in the top right corner." +
               (CORSIssueLikely
-                ? " This could be due to a CORS configuration issue."
+                ? " This could also be due to a CORS configuration issue."
                 : ""),
           );
         }
