@@ -1,5 +1,15 @@
 import { SmallIconButton } from "@fi-sci/misc";
-import { Cancel, ForkLeft, Save, Send } from "@mui/icons-material";
+import {
+  Cancel,
+  Circle,
+  DeleteForever,
+  DockTwoTone,
+  ForkLeft,
+  Save,
+  Send,
+  SubtitlesTwoTone,
+  ThreeDRotation,
+} from "@mui/icons-material";
 import Markdown from "app/Markdown/Markdown";
 import {
   ORMessage,
@@ -533,6 +543,20 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
                   <span style={{ color: "darkblue" }}>Q: </span>
                   <span style={{ color: "darkblue" }}>
                     <MessageDisplay message={c.content as string} />
+                    &nbsp;
+                    <SmallIconButton
+                      onClick={() => {
+                        const ok = confirm(
+                          "Delete this prompt and all subsequent messages?",
+                        );
+                        if (!ok) return;
+                        setChat({
+                          messages: messages.slice(0, index),
+                        });
+                      }}
+                      icon={<>...</>}
+                      title="Delete this prompt"
+                    />
                   </span>
                   <hr />
                 </>
