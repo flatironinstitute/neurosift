@@ -546,7 +546,6 @@ export const getSuggestedQuestionsForRoute = (route: Route): string[] => {
   } else if (route.page === "dandiset") {
     return [
       "Provide an overview of this Dandiset",
-      "Summarize the NWB files in this Dandiset",
       "What are the Neurodata types in this Dandiset?",
     ];
   } else if (route.page === "nwb") {

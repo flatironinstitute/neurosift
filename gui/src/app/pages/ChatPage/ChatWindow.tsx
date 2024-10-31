@@ -171,7 +171,6 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       ret.push(unitsColnamesTool);
     }
     if (["main", "dandiset"].includes(chatContext.type)) {
-      ret.push(probeDandisetTool);
       ret.push(dandisetObjectsTool);
       ret.push(neurodataTypesTool);
       ret.push(probeDandisetTool);
@@ -371,8 +370,8 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
     } else if (chatContext.type === "dandiset") {
       return [
         "Provide an overview of this Dandiset",
-        "Summarize the NWB files in this Dandiset",
-        "What are the Neurodata types in this Dandiset?"
+        "What are the Neurodata types in this Dandiset?",
+        "What can you help with?",
       ];
     } else {
       return [];
@@ -742,26 +741,42 @@ const getSystemMessage = async (
   //   allNeurodataTypes = [];
   // }
   let systemMessage: string = "";
+  systemMessage += `
+You are a helpful assistant that is responding to technical questions.
+Your responses should be concise and informative with a scientific style and certainly not informal or overly verbose.
+
+Do not deviate from the specific capabilities that are spelled out here.
+Each capability starts with the word "CAPABILITY" in all caps, followed by a colon and then the description of the capability.
+In your responses you should use one or more of the capabilities, using only the tools spelled out there.
+Note that it is okay to use more than one capability in a response.
+
+You should also respect invormation that starts with "NOTE" in all caps followed by a colon.
+
+If the user asks about something that is not related to one of these capabilities, you should respond with a message indicating that you are unable to help with that question.
+`;
   if (chatContext.type === "main") {
     systemMessage += `
-You are a helpful assistant that is responding to questions about the DANDI Archive.
+NOTE: You are a responding to questions about data on the DANDI Archive.
 
-Do not deviate from the topics that you have been trained on. If the user asks about something that you are not trained on, you should respond with a message indicating that you are unable to help with that question.
-
-Whenever you provide a 6-digit Dandiset ID in response to a question you should use markdown notation for a link of the following format
-
+NOTE: Whenever you provide a 6-digit Dandiset ID in response to a question you should use markdown notation for a link of the following format
 [000409](https://neurosift.app/?p=/dandiset&dandisetId=000409)
-
 where of course the number 000409 is replaced with the actual Dandiset ID.
 
-Assume that if the user is asking to find Dandisets, they also want to know more about those dandisets and how they are relevant to the user's query. So you should use the probe_dandiset tool for that.
-
-When you use probe_dandiset, try to be specific based on the context. For example, instead of just saying "what's this dandiset about?" say "what's this dandiset about, especially relating to xyz".
-
+CAPABILITY: Search for Dandisets either using the lexical_dandisets tool, the relevant_dandisets tool, and/or the neurodata_types tool and report the relevant results.
+Assume that if the user is asking to find Dandisets, they also want to know more about those dandisets and how they are relevant to the user's query.
+You should use the probe_dandiset tool for that.
 If the user is looking for particular types of data, you will want to probe the neurodata types in DANDI by submitting scripts
 to the probe_neurodata_types tool.
+If the user wants dandisets with particular data type and also other criteria (like a prompt),
+then you should first find the dandisets with the data types using the probe_neurodata_types tool,
+and then use the relevant_dandisets tool with a restriction to the dandisets found in the previous step.
+If the user wants to do a lexical search for dandisets, you can use the lexical_dandisets tool.
+The results of lexical_dandisets will be in descending order of modified date, so you can also
+use the with an empty search_text to get the most recently modified dandisets.
 
-Here are the Neurodata types organized by category:
+NOTE: When you use probe_dandiset, try to be specific based on the context. For example, instead of just saying "what's this dandiset about?" say "what's this dandiset about, especially relating to xyz".
+
+NOTE: Here are the Neurodata types organized by category:
 
 Base data types: NWBData, TimeSeriesReferenceVectorData, Image, ImageReferences, NWBContainer, NWBDataInterface, TimeSeries, ProcessingModule, Images
 Devices: Device
@@ -776,44 +791,34 @@ Optogenetics: OptogeneticSeries, OptogeneticStimulusSite
 Optical physiology: OnePhotonSeries, TwoPhotonSeries, RoiResponseSeries, DfOverF, Fluorescence, ImageSegmentation, PlaneSegmentation, ImagingPlane, OpticalChannel, MotionCorrection, CorrectedImageStack
 Retinotopy: ImagingRetinotopy
 
-If the user wants dandisets with particular data type and also other criteria (like a prompt),
-then you should first find the dandisets with the data types using the probe_neurodata_types tool,
-and then use the relevant_dandisets tool with a restriction to the dandisets found in the previous step.
+CAPABILITY: Provide information about neurodata types in DANDI Archive.
 
-If the user wants to do a lexical search for dandisets, you can use the lexical_dandisets tool.
-The results of lexical_dandisets will be in descending order of modified date, so you can also
-use the with an empty search_text to get the most recently modified dandisets.
-
-If the user wants to know about what column names are in units tables for various dandisets, you can use the probe_units_colnames tool.
+CAPABILITY: If the user wants to know about what column names are in units tables for various dandisets, you can use the probe_units_colnames tool to provide that information.
 
 `;
   } else if (chatContext.type === "dandiset") {
     systemMessage += `
-You are a helpful assistant that is responding to questions about Dandiset ${chatContext.dandisetId} in the DANDI Archive.
+NOTE: You are responding to questions about Dandiset ${chatContext.dandisetId} in the DANDI Archive.
 
-Do not deviate from the topics that you have been trained on. If the user asks about something that you are not trained on, you should respond with a message indicating that you are unable to help with that question.
-
-You should use the probe_dandiset tool to get information about this Dandiset based on its metadata on DANDI Archive.
+CAPABILITY: Respond to questions about the Dandiset ${chatContext.dandisetId} using the probe_dandiset tool.
+Be specific based on the context. For example, instead of just saying "what's this dandiset about?" say "what's this dandiset about, especially relating to xyz".
 
 `;
+  }
 
-    systemMessage += `
-You should make use of the tools provided to you to help answer questions.
+  systemMessage += `
+NOTE: Within a single response, do not make excessive calls to the tools. Maybe up to around 5 is reasonable. But if you want to make more, you could ask the user if they would like you to do more work to find the answer.
 
-Within one response, do not make excessive calls to the tools. Maybe up to around 5 is reasonable. But if you want to make more, you could ask the user if they would like you to do more work to find the answer.
-
-When you refer to a particular neurodata object (that is in an NWB file within a dandiset), you should use the following link to a visualization
-
+NOTE: Whenever you refer to a particular neurodata object (that is in an NWB file within a dandiset), you should use the following link to a visualization
 [label](https://neurosift.app/?p=/nwb&url=[download_url]&dandisetId=[dandiset_id]&dandisetVersion=[dandiseet_version]&tab=view:[neurodata_type]|[object_path])
 
-If the user asks for a random example, then use Math.random in the javascript to truly provide a random example... don't just use the first in the list.
+CAPABILITY: If the user asks for a random example of something then use Math.random in the javascript calls to truly provide a random example... don't just use the first in the list.
 
-When asked about prompt ideas, you should give a list of your capabilities... and don't deviate from the things you have been specifically told how to do.
+CAPABILITY: When asked about prompt ideas or how you can be helpful, you should give a thorough list of your capabilities as spelled out here with helpful summaries.
 
 ${additionalKnowledge}
 
 `;
-  }
   for (const tool of tools) {
     if (tool.detailedDescription) {
       systemMessage += `

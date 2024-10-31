@@ -20,9 +20,7 @@ const DandiQueryPage: FunctionComponent<DandiQueryPageProps> = ({
 }) => {
   // const initialSideChatWidth = getInitialSideChatWidth(width);
   // const [chat, setChat] = useState<Chat>(emptyChat);
-  return (
-    <DandiQueryPageContent width={width} height={height} />
-  )
+  return <DandiQueryPageContent width={width} height={height} />;
   // return (
   //   <Splitter
   //     width={width}
