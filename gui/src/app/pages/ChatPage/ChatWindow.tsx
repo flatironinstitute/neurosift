@@ -212,7 +212,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
     if (!lastMessage) return;
     if (lastMessage.role === "user" || lastMessage.role === "tool") {
       (async () => {
-        let assistanMessage: string;
+        let assistantMessage: string;
         let toolCalls: any[] | undefined;
         try {
           const x = await chatCompletion({
@@ -221,7 +221,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
             openRouterKey,
             tools: tools.map((x) => x.tool),
           });
-          assistanMessage = x.assistantMessage;
+          assistantMessage = x.assistantMessage;
           toolCalls = x.toolCalls;
         } catch (e: any) {
           if (canceled) return;
