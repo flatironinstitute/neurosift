@@ -38,6 +38,7 @@ import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import SaveChatDialog from "./SaveChatDialog";
 import { FaRegThumbsDown, FaRegThumbsUp, FaThumbsUp } from "react-icons/fa";
 import FeedbackWindow from "./FeedbackWindow";
+import { probeNwbFileTool } from "./tools/probeNwbFile";
 
 export type Chat = {
   messages: (ORMessage | { role: "client-side-only"; content: string })[];
@@ -191,6 +192,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       ret.push(neurodataTypesTool);
       ret.push(probeDandisetTool);
       ret.push(timeseriesAlignmentViewTool);
+      ret.push(probeNwbFileTool);
     }
     return ret;
   }, [chatContext]);
@@ -909,6 +911,36 @@ Be specific based on the context. For example, instead of just saying "what's th
     systemMessage += `
 NOTE: Whenever you refer to a particular NWB file, you should use the following link to it:
 [label](https://neurosift.app/?p=/nwb&url=[download_url]&dandisetId=[dandiset_id]
+
+CAPABILITY: If the user needs detailed information about a specific NWB file in a Dandiset, you should use the probe_nwb_file tool.
+
+========================
+CAPABILITY: If the user wants to know how to load an NWB file in Python, you should provide a self-contained Python script.
+Here are instructions for loading this NWB file into pynwb:
+
+# Prerequisites:
+pip install --upgrade lindi pynwb
+
+\`\`\`python
+import pynwb
+import lindi
+
+url = 'The URL of the NWB file'
+
+# Load the remote NWB file
+f = lindi.LindiH5pyFile.from_hdf5_file(url)"}
+io = pynwb.NWBHDF5IO(file=f, mode='r')
+nwbfile = io.read()
+
+# Access the data
+print(nwbfile)
+
+# Close the file
+io.close()
+\`\`\`
+
+Tip: when using Timeseries objects with pynwb it's better to use the x.get_timestamps() method rather than x.timestamps, because sometimes start_time and rate is used instead.
+========================
 
 `;
   }
