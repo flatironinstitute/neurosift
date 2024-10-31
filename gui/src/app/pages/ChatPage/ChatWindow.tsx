@@ -197,6 +197,29 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
     visible: saveChatVisible,
   } = useModalWindow();
 
+  const [editedPromptText, setEditedPromptText] = useState("");
+
+  const backUpAndEraseLastUserMessage = useCallback(() => {
+    let lastUserMessageIndex = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "user") {
+        lastUserMessageIndex = i;
+        break;
+      }
+    }
+    if (lastUserMessageIndex === -1) {
+      return;
+    }
+    const lastUserMessageContent = messages[lastUserMessageIndex].content;
+    const newMessages = messages.slice(0, lastUserMessageIndex);
+    setChat({
+      messages: newMessages,
+    });
+    if (typeof lastUserMessageContent === "string") {
+      setEditedPromptText(lastUserMessageContent);
+    }
+  }, [messages, setChat]);
+
   useEffect(() => {
     if (!systemMessage) return;
     // submit user message or tool results
@@ -227,6 +250,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
           if (canceled) return;
           console.warn("Error in chat completion", e);
           alert("An error occurred in chat completion: " + e.message);
+          backUpAndEraseLastUserMessage();
           return;
         }
         if (canceled) return;
@@ -330,6 +354,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
     tools,
     onLogMessage,
     systemMessage,
+    backUpAndEraseLastUserMessage,
   ]);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -551,6 +576,8 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
           onMessage={handleUserMessage}
           disabled={!inputBarEnabled}
           waitingForResponse={lastMessageIsUserOrTool || lastMessageIsToolCalls}
+          editedPromptText={editedPromptText}
+          setEditedPromptText={setEditedPromptText}
         />
       </div>
       <div
@@ -601,6 +628,8 @@ type InputBarProps = {
   onMessage: (message: string) => void;
   disabled?: boolean;
   waitingForResponse?: boolean;
+  editedPromptText: string;
+  setEditedPromptText: (text: string) => void;
 };
 
 const InputBar: FunctionComponent<InputBarProps> = ({
@@ -609,27 +638,28 @@ const InputBar: FunctionComponent<InputBarProps> = ({
   onMessage,
   disabled,
   waitingForResponse,
+  editedPromptText,
+  setEditedPromptText,
 }) => {
-  const [messageText, setMessageText] = useState("");
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter" || e.key === "NumpadEnter" || e.key === "Return") {
         // not sure about this
-        if (messageText.length > 1000) {
+        if (editedPromptText.length > 1000) {
           alert("Message is too long");
           return;
         }
-        onMessage(messageText);
-        setMessageText("");
+        onMessage(editedPromptText);
+        setEditedPromptText("");
       }
     },
-    [messageText, onMessage],
+    [editedPromptText, onMessage, setEditedPromptText],
   );
   return (
     <div style={{ position: "absolute", width, height }}>
       <input
-        value={messageText}
-        onChange={(e) => setMessageText(e.target.value)}
+        value={editedPromptText}
+        onChange={(e) => setEditedPromptText(e.target.value)}
         style={{ width: width - 8 - 20, height: height - 7 }}
         onKeyDown={handleKeyDown}
         placeholder={
@@ -642,12 +672,12 @@ const InputBar: FunctionComponent<InputBarProps> = ({
           icon={<Send />}
           title="Submit"
           onClick={() => {
-            if (messageText.length > 1000) {
+            if (editedPromptText.length > 1000) {
               alert("Message is too long");
               return;
             }
-            onMessage(messageText);
-            setMessageText("");
+            onMessage(editedPromptText);
+            setEditedPromptText("");
           }}
         />
       </span>
