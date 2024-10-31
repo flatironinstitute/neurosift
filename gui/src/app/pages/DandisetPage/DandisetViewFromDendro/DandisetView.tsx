@@ -329,6 +329,12 @@ export const useQueryDandiset = (
           const json = await response.json();
           const dandisetResponse = json as DandisetSearchResultItem;
           setDandisetResponse(dandisetResponse);
+        } else if (response.status === 403) {
+          console.error(
+              `Error fetching dandiset due to permissions. If this dandiset is embargoed, ` +
+              "make sure to set your DANDI_API_KEY under the key icon in the top right corner", response
+          );
+          setDandisetResponse(null);
         } else {
           console.error("Error fetching dandiset", response);
           setDandisetResponse(null);
