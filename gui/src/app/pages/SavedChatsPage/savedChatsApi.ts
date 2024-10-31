@@ -16,12 +16,18 @@ export const neurosiftSavedChatsApiUrl =
 export const getSavedChats = async (a: {
   chatId?: string;
   dandisetId?: string;
+  dandisetVersion?: string;
+  nwbFileUrl?: string;
+  feedback?: boolean;
   userId?: string;
 }) => {
   const req: GetSavedChatsRequest = {
     type: "GetSavedChats",
     chatId: a.chatId,
-    dandiSetId: a.dandisetId,
+    dandisetId: a.dandisetId,
+    dandisetVersion: a.dandisetVersion,
+    nwbFileUrl: a.nwbFileUrl,
+    feedback: a.feedback,
     userId: a.userId,
   };
   const url = `${neurosiftSavedChatsApiUrl}/api/getSavedChats`;
@@ -49,9 +55,14 @@ export const getSavedChats = async (a: {
 export const addSavedChat = async (a: {
   chatTitle: string;
   messages: any[];
-  userId: string;
+  userId?: string;
   dandisetId?: string;
-  neurosiftSavedChatsAccessToken: string;
+  dataVersion?: string;
+  nwbFileUrl?: string;
+  feedbackResponse?: "helpful" | "unhelpful";
+  feedbackNotes?: string;
+  feedbackOnly?: boolean;
+  neurosiftSavedChatsAccessToken?: string;
 }) => {
   const url = `${neurosiftSavedChatsApiUrl}/api/addSavedChat`;
   const req: AddSavedChatRequest = {
@@ -60,13 +71,31 @@ export const addSavedChat = async (a: {
     messages: a.messages,
     userId: a.userId,
     dandisetId: a.dandisetId,
+    dandisetVersion: a.dataVersion,
+    nwbFileUrl: a.nwbFileUrl,
+    feedbackResponse: a.feedbackResponse,
+    feedbackNotes: a.feedbackNotes,
+    feedbackOnly: a.feedbackOnly,
   };
+  let authorizationHeader: string | undefined;
+  if (a.neurosiftSavedChatsAccessToken) {
+    authorizationHeader = `Bearer ${a.neurosiftSavedChatsAccessToken}`;
+  } else {
+    if (!a.feedbackOnly) {
+      console.error("Missing access token for adding saved chat");
+      return;
+    }
+    authorizationHeader = undefined;
+  }
+  const headers: { [key: string]: string } = {
+    "Content-Type": "application/json",
+  };
+  if (authorizationHeader) {
+    headers.Authorization = authorizationHeader;
+  }
   const r = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${a.neurosiftSavedChatsAccessToken}`,
-    },
+    headers,
     body: JSON.stringify(req),
   });
   if (r.status !== 200) {
@@ -115,6 +144,9 @@ export const useSavedChats = (a: {
   load: boolean;
   chatId?: string;
   dandisetId?: string;
+  dandisetVersion?: string;
+  nwbFileUrl?: string;
+  feedback?: boolean;
   userId?: string;
 }) => {
   const { neurosiftSavedChatsAccessToken, neurosiftSavedChatsUserId } =
@@ -133,6 +165,9 @@ export const useSavedChats = (a: {
       const savedChats = await getSavedChats({
         chatId: a.chatId,
         dandisetId: a.dandisetId,
+        dandisetVersion: a.dandisetVersion,
+        nwbFileUrl: a.nwbFileUrl,
+        feedback: a.feedback,
         userId: a.userId,
       });
       if (canceled) return;
@@ -142,7 +177,16 @@ export const useSavedChats = (a: {
     return () => {
       canceled = true;
     };
-  }, [savedChatsRefreshCode, a.load, a.chatId, a.dandisetId, a.userId]);
+  }, [
+    savedChatsRefreshCode,
+    a.load,
+    a.chatId,
+    a.dandisetId,
+    a.dandisetVersion,
+    a.nwbFileUrl,
+    a.feedback,
+    a.userId,
+  ]);
   const handleAddSavedChat = useMemo(
     () =>
       neurosiftSavedChatsAccessToken && neurosiftSavedChatsUserId
@@ -181,9 +225,26 @@ export const useSavedChats = (a: {
         : undefined,
     [neurosiftSavedChatsAccessToken, refreshSavedChats],
   );
+  const handleAddFeedbackOnlyChat = useMemo(
+    () =>
+      (feedbackResponse: "helpful" | "unhelpful", feedbackNotes: string) => {
+        return addSavedChat({
+          chatTitle: "Feedback only",
+          messages: [],
+          userId: neurosiftSavedChatsUserId || undefined,
+          feedbackResponse,
+          feedbackNotes,
+          feedbackOnly: true,
+          neurosiftSavedChatsAccessToken:
+            neurosiftSavedChatsAccessToken || undefined,
+        });
+      },
+    [neurosiftSavedChatsAccessToken, neurosiftSavedChatsUserId],
+  );
   return {
     savedChats,
     addSavedChat: handleAddSavedChat,
+    addFeedbackOnlyChat: handleAddFeedbackOnlyChat,
     deleteSavedChat: handleDeleteSavedChat,
     refreshSavedChats,
   };

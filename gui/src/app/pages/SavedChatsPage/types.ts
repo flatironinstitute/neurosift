@@ -6,13 +6,19 @@ import {
   isString,
   optional,
   validateObject,
+  isBoolean,
 } from "@fi-sci/misc";
 
 export type NeurosiftSavedChat = {
   chatId: string;
   chatTitle: string;
   dandisetId?: string;
-  userId: string;
+  dandisetVersion?: string;
+  nwbFileUrl?: string;
+  feedbackResponse?: "helpful" | "unhelpful";
+  feedbackNotes?: string;
+  feedbackOnly?: boolean;
+  userId?: string;
   timestampCreated: number;
   messages: any[];
 };
@@ -22,7 +28,12 @@ export const isNeurosiftSavedChat = (x: any): x is NeurosiftSavedChat => {
     chatId: isString,
     chatTitle: isString,
     dandisetId: optional(isString),
-    userId: isString,
+    dandisetVersion: optional(isString),
+    nwbFileUrl: optional(isString),
+    feedbackResponse: optional(isString),
+    feedbackNotes: optional(isString),
+    feedbackOnly: optional(isBoolean),
+    userId: optional(isString),
     timestampCreated: isNumber,
     messages: isArrayOf(() => true),
   });
@@ -33,7 +44,10 @@ export type GetSavedChatsRequest = {
   type: "GetSavedChats";
   chatId?: string;
   userId?: string;
-  dandiSetId?: string;
+  dandisetId?: string;
+  dandisetVersion?: string;
+  nwbFileUrl?: string;
+  feedback?: boolean;
 };
 
 export const isGetSavedChatsRequest = (x: any): x is GetSavedChatsRequest => {
@@ -41,7 +55,10 @@ export const isGetSavedChatsRequest = (x: any): x is GetSavedChatsRequest => {
     type: isEqualTo("GetSavedChats"),
     chatId: optional(isString),
     userId: optional(isString),
-    dandiSetId: optional(isString),
+    dandisetId: optional(isString),
+    dandisetVersion: optional(isString),
+    nwbFileUrl: optional(isString),
+    feedback: optional(isBoolean),
   });
 };
 
@@ -61,8 +78,13 @@ export const isGetSavedChatsResponse = (x: any): x is GetSavedChatsResponse => {
 export type AddSavedChatRequest = {
   type: "AddSavedChat";
   chatTitle: string;
-  userId: string;
+  userId?: string;
   dandisetId?: string;
+  dandisetVersion?: string;
+  nwbFileUrl?: string;
+  feedbackResponse?: "helpful" | "unhelpful";
+  feedbackNotes?: string;
+  feedbackOnly?: boolean;
   messages: any[];
 };
 
@@ -70,8 +92,13 @@ export const isAddSavedChatRequest = (x: any): x is AddSavedChatRequest => {
   return validateObject(x, {
     type: isEqualTo("AddSavedChat"),
     chatTitle: isString,
-    userId: isString,
+    userId: optional(isString),
     dandisetId: optional(isString),
+    dandisetVersion: optional(isString),
+    nwbFileUrl: optional(isString),
+    feedbackResponse: optional(isString),
+    feedbackNotes: optional(isString),
+    feedbackOnly: optional(isBoolean),
     messages: isArrayOf(() => true),
   });
 };

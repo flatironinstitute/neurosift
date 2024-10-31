@@ -125,29 +125,36 @@ const EditChatTitleComponent: FunctionComponent<{
   );
 };
 
+export const getRecommendedChatTitle = async (
+  chat: Chat,
+  openRouterKey: string | null,
+) => {
+  const messages: ORMessage[] = [
+    ...chat.messages.filter((m) => m.role !== "client-side-only"),
+    {
+      role: "user",
+      content:
+        "What is a short recommended title for this chat? Respond with the chat title only.",
+    },
+  ];
+  const response = await chatCompletion({
+    messages,
+    modelName: "gpt-4o-mini",
+    openRouterKey,
+    tools: [],
+  });
+  const x = response.assistantMessage;
+  // remove "" and strip
+  const y = x.replace(/^"(.*)"$/, "$1").trim();
+  return y;
+};
+
 const useRecommendedChatTitle = (chat: Chat, openRouterKey: string | null) => {
   const [recommendedChatTitle, setRecommendedChatTitle] = useState<string>("");
   useEffect(() => {
     let canceled = false;
     const load = async () => {
-      const messages: ORMessage[] = [
-        ...chat.messages.filter((m) => m.role !== "client-side-only"),
-        {
-          role: "user",
-          content:
-            "What is a short recommended title for this chat? Respond with the chat title only.",
-        },
-      ];
-      const response = await chatCompletion({
-        messages,
-        modelName: "gpt-4o-mini",
-        openRouterKey,
-        tools: [],
-      });
-      if (canceled) return;
-      const x = response.assistantMessage;
-      // remove "" and strip
-      const y = x.replace(/^"(.*)"$/, "$1").trim();
+      const y = await getRecommendedChatTitle(chat, openRouterKey);
       setRecommendedChatTitle(y);
     };
     load();

@@ -23,6 +23,7 @@ export type Route =
     }
   | {
       page: "saved-chats";
+      feedback?: boolean;
     }
   | {
       page: "nwb";
@@ -66,9 +67,6 @@ export type Route =
     }
   | {
       page: "tests";
-    }
-  | {
-      page: "saved-chats";
     }
   | {
       page: "github-auth";
@@ -144,6 +142,7 @@ const useRoute = () => {
     } else if (p === "/saved-chats") {
       return {
         page: "saved-chats",
+        feedback: query.feedback === "1",
       };
     } else if (p === "/nwb") {
       const urlList = typeof query.url === "string" ? [query.url] : query.url; // actually a list of urls
@@ -280,6 +279,9 @@ const useRoute = () => {
         }
       } else if (r.page === "saved-chats") {
         newQuery.p = "/saved-chats";
+        if (r.feedback) {
+          newQuery.feedback = "1";
+        }
       } else if (r.page === "nwb") {
         newQuery.p = "/nwb";
         newQuery.url = r.url;

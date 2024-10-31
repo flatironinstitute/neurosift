@@ -16,9 +16,13 @@ const SavedChatsPage: FunctionComponent<SavedChatsPageProps> = ({
   width,
   height,
 }) => {
+  const { route } = useRoute();
+  if (route.page !== "saved-chats") throw Error("Unexpected page");
+  const { feedback } = route;
   const padding = 10;
   const { savedChats, refreshSavedChats, deleteSavedChat } = useSavedChats({
     load: true,
+    feedback,
   });
   const { neurosiftSavedChatsUserId } = useNeurosiftSavedChats();
   const { setRoute } = useRoute();
@@ -64,6 +68,8 @@ const SavedChatsPage: FunctionComponent<SavedChatsPageProps> = ({
                   <th>Title</th>
                   <th>User</th>
                   <th>Created</th>
+                  {feedback && <th>Response</th>}
+                  {feedback && <th>Notes</th>}
                 </tr>
               </thead>
               <tbody>
@@ -101,6 +107,8 @@ const SavedChatsPage: FunctionComponent<SavedChatsPageProps> = ({
                     </td>
                     <td>{chat.userId}</td>
                     <td>{timeAgoString(chat.timestampCreated / 1000)}</td>
+                    {feedback && <td>{chat.feedbackResponse}</td>}
+                    {feedback && <td>{chat.feedbackNotes}</td>}
                   </tr>
                 ))}
               </tbody>

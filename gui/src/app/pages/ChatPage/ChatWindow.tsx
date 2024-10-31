@@ -26,6 +26,8 @@ import { relevantDandisetsTool } from "./tools/relevantDandisets";
 import { timeseriesAlignmentViewTool } from "./tools/timeseriesAlignmentView";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import SaveChatDialog from "./SaveChatDialog";
+import { FaRegThumbsDown, FaRegThumbsUp, FaThumbsUp } from "react-icons/fa";
+import FeedbackWindow from "./FeedbackWindow";
 
 export type Chat = {
   messages: (ORMessage | { role: "client-side-only"; content: string })[];
@@ -163,6 +165,10 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       : false;
   }, [lastMessage]);
 
+  const lastMessageIsAssistant = useMemo(() => {
+    return lastMessage ? lastMessage.role === "assistant" : false;
+  }, [lastMessage]);
+
   const tools: ToolItem[] = useMemo(() => {
     const ret: ToolItem[] = [];
     if (["main"].includes(chatContext.type)) {
@@ -206,12 +212,23 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
     if (!lastMessage) return;
     if (lastMessage.role === "user" || lastMessage.role === "tool") {
       (async () => {
-        const { assistantMessage, toolCalls } = await chatCompletion({
-          messages: messages2,
-          modelName,
-          openRouterKey,
-          tools: tools.map((x) => x.tool),
-        });
+        let assistanMessage: string;
+        let toolCalls: any[] | undefined;
+        try {
+          const x = await chatCompletion({
+            messages: messages2,
+            modelName,
+            openRouterKey,
+            tools: tools.map((x) => x.tool),
+          });
+          assistanMessage = x.assistantMessage;
+          toolCalls = x.toolCalls;
+        } catch (e: any) {
+          if (canceled) return;
+          console.warn("Error in chat completion", e);
+          alert("An error occurred in chat completion: " + e.message);
+          return;
+        }
         if (canceled) return;
         if (!toolCalls) {
           setChat({
@@ -408,6 +425,15 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
     }
   }, [messages]);
 
+  const {
+    handleOpen: openFeedbackWindow,
+    handleClose: closeFeedbackWindow,
+    visible: feedbackWindowVisible,
+  } = useModalWindow();
+  const [feedbackResponse, setFeedbackResponse] = useState<
+    "helpful" | "unhelpful"
+  >("helpful");
+
   return (
     <div
       style={{
@@ -496,11 +522,19 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
               )}
             </div>
           ))}
-        {lastMessageIsUserOrTool || lastMessageIsToolCalls ? (
+        {(lastMessageIsUserOrTool || lastMessageIsToolCalls) && (
           <div>
             <span style={{ color: "#6a6" }}>...</span>
           </div>
-        ) : null}
+        )}
+        {lastMessageIsAssistant && (
+          <HelpfulUnhelpfulButtons
+            onClick={(response) => {
+              setFeedbackResponse(response);
+              openFeedbackWindow();
+            }}
+          />
+        )}
       </div>
       <div
         style={{
@@ -544,6 +578,17 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
           onClose={closeSaveChat}
           openRouterKey={openRouterKey}
           chatContext={chatContext}
+        />
+      </ModalWindow>
+      <ModalWindow
+        visible={feedbackWindowVisible}
+        onClose={closeFeedbackWindow}
+      >
+        <FeedbackWindow
+          chat={chat}
+          onClose={closeFeedbackWindow}
+          response={feedbackResponse}
+          openRouterKey={openRouterKey}
         />
       </ModalWindow>
     </div>
@@ -909,5 +954,35 @@ const getAllNeurodataTypes = async () => {
 //     return ret;
 //   },
 // };
+
+type HelpfulUnhelpfulButtonsProps = {
+  onClick: (response: "helpful" | "unhelpful") => void;
+};
+
+const HelpfulUnhelpfulButtons: FunctionComponent<
+  HelpfulUnhelpfulButtonsProps
+> = ({ onClick }) => {
+  return (
+    <div>
+      <span>
+        <SmallIconButton
+          onClick={() => onClick("helpful")}
+          fontSize={12}
+          icon={<FaRegThumbsUp />}
+          title="This was helpful"
+        />
+      </span>
+      <span>&nbsp;</span>
+      <span>
+        <SmallIconButton
+          onClick={() => onClick("unhelpful")}
+          fontSize={12}
+          icon={<FaRegThumbsDown />}
+          title="This was not helpful or incorrect"
+        />
+      </span>
+    </div>
+  );
+};
 
 export default ChatWindow;
