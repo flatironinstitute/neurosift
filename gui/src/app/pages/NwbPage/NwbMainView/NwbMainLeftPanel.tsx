@@ -22,6 +22,7 @@ import LoadInPynwbWindow from "./LoadInPynwbWindow";
 import { useDatasetData, useGroup } from "./NwbMainView";
 import SelectedNeurodataItemsWidget from "./SelectedNeurodataItemsWidget";
 import { useContextAnnotationsForDandiset } from "../NeurosiftAnnotations/useContextAnnotations";
+import ChatWindow, { ChatContext } from "app/pages/ChatPage/ChatWindow";
 
 type Props = {
   width: number;
@@ -62,10 +63,10 @@ const tabs = [
   { id: "chat", label: <ChatIcon />, closeable: false },
 ];
 
-type ChatResource = {
-  url: string;
-  selected: boolean;
-};
+// type ChatResource = {
+//   url: string;
+//   selected: boolean;
+// };
 
 const NwbMainLeftPanel: FunctionComponent<Props> = ({
   width,
@@ -94,6 +95,14 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
       })
       .map((a) => a.annotation.text);
   }, [contextAnnotations]);
+  const chatContext: ChatContext = useMemo(
+    () => ({
+      type: "nwb",
+      dandisetId: route.dandisetId,
+      nwbUrl: nwbFile.getUrls()[0] || "",
+    }),
+    [route.dandisetId, nwbFile],
+  );
   return (
     <TabWidget
       tabs={tabs}
@@ -108,13 +117,24 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
         nwbFile={nwbFile}
         usingLindi={usingLindi}
       />
-      <ChatPanel
+      <ChatWindow
+        width={0}
+        height={0}
+        chat={chat}
+        setChat={setChat}
+        openRouterKey={null}
+        onLogMessage={() => {}}
+        additionalKnowledge=""
+        onToggleLeftPanel={undefined}
+        chatContext={chatContext}
+      />
+      {/* <ChatPanel
         width={0}
         height={0}
         chat={chat}
         setChat={setChat}
         availableResourceUrls={availableResourceUrls}
-      />
+      /> */}
     </TabWidget>
   );
 };

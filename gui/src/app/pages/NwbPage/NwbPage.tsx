@@ -482,6 +482,9 @@ const getResolvedUrl = async (
 };
 
 export const tryGetLindiUrl = async (url: string, dandisetId: string) => {
+  if (url.endsWith(".lindi.json") || url.endsWith(".lindi.tar")) {
+    return url;
+  }
   let assetId: string;
   let staging: boolean;
   if (url.startsWith("https://api-staging.dandiarchive.org/api/assets/")) {

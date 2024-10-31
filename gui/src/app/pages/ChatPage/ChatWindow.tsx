@@ -1,15 +1,6 @@
 import { SmallIconButton } from "@fi-sci/misc";
-import {
-  Cancel,
-  Circle,
-  DeleteForever,
-  DockTwoTone,
-  ForkLeft,
-  Save,
-  Send,
-  SubtitlesTwoTone,
-  ThreeDRotation,
-} from "@mui/icons-material";
+import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
+import { Cancel, ForkLeft, Save, Send } from "@mui/icons-material";
 import Markdown from "app/Markdown/Markdown";
 import {
   ORMessage,
@@ -25,20 +16,19 @@ import {
   useRef,
   useState,
 } from "react";
+import { FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa";
 import { fetchNeurodataTypesIndex } from "../DandiQueryPage/SearchByNeurodataTypeWindow";
 import chatCompletion from "./chatCompletion";
+import FeedbackWindow from "./FeedbackWindow";
+import SaveChatDialog from "./SaveChatDialog";
 import { lexicaltDandisetsTool } from "./tools/lexicalDandisets";
 import { probeDandisetTool } from "./tools/probeDandiset";
 import { dandisetObjectsTool } from "./tools/probeDandisetObjects";
 import { neurodataTypesTool } from "./tools/probeNeurodataTypes";
+import { probeNwbFileTool } from "./tools/probeNwbFile";
 import { unitsColnamesTool } from "./tools/probeUnitsColnames";
 import { relevantDandisetsTool } from "./tools/relevantDandisets";
 import { timeseriesAlignmentViewTool } from "./tools/timeseriesAlignmentView";
-import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
-import SaveChatDialog from "./SaveChatDialog";
-import { FaRegThumbsDown, FaRegThumbsUp, FaThumbsUp } from "react-icons/fa";
-import FeedbackWindow from "./FeedbackWindow";
-import { probeNwbFileTool } from "./tools/probeNwbFile";
 
 export type Chat = {
   messages: (ORMessage | { role: "client-side-only"; content: string })[];
@@ -55,6 +45,11 @@ export type ChatContext =
   | {
       type: "dandiset";
       dandisetId: string;
+    }
+  | {
+      type: "nwb";
+      dandisetId?: string;
+      nwbUrl: string;
     };
 
 type ChatWindowProps = {
@@ -141,6 +136,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       setChat({
         messages: [...chat.messages, { role: "user", content: message }],
       });
+      setAtLeastOneUserMessageSubmitted(true);
     },
     [chat, setChat],
   );
@@ -190,6 +186,8 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
     if (["main", "dandiset"].includes(chatContext.type)) {
       ret.push(dandisetObjectsTool);
       ret.push(neurodataTypesTool);
+    }
+    if (["main", "dandiset", "nwb"].includes(chatContext.type)) {
       ret.push(probeDandisetTool);
       ret.push(timeseriesAlignmentViewTool);
       ret.push(probeNwbFileTool);
@@ -370,13 +368,16 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   ]);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const lastMessageRef = useRef<HTMLDivElement>(null);
+  const bottomElementRef = useRef<HTMLDivElement>(null);
+  const [atLeastOneUserMessageSubmitted, setAtLeastOneUserMessageSubmitted] =
+    useState(false);
 
-  useEffect(() => {
-    if (lastMessageRef.current) {
-      lastMessageRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages]);
+  // useEffect(() => {
+  //   if (!atLeastOneUserMessageSubmitted) return;
+  //   if (lastMessageRef.current) {
+  //     lastMessageRef.current.scrollIntoView({ behavior: "smooth" });
+  //   }
+  // }, [messages, atLeastOneUserMessageSubmitted]);
 
   const handleClearAllMessages = useCallback(() => {
     setChat({
@@ -409,6 +410,8 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       return `Neurosift chat`;
     } else if (chatContext.type === "dandiset") {
       return `I can help you find information about Dandiset ${chatContext.dandisetId}.`;
+    } else if (chatContext.type === "nwb") {
+      return `I can help you with this NWB file.`;
     } else {
       return "";
     }
@@ -427,6 +430,8 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
         "What are the Neurodata types in this Dandiset?",
         "What can you help with?",
       ];
+    } else if (chatContext.type === "nwb") {
+      return ["Provide an overview of this file", "What can you help with?"];
     } else {
       return [];
     }
@@ -440,6 +445,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       setChat({
         messages: [...messages, { role: "user", content: question }],
       });
+      setAtLeastOneUserMessageSubmitted(true);
     },
     [messages, setChat, inputBarEnabled],
   );
@@ -452,6 +458,9 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
     if (messages.length === 0) {
       return;
     }
+    if (!atLeastOneUserMessageSubmitted) {
+      return;
+    }
     const lastMessage = messages[messages.length - 1];
     if (!["assistant", "client-side-only"].includes(lastMessage.role)) {
       return;
@@ -460,7 +469,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
       chatContainerRef.current.scrollTop =
         chatContainerRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, atLeastOneUserMessageSubmitted]);
 
   const {
     handleOpen: openFeedbackWindow,
@@ -527,7 +536,6 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
           .map((c, index) => (
             <div
               key={index}
-              ref={index === messages.length - 1 ? lastMessageRef : null}
               style={{
                 color: colorForString(c.role),
               }}
@@ -556,7 +564,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
                           messages: messages.slice(0, index),
                         });
                       }}
-                      icon={<>...</>}
+                      icon={<span>...</span>}
                       title="Delete this prompt"
                     />
                   </span>
@@ -586,6 +594,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
             }}
           />
         )}
+        <div ref={bottomElementRef}>&nbsp;</div>
       </div>
       <div
         style={{
@@ -642,6 +651,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
           onClose={closeFeedbackWindow}
           response={feedbackResponse}
           openRouterKey={openRouterKey}
+          chatContext={chatContext}
         />
       </ModalWindow>
     </div>
@@ -905,6 +915,17 @@ CAPABILITY: Respond to questions about the Dandiset ${chatContext.dandisetId} us
 Be specific based on the context. For example, instead of just saying "what's this dandiset about?" say "what's this dandiset about, especially relating to xyz".
 
 `;
+  } else if (chatContext.type === "nwb") {
+    systemMessage += `
+  NOTE: You are responding to questions about a specific NWB file defined as follows:
+  Dandiset ID: ${chatContext.dandisetId}
+  NWB URL: ${chatContext.nwbUrl}
+
+  CAPABILITY: Respond to questions about the NWB file using the probe_nwb_file tool.
+  You can also get more general information about the broader Dandiset using the probe_dandiset tool.
+
+  If asked to analyze the data or provide plots, you should certainly use the probe_nwb_file tool first.
+  `;
   }
 
   if (chatContext.type === "main" || chatContext.type === "dandiset") {
@@ -913,7 +934,15 @@ NOTE: Whenever you refer to a particular NWB file, you should use the following 
 [label](https://neurosift.app/?p=/nwb&url=[download_url]&dandisetId=[dandiset_id]
 
 CAPABILITY: If the user needs detailed information about a specific NWB file in a Dandiset, you should use the probe_nwb_file tool.
+`;
+  }
 
+  if (
+    chatContext.type === "main" ||
+    chatContext.type === "dandiset" ||
+    chatContext.type === "nwb"
+  ) {
+    systemMessage += `
 ========================
 CAPABILITY: If the user wants to know how to load an NWB file in Python, you should provide a self-contained Python script.
 Here are instructions for loading this NWB file into pynwb:
@@ -939,8 +968,21 @@ print(nwbfile)
 io.close()
 \`\`\`
 
-Tip: when using Timeseries objects with pynwb it's better to use the x.get_timestamps() method rather than x.timestamps, because sometimes start_time and rate is used instead.
+IMPORTANT: However, if the url ends with .lindi.json or .lindi.tar, then you need to use
+f = lindi.LindiH5pyFile.from_lindi_file(url)
+instead of
+f = lindi.LindiH5pyFile.from_hdf5_file(url)
+
+Tip: when using Timeseries objects with pynwb it's better to use the x.get_timestamps()[:] method rather than x.timestamps, because sometimes start_time and rate is used instead.
+
+Tip: It's important to use keyword arguments when creating the pynwb.NWBHDF5IO object.
 ========================
+
+CAPABILITY: If the user wants plot or analyze data in an NWB file, you may provide a Python script for them.
+To construct it, you should use the above method of loading the data together with your knowledge of pynwb and other Python libraries.
+When convenient, please use complete self-contained Python scripts that can be run as-is.
+If the user requests to plot something, you should assume they mean to provide a script that does the plotting.
+When constructing an example plot, be mindful of the size of the data you are loading. If it is too large, consider loading a subset of the data.
 
 `;
   }
@@ -955,7 +997,9 @@ CAPABILITY: If the user asks for a random example of something then use Math.ran
 
 CAPABILITY: When asked about prompt ideas or how you can be helpful, you should give a thorough list of your capabilities as spelled out here with helpful summaries.
 
-NOTE: If asked to plot something, you should decline unless you have a specific capability that allows you to plot that thing.
+NOTE: Do not provide markdown links to NWB download URLs because those are impractical for downloading.
+
+NOTE: When finding a random dandiset where the user has not provided any criteria, you should think of an actual neurophysiology topic, and then use the relevant_dandisets tool to find a random dandiset related to that topic. Don't just query for a generic term.
 
 ${additionalKnowledge}
 

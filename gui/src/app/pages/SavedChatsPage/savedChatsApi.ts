@@ -194,12 +194,14 @@ export const useSavedChats = (a: {
             chatTitle: string;
             messages: any[];
             dandisetId?: string;
+            nwbFileUrl?: string;
           }) => {
             const chatId = await addSavedChat({
               chatTitle: a.chatTitle,
               messages: a.messages,
               userId: neurosiftSavedChatsUserId!,
               dandisetId: a.dandisetId,
+              nwbFileUrl: a.nwbFileUrl,
               neurosiftSavedChatsAccessToken,
             });
             refreshSavedChats();

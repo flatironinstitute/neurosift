@@ -70,13 +70,23 @@ const SaveChatDialog: FunctionComponent<SaveChatDialogProps> = ({
             if (!ok) {
               return;
             }
+            let dandisetId: string | undefined;
+            let nwbFileUrl: string | undefined;
+            if (chatContext.type === "main") {
+              dandisetId = undefined;
+              nwbFileUrl = undefined;
+            } else if (chatContext.type === "dandiset") {
+              dandisetId = chatContext.dandisetId;
+              nwbFileUrl = undefined;
+            } else if (chatContext.type === "nwb") {
+              dandisetId = undefined;
+              nwbFileUrl = chatContext.nwbUrl;
+            }
             const chatId = await addSavedChat({
               chatTitle,
               messages: chat.messages,
-              dandisetId:
-                chatContext.type === "dandiset"
-                  ? chatContext.dandisetId
-                  : undefined,
+              dandisetId,
+              nwbFileUrl,
             });
             if (!chatId) {
               alert("Failed to save chat");
