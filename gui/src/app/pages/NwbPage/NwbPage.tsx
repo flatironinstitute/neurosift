@@ -487,12 +487,29 @@ export const tryGetLindiUrl = async (url: string, dandisetId: string) => {
   if (url.startsWith("https://api-staging.dandiarchive.org/api/assets/")) {
     staging = true;
     assetId = url.split("/")[5];
+  } else if (
+    url.startsWith("https://api-staging.dandiarchive.org/api/dandisets/")
+  ) {
+    staging = true;
+    dandisetId = url.split("/")[5];
+    const indexOfAssetsPart = url.split("/").indexOf("assets");
+    if (indexOfAssetsPart === -1) return undefined;
+    assetId = url.split("/")[indexOfAssetsPart + 1];
   } else if (url.startsWith("https://api.dandiarchive.org/api/assets/")) {
     staging = false;
     assetId = url.split("/")[5];
+  } else if (url.startsWith("https://api.dandiarchive.org/api/dandisets/")) {
+    // https://api.dandiarchive.org/api/dandisets/000246/versions/draft/assets/24190f91-44ae-4e77-8581-19dcc567a161/download/
+    staging = false;
+    dandisetId = url.split("/")[5];
+    const indexOfAssetsPart = url.split("/").indexOf("assets");
+    if (indexOfAssetsPart === -1) return undefined;
+    assetId = url.split("/")[indexOfAssetsPart + 1];
   } else {
     return undefined;
   }
+  if (!dandisetId) return undefined;
+  if (!assetId) return undefined;
   const aa = staging ? "dandi-staging" : "dandi";
   const tryUrl = `https://lindi.neurosift.org/${aa}/dandisets/${dandisetId}/assets/${assetId}/nwb.lindi.json`;
   const resp = await fetch(tryUrl, { method: "HEAD" });

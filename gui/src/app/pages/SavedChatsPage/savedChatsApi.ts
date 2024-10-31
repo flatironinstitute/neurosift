@@ -43,7 +43,7 @@ export const getSavedChats = async (a: {
     return [];
   }
   const savedChats: NeurosiftSavedChat[] = data.savedChats;
-  return savedChats.sort((a, b) => a.timestampCreated - b.timestampCreated);
+  return savedChats.sort((a, b) => b.timestampCreated - a.timestampCreated);
 };
 
 export const addSavedChat = async (a: {

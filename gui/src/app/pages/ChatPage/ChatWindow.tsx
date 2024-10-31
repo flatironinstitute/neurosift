@@ -806,6 +806,14 @@ Be specific based on the context. For example, instead of just saying "what's th
 `;
   }
 
+  if (chatContext.type === "main" || chatContext.type === "dandiset") {
+    systemMessage += `
+NOTE: Whenever you refer to a particular NWB file, you should use the following link to it:
+[label](https://neurosift.app/?p=/nwb&url=[download_url]&dandisetId=[dandiset_id]
+
+`;
+  }
+
   systemMessage += `
 NOTE: Within a single response, do not make excessive calls to the tools. Maybe up to around 5 is reasonable. But if you want to make more, you could ask the user if they would like you to do more work to find the answer.
 
@@ -815,6 +823,8 @@ NOTE: Whenever you refer to a particular neurodata object (that is in an NWB fil
 CAPABILITY: If the user asks for a random example of something then use Math.random in the javascript calls to truly provide a random example... don't just use the first in the list.
 
 CAPABILITY: When asked about prompt ideas or how you can be helpful, you should give a thorough list of your capabilities as spelled out here with helpful summaries.
+
+NOTE: If asked to plot something, you should decline unless you have a specific capability that allows you to plot that thing.
 
 ${additionalKnowledge}
 
