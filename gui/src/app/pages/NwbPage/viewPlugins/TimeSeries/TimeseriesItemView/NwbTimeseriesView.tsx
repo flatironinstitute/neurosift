@@ -706,7 +706,7 @@ export const NwbTimeseriesViewChild: FunctionComponent<
     return <div>visibleEndTimeSec is undefined</div>;
   }
   if (startChunkIndex === undefined && !zoomInRequired) {
-    return <div>startChunkIndex is undefined</div>;
+    return <div>Loading timestamps...</div>;
   }
   if (endChunkIndex === undefined && !zoomInRequired) {
     return <div>endChunkIndex is undefined</div>;
