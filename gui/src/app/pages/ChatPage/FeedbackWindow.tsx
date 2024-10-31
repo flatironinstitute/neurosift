@@ -7,7 +7,7 @@ import { getRecommendedChatTitle } from "./SaveChatDialog";
 type FeedbackWindowProps = {
   onClose: () => void;
   chat: Chat;
-  response: "helpful" | "unhelpful";
+  response: "helpful" | "unhelpful" | "neutral";
   openRouterKey: string | null;
   chatContext: ChatContext;
 };

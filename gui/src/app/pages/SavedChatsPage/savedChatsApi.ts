@@ -59,7 +59,7 @@ export const addSavedChat = async (a: {
   dandisetId?: string;
   dataVersion?: string;
   nwbFileUrl?: string;
-  feedbackResponse?: "helpful" | "unhelpful";
+  feedbackResponse?: "helpful" | "unhelpful" | "neutral";
   feedbackNotes?: string;
   feedbackOnly?: boolean;
   neurosiftSavedChatsAccessToken?: string;
@@ -229,7 +229,10 @@ export const useSavedChats = (a: {
   );
   const handleAddFeedbackOnlyChat = useMemo(
     () =>
-      (feedbackResponse: "helpful" | "unhelpful", feedbackNotes: string) => {
+      (
+        feedbackResponse: "helpful" | "unhelpful" | "neutral",
+        feedbackNotes: string,
+      ) => {
         return addSavedChat({
           chatTitle: "Feedback only",
           messages: [],

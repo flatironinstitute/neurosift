@@ -15,7 +15,7 @@ export type NeurosiftSavedChat = {
   dandisetId?: string;
   dandisetVersion?: string;
   nwbFileUrl?: string;
-  feedbackResponse?: "helpful" | "unhelpful";
+  feedbackResponse?: "helpful" | "unhelpful" | "neutral";
   feedbackNotes?: string;
   feedbackOnly?: boolean;
   userId?: string;
@@ -82,7 +82,7 @@ export type AddSavedChatRequest = {
   dandisetId?: string;
   dandisetVersion?: string;
   nwbFileUrl?: string;
-  feedbackResponse?: "helpful" | "unhelpful";
+  feedbackResponse?: "helpful" | "unhelpful" | "neutral";
   feedbackNotes?: string;
   feedbackOnly?: boolean;
   messages: any[];

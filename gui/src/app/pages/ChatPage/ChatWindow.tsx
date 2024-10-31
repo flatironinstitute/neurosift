@@ -16,7 +16,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa";
+import { FaEnvelope, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa";
 import { fetchNeurodataTypesIndex } from "../DandiQueryPage/SearchByNeurodataTypeWindow";
 import chatCompletion from "./chatCompletion";
 import FeedbackWindow from "./FeedbackWindow";
@@ -477,7 +477,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
     visible: feedbackWindowVisible,
   } = useModalWindow();
   const [feedbackResponse, setFeedbackResponse] = useState<
-    "helpful" | "unhelpful"
+    "helpful" | "unhelpful" | "neutral"
   >("helpful");
 
   return (
@@ -1086,7 +1086,7 @@ const getAllNeurodataTypes = async () => {
 // };
 
 type HelpfulUnhelpfulButtonsProps = {
-  onClick: (response: "helpful" | "unhelpful") => void;
+  onClick: (response: "helpful" | "unhelpful" | "neutral") => void;
 };
 
 const HelpfulUnhelpfulButtons: FunctionComponent<
@@ -1099,7 +1099,7 @@ const HelpfulUnhelpfulButtons: FunctionComponent<
           onClick={() => onClick("helpful")}
           fontSize={12}
           icon={<FaRegThumbsUp />}
-          title="This was helpful"
+          title="This was helpful, provide feedback"
         />
       </span>
       <span>&nbsp;</span>
@@ -1108,7 +1108,16 @@ const HelpfulUnhelpfulButtons: FunctionComponent<
           onClick={() => onClick("unhelpful")}
           fontSize={12}
           icon={<FaRegThumbsDown />}
-          title="This was not helpful or incorrect"
+          title="Not helpful or incorrect, provide feedback"
+        />
+      </span>
+      <span>&nbsp;</span>
+      <span>
+        <SmallIconButton
+          onClick={() => onClick("neutral")}
+          fontSize={12}
+          icon={<FaEnvelope />}
+          title="Provide feedback"
         />
       </span>
     </div>
