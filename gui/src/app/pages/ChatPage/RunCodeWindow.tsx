@@ -9,6 +9,8 @@ import {
 import PythonSessionClient, {
   PythonSessionOutputItem,
 } from "./PythonSessionClient";
+import { SmallIconButton } from "@fi-sci/misc";
+import { Cancel } from "@mui/icons-material";
 
 type RunCodeWindowProps = {
   width: number;
@@ -133,6 +135,18 @@ const RunCodeWindow: FunctionComponent<RunCodeWindowProps> = ({
       runCodeCommunicator.removeOnRunCode(callback);
     };
   }, [runCodeCommunicator, handleRunCode]);
+  const [pythonSessionStatus, setPythonSessionStatus] =
+    useState<PythonSessionStatus>("uninitiated");
+  useEffect(() => {
+    setPythonSessionStatus(runCodeCommunicator.pythonSessionStatus);
+    const cb = (status: PythonSessionStatus) => {
+      setPythonSessionStatus(status);
+    };
+    runCodeCommunicator.onPythonSessionStatusChanged(cb);
+    return () => {
+      runCodeCommunicator.removeOnPythonSessionStatusChanged(cb);
+    };
+  }, [runCodeCommunicator]);
 
   // when a new output comes in, scroll to the bottom
   const containerRef = useRef<HTMLDivElement>(null);
@@ -142,16 +156,54 @@ const RunCodeWindow: FunctionComponent<RunCodeWindowProps> = ({
     }
   }, [outputContent]);
 
+  const topBarHeight = 25;
+
   return (
-    <div
-      ref={containerRef}
-      style={{ width, height, padding: 12, overflowY: "auto" }}
-    >
-      <h2>Python output</h2>
-      {outputContent.items.map((item, index) => (
-        <OutputItemView key={index} item={item} />
-      ))}
-      <div ref={bottomElementRef}>&nbsp;</div>
+    <div style={{ position: "absolute", width, height }}>
+      <div
+        style={{
+          height: topBarHeight,
+          backgroundColor: "lightgray",
+        }}
+      >
+        <div style={{ paddingTop: 3 }}>
+          &nbsp;Output |&nbsp;
+          <span>
+            {pythonSessionStatus === "idle"
+              ? "ready"
+              : pythonSessionStatus === "busy"
+                ? "running"
+                : pythonSessionStatus}
+            &nbsp;|&nbsp;
+          </span>
+          {pythonSessionStatus === "busy" && (
+            <SmallIconButton
+              icon={<Cancel />}
+              title="Cancel execution"
+              onClick={() => {
+                if (!pythonSessionClient) return;
+                pythonSessionClient.cancelExecution();
+              }}
+            />
+          )}
+        </div>
+      </div>
+      <div
+        ref={containerRef}
+        style={{
+          width,
+          top: topBarHeight,
+          height: height - topBarHeight,
+          overflowY: "auto",
+        }}
+      >
+        <div style={{ padding: 20 }}>
+          {outputContent.items.map((item, index) => (
+            <OutputItemView key={index} item={item} />
+          ))}
+          <div ref={bottomElementRef}>&nbsp;</div>
+        </div>
+      </div>
     </div>
   );
 };

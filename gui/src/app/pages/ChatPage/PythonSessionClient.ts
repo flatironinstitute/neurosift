@@ -77,6 +77,10 @@ class PythonSessionClient {
       throw Error("Unexpected python session status");
     }
   }
+  async cancelExecution() {
+    if (!this.#kernel) return;
+    await this.#kernel.interrupt();
+  }
   async shutdown() {
     if (!this.#kernel) return;
     await this.#kernel.shutdown();
@@ -90,10 +94,18 @@ class PythonSessionClient {
         console.error("Error initiating", err);
         const item: PythonSessionOutputItem = {
           type: "stderr",
-          content: `Error initiating python session. You must have a jupyter server running on http://localhost:8888`,
+          content: `Error initiating python session. You must have a jupyter server running on http://localhost:8888 and allow access to neurosift.`,
         };
         this.#onOutputItemCallbacks.forEach((callback) => {
           callback(item);
+        });
+        const item2: PythonSessionOutputItem = {
+          type: "stderr",
+          content:
+            "For example: jupyter lab --NotebookApp.allow_origin='https://neurosift.app'",
+        };
+        this.#onOutputItemCallbacks.forEach((callback) => {
+          callback(item2);
         });
         return;
       }
