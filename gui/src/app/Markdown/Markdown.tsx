@@ -13,14 +13,21 @@ import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import remarkMathPlugin from "remark-math";
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
-import { CopyAll } from "@mui/icons-material";
+import { CopyAll, PlayArrow } from "@mui/icons-material";
 
 type Props = {
   source: string;
   onSpecialLinkClick?: (link: string) => void;
+  onRunCode?: (code: string) => void;
+  runCodeReady?: boolean;
 };
 
-const Markdown: FunctionComponent<Props> = ({ source, onSpecialLinkClick }) => {
+const Markdown: FunctionComponent<Props> = ({
+  source,
+  onSpecialLinkClick,
+  onRunCode,
+  runCodeReady,
+}) => {
   const components: Partial<
     Omit<NormalComponents, keyof SpecialComponents> & SpecialComponents
   > = useMemo(
@@ -41,6 +48,19 @@ const Markdown: FunctionComponent<Props> = ({ source, onSpecialLinkClick }) => {
                 }}
               />
               {copied && <>&nbsp;copied</>}
+              {onRunCode && (
+                <span style={{ color: runCodeReady ? "black" : "lightgray" }}>
+                  <SmallIconButton
+                    icon={<PlayArrow />}
+                    title="Run code"
+                    onClick={() => {
+                      const code = String(children);
+                      onRunCode(code);
+                    }}
+                    disabled={!runCodeReady}
+                  />
+                </span>
+              )}
             </div>
             <SyntaxHighlighter
               // eslint-disable-next-line react/no-children-prop
@@ -98,7 +118,7 @@ const Markdown: FunctionComponent<Props> = ({ source, onSpecialLinkClick }) => {
       },
       // }
     }),
-    [onSpecialLinkClick],
+    [onSpecialLinkClick, onRunCode, runCodeReady],
   );
   const source2 = useMemo(() => {
     const lines = source.split("\n").map((line) => {

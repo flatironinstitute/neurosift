@@ -25,6 +25,7 @@ import OpenNeuroPage from "./pages/OpenNeuroPage/OpenNeuroPage";
 import OpenNeuroDatasetPage from "./pages/OpenNeuroDatasetPage/OpenNeuroDatasetPage";
 import NeurosiftSavedChatsLoginPage from "./pages/NeurosiftAnnotationsLoginPage/NeurosiftAnnotationsLoginPage";
 import SavedChatsPage from "./pages/SavedChatsPage/SavedChatsPage";
+import TestPage from "./pages/TestPage/TestPage";
 
 type Props = {
   // none
@@ -112,7 +113,7 @@ const MainWindow: FunctionComponent<Props> = () => {
         ) : route.page === "chat" ? (
           <ChatPage width={width} height={H} />
         ) : route.page === "test" ? (
-          <div>Test</div>
+          <TestPage width={width} height={H} />
         ) : route.page === "saved-chats" ? (
           <SavedChatsPage width={width} height={H} />
         ) : route.page === "nwb" ? (

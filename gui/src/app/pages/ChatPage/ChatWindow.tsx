@@ -29,6 +29,11 @@ import { probeNwbFileTool } from "./tools/probeNwbFile";
 import { unitsColnamesTool } from "./tools/probeUnitsColnames";
 import { relevantDandisetsTool } from "./tools/relevantDandisets";
 import { timeseriesAlignmentViewTool } from "./tools/timeseriesAlignmentView";
+import Splitter from "app/Splitter/Splitter";
+import RunCodeWindow, {
+  PythonSessionStatus,
+  RunCodeCommunicator,
+} from "./RunCodeWindow";
 
 export type Chat = {
   messages: (ORMessage | { role: "client-side-only"; content: string })[];
@@ -123,6 +128,74 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   additionalKnowledge,
   onToggleLeftPanel,
   chatContext,
+}) => {
+  const [showRunCodeWindow, setShowRunCodeWindow] = useState(false);
+  const [pythonSessionStatus, setPythonSessionStatus] =
+    useState<PythonSessionStatus>("uninitiated");
+  const runCodeCommunicator = useMemo(() => new RunCodeCommunicator(), []);
+  useEffect(() => {
+    setPythonSessionStatus(runCodeCommunicator.pythonSessionStatus);
+    const onChange = (status: PythonSessionStatus) => {
+      setPythonSessionStatus(status);
+    };
+    runCodeCommunicator.onPythonSessionStatusChanged(onChange);
+    return () => {
+      runCodeCommunicator.removeOnPythonSessionStatusChanged(onChange);
+    };
+  }, [runCodeCommunicator]);
+  const handleRunCode = useCallback(
+    async (code: string) => {
+      setShowRunCodeWindow(true);
+      runCodeCommunicator.runCode(code);
+    },
+    [runCodeCommunicator],
+  );
+  return (
+    <Splitter
+      width={width}
+      height={height}
+      initialPosition={width / 2}
+      hideSecondChild={!showRunCodeWindow}
+    >
+      <MainChatWindow
+        width={0}
+        height={0}
+        chat={chat}
+        setChat={setChat}
+        openRouterKey={openRouterKey}
+        onLogMessage={onLogMessage}
+        additionalKnowledge={additionalKnowledge}
+        onToggleLeftPanel={onToggleLeftPanel}
+        chatContext={chatContext}
+        onRunCode={handleRunCode}
+        pythonSessionStatus={pythonSessionStatus}
+      />
+      <RunCodeWindow
+        width={0}
+        height={0}
+        runCodeCommunicator={runCodeCommunicator}
+      />
+    </Splitter>
+  );
+};
+
+const MainChatWindow: FunctionComponent<
+  ChatWindowProps & {
+    onRunCode: (code: string) => void;
+    pythonSessionStatus: PythonSessionStatus;
+  }
+> = ({
+  width,
+  height,
+  chat,
+  setChat,
+  openRouterKey,
+  onLogMessage,
+  additionalKnowledge,
+  onToggleLeftPanel,
+  chatContext,
+  onRunCode,
+  pythonSessionStatus,
 }) => {
   const { route, setRoute } = useRoute();
   const inputBarHeight = 30;
@@ -545,6 +618,11 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
                   <Markdown
                     source={c.content as string}
                     onSpecialLinkClick={handleSpecialLinkClick}
+                    onRunCode={onRunCode}
+                    runCodeReady={
+                      pythonSessionStatus === "idle" ||
+                      pythonSessionStatus === "uninitiated"
+                    }
                   />
                 </>
               ) : c.role === "user" ? (

@@ -142,7 +142,9 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
   if (dandisetResponse === null)
     return (
       <div>
-        Error loading dandiset {dandisetId} {useStaging ? "staging" : ""}. If this is an embargoed dandiset, make sure to set your DANDI_API_KEY under the key icon in the top right corner.
+        Error loading dandiset {dandisetId} {useStaging ? "staging" : ""}. If
+        this is an embargoed dandiset, make sure to set your DANDI_API_KEY under
+        the key icon in the top right corner.
       </div>
     );
   if (!dandisetResponse)
@@ -332,8 +334,9 @@ export const useQueryDandiset = (
           return;
         } else if (response.status === 403) {
           console.error(
-              `Error fetching dandiset due to permissions. If this dandiset is embargoed, ` +
-              "make sure to set your DANDI_API_KEY under the key icon in the top right corner", response
+            `Error fetching dandiset due to permissions. If this dandiset is embargoed, ` +
+              "make sure to set your DANDI_API_KEY under the key icon in the top right corner",
+            response,
           );
         } else {
           console.error("Error fetching dandiset", response);
