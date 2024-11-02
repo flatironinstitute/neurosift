@@ -1,6 +1,7 @@
+import { SmallIconButton } from "@fi-sci/misc";
+import { Cancel, ClearAll } from "@mui/icons-material";
 import {
   FunctionComponent,
-  useCallback,
   useEffect,
   useReducer,
   useRef,
@@ -9,8 +10,6 @@ import {
 import PythonSessionClient, {
   PythonSessionOutputItem,
 } from "./PythonSessionClient";
-import { SmallIconButton } from "@fi-sci/misc";
-import { Cancel } from "@mui/icons-material";
 
 type RunCodeWindowProps = {
   width: number;
@@ -25,20 +24,22 @@ export type PythonSessionStatus =
   | "uninitiated";
 
 export class RunCodeCommunicator {
-  #onRunCodeCallbacks: ((code: string) => void)[] = [];
-  #pythonSessionStatus: PythonSessionStatus = "unavailable";
+  #pythonSessionClient: PythonSessionClient | null = null;
   #onPythonSessionStatusChangedCallbacks: ((
     status: PythonSessionStatus,
   ) => void)[] = [];
   constructor() {}
-  setPythonSessionStatus(status: PythonSessionStatus) {
-    this.#pythonSessionStatus = status;
-    for (const callback of this.#onPythonSessionStatusChangedCallbacks) {
-      callback(status);
-    }
-  }
   get pythonSessionStatus() {
-    return this.#pythonSessionStatus;
+    return this.#pythonSessionClient?.pythonSessionStatus ?? "uninitiated";
+  }
+  setPythonSessionClient(client: PythonSessionClient) {
+    this.#pythonSessionClient = client;
+    client.onPythonSessionStatusChanged((status) => {
+      this.#onPythonSessionStatusChangedCallbacks.forEach((cb) => cb(status));
+    });
+  }
+  removePythonSessionClient() {
+    this.#pythonSessionClient = null;
   }
   onPythonSessionStatusChanged(
     callback: (status: PythonSessionStatus) => void,
@@ -51,17 +52,47 @@ export class RunCodeCommunicator {
     this.#onPythonSessionStatusChangedCallbacks =
       this.#onPythonSessionStatusChangedCallbacks.filter((c) => c !== callback);
   }
-  onRunCode(callback: (code: string) => void) {
-    this.#onRunCodeCallbacks.push(callback);
-  }
-  removeOnRunCode(callback: (code: string) => void) {
-    this.#onRunCodeCallbacks = this.#onRunCodeCallbacks.filter(
-      (c) => c !== callback,
-    );
-  }
-  async runCode(code: string) {
-    for (const callback of this.#onRunCodeCallbacks) {
-      callback(code);
+  async runCode(
+    code: string,
+    {
+      onStdout,
+      onStderr,
+      onImage,
+    }: {
+      onStdout: (message: string) => void;
+      onStderr: (message: string) => void;
+      onImage: (format: "png", content: string) => void;
+    },
+  ) {
+    if (!this.#pythonSessionClient) {
+      throw new Error("Python session client not ready");
+    }
+    if (
+      this.#pythonSessionClient.pythonSessionStatus !== "idle" &&
+      this.#pythonSessionClient.pythonSessionStatus !== "uninitiated"
+    ) {
+      throw new Error("Python session is not idle");
+    }
+    const onOutputItem = (item: PythonSessionOutputItem) => {
+      if (item.type === "stdout") {
+        onStdout(item.content);
+      } else if (item.type === "stderr") {
+        onStderr(item.content);
+      } else if (item.type === "image") {
+        onImage(item.format, item.content);
+      }
+    };
+    this.#pythonSessionClient.onOutputItem(onOutputItem);
+    try {
+      await this.#pythonSessionClient.requestRunCode(code);
+      // wait until idle
+      while (
+        (this.#pythonSessionClient.pythonSessionStatus as any) !== "idle"
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    } finally {
+      this.#pythonSessionClient.removeOnOutputItem(onOutputItem);
     }
   }
 }
@@ -70,10 +101,14 @@ type OutputContent = {
   items: PythonSessionOutputItem[];
 };
 
-type OutputContentAction = {
-  type: "add-output-item";
-  item: PythonSessionOutputItem;
-};
+type OutputContentAction =
+  | {
+      type: "add-output-item";
+      item: PythonSessionOutputItem;
+    }
+  | {
+      type: "clear-output";
+    };
 
 const outputContentReducer = (
   state: OutputContent,
@@ -84,6 +119,10 @@ const outputContentReducer = (
       return {
         ...state,
         items: [...state.items, action.item],
+      };
+    case "clear-output":
+      return {
+        items: [],
       };
     default:
       return state;
@@ -107,34 +146,12 @@ const RunCodeWindow: FunctionComponent<RunCodeWindowProps> = ({
     x.onOutputItem((item: PythonSessionOutputItem) => {
       dispatchOutputContent({ type: "add-output-item", item });
     });
-    x.onPythonSessionStatusChanged((status: PythonSessionStatus) => {
-      runCodeCommunicator.setPythonSessionStatus(status);
-    });
     setPythonSessionClient(x);
-    runCodeCommunicator.setPythonSessionStatus(x.pythonSessionStatus);
+    runCodeCommunicator.setPythonSessionClient(x);
     return () => {
       x.shutdown();
     };
   }, [runCodeCommunicator]);
-  const handleRunCode = useCallback(
-    async (code: string) => {
-      if (!pythonSessionClient) {
-        console.warn("Python session client not ready");
-        return;
-      }
-      await pythonSessionClient.requestRunCode(code);
-    },
-    [pythonSessionClient],
-  );
-  useEffect(() => {
-    const callback = (code: string) => {
-      handleRunCode(code);
-    };
-    runCodeCommunicator.onRunCode(callback);
-    return () => {
-      runCodeCommunicator.removeOnRunCode(callback);
-    };
-  }, [runCodeCommunicator, handleRunCode]);
   const [pythonSessionStatus, setPythonSessionStatus] =
     useState<PythonSessionStatus>("uninitiated");
   useEffect(() => {
@@ -186,6 +203,14 @@ const RunCodeWindow: FunctionComponent<RunCodeWindowProps> = ({
               }}
             />
           )}
+          &nbsp;
+          <SmallIconButton
+            icon={<ClearAll />}
+            title="Clear output"
+            onClick={() => {
+              dispatchOutputContent({ type: "clear-output" });
+            }}
+          />
         </div>
       </div>
       <div

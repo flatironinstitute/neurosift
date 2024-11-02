@@ -20,6 +20,7 @@ type Props = {
   onSpecialLinkClick?: (link: string) => void;
   onRunCode?: (code: string) => void;
   runCodeReady?: boolean;
+  images?: { name: string; url: string }[];
 };
 
 const Markdown: FunctionComponent<Props> = ({
@@ -27,6 +28,7 @@ const Markdown: FunctionComponent<Props> = ({
   onSpecialLinkClick,
   onRunCode,
   runCodeReady,
+  images,
 }) => {
   const components: Partial<
     Omit<NormalComponents, keyof SpecialComponents> & SpecialComponents
@@ -116,9 +118,17 @@ const Markdown: FunctionComponent<Props> = ({
           );
         }
       },
+      img: ({ node, src, ...props }) => {
+        for (const image of images || []) {
+          if (src === `image://${image.name}`) {
+            return <img src={image.url} {...props} />;
+          }
+        }
+        return <img src={src} {...props} />;
+      },
       // }
     }),
-    [onSpecialLinkClick, onRunCode, runCodeReady],
+    [onSpecialLinkClick, onRunCode, runCodeReady, images],
   );
   const source2 = useMemo(() => {
     const lines = source.split("\n").map((line) => {

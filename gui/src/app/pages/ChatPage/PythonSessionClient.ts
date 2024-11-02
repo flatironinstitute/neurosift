@@ -47,9 +47,7 @@ class PythonSessionClient {
             type: msg.content.name,
             content: msg.content.text,
           };
-          this.#onOutputItemCallbacks.forEach((callback) => {
-            callback(item);
-          });
+          this._addOutputItem(item);
         }
       } else if ("data" in msg.content) {
         if ("image/png" in msg.content.data) {
@@ -58,9 +56,7 @@ class PythonSessionClient {
             format: "png",
             content: msg.content.data["image/png"] as string,
           };
-          this.#onOutputItemCallbacks.forEach((callback) => {
-            callback(item);
-          });
+          this._addOutputItem(item);
         }
       }
     });
@@ -74,7 +70,9 @@ class PythonSessionClient {
     } else if (this.#pythonSessionStatus === "idle") {
       this.#kernel = kernel;
     } else {
-      throw Error("Unexpected python session status");
+      throw Error(
+        "Unexpected python session status:" + this.#pythonSessionStatus,
+      );
     }
   }
   async cancelExecution() {
@@ -92,21 +90,19 @@ class PythonSessionClient {
         await this.initiate();
       } catch (err: any) {
         console.error("Error initiating", err);
-        const item: PythonSessionOutputItem = {
-          type: "stderr",
-          content: `Error initiating python session. You must have a jupyter server running on http://localhost:8888 and allow access to neurosift.`,
-        };
-        this.#onOutputItemCallbacks.forEach((callback) => {
-          callback(item);
-        });
-        const item2: PythonSessionOutputItem = {
-          type: "stderr",
-          content:
-            "For example: jupyter lab --NotebookApp.allow_origin='https://neurosift.app'",
-        };
-        this.#onOutputItemCallbacks.forEach((callback) => {
-          callback(item2);
-        });
+        const errMessages = [
+          "Error initiating python session. You must have a jupyter server running on http://localhost:8888 and allow access to neurosift.",
+          "Run: jupyter lab --NotebookApp.allow_origin='https://neurosift.app' --no-browser",
+        ];
+        for (const errMessage of errMessages) {
+          const item: PythonSessionOutputItem = {
+            type: "stderr",
+            content: errMessage,
+          };
+          this.#onOutputItemCallbacks.forEach((callback) => {
+            callback(item);
+          });
+        }
         return;
       }
     }
@@ -141,6 +137,11 @@ class PythonSessionClient {
     this.#pythonSessionStatus = status;
     this.#onPythonSessionStatusChangedCallbacks.forEach((callback) => {
       callback(status);
+    });
+  }
+  _addOutputItem(item: PythonSessionOutputItem) {
+    this.#onOutputItemCallbacks.forEach((callback) => {
+      callback(item);
     });
   }
 }

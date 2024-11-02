@@ -16,7 +16,12 @@ import {
   useRef,
   useState,
 } from "react";
-import { FaEnvelope, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa";
+import {
+  FaBrain,
+  FaEnvelope,
+  FaRegThumbsDown,
+  FaRegThumbsUp,
+} from "react-icons/fa";
 import { fetchNeurodataTypesIndex } from "../DandiQueryPage/SearchByNeurodataTypeWindow";
 import chatCompletion from "./chatCompletion";
 import FeedbackWindow from "./FeedbackWindow";
@@ -34,6 +39,7 @@ import RunCodeWindow, {
   PythonSessionStatus,
   RunCodeCommunicator,
 } from "./RunCodeWindow";
+import { ExecuteScript, generateFigureTool } from "./tools/generateFigure";
 
 export type Chat = {
   messages: (ORMessage | { role: "client-side-only"; content: string })[];
@@ -64,7 +70,6 @@ type ChatWindowProps = {
   setChat: (chat: Chat) => void;
   openRouterKey: string | null;
   onLogMessage: (title: string, message: string) => void;
-  additionalKnowledge: string;
   onToggleLeftPanel?: () => void;
   chatContext: ChatContext;
 };
@@ -112,6 +117,8 @@ export type ToolItem = {
     o: {
       modelName: string;
       openRouterKey: string | null;
+      executeScript?: ExecuteScript;
+      onAddImage?: (name: string, url: string) => void;
     },
   ) => Promise<any>;
   detailedDescription?: string;
@@ -125,7 +132,6 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   setChat,
   openRouterKey,
   onLogMessage,
-  additionalKnowledge,
   onToggleLeftPanel,
   chatContext,
 }) => {
@@ -133,6 +139,13 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   const [pythonSessionStatus, setPythonSessionStatus] =
     useState<PythonSessionStatus>("uninitiated");
   const runCodeCommunicator = useMemo(() => new RunCodeCommunicator(), []);
+  useEffect(() => {
+    runCodeCommunicator.onPythonSessionStatusChanged((status) => {
+      if (status === "busy") {
+        setShowRunCodeWindow(true);
+      }
+    });
+  }, [runCodeCommunicator]);
   useEffect(() => {
     setPythonSessionStatus(runCodeCommunicator.pythonSessionStatus);
     const onChange = (status: PythonSessionStatus) => {
@@ -146,7 +159,35 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   const handleRunCode = useCallback(
     async (code: string) => {
       setShowRunCodeWindow(true);
-      runCodeCommunicator.runCode(code);
+      runCodeCommunicator.runCode(code, {
+        onStdout: (message) => {
+          //
+        },
+        onStderr: (message) => {
+          //
+        },
+        onImage: (format, content) => {
+          //
+        },
+      });
+    },
+    [runCodeCommunicator],
+  );
+  const executeScript: ExecuteScript = useCallback(
+    async (
+      script: string,
+      o: {
+        onStdout: (message: string) => void;
+        onStderr: (message: string) => void;
+        onImage: (format: "png", content: string) => void;
+      },
+    ) => {
+      const { onStdout, onStderr, onImage } = o;
+      await runCodeCommunicator.runCode(script, {
+        onStdout,
+        onStderr,
+        onImage,
+      });
     },
     [runCodeCommunicator],
   );
@@ -164,11 +205,11 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
         setChat={setChat}
         openRouterKey={openRouterKey}
         onLogMessage={onLogMessage}
-        additionalKnowledge={additionalKnowledge}
         onToggleLeftPanel={onToggleLeftPanel}
         chatContext={chatContext}
         onRunCode={handleRunCode}
         pythonSessionStatus={pythonSessionStatus}
+        executeScript={executeScript}
       />
       <RunCodeWindow
         width={0}
@@ -179,10 +220,33 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   );
 };
 
+type ImagesState = {
+  name: string;
+  url: string;
+}[];
+
+type ImagesAction = {
+  type: "add";
+  name: string;
+  url: string;
+};
+
+const imagesReducer = (
+  state: ImagesState,
+  action: ImagesAction,
+): ImagesState => {
+  if (action.type === "add") {
+    return [...state, { name: action.name, url: action.url }];
+  } else {
+    return state;
+  }
+};
+
 const MainChatWindow: FunctionComponent<
   ChatWindowProps & {
     onRunCode: (code: string) => void;
     pythonSessionStatus: PythonSessionStatus;
+    executeScript: ExecuteScript;
   }
 > = ({
   width,
@@ -191,11 +255,11 @@ const MainChatWindow: FunctionComponent<
   setChat,
   openRouterKey,
   onLogMessage,
-  additionalKnowledge,
   onToggleLeftPanel,
   chatContext,
   onRunCode,
   pythonSessionStatus,
+  executeScript,
 }) => {
   const { route, setRoute } = useRoute();
   const inputBarHeight = 30;
@@ -203,6 +267,8 @@ const MainChatWindow: FunctionComponent<
   const topBarHeight = 24;
 
   const [modelName, setModelName] = useState("openai/gpt-4o");
+
+  const [images, imagesDispatch] = useReducer(imagesReducer, []);
 
   const handleUserMessage = useCallback(
     (message: string) => {
@@ -264,9 +330,13 @@ const MainChatWindow: FunctionComponent<
       ret.push(probeDandisetTool);
       ret.push(timeseriesAlignmentViewTool);
       ret.push(probeNwbFileTool);
+      ret.push(generateFigureTool);
     }
     return ret;
   }, [chatContext]);
+
+  const [additionalKnowledge, setAdditionalKnowledge] = useState("");
+  usePersistAdditionalKnowledge(additionalKnowledge, setAdditionalKnowledge);
 
   const systemMessage = useSystemMessage(
     tools,
@@ -389,6 +459,14 @@ const MainChatWindow: FunctionComponent<
               response = await func(args, onLogMessage, {
                 modelName,
                 openRouterKey,
+                executeScript,
+                onAddImage: (name, url) => {
+                  imagesDispatch({
+                    type: "add",
+                    name,
+                    url,
+                  });
+                },
               });
             } catch (e: any) {
               response = "Error: " + e.message;
@@ -438,6 +516,7 @@ const MainChatWindow: FunctionComponent<
     onLogMessage,
     systemMessage,
     backUpAndEraseLastUserMessage,
+    executeScript,
   ]);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -553,6 +632,23 @@ const MainChatWindow: FunctionComponent<
     "helpful" | "unhelpful" | "neutral"
   >("helpful");
 
+  const {
+    visible: additionalKnowledgeVisible,
+    handleOpen: openAdditionalKnowledge,
+    handleClose: closeAdditionalKnowledge,
+  } = useModalWindow();
+
+  const truncateAtMessage = useCallback(
+    (m: ORMessage) => {
+      const index = messages.indexOf(m);
+      if (index < 0) return;
+      setChat({
+        messages: messages.slice(0, index),
+      });
+    },
+    [messages, setChat],
+  );
+
   return (
     <div
       style={{
@@ -623,6 +719,7 @@ const MainChatWindow: FunctionComponent<
                       pythonSessionStatus === "idle" ||
                       pythonSessionStatus === "uninitiated"
                     }
+                    images={images}
                   />
                 </>
               ) : c.role === "user" ? (
@@ -638,9 +735,7 @@ const MainChatWindow: FunctionComponent<
                           "Delete this prompt and all subsequent messages?",
                         );
                         if (!ok) return;
-                        setChat({
-                          messages: messages.slice(0, index),
-                        });
+                        truncateAtMessage(c);
                       }}
                       icon={<span>...</span>}
                       title="Delete this prompt"
@@ -710,6 +805,7 @@ const MainChatWindow: FunctionComponent<
           setModelName={setModelName}
           onToggleLeftPanel={onToggleLeftPanel}
           onSaveChat={openSaveChat}
+          onOpenAdditionalKnowledge={openAdditionalKnowledge}
         />
       </div>
       <ModalWindow visible={saveChatVisible} onClose={closeSaveChat}>
@@ -730,6 +826,15 @@ const MainChatWindow: FunctionComponent<
           response={feedbackResponse}
           openRouterKey={openRouterKey}
           chatContext={chatContext}
+        />
+      </ModalWindow>
+      <ModalWindow
+        visible={additionalKnowledgeVisible}
+        onClose={closeAdditionalKnowledge}
+      >
+        <EditAdditionalKnowledge
+          additionalKnowledge={additionalKnowledge}
+          setAdditionalKnowledge={setAdditionalKnowledge}
         />
       </ModalWindow>
     </div>
@@ -807,6 +912,7 @@ type SettingsBarProps = {
   setModelName: (name: string) => void;
   onToggleLeftPanel?: () => void;
   onSaveChat?: () => void;
+  onOpenAdditionalKnowledge?: () => void;
 };
 
 const modelOptions = [
@@ -824,6 +930,7 @@ const SettingsBar: FunctionComponent<SettingsBarProps> = ({
   setModelName,
   onToggleLeftPanel,
   onSaveChat,
+  onOpenAdditionalKnowledge,
 }) => {
   return (
     <span style={{ fontSize: 12, padding: 5 }}>
@@ -855,6 +962,14 @@ const SettingsBar: FunctionComponent<SettingsBarProps> = ({
           icon={<Save />}
           onClick={onSaveChat}
           title="Save chat"
+        />
+      )}
+      &nbsp;
+      {onOpenAdditionalKnowledge && (
+        <SmallIconButton
+          icon={<FaBrain />}
+          onClick={onOpenAdditionalKnowledge}
+          title="Edit additional knowledge"
         />
       )}
       <span>&nbsp;&nbsp;AI can be inaccurate.</span>
@@ -916,6 +1031,23 @@ const labelForToolCall = (tc: {
     return tc.function.name;
   }
 };
+
+const pynwbTips = `
+NOTE: Here are some tips for working with pynwb:
+
+Here's how you can load a stimulus template image using pynwb:
+Suppose you have a stimulus template at
+/stimulus/templates/StimulusTemplates/image_22
+img = nwbfile.stimulus_template['StimulusTemplates']['image_22'][:]
+The dimensions of img will be (width, height, 3) where 3 is the number of color channels (RGB) in the image.
+
+Here's how you can load a stimulus presentation using pynwb:
+Suppose you have a stimulus presentation at
+/stimulus/presentation/StimulusPresentation
+presentation = nwbfile.get_stimulus['StimulusPresentation']
+timestamps = presentation.get_timestamps()[:]
+data = presentation.data[:]
+`;
 
 const getSystemMessage = async (
   tools: ToolItem[],
@@ -1056,12 +1188,19 @@ Tip: when using Timeseries objects with pynwb it's better to use the x.get_times
 Tip: It's important to use keyword arguments when creating the pynwb.NWBHDF5IO object.
 ========================
 
-CAPABILITY: If the user wants plot or analyze data in an NWB file, you may provide a Python script for them.
-To construct it, you should use the above method of loading the data together with your knowledge of pynwb and other Python libraries.
-When convenient, please use complete self-contained Python scripts that can be run as-is.
-If the user requests to plot something, you should assume they mean to provide a script that does the plotting.
+CAPABILITY: If the user wants plot or analyze data in an NWB file, you should use the generate_figure tool.
+You pass in a self-contained script that uses matplotlib, and the output is markdown text that you can include in your response.
+To construct the Python script, you should use the above method of loading the data together with your knowledge of pynwb and other Python libraries.
 When constructing an example plot, be mindful of the size of the data you are loading. If it is too large, consider loading a subset of the data.
 
+IMPORTANT: be sure to include the text output by the script in your generated response.
+For example, if the response was ![plot](image://figure_1.png), you should include the text ![plot](image://figure_1.png) in your response.
+
+The user may also ask for a script to generate a plot.
+When convenient, please use complete self-contained Python scripts that can be run as-is, because
+the user will have the ability to run the script from the interface.
+
+It's okay if the user wants you to make a test plot.
 `;
   }
 
@@ -1078,6 +1217,8 @@ CAPABILITY: When asked about prompt ideas or how you can be helpful, you should 
 NOTE: Do not provide markdown links to NWB download URLs because those are impractical for downloading.
 
 NOTE: When finding a random dandiset where the user has not provided any criteria, you should think of an actual neurophysiology topic, and then use the relevant_dandisets tool to find a random dandiset related to that topic. Don't just query for a generic term.
+
+${pynwbTips}
 
 ${additionalKnowledge}
 
@@ -1117,13 +1258,13 @@ const useSystemMessage = (
   return systemMessage;
 };
 
-const getAllNeurodataTypes = async () => {
-  const a: any = await fetchNeurodataTypesIndex();
-  if (!a) {
-    throw new Error("Failed to fetch neurodata types index");
-  }
-  return a.neurodata_types.map((x: any) => x.neurodata_type);
-};
+// const getAllNeurodataTypes = async () => {
+//   const a: any = await fetchNeurodataTypesIndex();
+//   if (!a) {
+//     throw new Error("Failed to fetch neurodata types index");
+//   }
+//   return a.neurodata_types.map((x: any) => x.neurodata_type);
+// };
 
 // const topicInfo: { [key: string]: string } = {
 //   "units-tables": "Units tables are the boss",
@@ -1198,6 +1339,54 @@ const HelpfulUnhelpfulButtons: FunctionComponent<
           title="Provide feedback"
         />
       </span>
+    </div>
+  );
+};
+
+const usePersistAdditionalKnowledge = (
+  additionalKnowledge: string,
+  setAdditionalKnowledge: (additionalKnowledge: string) => void,
+) => {
+  const localStorageKey = "additionalKnowledge";
+  const didInitialLoad = useRef(false);
+  useEffect(() => {
+    if (!didInitialLoad.current) {
+      didInitialLoad.current = true;
+      const ak = localStorage.getItem(localStorageKey);
+      if (ak) {
+        setAdditionalKnowledge(ak);
+      }
+    }
+  }, [setAdditionalKnowledge]);
+  useEffect(() => {
+    if (!didInitialLoad.current) {
+      return;
+    }
+    localStorage.setItem(localStorageKey, additionalKnowledge);
+  }, [additionalKnowledge]);
+};
+
+type EditAdditionalKnowledgeProps = {
+  additionalKnowledge: string;
+  setAdditionalKnowledge: (additionalKnowledge: string) => void;
+};
+
+const EditAdditionalKnowledge: FunctionComponent<
+  EditAdditionalKnowledgeProps
+> = ({ additionalKnowledge, setAdditionalKnowledge }) => {
+  // edit the additional knowledge in a text area of height 400
+  return (
+    <div style={{ padding: 20 }}>
+      <p>
+        You can add additional knowledge for the assistant here. This is a
+        convenient way to develop the assistant. Reach out to the Neurosift team
+        to propose adding this knowledge to the assistant.
+      </p>
+      <textarea
+        style={{ width: "100%", height: 400 }}
+        value={additionalKnowledge}
+        onChange={(e) => setAdditionalKnowledge(e.target.value)}
+      />
     </div>
   );
 };

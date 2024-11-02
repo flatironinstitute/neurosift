@@ -124,7 +124,6 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
         setChat={setChat}
         openRouterKey={null}
         onLogMessage={() => {}}
-        additionalKnowledge=""
         onToggleLeftPanel={undefined}
         chatContext={chatContext}
       />
