@@ -63,6 +63,7 @@ export const addSavedChat = async (a: {
   feedbackNotes?: string;
   feedbackOnly?: boolean;
   neurosiftSavedChatsAccessToken?: string;
+  images: { name: string; dataUrl: string }[];
 }) => {
   const url = `${neurosiftSavedChatsApiUrl}/api/addSavedChat`;
   const req: AddSavedChatRequest = {
@@ -108,7 +109,40 @@ export const addSavedChat = async (a: {
     console.error("Unexpected response");
     return;
   }
+  for (const sub of data.imageSubstitutions) {
+    const { name, uploadUrl } = sub;
+    const x = a.images.find((x) => x.name === name);
+    if (!x) {
+      console.error("Unexpected: image not found", name);
+      continue;
+    }
+    const buf = arrayBufferFromDataUrl(x.dataUrl);
+    const r2 = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "image/png",
+      },
+      body: buf,
+    });
+    if (r2.status !== 200) {
+      console.error("Error uploading image", r2);
+      continue;
+    }
+  }
   return data.chatId;
+};
+
+const arrayBufferFromDataUrl = (dataUrl: string) => {
+  const parts = dataUrl.split(",");
+  if (parts.length !== 2) {
+    throw new Error("Invalid data URL");
+  }
+  const mime = parts[0].split(":")[1].split(";")[0];
+  if (mime !== "image/png") {
+    throw new Error("Unexpected MIME type: " + mime);
+  }
+  const data = parts[1];
+  return Uint8Array.from(atob(data), (c) => c.charCodeAt(0)).buffer;
 };
 
 export const deleteSavedChat = async (a: {
@@ -195,6 +229,7 @@ export const useSavedChats = (a: {
             messages: any[];
             dandisetId?: string;
             nwbFileUrl?: string;
+            images: { name: string; dataUrl: string }[];
           }) => {
             const chatId = await addSavedChat({
               chatTitle: a.chatTitle,
@@ -203,6 +238,7 @@ export const useSavedChats = (a: {
               dandisetId: a.dandisetId,
               nwbFileUrl: a.nwbFileUrl,
               neurosiftSavedChatsAccessToken,
+              images: a.images,
             });
             refreshSavedChats();
             return chatId;
@@ -227,29 +263,9 @@ export const useSavedChats = (a: {
         : undefined,
     [neurosiftSavedChatsAccessToken, refreshSavedChats],
   );
-  const handleAddFeedbackOnlyChat = useMemo(
-    () =>
-      (
-        feedbackResponse: "helpful" | "unhelpful" | "neutral",
-        feedbackNotes: string,
-      ) => {
-        return addSavedChat({
-          chatTitle: "Feedback only",
-          messages: [],
-          userId: neurosiftSavedChatsUserId || undefined,
-          feedbackResponse,
-          feedbackNotes,
-          feedbackOnly: true,
-          neurosiftSavedChatsAccessToken:
-            neurosiftSavedChatsAccessToken || undefined,
-        });
-      },
-    [neurosiftSavedChatsAccessToken, neurosiftSavedChatsUserId],
-  );
   return {
     savedChats,
     addSavedChat: handleAddSavedChat,
-    addFeedbackOnlyChat: handleAddFeedbackOnlyChat,
     deleteSavedChat: handleDeleteSavedChat,
     refreshSavedChats,
   };

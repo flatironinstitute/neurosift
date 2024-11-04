@@ -13,6 +13,7 @@ type SaveChatDialogProps = {
   onClose: () => void;
   openRouterKey: string | null;
   chatContext: ChatContext;
+  images: { name: string; dataUrl: string }[];
 };
 
 const SaveChatDialog: FunctionComponent<SaveChatDialogProps> = ({
@@ -20,6 +21,7 @@ const SaveChatDialog: FunctionComponent<SaveChatDialogProps> = ({
   onClose,
   openRouterKey,
   chatContext,
+  images,
 }) => {
   const { addSavedChat } = useSavedChats({ load: false });
   const { neurosiftSavedChatsAccessToken, neurosiftSavedChatsUserId } =
@@ -87,6 +89,7 @@ const SaveChatDialog: FunctionComponent<SaveChatDialogProps> = ({
               messages: chat.messages,
               dandisetId,
               nwbFileUrl,
+              images,
             });
             if (!chatId) {
               alert("Failed to save chat");

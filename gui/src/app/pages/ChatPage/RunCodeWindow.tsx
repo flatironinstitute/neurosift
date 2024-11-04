@@ -59,9 +59,9 @@ export class RunCodeCommunicator {
       onStderr,
       onImage,
     }: {
-      onStdout: (message: string) => void;
-      onStderr: (message: string) => void;
-      onImage: (format: "png", content: string) => void;
+      onStdout?: (message: string) => void;
+      onStderr?: (message: string) => void;
+      onImage?: (format: "png", content: string) => void;
     },
   ) {
     if (!this.#pythonSessionClient) {
@@ -75,11 +75,11 @@ export class RunCodeCommunicator {
     }
     const onOutputItem = (item: PythonSessionOutputItem) => {
       if (item.type === "stdout") {
-        onStdout(item.content);
+        onStdout && onStdout(item.content);
       } else if (item.type === "stderr") {
-        onStderr(item.content);
+        onStderr && onStderr(item.content);
       } else if (item.type === "image") {
-        onImage(item.format, item.content);
+        onImage && onImage(item.format, item.content);
       }
     };
     this.#pythonSessionClient.onOutputItem(onOutputItem);

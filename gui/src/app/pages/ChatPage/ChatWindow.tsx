@@ -1,6 +1,6 @@
 import { SmallIconButton } from "@fi-sci/misc";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
-import { Cancel, ForkLeft, Save, Send } from "@mui/icons-material";
+import { Cancel, Check, ForkLeft, Save, Send } from "@mui/icons-material";
 import Markdown from "app/Markdown/Markdown";
 import {
   ORMessage,
@@ -22,7 +22,6 @@ import {
   FaRegThumbsDown,
   FaRegThumbsUp,
 } from "react-icons/fa";
-import { fetchNeurodataTypesIndex } from "../DandiQueryPage/SearchByNeurodataTypeWindow";
 import chatCompletion from "./chatCompletion";
 import FeedbackWindow from "./FeedbackWindow";
 import SaveChatDialog from "./SaveChatDialog";
@@ -40,9 +39,13 @@ import RunCodeWindow, {
   RunCodeCommunicator,
 } from "./RunCodeWindow";
 import { ExecuteScript, generateFigureTool } from "./tools/generateFigure";
+import PythonSessionClient from "./PythonSessionClient";
 
 export type Chat = {
-  messages: (ORMessage | { role: "client-side-only"; content: string })[];
+  messages: (
+    | ORMessage
+    | { role: "client-side-only"; content: string; color?: string }
+  )[];
 };
 
 export const emptyChat: Chat = {
@@ -76,20 +79,24 @@ type ChatWindowProps = {
 
 type PendingMessages = (
   | ORMessage
-  | { role: "client-side-only"; content: string }
+  | { role: "client-side-only"; content: string; color?: string }
 )[];
 
 type PendingMessagesAction =
   | {
       type: "add";
-      message: ORMessage | { role: "client-side-only"; content: string };
+      message:
+        | ORMessage
+        | { role: "client-side-only"; content: string; color?: string };
     }
   | {
       type: "clear";
     }
   | {
       type: "replace-last";
-      message: ORMessage | { role: "client-side-only"; content: string };
+      message:
+        | ORMessage
+        | { role: "client-side-only"; content: string; color?: string };
     };
 
 const pendingMesagesReducer = (
@@ -119,6 +126,9 @@ export type ToolItem = {
       openRouterKey: string | null;
       executeScript?: ExecuteScript;
       onAddImage?: (name: string, url: string) => void;
+      onStdout?: (message: string) => void;
+      onStderr?: (message: string) => void;
+      confirmOkayToRun?: (script: string) => Promise<boolean>;
     },
   ) => Promise<any>;
   detailedDescription?: string;
@@ -177,9 +187,9 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
     async (
       script: string,
       o: {
-        onStdout: (message: string) => void;
-        onStderr: (message: string) => void;
-        onImage: (format: "png", content: string) => void;
+        onStdout?: (message: string) => void;
+        onStderr?: (message: string) => void;
+        onImage?: (format: "png", content: string) => void;
       },
     ) => {
       const { onStdout, onStderr, onImage } = o;
@@ -222,13 +232,13 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
 
 type ImagesState = {
   name: string;
-  url: string;
+  dataUrl: string;
 }[];
 
 type ImagesAction = {
   type: "add";
   name: string;
-  url: string;
+  dataUrl: string;
 };
 
 const imagesReducer = (
@@ -236,10 +246,15 @@ const imagesReducer = (
   action: ImagesAction,
 ): ImagesState => {
   if (action.type === "add") {
-    return [...state, { name: action.name, url: action.url }];
+    return [...state, { name: action.name, dataUrl: action.dataUrl }];
   } else {
     return state;
   }
+};
+
+type CompletionProgressMessage = {
+  type: "stdout" | "stderr";
+  message: string;
 };
 
 const MainChatWindow: FunctionComponent<
@@ -373,6 +388,58 @@ const MainChatWindow: FunctionComponent<
     }
   }, [messages, setChat]);
 
+  const [completionProgress, setCompletionProgress] = useState<
+    CompletionProgressMessage[]
+  >([]);
+  const resetCompletionProgress = useCallback(() => {
+    setCompletionProgress([]);
+  }, []);
+  const addCompletionProgressMessage = useCallback(
+    (type: "stdout" | "stderr", message: string) => {
+      setCompletionProgress((prev) => [
+        ...prev,
+        {
+          type,
+          message,
+        },
+      ]);
+    },
+    [],
+  );
+
+  const {
+    visible: confirmOkayToRunVisible,
+    handleOpen: openConfirmOkayToRun,
+    handleClose: closeConfirmOkayToRun,
+  } = useModalWindow();
+  const confirmOkayToRunStatus = useRef<
+    "none" | "waiting" | "confirmed" | "canceled"
+  >("none");
+  const [confirmOkayToRunScript, setConfirmOkayToRunScript] = useState<
+    string | null
+  >(null);
+  const confirmOkayToRun = useMemo(
+    () => async (script: string) => {
+      confirmOkayToRunStatus.current = "waiting";
+      setConfirmOkayToRunScript(script);
+      openConfirmOkayToRun();
+      return new Promise<boolean>((resolve) => {
+        const interval = setInterval(() => {
+          if (confirmOkayToRunStatus.current === "confirmed") {
+            confirmOkayToRunStatus.current = "none";
+            clearInterval(interval);
+            resolve(true);
+          } else if (confirmOkayToRunStatus.current === "canceled") {
+            confirmOkayToRunStatus.current = "none";
+            clearInterval(interval);
+            resolve(false);
+          }
+        }, 100);
+      });
+    },
+    [openConfirmOkayToRun],
+  );
+
   useEffect(() => {
     if (!systemMessage) return;
     // submit user message or tool results
@@ -423,7 +490,7 @@ const MainChatWindow: FunctionComponent<
           }
           const newMessages: (
             | ORMessage
-            | { role: "client-side-only"; content: string }
+            | { role: "client-side-only"; content: string; color?: string }
           )[] = [];
           const msg: ORMessage = {
             role: "assistant",
@@ -443,9 +510,14 @@ const MainChatWindow: FunctionComponent<
             if (!func) {
               throw Error(`Unexpected. Did not find tool: ${tc.function.name}`);
             }
-            const msg0: { role: "client-side-only"; content: string } = {
+            const msg0: {
+              role: "client-side-only";
+              content: string;
+              color?: string;
+            } = {
               role: "client-side-only",
               content: labelForToolCall(tc) + "...",
+              color: "#6a6",
             };
             newMessages.push(msg0);
             pendingMessagesDispatch({
@@ -454,25 +526,68 @@ const MainChatWindow: FunctionComponent<
             });
             const args = JSON.parse(tc.function.arguments);
             console.info("TOOL CALL: ", tc.function.name, args);
+            const executeScript2: ExecuteScript = async (
+              script: string,
+              o: {
+                onStdout?: (message: string) => void;
+                onStderr?: (message: string) => void;
+                onImage?: (format: "png", content: string) => void;
+              },
+            ) => {
+              const pythonSessionClient = new PythonSessionClient();
+              pythonSessionClient.onOutputItem((item) => {
+                if (item.type === "stdout") {
+                  o.onStdout && o.onStdout(item.content);
+                } else if (item.type === "stderr") {
+                  o.onStderr && o.onStderr(item.content);
+                } else if (item.type === "image") {
+                  o.onImage && o.onImage(item.format, item.content);
+                }
+              });
+              await pythonSessionClient.initiate();
+              await pythonSessionClient.requestRunCode(script);
+              // wait until idle
+              while (pythonSessionClient.pythonSessionStatus !== "idle") {
+                await new Promise((resolve) => setTimeout(resolve, 100));
+              }
+            };
             let response: string;
+            let errorMessage: string | undefined;
             try {
+              resetCompletionProgress();
+              addCompletionProgressMessage("stdout", "Running tool...");
               response = await func(args, onLogMessage, {
                 modelName,
                 openRouterKey,
-                executeScript,
+                executeScript: executeScript2,
+                onStdout: (message) => {
+                  addCompletionProgressMessage("stdout", message);
+                },
+                onStderr: (message) => {
+                  addCompletionProgressMessage("stderr", message);
+                },
                 onAddImage: (name, url) => {
                   imagesDispatch({
                     type: "add",
                     name,
-                    url,
+                    dataUrl: url,
                   });
                 },
+                confirmOkayToRun,
               });
             } catch (e: any) {
+              errorMessage = e.message;
               response = "Error: " + e.message;
+            } finally {
+              resetCompletionProgress();
             }
             if (canceled) return;
-            msg0.content = "✓ " + labelForToolCall(tc);
+            if (errorMessage === undefined) {
+              msg0.content = "✓ " + labelForToolCall(tc);
+            } else {
+              msg0.content = "✗ " + labelForToolCall(tc) + ": " + errorMessage;
+              msg0.color = "#a66";
+            }
             pendingMessagesDispatch({
               type: "replace-last",
               message: msg0,
@@ -517,6 +632,9 @@ const MainChatWindow: FunctionComponent<
     systemMessage,
     backUpAndEraseLastUserMessage,
     executeScript,
+    addCompletionProgressMessage,
+    resetCompletionProgress,
+    confirmOkayToRun,
   ]);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -745,7 +863,7 @@ const MainChatWindow: FunctionComponent<
                 </>
               ) : c.role === "client-side-only" ? (
                 <>
-                  <div style={{ color: "#6a6", paddingBottom: 10 }}>
+                  <div style={{ color: c.color || "#6a6", paddingBottom: 10 }}>
                     {c.content}
                   </div>
                 </>
@@ -765,6 +883,13 @@ const MainChatWindow: FunctionComponent<
               setFeedbackResponse(response);
               openFeedbackWindow();
             }}
+          />
+        )}
+        {completionProgress.length > 0 && (
+          <CompletionProgressWindow
+            width={chatAreaWidth - 10}
+            height={400}
+            completionProgress={completionProgress}
           />
         )}
         <div ref={bottomElementRef}>&nbsp;</div>
@@ -814,6 +939,7 @@ const MainChatWindow: FunctionComponent<
           onClose={closeSaveChat}
           openRouterKey={openRouterKey}
           chatContext={chatContext}
+          images={images}
         />
       </ModalWindow>
       <ModalWindow
@@ -826,6 +952,7 @@ const MainChatWindow: FunctionComponent<
           response={feedbackResponse}
           openRouterKey={openRouterKey}
           chatContext={chatContext}
+          images={images}
         />
       </ModalWindow>
       <ModalWindow
@@ -835,6 +962,25 @@ const MainChatWindow: FunctionComponent<
         <EditAdditionalKnowledge
           additionalKnowledge={additionalKnowledge}
           setAdditionalKnowledge={setAdditionalKnowledge}
+        />
+      </ModalWindow>
+      <ModalWindow
+        visible={confirmOkayToRunVisible}
+        onClose={() => {
+          confirmOkayToRunStatus.current = "canceled";
+          closeConfirmOkayToRun();
+        }}
+      >
+        <ConfirmOkayToRunWindow
+          script={confirmOkayToRunScript}
+          onConfirm={() => {
+            confirmOkayToRunStatus.current = "confirmed";
+            closeConfirmOkayToRun();
+          }}
+          onCancel={() => {
+            confirmOkayToRunStatus.current = "canceled";
+            closeConfirmOkayToRun();
+          }}
         />
       </ModalWindow>
     </div>
@@ -1387,6 +1533,77 @@ const EditAdditionalKnowledge: FunctionComponent<
         value={additionalKnowledge}
         onChange={(e) => setAdditionalKnowledge(e.target.value)}
       />
+    </div>
+  );
+};
+
+type CompletionProgressWindowProps = {
+  width: number;
+  height: number;
+  completionProgress: CompletionProgressMessage[];
+};
+
+const CompletionProgressWindow: FunctionComponent<
+  CompletionProgressWindowProps
+> = ({ width, height, completionProgress }) => {
+  return (
+    <div
+      style={{
+        position: "relative",
+        width,
+        height,
+        top: 0,
+        left: 0,
+        backgroundColor: "#fff",
+        opacity: 0.9,
+        overflow: "auto",
+        padding: 10,
+      }}
+    >
+      {completionProgress.map((m, i) => (
+        <div key={i}>
+          <span style={{ color: m.type === "stdout" ? "black" : "red" }}>
+            {m.message}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+type ConfirmOkayToRunWindowProps = {
+  script: string | null;
+  onConfirm: () => void;
+  onCancel: () => void;
+};
+
+const ConfirmOkayToRunWindow: FunctionComponent<
+  ConfirmOkayToRunWindowProps
+> = ({ script, onConfirm, onCancel }) => {
+  return (
+    <div style={{ padding: 20 }}>
+      <p>
+        The agent would like to run the following script on your Jupyter runtime
+        kernel. Are you okay with this?
+      </p>
+      <div>
+        <SmallIconButton
+          icon={<Check />}
+          onClick={onConfirm}
+          title="Confirm"
+          label="Confirm"
+        />
+        &nbsp;&nbsp;&nbsp;
+        <SmallIconButton
+          icon={<Cancel />}
+          onClick={onCancel}
+          title="Cancel"
+          label="Cancel"
+        />
+      </div>
+      <div>
+        <Markdown source={`\`\`\`python\n${script}\n\`\`\``} />
+      </div>
     </div>
   );
 };

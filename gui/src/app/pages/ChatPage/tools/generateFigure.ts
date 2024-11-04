@@ -5,9 +5,9 @@ const generateFigureDetailedDescription = undefined;
 export type ExecuteScript = (
   script: string,
   handlers: {
-    onStdout: (message: string) => void;
-    onStderr: (message: string) => void;
-    onImage: (format: "png", content: string) => void;
+    onStdout?: (message: string) => void;
+    onStderr?: (message: string) => void;
+    onImage?: (format: "png", content: string) => void;
   },
 ) => Promise<void>;
 
@@ -38,9 +38,13 @@ export const generateFigureTool: ToolItem = {
       openRouterKey: string | null;
       executeScript?: ExecuteScript;
       onAddImage?: (name: string, url: string) => void;
+      onStdout?: (message: string) => void;
+      onStderr?: (message: string) => void;
+      confirmOkayToRun?: (script: string) => Promise<boolean>;
     },
   ) => {
-    const { executeScript, onAddImage } = o;
+    const { executeScript, onAddImage, onStdout, onStderr, confirmOkayToRun } =
+      o;
     if (!executeScript) {
       throw new Error("executeScript is required");
     }
@@ -50,14 +54,16 @@ export const generateFigureTool: ToolItem = {
     const script: string = args.script;
     onLogMessage("generate_figure query", script);
     const images: { format: "png"; content: string }[] = [];
-    const onStdout = (message: string) => {};
-    const onStderr = (message: string) => {};
     const onImage = (format: "png", content: string) => {
       images.push({ format, content });
     };
     let output: string;
     try {
-      await executeScript(script, { onStdout, onStderr, onImage });
+      const okay = confirmOkayToRun ? await confirmOkayToRun(script) : false;
+      if (!okay) {
+        throw Error("User did not permit running the script");
+      }
+      await executeScript(script, { onStdout: onStdout, onStderr, onImage });
       if (images.length === 0) {
         output = "No image generated";
       } else {
@@ -70,8 +76,9 @@ export const generateFigureTool: ToolItem = {
           })
           .join("\n\n");
       }
-    } catch (err: any) {
-      output = `Error: ${err.message}`;
+    } catch (error: any) {
+      onLogMessage("generate_figure error", error.message);
+      throw error;
     }
     onLogMessage("generate_figure response", output);
     return output;

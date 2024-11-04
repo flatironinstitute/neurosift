@@ -20,7 +20,7 @@ type Props = {
   onSpecialLinkClick?: (link: string) => void;
   onRunCode?: (code: string) => void;
   runCodeReady?: boolean;
-  images?: { name: string; url: string }[];
+  images?: { name: string; dataUrl: string }[];
 };
 
 const Markdown: FunctionComponent<Props> = ({
@@ -121,7 +121,7 @@ const Markdown: FunctionComponent<Props> = ({
       img: ({ node, src, ...props }) => {
         for (const image of images || []) {
           if (src === `image://${image.name}`) {
-            return <img src={image.url} {...props} />;
+            return <img src={image.dataUrl} {...props} />;
           }
         }
         return <img src={src} {...props} />;
