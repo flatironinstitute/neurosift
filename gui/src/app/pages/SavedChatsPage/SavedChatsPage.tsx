@@ -5,7 +5,8 @@ import { useSavedChats } from "./savedChatsApi";
 import { timeAgoString } from "app/timeStrings";
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import { Add, Delete, Refresh } from "@mui/icons-material";
-import useRoute from "app/useRoute";
+import useRoute, { Route } from "app/useRoute";
+import { NeurosiftSavedChat } from "./types";
 
 type SavedChatsPageProps = {
   width: number;
@@ -96,10 +97,7 @@ const SavedChatsPage: FunctionComponent<SavedChatsPageProps> = ({
                     <td>
                       <Hyperlink
                         onClick={() => {
-                          setRoute({
-                            page: "chat",
-                            chatId: chat.chatId,
-                          });
+                          setRoute(routeForChat(chat));
                         }}
                       >
                         {chat.chatTitle}
@@ -120,6 +118,30 @@ const SavedChatsPage: FunctionComponent<SavedChatsPageProps> = ({
       </div>
     </div>
   );
+};
+
+const routeForChat = (chat: NeurosiftSavedChat): Route => {
+  console.log("--- route for chat", chat);
+  if (chat.nwbFileUrl && chat.dandisetId) {
+    return {
+      page: "nwb",
+      url: [chat.nwbFileUrl],
+      dandisetId: chat.dandisetId,
+      chatId: chat.chatId,
+      storageType: ["h5"],
+    };
+  } else if (chat.dandisetId) {
+    return {
+      page: "dandiset",
+      dandisetId: chat.dandisetId,
+      chatId: chat.chatId,
+    };
+  } else {
+    return {
+      page: "chat",
+      chatId: chat.chatId,
+    };
+  }
 };
 
 export default SavedChatsPage;

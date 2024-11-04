@@ -34,6 +34,7 @@ export type Route =
       storageType: StorageType[];
       tab?: string;
       embedded?: boolean;
+      chatId?: string;
     }
   | {
       page: "avi";
@@ -169,6 +170,7 @@ const useRoute = () => {
         storageType,
         tab: (query.tab as string) || undefined,
         embedded: query.embedded === "1",
+        chatId: (query.chatId || "") as string,
       };
     } else if (p === "/avi") {
       return {
@@ -303,6 +305,9 @@ const useRoute = () => {
         }
         if (r.embedded) {
           newQuery.embedded = "1";
+        }
+        if (r.chatId) {
+          newQuery.chatId = r.chatId;
         }
       } else if (r.page === "avi") {
         newQuery.p = "/avi";

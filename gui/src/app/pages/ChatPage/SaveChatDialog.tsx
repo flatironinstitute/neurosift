@@ -44,6 +44,15 @@ const SaveChatDialog: FunctionComponent<SaveChatDialogProps> = ({
           You can view your chat at {chatLink} <CopyButton text={chatLink} />
         </p>
         <button onClick={onClose}>Close</button>
+        <div>
+          <Hyperlink
+            onClick={() => {
+              setRoute({ page: "saved-chats" });
+            }}
+          >
+            View saved chats
+          </Hyperlink>
+        </div>
       </div>
     );
   }
@@ -81,7 +90,7 @@ const SaveChatDialog: FunctionComponent<SaveChatDialogProps> = ({
               dandisetId = chatContext.dandisetId;
               nwbFileUrl = undefined;
             } else if (chatContext.type === "nwb") {
-              dandisetId = undefined;
+              dandisetId = chatContext.dandisetId;
               nwbFileUrl = chatContext.nwbUrl;
             }
             const chatId = await addSavedChat({
@@ -94,11 +103,19 @@ const SaveChatDialog: FunctionComponent<SaveChatDialogProps> = ({
             if (!chatId) {
               alert("Failed to save chat");
             }
-            let chatLink = `https://neurosift.app?p=/chat&chatId=${chatId}`;
-            if (chatContext.type === "dandiset") {
-              chatLink += `&dandisetId=${chatContext.dandisetId}`;
+            let chatLink: string | undefined;
+            if (chatContext.type === "main") {
+              chatLink = `https://neurosift.app?p=/chat&chatId=${chatId}`;
+            } else if (chatContext.type === "dandiset") {
+              chatLink = `https://neurosift.app?p=/dandiset&dandisetId=${chatContext.dandisetId}&chatId=${chatId}`;
+            } else if (chatContext.type === "nwb") {
+              chatLink = `https://neurosift.app?p=/nwb&url=${chatContext.nwbUrl}&danisetId=${chatContext.dandisetId}&chatId=${chatId}`;
+            } else {
+              chatLink = undefined;
             }
-            setChatLink(chatLink);
+            if (chatLink) {
+              setChatLink(chatLink);
+            }
           }}
           disabled={!chatTitle}
         >

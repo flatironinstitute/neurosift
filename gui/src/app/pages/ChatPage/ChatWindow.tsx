@@ -365,6 +365,10 @@ const MainChatWindow: FunctionComponent<
     visible: saveChatVisible,
   } = useModalWindow();
 
+  const hasNoUserMessages = useMemo(() => {
+    return !messages.some((x) => x.role === "user");
+  }, [messages]);
+
   const [editedPromptText, setEditedPromptText] = useState("");
 
   const backUpAndEraseLastUserMessage = useCallback(() => {
@@ -790,7 +794,7 @@ const MainChatWindow: FunctionComponent<
         <div>
           <Markdown source={initialMessage} />
         </div>
-        {suggestedQuestions.length > 0 && (
+        {suggestedQuestions.length > 0 && hasNoUserMessages && (
           <div style={{ marginTop: 5, marginBottom: 5 }}>
             {suggestedQuestions.map((question, index) => (
               <span key={index}>

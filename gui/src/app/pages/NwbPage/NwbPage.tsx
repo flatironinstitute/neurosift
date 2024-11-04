@@ -38,6 +38,8 @@ import getAuthorizationHeaderForUrl from "./getAuthorizationHeaderForUrl";
 import getNwbFileInfoForChat, {
   NwbFileInfoForChat,
 } from "./getNwbFileInfoForChat";
+import { useSavedChats } from "../SavedChatsPage/savedChatsApi";
+import { Chat, emptyChat } from "../ChatPage/ChatWindow";
 
 type Props = {
   width: number;

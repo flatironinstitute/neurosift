@@ -23,6 +23,7 @@ import { useDatasetData, useGroup } from "./NwbMainView";
 import SelectedNeurodataItemsWidget from "./SelectedNeurodataItemsWidget";
 import { useContextAnnotationsForDandiset } from "../NeurosiftAnnotations/useContextAnnotations";
 import ChatWindow, { ChatContext } from "app/pages/ChatPage/ChatWindow";
+import { useSavedChats } from "app/pages/SavedChatsPage/savedChatsApi";
 
 type Props = {
   width: number;
@@ -95,13 +96,26 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
       })
       .map((a) => a.annotation.text);
   }, [contextAnnotations]);
+  const { savedChats } = useSavedChats({
+    load: route.chatId ? true : false,
+    chatId: route.chatId,
+  });
+  const initialChat = route.chatId
+    ? savedChats?.find((c) => c.chatId === route.chatId) || null
+    : null;
+  useEffect(() => {
+    if (initialChat) {
+      setChat(initialChat);
+      setCurrentTabId("chat");
+    }
+  }, [initialChat]);
   const chatContext: ChatContext = useMemo(
     () => ({
       type: "nwb",
       dandisetId: route.dandisetId,
-      nwbUrl: nwbFile.getUrls()[0] || "",
+      nwbUrl: route.url[0],
     }),
-    [route.dandisetId, nwbFile],
+    [route.url, route.dandisetId],
   );
   return (
     <TabWidget
