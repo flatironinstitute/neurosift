@@ -6,7 +6,13 @@ import { RemoteH5FileX } from "@remote-h5-file/index";
 import ChatPanel, { Chat, emptyChat } from "app/ChatPanel/ChatPanel";
 import TabWidget from "app/TabWidget/TabWidget";
 import { reportRecentlyViewedDandiset } from "app/pages/DandiPage/DandiBrowser/DandiBrowser";
-import { FunctionComponent, useEffect, useMemo, useReducer, useState } from "react";
+import {
+  FunctionComponent,
+  useEffect,
+  useMemo,
+  useReducer,
+  useState,
+} from "react";
 import useRoute from "../../../useRoute";
 import {
   serializeBigInt,
@@ -22,8 +28,10 @@ import LoadInPynwbWindow from "./LoadInPynwbWindow";
 import { useDatasetData, useGroup } from "./NwbMainView";
 import SelectedNeurodataItemsWidget from "./SelectedNeurodataItemsWidget";
 import { useContextAnnotationsForDandiset } from "../NeurosiftAnnotations/useContextAnnotations";
-import ChatWindow, { ChatContext, chatReducer } from "app/pages/ChatPage/ChatWindow";
+import ChatWindow from "app/pages/ChatPage/ChatWindow";
 import { useSavedChats } from "app/pages/SavedChatsPage/savedChatsApi";
+import { chatReducer } from "app/pages/ChatPage/Chat";
+import { ChatContext } from "app/pages/ChatPage/ChatContext";
 
 type Props = {
   width: number;
@@ -80,22 +88,22 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
   const [currentTabId, setCurrentTabId] = useState<string>("main");
   const [chat, chatDispatch] = useReducer(chatReducer, emptyChat);
   const contextAnnotations = useContextAnnotationsForDandiset(route.dandisetId);
-  const availableResourceUrls = useMemo(() => {
-    if (!contextAnnotations) return [];
-    return contextAnnotations
-      .filter((a) => {
-        if (a.annotationType === "note") {
-          if (
-            a.annotation.text.startsWith("http") &&
-            a.annotation.text.endsWith(".ipynb")
-          ) {
-            return true;
-          }
-        }
-        return false;
-      })
-      .map((a) => a.annotation.text);
-  }, [contextAnnotations]);
+  // const availableResourceUrls = useMemo(() => {
+  //   if (!contextAnnotations) return [];
+  //   return contextAnnotations
+  //     .filter((a) => {
+  //       if (a.annotationType === "note") {
+  //         if (
+  //           a.annotation.text.startsWith("http") &&
+  //           a.annotation.text.endsWith(".ipynb")
+  //         ) {
+  //           return true;
+  //         }
+  //       }
+  //       return false;
+  //     })
+  //     .map((a) => a.annotation.text);
+  // }, [contextAnnotations]);
   const { savedChats } = useSavedChats({
     load: route.chatId ? true : false,
     chatId: route.chatId,

@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { Chat, ChatContext } from "./ChatWindow";
+import { ChatContext } from "./ChatContext";
 import { useSavedChats } from "../SavedChatsPage/savedChatsApi";
 import useNeurosiftSavedChats from "app/NeurosiftSavedChats/useNeurosiftSavedChats";
 import useRoute from "app/useRoute";
@@ -7,6 +7,7 @@ import { NeurosiftSavedChatsLoginView } from "app/ApiKeysWindow/ApiKeysWindow";
 import { Hyperlink } from "@fi-sci/misc";
 import { ORMessage } from "../DandisetPage/DandisetViewFromDendro/openRouterTypes";
 import chatCompletion from "./chatCompletion";
+import { Chat } from "./Chat";
 
 type SaveChatDialogProps = {
   chat: Chat;

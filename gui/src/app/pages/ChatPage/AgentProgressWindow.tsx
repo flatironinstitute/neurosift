@@ -11,9 +11,11 @@ type AgentProgressWindowProps = {
   agentProgress: AgentProgressMessage[];
 };
 
-const AgentProgressWindow: FunctionComponent<
-  AgentProgressWindowProps
-> = ({ width, height, agentProgress }) => {
+const AgentProgressWindow: FunctionComponent<AgentProgressWindowProps> = ({
+  width,
+  height,
+  agentProgress,
+}) => {
   return (
     <div
       style={{

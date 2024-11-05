@@ -1,84 +1,79 @@
 import { SmallIconButton } from "@fi-sci/misc";
 import { Cancel, ForkLeft, Save } from "@mui/icons-material";
-import {
-    FunctionComponent
-} from "react";
-import {
-    FaBrain
-} from "react-icons/fa";
-
+import { FunctionComponent } from "react";
+import { FaBrain } from "react-icons/fa";
 
 type SettingsBarProps = {
-    width: number;
-    height: number;
-    onClearAllMessages: () => void;
-    modelName: string;
-    setModelName: (name: string) => void;
-    onToggleLeftPanel?: () => void;
-    onSaveChat?: () => void;
-    onOpenAdditionalKnowledge?: () => void;
-  };
+  width: number;
+  height: number;
+  onClearAllMessages: () => void;
+  modelName: string;
+  setModelName: (name: string) => void;
+  onToggleLeftPanel?: () => void;
+  onSaveChat?: () => void;
+  onOpenAdditionalKnowledge?: () => void;
+};
 
-  const modelOptions = [
-    "openai/gpt-4o-mini",
-    "openai/gpt-4o",
-    "anthropic/claude-3.5-sonnet",
-    "anthropic/claude-3-haiku",
-    // 'google/gemini-flash-1.5',
-    // 'google/gemini-pro-1.5'
-  ];
+const modelOptions = [
+  "openai/gpt-4o-mini",
+  "openai/gpt-4o",
+  "anthropic/claude-3.5-sonnet",
+  "anthropic/claude-3-haiku",
+  // 'google/gemini-flash-1.5',
+  // 'google/gemini-pro-1.5'
+];
 
-  const SettingsBar: FunctionComponent<SettingsBarProps> = ({
-    onClearAllMessages,
-    modelName,
-    setModelName,
-    onToggleLeftPanel,
-    onSaveChat,
-    onOpenAdditionalKnowledge,
-  }) => {
-    return (
-      <span style={{ fontSize: 12, padding: 5 }}>
-        &nbsp;
-        <select value={modelName} onChange={(e) => setModelName(e.target.value)}>
-          {modelOptions.map((x) => (
-            <option key={x} value={x}>
-              {x}
-            </option>
-          ))}
-        </select>
-        &nbsp;
+const SettingsBar: FunctionComponent<SettingsBarProps> = ({
+  onClearAllMessages,
+  modelName,
+  setModelName,
+  onToggleLeftPanel,
+  onSaveChat,
+  onOpenAdditionalKnowledge,
+}) => {
+  return (
+    <span style={{ fontSize: 12, padding: 5 }}>
+      &nbsp;
+      <select value={modelName} onChange={(e) => setModelName(e.target.value)}>
+        {modelOptions.map((x) => (
+          <option key={x} value={x}>
+            {x}
+          </option>
+        ))}
+      </select>
+      &nbsp;
+      <SmallIconButton
+        icon={<Cancel />}
+        onClick={() => {
+          onClearAllMessages();
+        }}
+        title="Clear all messages"
+      />
+      {onToggleLeftPanel && (
         <SmallIconButton
-          icon={<Cancel />}
-          onClick={() => {
-            onClearAllMessages();
-          }}
-          title="Clear all messages"
+          icon={<ForkLeft />}
+          onClick={onToggleLeftPanel}
+          title="Toggle left panel"
         />
-        {onToggleLeftPanel && (
-          <SmallIconButton
-            icon={<ForkLeft />}
-            onClick={onToggleLeftPanel}
-            title="Toggle left panel"
-          />
-        )}
-        {onSaveChat && (
-          <SmallIconButton
-            icon={<Save />}
-            onClick={onSaveChat}
-            title="Save chat"
-          />
-        )}
-        &nbsp;
-        {onOpenAdditionalKnowledge && (
-          <SmallIconButton
-            icon={<FaBrain />}
-            onClick={onOpenAdditionalKnowledge}
-            title="Edit additional knowledge"
-          />
-        )}
-        <span>&nbsp;&nbsp;AI can be inaccurate.</span>
-      </span>
-    );
-  };
+      )}
+      {onSaveChat && (
+        <SmallIconButton
+          icon={<Save />}
+          onClick={onSaveChat}
+          title="Save chat"
+        />
+      )}
+      &nbsp;
+      {onOpenAdditionalKnowledge && (
+        <SmallIconButton
+          icon={<FaBrain />}
+          onClick={onOpenAdditionalKnowledge}
+          title="Edit additional knowledge"
+        />
+      )}
+      <span>&nbsp;&nbsp;AI can be inaccurate.</span>
+    </span>
+  );
+};
 
-  export default SettingsBar;
+export default SettingsBar;

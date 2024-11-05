@@ -1,8 +1,9 @@
 import { FunctionComponent, useCallback, useState } from "react";
-import { Chat, ChatContext } from "./ChatWindow";
+import { Chat } from "./Chat";
 import { addSavedChat, useSavedChats } from "../SavedChatsPage/savedChatsApi";
 import useNeurosiftSavedChats from "app/NeurosiftSavedChats/useNeurosiftSavedChats";
 import { getRecommendedChatTitle } from "./SaveChatDialog";
+import { ChatContext } from "./ChatContext";
 
 type FeedbackWindowProps = {
   onClose: () => void;

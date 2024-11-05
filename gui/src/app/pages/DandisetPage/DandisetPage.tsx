@@ -1,20 +1,21 @@
+import { emptyChat } from "app/ChatPanel/ChatPanel";
+import Splitter from "app/Splitter/Splitter";
 import {
   FunctionComponent,
   useCallback,
   useEffect,
   useMemo,
   useReducer,
-  useState,
 } from "react";
 import useRoute from "../../useRoute";
+import ChatWindow from "../ChatPage/ChatWindow";
+import { getInitialSideChatWidth } from "../DandiPage/DandiPage";
 import { DandiAssetContext } from "../NwbPage/DandiAssetContext";
 import { SetupContextAnnotationsProvider } from "../NwbPage/NeurosiftAnnotations/useContextAnnotations";
-import DandisetView from "./DandisetViewFromDendro/DandisetView";
-import { getInitialSideChatWidth } from "../DandiPage/DandiPage";
-import ChatPanel, { Chat, emptyChat } from "app/ChatPanel/ChatPanel";
-import Splitter from "app/Splitter/Splitter";
-import ChatWindow, { ChatContext, chatReducer } from "../ChatPage/ChatWindow";
 import { useSavedChats } from "../SavedChatsPage/savedChatsApi";
+import DandisetView from "./DandisetViewFromDendro/DandisetView";
+import { ChatContext } from "../ChatPage/ChatContext";
+import { chatReducer } from "../ChatPage/Chat";
 
 type DandisetPageProps = {
   width: number;

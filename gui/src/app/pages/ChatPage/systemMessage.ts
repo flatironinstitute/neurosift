@@ -1,9 +1,6 @@
-import {
-    useEffect,
-    useState
-} from "react";
+import { useEffect, useState } from "react";
 import { ChatContext } from "./ChatContext";
-import { ToolItem } from "./ChatWindow";
+import { ToolItem } from "./ToolItem";
 
 export const getSystemMessage = async (
   tools: ToolItem[],

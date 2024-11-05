@@ -1,9 +1,9 @@
-import { SmallIconButton } from "@fi-sci/misc";
+import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import Markdown from "app/Markdown/Markdown";
 import {
   ORMessage,
-  ORToolCall
+  ORToolCall,
 } from "app/pages/DandisetPage/DandisetViewFromDendro/openRouterTypes";
 import Splitter from "app/Splitter/Splitter";
 import useRoute from "app/useRoute";
@@ -19,7 +19,9 @@ import {
 import { Chat, ChatAction } from "./Chat";
 import chatCompletion from "./chatCompletion";
 import { ChatContext } from "./ChatContext";
-import AgentProgressWindow, { AgentProgressMessage } from "./AgentProgressWindow";
+import AgentProgressWindow, {
+  AgentProgressMessage,
+} from "./AgentProgressWindow";
 import ConfirmOkayToRunWindow from "./ConfirmOkayToRunWindow";
 import EditAdditionalKnowledge from "./EditAdditionalKnowledge";
 import FeedbackWindow from "./FeedbackWindow";
@@ -282,9 +284,9 @@ const MainChatWindow: FunctionComponent<
   }, [messages, chatDispatch]);
 
   // agent progress
-  const [agentProgress, setAgentProgress] = useState<
-    AgentProgressMessage[]
-  >([]);
+  const [agentProgress, setAgentProgress] = useState<AgentProgressMessage[]>(
+    [],
+  );
   const resetAgentProgress = useCallback(() => {
     setAgentProgress([]);
   }, []);
@@ -335,6 +337,11 @@ const MainChatWindow: FunctionComponent<
     [openConfirmOkayToRun],
   );
 
+  // last completion failed
+  const [lastCompletionFailed, setLastCompletionFailed] = useState(false);
+  const [lastCompletionFailedRefreshCode, setLastCompletionFailedRefreshCode] =
+    useState(0);
+
   // Last message is user or tool, so we need to do a completion
   useEffect(() => {
     if (!systemMessage) return;
@@ -365,10 +372,11 @@ const MainChatWindow: FunctionComponent<
         if (canceled) return;
         console.warn("Error in chat completion", e);
         alert("An error occurred in chat completion: " + e.message);
-        backUpAndEraseLastUserMessage();
+        setLastCompletionFailed(true);
         return;
       }
       if (canceled) return;
+      setLastCompletionFailed(false);
       if (!toolCalls) {
         chatDispatch({
           type: "add-message",
@@ -402,7 +410,8 @@ const MainChatWindow: FunctionComponent<
     tools,
     systemMessage,
     backUpAndEraseLastUserMessage,
-    chatDispatch
+    chatDispatch,
+    lastCompletionFailedRefreshCode,
   ]);
 
   // last message is assistant with tool calls, so we need to run the tool calls
@@ -520,7 +529,7 @@ const MainChatWindow: FunctionComponent<
     addAgentProgressMessage,
     confirmOkayToRun,
     chatDispatch,
-    onLogMessage
+    onLogMessage,
   ]);
 
   // div refs
@@ -798,6 +807,20 @@ const MainChatWindow: FunctionComponent<
             height={400}
             agentProgress={agentProgress}
           />
+        )}
+        {lastCompletionFailed && (
+          <div>
+            <span style={{ color: "red" }}>
+              {`An error occurred retrieving the assistant's response. `}
+              <Hyperlink
+                onClick={() => {
+                  setLastCompletionFailedRefreshCode((x) => x + 1);
+                }}
+              >
+                Try again
+              </Hyperlink>
+            </span>
+          </div>
         )}
         <div ref={bottomElementRef}>&nbsp;</div>
       </div>
