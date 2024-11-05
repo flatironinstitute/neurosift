@@ -137,7 +137,7 @@ export const getSystemMessage = async (
   CAPABILITY: If the user wants plot or analyze data in an NWB file, you should use the generate_figure tool.
   You pass in a self-contained script that uses matplotlib, and the output is markdown text that you can include in your response.
   To construct the Python script, you should use the above method of loading the data together with your knowledge of pynwb and other Python libraries.
-  When constructing an example plot, be mindful of the size of the data you are loading. If it is too large, consider loading a subset of the data.
+  When constructing an example plot, be mindful of the size of the data you are loading. If it is too large, consider loading a subset of the data. But in that case, make sure you tell the user what you are doing.
 
   IMPORTANT: be sure to include the text output by the script in your generated response.
   For example, if the response was ![plot](image://figure_1.png), you should include the text ![plot](image://figure_1.png) in your response.

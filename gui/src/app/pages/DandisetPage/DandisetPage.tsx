@@ -97,7 +97,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
             chat={chat}
             chatDispatch={chatDispatch}
             openRouterKey={null}
-            onLogMessage={() => {}}
+            onLogMessage={undefined}
             chatContext={chatContext}
           />
           <DandisetView

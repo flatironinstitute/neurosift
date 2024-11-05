@@ -12,6 +12,7 @@ export type ExecuteScript = (
 ) => Promise<void>;
 
 export const generateFigureTool: ToolItem = {
+  serial: true,
   tool: {
     type: "function" as any,
     function: {

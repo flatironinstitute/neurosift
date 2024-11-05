@@ -56,7 +56,7 @@ type ChatWindowProps = {
   chat: Chat;
   chatDispatch: (action: ChatAction) => void;
   openRouterKey: string | null;
-  onLogMessage: (title: string, message: string) => void;
+  onLogMessage?: (title: string, message: string) => void;
   onToggleLeftPanel?: () => void;
   chatContext: ChatContext;
 };
@@ -356,6 +356,7 @@ const MainChatWindow: FunctionComponent<
     const lastMessage = messages2[messages2.length - 1];
     if (!lastMessage) return;
     if (!["user", "tool"].includes(lastMessage.role)) return;
+    console.log('---- A0 --------------------------------------------');
     (async () => {
       setLastCompletionFailed(false);
       let assistantMessage: string;
@@ -429,6 +430,7 @@ const MainChatWindow: FunctionComponent<
     if (!lastMessage) return;
     if (lastMessage.role !== "assistant") return;
     if (!(lastMessage as any).tool_calls) return;
+    console.log('---- A1 --------------------------------------------');
     (async () => {
       const newMessages: ORMessage[] = [];
       const toolCalls: ORToolCall[] = (lastMessage as any).tool_calls;
@@ -469,12 +471,11 @@ const MainChatWindow: FunctionComponent<
         let response: string;
         let errorMessage: string | undefined;
         try {
-          resetAgentProgress();
           addAgentProgressMessage(
             "stdout",
             `Running tool: ${tc.function.name}`,
           );
-          response = await func(args, onLogMessage, {
+          response = await func(args, onLogMessage || (() => {}), {
             modelName,
             openRouterKey,
             executeScript: executeScript2,
@@ -496,8 +497,6 @@ const MainChatWindow: FunctionComponent<
         } catch (e: any) {
           errorMessage = e.message;
           response = "Error: " + e.message;
-        } finally {
-          resetAgentProgress();
         }
         if (canceled) return;
         console.info("TOOL RESPONSE: ", response);
@@ -512,11 +511,21 @@ const MainChatWindow: FunctionComponent<
         newMessages.push(msg1);
       };
       // run the tool calls in parallel
+      resetAgentProgress();
       try {
         setPendingToolCalls(toolCalls);
-        await Promise.all(toolCalls.map(processToolCall));
+        const toolItems = toolCalls.map((tc) =>
+          tools.find((x) => x.tool.function.name === tc.function.name),
+        );
+        const serialIndices = toolItems.map((x, i) => ({ x, i })).filter(a => a.x?.serial).map(a => a.i);
+        const nonSerialIndices = toolItems.map((x, i) => ({ x, i })).filter(a => !a.x?.serial).map(a => a.i);
+        for (const i of serialIndices) {
+          await processToolCall(toolCalls[i]);
+        }
+        await Promise.all(toolCalls.filter((_, i) => nonSerialIndices.includes(i)).map(processToolCall));
       } finally {
         setPendingToolCalls([]);
+        resetAgentProgress();
       }
       if (canceled) return;
       chatDispatch({
@@ -533,12 +542,41 @@ const MainChatWindow: FunctionComponent<
     openRouterKey,
     tools,
     systemMessage,
+    chatDispatch,
     resetAgentProgress,
     addAgentProgressMessage,
     confirmOkayToRun,
-    chatDispatch,
-    onLogMessage,
+    imagesDispatch,
+    onLogMessage
   ]);
+
+  useEffect(() => {
+    console.log('--- messages changed ---------------------------------');
+  }, [messages]);
+  useEffect(() => {
+    console.log('--- tools changed ---------------------------------');
+  }, [tools]);
+  useEffect(() => {
+    console.log('--- system message changed ---------------------------------');
+  }, [systemMessage]);
+  useEffect(() => {
+    console.log('--- chatDispatch changed ---------------------------------');
+  }, [chatDispatch]);
+  useEffect(() => {
+    console.log('--- resetAgentProgress changed ---------------------------------');
+  }, [resetAgentProgress]);
+  useEffect(() => {
+    console.log('--- addAgentProgressMessage changed ---------------------------------');
+  }, [addAgentProgressMessage]);
+  useEffect(() => {
+    console.log('--- confirmOkayToRun changed ---------------------------------');
+  }, [confirmOkayToRun]);
+  useEffect(() => {
+    console.log('--- imagesDispatch changed ---------------------------------');
+  }, [imagesDispatch]);
+  useEffect(() => {
+    console.log('--- onLogMessage changed ---------------------------------');
+  }, [onLogMessage]);
 
   // div refs
   const chatContainerRef = useRef<HTMLDivElement>(null);

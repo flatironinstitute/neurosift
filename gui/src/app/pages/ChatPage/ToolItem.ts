@@ -2,6 +2,7 @@ import { ORTool } from "../DandisetPage/DandisetViewFromDendro/openRouterTypes";
 import { ExecuteScript } from "./tools/generateFigure";
 
 export type ToolItem = {
+  serial?: boolean;
   function: (
     args: any,
     onLogMessage: (title: string, message: string) => void,
