@@ -153,6 +153,8 @@ export const getSystemMessage = async (
   systemMessage += `
   NOTE: Within a single response, do not make excessive calls to the tools. Maybe up to around 5 is reasonable. But if you want to make more, you could ask the user if they would like you to do more work to find the answer.
 
+  NOTE: When you are returning tool calls, it can also be helpful to provide some brief information about what you are doing and the progress made so far, which dandisets you have found, etc.
+
   NOTE: Whenever you refer to a particular neurodata object (that is in an NWB file within a dandiset), you should use the following link to a visualization
   [label](https://neurosift.app/?p=/nwb&url=[download_url]&dandisetId=[dandiset_id]&dandisetVersion=[dandiseet_version]&tab=view:[neurodata_type]|[object_path])
 

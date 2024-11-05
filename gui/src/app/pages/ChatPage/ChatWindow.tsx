@@ -206,7 +206,7 @@ const MainChatWindow: FunctionComponent<
   // last message is assistant non-tool call
   const lastMessageIsAssistantNonToolCall = useMemo(() => {
     return lastMessage
-      ? lastMessage.role === "assistant" && lastMessage.content
+      ? lastMessage.role === "assistant" && !(lastMessage as any).tool_calls
       : false;
   }, [lastMessage]);
 
@@ -357,6 +357,7 @@ const MainChatWindow: FunctionComponent<
     if (!lastMessage) return;
     if (!["user", "tool"].includes(lastMessage.role)) return;
     (async () => {
+      setLastCompletionFailed(false);
       let assistantMessage: string;
       let toolCalls: any[] | undefined;
       try {
@@ -371,32 +372,28 @@ const MainChatWindow: FunctionComponent<
       } catch (e: any) {
         if (canceled) return;
         console.warn("Error in chat completion", e);
-        alert("An error occurred in chat completion: " + e.message);
         setLastCompletionFailed(true);
         return;
       }
       if (canceled) return;
-      setLastCompletionFailed(false);
-      if (!toolCalls) {
-        chatDispatch({
-          type: "add-message",
-          message: { role: "assistant", content: assistantMessage },
-        });
-      } else {
+      if (toolCalls) {
         // tool calls
-        if (assistantMessage) {
-          console.warn(
-            "Unexpected: assistant message and tool calls. Ignoring assistant message.",
-          );
-          return;
-        }
         chatDispatch({
           type: "add-message",
           message: {
             role: "assistant",
-            content: null,
+            content: assistantMessage || null,
             tool_calls: toolCalls,
           },
+        });
+      } else {
+        if (!assistantMessage) {
+          console.warn("Unexpected: no assistant message and no tool calls");
+          return;
+        }
+        chatDispatch({
+          type: "add-message",
+          message: { role: "assistant", content: assistantMessage },
         });
       }
     })();
@@ -413,6 +410,9 @@ const MainChatWindow: FunctionComponent<
     chatDispatch,
     lastCompletionFailedRefreshCode,
   ]);
+
+  // pending tool calls
+  const [pendingToolCalls, setPendingToolCalls] = useState<ORToolCall[]>([]);
 
   // last message is assistant with tool calls, so we need to run the tool calls
   useEffect(() => {
@@ -470,7 +470,10 @@ const MainChatWindow: FunctionComponent<
         let errorMessage: string | undefined;
         try {
           resetAgentProgress();
-          addAgentProgressMessage("stdout", "Running tool...");
+          addAgentProgressMessage(
+            "stdout",
+            `Running tool: ${tc.function.name}`,
+          );
           response = await func(args, onLogMessage, {
             modelName,
             openRouterKey,
@@ -509,7 +512,12 @@ const MainChatWindow: FunctionComponent<
         newMessages.push(msg1);
       };
       // run the tool calls in parallel
-      await Promise.all(toolCalls.map(processToolCall));
+      try {
+        setPendingToolCalls(toolCalls);
+        await Promise.all(toolCalls.map(processToolCall));
+      } finally {
+        setPendingToolCalls([]);
+      }
       if (canceled) return;
       chatDispatch({
         type: "add-messages",
@@ -790,7 +798,7 @@ const MainChatWindow: FunctionComponent<
           ))}
         {(lastMessageIsUserOrTool || lastMessageIsToolCalls) && (
           <div>
-            <span style={{ color: "#6a6" }}>...</span>
+            <span style={{ color: "#6a6" }}>processing...</span>
           </div>
         )}
         {lastMessageIsAssistantNonToolCall && (
@@ -800,6 +808,13 @@ const MainChatWindow: FunctionComponent<
               openFeedbackWindow();
             }}
           />
+        )}
+        {pendingToolCalls.length > 0 && (
+          <div>
+            {pendingToolCalls.length === 1
+              ? `Processing tool call: ${pendingToolCalls[0].function.name}`
+              : `Processing ${pendingToolCalls.length} tool calls: ${pendingToolCalls.map((x) => x.function.name).join(", ")}`}
+          </div>
         )}
         {agentProgress.length > 0 && (
           <AgentProgressWindow

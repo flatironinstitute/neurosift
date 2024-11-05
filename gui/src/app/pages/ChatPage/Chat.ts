@@ -3,7 +3,7 @@ import { ORMessage } from "../DandisetPage/DandisetViewFromDendro/openRouterType
 export type Chat = {
   messages: (
     | ORMessage
-    | { role: "client-side-only"; content: string; color?: string }
+    | { role: "client-side-only"; content: string; color?: string } // not used anymore
   )[];
 };
 
