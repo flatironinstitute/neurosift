@@ -1,22 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
-import { NeurosiftSavedChatsLoginView } from "app/ApiKeysWindow/ApiKeysWindow";
-import useNeurosiftSavedChats from "app/NeurosiftSavedChats/useNeurosiftSavedChats";
+import { useModalWindow } from "@fi-sci/modal-window";
 import Splitter from "app/Splitter/Splitter";
+import useRoute from "app/useRoute";
 import {
   FunctionComponent,
   useCallback,
   useEffect,
   useMemo,
-  useRef,
-  useState,
+  useReducer,
+  useState
 } from "react";
-import { ORMessage } from "../DandisetPage/DandisetViewFromDendro/openRouterTypes";
 import { useSavedChats } from "../SavedChatsPage/savedChatsApi";
-import chatCompletion from "./chatCompletion";
-import ChatWindow, { Chat, ChatContext } from "./ChatWindow";
-import useRoute from "app/useRoute";
-import { Hyperlink } from "@fi-sci/misc";
+import { Chat, chatReducer, emptyChat } from "./Chat";
+import { ChatContext } from "./ChatContext";
+import ChatWindow from "./ChatWindow";
 
 type ChatPageProps = {
   width: number;
@@ -49,8 +46,6 @@ const ChatPage: FunctionComponent<ChatPageProps> = ({ width, height }) => {
 
   if (chatIdFromRoute && !savedChats) {
     return <div>Loading...</div>;
-  } else if (initialChat?.dandisetId) {
-    return <div>Redirecting to Dandiset page {initialChat.dandisetId}</div>;
   } else if (initialChat) {
     return (
       <ChatPageChild width={width} height={height} initialChat={initialChat} />
@@ -64,7 +59,7 @@ const ChatPageChild: FunctionComponent<
   ChatPageProps & { initialChat: Chat | null }
 > = ({ width, height, initialChat }) => {
   const [openRouterKey, setOpenRouterKey] = useState<string | null>(null);
-  const [chat, setChat] = useState<Chat>({ messages: [] });
+  const [chat, chatDispatch] = useReducer(chatReducer, emptyChat);
   const logger = useMemo(() => new Logger(), []);
   const handleLogMessage = useCallback(
     (title: string, message: string) => {
@@ -74,7 +69,7 @@ const ChatPageChild: FunctionComponent<
   );
   useEffect(() => {
     if (!initialChat) return;
-    setChat(initialChat);
+    chatDispatch({ type: "set", chat: initialChat });
   }, [initialChat]);
   const [leftPanelVisible, setLeftPanelVisible] = useState(false);
   const chatContext: ChatContext = useMemo(
@@ -103,7 +98,7 @@ const ChatPageChild: FunctionComponent<
         width={0}
         height={0}
         chat={chat}
-        setChat={setChat}
+        chatDispatch={chatDispatch}
         openRouterKey={openRouterKey}
         onLogMessage={handleLogMessage}
         onToggleLeftPanel={() => setLeftPanelVisible((prev) => !prev)}

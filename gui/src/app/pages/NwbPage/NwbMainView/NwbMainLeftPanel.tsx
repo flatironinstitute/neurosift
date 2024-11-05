@@ -6,7 +6,7 @@ import { RemoteH5FileX } from "@remote-h5-file/index";
 import ChatPanel, { Chat, emptyChat } from "app/ChatPanel/ChatPanel";
 import TabWidget from "app/TabWidget/TabWidget";
 import { reportRecentlyViewedDandiset } from "app/pages/DandiPage/DandiBrowser/DandiBrowser";
-import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import { FunctionComponent, useEffect, useMemo, useReducer, useState } from "react";
 import useRoute from "../../../useRoute";
 import {
   serializeBigInt,
@@ -22,7 +22,7 @@ import LoadInPynwbWindow from "./LoadInPynwbWindow";
 import { useDatasetData, useGroup } from "./NwbMainView";
 import SelectedNeurodataItemsWidget from "./SelectedNeurodataItemsWidget";
 import { useContextAnnotationsForDandiset } from "../NeurosiftAnnotations/useContextAnnotations";
-import ChatWindow, { ChatContext } from "app/pages/ChatPage/ChatWindow";
+import ChatWindow, { ChatContext, chatReducer } from "app/pages/ChatPage/ChatWindow";
 import { useSavedChats } from "app/pages/SavedChatsPage/savedChatsApi";
 
 type Props = {
@@ -78,7 +78,7 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
   const { route } = useRoute();
   if (route.page !== "nwb") throw Error("Unexpected: route.page is not nwb");
   const [currentTabId, setCurrentTabId] = useState<string>("main");
-  const [chat, setChat] = useState<Chat>(emptyChat);
+  const [chat, chatDispatch] = useReducer(chatReducer, emptyChat);
   const contextAnnotations = useContextAnnotationsForDandiset(route.dandisetId);
   const availableResourceUrls = useMemo(() => {
     if (!contextAnnotations) return [];
@@ -105,7 +105,7 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
     : null;
   useEffect(() => {
     if (initialChat) {
-      setChat(initialChat);
+      chatDispatch({ type: "set", chat: initialChat });
       setCurrentTabId("chat");
     }
   }, [initialChat]);
@@ -135,7 +135,7 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
         width={0}
         height={0}
         chat={chat}
-        setChat={setChat}
+        chatDispatch={chatDispatch}
         openRouterKey={null}
         onLogMessage={() => {}}
         onToggleLeftPanel={undefined}

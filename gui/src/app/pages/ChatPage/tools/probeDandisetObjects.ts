@@ -1,4 +1,4 @@
-import { ToolItem } from "../ChatWindow";
+import { ToolItem } from "../ToolItem";
 
 const dandisetObjectsDetailedDescription = `
 You use this tool to probe a Dandiset for neurodata objects.

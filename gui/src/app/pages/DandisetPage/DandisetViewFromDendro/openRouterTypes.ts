@@ -182,7 +182,7 @@ type ORFunctionCall = {
   arguments: string; // JSON format arguments
 };
 
-type ORToolCall = {
+export type ORToolCall = {
   id: string;
   type: "function";
   function: ORFunctionCall;

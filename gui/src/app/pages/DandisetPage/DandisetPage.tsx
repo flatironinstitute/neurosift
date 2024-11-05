@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useReducer,
   useState,
 } from "react";
 import useRoute from "../../useRoute";
@@ -12,7 +13,7 @@ import DandisetView from "./DandisetViewFromDendro/DandisetView";
 import { getInitialSideChatWidth } from "../DandiPage/DandiPage";
 import ChatPanel, { Chat, emptyChat } from "app/ChatPanel/ChatPanel";
 import Splitter from "app/Splitter/Splitter";
-import ChatWindow, { ChatContext } from "../ChatPage/ChatWindow";
+import ChatWindow, { ChatContext, chatReducer } from "../ChatPage/ChatWindow";
 import { useSavedChats } from "../SavedChatsPage/savedChatsApi";
 
 type DandisetPageProps = {
@@ -60,7 +61,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
     [route.dandisetId, route.dandisetVersion],
   );
   const initialSideChatWidth = getInitialSideChatWidth(width);
-  const [chat, setChat] = useState<Chat>(emptyChat);
+  const [chat, chatDispatch] = useReducer(chatReducer, emptyChat);
   const chatContext: ChatContext = useMemo(
     () => ({ type: "dandiset", dandisetId: route.dandisetId }),
     [route.dandisetId],
@@ -76,11 +77,10 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
     : null;
   useEffect(() => {
     if (initialChat) {
-      setChat(initialChat);
+      chatDispatch({ type: "set", chat: initialChat });
     }
   }, [initialChat]);
 
-  useEffect(() => {}, [route.chatId]);
   return (
     <DandiAssetContext.Provider value={dandiAssetContextValue}>
       <SetupContextAnnotationsProvider>
@@ -94,7 +94,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
             width={0}
             height={0}
             chat={chat}
-            setChat={setChat}
+            chatDispatch={chatDispatch}
             openRouterKey={null}
             onLogMessage={() => {}}
             chatContext={chatContext}

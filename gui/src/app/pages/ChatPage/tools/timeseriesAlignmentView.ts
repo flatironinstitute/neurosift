@@ -8,7 +8,7 @@ import {
   loadSpecifications,
   NwbFileSpecifications,
 } from "app/pages/NwbPage/SpecificationsView/SetupNwbFileSpecificationsProvider";
-import { ToolItem } from "../ChatWindow";
+import { ToolItem } from "../ToolItem";
 import { tryGetLindiUrl } from "app/pages/NwbPage/NwbPage";
 
 const detailedDescription = `

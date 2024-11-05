@@ -65,6 +65,10 @@ class PythonSessionClient {
     while (this.#pythonSessionStatus === "uninitiated") {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
+    // wait until not busy
+    while (this.#pythonSessionStatus === "busy") {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
     if (this.#pythonSessionStatus === "unavailable") {
       throw Error("Python session unavailable");
     } else if (this.#pythonSessionStatus === "idle") {

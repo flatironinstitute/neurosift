@@ -1,4 +1,4 @@
-import { ToolItem } from "../ChatWindow";
+import { ToolItem } from "../ToolItem";
 
 const neurodataTypesToolDetailedDescription = `
 You use this tool to probe a json object by executing a javascript function defined in the input parameter function_text.

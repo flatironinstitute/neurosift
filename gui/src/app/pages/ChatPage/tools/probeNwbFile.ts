@@ -5,7 +5,7 @@ import {
 } from "@remote-h5-file/index";
 import getNwbFileInfoForChat from "app/pages/NwbPage/getNwbFileInfoForChat";
 import { tryGetLindiUrl } from "app/pages/NwbPage/NwbPage";
-import { ToolItem } from "../ChatWindow";
+import { ToolItem } from "../ToolItem";
 
 const detailedDescription = `
 This tool uses the NWB file URL to get detailed information about the file.

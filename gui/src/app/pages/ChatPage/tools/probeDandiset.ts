@@ -1,6 +1,6 @@
 import { ORMessage } from "../../DandisetPage/DandisetViewFromDendro/openRouterTypes";
 import chatCompletion from "../chatCompletion";
-import { ToolItem } from "../ChatWindow";
+import { ToolItem } from "../ToolItem";
 
 export const probeDandisetTool: ToolItem = {
   tool: {

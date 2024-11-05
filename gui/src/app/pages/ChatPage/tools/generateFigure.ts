@@ -1,4 +1,4 @@
-import { ToolItem } from "../ChatWindow";
+import { ToolItem } from "../ToolItem";
 
 const generateFigureDetailedDescription = undefined;
 
