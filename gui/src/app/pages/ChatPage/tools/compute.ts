@@ -1,6 +1,6 @@
 import { ToolItem } from "../ToolItem";
 
-const generateFigureDetailedDescription = undefined;
+const computeDetailedDescription = undefined;
 
 export type ExecuteScript = (
   script: string,
@@ -11,26 +11,26 @@ export type ExecuteScript = (
   },
 ) => Promise<void>;
 
-export const generateFigureTool: ToolItem = {
+export const computeTool: ToolItem = {
   serial: true,
   tool: {
     type: "function" as any,
     function: {
-      name: "figure_script",
-      description: `Generate a figure by executing Python code that makes use of the matplotlib library. Returns Markdown text that can be included in the chat response.`,
+      name: "compute_script",
+      description: `Make a computation by executing Python code and printing the results to stdout. Returns the stdout output.`,
       parameters: {
         type: "object",
         properties: {
           script: {
             type: "string",
             description:
-              "Python code that generates a figure using the matplotlib library.",
+              "Python code that performs a computation and prints the results to stdout.",
           },
         },
       },
     },
   },
-  detailedDescription: generateFigureDetailedDescription,
+  detailedDescription: computeDetailedDescription,
   function: async (
     args: any,
     onLogMessage: (title: string, message: string) => void,
@@ -53,10 +53,11 @@ export const generateFigureTool: ToolItem = {
       throw new Error("onAddImage is required");
     }
     const script: string = args.script;
-    onLogMessage("generate_figure query", script);
-    const images: { format: "png"; content: string }[] = [];
-    const onImage = (format: "png", content: string) => {
-      images.push({ format, content });
+    onLogMessage("compute query", script);
+    const stdoutLines: string[] = [];
+    const onStdout2 = (message: string) => {
+      onStdout && onStdout(message);
+      stdoutLines.push(message);
     };
     let output: string;
     try {
@@ -64,24 +65,21 @@ export const generateFigureTool: ToolItem = {
       if (!okay) {
         throw Error("User did not permit running the script");
       }
-      await executeScript(script, { onStdout: onStdout, onStderr, onImage });
-      if (images.length === 0) {
-        output = "No image generated";
+      await executeScript(script, {
+        onStdout: onStdout2,
+        onStderr,
+        onImage: undefined,
+      });
+      if (stdoutLines.length === 0) {
+        output = "No standard output generated";
       } else {
-        output = images
-          .map((image, index) => {
-            const imageUrl = `data:image/png;base64,${image.content}`;
-            const randStr = Math.random().toString(36).substring(7);
-            onAddImage(`figure_${randStr}.png`, imageUrl);
-            return "![image](image://figure_" + randStr + ".png)";
-          })
-          .join("\n\n");
+        output = stdoutLines.join("\n");
       }
     } catch (error: any) {
-      onLogMessage("generate_figure error", error.message);
+      onLogMessage("compute error", error.message);
       throw error;
     }
-    onLogMessage("generate_figure response", output);
+    onLogMessage("compute response", output);
     return output;
   },
 };

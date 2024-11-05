@@ -45,6 +45,10 @@ const SettingsBar: FunctionComponent<SettingsBarProps> = ({
       <SmallIconButton
         icon={<Cancel />}
         onClick={() => {
+          const ok = window.confirm(
+            "Are you sure you want to clear all messages?",
+          );
+          if (!ok) return;
           onClearAllMessages();
         }}
         title="Clear all messages"

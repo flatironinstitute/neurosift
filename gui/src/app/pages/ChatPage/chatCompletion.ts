@@ -4,12 +4,34 @@ import {
   ORToolChoice,
 } from "app/pages/DandisetPage/DandisetViewFromDendro/openRouterTypes";
 
+const chatCompletionTimestamps: number[] = [];
+
+// safeguard (e.g., an infinite loop)
+const MAX_CHAT_COMPLETIONS_PER_MINUTE = 10;
+
 const chatCompletion = async (a: {
   messages: ORMessage[];
   modelName: string;
   openRouterKey: string | null;
   tools: ORTool[];
 }) => {
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const numberOfChatCompletionsInLastMinute = chatCompletionTimestamps.filter(
+      (timestamp) => Date.now() - timestamp < 60 * 1000,
+    ).length;
+    if (numberOfChatCompletionsInLastMinute < MAX_CHAT_COMPLETIONS_PER_MINUTE) {
+      break;
+    }
+    const ok = confirm(
+      "You are sending too many requests to the server. Wait a bit and then click OK to continue.",
+    );
+    if (!ok) {
+      throw new Error("Too many requests");
+    }
+  }
+  chatCompletionTimestamps.push(Date.now());
+
   const { messages, modelName, tools, openRouterKey } = a;
   const messages2: ORMessage[] = [...messages];
   console.info("messages", messages2);

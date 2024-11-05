@@ -134,10 +134,16 @@ export const getSystemMessage = async (
   Tip: It's important to use keyword arguments when creating the pynwb.NWBHDF5IO object.
   ========================
 
-  CAPABILITY: If the user wants plot or analyze data in an NWB file, you should use the generate_figure tool.
+  CAPABILITY: If the user wants plot data in an NWB file, you should use the figure_script tool.
   You pass in a self-contained script that uses matplotlib, and the output is markdown text that you can include in your response.
   To construct the Python script, you should use the above method of loading the data together with your knowledge of pynwb and other Python libraries.
   When constructing an example plot, be mindful of the size of the data you are loading. If it is too large, consider loading a subset of the data. But in that case, make sure you tell the user what you are doing.
+
+  CAPABILITY: If you need to compute or analyze data in an NWB file, you should use the compute_script tool.
+  You pass in a Python script that performs the computation and prints the results to stdout.
+  The output of the tool is the stdout output of the script.
+  Just as with generating figures, you should use the above method of loading the data together with your knowledge of pynwb and other Python libraries to construct the script.
+  You may consider outputing the results as JSON text.
 
   IMPORTANT: be sure to include the text output by the script in your generated response.
   For example, if the response was ![plot](image://figure_1.png), you should include the text ![plot](image://figure_1.png) in your response.
@@ -146,7 +152,7 @@ export const getSystemMessage = async (
   When convenient, please use complete self-contained Python scripts that can be run as-is, because
   the user will have the ability to run the script from the interface.
 
-  It's okay if the user wants you to make a test plot.
+  It's okay if the user wants you to make a test plot. In this case, if they do not specify data, just create some artificial data for plotting.
   `;
   }
 
