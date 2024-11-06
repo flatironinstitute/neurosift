@@ -23,7 +23,6 @@ import AgentProgressWindow, {
   AgentProgressMessage,
 } from "./AgentProgressWindow";
 import ConfirmOkayToRunWindow from "./ConfirmOkayToRunWindow";
-import EditAdditionalKnowledge from "./EditAdditionalKnowledge";
 import FeedbackWindow from "./FeedbackWindow";
 import HelpfulUnhelpfulButtons from "./HelpfulUnhelpfulButtons";
 import { imagesReducer, figureDataFilesReducer } from "./ImagesState";
@@ -240,21 +239,8 @@ const MainChatWindow: FunctionComponent<
     return ret;
   }, [chatContext]);
 
-  // additional knowledge
-  const [additionalKnowledge, setAdditionalKnowledge] = useState("");
-  usePersistAdditionalKnowledge(additionalKnowledge, setAdditionalKnowledge);
-  const {
-    visible: additionalKnowledgeVisible,
-    handleOpen: openAdditionalKnowledge,
-    handleClose: closeAdditionalKnowledge,
-  } = useModalWindow();
-
   // system message
-  const systemMessage = useSystemMessage(
-    tools,
-    chatContext,
-    additionalKnowledge,
-  );
+  const systemMessage = useSystemMessage(tools, chatContext, "");
 
   // save chat
   const {
@@ -917,7 +903,6 @@ const MainChatWindow: FunctionComponent<
           setModelName={setModelName}
           onToggleLeftPanel={onToggleLeftPanel}
           onSaveChat={openSaveChat}
-          onOpenAdditionalKnowledge={openAdditionalKnowledge}
         />
       </div>
       <ModalWindow visible={saveChatVisible} onClose={closeSaveChat}>
@@ -941,15 +926,7 @@ const MainChatWindow: FunctionComponent<
           openRouterKey={openRouterKey}
           chatContext={chatContext}
           images={images}
-        />
-      </ModalWindow>
-      <ModalWindow
-        visible={additionalKnowledgeVisible}
-        onClose={closeAdditionalKnowledge}
-      >
-        <EditAdditionalKnowledge
-          additionalKnowledge={additionalKnowledge}
-          setAdditionalKnowledge={setAdditionalKnowledge}
+          figureDataFiles={figureDataFiles}
         />
       </ModalWindow>
       <ModalWindow
@@ -992,29 +969,6 @@ const colorForRole = (role: string) => {
   const g = (hash * 2) % 200;
   const b = (hash * 3) % 200;
   return `rgb(${r},${g},${b})`;
-};
-
-const usePersistAdditionalKnowledge = (
-  additionalKnowledge: string,
-  setAdditionalKnowledge: (additionalKnowledge: string) => void,
-) => {
-  const localStorageKey = "additionalKnowledge";
-  const didInitialLoad = useRef(false);
-  useEffect(() => {
-    if (!didInitialLoad.current) {
-      didInitialLoad.current = true;
-      const ak = localStorage.getItem(localStorageKey);
-      if (ak) {
-        setAdditionalKnowledge(ak);
-      }
-    }
-  }, [setAdditionalKnowledge]);
-  useEffect(() => {
-    if (!didInitialLoad.current) {
-      return;
-    }
-    localStorage.setItem(localStorageKey, additionalKnowledge);
-  }, [additionalKnowledge]);
 };
 
 export default ChatWindow;

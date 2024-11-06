@@ -21,7 +21,7 @@ export const generateFigureTool: (
     type: "function" as any,
     function: {
       name: "figure_script",
-      description: `Generate a figure by executing Python code that makes use of the ${plotLibrary} library. Returns Markdown or HTML text that can be included in the chat response.`,
+      description: `Generate a figure by executing Python code that makes use of the ${plotLibrary} library. Returns Markdown or HTML text that can be included in the chat response. In case of error it returns the stderr.`,
       parameters: {
         type: "object",
         properties: {
@@ -75,6 +75,16 @@ export const generateFigureTool: (
     const onFigure = (format: "plotly", content: PlotlyContent) => {
       figures.push({ format, content });
     };
+    const onStdout2 = (message: string) => {
+      console.info(`STDOUT: ${message}`);
+      onStdout && onStdout(message);
+    };
+    const stderrLines: string[] = [];
+    const onStderr2 = (message: string) => {
+      console.error(`STDERR: ${message}`);
+      onStderr && onStderr(message);
+      stderrLines.push(message);
+    };
     let output: string;
     try {
       const okay = confirmOkayToRun ? await confirmOkayToRun(script) : false;
@@ -82,13 +92,16 @@ export const generateFigureTool: (
         throw Error("User did not permit running the script");
       }
       await executeScript(script, {
-        onStdout: onStdout,
-        onStderr,
+        onStdout: onStdout2,
+        onStderr: onStderr2,
         onImage,
         onFigure,
       });
       if (images.length === 0 && figures.length === 0) {
         output = "No image or figure generated";
+        if (stderrLines.length > 0) {
+          output += "\n\n" + stderrLines.join("\n");
+        }
       } else {
         output = images
           .map((image, index) => {
@@ -111,7 +124,11 @@ export const generateFigureTool: (
       }
     } catch (error: any) {
       onLogMessage("generate_figure error", error.message);
-      throw error;
+      if (stderrLines.length > 0) {
+        output = stderrLines.join("\n");
+      } else {
+        throw error;
+      }
     }
     onLogMessage("generate_figure response", output);
     return output;

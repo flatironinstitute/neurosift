@@ -12,6 +12,7 @@ type FeedbackWindowProps = {
   openRouterKey: string | null;
   chatContext: ChatContext;
   images: { name: string; dataUrl: string }[];
+  figureDataFiles: { name: string; content: string }[];
 };
 
 const FeedbackWindow: FunctionComponent<FeedbackWindowProps> = ({
@@ -21,6 +22,7 @@ const FeedbackWindow: FunctionComponent<FeedbackWindowProps> = ({
   openRouterKey,
   chatContext,
   images,
+  figureDataFiles,
 }) => {
   const [notes, setNotes] = useState<string>("");
   const { neurosiftSavedChatsUserId, neurosiftSavedChatsAccessToken } =
@@ -54,6 +56,7 @@ const FeedbackWindow: FunctionComponent<FeedbackWindowProps> = ({
       neurosiftSavedChatsAccessToken:
         neurosiftSavedChatsAccessToken || undefined,
       images,
+      figureDataFiles,
     });
     setStatusMessage(null);
     onClose();
@@ -67,6 +70,7 @@ const FeedbackWindow: FunctionComponent<FeedbackWindowProps> = ({
     openRouterKey,
     chatContext,
     images,
+    figureDataFiles,
   ]);
   return (
     <div>

@@ -62,6 +62,12 @@ class PythonSessionClient {
           };
           this._addOutputItem(item);
         }
+      } else if ("traceback" in msg.content) {
+        const item: PythonSessionOutputItem = {
+          type: "stderr",
+          content: msg.content.traceback.join("\n") + "\n" + msg.content.evalue,
+        };
+        this._addOutputItem(item);
       } else if ("data" in msg.content) {
         if ("image/png" in msg.content.data) {
           const item: PythonSessionOutputItem = {

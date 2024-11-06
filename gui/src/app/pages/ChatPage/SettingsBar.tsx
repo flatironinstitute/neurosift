@@ -11,7 +11,6 @@ type SettingsBarProps = {
   setModelName: (name: string) => void;
   onToggleLeftPanel?: () => void;
   onSaveChat?: () => void;
-  onOpenAdditionalKnowledge?: () => void;
 };
 
 const modelOptions = [
@@ -29,7 +28,6 @@ const SettingsBar: FunctionComponent<SettingsBarProps> = ({
   setModelName,
   onToggleLeftPanel,
   onSaveChat,
-  onOpenAdditionalKnowledge,
 }) => {
   return (
     <span style={{ fontSize: 12, padding: 5 }}>
@@ -65,14 +63,6 @@ const SettingsBar: FunctionComponent<SettingsBarProps> = ({
           icon={<Save />}
           onClick={onSaveChat}
           title="Save chat"
-        />
-      )}
-      &nbsp;
-      {onOpenAdditionalKnowledge && (
-        <SmallIconButton
-          icon={<FaBrain />}
-          onClick={onOpenAdditionalKnowledge}
-          title="Edit additional knowledge"
         />
       )}
       <span>&nbsp;&nbsp;AI can be inaccurate.</span>

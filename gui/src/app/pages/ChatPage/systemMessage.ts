@@ -150,6 +150,8 @@ export const getSystemMessage = async (
   Just as with generating figures, you should use the above method of loading the data together with your knowledge of pynwb and other Python libraries to construct the script.
   You may consider outputing the results as JSON text.
 
+  NOTE: If user wants to compute and plot data, it is important to include the compute part in the plot script rather than having two separate scripts.
+
   IMPORTANT: be sure to include the text output by the script in your generated response.
   For example, if the response was ![plot](image://figure_1.png), you should include the text ![plot](image://figure_1.png) in your response,
   and if the response was <div class="plotly" src="...">plotly</div>, you should include the text <div class="plotly" src="...">plotly</div> in your response.

@@ -17,7 +17,7 @@ export const computeTool: ToolItem = {
     type: "function" as any,
     function: {
       name: "compute_script",
-      description: `Make a computation by executing Python code and printing the results to stdout. Returns the stdout output.`,
+      description: `Make a computation by executing Python code and printing the results to stdout. Returns the stdout output. Or if there is no stdout, returns stderr.`,
       parameters: {
         type: "object",
         properties: {
@@ -45,8 +45,7 @@ export const computeTool: ToolItem = {
       confirmOkayToRun?: (script: string) => Promise<boolean>;
     },
   ) => {
-    const { executeScript, onAddImage, onStdout, onStderr, confirmOkayToRun } =
-      o;
+    const { executeScript, onStdout, onStderr, confirmOkayToRun } = o;
     if (!executeScript) {
       throw new Error("executeScript is required");
     }
@@ -54,8 +53,15 @@ export const computeTool: ToolItem = {
     onLogMessage("compute query", script);
     const stdoutLines: string[] = [];
     const onStdout2 = (message: string) => {
+      console.info(`STDOUT: ${message}`);
       onStdout && onStdout(message);
       stdoutLines.push(message);
+    };
+    const stderrLines: string[] = [];
+    const onStderr2 = (message: string) => {
+      console.error(`STDERR: ${message}`);
+      onStderr && onStderr(message);
+      stderrLines.push(message);
     };
     let output: string;
     try {
@@ -65,11 +71,14 @@ export const computeTool: ToolItem = {
       }
       await executeScript(script, {
         onStdout: onStdout2,
-        onStderr,
+        onStderr: onStderr2,
         onImage: undefined,
       });
       if (stdoutLines.length === 0) {
         output = "No standard output generated";
+        if (stderrLines.length > 0) {
+          output += "\n" + stderrLines.join("\n");
+        }
       } else {
         output = stdoutLines.join("\n");
       }

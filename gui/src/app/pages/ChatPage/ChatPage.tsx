@@ -132,11 +132,6 @@ const LeftPanel: FunctionComponent<LeftPanelProps> = ({
       setLogMessages((prev) => [...prev, { title, message }]);
     });
   }, [logger]);
-  const {
-    handleOpen: openAdditionalKnowledge,
-    handleClose: closeAdditionalKnowledge,
-    visible: additionalKnowledgeVisible,
-  } = useModalWindow();
   return (
     <div style={{ position: "absolute", width, height, overflowY: "auto" }}>
       <div style={{ padding: 20 }}>
