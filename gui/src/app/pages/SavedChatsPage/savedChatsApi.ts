@@ -64,6 +64,7 @@ export const addSavedChat = async (a: {
   feedbackOnly?: boolean;
   neurosiftSavedChatsAccessToken?: string;
   images: { name: string; dataUrl: string }[];
+  figureDataFiles: { name: string; content: string }[];
 }) => {
   const url = `${neurosiftSavedChatsApiUrl}/api/addSavedChat`;
   const req: AddSavedChatRequest = {
@@ -126,6 +127,25 @@ export const addSavedChat = async (a: {
     });
     if (r2.status !== 200) {
       console.error("Error uploading image", r2);
+      continue;
+    }
+  }
+  for (const sub of data.figureDataSubstitutions || []) {
+    const { name, uploadUrl } = sub;
+    const x = a.figureDataFiles.find((x) => x.name === name);
+    if (!x) {
+      console.error("Unexpected: figure data file not found", name);
+      continue;
+    }
+    const r2 = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: x.content,
+    });
+    if (r2.status !== 200) {
+      console.error("Error uploading figure data file", r2);
       continue;
     }
   }
@@ -230,6 +250,7 @@ export const useSavedChats = (a: {
             dandisetId?: string;
             nwbFileUrl?: string;
             images: { name: string; dataUrl: string }[];
+            figureDataFiles: { name: string; content: string }[];
           }) => {
             const chatId = await addSavedChat({
               chatTitle: a.chatTitle,
@@ -239,6 +260,7 @@ export const useSavedChats = (a: {
               nwbFileUrl: a.nwbFileUrl,
               neurosiftSavedChatsAccessToken,
               images: a.images,
+              figureDataFiles: a.figureDataFiles,
             });
             refreshSavedChats();
             return chatId;

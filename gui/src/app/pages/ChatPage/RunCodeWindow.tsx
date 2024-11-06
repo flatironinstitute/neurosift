@@ -8,8 +8,10 @@ import {
   useState,
 } from "react";
 import PythonSessionClient, {
+  PlotlyContent,
   PythonSessionOutputItem,
 } from "./PythonSessionClient";
+import LazyPlotlyPlot from "../NwbPage/viewPlugins/CEBRA/LazyPlotlyPlot";
 
 type RunCodeWindowProps = {
   width: number;
@@ -58,10 +60,12 @@ export class RunCodeCommunicator {
       onStdout,
       onStderr,
       onImage,
+      onFigure,
     }: {
       onStdout?: (message: string) => void;
       onStderr?: (message: string) => void;
       onImage?: (format: "png", content: string) => void;
+      onFigure?: (format: "plotly", content: PlotlyContent) => void;
     },
   ) {
     if (!this.#pythonSessionClient) {
@@ -80,6 +84,8 @@ export class RunCodeCommunicator {
         onStderr && onStderr(item.content);
       } else if (item.type === "image") {
         onImage && onImage(item.format, item.content);
+      } else if (item.type === "figure") {
+        onFigure && onFigure(item.format, item.content);
       }
     };
     this.#pythonSessionClient.onOutputItem(onOutputItem);
@@ -241,6 +247,16 @@ const OutputItemView: FunctionComponent<OutputItemViewProps> = ({ item }) => {
   if (item.type === "image") {
     if (item.format === "png") {
       return <img src={`data:image/png;base64,${item.content}`} />;
+    } else {
+      return <div>Unknown image format: {(item as any).format}</div>;
+    }
+  } else if (item.type === "figure") {
+    if (item.format === "plotly") {
+      const data = item.content.data;
+      const layout = item.content.layout;
+      return <LazyPlotlyPlot data={data} layout={layout} />;
+    } else {
+      return <div>Unknown figure format: {(item as any).format}</div>;
     }
   } else {
     return (

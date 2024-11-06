@@ -1,4 +1,10 @@
-import React, { FunctionComponent, Suspense, useRef } from "react";
+import React, {
+  FunctionComponent,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { InView, useInView } from "react-intersection-observer";
 
 const Plot = React.lazy(() => import("react-plotly.js"));
@@ -42,6 +48,53 @@ const LazyPlotlyPlot: FunctionComponent<Props> = ({ data, layout }) => {
       )}
     </div>
   );
+};
+
+export const PlotlyPlotFromUrl: FunctionComponent<{ url: string }> = ({
+  url,
+}) => {
+  const x = useDataFromUrl(url);
+  if (x === undefined) {
+    return <div>Loading data for plotly plot</div>;
+  } else if (x === null) {
+    return <div>Error loading data for plotly plot</div>;
+  } else {
+    return <LazyPlotlyPlot data={x.data} layout={x.layout} />;
+  }
+};
+
+const useDataFromUrl = (url: string) => {
+  const [data, setData] = useState<{ data: any; layout: any } | undefined>(
+    undefined,
+  );
+  const [error, setError] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    let canceled = false;
+    const load = async () => {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Error loading data from url: ${url}`);
+        }
+        const x = await response.json();
+        if (canceled) return;
+        setData(x);
+      } catch (err: any) {
+        if (canceled) return;
+        setError(err.message);
+      }
+    };
+    load();
+    return () => {
+      canceled = true;
+    };
+  }, [url]);
+
+  if (error) {
+    return null;
+  }
+
+  return data;
 };
 
 export default LazyPlotlyPlot;

@@ -39,6 +39,7 @@ export const computeTool: ToolItem = {
       openRouterKey: string | null;
       executeScript?: ExecuteScript;
       onAddImage?: (name: string, url: string) => void;
+      onAddFigureDataFile?: (name: string, content: string) => void;
       onStdout?: (message: string) => void;
       onStderr?: (message: string) => void;
       confirmOkayToRun?: (script: string) => Promise<boolean>;
@@ -48,9 +49,6 @@ export const computeTool: ToolItem = {
       o;
     if (!executeScript) {
       throw new Error("executeScript is required");
-    }
-    if (!onAddImage) {
-      throw new Error("onAddImage is required");
     }
     const script: string = args.script;
     onLogMessage("compute query", script);

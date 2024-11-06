@@ -1,6 +1,14 @@
 import { KernelManager, ServerConnection, Kernel } from "@jupyterlab/services";
 import { PythonSessionStatus } from "./RunCodeWindow";
 
+export type PlotlyContent = {
+  config: {
+    plotlyServerURL: string;
+  };
+  data: any;
+  layout: any;
+};
+
 export type PythonSessionOutputItem =
   | {
       type: "stdout" | "stderr";
@@ -10,6 +18,11 @@ export type PythonSessionOutputItem =
       type: "image";
       format: "png";
       content: string;
+    }
+  | {
+      type: "figure";
+      format: "plotly";
+      content: PlotlyContent;
     };
 
 class PythonSessionClient {
@@ -55,6 +68,15 @@ class PythonSessionClient {
             type: "image",
             format: "png",
             content: msg.content.data["image/png"] as string,
+          };
+          this._addOutputItem(item);
+        } else if ("application/vnd.plotly.v1+json" in msg.content.data) {
+          const item: PythonSessionOutputItem = {
+            type: "figure",
+            format: "plotly",
+            content: msg.content.data[
+              "application/vnd.plotly.v1+json"
+            ] as PlotlyContent,
           };
           this._addOutputItem(item);
         }

@@ -22,6 +22,7 @@ export type NeurosiftSavedChat = {
   timestampCreated: number;
   messages: any[];
   imageUrls?: string[];
+  figureDataUrls?: string[];
 };
 
 export const isNeurosiftSavedChat = (x: any): x is NeurosiftSavedChat => {
@@ -38,6 +39,7 @@ export const isNeurosiftSavedChat = (x: any): x is NeurosiftSavedChat => {
     timestampCreated: isNumber,
     messages: isArrayOf(() => true),
     imageUrls: optional(isArrayOf(isString)),
+    figureDataUrls: optional(isArrayOf(isString)),
   });
 };
 
@@ -113,6 +115,11 @@ export type AddSavedChatResponse = {
     url: string;
     uploadUrl: string;
   }[];
+  figureDataSubstitutions?: {
+    name: string;
+    url: string;
+    uploadUrl: string;
+  }[];
 };
 
 export const isAddSavedChatResponse = (x: any): x is AddSavedChatResponse => {
@@ -126,6 +133,15 @@ export const isAddSavedChatResponse = (x: any): x is AddSavedChatResponse => {
         uploadUrl: isString,
       });
     }),
+    figureDataSubstitutions: optional(
+      isArrayOf((y: any) => {
+        return validateObject(y, {
+          name: isString,
+          url: isString,
+          uploadUrl: isString,
+        });
+      }),
+    ),
   });
 };
 

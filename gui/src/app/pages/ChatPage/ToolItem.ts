@@ -11,6 +11,7 @@ export type ToolItem = {
       openRouterKey: string | null;
       executeScript?: ExecuteScript;
       onAddImage?: (name: string, url: string) => void;
+      onAddFigureData?: (name: string, content: string) => void;
       onStdout?: (message: string) => void;
       onStderr?: (message: string) => void;
       confirmOkayToRun?: (script: string) => Promise<boolean>;

@@ -121,7 +121,6 @@ const SavedChatsPage: FunctionComponent<SavedChatsPageProps> = ({
 };
 
 const routeForChat = (chat: NeurosiftSavedChat): Route => {
-  console.log("--- route for chat", chat);
   if (chat.nwbFileUrl && chat.dandisetId) {
     return {
       page: "nwb",

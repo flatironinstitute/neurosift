@@ -6,6 +6,7 @@ export const getSystemMessage = async (
   tools: ToolItem[],
   chatContext: ChatContext,
   additionalKnowledge: string,
+  plotLibrary: "matplotlib" | "plotly" | "matplotlib or plotly",
 ): Promise<string> => {
   let systemMessage: string = "";
   systemMessage += `
@@ -132,10 +133,14 @@ export const getSystemMessage = async (
   Tip: when using Timeseries objects with pynwb it's better to use the x.get_timestamps()[:] method rather than x.timestamps, because sometimes start_time and rate is used instead.
 
   Tip: It's important to use keyword arguments when creating the pynwb.NWBHDF5IO object.
+
+  Tip: When you are loading an object from an NWB file in NWB do it like the following:
+  For /processing/CalciumActivity/SegmentationVol1:
+  nwbfile.processing['CalciumActivity']['SegmentationVol1']
   ========================
 
   CAPABILITY: If the user wants plot data in an NWB file, you should use the figure_script tool.
-  You pass in a self-contained script that uses matplotlib, and the output is markdown text that you can include in your response.
+  You pass in a self-contained script that uses ${plotLibrary}, and the output is markdown or html text that you can include in your response.
   To construct the Python script, you should use the above method of loading the data together with your knowledge of pynwb and other Python libraries.
   When constructing an example plot, be mindful of the size of the data you are loading. If it is too large, consider loading a subset of the data. But in that case, make sure you tell the user what you are doing.
 
@@ -146,7 +151,8 @@ export const getSystemMessage = async (
   You may consider outputing the results as JSON text.
 
   IMPORTANT: be sure to include the text output by the script in your generated response.
-  For example, if the response was ![plot](image://figure_1.png), you should include the text ![plot](image://figure_1.png) in your response.
+  For example, if the response was ![plot](image://figure_1.png), you should include the text ![plot](image://figure_1.png) in your response,
+  and if the response was <div class="plotly" src="...">plotly</div>, you should include the text <div class="plotly" src="...">plotly</div> in your response.
 
   The user may also ask for a script to generate a plot.
   When convenient, please use complete self-contained Python scripts that can be run as-is, because
@@ -205,9 +211,11 @@ export const useSystemMessage = (
 ) => {
   const [systemMessage, setSystemMessage] = useState<string | null>(null);
   useEffect(() => {
-    getSystemMessage(tools, chatContext, additionalKnowledge).then((msg) => {
-      setSystemMessage(msg);
-    });
+    getSystemMessage(tools, chatContext, additionalKnowledge, "plotly").then(
+      (msg) => {
+        setSystemMessage(msg);
+      },
+    );
   }, [tools, chatContext, additionalKnowledge]);
   return systemMessage;
 };

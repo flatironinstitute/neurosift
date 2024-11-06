@@ -26,10 +26,10 @@ import ConfirmOkayToRunWindow from "./ConfirmOkayToRunWindow";
 import EditAdditionalKnowledge from "./EditAdditionalKnowledge";
 import FeedbackWindow from "./FeedbackWindow";
 import HelpfulUnhelpfulButtons from "./HelpfulUnhelpfulButtons";
-import { imagesReducer } from "./ImagesState";
+import { imagesReducer, figureDataFilesReducer } from "./ImagesState";
 import InputBar from "./InputBar";
 import MessageDisplay from "./MessageDisplay";
-import PythonSessionClient from "./PythonSessionClient";
+import PythonSessionClient, { PlotlyContent } from "./PythonSessionClient";
 import RunCodeWindow, {
   PythonSessionStatus,
   RunCodeCommunicator,
@@ -106,6 +106,9 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
         onImage: (format, content) => {
           //
         },
+        onFigure: (format, content) => {
+          //
+        },
       });
     },
     [runCodeCommunicator],
@@ -163,6 +166,10 @@ const MainChatWindow: FunctionComponent<
   const [modelName, setModelName] = useState("openai/gpt-4o");
 
   const [images, imagesDispatch] = useReducer(imagesReducer, []);
+  const [figureDataFiles, figureDataFilesDispatch] = useReducer(
+    figureDataFilesReducer,
+    [],
+  );
 
   const handleUserMessage = useCallback(
     (message: string) => {
@@ -227,7 +234,7 @@ const MainChatWindow: FunctionComponent<
       ret.push(probeDandisetTool);
       ret.push(timeseriesAlignmentViewTool);
       ret.push(probeNwbFileTool);
-      ret.push(generateFigureTool);
+      ret.push(generateFigureTool("matplotlib or plotly"));
       ret.push(computeTool);
     }
     return ret;
@@ -449,6 +456,7 @@ const MainChatWindow: FunctionComponent<
             onStdout?: (message: string) => void;
             onStderr?: (message: string) => void;
             onImage?: (format: "png", content: string) => void;
+            onFigure?: (format: "plotly", content: PlotlyContent) => void;
           },
         ) => {
           const pythonSessionClient = new PythonSessionClient();
@@ -459,6 +467,8 @@ const MainChatWindow: FunctionComponent<
               o.onStderr && o.onStderr(item.content);
             } else if (item.type === "image") {
               o.onImage && o.onImage(item.format, item.content);
+            } else if (item.type === "figure") {
+              o.onFigure && o.onFigure(item.format, item.content);
             }
           });
           await pythonSessionClient.initiate();
@@ -490,6 +500,13 @@ const MainChatWindow: FunctionComponent<
                 type: "add",
                 name,
                 dataUrl: url,
+              });
+            },
+            onAddFigureData: (name, content) => {
+              figureDataFilesDispatch({
+                type: "add",
+                name,
+                content,
               });
             },
             confirmOkayToRun,
@@ -768,6 +785,7 @@ const MainChatWindow: FunctionComponent<
                       pythonSessionStatus === "uninitiated"
                     }
                     images={images}
+                    figureDataFiles={figureDataFiles}
                   />
                 </>
               ) : c.role === "assistant" && !!(c as any).tool_calls ? (
@@ -909,6 +927,7 @@ const MainChatWindow: FunctionComponent<
           openRouterKey={openRouterKey}
           chatContext={chatContext}
           images={images}
+          figureDataFiles={figureDataFiles}
         />
       </ModalWindow>
       <ModalWindow

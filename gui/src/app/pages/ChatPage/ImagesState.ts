@@ -19,3 +19,25 @@ export const imagesReducer = (
     return state;
   }
 };
+
+export type FigureDataFilesState = {
+  name: string;
+  content: string;
+}[];
+
+export type FigureDataFilesAction = {
+  type: "add";
+  name: string;
+  content: string;
+};
+
+export const figureDataFilesReducer = (
+  state: FigureDataFilesState,
+  action: FigureDataFilesAction,
+): FigureDataFilesState => {
+  if (action.type === "add") {
+    return [...state, { name: action.name, content: action.content }];
+  } else {
+    return state;
+  }
+};

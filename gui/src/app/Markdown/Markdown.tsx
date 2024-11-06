@@ -14,6 +14,9 @@ import remarkGfm from "remark-gfm";
 import remarkMathPlugin from "remark-math";
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import { CopyAll, PlayArrow } from "@mui/icons-material";
+import LazyPlotlyPlot, {
+  PlotlyPlotFromUrl,
+} from "app/pages/NwbPage/viewPlugins/CEBRA/LazyPlotlyPlot";
 
 type Props = {
   source: string;
@@ -21,6 +24,7 @@ type Props = {
   onRunCode?: (code: string) => void;
   runCodeReady?: boolean;
   images?: { name: string; dataUrl: string }[];
+  figureDataFiles?: { name: string; content: string }[];
 };
 
 const Markdown: FunctionComponent<Props> = ({
@@ -29,6 +33,7 @@ const Markdown: FunctionComponent<Props> = ({
   onRunCode,
   runCodeReady,
   images,
+  figureDataFiles,
 }) => {
   const components: Partial<
     Omit<NormalComponents, keyof SpecialComponents> & SpecialComponents
@@ -91,6 +96,24 @@ const Markdown: FunctionComponent<Props> = ({
               frameBorder={0}
             />
           );
+        } else if (className === "plotly") {
+          // eslint-disable-next-line react/prop-types
+          const src = (props as any).src || "";
+          if (src.startsWith("figure://")) {
+            for (const figureDataFile of figureDataFiles || []) {
+              if (src === `figure://${figureDataFile.name}`) {
+                const x = JSON.parse(figureDataFile.content);
+                return <LazyPlotlyPlot data={x.data} layout={x.layout} />;
+              }
+            }
+          } else if (src.startsWith("http://") || src.startsWith("https://")) {
+            return <PlotlyPlotFromUrl url={src} />;
+          }
+          return (
+            <div className={className} {...props}>
+              {children}
+            </div>
+          );
         } else {
           return (
             <div className={className} {...props}>
@@ -128,7 +151,7 @@ const Markdown: FunctionComponent<Props> = ({
       },
       // }
     }),
-    [onSpecialLinkClick, onRunCode, runCodeReady, images],
+    [onSpecialLinkClick, onRunCode, runCodeReady, images, figureDataFiles],
   );
   const source2 = useMemo(() => {
     const lines = source.split("\n").map((line) => {
