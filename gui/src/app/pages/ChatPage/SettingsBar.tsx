@@ -1,5 +1,5 @@
 import { SmallIconButton } from "@fi-sci/misc";
-import { Cancel, ForkLeft, Save } from "@mui/icons-material";
+import { Cancel, ClearAll, ForkLeft, Save } from "@mui/icons-material";
 import { FunctionComponent } from "react";
 import { FaBrain } from "react-icons/fa";
 
@@ -11,6 +11,7 @@ type SettingsBarProps = {
   setModelName: (name: string) => void;
   onToggleLeftPanel?: () => void;
   onSaveChat?: () => void;
+  onCancelScript?: () => void;
 };
 
 const modelOptions = [
@@ -28,6 +29,7 @@ const SettingsBar: FunctionComponent<SettingsBarProps> = ({
   setModelName,
   onToggleLeftPanel,
   onSaveChat,
+  onCancelScript,
 }) => {
   return (
     <span style={{ fontSize: 12, padding: 5 }}>
@@ -41,7 +43,7 @@ const SettingsBar: FunctionComponent<SettingsBarProps> = ({
       </select>
       &nbsp;
       <SmallIconButton
-        icon={<Cancel />}
+        icon={<ClearAll />}
         onClick={() => {
           const ok = window.confirm(
             "Are you sure you want to clear all messages?",
@@ -63,6 +65,13 @@ const SettingsBar: FunctionComponent<SettingsBarProps> = ({
           icon={<Save />}
           onClick={onSaveChat}
           title="Save chat"
+        />
+      )}
+      {onCancelScript && (
+        <SmallIconButton
+          icon={<Cancel />}
+          onClick={onCancelScript}
+          title="Cancel running script"
         />
       )}
       <span>&nbsp;&nbsp;AI can be inaccurate.</span>

@@ -127,7 +127,7 @@ const routeForChat = (chat: NeurosiftSavedChat): Route => {
       url: [chat.nwbFileUrl],
       dandisetId: chat.dandisetId,
       chatId: chat.chatId,
-      storageType: ["h5"],
+      storageType: [storageTypeForUrl(chat.nwbFileUrl)],
     };
   } else if (chat.dandisetId) {
     return {
@@ -141,6 +141,13 @@ const routeForChat = (chat: NeurosiftSavedChat): Route => {
       chatId: chat.chatId,
     };
   }
+};
+
+const storageTypeForUrl = (url: string): "h5" | "lindi" => {
+  if (url.endsWith(".lindi.json") || url.endsWith(".lindi.tar")) {
+    return "lindi";
+  }
+  return "h5";
 };
 
 export default SavedChatsPage;

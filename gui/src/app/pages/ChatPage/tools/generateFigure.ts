@@ -46,6 +46,7 @@ export const generateFigureTool: (
       onStdout?: (message: string) => void;
       onStderr?: (message: string) => void;
       confirmOkayToRun?: (script: string) => Promise<boolean>;
+      cancelSignaler?: { onCancel: () => void };
     },
   ) => {
     const {
@@ -85,7 +86,7 @@ export const generateFigureTool: (
       onStderr && onStderr(message);
       stderrLines.push(message);
     };
-    let output: string;
+    let output: string = "";
     try {
       const okay = confirmOkayToRun ? await confirmOkayToRun(script) : false;
       if (!okay) {
@@ -125,7 +126,7 @@ export const generateFigureTool: (
     } catch (error: any) {
       onLogMessage("generate_figure error", error.message);
       if (stderrLines.length > 0) {
-        output = stderrLines.join("\n");
+        output = "Error:\n\n" + error.message + "\n\n" + stderrLines.join("\n");
       } else {
         throw error;
       }

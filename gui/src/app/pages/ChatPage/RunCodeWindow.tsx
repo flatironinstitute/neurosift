@@ -67,6 +67,7 @@ export class RunCodeCommunicator {
       onImage?: (format: "png", content: string) => void;
       onFigure?: (format: "plotly", content: PlotlyContent) => void;
     },
+    canceler: { current: boolean },
   ) {
     if (!this.#pythonSessionClient) {
       throw new Error("Python session client not ready");
@@ -90,7 +91,32 @@ export class RunCodeCommunicator {
     };
     this.#pythonSessionClient.onOutputItem(onOutputItem);
     try {
-      await this.#pythonSessionClient.requestRunCode(code);
+      await new Promise<void>((resolve, reject) => {
+        let done = false;
+        this.#pythonSessionClient
+          ?.runCode(code)
+          .then(() => {
+            if (done) return;
+            done = true;
+            resolve();
+          })
+          .catch((e) => {
+            if (done) return;
+            done = true;
+            reject(e);
+          });
+        const check = () => {
+          if (done) return;
+          if (canceler.current) {
+            done = true;
+            reject(new Error("Script execution cancelled"));
+            return;
+          }
+          setTimeout(check, 100);
+        };
+        check();
+      });
+      await this.#pythonSessionClient.runCode(code);
       // wait until idle
       while (
         (this.#pythonSessionClient.pythonSessionStatus as any) !== "idle"

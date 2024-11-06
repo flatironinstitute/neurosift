@@ -74,12 +74,9 @@ const getTimeseriesAlignmentViewData = async (
 ) => {
   const urlLindi = await tryGetLindiUrl(nwb_file_url, dandiset_id || "");
   let nwbFile: RemoteH5FileX;
-  console.log("------------- 1", urlLindi, nwb_file_url, dandiset_id);
   if (urlLindi) {
-    console.log("--- 2");
     nwbFile = await RemoteH5FileLindi.create(urlLindi);
   } else {
-    console.log("--- 3");
     nwbFile = new RemoteH5File(nwb_file_url, {});
   }
   const items: {

@@ -95,20 +95,26 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   const handleRunCode = useCallback(
     async (code: string) => {
       setShowRunCodeWindow(true);
-      runCodeCommunicator.runCode(code, {
-        onStdout: (message) => {
-          //
+      runCodeCommunicator.runCode(
+        code,
+        {
+          onStdout: (message) => {
+            //
+          },
+          onStderr: (message) => {
+            //
+          },
+          onImage: (format, content) => {
+            //
+          },
+          onFigure: (format, content) => {
+            //
+          },
         },
-        onStderr: (message) => {
-          //
+        {
+          current: false,
         },
-        onImage: (format, content) => {
-          //
-        },
-        onFigure: (format, content) => {
-          //
-        },
-      });
+      );
     },
     [runCodeCommunicator],
   );
@@ -409,6 +415,11 @@ const MainChatWindow: FunctionComponent<
   // pending tool calls
   const [pendingToolCalls, setPendingToolCalls] = useState<ORToolCall[]>([]);
 
+  const [scriptExecutionStatus, setScriptExecutionStatus] = useState<
+    "none" | "starting" | "running"
+  >("none");
+  const scriptCancelTrigger = useRef<boolean>(false);
+
   // last message is assistant with tool calls, so we need to run the tool calls
   useEffect(() => {
     if (!systemMessage) return;
@@ -445,23 +456,51 @@ const MainChatWindow: FunctionComponent<
             onFigure?: (format: "plotly", content: PlotlyContent) => void;
           },
         ) => {
+          setScriptExecutionStatus("starting");
+          scriptCancelTrigger.current = false;
           const pythonSessionClient = new PythonSessionClient();
-          pythonSessionClient.onOutputItem((item) => {
-            if (item.type === "stdout") {
-              o.onStdout && o.onStdout(item.content);
-            } else if (item.type === "stderr") {
-              o.onStderr && o.onStderr(item.content);
-            } else if (item.type === "image") {
-              o.onImage && o.onImage(item.format, item.content);
-            } else if (item.type === "figure") {
-              o.onFigure && o.onFigure(item.format, item.content);
-            }
-          });
-          await pythonSessionClient.initiate();
-          await pythonSessionClient.requestRunCode(script);
-          // wait until idle
-          while (pythonSessionClient.pythonSessionStatus !== "idle") {
-            await new Promise((resolve) => setTimeout(resolve, 100));
+          try {
+            pythonSessionClient.onOutputItem((item) => {
+              if (item.type === "stdout") {
+                o.onStdout && o.onStdout(item.content);
+              } else if (item.type === "stderr") {
+                o.onStderr && o.onStderr(item.content);
+              } else if (item.type === "image") {
+                o.onImage && o.onImage(item.format, item.content);
+              } else if (item.type === "figure") {
+                o.onFigure && o.onFigure(item.format, item.content);
+              }
+            });
+            await pythonSessionClient.initiate();
+            setScriptExecutionStatus("running");
+            await new Promise<void>((resolve, reject) => {
+              let done = false;
+              pythonSessionClient
+                .runCode(script)
+                .then(() => {
+                  if (done) return;
+                  done = true;
+                  resolve();
+                })
+                .catch((e) => {
+                  if (done) return;
+                  done = true;
+                  reject(e);
+                });
+              const check = () => {
+                if (done) return;
+                if (scriptCancelTrigger.current) {
+                  done = true;
+                  reject(new Error("Script execution cancelled by user"));
+                  return;
+                }
+                setTimeout(check, 100);
+              };
+              check();
+            });
+          } finally {
+            pythonSessionClient.shutdown();
+            setScriptExecutionStatus("none");
           }
         };
         let response: string;
@@ -903,6 +942,13 @@ const MainChatWindow: FunctionComponent<
           setModelName={setModelName}
           onToggleLeftPanel={onToggleLeftPanel}
           onSaveChat={openSaveChat}
+          onCancelScript={
+            scriptExecutionStatus === "running"
+              ? () => {
+                  scriptCancelTrigger.current = true;
+                }
+              : undefined
+          }
         />
       </div>
       <ModalWindow visible={saveChatVisible} onClose={closeSaveChat}>

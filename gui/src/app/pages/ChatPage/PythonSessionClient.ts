@@ -115,7 +115,7 @@ class PythonSessionClient {
     if (!this.#kernel) return;
     await this.#kernel.shutdown();
   }
-  async requestRunCode(code: string) {
+  async runCode(code: string) {
     if (!this.#kernel) {
       try {
         console.info("initiating python session");

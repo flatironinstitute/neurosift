@@ -157,7 +157,6 @@ const Markdown: FunctionComponent<Props> = ({
     const lines = source.split("\n").map((line) => {
       if (line.trim().startsWith("https://figurl.org/f")) {
         const url64 = base64Encode(line.trim());
-        console.log("---line", line);
         return `<div class="figurl-figure" src64="${url64}"></div>`;
         // it's very difficult to the following to work - encoding issues with markdown
         // return `<iframe src="${url}" width="100%" height="400" frameBorder="0"></iframe>`;
