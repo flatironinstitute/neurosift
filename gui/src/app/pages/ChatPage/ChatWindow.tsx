@@ -1,10 +1,7 @@
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import Markdown from "neurosift-lib/components/Markdown";
-import {
-  ORMessage,
-  ORToolCall,
-} from "app/pages/DandisetPage/DandisetViewFromDendro/openRouterTypes";
+import { ORMessage, ORToolCall } from "app/pages/ChatPage/openRouterTypes";
 import Splitter from "neurosift-lib/components/Splitter";
 import useRoute from "neurosift-lib/contexts/useRoute";
 import {

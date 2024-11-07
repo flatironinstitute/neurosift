@@ -1,4 +1,4 @@
-import { ORTool } from "../DandisetPage/DandisetViewFromDendro/openRouterTypes";
+import { ORTool } from "./openRouterTypes";
 import { ExecuteScript } from "./tools/generateFigure";
 
 export type ToolItem = {

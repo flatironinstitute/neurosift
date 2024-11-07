@@ -1,68 +1,10 @@
-import { ORMessage, ORTool } from "../../ChatPage/openRouterTypes";
 import {
-  InitiateChatQueryRequest,
-  ChatQueryRequest,
-  isInitiateChatQueryResponse,
-  isChatQueryResponse,
-  isChatQueryTokenObject,
-  NwbFileInfo,
+  EmbeddingRequest,
   InitiateEmbeddingRequest,
-  isInitiateEmbeddingResponse,
   isEmbeddingResponse,
   isEmbeddingTokenObject,
-  EmbeddingRequest,
-  InitiateNeurosiftCompletionRequest,
-  NeurosiftCompletionRequest,
-  isInitiateNeurosiftCompletionResponse,
-  isNeurosiftCompletionResponse,
-  isNeurosiftCompletionTokenObject,
+  isInitiateEmbeddingResponse,
 } from "./nwbchat-types";
-
-export class NwbchatClient {
-  constructor(private o: { verbose?: boolean } = {}) {}
-  async chatQuery(prompt: string, nwbFileInfo: NwbFileInfo, gptModel: string) {
-    const nwbFileInfoJson = JSON.stringify(nwbFileInfo);
-    const req: InitiateChatQueryRequest = {
-      type: "initiateChatQueryRequest",
-      promptLength: prompt.length,
-      nwbFileInfoJsonLength: nwbFileInfoJson.length,
-      gptModel,
-    };
-    const resp = await postApiRequest("initiateChatQuery", req);
-    if (!isInitiateChatQueryResponse(resp)) {
-      throw new Error("Invalid response");
-    }
-    const { chatQueryToken, tokenSignature } = resp;
-    const tokenObject = JSON.parse(chatQueryToken);
-    if (!isChatQueryTokenObject(tokenObject)) {
-      throw new Error("Invalid chat query token");
-    }
-    const { difficulty, delay } = tokenObject;
-    const challengeResponse = await solveChallenge(
-      resp.chatQueryToken,
-      difficulty,
-      delay,
-      { verbose: this.o.verbose },
-    );
-    const req2: ChatQueryRequest = {
-      type: "chatQueryRequest",
-      chatQueryToken: resp.chatQueryToken,
-      tokenSignature,
-      promptLength: prompt.length,
-      nwbFileInfoJsonLength: nwbFileInfoJson.length,
-      prompt,
-      nwbFileInfoJson,
-      challengeResponse: challengeResponse,
-      gptModel,
-    };
-    const resp2 = await postApiRequest("chatQuery", req2);
-    if (!isChatQueryResponse(resp2)) {
-      throw new Error("Invalid response");
-    }
-    const { response, estimatedCost, fullPrompt } = resp2;
-    return { response, estimatedCost, fullPrompt };
-  }
-}
 
 const solveChallenge = async (
   prefix: string,
@@ -185,50 +127,5 @@ export class EmbeddingClient {
     }
     const { embedding } = resp2;
     return { embedding };
-  }
-}
-
-export class NeurosiftCompletionClient {
-  constructor(private o: { verbose?: boolean } = {}) {}
-  async completion(messages: ORMessage[], modelName: string, tools?: ORTool[]) {
-    const messagesJson = JSON.stringify(messages);
-    const req: InitiateNeurosiftCompletionRequest = {
-      type: "initiateNeurosiftCompletionRequest",
-      messagesJsonLength: messagesJson.length,
-      modelName,
-    };
-    const resp = await postApiRequest("initiateNeurosiftCompletion", req);
-    if (!isInitiateNeurosiftCompletionResponse(resp)) {
-      throw new Error("Invalid response");
-    }
-    const { neurosiftCompletionToken, tokenSignature } = resp;
-    const tokenObject = JSON.parse(neurosiftCompletionToken);
-    if (!isNeurosiftCompletionTokenObject(tokenObject)) {
-      throw new Error("Invalid neurosift completion token");
-    }
-    const { difficulty, delay } = tokenObject;
-    const challengeResponse = await solveChallenge(
-      neurosiftCompletionToken,
-      difficulty,
-      delay,
-      { verbose: this.o.verbose },
-    );
-    const req2: NeurosiftCompletionRequest = {
-      type: "neurosiftCompletionRequest",
-      neurosiftCompletionToken,
-      tokenSignature,
-      messagesJsonLength: messagesJson.length,
-      messagesJson,
-      challengeResponse,
-      modelName,
-      toolsJson: tools ? JSON.stringify(tools) : undefined,
-      toolChoice: tools ? "auto" : undefined,
-    };
-    const resp2 = await postApiRequest("neurosiftCompletion", req2);
-    if (!isNeurosiftCompletionResponse(resp2)) {
-      throw new Error("Invalid response");
-    }
-    const { response, toolCalls } = resp2;
-    return { response, toolCalls };
   }
 }

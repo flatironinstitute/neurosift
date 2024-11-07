@@ -1,8 +1,4 @@
-import {
-  ORMessage,
-  ORTool,
-  ORToolChoice,
-} from "app/pages/DandisetPage/DandisetViewFromDendro/openRouterTypes";
+import { ORMessage, ORTool, ORToolChoice } from "./openRouterTypes";
 
 const chatCompletionTimestamps: number[] = [];
 

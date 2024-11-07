@@ -1,8 +1,5 @@
 import { Hyperlink } from "@fi-sci/misc";
-import {
-  ORMessage,
-  ORToolCall,
-} from "app/pages/DandisetPage/DandisetViewFromDendro/openRouterTypes";
+import { ORMessage, ORToolCall } from "app/pages/ChatPage/openRouterTypes";
 import { FunctionComponent, useMemo } from "react";
 
 type ToolElementProps = {

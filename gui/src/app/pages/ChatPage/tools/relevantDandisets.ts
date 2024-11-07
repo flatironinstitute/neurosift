@@ -2,7 +2,7 @@ import {
   computeEmbeddingForAbstractText,
   findSimilarDandisetIds,
   loadEmbeddings,
-} from "../../DandisetPage/DandisetViewFromDendro/SimilarDandisetsView";
+} from "./SimilarDandisetsView";
 
 export const relevantDandisetsTool = {
   tool: {

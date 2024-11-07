@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useModalWindow } from "@fi-sci/modal-window";
 import Splitter from "neurosift-lib/components/Splitter";
 import useRoute from "neurosift-lib/contexts/useRoute";
 import {

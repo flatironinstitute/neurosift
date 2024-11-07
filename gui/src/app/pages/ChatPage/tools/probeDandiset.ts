@@ -1,4 +1,4 @@
-import { ORMessage } from "../../DandisetPage/DandisetViewFromDendro/openRouterTypes";
+import { ORMessage } from "../openRouterTypes";
 import chatCompletion from "../chatCompletion";
 import { ToolItem } from "../ToolItem";
 

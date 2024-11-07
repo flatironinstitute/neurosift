@@ -5,7 +5,7 @@ import useNeurosiftSavedChats from "../SavedChatsPage/useNeurosiftSavedChats";
 import useRoute from "neurosift-lib/contexts/useRoute";
 import { NeurosiftSavedChatsLoginView } from "app/ApiKeysWindow/ApiKeysWindow";
 import { Hyperlink } from "@fi-sci/misc";
-import { ORMessage } from "../DandisetPage/DandisetViewFromDendro/openRouterTypes";
+import { ORMessage } from "./openRouterTypes";
 import chatCompletion from "./chatCompletion";
 import { Chat } from "./Chat";
 

@@ -1,7 +1,6 @@
 import { SmallIconButton } from "@fi-sci/misc";
 import { Cancel, ClearAll, ForkLeft, Save } from "@mui/icons-material";
 import { FunctionComponent } from "react";
-import { FaBrain } from "react-icons/fa";
 
 type SettingsBarProps = {
   width: number;

@@ -1,4 +1,4 @@
-import { DandisetsResponse } from "app/pages/DandiPage/DandiBrowser/types";
+import { DandisetsResponse } from "./dandiset-types";
 
 export const lexicaltDandisetsTool = {
   tool: {

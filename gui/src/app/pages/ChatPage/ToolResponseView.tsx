@@ -1,8 +1,5 @@
 import Markdown from "neurosift-lib/components/Markdown";
-import {
-  ORMessage,
-  ORToolCall,
-} from "app/pages/DandisetPage/DandisetViewFromDendro/openRouterTypes";
+import { ORMessage, ORToolCall } from "app/pages/ChatPage/openRouterTypes";
 import { FunctionComponent } from "react";
 
 type ToolResponseViewProps = {
