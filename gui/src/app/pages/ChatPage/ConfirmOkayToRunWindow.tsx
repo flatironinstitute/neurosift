@@ -1,7 +1,8 @@
-import { SmallIconButton } from "@fi-sci/misc";
+import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import { Cancel, Check, Refresh } from "@mui/icons-material";
 import Markdown from "app/Markdown/Markdown";
 import { FunctionComponent, useCallback, useEffect, useState } from "react";
+import { useJupyterConnectivity } from "./JupyterConnectivity";
 
 type ConfirmOkayToRunWindowProps = {
   script: string | null;
@@ -12,11 +13,47 @@ type ConfirmOkayToRunWindowProps = {
 const ConfirmOkayToRunWindow: FunctionComponent<
   ConfirmOkayToRunWindowProps
 > = ({ script, onConfirm, onCancel }) => {
+  const { jupyterIsConnected, jupyterUrl, refreshJupyter, changeJupyterUrl } =
+    useJupyterConnectivity();
+  if (!jupyterIsConnected) {
+    return (
+      <div style={{ padding: 20 }}>
+        <div>
+          <p>
+            The agent would like to run a script on your Jupyter runtime kernel,
+            but you are not connected to a Jupyter runtime.
+          </p>
+          <p>
+            You are trying to connect to a Jupyter runtime at {jupyterUrl} (
+            <Hyperlink onClick={changeJupyterUrl}>change this</Hyperlink>).
+          </p>
+          <p>
+            Run the following command to start a Jupyter runtime on your local
+            machine on port 8888 and allow access to neurosift:
+          </p>
+          <div>
+            <code>
+              {`jupyter lab --NotebookApp.allow_origin='https://neurosift.app' --no-browser --port=8888`}
+            </code>
+          </div>
+        </div>
+        <div>
+          <button onClick={refreshJupyter}>Refresh</button>
+          &nbsp;&nbsp;&nbsp;
+          <button onClick={onCancel}>Cancel</button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div style={{ padding: 20 }}>
       <p>
         The agent would like to run the following script on your Jupyter runtime
         kernel. Are you okay with this?
+      </p>
+      <p>
+        You are connected to a Jupyter runtime at {jupyterUrl} (
+        <Hyperlink onClick={changeJupyterUrl}>change this</Hyperlink>).
       </p>
       <div>
         <SmallIconButton
@@ -34,72 +71,10 @@ const ConfirmOkayToRunWindow: FunctionComponent<
         />
       </div>
       <div>
-        <JupyterConnectivityCheck />
-      </div>
-      <div>
         <Markdown source={`\`\`\`python\n${script}\n\`\`\``} />
       </div>
     </div>
   );
-};
-
-const JUPYTER_PORT = 8888;
-
-const JupyterConnectivityCheck: FunctionComponent = () => {
-  const { isConnected, refresh } = useJupyterConnectivity();
-  if (isConnected) {
-    return (
-      <span style={{ color: "darkgreen" }}>
-        Connected to Jupyter runtime on port {JUPYTER_PORT}
-      </span>
-    );
-  } else {
-    return (
-      <>
-        <div style={{ color: "darkred" }}>
-          Not connected to Jupyter runtime on port {JUPYTER_PORT}. Use the
-          following command to start one:{" "}
-          <code>
-            {
-              "jupyter lab --NotebookApp.allow_origin='https://neurosift.app' --no-browser"
-            }
-          </code>
-        </div>
-        <div>
-          <SmallIconButton
-            icon={<Refresh />}
-            onClick={refresh}
-            title="Refresh"
-            label="Refresh"
-          />
-        </div>
-      </>
-    );
-  }
-};
-
-const useJupyterConnectivity = () => {
-  const [isConnected, setIsConnected] = useState(false);
-  const check = useCallback(async () => {
-    try {
-      const resp = await fetch(`http://localhost:${JUPYTER_PORT}/api/sessions`);
-      if (resp.ok) {
-        setIsConnected(true);
-      } else {
-        setIsConnected(false);
-      }
-    } catch {
-      setIsConnected(false);
-    }
-  }, []);
-  const [refreshCode, setRefreshCode] = useState(0);
-  useEffect(() => {
-    check();
-  }, [check, refreshCode]);
-  return {
-    isConnected,
-    refresh: () => setRefreshCode((c) => c + 1),
-  };
 };
 
 export default ConfirmOkayToRunWindow;

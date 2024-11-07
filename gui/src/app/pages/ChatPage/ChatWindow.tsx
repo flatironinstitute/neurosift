@@ -49,6 +49,7 @@ import { unitsColnamesTool } from "./tools/probeUnitsColnames";
 import { relevantDandisetsTool } from "./tools/relevantDandisets";
 import { timeseriesAlignmentViewTool } from "./tools/timeseriesAlignmentView";
 import { computeTool } from "./tools/compute";
+import { useJupyterConnectivity } from "./JupyterConnectivity";
 
 type ChatWindowProps = {
   width: number;
@@ -420,6 +421,10 @@ const MainChatWindow: FunctionComponent<
   >("none");
   const scriptCancelTrigger = useRef<boolean>(false);
 
+  const { jupyterUrl } = useJupyterConnectivity();
+
+  const runningToolCalls = useRef(false);
+
   // last message is assistant with tool calls, so we need to run the tool calls
   useEffect(() => {
     if (!systemMessage) return;
@@ -435,6 +440,7 @@ const MainChatWindow: FunctionComponent<
     if (!lastMessage) return;
     if (lastMessage.role !== "assistant") return;
     if (!(lastMessage as any).tool_calls) return;
+    if (runningToolCalls.current) return;
     (async () => {
       const newMessages: ORMessage[] = [];
       const toolCalls: ORToolCall[] = (lastMessage as any).tool_calls;
@@ -458,7 +464,7 @@ const MainChatWindow: FunctionComponent<
         ) => {
           setScriptExecutionStatus("starting");
           scriptCancelTrigger.current = false;
-          const pythonSessionClient = new PythonSessionClient();
+          const pythonSessionClient = new PythonSessionClient(jupyterUrl);
           try {
             pythonSessionClient.onOutputItem((item) => {
               if (item.type === "stdout") {
@@ -554,6 +560,7 @@ const MainChatWindow: FunctionComponent<
       };
       // run the tool calls in parallel
       resetAgentProgress();
+      runningToolCalls.current = true;
       try {
         setPendingToolCalls(toolCalls);
         const toolItems = toolCalls.map((tc) =>
@@ -576,6 +583,7 @@ const MainChatWindow: FunctionComponent<
             .map(processToolCall),
         );
       } finally {
+        runningToolCalls.current = false;
         setPendingToolCalls([]);
         resetAgentProgress();
       }
@@ -600,6 +608,7 @@ const MainChatWindow: FunctionComponent<
     confirmOkayToRun,
     imagesDispatch,
     onLogMessage,
+    jupyterUrl,
   ]);
 
   // div refs

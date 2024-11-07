@@ -32,10 +32,10 @@ class PythonSessionClient {
     status: PythonSessionStatus,
   ) => void)[] = [];
   #kernel: Kernel.IKernelConnection | undefined;
-  constructor() {}
+  constructor(private jupyterUrl: string) {}
   async initiate() {
     const serverSettings = ServerConnection.makeSettings({
-      baseUrl: "http://localhost:8888",
+      baseUrl: this.jupyterUrl,
     });
     const kernelManager = new KernelManager({ serverSettings });
     const kernel = await kernelManager.startNew({
@@ -123,7 +123,7 @@ class PythonSessionClient {
       } catch (err: any) {
         console.error("Error initiating", err);
         const errMessages = [
-          "Error initiating python session. You must have a jupyter server running on http://localhost:8888 and allow access to neurosift.",
+          "Error initiating python session. You need to have a jupyter server running on http://localhost:8888 and allow access to neurosift.",
           "Run: jupyter lab --NotebookApp.allow_origin='https://neurosift.app' --no-browser",
         ];
         for (const errMessage of errMessages) {

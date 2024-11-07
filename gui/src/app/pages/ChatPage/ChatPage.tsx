@@ -14,6 +14,7 @@ import { useSavedChats } from "../SavedChatsPage/savedChatsApi";
 import { Chat, chatReducer, emptyChat } from "./Chat";
 import { ChatContext } from "./ChatContext";
 import ChatWindow from "./ChatWindow";
+import { JupyterConnectivityProvider } from "./JupyterConnectivity";
 
 type ChatPageProps = {
   width: number;
@@ -79,32 +80,34 @@ const ChatPageChild: FunctionComponent<
     [],
   );
   return (
-    <Splitter
-      width={width}
-      height={height}
-      direction="horizontal"
-      initialPosition={Math.min(300, width / 2)}
-      hideFirstChild={!leftPanelVisible}
-    >
-      <LeftPanel
-        width={0}
-        height={0}
-        chat={chat}
-        openRouterKey={openRouterKey}
-        setOpenRouterKey={setOpenRouterKey}
-        logger={logger}
-      />
-      <ChatWindow
-        width={0}
-        height={0}
-        chat={chat}
-        chatDispatch={chatDispatch}
-        openRouterKey={openRouterKey}
-        onLogMessage={handleLogMessage}
-        onToggleLeftPanel={() => setLeftPanelVisible((prev) => !prev)}
-        chatContext={chatContext}
-      />
-    </Splitter>
+    <JupyterConnectivityProvider>
+      <Splitter
+        width={width}
+        height={height}
+        direction="horizontal"
+        initialPosition={Math.min(300, width / 2)}
+        hideFirstChild={!leftPanelVisible}
+      >
+        <LeftPanel
+          width={0}
+          height={0}
+          chat={chat}
+          openRouterKey={openRouterKey}
+          setOpenRouterKey={setOpenRouterKey}
+          logger={logger}
+        />
+        <ChatWindow
+          width={0}
+          height={0}
+          chat={chat}
+          chatDispatch={chatDispatch}
+          openRouterKey={openRouterKey}
+          onLogMessage={handleLogMessage}
+          onToggleLeftPanel={() => setLeftPanelVisible((prev) => !prev)}
+          chatContext={chatContext}
+        />
+      </Splitter>
+    </JupyterConnectivityProvider>
   );
 };
 

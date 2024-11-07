@@ -12,6 +12,7 @@ import PythonSessionClient, {
   PythonSessionOutputItem,
 } from "./PythonSessionClient";
 import LazyPlotlyPlot from "../NwbPage/viewPlugins/CEBRA/LazyPlotlyPlot";
+import { useJupyterConnectivity } from "./JupyterConnectivity";
 
 type RunCodeWindowProps = {
   width: number;
@@ -116,7 +117,6 @@ export class RunCodeCommunicator {
         };
         check();
       });
-      await this.#pythonSessionClient.runCode(code);
       // wait until idle
       while (
         (this.#pythonSessionClient.pythonSessionStatus as any) !== "idle"
@@ -166,6 +166,7 @@ const RunCodeWindow: FunctionComponent<RunCodeWindowProps> = ({
   height,
   runCodeCommunicator,
 }) => {
+  const { jupyterUrl } = useJupyterConnectivity();
   const [outputContent, dispatchOutputContent] = useReducer(
     outputContentReducer,
     { items: [] },
@@ -174,7 +175,7 @@ const RunCodeWindow: FunctionComponent<RunCodeWindowProps> = ({
     useState<PythonSessionClient | null>(null);
   const bottomElementRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const x = new PythonSessionClient();
+    const x = new PythonSessionClient(jupyterUrl);
     x.onOutputItem((item: PythonSessionOutputItem) => {
       dispatchOutputContent({ type: "add-output-item", item });
     });
