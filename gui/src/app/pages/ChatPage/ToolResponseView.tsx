@@ -1,4 +1,4 @@
-import { Markdown } from "neurosift-lib";
+import Markdown from "neurosift-lib/components/Markdown";
 import {
   ORMessage,
   ORToolCall,

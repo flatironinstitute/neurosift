@@ -26,7 +26,8 @@
     "paths": {
       "@NSComponents/*": ["app/components/*"],
       "@remote-h5-file/*": ["remote-h5-file/*"],
-      "@electrode-geometry/*": ["electrode-geometry/*"]
+      "@electrode-geometry/*": ["electrode-geometry/*"],
+      "neurosift-lib/*": ["neurosift-lib/*"]
     }
   },
   "include": ["src"],

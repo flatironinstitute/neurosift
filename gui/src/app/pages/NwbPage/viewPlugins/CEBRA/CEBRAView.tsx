@@ -4,7 +4,7 @@ import {
   getRemoteH5FileLindi,
 } from "@remote-h5-file/index";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import { Markdown } from "neurosift-lib";
+import Markdown from "neurosift-lib/components/Markdown";
 import {
   DendroJob,
   DendroJobDefinition,

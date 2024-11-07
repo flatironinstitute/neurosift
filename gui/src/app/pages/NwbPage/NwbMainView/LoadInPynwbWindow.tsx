@@ -3,7 +3,7 @@ import {
   RemoteH5File,
   RemoteH5FileLindi,
 } from "@remote-h5-file/index";
-import { Markdown } from "neurosift-lib";
+import Markdown from "neurosift-lib/components/Markdown";
 import { FunctionComponent, useMemo } from "react";
 import { useNwbFile } from "../NwbFileContext";
 

@@ -1,5 +1,5 @@
 import { FunctionComponent } from "react";
-import { Markdown } from "neurosift-lib";
+import Markdown from "neurosift-lib/components/Markdown";
 
 type QueryHintsViewProps = {
   //

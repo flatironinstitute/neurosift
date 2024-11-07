@@ -1,6 +1,6 @@
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import { Cancel, Check } from "@mui/icons-material";
-import { Markdown } from "neurosift-lib";
+import Markdown from "neurosift-lib/components/Markdown";
 import { FunctionComponent } from "react";
 import { useJupyterConnectivity } from "./JupyterConnectivity";
 
