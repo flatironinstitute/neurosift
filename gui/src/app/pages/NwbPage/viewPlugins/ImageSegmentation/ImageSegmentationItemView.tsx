@@ -1,5 +1,5 @@
 import { RemoteH5FileX, RemoteH5Group } from "@remote-h5-file/index";
-import Splitter from "neurosift-lib/components/Splitter"
+import Splitter from "neurosift-lib/components/Splitter";
 import { FunctionComponent, useEffect, useState } from "react";
 import { useNwbFile } from "../../NwbFileContext";
 import { useGroup } from "../../NwbMainView/NwbMainView";

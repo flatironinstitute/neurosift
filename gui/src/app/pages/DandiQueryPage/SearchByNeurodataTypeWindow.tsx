@@ -5,7 +5,7 @@ import pako from "pako";
 import NeurodataTypesSelector from "./NeurodataTypesSelector";
 import { Hyperlink } from "@fi-sci/misc";
 import JsonPathQueryComponent from "./JsonPathQueryComponent";
-import Splitter from "neurosift-lib/components/Splitter"
+import Splitter from "neurosift-lib/components/Splitter";
 
 type SearchByNeurodataTypeWindowProps = {
   width: number;

@@ -18,7 +18,7 @@ import {
 } from "../ViewToolbar";
 import { AutocorrelogramsViewData } from "./AutocorrelogramsViewData";
 import CorrelogramPlot from "./CorrelogramPlot";
-import Splitter from "neurosift-lib/components/Splitter"
+import Splitter from "neurosift-lib/components/Splitter";
 
 const viewToolbarWidth = 45;
 

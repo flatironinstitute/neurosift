@@ -1,4 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useMemo } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+} from "react";
 import { Route, useLocation, useNavigate } from "react-router-dom";
 
 export type StorageType = "h5" | "zarr" | "lindi";
@@ -98,7 +104,10 @@ export type Route =
 
 type PluginName = "EphysSummary";
 
-const RouteContext = createContext<{route: Route, setRoute: (r: Route, replaceHistory?: boolean) => void} | undefined>(undefined);
+const RouteContext = createContext<
+  | { route: Route; setRoute: (r: Route, replaceHistory?: boolean) => void }
+  | undefined
+>(undefined);
 
 export const useRoute = () => {
   const context = useContext(RouteContext);
@@ -108,9 +117,9 @@ export const useRoute = () => {
   const { route, setRoute } = context;
 
   return { route, setRoute };
-}
+};
 
-export const RouteProvider = ({children}: {children: React.ReactNode}) => {
+export const RouteProvider = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const search = location.search;

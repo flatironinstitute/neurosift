@@ -1,4 +1,4 @@
-import Splitter from "neurosift-lib/components/Splitter"
+import Splitter from "neurosift-lib/components/Splitter";
 import {
   FunctionComponent,
   useCallback,

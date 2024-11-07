@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useCallback } from "react";
 import { Hyperlink } from "@fi-sci/misc";
-import Splitter from "neurosift-lib/components/Splitter"
+import Splitter from "neurosift-lib/components/Splitter";
 import formatByteCount from "./formatByteCount";
 import { DandisetSearchResultItem } from "./types";
 import DandisetView from "../../DandisetPage/DandisetViewFromDendro/DandisetView";

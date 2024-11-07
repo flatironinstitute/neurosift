@@ -14,9 +14,7 @@ import remarkGfm from "remark-gfm";
 import remarkMathPlugin from "remark-math";
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import { CopyAll, PlayArrow } from "@mui/icons-material";
-import LazyPlotlyPlot, {
-  PlotlyPlotFromUrl,
-} from "./LazyPlotlyPlot";
+import LazyPlotlyPlot, { PlotlyPlotFromUrl } from "./LazyPlotlyPlot";
 
 type Props = {
   source: string;
