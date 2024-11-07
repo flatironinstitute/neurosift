@@ -2,7 +2,7 @@ import { NeurosiftSavedChatsLoginView } from "app/ApiKeysWindow/ApiKeysWindow";
 import useNeurosiftSavedChats from "./useNeurosiftSavedChats";
 import { FunctionComponent, useEffect } from "react";
 import { useSavedChats } from "./savedChatsApi";
-import { timeAgoString } from "app/timeStrings";
+import { timeAgoString } from "neurosift-lib/utils/timeStrings";
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import { Add, Delete, Refresh } from "@mui/icons-material";
 import useRoute, { Route } from "neurosift-lib/contexts/useRoute";
