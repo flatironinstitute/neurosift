@@ -2,7 +2,7 @@
 import { Hyperlink } from "@fi-sci/misc";
 import { FunctionComponent } from "react";
 import { OpenNeuroDataset } from "./OpenNeuroBrowser";
-import useRoute from "app/useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import formatByteCount from "../DandiPage/DandiBrowser/formatByteCount";
 
 export const applicationBarColorDarkened = "#546"; // from dendro

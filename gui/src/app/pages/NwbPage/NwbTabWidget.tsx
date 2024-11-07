@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { FunctionComponent, useMemo, useReducer } from "react";
-import TabWidget from "../../TabWidget/TabWidget";
+import TabWidget from "neurosift-lib/components/TabWidget";
 import { SetupTimeseriesSelection } from "../../package/context-timeseries-selection";
 import {
   UnitSelectionContext,

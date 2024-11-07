@@ -89,57 +89,9 @@ def find_free_port():
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         return s.getsockname()[1]
 
-@click.command()
-@click.option('--jupyter-url', required=True, type=str)
-@click.option('--allow-origin', required=True, type=str)
-@click.option('--port', required=True, type=int)
-def jupyter_proxy(jupyter_url: str, allow_origin: str, port: int):
-    # this directory
-    this_directory = os.path.dirname(os.path.realpath(__file__))
-
-    env = os.environ.copy()
-
-    # apparently shell=True is necessary for Windows, but shell=False is necessary for Linux
-    if os.name == 'nt':
-        shell = True
-    elif os.name == 'posix':
-        shell = False
-    else:
-        print(f'Warning: unrecognized os.name: {os.name}')
-        shell = False
-
-    try:
-        npm_version = subprocess.run(["npm", "--version"], stdout=subprocess.PIPE, universal_newlines=True, shell=shell, env=env).stdout.strip()
-        print(f'npm version: {npm_version}')
-    except Exception:
-        raise Exception('Unable to run npm.')
-
-    try:
-        node_version = subprocess.run(["node", "--version"], stdout=subprocess.PIPE, universal_newlines=True, shell=shell, env=env).stdout.strip()
-        print(f'node version: {node_version}')
-    except Exception:
-        raise Exception('Unable to run node.')
-
-    # parse node_version v18.0.0 to get the major version number
-    node_major_version = int(node_version.split('.')[0][1:])
-    if node_major_version < 16:
-        raise Exception('node version must be >= 16.0.0')
-
-    subprocess.run(["npm", "install"], cwd=f'{this_directory}/jupyter-proxy-js', shell=shell, env=env)
-
-    # run the service
-    env['JUPYTER_URL'] = jupyter_url
-    env['ALLOW_ORIGIN'] = allow_origin
-    env['PORT'] = str(port)
-    process = subprocess.Popen(['npm', 'run', 'start'], cwd=f'{this_directory}/jupyter-proxy-js', shell=shell, env=env)
-
-    # wait for the process to finish
-    process.wait()
-
 
 # Add command to the neurosift group
 neurosift.add_command(view_nwb)
-neurosift.add_command(jupyter_proxy)
 
 
 if __name__ == '__main__':

@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import ApiKeysWindow from "./ApiKeysWindow/ApiKeysWindow";
-import useRoute from "./useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 
 type Props = {
   onContextChat: () => void;

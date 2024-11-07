@@ -5,8 +5,8 @@ import {
   ORMessage,
   ORToolCall,
 } from "app/pages/DandisetPage/DandisetViewFromDendro/openRouterTypes";
-import Splitter from "app/Splitter/Splitter";
-import useRoute from "app/useRoute";
+import Splitter from "neurosift-lib/components/Splitter";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import {
   FunctionComponent,
   useCallback,

@@ -1,4 +1,4 @@
-import Splitter from "app/Splitter/Splitter";
+import Splitter from "neurosift-lib/components/Splitter"
 import { FunctionComponent, useState } from "react";
 import { useNwbFile } from "../NwbFileContext";
 import { useGroup } from "../NwbMainView/NwbMainView";

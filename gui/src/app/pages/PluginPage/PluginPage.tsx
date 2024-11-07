@@ -1,5 +1,5 @@
 import { FunctionComponent } from "react";
-import useRoute from "../../useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import EphysSummaryPluginPage from "./EphysSummaryPluginPage";
 
 type PluginPageProps = {

@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import { useDandisetVersionInfo, useQueryDandiset } from "./DandisetView";
-import useRoute from "app/useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import { DandisetSearchResultItem } from "./types";
 import { Hyperlink } from "@fi-sci/misc";
 import {

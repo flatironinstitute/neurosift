@@ -1,4 +1,4 @@
-import useRoute from "app/useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import { FunctionComponent, useEffect, useState } from "react";
 import SessionsBrowser, { fetchSnapshotTagForDataset } from "./SessionsBrowser";
 

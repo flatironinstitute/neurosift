@@ -1,11 +1,11 @@
 import { NeurosiftSavedChatsLoginView } from "app/ApiKeysWindow/ApiKeysWindow";
-import useNeurosiftSavedChats from "app/NeurosiftSavedChats/useNeurosiftSavedChats";
+import useNeurosiftSavedChats from "./useNeurosiftSavedChats";
 import { FunctionComponent, useEffect } from "react";
 import { useSavedChats } from "./savedChatsApi";
 import { timeAgoString } from "app/timeStrings";
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import { Add, Delete, Refresh } from "@mui/icons-material";
-import useRoute, { Route } from "app/useRoute";
+import useRoute, { Route } from "neurosift-lib/contexts/useRoute";
 import { NeurosiftSavedChat } from "./types";
 
 type SavedChatsPageProps = {

@@ -3,7 +3,7 @@ import DynamicTableView from "../DynamicTable/DynamicTableView";
 import { useSelectedUnitIds } from "app/package/context-unit-selection";
 import { useNwbFile } from "../../NwbFileContext";
 import { checkUrlIsLocal } from "../viewPlugins";
-import TabWidget from "app/TabWidget/TabWidget";
+import TabWidget from "neurosift-lib/components/TabWidget";
 import UnitsSummaryItemView from "./UnitsSummaryItemView";
 import UnitsCEBRAView from "./UnitsCEBRAView/UnitsCEBRAView";
 

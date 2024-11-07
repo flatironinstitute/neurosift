@@ -1,6 +1,6 @@
 import { Hyperlink, SmallIconButton, VBoxLayout } from "@fi-sci/misc";
 import { Search } from "@mui/icons-material";
-import useRoute from "app/useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import { FunctionComponent, useCallback, useEffect, useState } from "react";
 import OpenNeuroSearchResults from "./OpenNeuroSearchResults";
 

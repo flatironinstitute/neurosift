@@ -3,7 +3,7 @@ import { Chat, Search } from "@mui/icons-material";
 import { FunctionComponent, useCallback, useEffect, useState } from "react";
 import SearchResults, { applicationBarColorDarkened } from "./SearchResults";
 import { DandisetSearchResultItem, DandisetsResponse } from "./types";
-import useRoute from "../../../useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 
 type Props = {
   width: number;

@@ -19,7 +19,7 @@ import {
   useState,
 } from "react";
 import { useCustomStatusBarElements } from "../../StatusBar";
-import useRoute, { StorageType } from "../../useRoute";
+import useRoute, { StorageType } from "neurosift-lib/contexts/useRoute";
 import {
   DandiAssetContext,
   DandiAssetContextType,

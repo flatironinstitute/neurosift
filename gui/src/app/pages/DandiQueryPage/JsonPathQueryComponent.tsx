@@ -12,8 +12,8 @@ import jp from "jsonpath";
 import { Hyperlink } from "@fi-sci/misc";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import QueryHintsView from "./QueryHintsView";
-import useRoute from "../../useRoute";
-import Splitter from "app/Splitter/Splitter";
+import useRoute from "neurosift-lib/contexts/useRoute";
+import Splitter from "neurosift-lib/components/Splitter"
 
 type JsonPathQueryComponentProps = {
   width: number;

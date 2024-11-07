@@ -4,7 +4,7 @@ import {
   DendroJobDefinition,
   DendroJobRequiredResources,
 } from "app/dendro/dendro-types";
-import useRoute from "app/useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import { FunctionComponent, useMemo } from "react";
 import { useNwbFile } from "../../NwbFileContext";
 import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/DendroHelpers";

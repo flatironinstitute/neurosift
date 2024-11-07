@@ -26,7 +26,7 @@ import useTimeScrollEventHandlers, {
 import useTimeScrollZoom from "./TimeScrollViewInteractions/useTimeScrollZoom";
 import { filterAndProjectHighlightSpans } from "./TimeScrollViewSpans";
 import { TickSet } from "./YAxisTicks";
-import Splitter from "app/Splitter/Splitter";
+import Splitter from "neurosift-lib/components/Splitter"
 
 export type TimeScrollViewPanel<T extends { [key: string]: any }> = {
   key: string;

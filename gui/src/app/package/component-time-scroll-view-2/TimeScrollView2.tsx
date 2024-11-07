@@ -26,7 +26,7 @@ import { ToolbarItem, ViewToolbar } from "../ViewToolbar";
 import { useTimeTicks } from "./timeTicks";
 import TSV2AxesLayer from "./TSV2AxesLayer";
 import TSV2CursorLayer from "./TSV2CursorLayer";
-import Splitter from "app/Splitter/Splitter";
+import Splitter from "neurosift-lib/components/Splitter"
 
 type Props = {
   width: number;

@@ -25,7 +25,7 @@ import PlaneTransformSelector, {
   defaultPlaneTransform,
 } from "./PlaneTransformSelector";
 import TwoPhotonSeriesItemViewMp4 from "./TwoPhotonSeriesItemViewMp4";
-import TabWidget from "app/TabWidget/TabWidget";
+import TabWidget from "neurosift-lib/components/TabWidget";
 import TwoPhotonSeriesMovieView from "./TwoPhotonSeriesMovieView";
 
 // const queryParams = parseQuery(window.location.href)

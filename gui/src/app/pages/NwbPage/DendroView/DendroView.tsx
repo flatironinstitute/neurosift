@@ -1,6 +1,6 @@
 import { DendroJob } from "app/dendro/dendro-types";
 import { timeAgoString } from "app/timeStrings";
-import useRoute, { Route } from "app/useRoute";
+import useRoute, { Route } from "neurosift-lib/contexts/useRoute";
 import {
   FunctionComponent,
   useCallback,

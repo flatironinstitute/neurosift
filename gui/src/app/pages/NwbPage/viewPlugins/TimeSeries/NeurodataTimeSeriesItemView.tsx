@@ -4,7 +4,7 @@ import TimeSeriesViewToolbar, {
   TimeSeriesViewOpts,
 } from "./TimeSeriesViewToolbar";
 import { SpikeTrainsClient } from "../Units/DirectRasterPlotUnitsItemView";
-import TabWidget from "app/TabWidget/TabWidget";
+import TabWidget from "neurosift-lib/components/TabWidget";
 import { useNwbFile } from "../../NwbFileContext";
 import MultiscaleTimeSeriesView from "./MultiscaleTimeSeriesView";
 

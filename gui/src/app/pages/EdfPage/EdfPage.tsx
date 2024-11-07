@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import useRoute from "../../useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import {
   DatasetChunkingClientInterface,
   NwbTimeseriesViewChild,
@@ -10,7 +10,7 @@ import {
   SetupTimeseriesSelection,
   useTimeseriesSelectionInitialization,
 } from "app/package/context-timeseries-selection";
-import Splitter from "app/Splitter/Splitter";
+import Splitter from "neurosift-lib/components/Splitter"
 import { SmallIconButton } from "@fi-sci/misc";
 import { Link, OpenInBrowser, OpenInFull } from "@mui/icons-material";
 

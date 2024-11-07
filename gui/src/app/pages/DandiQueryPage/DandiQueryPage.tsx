@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import TabWidget from "app/TabWidget/TabWidget";
+import TabWidget from "neurosift-lib/components/TabWidget";
 import { FunctionComponent, useState } from "react";
 import SearchByAbstractWindow from "./SearchByAbstractWindow";
 import SearchByNeurodataTypeWindow from "./SearchByNeurodataTypeWindow";

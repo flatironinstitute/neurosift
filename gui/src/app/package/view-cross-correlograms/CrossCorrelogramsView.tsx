@@ -13,7 +13,7 @@ import {
   CrossCorrelogramData,
   CrossCorrelogramsViewData,
 } from "./CrossCorrelogramsViewData";
-import Splitter from "app/Splitter/Splitter";
+import Splitter from "neurosift-lib/components/Splitter"
 
 type Props = {
   data: CrossCorrelogramsViewData;

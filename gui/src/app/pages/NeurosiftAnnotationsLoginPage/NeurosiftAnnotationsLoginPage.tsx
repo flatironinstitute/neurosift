@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect } from "react";
-import useRoute from "../../useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 
 type Props = {
   //

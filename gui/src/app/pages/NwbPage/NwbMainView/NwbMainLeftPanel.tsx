@@ -3,7 +3,7 @@ import { Hyperlink } from "@fi-sci/misc";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import { Chat as ChatIcon, ListAlt } from "@mui/icons-material";
 import { RemoteH5FileX } from "@remote-h5-file/index";
-import TabWidget from "app/TabWidget/TabWidget";
+import TabWidget from "neurosift-lib/components/TabWidget";
 import { reportRecentlyViewedDandiset } from "app/pages/DandiPage/DandiBrowser/DandiBrowser";
 import {
   FunctionComponent,
@@ -12,7 +12,7 @@ import {
   useReducer,
   useState,
 } from "react";
-import useRoute from "../../../useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import {
   serializeBigInt,
   valueToElement,

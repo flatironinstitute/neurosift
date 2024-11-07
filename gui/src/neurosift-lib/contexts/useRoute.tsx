@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { createContext, useCallback, useContext, useEffect, useMemo } from "react";
+import { Route, useLocation, useNavigate } from "react-router-dom";
 
 export type StorageType = "h5" | "zarr" | "lindi";
 
@@ -98,7 +98,19 @@ export type Route =
 
 type PluginName = "EphysSummary";
 
-const useRoute = () => {
+const RouteContext = createContext<{route: Route, setRoute: (r: Route, replaceHistory?: boolean) => void} | undefined>(undefined);
+
+export const useRoute = () => {
+  const context = useContext(RouteContext);
+  if (!context) {
+    throw new Error("useRoute must be used within a RouteProvider");
+  }
+  const { route, setRoute } = context;
+
+  return { route, setRoute };
+}
+
+export const RouteProvider = ({children}: {children: React.ReactNode}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const search = location.search;
@@ -407,10 +419,11 @@ const useRoute = () => {
     }
   }, [p, setRoute, query.staging]);
 
-  return {
-    route,
-    setRoute,
-  };
+  return (
+    <RouteContext.Provider value={{ route, setRoute }}>
+      {children}
+    </RouteContext.Provider>
+  );
 };
 
 const parseSearchString = (search: string) => {

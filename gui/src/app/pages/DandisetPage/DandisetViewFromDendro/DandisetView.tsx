@@ -11,7 +11,7 @@ import {
   useReducer,
   useState,
 } from "react";
-import useRoute from "../../../useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import getAuthorizationHeaderForUrl from "../../NwbPage/getAuthorizationHeaderForUrl";
 import ViewObjectAnalysesIconThing from "../../NwbPage/ObjectNote/ViewObjectAnalysesIconThing";
 import ViewObjectNotesIconThing from "../../NwbPage/ObjectNote/ViewObjectNotesIconThing";

@@ -1,4 +1,4 @@
-import useNeurosiftSavedChats from "app/NeurosiftSavedChats/useNeurosiftSavedChats";
+import useNeurosiftSavedChats from "../SavedChatsPage/useNeurosiftSavedChats";
 import {
   AddSavedChatRequest,
   DeleteSavedChatRequest,

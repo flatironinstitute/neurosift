@@ -1,6 +1,6 @@
 import { FunctionComponent, useMemo, useState } from "react";
 import NeurodataTimeSeriesItemView from "../TimeSeries/NeurodataTimeSeriesItemView";
-import TabWidget from "../../../../TabWidget/TabWidget";
+import TabWidget from "neurosift-lib/components/TabWidget";
 import EphysSummaryItemView from "../Ephys/EphysSummaryItemView";
 import { checkUrlIsLocal } from "../viewPlugins";
 import { useNwbFile } from "../../NwbFileContext";

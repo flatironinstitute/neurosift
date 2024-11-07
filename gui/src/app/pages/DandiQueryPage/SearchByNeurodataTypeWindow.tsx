@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import useRoute from "../../useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import pako from "pako";
 import NeurodataTypesSelector from "./NeurodataTypesSelector";
 import { Hyperlink } from "@fi-sci/misc";
 import JsonPathQueryComponent from "./JsonPathQueryComponent";
-import Splitter from "app/Splitter/Splitter";
+import Splitter from "neurosift-lib/components/Splitter"
 
 type SearchByNeurodataTypeWindowProps = {
   width: number;

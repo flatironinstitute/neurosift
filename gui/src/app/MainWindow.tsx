@@ -20,7 +20,7 @@ import NwbPage from "./pages/NwbPage/NwbPage";
 import PluginPage from "./pages/PluginPage/PluginPage";
 import ChatPage from "./pages/ChatPage/ChatPage";
 import TestsPage from "./pages/TestsPage/TestsPage";
-import useRoute from "./useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import OpenNeuroPage from "./pages/OpenNeuroPage/OpenNeuroPage";
 import OpenNeuroDatasetPage from "./pages/OpenNeuroDatasetPage/OpenNeuroDatasetPage";
 import NeurosiftSavedChatsLoginPage from "./pages/NeurosiftAnnotationsLoginPage/NeurosiftAnnotationsLoginPage";

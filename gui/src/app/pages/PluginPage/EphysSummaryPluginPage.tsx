@@ -6,7 +6,7 @@ import {
   RemoteH5Group,
 } from "@remote-h5-file/index";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import useRoute from "../../useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import {
   AssetsResponseItem,
   DandisetSearchResultItem,

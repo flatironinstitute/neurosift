@@ -1,4 +1,4 @@
-import Splitter from "app/Splitter/Splitter";
+import Splitter from "neurosift-lib/components/Splitter"
 import {
   FunctionComponent,
   useCallback,
@@ -6,7 +6,7 @@ import {
   useMemo,
   useReducer,
 } from "react";
-import useRoute from "../../useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import ChatWindow from "../ChatPage/ChatWindow";
 import { getInitialSideChatWidth } from "../DandiPage/DandiPage";
 import { DandiAssetContext } from "../NwbPage/DandiAssetContext";

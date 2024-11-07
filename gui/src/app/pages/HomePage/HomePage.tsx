@@ -1,7 +1,7 @@
 import { Hyperlink } from "@fi-sci/misc";
 import { FunctionComponent } from "react";
 import { FaGithub } from "react-icons/fa";
-import useRoute from "../../useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 
 type Props = {
   width: number;

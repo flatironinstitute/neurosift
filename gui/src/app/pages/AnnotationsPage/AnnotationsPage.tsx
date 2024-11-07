@@ -9,7 +9,7 @@ import { neurosiftAnnotationsApiUrl } from "../NwbPage/NeurosiftAnnotations/useC
 import { timeAgoString } from "../../timeStrings";
 import { FiddleAnnotationView } from "../NwbPage/ObjectNote/ObjectAnalysesView";
 import { Hyperlink } from "@fi-sci/misc";
-import useRoute from "../../useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import { NeurosiftAnnotationsLoginView } from "../../ApiKeysWindow/ApiKeysWindow";
 
 type AnnotationsPageProps = {

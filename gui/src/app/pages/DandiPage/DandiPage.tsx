@@ -1,4 +1,4 @@
-import useRoute from "app/useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import { FunctionComponent } from "react";
 import DandiBrowser from "./DandiBrowser/DandiBrowser";
 

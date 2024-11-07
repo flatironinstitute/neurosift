@@ -15,7 +15,7 @@ import {
   isCreateJobResponse,
 } from "app/dendro/dendro-types";
 import { timeAgoString } from "app/timeStrings";
-import useRoute from "app/useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import {
   FunctionComponent,
   useCallback,

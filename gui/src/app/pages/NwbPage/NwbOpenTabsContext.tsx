@@ -1,4 +1,4 @@
-import useRoute from "app/useRoute";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import React, { FunctionComponent, PropsWithChildren, useEffect } from "react";
 
 type NwbOpenTabsState = {

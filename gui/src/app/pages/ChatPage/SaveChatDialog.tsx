@@ -1,8 +1,8 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import { ChatContext } from "./ChatContext";
 import { useSavedChats } from "../SavedChatsPage/savedChatsApi";
-import useNeurosiftSavedChats from "app/NeurosiftSavedChats/useNeurosiftSavedChats";
-import useRoute from "app/useRoute";
+import useNeurosiftSavedChats from "../SavedChatsPage/useNeurosiftSavedChats";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import { NeurosiftSavedChatsLoginView } from "app/ApiKeysWindow/ApiKeysWindow";
 import { Hyperlink } from "@fi-sci/misc";
 import { ORMessage } from "../DandisetPage/DandisetViewFromDendro/openRouterTypes";
