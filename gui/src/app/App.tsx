@@ -25,7 +25,7 @@ function App() {
         <RouteProvider>
           <SetupNeurosiftAnnotationsProvider>
             <SetupNeurosiftSavedChatsProvider>
-                <MainWindow />
+              <MainWindow />
             </SetupNeurosiftSavedChatsProvider>
           </SetupNeurosiftAnnotationsProvider>
         </RouteProvider>
