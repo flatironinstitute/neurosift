@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import ChatPanel, { Chat, emptyChat } from "app/ChatPanel/ChatPanel";
-import Splitter from "app/Splitter/Splitter";
 import TabWidget from "app/TabWidget/TabWidget";
 import { FunctionComponent, useState } from "react";
-import { getInitialSideChatWidth } from "../DandiPage/DandiPage";
 import SearchByAbstractWindow from "./SearchByAbstractWindow";
 import SearchByNeurodataTypeWindow from "./SearchByNeurodataTypeWindow";
 

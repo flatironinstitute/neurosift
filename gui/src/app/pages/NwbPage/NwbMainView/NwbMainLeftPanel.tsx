@@ -3,7 +3,6 @@ import { Hyperlink } from "@fi-sci/misc";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import { Chat as ChatIcon, ListAlt } from "@mui/icons-material";
 import { RemoteH5FileX } from "@remote-h5-file/index";
-import ChatPanel, { Chat, emptyChat } from "app/ChatPanel/ChatPanel";
 import TabWidget from "app/TabWidget/TabWidget";
 import { reportRecentlyViewedDandiset } from "app/pages/DandiPage/DandiBrowser/DandiBrowser";
 import {
@@ -30,7 +29,7 @@ import SelectedNeurodataItemsWidget from "./SelectedNeurodataItemsWidget";
 import { useContextAnnotationsForDandiset } from "../NeurosiftAnnotations/useContextAnnotations";
 import ChatWindow from "app/pages/ChatPage/ChatWindow";
 import { useSavedChats } from "app/pages/SavedChatsPage/savedChatsApi";
-import { chatReducer } from "app/pages/ChatPage/Chat";
+import { chatReducer, emptyChat } from "app/pages/ChatPage/Chat";
 import { ChatContext } from "app/pages/ChatPage/ChatContext";
 
 type Props = {

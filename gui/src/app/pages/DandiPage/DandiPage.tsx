@@ -1,8 +1,6 @@
-import { FunctionComponent, useEffect, useState } from "react";
-import DandiBrowser from "./DandiBrowser/DandiBrowser";
 import useRoute from "app/useRoute";
-import Splitter from "app/Splitter/Splitter";
-import ChatPanel, { Chat, emptyChat } from "app/ChatPanel/ChatPanel";
+import { FunctionComponent } from "react";
+import DandiBrowser from "./DandiBrowser/DandiBrowser";
 
 type DandiPageProps = {
   width: number;

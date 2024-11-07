@@ -1,4 +1,3 @@
-import { emptyChat } from "app/ChatPanel/ChatPanel";
 import Splitter from "app/Splitter/Splitter";
 import {
   FunctionComponent,
@@ -15,7 +14,7 @@ import { SetupContextAnnotationsProvider } from "../NwbPage/NeurosiftAnnotations
 import { useSavedChats } from "../SavedChatsPage/savedChatsApi";
 import DandisetView from "./DandisetViewFromDendro/DandisetView";
 import { ChatContext } from "../ChatPage/ChatContext";
-import { chatReducer } from "../ChatPage/Chat";
+import { chatReducer, emptyChat } from "../ChatPage/Chat";
 
 type DandisetPageProps = {
   width: number;
