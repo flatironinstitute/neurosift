@@ -18,13 +18,13 @@ import HomePage from "./pages/HomePage/HomePage";
 import NeurosiftAnnotationsLoginPage from "./pages/NeurosiftAnnotationsLoginPage/NeurosiftAnnotationsLoginPage";
 import NwbPage from "./pages/NwbPage/NwbPage";
 import PluginPage from "./pages/PluginPage/PluginPage";
-import ChatPage from "./pages/ChatPage/ChatPage";
+import ChatPage from "neurosift-lib/pages/ChatPage/ChatPage";
 import TestsPage from "./pages/TestsPage/TestsPage";
 import useRoute from "neurosift-lib/contexts/useRoute";
 import OpenNeuroPage from "./pages/OpenNeuroPage/OpenNeuroPage";
 import OpenNeuroDatasetPage from "./pages/OpenNeuroDatasetPage/OpenNeuroDatasetPage";
 import NeurosiftSavedChatsLoginPage from "./pages/NeurosiftAnnotationsLoginPage/NeurosiftAnnotationsLoginPage";
-import SavedChatsPage from "./pages/SavedChatsPage/SavedChatsPage";
+import SavedChatsPage from "neurosift-lib/pages/SavedChatsPage/SavedChatsPage";
 import TestPage from "./pages/TestPage/TestPage";
 
 type Props = {

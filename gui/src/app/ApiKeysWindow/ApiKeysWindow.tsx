@@ -8,7 +8,7 @@ import {
 } from "react";
 import useNeurosiftAnnotations from "../NeurosiftAnnotations/useNeurosiftAnnotations";
 import { Button } from "@mui/material";
-import useNeurosiftSavedChats from "../pages/SavedChatsPage/useNeurosiftSavedChats";
+import useNeurosiftSavedChats from "neurosift-lib/pages/SavedChatsPage/useNeurosiftSavedChats";
 
 type ApiKeysWindowProps = {
   onClose: () => void;

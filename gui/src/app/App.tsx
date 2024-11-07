@@ -6,7 +6,8 @@ import {
   customStatusBarElementsReducer,
 } from "./StatusBar";
 import { SetupNeurosiftAnnotationsProvider } from "./NeurosiftAnnotations/useNeurosiftAnnotations";
-import { SetupNeurosiftSavedChatsProvider } from "./pages/SavedChatsPage/useNeurosiftSavedChats";
+import { SetupNeurosiftSavedChatsProvider } from "neurosift-lib/pages/SavedChatsPage/useNeurosiftSavedChats";
+import { RouteProvider } from "neurosift-lib/contexts/useRoute";
 
 function App() {
   const [customStatusBarStrings, customStatusBarStringsDispatch] = useReducer(
@@ -21,11 +22,13 @@ function App() {
           customStatusBarElementsDispatch: customStatusBarStringsDispatch,
         }}
       >
-        <SetupNeurosiftAnnotationsProvider>
-          <SetupNeurosiftSavedChatsProvider>
-            <MainWindow />
-          </SetupNeurosiftSavedChatsProvider>
-        </SetupNeurosiftAnnotationsProvider>
+        <RouteProvider>
+          <SetupNeurosiftAnnotationsProvider>
+            <SetupNeurosiftSavedChatsProvider>
+                <MainWindow />
+            </SetupNeurosiftSavedChatsProvider>
+          </SetupNeurosiftAnnotationsProvider>
+        </RouteProvider>
       </CustomStatusBarElementsContext.Provider>
     </BrowserRouter>
   );

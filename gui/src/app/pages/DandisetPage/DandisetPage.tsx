@@ -7,14 +7,14 @@ import {
   useReducer,
 } from "react";
 import useRoute from "neurosift-lib/contexts/useRoute";
-import ChatWindow from "../ChatPage/ChatWindow";
+import ChatWindow from "neurosift-lib/pages/ChatPage/ChatWindow";
 import { getInitialSideChatWidth } from "../DandiPage/DandiPage";
 import { DandiAssetContext } from "../NwbPage/DandiAssetContext";
 import { SetupContextAnnotationsProvider } from "../NwbPage/NeurosiftAnnotations/useContextAnnotations";
-import { useSavedChats } from "../SavedChatsPage/savedChatsApi";
+import { useSavedChats } from "neurosift-lib/pages/SavedChatsPage/savedChatsApi";
 import DandisetView from "./DandisetViewFromDendro/DandisetView";
-import { ChatContext } from "../ChatPage/ChatContext";
-import { chatReducer, emptyChat } from "../ChatPage/Chat";
+import { ChatContext } from "neurosift-lib/pages/ChatPage/ChatContext";
+import { chatReducer, emptyChat } from "neurosift-lib/pages/ChatPage/Chat";
 
 type DandisetPageProps = {
   width: number;

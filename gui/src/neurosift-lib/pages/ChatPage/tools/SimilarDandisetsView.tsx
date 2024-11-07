@@ -1,4 +1,4 @@
-import { EmbeddingClient } from "./NwbchatClient";
+import { EmbeddingClient } from "./EmbeddingClient";
 
 let globalEmbeddings:
   | {

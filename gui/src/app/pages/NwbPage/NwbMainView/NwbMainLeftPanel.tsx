@@ -27,10 +27,10 @@ import LoadInPynwbWindow from "./LoadInPynwbWindow";
 import { useDatasetData, useGroup } from "./NwbMainView";
 import SelectedNeurodataItemsWidget from "./SelectedNeurodataItemsWidget";
 import { useContextAnnotationsForDandiset } from "../NeurosiftAnnotations/useContextAnnotations";
-import ChatWindow from "app/pages/ChatPage/ChatWindow";
-import { useSavedChats } from "app/pages/SavedChatsPage/savedChatsApi";
-import { chatReducer, emptyChat } from "app/pages/ChatPage/Chat";
-import { ChatContext } from "app/pages/ChatPage/ChatContext";
+import ChatWindow from "neurosift-lib/pages/ChatPage/ChatWindow";
+import { useSavedChats } from "neurosift-lib/pages/SavedChatsPage/savedChatsApi";
+import { chatReducer, emptyChat } from "neurosift-lib/pages/ChatPage/Chat";
+import { ChatContext } from "neurosift-lib/pages/ChatPage/ChatContext";
 
 type Props = {
   width: number;

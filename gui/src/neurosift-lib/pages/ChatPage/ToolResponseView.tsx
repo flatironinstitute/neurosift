@@ -1,5 +1,5 @@
 import Markdown from "neurosift-lib/components/Markdown";
-import { ORMessage, ORToolCall } from "app/pages/ChatPage/openRouterTypes";
+import { ORMessage, ORToolCall } from "./openRouterTypes";
 import { FunctionComponent } from "react";
 
 type ToolResponseViewProps = {
