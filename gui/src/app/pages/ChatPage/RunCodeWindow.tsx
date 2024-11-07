@@ -11,7 +11,7 @@ import PythonSessionClient, {
   PlotlyContent,
   PythonSessionOutputItem,
 } from "./PythonSessionClient";
-import LazyPlotlyPlot from "../NwbPage/viewPlugins/CEBRA/LazyPlotlyPlot";
+import { LazyPlotlyPlot } from "neurosift-lib";
 import { useJupyterConnectivity } from "./JupyterConnectivity";
 
 type RunCodeWindowProps = {
@@ -184,7 +184,7 @@ const RunCodeWindow: FunctionComponent<RunCodeWindowProps> = ({
     return () => {
       x.shutdown();
     };
-  }, [runCodeCommunicator]);
+  }, [runCodeCommunicator, jupyterUrl]);
   const [pythonSessionStatus, setPythonSessionStatus] =
     useState<PythonSessionStatus>("uninitiated");
   useEffect(() => {

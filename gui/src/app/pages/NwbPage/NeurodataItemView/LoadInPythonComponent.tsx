@@ -10,7 +10,7 @@ import {
 import { findViewPluginsForType, ViewPlugin } from "../viewPlugins/viewPlugins";
 import { Hyperlink } from "@fi-sci/misc";
 import ModalWindow from "@fi-sci/modal-window";
-import Markdown from "../../../Markdown/Markdown";
+import { Markdown } from "neurosift-lib";
 import { useNwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 type Props = {

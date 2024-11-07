@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import Markdown from "../../Markdown/Markdown";
+import { Markdown } from "neurosift-lib";
 
 type Props = {
   width: number;

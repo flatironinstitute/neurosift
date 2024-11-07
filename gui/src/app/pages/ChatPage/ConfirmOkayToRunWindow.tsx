@@ -1,7 +1,7 @@
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
-import { Cancel, Check, Refresh } from "@mui/icons-material";
-import Markdown from "app/Markdown/Markdown";
-import { FunctionComponent, useCallback, useEffect, useState } from "react";
+import { Cancel, Check } from "@mui/icons-material";
+import { Markdown } from "neurosift-lib";
+import { FunctionComponent } from "react";
 import { useJupyterConnectivity } from "./JupyterConnectivity";
 
 type ConfirmOkayToRunWindowProps = {

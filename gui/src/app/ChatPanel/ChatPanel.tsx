@@ -1,6 +1,6 @@
 import { SmallIconButton } from "@fi-sci/misc";
 import { Cancel, Send } from "@mui/icons-material";
-import Markdown from "app/Markdown/Markdown";
+import { Markdown } from "neurosift-lib";
 import {
   FunctionComponent,
   useCallback,

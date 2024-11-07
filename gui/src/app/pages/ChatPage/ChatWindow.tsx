@@ -1,6 +1,6 @@
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
-import Markdown from "app/Markdown/Markdown";
+import { Markdown } from "neurosift-lib";
 import {
   ORMessage,
   ORToolCall,

@@ -16,7 +16,7 @@ import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import { CopyAll, PlayArrow } from "@mui/icons-material";
 import LazyPlotlyPlot, {
   PlotlyPlotFromUrl,
-} from "app/pages/NwbPage/viewPlugins/CEBRA/LazyPlotlyPlot";
+} from "./LazyPlotlyPlot";
 
 type Props = {
   source: string;
