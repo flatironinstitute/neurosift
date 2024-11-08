@@ -18,7 +18,7 @@ import {
   unitSelectionReducer,
 } from "../../../../package/context-unit-selection";
 import { useSelectedUnitIds } from "../../../../package/context-unit-selection/UnitSelectionContext";
-import { useNwbFile } from "../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useGroup } from "../../NwbMainView/NwbMainView";
 import { DirectSpikeTrainsClient } from "../Units/DirectRasterPlotUnitsItemView";
 import IfHasBeenVisible from "./IfHasBeenVisible";

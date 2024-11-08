@@ -12,7 +12,7 @@ import {
   DendroJobRequiredResources,
   isCreateJobResponse,
 } from "../../../../dendro/dendro-types";
-import { useNwbFile } from "../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import {
   SelectDendroApiKeyComponent,
   useAllJobs,

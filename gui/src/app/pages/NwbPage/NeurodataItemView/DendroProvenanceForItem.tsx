@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import { useJobProducingOutput } from "../DendroView/useJobProducingOutput";
-import { useNwbFile } from "../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import {
   DendroJob,
   GetJobRequest,

@@ -6,7 +6,7 @@ import {
   AverageWaveformData,
   AverageWaveformsViewData,
 } from "../../../../package/view-average-waveforms/AverageWaveformsViewData";
-import { useNwbFile } from "../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 
 type Props = {
   width: number;

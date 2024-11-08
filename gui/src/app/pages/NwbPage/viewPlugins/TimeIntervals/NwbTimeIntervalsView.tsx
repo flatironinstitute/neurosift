@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useEffect, useState } from "react";
-import { useNwbFile } from "../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useDatasetData, useGroup } from "../../NwbMainView/NwbMainView";
 import NwbTimeIntervalsWidget from "./NwbTimeIntervalsWidget";
 

@@ -1,4 +1,4 @@
-import { RemoteH5Dataset, RemoteH5FileX } from "@remote-h5-file/index";
+import { RemoteH5Dataset, RemoteH5FileX } from "../../../remote-h5-file/index";
 
 type GeneralItem = {
   name: string;

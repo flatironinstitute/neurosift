@@ -70,7 +70,7 @@ export type ORContentPart = ORTextContent | ORImageContentPart;
 
 export type ORMessage =
   | {
-      role: "user" | "assistant" | "system";
+      role: "user" | "assistant" | "system" | "client-side-only";
       // ContentParts are only for the 'user' role:
       content: string | ORContentPart[];
       // If "name" is included, it will be prepended like this

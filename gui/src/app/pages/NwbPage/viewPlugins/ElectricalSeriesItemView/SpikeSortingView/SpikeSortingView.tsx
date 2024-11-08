@@ -24,7 +24,7 @@ import {
   useReducer,
   useState,
 } from "react";
-import { useNwbFile } from "../../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import {
   SelectDendroApiKeyComponent,
   SelectDendroComputeClientIdComponent,

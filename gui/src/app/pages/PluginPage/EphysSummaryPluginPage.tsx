@@ -18,7 +18,7 @@ import {
   useQueryAssets,
   useQueryDandiset,
 } from "../DandisetPage/DandisetViewFromDendro/DandisetView";
-import { NwbFileContext } from "../NwbPage/NwbFileContext";
+import { NwbFileContext } from "neurosift-lib/misc/NwbFileContext";
 import { tryGetLindiUrl } from "../NwbPage/NwbPage";
 import { LazyPlotlyPlotContext } from "../NwbPage/viewPlugins/CEBRA/LazyPlotlyPlot";
 import EphysSummaryItemView, {

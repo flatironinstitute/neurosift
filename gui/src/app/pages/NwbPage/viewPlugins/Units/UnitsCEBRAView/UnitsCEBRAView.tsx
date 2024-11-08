@@ -1,4 +1,4 @@
-import { useNwbFile } from "app/pages/NwbPage/NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { FunctionComponent, useMemo, useReducer, useState } from "react";
 import {
   AllJobsTreeRow,

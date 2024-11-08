@@ -5,7 +5,7 @@ import {
 } from "@remote-h5-file/index";
 import Markdown from "neurosift-lib/components/Markdown";
 import { FunctionComponent, useMemo } from "react";
-import { useNwbFile } from "../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 
 type LoadInPythonWindowProps = {
   // none

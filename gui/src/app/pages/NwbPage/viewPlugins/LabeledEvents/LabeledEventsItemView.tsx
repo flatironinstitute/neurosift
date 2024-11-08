@@ -7,7 +7,7 @@ import {
   RemoteH5FileX,
 } from "@remote-h5-file/index";
 import { FunctionComponent, useEffect, useState } from "react";
-import { useNwbFile } from "../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import RasterPlotView3 from "../Units/RasterPlotView3/RasterPlotView3";
 
 type Props = {

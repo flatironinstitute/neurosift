@@ -1,4 +1,4 @@
-import { NwbFileSpecifications } from "neurosift-lib/misc/SpecificationsView/SetupNwbFileSpecificationsProvider";
+import { NwbFileSpecifications } from "../../../misc/SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 const neurodataTypeInheritanceRaw: { [key: string]: string } = {
   NWBData: "Data",

@@ -4,7 +4,7 @@ import { FunctionComponent, useEffect, useState } from "react";
 import BrowseNwbView from "../BrowseNwbView/BrowseNwbView";
 import DendroView from "../DendroView/DendroView";
 import NeurosiftAnnotationsView from "../NeurosiftAnnotationsView/NeurosiftAnnotationsView";
-import SpecificationsView from "../SpecificationsView/SpecificationsView";
+import SpecificationsView from "neurosift-lib/misc/SpecificationsView/SpecificationsView";
 import WidgetsView from "../WidgetsView/WidgetsView";
 import DefaultNwbFileView from "./DefaultNwbFileView";
 

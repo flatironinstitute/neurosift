@@ -2,8 +2,8 @@ import { FunctionComponent, useEffect, useState } from "react";
 import { ChatContext } from "./ChatContext";
 import { useSavedChats } from "../SavedChatsPage/savedChatsApi";
 import useNeurosiftSavedChats from "../SavedChatsPage/useNeurosiftSavedChats";
-import useRoute from "neurosift-lib/contexts/useRoute";
-import { NeurosiftSavedChatsLoginView } from "app/ApiKeysWindow/ApiKeysWindow";
+import useRoute from "../../contexts/useRoute";
+import { NeurosiftSavedChatsLoginView } from "./NeurosiftSavedChatsLoginView";
 import { Hyperlink } from "@fi-sci/misc";
 import { ORMessage } from "./openRouterTypes";
 import chatCompletion from "./chatCompletion";
@@ -189,6 +189,7 @@ const useRecommendedChatTitle = (chat: Chat, openRouterKey: string | null) => {
     let canceled = false;
     const load = async () => {
       const y = await getRecommendedChatTitle(chat, openRouterKey);
+      if (canceled) return;
       setRecommendedChatTitle(y);
     };
     load();

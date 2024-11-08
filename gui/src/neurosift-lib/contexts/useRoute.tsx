@@ -104,7 +104,7 @@ export type Route =
 
 type PluginName = "EphysSummary";
 
-const RouteContext = createContext<
+export const RouteContext = createContext<
   | { route: Route; setRoute: (r: Route, replaceHistory?: boolean) => void }
   | undefined
 >(undefined);

@@ -13,12 +13,12 @@ import {
   useReducer,
 } from "react";
 import { FaEye, FaRegCircle } from "react-icons/fa";
-import { useNeurodataItems, useNwbFile } from "../NwbFileContext";
+import { useNeurodataItems, useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useNwbOpenTabs } from "../NwbOpenTabsContext";
 import { findViewPluginsForType } from "../viewPlugins/viewPlugins";
 import { valueToElement } from "./BrowseNwbView";
 import "./nwb-attributes-table.css";
-import { useNwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
+import { useNwbFileSpecifications } from "neurosift-lib/misc/SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 type Props = {
   name: string;

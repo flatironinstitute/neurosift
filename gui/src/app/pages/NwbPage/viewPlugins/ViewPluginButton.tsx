@@ -1,6 +1,6 @@
 import { Hyperlink } from "@fi-sci/misc";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import { useNeurodataItems, useNwbFile } from "../NwbFileContext";
+import { useNeurodataItems, useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useNwbOpenTabs } from "../NwbOpenTabsContext";
 import { useSelectedItemViews } from "../SelectedItemViewsContext";
 import { ViewPlugin } from "./viewPlugins";

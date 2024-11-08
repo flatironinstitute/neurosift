@@ -18,7 +18,7 @@ import {
   useTimeRange,
   useTimeseriesSelectionInitialization,
 } from "../../../../../package/context-timeseries-selection";
-import { useNwbFile } from "../../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useDataset } from "../../../NwbMainView/NwbMainView";
 import {
   TimeseriesTimestampsClient,

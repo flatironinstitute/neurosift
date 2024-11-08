@@ -7,7 +7,7 @@ import {
   useDirectSpikeTrainsClientUnitSlice,
 } from "../Units/DirectRasterPlotUnitsItemView";
 import { useSelectedUnitIds } from "app/package/context-unit-selection";
-import { useNwbFile } from "../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 
 type EphysAndUnitsItemViewProps = {
   width: number;

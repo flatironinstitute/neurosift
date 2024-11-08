@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import { RemoteH5FileX } from "@remote-h5-file/index";
+import { RemoteH5FileX } from "../remote-h5-file/index";
 
 type NwbFileContextType = {
   nwbFile: RemoteH5FileX | null;

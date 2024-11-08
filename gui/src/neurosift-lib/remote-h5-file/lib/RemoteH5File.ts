@@ -216,7 +216,7 @@ export class RemoteH5File {
   get sourceUrls(): string[] | undefined {
     return this.#sourceUrls;
   }
-  set sourceUrls(v: string[]) {
+  set sourceUrls(v: string[] | undefined) {
     this.#sourceUrls = v;
   }
 }
@@ -291,7 +291,7 @@ export class MergedRemoteH5File {
   get sourceUrls(): string[] | undefined {
     return this.#sourceUrls;
   }
-  set sourceUrls(v: string[]) {
+  set sourceUrls(v: string[] | undefined) {
     this.#sourceUrls = v;
   }
 }

@@ -1,4 +1,4 @@
-import Markdown from "neurosift-lib/components/Markdown";
+import Markdown from "../../components/Markdown";
 import { ORMessage, ORToolCall } from "./openRouterTypes";
 import { FunctionComponent } from "react";
 

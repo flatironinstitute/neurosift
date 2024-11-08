@@ -5,7 +5,7 @@ import BehavioralEventsItemView from "./BehavioralEvents/BehavioralEventsItemVie
 import DynamicTableView from "./DynamicTable/DynamicTableView";
 import ImageSegmentationItemView from "./ImageSegmentation/ImageSegmentationItemView";
 // import ImageSeriesItemView from "./ImageSeries/ImageSeriesItemView"
-import { NwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
+import { NwbFileSpecifications } from "neurosift-lib/misc/SpecificationsView/SetupNwbFileSpecificationsProvider";
 import { getNeurodataTypeInheritanceRaw } from "../neurodataSpec";
 import ElectricalSeriesItemView from "./ElectricalSeriesItemView/ElectricalSeriesItemView";
 import EphysAndUnitsItemView from "./EphysAndUnits/EphysAndUnitsItemView";

@@ -18,7 +18,7 @@ import {
   valueToElement,
 } from "../BrowseNwbView/BrowseNwbView";
 import { useDandiAssetContext } from "../DandiAssetContext";
-import { useNwbFile } from "../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useNwbOpenTabs } from "../NwbOpenTabsContext";
 import ViewObjectAnalysesIconThing from "../ObjectNote/ViewObjectAnalysesIconThing";
 import ViewObjectNotesIconThing from "../ObjectNote/ViewObjectNotesIconThing";

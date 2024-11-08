@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Splitter from "neurosift-lib/components/Splitter";
-import useRoute from "neurosift-lib/contexts/useRoute";
+import Splitter from "../../components/Splitter";
+import useRoute from "../../contexts/useRoute";
 import {
   FunctionComponent,
   useCallback,

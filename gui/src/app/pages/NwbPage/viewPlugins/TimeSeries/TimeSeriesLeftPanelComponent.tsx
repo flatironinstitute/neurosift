@@ -1,5 +1,5 @@
 import { FunctionComponent } from "react";
-import { useNwbFile } from "../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import useTimeSeriesInfo from "./useTimeseriesInfo";
 
 type TimeSeriesLeftPanelComponentProps = {

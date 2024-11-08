@@ -6,7 +6,7 @@ import {
   AutocorrelogramsViewData,
 } from "../../../../package/view-autocorrelograms";
 import { AutocorrelogramData } from "../../../../package/view-autocorrelograms/AutocorrelogramsViewData";
-import { useNwbFile } from "../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 
 type Props = {
   width: number;

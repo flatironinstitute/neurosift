@@ -15,7 +15,7 @@ import {
   DendroJobDefinition,
   DendroJobRequiredResources,
 } from "../../../../dendro/dendro-types";
-import { useNwbFile } from "../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import LazyPlotlyPlot from "../CEBRA/LazyPlotlyPlot";
 import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/DendroHelpers";
 import DendroItemView from "../CEBRA/DendroItemView";

@@ -26,14 +26,14 @@ import {
   defaultDandiAssetContext,
 } from "./DandiAssetContext";
 import { SetupContextAnnotationsProvider } from "./NeurosiftAnnotations/useContextAnnotations";
-import { NwbFileContext } from "./NwbFileContext";
+import { NwbFileContext } from "neurosift-lib/misc/NwbFileContext";
 import { SetupNwbOpenTabs } from "./NwbOpenTabsContext";
 import NwbTabWidget from "./NwbTabWidget";
 import {
   SelectedItemViewsContext,
   selectedItemViewsReducer,
 } from "./SelectedItemViewsContext";
-import { SetupNwbFileSpecificationsProvider } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
+import { SetupNwbFileSpecificationsProvider } from "neurosift-lib/misc/SpecificationsView/SetupNwbFileSpecificationsProvider";
 import getAuthorizationHeaderForUrl from "./getAuthorizationHeaderForUrl";
 import getNwbFileInfoForChat, {
   NwbFileInfoForChat,

@@ -3,7 +3,7 @@ import NeurodataTimeSeriesItemView from "../TimeSeries/NeurodataTimeSeriesItemVi
 import TabWidget from "neurosift-lib/components/TabWidget";
 import EphysSummaryItemView from "../Ephys/EphysSummaryItemView";
 import { checkUrlIsLocal } from "../viewPlugins";
-import { useNwbFile } from "../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import SpikeSortingView from "./SpikeSortingView/SpikeSortingView";
 
 type Props = {

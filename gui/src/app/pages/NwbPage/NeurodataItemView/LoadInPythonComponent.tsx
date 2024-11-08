@@ -1,6 +1,6 @@
 import { FunctionComponent, useMemo } from "react";
 import { useModalDialog } from "../../../ApplicationBar";
-import { useNeurodataItems, useNwbFile } from "../NwbFileContext";
+import { useNeurodataItems, useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import {
   MergedRemoteH5File,
   RemoteH5File,
@@ -11,7 +11,7 @@ import { findViewPluginsForType, ViewPlugin } from "../viewPlugins/viewPlugins";
 import { Hyperlink } from "@fi-sci/misc";
 import ModalWindow from "@fi-sci/modal-window";
 import Markdown from "neurosift-lib/components/Markdown";
-import { useNwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
+import { useNwbFileSpecifications } from "neurosift-lib/misc/SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 type Props = {
   path: string;

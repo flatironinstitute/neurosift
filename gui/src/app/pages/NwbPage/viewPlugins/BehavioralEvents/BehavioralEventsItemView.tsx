@@ -12,7 +12,7 @@ import {
   useTimeRange,
   useTimeseriesSelectionInitialization,
 } from "../../../../package/context-timeseries-selection";
-import { useNwbFile } from "../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useGroup } from "../../NwbMainView/NwbMainView";
 import { timeSelectionBarHeight } from "../TimeSeries/TimeseriesItemView/TimeseriesSelectionBar";
 import { BehavioralEventsData, EventSeries, Opts } from "./WorkerTypes";

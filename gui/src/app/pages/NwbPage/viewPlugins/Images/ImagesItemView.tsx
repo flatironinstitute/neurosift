@@ -4,7 +4,7 @@ import {
   RemoteH5FileX,
 } from "@remote-h5-file/index";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import { useNwbFile } from "../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useDatasetData, useGroup } from "../../NwbMainView/NwbMainView";
 
 type Props = {

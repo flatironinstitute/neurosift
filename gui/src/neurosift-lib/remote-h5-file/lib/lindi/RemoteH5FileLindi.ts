@@ -268,7 +268,7 @@ class RemoteH5FileLindi {
   get sourceUrls(): string[] | undefined {
     return this.#sourceUrls;
   }
-  set sourceUrls(v: string[]) {
+  set sourceUrls(v: string[] | undefined) {
     this.#sourceUrls = v;
   }
   _disableCache() {

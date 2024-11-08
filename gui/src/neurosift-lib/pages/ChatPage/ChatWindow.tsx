@@ -1,9 +1,9 @@
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
-import Markdown from "neurosift-lib/components/Markdown";
+import Markdown from "../../components/Markdown";
 import { ORMessage, ORToolCall } from "./openRouterTypes";
-import Splitter from "neurosift-lib/components/Splitter";
-import useRoute from "neurosift-lib/contexts/useRoute";
+import Splitter from "../../components/Splitter";
+import useRoute from "../../contexts/useRoute";
 import {
   FunctionComponent,
   useCallback,
@@ -507,7 +507,7 @@ const MainChatWindow: FunctionComponent<
           }
         };
         let response: string;
-        let errorMessage: string | undefined;
+        // let errorMessage: string | undefined;
         try {
           addAgentProgressMessage(
             "stdout",
@@ -540,7 +540,7 @@ const MainChatWindow: FunctionComponent<
             confirmOkayToRun,
           });
         } catch (e: any) {
-          errorMessage = e.message;
+          // errorMessage = e.message;
           response = "Error: " + e.message;
         }
         if (canceled) return;
@@ -856,8 +856,8 @@ const MainChatWindow: FunctionComponent<
                 </div>
               ) : c.role === "client-side-only" ? (
                 <>
-                  <div style={{ color: c.color || "#6a6", paddingBottom: 10 }}>
-                    {c.content}
+                  <div style={{ color: (c as any).color || "#6a6", paddingBottom: 10 }}>
+                    {(c as any).content}
                   </div>
                 </>
               ) : (

@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useNwbFile } from "../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import {
   getJobProducingOutput,
   useDownstreamJobsForInput,

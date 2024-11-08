@@ -7,8 +7,8 @@ import {
   useEffect,
   useState,
 } from "react";
-import { useNwbFile } from "../NwbFileContext";
-import { RemoteH5FileX } from "@remote-h5-file/index";
+import { useNwbFile } from "../../misc/NwbFileContext";
+import { RemoteH5FileX } from "../../remote-h5-file/index";
 
 export const SpecificationsContext = createContext<
   NwbFileSpecifications | undefined

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createContext, useContext, useEffect, useState } from "react";
+import React from "react";
 
 type NeurosiftSavedChatsContextType = {
   neurosiftSavedChatsAccessToken?: string;

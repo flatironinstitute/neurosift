@@ -5,7 +5,7 @@ import TimeSeriesViewToolbar, {
 } from "./TimeSeriesViewToolbar";
 import { SpikeTrainsClient } from "../Units/DirectRasterPlotUnitsItemView";
 import TabWidget from "neurosift-lib/components/TabWidget";
-import { useNwbFile } from "../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import MultiscaleTimeSeriesView from "./MultiscaleTimeSeriesView";
 
 type Props = {

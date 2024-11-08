@@ -13,7 +13,7 @@ import {
   useTimeseriesSelection,
   useTimeseriesSelectionInitialization,
 } from "../../../../package/context-timeseries-selection";
-import { useNwbFile } from "../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useDataset } from "../../NwbMainView/NwbMainView";
 import { useTimeseriesTimestampsClient } from "../TimeSeries/TimeseriesItemView/TimeseriesTimestampsClient";
 import TimeseriesSelectionBar, {

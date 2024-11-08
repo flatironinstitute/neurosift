@@ -1,6 +1,6 @@
 import Splitter from "neurosift-lib/components/Splitter";
 import { FunctionComponent, useState } from "react";
-import { useNwbFile } from "../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useGroup } from "../NwbMainView/NwbMainView";
 import { ViewPlugin } from "../viewPlugins/viewPlugins";
 import NeurodataItemViewLeftPanel from "./NeurodataItemViewLeftPanel";

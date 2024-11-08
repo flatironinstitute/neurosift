@@ -8,10 +8,10 @@ import {
   useState,
 } from "react";
 import { FaEye } from "react-icons/fa";
-import { useNwbFile } from "../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useNwbOpenTabs } from "../NwbOpenTabsContext";
 import { neurodataTypeInheritsFrom } from "../neurodataSpec";
-import { useNwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
+import { useNwbFileSpecifications } from "neurosift-lib/misc/SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 type Props = {
   width: number;

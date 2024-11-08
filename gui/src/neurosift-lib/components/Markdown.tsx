@@ -9,7 +9,7 @@ import "github-markdown-css/github-markdown-light.css";
 import { SpecialComponents } from "react-markdown/lib/ast-to-react";
 import { NormalComponents } from "react-markdown/lib/complex-types";
 import rehypeMathJaxSvg from "rehype-mathjax";
-import rehypeRaw from "rehype-raw";
+// import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import remarkMathPlugin from "remark-math";
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
@@ -168,7 +168,7 @@ const Markdown: FunctionComponent<Props> = ({
         // eslint-disable-next-line react/no-children-prop
         children={source2}
         remarkPlugins={[remarkGfm, remarkMathPlugin]}
-        rehypePlugins={[rehypeRaw, rehypeMathJaxSvg /*, rehypeKatexPlugin*/]}
+        rehypePlugins={[/*rehypeRaw, */ rehypeMathJaxSvg /*, rehypeKatexPlugin*/]}
         components={components}
         linkTarget="_blank"
       />

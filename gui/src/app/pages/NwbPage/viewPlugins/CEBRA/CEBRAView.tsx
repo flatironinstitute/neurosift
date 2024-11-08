@@ -10,7 +10,7 @@ import {
   DendroJobDefinition,
   DendroJobRequiredResources,
 } from "../../../../dendro/dendro-types";
-import { useNwbFile } from "../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import EmbeddingPlot3D from "./EmbeddingPlot3D";
 import EmbeddingTimePlot from "./EmbeddingTimePlot";
 import LossPlot from "./LossPlot";

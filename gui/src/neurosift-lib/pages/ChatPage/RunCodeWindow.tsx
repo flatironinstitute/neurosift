@@ -11,7 +11,7 @@ import PythonSessionClient, {
   PlotlyContent,
   PythonSessionOutputItem,
 } from "./PythonSessionClient";
-import LazyPlotlyPlot from "neurosift-lib/components/LazyPlotlyPlot";
+import LazyPlotlyPlot from "../../components/LazyPlotlyPlot";
 import { useJupyterConnectivity } from "./JupyterConnectivity";
 
 type RunCodeWindowProps = {

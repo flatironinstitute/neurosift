@@ -35,7 +35,7 @@ export const loadEmbeddings = async () => {
   return globalEmbeddings;
 };
 
-const modelName = "text-embedding-3-large";
+// const modelName = "text-embedding-3-large";
 
 export const computeEmbeddingForAbstractText = async (
   abstractText: string,

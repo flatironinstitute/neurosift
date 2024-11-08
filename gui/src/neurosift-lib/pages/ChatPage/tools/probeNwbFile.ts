@@ -2,7 +2,7 @@ import {
   RemoteH5File,
   RemoteH5FileLindi,
   RemoteH5FileX,
-} from "@remote-h5-file/index";
+} from "../../../remote-h5-file/index";
 import getNwbFileInfoForChat from "./getNwbFileInfoForChat";
 import { ToolItem } from "../ToolItem";
 

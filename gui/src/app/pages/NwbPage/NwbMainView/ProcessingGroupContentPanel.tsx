@@ -18,7 +18,7 @@ import ViewPluginButton from "../viewPlugins/ViewPluginButton";
 import { findViewPluginsForType } from "../viewPlugins/viewPlugins";
 import { useGroup } from "./NwbMainView";
 import { neurodataTypeInheritsFrom } from "../neurodataSpec";
-import { useNwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
+import { useNwbFileSpecifications } from "neurosift-lib/misc/SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 type Props = {
   nwbFile: RemoteH5FileX;

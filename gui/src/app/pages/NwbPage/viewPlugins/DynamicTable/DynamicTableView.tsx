@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { valueToElement } from "../../BrowseNwbView/BrowseNwbView";
-import { useNwbFile } from "../../NwbFileContext";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useGroup } from "../../NwbMainView/NwbMainView";
 import { SmallIconButton } from "@fi-sci/misc";
 import { Download, Help } from "@mui/icons-material";
