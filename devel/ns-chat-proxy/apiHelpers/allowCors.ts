@@ -3,6 +3,11 @@ import { VercelRequest, VercelResponse } from "@vercel/node";
 const defaultAllowedOrigins = [
   "http://localhost:3000",
   "https://neurosift.app",
+  "http://localhost:8888",
+  "http://localhost:8889",
+  "http://localhost:8890",
+  "http://localhost:8891",
+  "https://hub.dandiarchive.org"
 ];
 const ALLOWED_ORIGINS = (
   process.env["ALLOWED_ORIGINS"] || defaultAllowedOrigins.join(",")
