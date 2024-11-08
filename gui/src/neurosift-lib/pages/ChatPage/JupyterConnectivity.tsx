@@ -8,62 +8,79 @@ import {
   useState,
 } from "react";
 
-type JupyterConnectivityState = {
-  jupyterUrl: string;
-  jupyterIsConnected: boolean;
+export type JupyterConnectivityState = {
+  mode: "jupyter-server" | "jupyterlab-extension";
+  jupyterServerUrl: string;
+  jupyterServerIsAvailable: boolean;
   refreshJupyter: () => void;
-  changeJupyterUrl: () => void;
+  changeJupyterServerUrl: () => void;
+  extensionKernel?: any;
 };
 
 const JupyterConnectivityContext = createContext<JupyterConnectivityState>({
-  jupyterUrl: "",
-  jupyterIsConnected: false,
+  mode: "jupyter-server",
+  jupyterServerUrl: "http://localhost:8888",
+  jupyterServerIsAvailable: false,
   refreshJupyter: () => {},
-  changeJupyterUrl: () => {},
+  changeJupyterServerUrl: () => {},
+  extensionKernel: undefined,
 });
 
 export const JupyterConnectivityProvider: FunctionComponent<
-  PropsWithChildren
-> = ({ children }) => {
-  const [jupyterUrl, setJupyterUrl] = useState("");
+  PropsWithChildren<{
+    mode: "jupyter-server" | "jupyterlab-extension";
+    extensionKernel?: any;
+  }>
+> = ({ children, mode, extensionKernel }) => {
+  const [jupyterServerUrl, setJupyterServerUrl] = useState("");
   useEffect(() => {
-    const localStorageKey = "jupyter-url";
-    const storedJupyterUrl = localStorage.getItem(localStorageKey);
-    setJupyterUrl(storedJupyterUrl || "http://localhost:8888");
+    const localStorageKey = "jupyter-server-url";
+    const storedJupyterServerUrl = localStorage.getItem(localStorageKey);
+    setJupyterServerUrl(storedJupyterServerUrl || "http://localhost:8888");
   }, []);
-  const [jupyterIsConnected, setJupyterIsConnected] = useState(false);
+  const [jupyterServerIsAvailable, setJupyterServerIsAvailable] =
+    useState(false);
   const check = useCallback(async () => {
-    try {
-      const resp = await fetch(`${jupyterUrl}/api/sessions`);
-      if (resp.ok) {
-        setJupyterIsConnected(true);
-      } else {
-        setJupyterIsConnected(false);
+    if (mode === "jupyter-server") {
+      try {
+        const resp = await fetch(`${jupyterServerUrl}/api/sessions`);
+        if (resp.ok) {
+          setJupyterServerIsAvailable(true);
+        } else {
+          setJupyterServerIsAvailable(false);
+        }
+      } catch {
+        setJupyterServerIsAvailable(false);
       }
-    } catch {
-      setJupyterIsConnected(false);
+    } else if (mode === "jupyterlab-extension") {
+      setJupyterServerIsAvailable(!!extensionKernel);
     }
-  }, [jupyterUrl]);
+  }, [jupyterServerUrl, mode, extensionKernel]);
   const [refreshCode, setRefreshCode] = useState(0);
   useEffect(() => {
     check();
-  }, [check, refreshCode, jupyterUrl]);
+  }, [check, refreshCode, jupyterServerUrl]);
   const refreshJupyter = useCallback(() => setRefreshCode((c) => c + 1), []);
-  const changeJupyterUrl = useCallback(() => {
-    const newUrl = prompt("Enter the URL of your Jupyter runtime", jupyterUrl);
+  const changeJupyterServerUrl = useCallback(() => {
+    const newUrl = prompt(
+      "Enter the URL of your Jupyter runtime",
+      jupyterServerUrl,
+    );
     if (newUrl) {
-      localStorage.setItem("jupyterUrl", newUrl);
-      setJupyterUrl(newUrl);
+      localStorage.setItem("jupyter-server-url", newUrl);
+      setJupyterServerUrl(newUrl);
       setRefreshCode((c) => c + 1);
     }
-  }, [jupyterUrl]);
+  }, [jupyterServerUrl]);
   return (
     <JupyterConnectivityContext.Provider
       value={{
-        jupyterUrl,
-        jupyterIsConnected,
+        mode,
+        jupyterServerUrl,
+        jupyterServerIsAvailable,
         refreshJupyter,
-        changeJupyterUrl,
+        changeJupyterServerUrl,
+        extensionKernel,
       }}
     >
       {children}

@@ -1,12 +1,7 @@
 import { Hyperlink } from "@fi-sci/misc";
 import { Button } from "@mui/material";
 import useNeurosiftSavedChats from "../../pages/SavedChatsPage/useNeurosiftSavedChats";
-import {
-    FunctionComponent,
-    useCallback,
-    useEffect,
-    useState
-} from "react";
+import { FunctionComponent, useCallback, useEffect, useState } from "react";
 
 type NeurosiftSavedChatsLoginViewProps = {
   onLoggedIn?: () => void;

@@ -18,9 +18,14 @@ import { JupyterConnectivityProvider } from "./JupyterConnectivity";
 type ChatPageProps = {
   width: number;
   height: number;
+  jupyterConnectivityMode?: "jupyter-server" | "jupyterlab-extension";
 };
 
-const ChatPage: FunctionComponent<ChatPageProps> = ({ width, height }) => {
+const ChatPage: FunctionComponent<ChatPageProps> = ({
+  width,
+  height,
+  jupyterConnectivityMode,
+}) => {
   const { route, setRoute } = useRoute();
   if (route.page !== "chat") throw Error("Unexpected route: " + route.page);
   const { chatId: chatIdFromRoute } = route;
@@ -48,16 +53,28 @@ const ChatPage: FunctionComponent<ChatPageProps> = ({ width, height }) => {
     return <div>Loading...</div>;
   } else if (initialChat) {
     return (
-      <ChatPageChild width={width} height={height} initialChat={initialChat} />
+      <ChatPageChild
+        width={width}
+        height={height}
+        initialChat={initialChat}
+        jupyterConnectivityMode={jupyterConnectivityMode}
+      />
     );
   } else {
-    return <ChatPageChild width={width} height={height} initialChat={null} />;
+    return (
+      <ChatPageChild
+        width={width}
+        height={height}
+        initialChat={null}
+        jupyterConnectivityMode={jupyterConnectivityMode}
+      />
+    );
   }
 };
 
 const ChatPageChild: FunctionComponent<
   ChatPageProps & { initialChat: Chat | null }
-> = ({ width, height, initialChat }) => {
+> = ({ width, height, initialChat, jupyterConnectivityMode }) => {
   const [openRouterKey, setOpenRouterKey] = useState<string | null>(null);
   const [chat, chatDispatch] = useReducer(chatReducer, emptyChat);
   const logger = useMemo(() => new Logger(), []);
@@ -79,7 +96,9 @@ const ChatPageChild: FunctionComponent<
     [],
   );
   return (
-    <JupyterConnectivityProvider>
+    <JupyterConnectivityProvider
+      mode={jupyterConnectivityMode || "jupyter-server"}
+    >
       <Splitter
         width={width}
         height={height}

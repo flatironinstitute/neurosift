@@ -418,7 +418,7 @@ const MainChatWindow: FunctionComponent<
   >("none");
   const scriptCancelTrigger = useRef<boolean>(false);
 
-  const { jupyterUrl } = useJupyterConnectivity();
+  const jupyterConnectivityState = useJupyterConnectivity();
 
   const runningToolCalls = useRef(false);
 
@@ -461,7 +461,9 @@ const MainChatWindow: FunctionComponent<
         ) => {
           setScriptExecutionStatus("starting");
           scriptCancelTrigger.current = false;
-          const pythonSessionClient = new PythonSessionClient(jupyterUrl);
+          const pythonSessionClient = new PythonSessionClient(
+            jupyterConnectivityState,
+          );
           try {
             pythonSessionClient.onOutputItem((item) => {
               if (item.type === "stdout") {
@@ -605,7 +607,7 @@ const MainChatWindow: FunctionComponent<
     confirmOkayToRun,
     imagesDispatch,
     onLogMessage,
-    jupyterUrl,
+    jupyterConnectivityState,
   ]);
 
   // div refs
@@ -856,7 +858,12 @@ const MainChatWindow: FunctionComponent<
                 </div>
               ) : c.role === "client-side-only" ? (
                 <>
-                  <div style={{ color: (c as any).color || "#6a6", paddingBottom: 10 }}>
+                  <div
+                    style={{
+                      color: (c as any).color || "#6a6",
+                      paddingBottom: 10,
+                    }}
+                  >
                     {(c as any).content}
                   </div>
                 </>

@@ -9,7 +9,10 @@ import {
 } from "../../package/context-unit-selection";
 import NeurodataItemsView from "./NeurodataItemView/NeurodataItemsView";
 import ViewItemWidget from "./NeurodataItemView/ViewItemWidget";
-import { useNeurodataItems, useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+import {
+  useNeurodataItems,
+  useNwbFile,
+} from "neurosift-lib/misc/NwbFileContext";
 import NwbMainView from "./NwbMainView/NwbMainView";
 import { useNwbOpenTabs } from "./NwbOpenTabsContext";
 import TimeseriesAlignmentView from "./TimeseriesAlignmentView/TimeseriesAlignmentView";

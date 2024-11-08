@@ -1,6 +1,9 @@
 import { FunctionComponent, useMemo } from "react";
 import { useModalDialog } from "../../../ApplicationBar";
-import { useNeurodataItems, useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+import {
+  useNeurodataItems,
+  useNwbFile,
+} from "neurosift-lib/misc/NwbFileContext";
 import {
   MergedRemoteH5File,
   RemoteH5File,

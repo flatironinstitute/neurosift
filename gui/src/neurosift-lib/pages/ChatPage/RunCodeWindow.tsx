@@ -166,7 +166,7 @@ const RunCodeWindow: FunctionComponent<RunCodeWindowProps> = ({
   height,
   runCodeCommunicator,
 }) => {
-  const { jupyterUrl } = useJupyterConnectivity();
+  const jupyterConnectivityState = useJupyterConnectivity();
   const [outputContent, dispatchOutputContent] = useReducer(
     outputContentReducer,
     { items: [] },
@@ -175,7 +175,7 @@ const RunCodeWindow: FunctionComponent<RunCodeWindowProps> = ({
     useState<PythonSessionClient | null>(null);
   const bottomElementRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const x = new PythonSessionClient(jupyterUrl);
+    const x = new PythonSessionClient(jupyterConnectivityState);
     x.onOutputItem((item: PythonSessionOutputItem) => {
       dispatchOutputContent({ type: "add-output-item", item });
     });
@@ -184,7 +184,7 @@ const RunCodeWindow: FunctionComponent<RunCodeWindowProps> = ({
     return () => {
       x.shutdown();
     };
-  }, [runCodeCommunicator, jupyterUrl]);
+  }, [runCodeCommunicator, jupyterConnectivityState]);
   const [pythonSessionStatus, setPythonSessionStatus] =
     useState<PythonSessionStatus>("uninitiated");
   useEffect(() => {

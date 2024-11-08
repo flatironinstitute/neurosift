@@ -4,7 +4,10 @@ import {
   ViewPlugin,
   findViewPluginsForType,
 } from "../viewPlugins/viewPlugins";
-import { useNeurodataItems, useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+import {
+  useNeurodataItems,
+  useNwbFile,
+} from "neurosift-lib/misc/NwbFileContext";
 import { RemoteH5FileX, RemoteH5Group } from "@remote-h5-file/index";
 import { Hyperlink } from "@fi-sci/misc";
 import { useNwbOpenTabs } from "../NwbOpenTabsContext";

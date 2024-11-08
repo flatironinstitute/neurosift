@@ -1,7 +1,10 @@
 import { RemoteH5FileX } from "@remote-h5-file/index";
 import Splitter from "neurosift-lib/components/Splitter";
 import { FunctionComponent, useMemo } from "react";
-import { useNeurodataItems, useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+import {
+  useNeurodataItems,
+  useNwbFile,
+} from "neurosift-lib/misc/NwbFileContext";
 import TimeseriesSelectionWidget from "../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget";
 import {
   findViewPluginsForType,

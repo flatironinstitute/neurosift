@@ -6,7 +6,10 @@ import {
 } from "@remote-h5-file/index";
 import Splitter from "neurosift-lib/components/Splitter";
 import { FunctionComponent, useEffect, useState } from "react";
-import { useNeurodataItems, useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+import {
+  useNeurodataItems,
+  useNwbFile,
+} from "neurosift-lib/misc/NwbFileContext";
 import NwbMainLeftPanel from "./NwbMainLeftPanel";
 import NwbMainViewMainPanel from "./NwbMainViewMainPanel";
 

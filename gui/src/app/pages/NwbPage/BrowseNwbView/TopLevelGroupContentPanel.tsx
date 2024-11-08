@@ -13,7 +13,10 @@ import {
   useReducer,
 } from "react";
 import { FaEye, FaRegCircle } from "react-icons/fa";
-import { useNeurodataItems, useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+import {
+  useNeurodataItems,
+  useNwbFile,
+} from "neurosift-lib/misc/NwbFileContext";
 import { useNwbOpenTabs } from "../NwbOpenTabsContext";
 import { findViewPluginsForType } from "../viewPlugins/viewPlugins";
 import { valueToElement } from "./BrowseNwbView";
