@@ -5,6 +5,8 @@ import { ReactMarkdown } from "react-markdown/lib/react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { darcula as highlighterStyle } from "react-syntax-highlighter/dist/esm/styles/prism";
 // import rehypeKatexPlugin from 'rehype-katex';
+import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
+import { CopyAll, PlayArrow } from "@mui/icons-material";
 import "github-markdown-css/github-markdown-light.css";
 import { SpecialComponents } from "react-markdown/lib/ast-to-react";
 import { NormalComponents } from "react-markdown/lib/complex-types";
@@ -12,8 +14,6 @@ import rehypeMathJaxSvg from "rehype-mathjax";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import remarkMathPlugin from "remark-math";
-import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
-import { CopyAll, PlayArrow } from "@mui/icons-material";
 import LazyPlotlyPlot, { PlotlyPlotFromUrl } from "./LazyPlotlyPlot";
 
 type Props = {
@@ -21,8 +21,7 @@ type Props = {
   onSpecialLinkClick?: (link: string) => void;
   onRunCode?: (code: string) => void;
   runCodeReady?: boolean;
-  images?: { name: string; dataUrl: string }[];
-  figureDataFiles?: { name: string; content: string }[];
+  files?: { [name: string]: string };
 };
 
 const Markdown: FunctionComponent<Props> = ({
@@ -30,8 +29,7 @@ const Markdown: FunctionComponent<Props> = ({
   onSpecialLinkClick,
   onRunCode,
   runCodeReady,
-  images,
-  figureDataFiles,
+  files,
 }) => {
   const components: Partial<
     Omit<NormalComponents, keyof SpecialComponents> & SpecialComponents
@@ -97,12 +95,11 @@ const Markdown: FunctionComponent<Props> = ({
         } else if (className === "plotly") {
           // eslint-disable-next-line react/prop-types
           const src = (props as any).src || "";
-          if (src.startsWith("figure://")) {
-            for (const figureDataFile of figureDataFiles || []) {
-              if (src === `figure://${figureDataFile.name}`) {
-                const x = JSON.parse(figureDataFile.content);
-                return <LazyPlotlyPlot data={x.data} layout={x.layout} />;
-              }
+          if (src.startsWith("figure://") && files) {
+            const name = src.slice("figure://".length);
+            if (name in files) {
+              const x = JSON.parse(files[name]);
+              return <LazyPlotlyPlot data={x.data} layout={x.layout} />;
             }
           } else if (src.startsWith("http://") || src.startsWith("https://")) {
             return <PlotlyPlotFromUrl url={src} />;
@@ -140,16 +137,22 @@ const Markdown: FunctionComponent<Props> = ({
         }
       },
       img: ({ node, src, ...props }) => {
-        for (const image of images || []) {
-          if (src === `image://${image.name}`) {
-            return <img src={image.dataUrl} {...props} />;
+        if (src?.startsWith("image://") && files) {
+          const name = src.slice("image://".length);
+          if (name in files) {
+            const a = files[name];
+            if (a.startsWith("base64:")) {
+              const dataBase64 = a.slice("base64:".length);
+              const dataUrl = `data:image/png;base64,${dataBase64}`;
+              return <img src={dataUrl} {...props} />;
+            }
           }
         }
         return <img src={src} {...props} />;
       },
       // }
     }),
-    [onSpecialLinkClick, onRunCode, runCodeReady, images, figureDataFiles],
+    [onSpecialLinkClick, onRunCode, runCodeReady, files],
   );
   const source2 = useMemo(() => {
     const lines = source.split("\n").map((line) => {

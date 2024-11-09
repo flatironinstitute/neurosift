@@ -5,6 +5,7 @@ export type Chat = {
     | ORMessage
     | { role: "client-side-only"; content: string; color?: string } // not used anymore
   )[];
+  files?: { [name: string]: string };
 };
 
 export type ChatAction =
@@ -29,6 +30,15 @@ export type ChatAction =
   | {
       type: "set";
       chat: Chat;
+    }
+  | {
+      type: "set-messages";
+      messages: ORMessage[];
+    }
+  | {
+      type: "set-file";
+      name: string;
+      content: string | ArrayBuffer;
     };
 
 export const chatReducer = (state: Chat, action: ChatAction): Chat => {
@@ -67,8 +77,35 @@ export const chatReducer = (state: Chat, action: ChatAction): Chat => {
   } else if (action.type === "set") {
     return {
       messages: [...action.chat.messages],
+      files: { ...action.chat.files },
+    };
+  } else if (action.type === "set-messages") {
+    return {
+      ...state,
+      messages: [...action.messages],
+    };
+  } else if (action.type === "set-file") {
+    return {
+      ...state,
+      files: {
+        ...(state.files || {}),
+        [action.name]: resolveArrayBuffer(action.content),
+      },
     };
   } else return state;
+};
+
+const resolveArrayBuffer = (content: string | ArrayBuffer): string => {
+  if (typeof content === "string") {
+    return content;
+  }
+  return `base64:${arrayBufferToBase64(content)}`;
+};
+
+const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
+  const bytes = new Uint8Array(buffer);
+  const binary = String.fromCharCode(...bytes);
+  return btoa(binary);
 };
 
 export const emptyChat: Chat = {

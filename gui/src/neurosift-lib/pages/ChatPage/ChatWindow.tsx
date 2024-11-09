@@ -1,30 +1,29 @@
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
-import Markdown from "../../components/Markdown";
-import { ORMessage, ORToolCall } from "./openRouterTypes";
-import Splitter from "../../components/Splitter";
-import useRoute from "../../contexts/useRoute";
 import {
   FunctionComponent,
   useCallback,
   useEffect,
   useMemo,
-  useReducer,
   useRef,
   useState,
 } from "react";
-import { Chat, ChatAction } from "./Chat";
-import chatCompletion from "./chatCompletion";
-import { ChatContext } from "./ChatContext";
+import Markdown from "../../components/Markdown";
+import Splitter from "../../components/Splitter";
+import useRoute from "../../contexts/useRoute";
 import AgentProgressWindow, {
   AgentProgressMessage,
 } from "./AgentProgressWindow";
+import { Chat, ChatAction } from "./Chat";
+import chatCompletion from "./chatCompletion";
+import { ChatContext } from "./ChatContext";
 import ConfirmOkayToRunWindow from "./ConfirmOkayToRunWindow";
 import FeedbackWindow from "./FeedbackWindow";
 import HelpfulUnhelpfulButtons from "./HelpfulUnhelpfulButtons";
-import { imagesReducer, figureDataFilesReducer } from "./ImagesState";
 import InputBar from "./InputBar";
+import { useJupyterConnectivity } from "./JupyterConnectivity";
 import MessageDisplay from "./MessageDisplay";
+import { ORMessage, ORToolCall } from "./openRouterTypes";
 import PythonSessionClient, { PlotlyContent } from "./PythonSessionClient";
 import RunCodeWindow, {
   PythonSessionStatus,
@@ -36,6 +35,7 @@ import { useSystemMessage } from "./systemMessage";
 import ToolElement from "./ToolElement";
 import { ToolItem } from "./ToolItem";
 import ToolResponseView from "./ToolResponseView";
+import { computeTool } from "./tools/compute";
 import { ExecuteScript, generateFigureTool } from "./tools/generateFigure";
 import { lexicaltDandisetsTool } from "./tools/lexicalDandisets";
 import { probeDandisetTool } from "./tools/probeDandiset";
@@ -45,8 +45,6 @@ import { probeNwbFileTool } from "./tools/probeNwbFile";
 import { unitsColnamesTool } from "./tools/probeUnitsColnames";
 import { relevantDandisetsTool } from "./tools/relevantDandisets";
 import { timeseriesAlignmentViewTool } from "./tools/timeseriesAlignmentView";
-import { computeTool } from "./tools/compute";
-import { useJupyterConnectivity } from "./JupyterConnectivity";
 
 type ChatWindowProps = {
   width: number;
@@ -57,6 +55,7 @@ type ChatWindowProps = {
   onLogMessage?: (title: string, message: string) => void;
   onToggleLeftPanel?: () => void;
   chatContext: ChatContext;
+  allowSaveChat?: boolean;
 };
 
 const ChatWindow: FunctionComponent<ChatWindowProps> = ({
@@ -68,6 +67,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   onLogMessage,
   onToggleLeftPanel,
   chatContext,
+  allowSaveChat = true,
 }) => {
   const [showRunCodeWindow, setShowRunCodeWindow] = useState(false);
   const [pythonSessionStatus, setPythonSessionStatus] =
@@ -134,6 +134,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
         chatContext={chatContext}
         onRunCode={handleRunCode}
         pythonSessionStatus={pythonSessionStatus}
+        allowSaveChat={allowSaveChat}
       />
       <RunCodeWindow
         width={0}
@@ -160,6 +161,7 @@ const MainChatWindow: FunctionComponent<
   chatContext,
   onRunCode,
   pythonSessionStatus,
+  allowSaveChat = true,
 }) => {
   const { setRoute } = useRoute();
   const inputBarHeight = 30;
@@ -167,12 +169,6 @@ const MainChatWindow: FunctionComponent<
   const topBarHeight = 24;
 
   const [modelName, setModelName] = useState("openai/gpt-4o");
-
-  const [images, imagesDispatch] = useReducer(imagesReducer, []);
-  const [figureDataFiles, figureDataFilesDispatch] = useReducer(
-    figureDataFilesReducer,
-    [],
-  );
 
   const handleUserMessage = useCallback(
     (message: string) => {
@@ -526,15 +522,15 @@ const MainChatWindow: FunctionComponent<
               addAgentProgressMessage("stderr", message);
             },
             onAddImage: (name, url) => {
-              imagesDispatch({
-                type: "add",
+              chatDispatch({
+                type: "set-file",
                 name,
-                dataUrl: url,
+                content: arrayBufferFromPngDataUrl(url),
               });
             },
             onAddFigureData: (name, content) => {
-              figureDataFilesDispatch({
-                type: "add",
+              chatDispatch({
+                type: "set-file",
                 name,
                 content,
               });
@@ -605,7 +601,6 @@ const MainChatWindow: FunctionComponent<
     resetAgentProgress,
     addAgentProgressMessage,
     confirmOkayToRun,
-    imagesDispatch,
     onLogMessage,
     jupyterConnectivityState,
   ]);
@@ -817,8 +812,7 @@ const MainChatWindow: FunctionComponent<
                       pythonSessionStatus === "idle" ||
                       pythonSessionStatus === "uninitiated"
                     }
-                    images={images}
-                    figureDataFiles={figureDataFiles}
+                    files={chat.files}
                   />
                 </>
               ) : c.role === "assistant" && !!(c as any).tool_calls ? (
@@ -954,7 +948,7 @@ const MainChatWindow: FunctionComponent<
           modelName={modelName}
           setModelName={setModelName}
           onToggleLeftPanel={onToggleLeftPanel}
-          onSaveChat={openSaveChat}
+          onSaveChat={allowSaveChat ? openSaveChat : undefined}
           onCancelScript={
             scriptExecutionStatus === "running"
               ? () => {
@@ -970,8 +964,6 @@ const MainChatWindow: FunctionComponent<
           onClose={closeSaveChat}
           openRouterKey={openRouterKey}
           chatContext={chatContext}
-          images={images}
-          figureDataFiles={figureDataFiles}
         />
       </ModalWindow>
       <ModalWindow
@@ -984,8 +976,6 @@ const MainChatWindow: FunctionComponent<
           response={feedbackResponse}
           openRouterKey={openRouterKey}
           chatContext={chatContext}
-          images={images}
-          figureDataFiles={figureDataFiles}
         />
       </ModalWindow>
       <ModalWindow
@@ -1028,6 +1018,19 @@ const colorForRole = (role: string) => {
   const g = (hash * 2) % 200;
   const b = (hash * 3) % 200;
   return `rgb(${r},${g},${b})`;
+};
+
+const arrayBufferFromPngDataUrl = (dataUrl: string) => {
+  const parts = dataUrl.split(",");
+  if (parts.length !== 2) {
+    throw new Error("Invalid data URL");
+  }
+  const mime = parts[0].split(":")[1].split(";")[0];
+  if (mime !== "image/png") {
+    throw new Error("Unexpected MIME type: " + mime);
+  }
+  const data = parts[1];
+  return Uint8Array.from(atob(data), (c) => c.charCodeAt(0)).buffer;
 };
 
 export default ChatWindow;

@@ -55,6 +55,7 @@ export const getSavedChats = async (a: {
 export const addSavedChat = async (a: {
   chatTitle: string;
   messages: any[];
+  files?: { [name: string]: string };
   userId?: string;
   dandisetId?: string;
   dataVersion?: string;
@@ -63,8 +64,6 @@ export const addSavedChat = async (a: {
   feedbackNotes?: string;
   feedbackOnly?: boolean;
   neurosiftSavedChatsAccessToken?: string;
-  images: { name: string; dataUrl: string }[];
-  figureDataFiles: { name: string; content: string }[];
 }) => {
   const url = `${neurosiftSavedChatsApiUrl}/api/addSavedChat`;
   const req: AddSavedChatRequest = {
@@ -111,19 +110,22 @@ export const addSavedChat = async (a: {
     return;
   }
   for (const sub of data.imageSubstitutions) {
+    if (!a.files) continue;
     const { name, uploadUrl } = sub;
-    const x = a.images.find((x) => x.name === name);
-    if (!x) {
+    const fileData = a.files[name];
+    if (fileData === undefined) {
       console.error("Unexpected: image not found", name);
       continue;
     }
-    const buf = arrayBufferFromDataUrl(x.dataUrl);
+    const fileBuf = fileData.startsWith("base64:")
+      ? base64ToArrayBuffer(fileData.slice("base64:".length))
+      : new TextEncoder().encode(fileData);
     const r2 = await fetch(uploadUrl, {
       method: "PUT",
       headers: {
         "Content-Type": "image/png",
       },
-      body: buf,
+      body: fileBuf,
     });
     if (r2.status !== 200) {
       console.error("Error uploading image", r2);
@@ -131,18 +133,22 @@ export const addSavedChat = async (a: {
     }
   }
   for (const sub of data.figureDataSubstitutions || []) {
+    if (!a.files) continue;
     const { name, uploadUrl } = sub;
-    const x = a.figureDataFiles.find((x) => x.name === name);
-    if (!x) {
+    const fileData = await a.files[name];
+    if (!fileData) {
       console.error("Unexpected: figure data file not found", name);
       continue;
     }
+    const fileBuf = fileData.startsWith("base64:")
+      ? base64ToArrayBuffer(fileData.slice("base64:".length))
+      : new TextEncoder().encode(fileData);
     const r2 = await fetch(uploadUrl, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
-      body: x.content,
+      body: fileBuf,
     });
     if (r2.status !== 200) {
       console.error("Error uploading figure data file", r2);
@@ -152,17 +158,14 @@ export const addSavedChat = async (a: {
   return data.chatId;
 };
 
-const arrayBufferFromDataUrl = (dataUrl: string) => {
-  const parts = dataUrl.split(",");
-  if (parts.length !== 2) {
-    throw new Error("Invalid data URL");
+const base64ToArrayBuffer = (base64: string) => {
+  const binary_string = atob(base64);
+  const len = binary_string.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary_string.charCodeAt(i);
   }
-  const mime = parts[0].split(":")[1].split(";")[0];
-  if (mime !== "image/png") {
-    throw new Error("Unexpected MIME type: " + mime);
-  }
-  const data = parts[1];
-  return Uint8Array.from(atob(data), (c) => c.charCodeAt(0)).buffer;
+  return bytes.buffer;
 };
 
 export const deleteSavedChat = async (a: {
@@ -247,20 +250,18 @@ export const useSavedChats = (a: {
         ? async (a: {
             chatTitle: string;
             messages: any[];
+            files?: { [name: string]: string };
             dandisetId?: string;
             nwbFileUrl?: string;
-            images: { name: string; dataUrl: string }[];
-            figureDataFiles: { name: string; content: string }[];
           }) => {
             const chatId = await addSavedChat({
               chatTitle: a.chatTitle,
               messages: a.messages,
+              files: a.files,
               userId: neurosiftSavedChatsUserId!,
               dandisetId: a.dandisetId,
               nwbFileUrl: a.nwbFileUrl,
               neurosiftSavedChatsAccessToken,
-              images: a.images,
-              figureDataFiles: a.figureDataFiles,
             });
             refreshSavedChats();
             return chatId;
