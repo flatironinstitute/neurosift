@@ -86,7 +86,7 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
   if (route.page !== "nwb") throw Error("Unexpected: route.page is not nwb");
   const [currentTabId, setCurrentTabId] = useState<string>("main");
   const [chat, chatDispatch] = useReducer(chatReducer, emptyChat);
-  const contextAnnotations = useContextAnnotationsForDandiset(route.dandisetId);
+  // const contextAnnotations = useContextAnnotationsForDandiset(route.dandisetId);
   // const availableResourceUrls = useMemo(() => {
   //   if (!contextAnnotations) return [];
   //   return contextAnnotations
@@ -165,6 +165,10 @@ const MainContent: FunctionComponent<Props> = ({
   usingLindi,
   nwbFile,
 }) => {
+  const { route } = useRoute();
+  if (route.page !== "nwb") throw Error("Unexpected: route.page is not nwb");
+  const dandisetId = route.dandisetId;
+  const ebrainsUuid = route.EBRAINSUUID;
   const rootGroup = useGroup(nwbFile, "/");
   const generalGroup = useGroup(nwbFile, "/general");
 
@@ -233,7 +237,8 @@ const MainContent: FunctionComponent<Props> = ({
           overflowY: "auto",
         }}
       >
-        <DandiTable />
+        {dandisetId && <DandiTable />}
+        {ebrainsUuid && <EbrainsTable />}
         {usingLindi && (
           <div>
             <div style={{ color: "darkgreen", fontSize: 10 }}>Using LINDI</div>
@@ -503,6 +508,90 @@ export const useDandisetInfo = (
     getDandisetInfo();
   }, [dandisetId, dandisetVersion, staging]);
   return dandisetInfo;
+};
+
+type EbrainsInfo = {
+  badge: string[];
+  meta: {
+    name: string;
+    description: string;
+    url: string | null;
+    identifier: string[];
+    keywords: string[] | null;
+    license: string | null;
+    creator: {
+      sameAs: string | null;
+      givenName: string;
+      familyName: string;
+      name: string;
+      "@type": string;
+    }[];
+    version: string;
+    "@context": string;
+    "@type": string;
+  };
+  id: string;
+  type: string;
+  category: string;
+  title: string;
+  fields: any;
+  disclaimer: string;
+  group: string;
+};
+
+const EbrainsTable = () => {
+  const { route } = useRoute();
+  if (route.page !== "nwb") throw Error("Unexpected: route.page is not nwb");
+  const ebrainsUuid = route.EBRAINSUUID;
+  const ebrainsInfo = useEbrainsInfo(ebrainsUuid);
+  if (!ebrainsInfo) return <span />;
+  return (
+    <div>
+      <div>
+        EBRAINS{" "}
+        <a
+          href={`https://search.kg.ebrains.eu/instances/Dataset/${ebrainsUuid}`}
+          rel="noreferrer"
+        >
+          {ebrainsInfo.meta.name}
+        </a>
+      </div>
+      <div>
+        <Abbreviate value={ebrainsInfo.meta.description} />
+      </div>
+    </div>
+  );
+};
+
+const Abbreviate = ({ value }: { value: string }) => {
+  const [expanded, setExpanded] = useState(false);
+  if (value.length < 100) return <span>{value}</span>;
+  if (expanded) return <span>{value}</span>;
+  return (
+    <span>
+      {value.slice(0, 100)}...{" "}
+      <Hyperlink onClick={() => setExpanded(true)}>more</Hyperlink>
+    </span>
+  );
+};
+
+const useEbrainsInfo = (ebrainsUuid?: string) => {
+  const [ebrainsInfo, setEbrainsInfo] = useState<EbrainsInfo | undefined>(
+    undefined,
+  );
+  useEffect(() => {
+    if (!ebrainsUuid) return;
+    const getEbrainsInfo = async () => {
+      const r = await fetch(
+        `https://search.kg.ebrains.eu/api/groups/public/documents/Dataset/${ebrainsUuid}`,
+      );
+      if (!r.ok) return;
+      const obj = (await r.json()) as EbrainsInfo;
+      setEbrainsInfo(obj);
+    };
+    getEbrainsInfo();
+  }, [ebrainsUuid]);
+  return ebrainsInfo;
 };
 
 export const formatUserId = (userId: string) => {

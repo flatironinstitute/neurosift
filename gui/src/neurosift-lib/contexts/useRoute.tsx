@@ -41,6 +41,8 @@ export type Route =
       tab?: string;
       embedded?: boolean;
       chatId?: string;
+
+      EBRAINSUUID?: string;
     }
   | {
       page: "avi";
@@ -192,6 +194,7 @@ export const RouteProvider = ({ children }: { children: React.ReactNode }) => {
         tab: (query.tab as string) || undefined,
         embedded: query.embedded === "1",
         chatId: (query.chatId || "") as string,
+        EBRAINSUUID: (query.EBRAINSUUID || "") as string,
       };
     } else if (p === "/avi") {
       return {
@@ -329,6 +332,9 @@ export const RouteProvider = ({ children }: { children: React.ReactNode }) => {
         }
         if (r.chatId) {
           newQuery.chatId = r.chatId;
+        }
+        if (r.EBRAINSUUID) {
+          newQuery.EBRAINSUUID = r.EBRAINSUUID;
         }
       } else if (r.page === "avi") {
         newQuery.p = "/avi";
