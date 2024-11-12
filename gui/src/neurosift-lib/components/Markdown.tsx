@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // import "katex/dist/katex.min.css";
 import { FunctionComponent, useMemo, useState } from "react";
@@ -15,6 +16,8 @@ import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import remarkMathPlugin from "remark-math";
 import LazyPlotlyPlot, { PlotlyPlotFromUrl } from "./LazyPlotlyPlot";
+import RasterPlotFigure from "./RasterPlotFigure";
+import TimeIntervalsFigure from "./TimeIntervalsFigure";
 
 type Props = {
   source: string;
@@ -109,6 +112,14 @@ const Markdown: FunctionComponent<Props> = ({
               {children}
             </div>
           );
+        } else if (className === "NeurosiftRasterPlot") {
+          const nwb_url = (props as any).nwb_url;
+          const path = (props as any).path;
+          return <RasterPlotFigure nwb_url={nwb_url} path={path} />;
+        } else if (className === "NeurosiftTimeIntervals") {
+          const nwb_url = (props as any).nwb_url;
+          const path = (props as any).path;
+          return <TimeIntervalsFigure nwb_url={nwb_url} path={path} />;
         } else {
           return (
             <div className={className} {...props}>

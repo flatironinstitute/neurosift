@@ -256,7 +256,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
       if (shiftZoom && !e.shiftKey) return;
       if (e.deltaY === 0) return;
       const zoomsCount = -e.deltaY / 100;
-      zoomTimeseriesSelection(zoomsCount > 0 ? "in" : "out", 1.1, hoverTime);
+      zoomTimeseriesSelection(zoomsCount > 0 ? "in" : "out", 1.06, hoverTime);
     },
     [shiftZoom, zoomTimeseriesSelection, hoverTime],
   );

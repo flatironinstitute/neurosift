@@ -13,9 +13,9 @@ export const suppressWheelScroll = (
   const canvases = divRef.current.querySelectorAll("canvas");
   canvases.forEach((c) => {
     c.addEventListener("wheel", (e: Event) => {
-      if ((divRef?.current as any)["_hasFocus"]) {
-        e.preventDefault();
-      }
+      // if ((divRef?.current as any)["_hasFocus"]) {
+      e.preventDefault();
+      // }
     });
   });
 };
