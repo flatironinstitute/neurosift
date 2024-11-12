@@ -23,7 +23,7 @@ import ViewToolbar from "./ViewToolbar";
 import { useTimeTicks } from "./timeTicks";
 import TSV2AxesLayer from "./TSV2AxesLayer";
 import TSV2CursorLayer from "./TSV2CursorLayer";
-import Splitter from "neurosift-lib/components/Splitter";
+import Splitter from "../../components/Splitter";
 import { ToolbarItem } from "./Toolbars";
 
 const DefaultToolbarWidth = 18;

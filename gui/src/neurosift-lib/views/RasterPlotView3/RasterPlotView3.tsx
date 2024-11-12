@@ -11,11 +11,11 @@ import { Opts } from "./WorkerTypes";
 import {
   useTimeRange,
   useTimeseriesSelectionInitialization,
-} from "neurosift-lib/contexts/context-timeseries-selection";
-import { useSelectedUnitIds } from "neurosift-lib/contexts/context-unit-selection";
+} from "../../contexts/context-timeseries-selection";
+import { useSelectedUnitIds } from "../../contexts/context-unit-selection";
 import TimeScrollView2, {
   useTimeScrollView2,
-} from "neurosift-lib/timeseries/component-time-scroll-view-2/TimeScrollView2";
+} from "../../timeseries/component-time-scroll-view-2/TimeScrollView2";
 
 type Props = {
   spikeTrainsClient: SpikeTrainsClientType;

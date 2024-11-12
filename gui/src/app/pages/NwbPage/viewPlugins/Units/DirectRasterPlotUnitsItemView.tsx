@@ -8,7 +8,7 @@ import {
 } from "@remote-h5-file/index";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
-import RasterPlotView3 from "./RasterPlotView3/RasterPlotView3";
+import RasterPlotView3 from "neurosift-lib/views/RasterPlotView3/RasterPlotView3";
 
 type Props = {
   width: number;
