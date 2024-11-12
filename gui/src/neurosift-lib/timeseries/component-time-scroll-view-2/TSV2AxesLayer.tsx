@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useCallback } from "react";
+import { FunctionComponent, useCallback } from "react";
 import { TickSet } from "./YAxisTicks";
 import BaseCanvas from "./BaseCanvas";
 import { TimeTick } from "./timeTicks";

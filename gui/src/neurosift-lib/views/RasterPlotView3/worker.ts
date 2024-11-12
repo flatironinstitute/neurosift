@@ -32,7 +32,7 @@ function debounce(f: () => void, msec: number) {
   };
 }
 
-let drawCode = 0;
+// let drawCode = 0;
 async function draw() {
   if (!canvas) return;
   if (!opts) return;
@@ -91,9 +91,9 @@ async function draw() {
     canvasContext.fillText("Loading...", canvasWidth / 2, canvasHeight / 2);
     return;
   }
-  drawCode += 1;
+  // drawCode += 1;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const thisDrawCode = drawCode;
+  // const thisDrawCode = drawCode;
 
   const numUnits = plotData.plots.length;
   const unitIndexToY = (unitIndex: number) =>

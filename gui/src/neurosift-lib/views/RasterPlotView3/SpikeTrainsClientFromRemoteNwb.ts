@@ -4,13 +4,13 @@ import {
   DatasetDataType,
   getRemoteH5File,
   RemoteH5FileX,
-} from "@remote-h5-file/index";
+} from "../../remote-h5-file/index";
 
 class SpikeTrainsClientFromRemoteNwb {
-  #nwbFile: RemoteH5FileX | undefined;
+  // #nwbFile: RemoteH5FileX | undefined;
   #blockSizeSec = 60 * 5;
   constructor(
-    private url: string,
+    // private url: string,
     private nwbFile: RemoteH5FileX,
     public unitIds: (string | number)[],
     public spikeTimesIndices: DatasetDataType,
@@ -42,7 +42,7 @@ class SpikeTrainsClientFromRemoteNwb {
     const startTimeSec = v1[0];
     const endTimeSec = v2[0];
     return new SpikeTrainsClientFromRemoteNwb(
-      url,
+      // url,
       nwbFile,
       unitIds,
       spikeTimesIndices,

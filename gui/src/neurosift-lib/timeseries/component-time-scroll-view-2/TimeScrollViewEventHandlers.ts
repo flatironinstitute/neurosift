@@ -10,9 +10,7 @@ export const suppressWheelScroll = (
   divRef: React.MutableRefObject<HTMLDivElement | null>,
 ) => {
   if (!divRef || !divRef.current) return;
-  const canvases = Array.from(divRef.current.children).filter(
-    (e) => e.nodeName === "CANVAS",
-  );
+  const canvases = divRef.current.querySelectorAll("canvas");
   canvases.forEach((c) => {
     c.addEventListener("wheel", (e: Event) => {
       if ((divRef?.current as any)["_hasFocus"]) {
