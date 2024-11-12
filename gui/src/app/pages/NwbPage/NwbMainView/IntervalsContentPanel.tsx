@@ -3,7 +3,7 @@ import {
   RemoteH5FileX,
   RemoteH5Group,
   RemoteH5Subgroup,
-} from "@remote-h5-file/index";
+} from "neurosift-lib/remote-h5-file/index";
 import { FunctionComponent, useMemo } from "react";
 import { useNwbOpenTabs } from "../NwbOpenTabsContext";
 import { useSelectedItemViews } from "../SelectedItemViewsContext";

@@ -1,5 +1,8 @@
 /* eslint-disable no-constant-condition */
-import { RemoteH5FileLindi, RemoteH5FileX } from "@remote-h5-file/index";
+import {
+  RemoteH5FileLindi,
+  RemoteH5FileX,
+} from "neurosift-lib/remote-h5-file/index";
 import {
   FunctionComponent,
   useCallback,

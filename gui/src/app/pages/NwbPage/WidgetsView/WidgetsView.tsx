@@ -8,7 +8,10 @@ import {
   useNeurodataItems,
   useNwbFile,
 } from "neurosift-lib/misc/NwbFileContext";
-import { RemoteH5FileX, RemoteH5Group } from "@remote-h5-file/index";
+import {
+  RemoteH5FileX,
+  RemoteH5Group,
+} from "neurosift-lib/remote-h5-file/index";
 import { Hyperlink } from "@fi-sci/misc";
 import { useNwbOpenTabs } from "../NwbOpenTabsContext";
 import { useNwbFileSpecifications } from "neurosift-lib/misc/SpecificationsView/SetupNwbFileSpecificationsProvider";

@@ -43,6 +43,7 @@ export const JupyterConnectivityProvider: FunctionComponent<
   const check = useCallback(async () => {
     if (mode === "jupyter-server") {
       try {
+        console.log(`Fetching ${jupyterServerUrl}/api/sessions`);
         const resp = await fetch(`${jupyterServerUrl}/api/sessions`);
         if (resp.ok) {
           setJupyterServerIsAvailable(true);
@@ -57,7 +58,9 @@ export const JupyterConnectivityProvider: FunctionComponent<
     }
   }, [jupyterServerUrl, mode, extensionKernel]);
   const [refreshCode, setRefreshCode] = useState(0);
+  console.log("---------------- a");
   useEffect(() => {
+    console.log("---------------- b");
     check();
   }, [check, refreshCode, jupyterServerUrl]);
   const refreshJupyter = useCallback(() => setRefreshCode((c) => c + 1), []);

@@ -1,6 +1,6 @@
 import { FunctionComponent, PropsWithChildren } from "react";
 import TimeseriesSelectionWidget from "../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget";
-import { RemoteH5Group } from "@remote-h5-file/index";
+import { RemoteH5Group } from "neurosift-lib/remote-h5-file/index";
 import ShareTabComponent from "./ShareTabComponent";
 import { ViewPlugin } from "../viewPlugins/viewPlugins";
 import LoadInPythonComponent from "./LoadInPythonComponent";

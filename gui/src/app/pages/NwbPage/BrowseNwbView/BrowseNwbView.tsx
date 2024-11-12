@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { RemoteH5FileX, RemoteH5Group } from "@remote-h5-file/index";
+import {
+  RemoteH5FileX,
+  RemoteH5Group,
+} from "neurosift-lib/remote-h5-file/index";
 import { FunctionComponent, useState } from "react";
 import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useGroup } from "../NwbMainView/NwbMainView";

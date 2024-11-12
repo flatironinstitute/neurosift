@@ -14,7 +14,7 @@ import {
   useState,
 } from "react";
 import { MatrixData, Opts } from "./WorkerTypes";
-import { RemoteH5FileLindi } from "@remote-h5-file/index";
+import { RemoteH5FileLindi } from "neurosift-lib/remote-h5-file/index";
 
 type SpikeDensityPlotWidgetProps = {
   width: number;

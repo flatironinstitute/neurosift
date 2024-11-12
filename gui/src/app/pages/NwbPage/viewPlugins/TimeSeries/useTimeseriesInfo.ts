@@ -1,4 +1,4 @@
-import { RemoteH5FileX } from "@remote-h5-file/index";
+import { RemoteH5FileX } from "neurosift-lib/remote-h5-file/index";
 import { useEffect, useState } from "react";
 
 export const getTimeseriesInfo = async (

@@ -2,9 +2,13 @@
 import { Hyperlink } from "@fi-sci/misc";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import { Chat as ChatIcon, ListAlt } from "@mui/icons-material";
-import { RemoteH5FileX } from "@remote-h5-file/index";
-import TabWidget from "neurosift-lib/components/TabWidget";
 import { reportRecentlyViewedDandiset } from "app/pages/DandiPage/DandiBrowser/DandiBrowser";
+import TabWidget from "neurosift-lib/components/TabWidget";
+import useRoute from "neurosift-lib/contexts/useRoute";
+import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+import { JupyterConnectivityProvider } from "neurosift-lib/pages/ChatPage/JupyterConnectivity";
+import { useSavedChats } from "neurosift-lib/pages/SavedChatsPage/savedChatsApi";
+import { RemoteH5FileX } from "neurosift-lib/remote-h5-file";
 import {
   FunctionComponent,
   useEffect,
@@ -12,13 +16,11 @@ import {
   useReducer,
   useState,
 } from "react";
-import useRoute from "neurosift-lib/contexts/useRoute";
 import {
   serializeBigInt,
   valueToElement,
 } from "../BrowseNwbView/BrowseNwbView";
 import { useDandiAssetContext } from "../DandiAssetContext";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useNwbOpenTabs } from "../NwbOpenTabsContext";
 import ViewObjectAnalysesIconThing from "../ObjectNote/ViewObjectAnalysesIconThing";
 import ViewObjectNotesIconThing from "../ObjectNote/ViewObjectNotesIconThing";
@@ -26,11 +28,9 @@ import getAuthorizationHeaderForUrl from "../getAuthorizationHeaderForUrl";
 import LoadInPynwbWindow from "./LoadInPynwbWindow";
 import { useDatasetData, useGroup } from "./NwbMainView";
 import SelectedNeurodataItemsWidget from "./SelectedNeurodataItemsWidget";
-import { useContextAnnotationsForDandiset } from "../NeurosiftAnnotations/useContextAnnotations";
-import ChatWindow from "neurosift-lib/pages/ChatPage/ChatWindow";
-import { useSavedChats } from "neurosift-lib/pages/SavedChatsPage/savedChatsApi";
 import { chatReducer, emptyChat } from "neurosift-lib/pages/ChatPage/Chat";
 import { ChatContext } from "neurosift-lib/pages/ChatPage/ChatContext";
+import ChatWindow from "neurosift-lib/pages/ChatPage/ChatWindow";
 
 type Props = {
   width: number;
@@ -125,37 +125,39 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
     [route.url, route.dandisetId],
   );
   return (
-    <TabWidget
-      tabs={tabs}
-      width={width}
-      height={height}
-      currentTabId={currentTabId}
-      setCurrentTabId={setCurrentTabId}
-    >
-      <MainContent
-        width={0}
-        height={0}
-        nwbFile={nwbFile}
-        usingLindi={usingLindi}
-      />
-      <ChatWindow
-        width={0}
-        height={0}
-        chat={chat}
-        chatDispatch={chatDispatch}
-        openRouterKey={null}
-        onLogMessage={undefined}
-        onToggleLeftPanel={undefined}
-        chatContext={chatContext}
-      />
-      {/* <ChatPanel
+    <JupyterConnectivityProvider mode={"jupyter-server"}>
+      <TabWidget
+        tabs={tabs}
+        width={width}
+        height={height}
+        currentTabId={currentTabId}
+        setCurrentTabId={setCurrentTabId}
+      >
+        <MainContent
+          width={0}
+          height={0}
+          nwbFile={nwbFile}
+          usingLindi={usingLindi}
+        />
+        <ChatWindow
+          width={0}
+          height={0}
+          chat={chat}
+          chatDispatch={chatDispatch}
+          openRouterKey={null}
+          onLogMessage={undefined}
+          onToggleLeftPanel={undefined}
+          chatContext={chatContext}
+        />
+        {/* <ChatPanel
         width={0}
         height={0}
         chat={chat}
         setChat={setChat}
         availableResourceUrls={availableResourceUrls}
       /> */}
-    </TabWidget>
+      </TabWidget>
+    </JupyterConnectivityProvider>
   );
 };
 

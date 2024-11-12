@@ -14,7 +14,7 @@ import { SmallIconButton } from "@fi-sci/misc";
 import { Download, Help } from "@mui/icons-material";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import DynamicTableColumnInfoView from "./DynamicTableColumnInfoView";
-import { DatasetDataType } from "@remote-h5-file/index";
+import { DatasetDataType } from "neurosift-lib/remote-h5-file/index";
 
 type Props = {
   width: number;

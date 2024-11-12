@@ -5,7 +5,7 @@ import {
   DatasetDataType,
   RemoteH5FileLindi,
   RemoteH5FileX,
-} from "@remote-h5-file/index";
+} from "neurosift-lib/remote-h5-file/index";
 import { ArrowLeft, ArrowRight } from "@mui/icons-material";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import {

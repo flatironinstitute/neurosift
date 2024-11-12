@@ -1,4 +1,4 @@
-import { RemoteH5FileX } from "@remote-h5-file/index";
+import { RemoteH5FileX } from "neurosift-lib/remote-h5-file/index";
 import Splitter from "neurosift-lib/components/Splitter";
 import { FunctionComponent, useMemo } from "react";
 import {

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hyperlink } from "@fi-sci/misc";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
-import { RemoteH5FileX } from "@remote-h5-file/index";
+import { RemoteH5FileX } from "neurosift-lib/remote-h5-file/index";
 import pako from "pako";
 import {
   FunctionComponent,

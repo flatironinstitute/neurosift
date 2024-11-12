@@ -2,7 +2,7 @@ import {
   DatasetDataType,
   RemoteH5Dataset,
   RemoteH5FileX,
-} from "@remote-h5-file/index";
+} from "neurosift-lib/remote-h5-file/index";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useDatasetData, useGroup } from "../../NwbMainView/NwbMainView";

@@ -25,7 +25,7 @@ import {
 } from "../../ElectricalSeriesItemView/SpikeSortingView/SpikeSortingView";
 import { JobInfoView } from "../../CEBRA/DendroItemView";
 import SpikeDensityPlotWidget from "./SpikeDensityPlotWidget";
-import { RemoteH5FileX } from "@remote-h5-file/index";
+import { RemoteH5FileX } from "neurosift-lib/remote-h5-file/index";
 
 type Props = {
   width: number;

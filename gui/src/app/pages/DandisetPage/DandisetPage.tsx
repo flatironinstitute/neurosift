@@ -1,4 +1,7 @@
 import Splitter from "neurosift-lib/components/Splitter";
+import useRoute from "neurosift-lib/contexts/useRoute";
+import { JupyterConnectivityProvider } from "neurosift-lib/pages/ChatPage/JupyterConnectivity";
+import { useSavedChats } from "neurosift-lib/pages/SavedChatsPage/savedChatsApi";
 import {
   FunctionComponent,
   useCallback,
@@ -6,14 +9,12 @@ import {
   useMemo,
   useReducer,
 } from "react";
-import useRoute from "neurosift-lib/contexts/useRoute";
-import ChatWindow from "neurosift-lib/pages/ChatPage/ChatWindow";
 import { getInitialSideChatWidth } from "../DandiPage/DandiPage";
 import { DandiAssetContext } from "../NwbPage/DandiAssetContext";
 import { SetupContextAnnotationsProvider } from "../NwbPage/NeurosiftAnnotations/useContextAnnotations";
-import { useSavedChats } from "neurosift-lib/pages/SavedChatsPage/savedChatsApi";
 import DandisetView from "./DandisetViewFromDendro/DandisetView";
 import { ChatContext } from "neurosift-lib/pages/ChatPage/ChatContext";
+import ChatWindow from "neurosift-lib/pages/ChatPage/ChatWindow";
 import { chatReducer, emptyChat } from "neurosift-lib/pages/ChatPage/Chat";
 
 type DandisetPageProps = {
@@ -84,30 +85,32 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
   return (
     <DandiAssetContext.Provider value={dandiAssetContextValue}>
       <SetupContextAnnotationsProvider>
-        <Splitter
-          width={width}
-          height={height}
-          initialPosition={initialSideChatWidth}
-          hideFirstChild={!showChat}
-        >
-          <ChatWindow
-            width={0}
-            height={0}
-            chat={chat}
-            chatDispatch={chatDispatch}
-            openRouterKey={null}
-            onLogMessage={undefined}
-            chatContext={chatContext}
-          />
-          <DandisetView
-            width={0}
-            height={0}
-            dandisetId={route.dandisetId}
-            dandisetVersion={route.dandisetVersion}
-            useStaging={!!route.staging}
-            onOpenAssets={handleOpenAssets}
-          />
-        </Splitter>
+        <JupyterConnectivityProvider mode={"jupyter-server"}>
+          <Splitter
+            width={width}
+            height={height}
+            initialPosition={initialSideChatWidth}
+            hideFirstChild={!showChat}
+          >
+            <ChatWindow
+              width={0}
+              height={0}
+              chat={chat}
+              chatDispatch={chatDispatch}
+              openRouterKey={null}
+              onLogMessage={undefined}
+              chatContext={chatContext}
+            />
+            <DandisetView
+              width={0}
+              height={0}
+              dandisetId={route.dandisetId}
+              dandisetVersion={route.dandisetVersion}
+              useStaging={!!route.staging}
+              onOpenAssets={handleOpenAssets}
+            />
+          </Splitter>
+        </JupyterConnectivityProvider>
       </SetupContextAnnotationsProvider>
     </DandiAssetContext.Provider>
   );

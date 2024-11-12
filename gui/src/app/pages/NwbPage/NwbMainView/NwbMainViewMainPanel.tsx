@@ -1,5 +1,5 @@
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
-import { RemoteH5FileX } from "@remote-h5-file/index";
+import { RemoteH5FileX } from "neurosift-lib/remote-h5-file/index";
 import { FunctionComponent, useEffect, useState } from "react";
 import BrowseNwbView from "../BrowseNwbView/BrowseNwbView";
 import DendroView from "../DendroView/DendroView";

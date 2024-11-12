@@ -4,7 +4,7 @@ import {
   DatasetDataType,
   RemoteH5Dataset,
   RemoteH5FileX,
-} from "@remote-h5-file/index";
+} from "neurosift-lib/remote-h5-file/index";
 import { useEffect, useState } from "react";
 import { useGroup } from "../../../NwbMainView/NwbMainView";
 

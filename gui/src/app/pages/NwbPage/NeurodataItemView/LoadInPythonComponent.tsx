@@ -9,7 +9,7 @@ import {
   RemoteH5File,
   RemoteH5FileLindi,
   RemoteH5Group,
-} from "@remote-h5-file/index";
+} from "neurosift-lib/remote-h5-file/index";
 import { findViewPluginsForType, ViewPlugin } from "../viewPlugins/viewPlugins";
 import { Hyperlink } from "@fi-sci/misc";
 import ModalWindow from "@fi-sci/modal-window";

@@ -3,7 +3,7 @@ import {
   RemoteH5Dataset,
   RemoteH5FileX,
   RemoteH5Group,
-} from "@remote-h5-file/index";
+} from "neurosift-lib/remote-h5-file";
 import Splitter from "neurosift-lib/components/Splitter";
 import { FunctionComponent, useEffect, useState } from "react";
 import {

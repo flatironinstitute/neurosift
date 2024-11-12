@@ -9,7 +9,7 @@ import {
   getRemoteH5File,
   getRemoteH5FileLindi,
   globalRemoteH5FileStats,
-} from "@remote-h5-file/index";
+} from "neurosift-lib/remote-h5-file/index";
 import { track } from "@vercel/analytics/react";
 import {
   FunctionComponent,

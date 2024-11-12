@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Canceler } from "@remote-h5-file/index";
+import { Canceler } from "neurosift-lib/remote-h5-file/index";
 import {
   FunctionComponent,
   useCallback,

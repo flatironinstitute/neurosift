@@ -2,7 +2,7 @@ import {
   RemoteH5FileLindi,
   RemoteH5FileX,
   getRemoteH5FileLindi,
-} from "@remote-h5-file/index";
+} from "neurosift-lib/remote-h5-file/index";
 import {
   FunctionComponent,
   PropsWithChildren,

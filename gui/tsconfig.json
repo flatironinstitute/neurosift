@@ -25,7 +25,7 @@
     "baseUrl": "./src",
     "paths": {
       "@NSComponents/*": ["app/components/*"],
-      "@remote-h5-file/*": ["neurosift-lib/remote-h5-file/*"],
+      "neurosift-lib/remote-h5-file/*": ["neurosift-lib/remote-h5-file/*"],
       "@electrode-geometry/*": ["electrode-geometry/*"],
       "neurosift-lib/*": ["neurosift-lib/*"]
     }

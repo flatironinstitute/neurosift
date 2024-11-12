@@ -1,4 +1,7 @@
-import { RemoteH5FileX, RemoteH5Group } from "@remote-h5-file/index";
+import {
+  RemoteH5FileX,
+  RemoteH5Group,
+} from "neurosift-lib/remote-h5-file/index";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import TopLevelGroupContentPanel from "../BrowseNwbView/TopLevelGroupContentPanel";
 import IntervalsContentPanel from "./IntervalsContentPanel";

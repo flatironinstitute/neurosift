@@ -27,7 +27,7 @@ import {
   useJob,
   useDendroApiKey,
 } from "./DendroHelpers";
-import { RemoteH5FileX } from "@remote-h5-file/index";
+import { RemoteH5FileX } from "neurosift-lib/remote-h5-file/index";
 import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { LazyPlotlyPlotContext } from "./LazyPlotlyPlot";
 import {
