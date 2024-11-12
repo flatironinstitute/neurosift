@@ -1,8 +1,8 @@
 import {
   PanDirection,
   ZoomDirection,
-} from "neurosift-lib/contexts/context-timeseries-selection";
-import { ToolbarItem } from "../ViewToolbar";
+} from "../../contexts/context-timeseries-selection";
+import { ToolbarItem } from "./Toolbars";
 import {
   FaArrowLeft,
   FaArrowRight,

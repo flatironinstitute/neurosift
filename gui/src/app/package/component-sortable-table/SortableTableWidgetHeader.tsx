@@ -13,7 +13,7 @@ import {
   UnitSelectionAction,
   UnitSelectionState,
   UPDATE_SORT_FIELDS,
-} from "../context-unit-selection";
+} from "neurosift-lib/contexts/context-unit-selection";
 import React, { FunctionComponent, useCallback, useMemo } from "react";
 import "./SortableTableWidget.css";
 import SortableTableWidgetCheckbox from "./SortableTableWidgetCheckbox";

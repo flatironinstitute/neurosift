@@ -1,7 +1,7 @@
 import { FunctionComponent } from "react";
 import { SortingCuration } from "../context-sorting-curation";
-import { idToNum } from "../context-unit-selection";
-import { getUnitColor } from "../spike_sorting/view-units-table/unitColors";
+import { idToNum } from "neurosift-lib/contexts/context-unit-selection";
+import { getUnitColor } from "neurosift-lib/contexts/context-unit-selection/unitColors";
 import "./SortableTableWidget.css";
 
 export interface ColorPatchUnitLabelProps {

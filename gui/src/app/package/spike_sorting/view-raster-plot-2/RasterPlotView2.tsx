@@ -7,12 +7,15 @@ import {
 } from "react";
 import TimeScrollView2, {
   useTimeScrollView2,
-} from "../../component-time-scroll-view-2/TimeScrollView2";
+} from "neurosift-lib/timeseries/component-time-scroll-view-2/TimeScrollView2";
 import {
   useTimeRange,
   useTimeseriesSelectionInitialization,
-} from "../../context-timeseries-selection";
-import { idToNum, useSelectedUnitIds } from "../../context-unit-selection";
+} from "neurosift-lib/contexts/context-timeseries-selection";
+import {
+  idToNum,
+  useSelectedUnitIds,
+} from "neurosift-lib/contexts/context-unit-selection";
 import { getUnitColor } from "../view-units-table";
 import { RasterPlotView2Data } from "./RasterPlotView2Data";
 import { Opts, PlotData } from "./WorkerTypes";

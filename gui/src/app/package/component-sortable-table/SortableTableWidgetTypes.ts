@@ -1,4 +1,7 @@
-import { SortingRule, UnitSelectionAction } from "../context-unit-selection";
+import {
+  SortingRule,
+  UnitSelectionAction,
+} from "neurosift-lib/contexts/context-unit-selection";
 export interface SortableTableWidgetRow {
   rowId: string | number;
   data: {

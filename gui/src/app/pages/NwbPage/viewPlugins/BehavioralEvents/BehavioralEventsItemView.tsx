@@ -7,14 +7,14 @@ import {
 } from "react";
 import TimeScrollView2, {
   useTimeScrollView2,
-} from "../../../../package/component-time-scroll-view-2/TimeScrollView2";
+} from "neurosift-lib/timeseries/component-time-scroll-view-2/TimeScrollView2";
 import {
   useTimeRange,
   useTimeseriesSelectionInitialization,
-} from "../../../../package/context-timeseries-selection";
+} from "neurosift-lib/contexts/context-timeseries-selection";
 import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useGroup } from "../../NwbMainView/NwbMainView";
-import { timeSelectionBarHeight } from "../TimeSeries/TimeseriesItemView/TimeseriesSelectionBar";
+import { timeSelectionBarHeight } from "neurosift-lib/timeseries/TimeseriesSelectionBar";
 import { BehavioralEventsData, EventSeries, Opts } from "./WorkerTypes";
 
 type Props = {

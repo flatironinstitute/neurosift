@@ -1,6 +1,6 @@
 import { FunctionComponent, useMemo, useState } from "react";
 import DynamicTableView from "../DynamicTable/DynamicTableView";
-import { useSelectedUnitIds } from "app/package/context-unit-selection";
+import { useSelectedUnitIds } from "neurosift-lib/contexts/context-unit-selection";
 import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { checkUrlIsLocal } from "../viewPlugins";
 import TabWidget from "neurosift-lib/components/TabWidget";

@@ -12,14 +12,14 @@ import {
   useTimeRange,
   useTimeseriesSelection,
   useTimeseriesSelectionInitialization,
-} from "../../../../../package/context-timeseries-selection";
+} from "neurosift-lib/contexts/context-timeseries-selection";
 import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useDataset } from "../../../NwbMainView/NwbMainView";
 import { useTimeseriesTimestampsClient } from "../../TimeSeries/TimeseriesItemView/TimeseriesTimestampsClient";
 import TimeseriesDatasetChunkingClient from "../../TimeSeries/TimeseriesItemView/TimeseriesDatasetChunkingClient";
 import TimeseriesSelectionBar, {
   timeSelectionBarHeight,
-} from "../../TimeSeries/TimeseriesItemView/TimeseriesSelectionBar";
+} from "neurosift-lib/timeseries/TimeseriesSelectionBar";
 import { DataSeries, Opts } from "./SpatialWorkerTypes";
 
 type Props = {

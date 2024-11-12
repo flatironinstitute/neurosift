@@ -1,6 +1,6 @@
 import { FunctionComponent, useContext, useMemo } from "react";
-import { TimeseriesSelectionContext } from "../context-timeseries-selection";
-import { idToNum } from "../context-unit-selection";
+import { TimeseriesSelectionContext } from "neurosift-lib/contexts/context-timeseries-selection";
+import { idToNum } from "neurosift-lib/contexts/context-unit-selection";
 import ElectrodeGeometry from "./WaveformWidget/sharedDrawnComponents/ElectrodeGeometry";
 import { WaveformColors } from "./WaveformWidget/WaveformPlot";
 import WaveformWidget from "./WaveformWidget/WaveformWidget";

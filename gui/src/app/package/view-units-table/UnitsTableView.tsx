@@ -15,7 +15,7 @@ import {
   UNIQUE_SELECT_NEXT,
   UNIQUE_SELECT_PREVIOUS,
   useSelectedUnitIds,
-} from "../context-unit-selection";
+} from "neurosift-lib/contexts/context-unit-selection";
 import {
   ColorPatchUnitIdLabel,
   ColorPatchUnitLabelProps,

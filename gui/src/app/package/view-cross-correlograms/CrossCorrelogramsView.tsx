@@ -1,13 +1,17 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import { PGPlot, PlotGrid } from "../component-plot-grid";
 import { VerticalScrollView } from "../component-vertical-scroll-view";
-import { idToNum, INITIALIZE_UNITS, sortIds } from "../context-unit-selection";
+import {
+  idToNum,
+  INITIALIZE_UNITS,
+  sortIds,
+} from "neurosift-lib/contexts/context-unit-selection";
 import {
   LockableSelectUnitsWidget,
   useLocalSelectedUnitIds,
 } from "../SelectUnitsWidget";
 import { CorrelogramPlot } from "../view-autocorrelograms";
-import { getUnitColor } from "../view-units-table/unitColors";
+import { getUnitColor } from "neurosift-lib/contexts/context-unit-selection/unitColors";
 import { ToolbarItem, ViewToolbar } from "../ViewToolbar";
 import {
   CrossCorrelogramData,

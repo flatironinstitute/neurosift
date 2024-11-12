@@ -10,7 +10,7 @@ import {
   TimeseriesSelectionContext,
   useTimeRange,
   useTimeseriesSelection,
-} from "../../../../../package/context-timeseries-selection";
+} from "../contexts/context-timeseries-selection";
 
 type Props = {
   width: number;

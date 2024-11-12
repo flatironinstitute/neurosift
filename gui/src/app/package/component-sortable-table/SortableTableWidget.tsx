@@ -3,7 +3,7 @@ import { FunctionComponent, useCallback, useMemo } from "react";
 import {
   allUnitSelectionState,
   voidClickHandler,
-} from "../context-unit-selection";
+} from "neurosift-lib/contexts/context-unit-selection";
 import "./SortableTableWidget.css";
 import SortableTableWidgetContentRow from "./SortableTableWidgetContentRow";
 import SortableTableWidgetHeaderRow, {

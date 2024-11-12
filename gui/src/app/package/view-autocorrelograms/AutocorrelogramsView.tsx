@@ -7,8 +7,8 @@ import {
   INITIALIZE_UNITS,
   sortIds,
   useSelectedUnitIds,
-} from "../context-unit-selection";
-import { getUnitColor } from "../view-units-table/unitColors";
+} from "neurosift-lib/contexts/context-unit-selection";
+import { getUnitColor } from "neurosift-lib/contexts/context-unit-selection/unitColors";
 import {
   defaultUnitsTableBottomToolbarOptions,
   ToolbarItem,

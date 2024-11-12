@@ -1,7 +1,7 @@
 import {
   defaultZoomScaleFactor,
   ZoomDirection,
-} from "../../context-timeseries-selection";
+} from "neurosift-lib/contexts/context-timeseries-selection";
 import { abs } from "mathjs";
 import React, { useCallback, useMemo, useRef } from "react";
 import {

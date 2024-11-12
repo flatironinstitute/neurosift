@@ -1,4 +1,4 @@
-import { TickSet } from "../component-time-scroll-view/YAxisTicks";
+import { TickSet } from "./YAxisTicks";
 import { TimeTick } from "./timeTicks";
 import { TSV2AxesLayerProps } from "./TSV2AxesLayer";
 

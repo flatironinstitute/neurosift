@@ -1,5 +1,5 @@
 import React, { useContext, useMemo } from "react";
-import { redistributeUnitColors } from "../spike_sorting/view-units-table/unitColors";
+import { redistributeUnitColors } from "./unitColors";
 import { sortIds } from "./sortIds";
 import {
   getCheckboxClickHandlerGenerator,

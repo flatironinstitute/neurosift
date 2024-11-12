@@ -12,7 +12,7 @@ import { GiPaperClip } from "react-icons/gi";
 import {
   useTimeRange,
   useTimeseriesSelection,
-} from "../../../package/context-timeseries-selection";
+} from "neurosift-lib/contexts/context-timeseries-selection";
 
 type Props = {
   tabName?: string;

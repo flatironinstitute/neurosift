@@ -15,7 +15,7 @@ import {
   sortIds,
   SortingRule,
   UnitSelectionAction,
-} from "../context-unit-selection";
+} from "neurosift-lib/contexts/context-unit-selection";
 
 export type SelectUnitsWidgetProps = {
   unitIds: (number | string)[];

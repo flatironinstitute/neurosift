@@ -8,25 +8,25 @@ import React, {
 } from "react";
 import TimeseriesSelectionBar, {
   timeSelectionBarHeight,
-} from "../../pages/NwbPage/viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionBar";
-import {
-  DefaultToolbarWidth,
-  useYAxisTicks,
-} from "../component-time-scroll-view";
-import useActionToolbar from "../component-time-scroll-view/TimeScrollViewActionsToolbar";
+} from "..//TimeseriesSelectionBar";
+import useYAxisTicks from "./YAxisTicks";
+import useActionToolbar from "./TimeScrollViewActionsToolbar";
 import useTimeScrollEventHandlers, {
   suppressWheelScroll,
-} from "../component-time-scroll-view/TimeScrollViewInteractions/TimeScrollViewEventHandlers";
-import { TickSet } from "../component-time-scroll-view/YAxisTicks";
+} from "./TimeScrollViewEventHandlers";
+import { TickSet } from "./YAxisTicks";
 import {
   useTimeRange,
   useTimeseriesSelection,
-} from "../context-timeseries-selection";
-import { ToolbarItem, ViewToolbar } from "../ViewToolbar";
+} from "../../contexts/context-timeseries-selection";
+import ViewToolbar from "./ViewToolbar";
 import { useTimeTicks } from "./timeTicks";
 import TSV2AxesLayer from "./TSV2AxesLayer";
 import TSV2CursorLayer from "./TSV2CursorLayer";
 import Splitter from "neurosift-lib/components/Splitter";
+import { ToolbarItem } from "./Toolbars";
+
+const DefaultToolbarWidth = 18;
 
 type Props = {
   width: number;

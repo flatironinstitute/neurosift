@@ -5,7 +5,7 @@ import {
   getCheckboxClickHandlerGenerator,
   unitSelectionReducer,
   useSelectedUnitIds,
-} from "../context-unit-selection";
+} from "neurosift-lib/contexts/context-unit-selection";
 
 // In practice we freeze the controls when the local selection is being used, but this component could theoretically support a separate selector.
 const useLocalSelectedUnitIds = () => {

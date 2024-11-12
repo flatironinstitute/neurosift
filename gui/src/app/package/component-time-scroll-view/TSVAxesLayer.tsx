@@ -3,7 +3,7 @@ import { TickSet } from "./YAxisTicks";
 import { TimeTick } from "./TimeAxisTicks";
 import { TimeScrollViewPanel } from "./TimeScrollView";
 import { paintAxes } from "./TSVPaintAxes";
-import BaseCanvas from "../component-time-scroll-view-2/BaseCanvas";
+import BaseCanvas from "neurosift-lib/timeseries/component-time-scroll-view-2/BaseCanvas";
 
 export type TSVAxesLayerProps<T extends { [key: string]: any }> = {
   panels: TimeScrollViewPanel<T>[];

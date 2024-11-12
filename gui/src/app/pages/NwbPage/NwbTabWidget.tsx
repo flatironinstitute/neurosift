@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { FunctionComponent, useMemo, useReducer } from "react";
 import TabWidget from "neurosift-lib/components/TabWidget";
-import { SetupTimeseriesSelection } from "../../package/context-timeseries-selection";
+import { SetupTimeseriesSelection } from "neurosift-lib/contexts/context-timeseries-selection";
 import {
   UnitSelectionContext,
   defaultUnitSelection,
   unitSelectionReducer,
-} from "../../package/context-unit-selection";
+} from "neurosift-lib/contexts/context-unit-selection";
 import NeurodataItemsView from "./NeurodataItemView/NeurodataItemsView";
 import ViewItemWidget from "./NeurodataItemView/ViewItemWidget";
 import {

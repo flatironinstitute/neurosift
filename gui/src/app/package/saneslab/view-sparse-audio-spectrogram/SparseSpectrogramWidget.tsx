@@ -9,7 +9,7 @@ import {
 import {
   useTimeRange,
   useTimeseriesSelectionInitialization,
-} from "../../context-timeseries-selection";
+} from "neurosift-lib/contexts/context-timeseries-selection";
 
 type Props = {
   width: number;

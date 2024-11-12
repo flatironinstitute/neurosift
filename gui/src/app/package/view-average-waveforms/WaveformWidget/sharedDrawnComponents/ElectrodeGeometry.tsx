@@ -11,7 +11,7 @@ import {
   applyAffineTransformInv,
   detAffineTransform,
 } from "../../../AffineTransform";
-import { useSelectedElectrodes } from "../../../context-timeseries-selection";
+import { useSelectedElectrodes } from "neurosift-lib/contexts/context-timeseries-selection";
 import {
   BaseCanvas,
   DragAction,

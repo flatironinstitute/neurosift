@@ -13,11 +13,11 @@ import { useModalDialog } from "../../../../../ApplicationBar";
 import { ToolbarItem } from "../../../../../package/ViewToolbar/Toolbars";
 import TimeScrollView2, {
   useTimeScrollView2,
-} from "../../../../../package/component-time-scroll-view-2/TimeScrollView2";
+} from "neurosift-lib/timeseries/component-time-scroll-view-2/TimeScrollView2";
 import {
   useTimeRange,
   useTimeseriesSelectionInitialization,
-} from "../../../../../package/context-timeseries-selection";
+} from "neurosift-lib/contexts/context-timeseries-selection";
 import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useDataset } from "../../../NwbMainView/NwbMainView";
 import {
@@ -25,7 +25,7 @@ import {
   useTimeseriesTimestampsClient,
 } from "./TimeseriesTimestampsClient";
 import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient";
-import { timeSelectionBarHeight } from "./TimeseriesSelectionBar";
+import { timeSelectionBarHeight } from "neurosift-lib/timeseries/TimeseriesSelectionBar";
 import { DataSeries, Opts, SpikeTrainsDataForWorker } from "./WorkerTypes";
 import { SpikeTrainsClient } from "../../Units/DirectRasterPlotUnitsItemView";
 import { getUnitColor } from "app/package/view-units-table";
@@ -444,6 +444,7 @@ export const NwbTimeseriesViewChild: FunctionComponent<
     colorForChannel,
     width,
     renderSubsampleFactor,
+    channelIndicesForColor,
   ]);
 
   // Set valueRange

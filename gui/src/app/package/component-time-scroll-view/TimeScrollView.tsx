@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { ViewToolbar } from "../ViewToolbar";
 import { DefaultToolbarWidth } from "../component-time-scroll-view";
-import { useTimeRange } from "../context-timeseries-selection";
+import { useTimeRange } from "neurosift-lib/contexts/context-timeseries-selection";
 import { TimeseriesLayoutOpts } from "../saneslab/view-firing-rates-plot/FiringRatesPlotView";
 import { use1dScalingMatrix } from "../util-point-projection";
 import TSVAxesLayer from "./TSVAxesLayer";

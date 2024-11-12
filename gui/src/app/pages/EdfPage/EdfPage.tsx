@@ -9,7 +9,7 @@ import EDFReader from "./EDFReader";
 import {
   SetupTimeseriesSelection,
   useTimeseriesSelectionInitialization,
-} from "app/package/context-timeseries-selection";
+} from "neurosift-lib/contexts/context-timeseries-selection";
 import Splitter from "neurosift-lib/components/Splitter";
 import { SmallIconButton } from "@fi-sci/misc";
 import { Link, OpenInBrowser, OpenInFull } from "@mui/icons-material";

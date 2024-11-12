@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from "react";
 import {
   useTimeseriesSelection,
   useTimeRange,
-} from "neurosift-lib/contexts/context-timeseries-selection";
+} from "../../contexts/context-timeseries-selection";
 import { clearDivFocus, divExists, setDivFocus } from "./divRefHandling";
 import useTimeScrollPan, { PanUpdateProperties } from "./useTimeScrollPan";
 

@@ -13,7 +13,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useTimeseriesSelection } from "../../../../../package/context-timeseries-selection";
+import { useTimeseriesSelection } from "neurosift-lib/contexts/context-timeseries-selection";
 
 type Props = {
   // none

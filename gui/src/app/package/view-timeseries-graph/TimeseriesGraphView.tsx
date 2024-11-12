@@ -7,11 +7,11 @@ import React, {
 } from "react";
 import TimeScrollView2, {
   useTimeScrollView2,
-} from "../component-time-scroll-view-2/TimeScrollView2";
+} from "neurosift-lib/timeseries/component-time-scroll-view-2/TimeScrollView2";
 import {
   useTimeRange,
   useTimeseriesSelectionInitialization,
-} from "../context-timeseries-selection";
+} from "neurosift-lib/contexts/context-timeseries-selection";
 import { TimeseriesGraphViewData } from "./TimeseriesGraphViewData";
 import { Opts } from "./WorkerTypes";
 

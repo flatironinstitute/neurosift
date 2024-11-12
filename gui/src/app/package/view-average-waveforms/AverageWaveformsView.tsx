@@ -23,9 +23,9 @@ import {
   idToNum,
   sortIds,
   useSelectedUnitIds,
-} from "../context-unit-selection";
+} from "neurosift-lib/contexts/context-unit-selection";
 import { UnitsTableView } from "../view-units-table";
-import { getUnitColor } from "../view-units-table/unitColors";
+import { getUnitColor } from "neurosift-lib/contexts/context-unit-selection/unitColors";
 import AverageWaveformPlot, {
   AverageWaveformPlotProps,
 } from "./AverageWaveformPlot";

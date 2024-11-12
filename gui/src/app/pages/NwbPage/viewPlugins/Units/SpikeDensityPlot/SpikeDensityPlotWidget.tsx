@@ -1,11 +1,11 @@
 import TimeScrollView2, {
   useTimeScrollView2,
-} from "app/package/component-time-scroll-view-2/TimeScrollView2";
+} from "neurosift-lib/timeseries/component-time-scroll-view-2/TimeScrollView2";
 import {
   useTimeRange,
   useTimeseriesSelectionInitialization,
-} from "app/package/context-timeseries-selection";
-import { useSelectedUnitIds } from "app/package/context-unit-selection";
+} from "neurosift-lib/contexts/context-timeseries-selection";
+import { useSelectedUnitIds } from "neurosift-lib/contexts/context-unit-selection";
 import {
   FunctionComponent,
   useCallback,

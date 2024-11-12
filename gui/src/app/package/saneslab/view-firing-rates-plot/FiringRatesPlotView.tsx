@@ -8,8 +8,11 @@ import {
 import {
   useTimeRange,
   useTimeseriesSelectionInitialization,
-} from "../../context-timeseries-selection";
-import { idToNum, useSelectedUnitIds } from "../../context-unit-selection";
+} from "neurosift-lib/contexts/context-timeseries-selection";
+import {
+  idToNum,
+  useSelectedUnitIds,
+} from "neurosift-lib/contexts/context-unit-selection";
 import BottomToolbar, { Action } from "./BottomToolbar";
 import { FiringRatesPlotViewData } from "./FiringRatesPlotViewData";
 

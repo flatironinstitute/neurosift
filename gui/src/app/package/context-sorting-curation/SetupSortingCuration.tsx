@@ -7,7 +7,7 @@ import {
   useReducer,
   useState,
 } from "react";
-import { useSelectedUnitIds } from "../context-unit-selection";
+import { useSelectedUnitIds } from "neurosift-lib/contexts/context-unit-selection";
 import SortingCurationContext, {
   sortingCurationReducer,
 } from "./SortingCurationContext";
