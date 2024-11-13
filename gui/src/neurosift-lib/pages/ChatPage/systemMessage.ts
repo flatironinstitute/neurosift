@@ -183,11 +183,8 @@ export const getSystemMessage = async (
   It's okay if the user wants you to make a test plot. In this case, if they do not specify data, just create some artificial data for plotting.
 
    CAPABILITY: If the user wants to view an raster plot for a Units table in an NWB file, use the following:
-   <div class="NeurosiftRasterPlot" nwb_url="[nwb_url]" path="[units_path]">raster plot</div>
+   <div class="neurosift_figure" nwb_url="[nwb_url]" item_path="[units_path]" view_plugin_name="RasterPlot">raster plot</div>
    But it's very important that you don't include this in a code block. Just include it as plain text in your response.
-
-   Similarly, for a TimeIntervals object:
-   <div class="NeurosiftTimeIntervals" nwb_url="[nwb_url]" path="[time_intervals_path]">time intervals plot</div>
   `;
   }
 
