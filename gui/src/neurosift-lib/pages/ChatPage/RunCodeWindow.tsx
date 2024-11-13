@@ -8,11 +8,13 @@ import {
   useState,
 } from "react";
 import PythonSessionClient, {
+  NeurosiftFigureContent,
   PlotlyContent,
   PythonSessionOutputItem,
 } from "./PythonSessionClient";
 import LazyPlotlyPlot from "../../components/LazyPlotlyPlot";
 import { useJupyterConnectivity } from "./JupyterConnectivity";
+import NeurosiftFigure0 from "../../components/NeurosiftFigure0";
 
 type RunCodeWindowProps = {
   width: number;
@@ -66,7 +68,11 @@ export class RunCodeCommunicator {
       onStdout?: (message: string) => void;
       onStderr?: (message: string) => void;
       onImage?: (format: "png", content: string) => void;
-      onFigure?: (format: "plotly", content: PlotlyContent) => void;
+      onFigure?: (
+        a:
+          | { format: "plotly"; content: PlotlyContent }
+          | { format: "neurosift_figure"; content: NeurosiftFigureContent },
+      ) => void;
     },
     canceler: { current: boolean },
   ) {
@@ -87,7 +93,11 @@ export class RunCodeCommunicator {
       } else if (item.type === "image") {
         onImage && onImage(item.format, item.content);
       } else if (item.type === "figure") {
-        onFigure && onFigure(item.format, item.content);
+        onFigure &&
+          onFigure({
+            format: item.format as any,
+            content: item.content as any,
+          });
       }
     };
     this.#pythonSessionClient.onOutputItem(onOutputItem);
@@ -282,6 +292,15 @@ const OutputItemView: FunctionComponent<OutputItemViewProps> = ({ item }) => {
       const data = item.content.data;
       const layout = item.content.layout;
       return <LazyPlotlyPlot data={data} layout={layout} />;
+    } else if (item.format === "neurosift_figure") {
+      return (
+        <NeurosiftFigure0
+          nwb_url={item.content.nwb_url}
+          item_path={item.content.item_path}
+          view_plugin_name={item.content.view_plugin_name}
+          height={item.content.height}
+        />
+      );
     } else {
       return <div>Unknown figure format: {(item as any).format}</div>;
     }

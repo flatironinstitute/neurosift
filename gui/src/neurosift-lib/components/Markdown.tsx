@@ -16,8 +16,7 @@ import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import remarkMathPlugin from "remark-math";
 import LazyPlotlyPlot, { PlotlyPlotFromUrl } from "./LazyPlotlyPlot";
-import RasterPlotFigure from "./RasterPlotFigure";
-import TimeIntervalsFigure from "./TimeIntervalsFigure";
+import NeurosiftFigure0 from "./NeurosiftFigure0";
 
 type Props = {
   source: string;
@@ -112,14 +111,24 @@ const Markdown: FunctionComponent<Props> = ({
               {children}
             </div>
           );
-        } else if (className === "NeurosiftRasterPlot") {
-          const nwb_url = (props as any).nwb_url;
-          const path = (props as any).path;
-          return <RasterPlotFigure nwb_url={nwb_url} path={path} />;
-        } else if (className === "NeurosiftTimeIntervals") {
-          const nwb_url = (props as any).nwb_url;
-          const path = (props as any).path;
-          return <TimeIntervalsFigure nwb_url={nwb_url} path={path} />;
+        } else if (className === "neurosift_figure") {
+          const nwb_url: string = (props as any).nwb_url;
+          const item_path: string = (props as any).item_path;
+          const view_plugin_name: string | undefined = (props as any)
+            .view_plugin_name;
+          const height: string | number | undefined = (props as any).height;
+          const height2: number | undefined =
+            height && typeof height === "string"
+              ? parseInt(height)
+              : (height as number | undefined);
+          return (
+            <NeurosiftFigure0
+              nwb_url={nwb_url}
+              item_path={item_path}
+              view_plugin_name={view_plugin_name}
+              height={height2}
+            />
+          );
         } else {
           return (
             <div className={className} {...props}>

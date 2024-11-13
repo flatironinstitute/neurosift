@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { InView, useInView } from "react-intersection-observer";
+import { useInView } from "react-intersection-observer";
 
 const Plot = React.lazy(() => import("react-plotly.js"));
 

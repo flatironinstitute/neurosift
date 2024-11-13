@@ -206,7 +206,7 @@ const ImageSeriesWidget: FunctionComponent<ImageSeriesWidgetProps> = ({
           const r = dd[i + j * W][0];
           const g = dd[i + j * W][1];
           const b = dd[i + j * W][2];
-          const val = Math.max(r, g, b);
+          // const val = Math.max(r, g, b);
           const ind = (i + j * W) * 4;
           const v_r = Math.min(
             Math.max(0, ((r - windowMin) / (windowMax - windowMin)) * 255),

@@ -58,9 +58,7 @@ export const JupyterConnectivityProvider: FunctionComponent<
     }
   }, [jupyterServerUrl, mode, extensionKernel]);
   const [refreshCode, setRefreshCode] = useState(0);
-  console.log("---------------- a");
   useEffect(() => {
-    console.log("---------------- b");
     check();
   }, [check, refreshCode, jupyterServerUrl]);
   const refreshJupyter = useCallback(() => setRefreshCode((c) => c + 1), []);

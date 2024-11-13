@@ -17,7 +17,7 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
 }) => {
   const nwbFile = useNwbFile();
   if (!nwbFile) throw Error("Unexpected: nwbFile is null");
-  const group = useGroup(nwbFile, path);
+  // const group = useGroup(nwbFile, path);
   const { data: startTimeData } = useDatasetData(nwbFile, `${path}/start_time`);
   const { data: stopTimeData } = useDatasetData(nwbFile, `${path}/stop_time`);
 

@@ -1,4 +1,4 @@
-import { PlotlyContent } from "../PythonSessionClient";
+import { NeurosiftFigureContent, PlotlyContent } from "../PythonSessionClient";
 import { ToolItem } from "../ToolItem";
 
 const generateFigureDetailedDescription = undefined;
@@ -9,25 +9,27 @@ export type ExecuteScript = (
     onStdout?: (message: string) => void;
     onStderr?: (message: string) => void;
     onImage?: (format: "png", content: string) => void;
-    onFigure?: (format: "plotly", content: PlotlyContent) => void;
+    onFigure?: (
+      a:
+        | { format: "plotly"; content: PlotlyContent }
+        | { format: "neurosift_figure"; content: NeurosiftFigureContent },
+    ) => void;
   },
 ) => Promise<void>;
 
-export const generateFigureTool: (
-  plotLibrary: "matplotlib" | "plotly" | "matplotlib or plotly",
-) => ToolItem = (plotLibrary) => ({
+export const generateFigureTool: ToolItem = {
   serial: true,
   tool: {
     type: "function" as any,
     function: {
       name: "figure_script",
-      description: `Generate a figure by executing Python code that makes use of the ${plotLibrary} library. Returns Markdown or HTML text that can be included in the chat response. In case of error it returns the stderr.`,
+      description: `Generate one or more figures by executing Python code that makes use of matplotlib, plotly, or neurosift_jp. Returns one or more lines of Markdown or HTML text that can be included in the chat response (one line per figure). In case of error it returns the stderr.`,
       parameters: {
         type: "object",
         properties: {
           script: {
             type: "string",
-            description: `Python code that generates a figure using the ${plotLibrary} library.`,
+            description: `Python code that generates one or more figures using the matplotlib, plotly, or neurosift_jp libraries.`,
           },
         },
       },
@@ -72,9 +74,16 @@ export const generateFigureTool: (
     const onImage = (format: "png", content: string) => {
       images.push({ format, content });
     };
-    const figures: { format: "plotly"; content: PlotlyContent }[] = [];
-    const onFigure = (format: "plotly", content: PlotlyContent) => {
-      figures.push({ format, content });
+    const figures: (
+      | { format: "plotly"; content: PlotlyContent }
+      | { format: "neurosift_figure"; content: NeurosiftFigureContent }
+    )[] = [];
+    const onFigure = (
+      a:
+        | { format: "plotly"; content: PlotlyContent }
+        | { format: "neurosift_figure"; content: NeurosiftFigureContent },
+    ) => {
+      figures.push(a);
     };
     const onStdout2 = (message: string) => {
       console.info(`STDOUT: ${message}`);
@@ -104,24 +113,39 @@ export const generateFigureTool: (
           output += "\n\n" + stderrLines.join("\n");
         }
       } else {
-        output = images
-          .map((image, index) => {
-            const imageUrl = `data:image/png;base64,${image.content}`;
-            const randStr = Math.random().toString(36).substring(7);
-            onAddImage(`figure_${randStr}.png`, imageUrl);
-            return "![image](image://figure_" + randStr + ".png)";
-          })
-          .join("\n\n");
-        output += figures
-          .map((figure, index) => {
+        const output1 = images.map((image, index) => {
+          const imageUrl = `data:image/png;base64,${image.content}`;
+          const randStr = Math.random().toString(36).substring(7);
+          onAddImage(`figure_${randStr}.png`, imageUrl);
+          return "![image](image://figure_" + randStr + ".png)";
+        });
+        const output2 = figures.map((figure, index) => {
+          if (figure.format === "plotly") {
             const randStr = Math.random().toString(36).substring(7);
             onAddFigureData(
               `figure_${randStr}.json`,
               JSON.stringify(figure.content),
             );
             return `<div class="plotly" src="figure://figure_${randStr}.json">plotly</div>`;
-          })
-          .join("\n\n");
+          } else if (figure.format === "neurosift_figure") {
+            let x = `<div class="neurosift_figure"`;
+            x += ` nwb_url="${figure.content.nwb_url}"`;
+            x += ` item_path="${figure.content.item_path}"`;
+            if (figure.content.view_plugin_name) {
+              x += ` view_plugin_name="${figure.content.view_plugin_name}"`;
+            }
+            if (figure.content.height) {
+              x += ` height="${figure.content.height}"`;
+            }
+            x += `></div>`;
+            return x;
+          } else {
+            console.warn("Unknown figure format", (figure as any).format);
+            return "";
+          }
+        });
+
+        output = [...output1, ...output2].join("\n");
       }
     } catch (error: any) {
       onLogMessage("generate_figure error", error.message);
@@ -134,4 +158,4 @@ export const generateFigureTool: (
     onLogMessage("generate_figure response", output);
     return output;
   },
-});
+};

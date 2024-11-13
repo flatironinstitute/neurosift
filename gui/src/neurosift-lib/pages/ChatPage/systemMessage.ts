@@ -6,7 +6,6 @@ export const getSystemMessage = async (
   tools: ToolItem[],
   chatContext: ChatContext,
   additionalKnowledge: string,
-  plotLibrary: "matplotlib" | "plotly" | "matplotlib or plotly",
 ): Promise<string> => {
   let systemMessage: string = "";
   systemMessage += `
@@ -140,9 +139,28 @@ export const getSystemMessage = async (
   ========================
 
   CAPABILITY: If the user wants plot data in an NWB file, you should use the figure_script tool.
-  You pass in a self-contained script that uses ${plotLibrary}, and the output is markdown or html text that you can include in your response.
-  To construct the Python script, you should use the above method of loading the data together with your knowledge of pynwb and other Python libraries.
-  When constructing an example plot, be mindful of the size of the data you are loading. If it is too large, consider loading a subset of the data. But in that case, make sure you tell the user what you are doing.
+  You pass in a self-contained script that uses matplotlib, plotly, or neurosift_jp (described below), and the output is one or more markdown or html text lines that you can include in your response.
+  To construct the Python script, you should use the above method of loading the data together with your knowledge of pynwb, other Python libraries, and neurosift_jp described below.
+  When constructing an example plot with matplotlib or plotly, be mindful of the size of the data you are loading. If it is too large, consider loading a subset of the data. But in that case, make sure you tell the user what you are doing. Or you can consider using neurosift_jp to handle large data.
+
+  Here is some information about neurosift_jp. neurosift_jp is a Python library that creates interactive views of NWB objects in NWB files.
+
+  The following is an example of how to use neurosift_jp to generate an interactive view of an NWB object within an NWB file.
+
+  pip install neurosift_jp
+
+  from neurosift_jp.widgets import NeurosiftFigure
+  f = NeurosiftFigure(
+      nwb_url='[nwb_url]',
+      item_path='[object_path]',
+  )
+  display(f)
+
+  When used with the figure_script tool, the output will be a div element with the class "neurosift_figure" and other attributes set.
+
+  CAPABILITY: If the user wants to show a particular NWB item in an NWB file, you can output the following without using the figure_script tool:
+  <div class="neurosift_figure" nwb_url="[nwb_url]" item_path="[object_path]">neurosift figure</div>
+  This is what you should do if the user asks to show or view a particular item in an NWB file.
 
   CAPABILITY: If you need to compute or analyze data in an NWB file, you should use the compute_script tool.
   You pass in a Python script that performs the computation and prints the results to stdout.
@@ -178,6 +196,8 @@ export const getSystemMessage = async (
 
   NOTE: Whenever you refer to a particular neurodata object (that is in an NWB file within a dandiset), you should use the following link to a visualization
   [label](https://neurosift.app/?p=/nwb&url=[download_url]&dandisetId=[dandiset_id]&dandisetVersion=[dandiseet_version]&tab=view:[neurodata_type]|[object_path])
+
+  However, if the user is asking to see the object, don't provide a link, instead use one of the described methods for creating an embedded view of the object.
 
   CAPABILITY: If the user asks for a random example of something then use Math.random in the javascript calls to truly provide a random example... don't just use the first in the list.
 
@@ -220,11 +240,9 @@ export const useSystemMessage = (
 ) => {
   const [systemMessage, setSystemMessage] = useState<string | null>(null);
   useEffect(() => {
-    getSystemMessage(tools, chatContext, additionalKnowledge, "plotly").then(
-      (msg) => {
-        setSystemMessage(msg);
-      },
-    );
+    getSystemMessage(tools, chatContext, additionalKnowledge).then((msg) => {
+      setSystemMessage(msg);
+    });
   }, [tools, chatContext, additionalKnowledge]);
   return systemMessage;
 };

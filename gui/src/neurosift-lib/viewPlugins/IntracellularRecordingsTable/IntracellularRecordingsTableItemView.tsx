@@ -151,10 +151,10 @@ const IntracellularRecordingsTableItemView: FunctionComponent<Props> = ({
 
 const ItemView: FunctionComponent<{ item: any }> = ({ item }) => {
   if (item === null) {
-    return "null";
+    return <span>null</span>;
   }
   if (item === undefined) {
-    return "undefined";
+    return <span>undefined</span>;
   }
   if (typeof item !== "object") {
     return <span>{item}</span>;

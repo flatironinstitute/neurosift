@@ -15,7 +15,7 @@ export class RoiClient {
   ) {
     (async () => {
       this.status = "loading";
-      const a = await nwbFile.getDatasetData(roiPath + "/data", {
+      const a = await this.nwbFile.getDatasetData(this.roiPath + "/data", {
         canceler: this.canceler /*, slice: [[0, 1000]]*/,
       });
       if (!a) throw Error("No data in RoiClient");

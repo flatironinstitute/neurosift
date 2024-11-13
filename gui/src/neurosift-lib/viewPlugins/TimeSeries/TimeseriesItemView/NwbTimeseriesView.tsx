@@ -27,7 +27,7 @@ import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient";
 import { timeSelectionBarHeight } from "../../../timeseries/TimeseriesSelectionBar";
 import { DataSeries, Opts, SpikeTrainsDataForWorker } from "./WorkerTypes";
 import { SpikeTrainsClient } from "../../Units/DirectRasterPlotUnitsItemView";
-import { getUnitColor } from "app/package/view-units-table";
+import { getUnitColor } from "../../Units/view-units-table";
 
 type Props = {
   width: number;

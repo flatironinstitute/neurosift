@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useMemo } from "react";
+import { FunctionComponent, useMemo } from "react";
 import { BarPlot, BarPlotBar, BarPlotTick } from "../component-bar-plot";
 
 type Props = {

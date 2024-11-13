@@ -1,12 +1,6 @@
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
-import { Delete, OpenInNew, Refresh } from "@mui/icons-material";
-import {
-  FunctionComponent,
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { OpenInNew, Refresh } from "@mui/icons-material";
+import { FunctionComponent, useCallback, useEffect, useState } from "react";
 import {
   GetJobRequest,
   FindJobsRequest,
@@ -359,35 +353,35 @@ const getJobParameter = (job: DendroJob, parameterName: string) => {
   return pp.value;
 };
 
-type ExpandableProps = {
-  title: string;
-  expanded: boolean;
-  setExpanded: (expanded: boolean) => void;
-};
+// type ExpandableProps = {
+//   title: string;
+//   expanded: boolean;
+//   setExpanded: (expanded: boolean) => void;
+// };
 
-const Expandable: FunctionComponent<PropsWithChildren<ExpandableProps>> = ({
-  title,
-  expanded,
-  setExpanded,
-  children,
-}) => {
-  return (
-    <div>
-      <div
-        style={{
-          cursor: "pointer",
-          padding: 10,
-          background: "#f8f8f8",
-          border: "solid 1px #ccc",
-        }}
-        onClick={() => setExpanded(!expanded)}
-      >
-        {expanded ? "▼" : "►"} {title}
-      </div>
-      {expanded && <div style={{ padding: 10 }}>{children}</div>}
-    </div>
-  );
-};
+// const Expandable: FunctionComponent<PropsWithChildren<ExpandableProps>> = ({
+//   title,
+//   expanded,
+//   setExpanded,
+//   children,
+// }) => {
+//   return (
+//     <div>
+//       <div
+//         style={{
+//           cursor: "pointer",
+//           padding: 10,
+//           background: "#f8f8f8",
+//           border: "solid 1px #ccc",
+//         }}
+//         onClick={() => setExpanded(!expanded)}
+//       >
+//         {expanded ? "▼" : "►"} {title}
+//       </div>
+//       {expanded && <div style={{ padding: 10 }}>{children}</div>}
+//     </div>
+//   );
+// };
 
 export const removeLeadingSlash = (path: string) => {
   if (path.startsWith("/")) return path.slice(1);

@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import { FunctionComponent, useMemo, useState } from "react";
 import NwbTimeseriesView from "./TimeseriesItemView/NwbTimeseriesView";
 import TimeSeriesViewToolbar, {
   TimeSeriesViewOpts,

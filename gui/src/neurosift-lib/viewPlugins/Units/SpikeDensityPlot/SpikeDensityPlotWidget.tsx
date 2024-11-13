@@ -214,7 +214,7 @@ const SpikeDensityPlotWidgetChild: FunctionComponent<
     string | number | undefined
   >(undefined);
 
-  const { selectedUnitIds, unitIdSelectionDispatch } = useSelectedUnitIds();
+  const { selectedUnitIds } = useSelectedUnitIds();
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {}, []);
 
@@ -236,9 +236,7 @@ const SpikeDensityPlotWidgetChild: FunctionComponent<
     };
   }, [canvasElement]);
 
-  const [loadingMessage, setLoadingMessage] = useState<string | undefined>(
-    undefined,
-  );
+  const [_, setLoadingMessage] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     let canceled = false;

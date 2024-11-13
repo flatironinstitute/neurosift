@@ -3,7 +3,7 @@ import {
   Vec2,
   Vec4,
 } from "../view-average-waveforms/WaveformWidget/sharedDrawnComponents/figurl-canvas";
-import React, { FunctionComponent, useCallback, useMemo } from "react";
+import { FunctionComponent, useCallback, useMemo } from "react";
 import BarPlotMainLayer, {
   BarBox,
   BarPlotTick,

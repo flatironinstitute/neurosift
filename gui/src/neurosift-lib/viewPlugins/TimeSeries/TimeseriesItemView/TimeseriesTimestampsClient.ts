@@ -14,7 +14,7 @@ class TimestampFinder {
   constructor(
     private nwbFile: RemoteH5FileX,
     private timestampsDataset: RemoteH5Dataset,
-    private estimatedSamplingFrequency: number,
+    // private estimatedSamplingFrequency: number,
   ) {}
   async getDataIndexForTime(time: number): Promise<number> {
     let iLower = 0;
@@ -127,7 +127,7 @@ class IrregularTimeseriesTimestampsClient {
     this.#timestampFinder = new TimestampFinder(
       this.nwbFile,
       timestampsDataset,
-      this.#estimatedSamplingFrequency!,
+      // this.#estimatedSamplingFrequency!,
     );
   }
   get startTime(): number | undefined {

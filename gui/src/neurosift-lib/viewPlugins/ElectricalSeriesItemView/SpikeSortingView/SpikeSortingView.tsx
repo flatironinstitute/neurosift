@@ -14,7 +14,7 @@ import {
   DendroJobRequiredResources,
   isCreateJobResponse,
 } from "../../../misc/dendro/dendro-types";
-import { timeAgoString } from "app/timeStrings";
+import { timeAgoString } from "../../../utils/timeStrings";
 import useRoute from "../../../contexts/useRoute";
 import {
   FunctionComponent,

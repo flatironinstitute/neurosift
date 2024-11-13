@@ -24,7 +24,10 @@ import InputBar from "./InputBar";
 import { useJupyterConnectivity } from "./JupyterConnectivity";
 import MessageDisplay from "./MessageDisplay";
 import { ORMessage, ORToolCall } from "./openRouterTypes";
-import PythonSessionClient, { PlotlyContent } from "./PythonSessionClient";
+import PythonSessionClient, {
+  NeurosiftFigureContent,
+  PlotlyContent,
+} from "./PythonSessionClient";
 import RunCodeWindow, {
   PythonSessionStatus,
   RunCodeCommunicator,
@@ -105,7 +108,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
           onImage: (format, content) => {
             //
           },
-          onFigure: (format, content) => {
+          onFigure: (a) => {
             //
           },
         },
@@ -233,7 +236,7 @@ const MainChatWindow: FunctionComponent<
       ret.push(probeDandisetTool);
       ret.push(timeseriesAlignmentViewTool);
       ret.push(probeNwbFileTool);
-      ret.push(generateFigureTool("matplotlib or plotly"));
+      ret.push(generateFigureTool);
       ret.push(computeTool);
     }
     return ret;
@@ -452,7 +455,14 @@ const MainChatWindow: FunctionComponent<
             onStdout?: (message: string) => void;
             onStderr?: (message: string) => void;
             onImage?: (format: "png", content: string) => void;
-            onFigure?: (format: "plotly", content: PlotlyContent) => void;
+            onFigure?: (
+              a:
+                | { format: "plotly"; content: PlotlyContent }
+                | {
+                    format: "neurosift_figure";
+                    content: NeurosiftFigureContent;
+                  },
+            ) => void;
           },
         ) => {
           setScriptExecutionStatus("starting");
@@ -469,7 +479,11 @@ const MainChatWindow: FunctionComponent<
               } else if (item.type === "image") {
                 o.onImage && o.onImage(item.format, item.content);
               } else if (item.type === "figure") {
-                o.onFigure && o.onFigure(item.format, item.content);
+                o.onFigure &&
+                  o.onFigure({
+                    format: item.format as any,
+                    content: item.content as any,
+                  });
               }
             });
             await pythonSessionClient.initiate();

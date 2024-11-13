@@ -1,8 +1,8 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import {
-  ElectrodeGeometryWidget,
+  default as ElectrodeGeometryWidget,
   ElectrodeLocation,
-} from "@electrode-geometry/index";
+} from "./ElectrodeGeometryWidget";
 import { RemoteH5FileX } from "../../remote-h5-file/index";
 
 type ElectrodeGeometryViewProps = {

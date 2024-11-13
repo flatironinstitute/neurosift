@@ -118,7 +118,7 @@ async function draw() {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // for (const pass of plotSeries ? [1, 2] : [1]) {
-  for (const pass of [1]) {
+  for (const _ of [1]) {
     if (thisDrawCode !== drawCode) return;
 
     const timer = Date.now();

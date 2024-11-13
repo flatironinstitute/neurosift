@@ -3,7 +3,6 @@ import { SmallIconButton } from "@fi-sci/misc";
 import {
   Canceler,
   DatasetDataType,
-  RemoteH5FileLindi,
   RemoteH5FileX,
 } from "../../remote-h5-file/index";
 import { ArrowLeft, ArrowRight } from "@mui/icons-material";
@@ -24,7 +23,6 @@ import PlaneTransformSelector, {
   PlaneTransform,
   defaultPlaneTransform,
 } from "./PlaneTransformSelector";
-import TwoPhotonSeriesItemViewMp4 from "./TwoPhotonSeriesItemViewMp4";
 import TabWidget from "../../components/TabWidget";
 import TwoPhotonSeriesMovieView from "./TwoPhotonSeriesMovieView";
 

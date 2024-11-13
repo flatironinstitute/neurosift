@@ -75,7 +75,7 @@ function debounce(f: () => void, msec: number) {
     }, msec);
   };
 }
-let drawCode = 0;
+// let drawCode = 0;
 async function draw() {
   if (!canvas) return;
   if (!opts) return;
@@ -101,12 +101,12 @@ async function draw() {
 
   const canvasContext = canvas.getContext("2d");
   if (!canvasContext) return;
-  drawCode += 1;
-  const thisDrawCode = drawCode;
+  // drawCode += 1;
+  // const thisDrawCode = drawCode;
 
   canvasContext.clearRect(0, 0, canvasWidth, canvasHeight);
 
-  const timer = Date.now();
+  // const timer = Date.now();
 
   const scale = Math.min(
     (canvasWidth - margins.left - margins.right) / (xMax - xMin),
@@ -256,10 +256,10 @@ async function draw() {
 
 const drawDebounced = debounce(draw, 10);
 
-function sleepMsec(msec: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, msec);
-  });
-}
+// function sleepMsec(msec: number) {
+//   return new Promise((resolve) => {
+//     setTimeout(resolve, msec);
+//   });
+// }
 
 // export { }

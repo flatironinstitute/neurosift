@@ -1,11 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {
-  DatasetDataType,
-  MergedRemoteH5File,
-  RemoteH5File,
-  RemoteH5FileX,
-} from "../../remote-h5-file/index";
+import { DatasetDataType, RemoteH5FileX } from "../../remote-h5-file/index";
 import { FunctionComponent, useEffect, useState } from "react";
 import { useNwbFile } from "../../misc/NwbFileContext";
 import RasterPlotView3 from "../../views/RasterPlotView3/RasterPlotView3";

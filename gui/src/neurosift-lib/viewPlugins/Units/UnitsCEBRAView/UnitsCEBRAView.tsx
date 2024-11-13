@@ -20,7 +20,7 @@ import {
 import InputChoices from "../../ElectricalSeriesItemView/SpikeSortingView/InputChoices";
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import { OpenInNew, Refresh } from "@mui/icons-material";
-import { timeAgoString } from "app/timeStrings";
+import { timeAgoString } from "../../../utils/timeStrings";
 
 const tagsBase = ["neurosift", "units_cebra"];
 const tagsUnitsCEBRA = [...tagsBase, "UnitsCEBRA"];

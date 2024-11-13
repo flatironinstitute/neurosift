@@ -1,6 +1,5 @@
 // adapted from https://codesandbox.io/s/multi-range-slider-react-js-6rzv0f
 
-import PropTypes from "prop-types";
 import { useCallback } from "react";
 import "./MultiRangeSlider.css";
 
