@@ -1,7 +1,7 @@
 import {
   RemoteH5FileX,
   RemoteH5Group,
-} from "neurosift-lib/remote-h5-file/index";
+} from "../remote-h5-file/index";
 import { FunctionComponent } from "react";
 // import { neurodataTypeInheritanceRaw } from "../neurodataSpec"
 import BehavioralEventsItemView from "./BehavioralEvents/BehavioralEventsItemView";
