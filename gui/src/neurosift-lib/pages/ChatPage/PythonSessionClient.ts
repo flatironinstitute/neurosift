@@ -133,6 +133,7 @@ class PythonSessionClient {
               "application/vnd.neurosift-figure+json"
             ] as NeurosiftFigureContent,
           };
+          this._addOutputItem(item);
         }
       }
     };
