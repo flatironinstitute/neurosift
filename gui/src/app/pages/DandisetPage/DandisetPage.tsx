@@ -97,7 +97,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
               height={0}
               chat={chat}
               chatDispatch={chatDispatch}
-              openRouterKey={null}
+              openRouterKey={localStorage.getItem("openRouterKey") || null}
               onLogMessage={undefined}
               chatContext={chatContext}
             />
