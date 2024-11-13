@@ -1,6 +1,10 @@
 import { SetupTimeseriesSelection } from "../contexts/context-timeseries-selection";
 import { NwbFileContext } from "../misc/NwbFileContext";
-import { getViewPlugins, ViewPlugin } from "../viewPlugins/viewPlugins";
+import {
+  findViewPluginsForType,
+  getViewPlugins,
+  ViewPlugin,
+} from "../viewPlugins/viewPlugins";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import {
   getRemoteH5File,
@@ -9,6 +13,7 @@ import {
   RemoteH5FileLindi,
   RemoteH5FileX,
 } from "../remote-h5-file";
+import { loadSpecifications } from "neurosift-lib/misc/SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 type NeurosiftFigure0Props = {
   nwb_url: string;
@@ -55,13 +60,22 @@ const NeurosiftFigure0: FunctionComponent<NeurosiftFigure0Props> = ({
         if (canceled) return;
         const neurodata_type = grp.attrs["neurodata_type"];
         if (!neurodata_type) return;
-        const vps = getViewPlugins({ nwbUrl: nwb_url });
-        const defaultViewPlugin = vps.find(
-          (p) =>
-            p.neurodataType === neurodata_type && p.defaultForNeurodataType,
+        const specifications = await loadSpecifications(
+          nwbFileContextValue.nwbFile,
+        );
+        if (canceled) return;
+        const { viewPlugins, defaultViewPlugin } = findViewPluginsForType(
+          neurodata_type,
+          {
+            nwbFile: nwbFileContextValue.nwbFile,
+            neurodataItems: nwbFileContextValue.neurodataItems,
+          },
+          specifications,
         );
         if (defaultViewPlugin) {
           setViewPlugin(defaultViewPlugin);
+        } else if (viewPlugins.length > 0) {
+          setViewPlugin(viewPlugins[0]);
         } else {
           setPluginNotFoundMessage(
             `No default view plugin found for neurodata type: ${neurodata_type}`,
@@ -112,7 +126,6 @@ const NeurosiftFigure0: FunctionComponent<NeurosiftFigure0Props> = ({
 const useFullWidth = (divElement: HTMLDivElement | null) => {
   const [width, setWidth] = useState<number | undefined>(undefined);
   useEffect(() => {
-    console.log("---------------------- 2");
     if (!divElement) return;
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {

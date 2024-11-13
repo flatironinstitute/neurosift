@@ -162,6 +162,8 @@ export const getSystemMessage = async (
   <div class="neurosift_figure" nwb_url="[nwb_url]" item_path="[object_path]">neurosift figure</div>
   This is what you should do if the user asks to show or view a particular item in an NWB file.
 
+  NOTE: If it is unclear what type of plot or figure is appropriate, ask them if they want matplotlib, plotly, or a neurosift figure.
+
   CAPABILITY: If you need to compute or analyze data in an NWB file, you should use the compute_script tool.
   You pass in a Python script that performs the computation and prints the results to stdout.
   The output of the tool is the stdout output of the script.

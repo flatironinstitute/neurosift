@@ -85,9 +85,11 @@ export const generateFigureTool: ToolItem = {
     ) => {
       figures.push(a);
     };
+    const stdoutLines: string[] = [];
     const onStdout2 = (message: string) => {
       console.info(`STDOUT: ${message}`);
       onStdout && onStdout(message);
+      stdoutLines.push(message);
     };
     const stderrLines: string[] = [];
     const onStderr2 = (message: string) => {
@@ -101,11 +103,18 @@ export const generateFigureTool: ToolItem = {
       if (!okay) {
         throw Error("User did not permit running the script");
       }
+      console.info("Executing script to create figure", { script });
       await executeScript(script, {
         onStdout: onStdout2,
         onStderr: onStderr2,
         onImage,
         onFigure,
+      });
+      console.info("Script completed", {
+        images,
+        figures,
+        stdoutLines,
+        stderrLines,
       });
       if (images.length === 0 && figures.length === 0) {
         output = "No image or figure generated";

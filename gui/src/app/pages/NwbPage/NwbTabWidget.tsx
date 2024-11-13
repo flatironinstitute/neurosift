@@ -9,10 +9,6 @@ import {
 } from "neurosift-lib/contexts/context-unit-selection";
 import NeurodataItemsView from "./NeurodataItemView/NeurodataItemsView";
 import ViewItemWidget from "./NeurodataItemView/ViewItemWidget";
-import {
-  useNeurodataItems,
-  useNwbFile,
-} from "neurosift-lib/misc/NwbFileContext";
 import NwbMainView from "./NwbMainView/NwbMainView";
 import { useNwbOpenTabs } from "./NwbOpenTabsContext";
 import TimeseriesAlignmentView from "./TimeseriesAlignmentView/TimeseriesAlignmentView";
@@ -21,6 +17,10 @@ import {
   findViewPluginsForType,
 } from "neurosift-lib/viewPlugins/viewPlugins";
 import { useNwbFileSpecifications } from "neurosift-lib/misc/SpecificationsView/SetupNwbFileSpecificationsProvider";
+import {
+  useNeurodataItems,
+  useNwbFile,
+} from "neurosift-lib/misc/NwbFileContext";
 
 const NwbTabWidget: FunctionComponent<{
   width: number;

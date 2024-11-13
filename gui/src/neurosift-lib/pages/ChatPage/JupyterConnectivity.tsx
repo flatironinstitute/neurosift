@@ -98,3 +98,21 @@ export const useJupyterConnectivity = () => {
   }
   return context;
 };
+
+// This is important inside a hook where we don't want to depend on a state variable for the jupyter connectivity state
+export const loadJupyterConnectivityStateFromLocalStorage = (
+  mode: "jupyter-server" | "jupyterlab-extension",
+  extensionKernel?: any,
+  jupyterServerIsAvailable: boolean = false,
+): JupyterConnectivityState => {
+  const localStorageKey = "jupyter-server-url";
+  const storedJupyterServerUrl = localStorage.getItem(localStorageKey);
+  return {
+    mode,
+    jupyterServerUrl: storedJupyterServerUrl || "http://localhost:8888",
+    jupyterServerIsAvailable,
+    refreshJupyter: () => {},
+    changeJupyterServerUrl: () => {},
+    extensionKernel,
+  };
+};

@@ -21,7 +21,10 @@ import ConfirmOkayToRunWindow from "./ConfirmOkayToRunWindow";
 import FeedbackWindow from "./FeedbackWindow";
 import HelpfulUnhelpfulButtons from "./HelpfulUnhelpfulButtons";
 import InputBar from "./InputBar";
-import { useJupyterConnectivity } from "./JupyterConnectivity";
+import {
+  loadJupyterConnectivityStateFromLocalStorage,
+  useJupyterConnectivity,
+} from "./JupyterConnectivity";
 import MessageDisplay from "./MessageDisplay";
 import { ORMessage, ORToolCall } from "./openRouterTypes";
 import PythonSessionClient, {
@@ -320,6 +323,7 @@ const MainChatWindow: FunctionComponent<
       openConfirmOkayToRun();
       return new Promise<boolean>((resolve) => {
         const interval = setInterval(() => {
+          console.log("--- abc ---", confirmOkayToRunStatus.current);
           if (confirmOkayToRunStatus.current === "confirmed") {
             confirmOkayToRunStatus.current = "none";
             clearInterval(interval);
@@ -329,7 +333,7 @@ const MainChatWindow: FunctionComponent<
             clearInterval(interval);
             resolve(false);
           }
-        }, 100);
+        }, 500);
       });
     },
     [openConfirmOkayToRun],
@@ -448,7 +452,7 @@ const MainChatWindow: FunctionComponent<
           throw Error(`Unexpected. Did not find tool: ${tc.function.name}`);
         }
         const args = JSON.parse(tc.function.arguments);
-        console.info("TOOL CALL: ", tc.function.name, args);
+        console.info("TOOL CALL: ", tc.function.name, args, tc);
         const executeScript2: ExecuteScript = async (
           script: string,
           o: {
@@ -467,9 +471,13 @@ const MainChatWindow: FunctionComponent<
         ) => {
           setScriptExecutionStatus("starting");
           scriptCancelTrigger.current = false;
-          const pythonSessionClient = new PythonSessionClient(
-            jupyterConnectivityState,
+          // it's important that we don't depend on the state variable jupyterConnectivityState
+          const jcState = loadJupyterConnectivityStateFromLocalStorage(
+            jupyterConnectivityState.mode,
+            jupyterConnectivityState.extensionKernel,
+            true,
           );
+          const pythonSessionClient = new PythonSessionClient(jcState);
           try {
             pythonSessionClient.onOutputItem((item) => {
               if (item.type === "stdout") {
@@ -525,6 +533,7 @@ const MainChatWindow: FunctionComponent<
             "stdout",
             `Running tool: ${tc.function.name}`,
           );
+          console.info(`Running ${tc.function.name}`);
           response = await func(args, onLogMessage || (() => {}), {
             modelName,
             openRouterKey,
@@ -552,10 +561,16 @@ const MainChatWindow: FunctionComponent<
             confirmOkayToRun,
           });
         } catch (e: any) {
+          console.error(`Error in tool ${tc.function.name}`, e);
           // errorMessage = e.message;
           response = "Error: " + e.message;
         }
-        if (canceled) return;
+        if (canceled) {
+          console.warn(
+            `WARNING!!! Hook canceled during tool call ${tc.function.name}`,
+          );
+          return;
+        }
         console.info("TOOL RESPONSE: ", response);
         const msg1: ORMessage = {
           role: "tool",
@@ -616,7 +631,10 @@ const MainChatWindow: FunctionComponent<
     addAgentProgressMessage,
     confirmOkayToRun,
     onLogMessage,
-    jupyterConnectivityState,
+    // it's important that this hook does not depend on jupyterConnectivityState object
+    // because then the tool execution would get interrupted when the jupyterConnectivityState object changes
+    jupyterConnectivityState.mode,
+    jupyterConnectivityState.extensionKernel,
   ]);
 
   // div refs
@@ -1002,10 +1020,12 @@ const MainChatWindow: FunctionComponent<
         <ConfirmOkayToRunWindow
           script={confirmOkayToRunScript}
           onConfirm={() => {
+            console.info("Confirmed okay to run");
             confirmOkayToRunStatus.current = "confirmed";
             closeConfirmOkayToRun();
           }}
           onCancel={() => {
+            console.info("Canceled okay to run");
             confirmOkayToRunStatus.current = "canceled";
             closeConfirmOkayToRun();
           }}
