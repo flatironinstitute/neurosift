@@ -7,14 +7,13 @@ import {
   useReducer,
   useState,
 } from "react";
-import { valueToElement } from "../../BrowseNwbView/BrowseNwbView";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
-import { useGroup } from "../../NwbMainView/NwbMainView";
+import { useNwbFile } from "../../misc/NwbFileContext";
+import { useGroup } from "../../misc/hooks";
 import { SmallIconButton } from "@fi-sci/misc";
 import { Download, Help } from "@mui/icons-material";
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import DynamicTableColumnInfoView from "./DynamicTableColumnInfoView";
-import { DatasetDataType } from "neurosift-lib/remote-h5-file/index";
+import { DatasetDataType } from "../../remote-h5-file/index";
 
 type Props = {
   width: number;
@@ -523,6 +522,87 @@ const DynamicTableView: FunctionComponent<Props> = ({
       </ModalWindow>
     </div>
   );
+};
+
+export const valueToElement = (val: any): any => {
+  if (typeof val === "string") {
+    return val;
+  } else if (typeof val === "number") {
+    return val + "";
+  } else if (typeof val === "boolean") {
+    return val ? "true" : "false";
+  } else if (typeof val === "object") {
+    if (Array.isArray(val)) {
+      if (val.length < 200) {
+        return `[${val.map((x) => valueToElement(x)).join(", ")}]`;
+      } else {
+        return `[${val
+          .slice(0, 200)
+          .map((x) => valueToElement(x))
+          .join(", ")} ...]`;
+      }
+    }
+    // check for Float64Array, Int32Array, etc.
+    else if (
+      val.constructor &&
+      [
+        "Float64Array",
+        "Int32Array",
+        "Uint32Array",
+        "Uint8Array",
+        "Uint16Array",
+        "Int8Array",
+        "Int16Array",
+      ].includes(val.constructor.name)
+    ) {
+      const array = Array.from(val);
+      return valueToElement(array);
+    } else {
+      if ("_REFERENCE" in val) {
+        return <ReferenceComponent value={val["_REFERENCE"]} />;
+      } else {
+        return JSON.stringify(serializeBigInt(val));
+      }
+    }
+  } else {
+    return "<>";
+  }
+};
+
+type ReferenceValue = {
+  path: string;
+  object_id: string;
+  source: string;
+  source_object_id: string;
+};
+
+export const ReferenceComponent: FunctionComponent<{
+  value: ReferenceValue;
+}> = ({ value }) => {
+  return (
+    <span style={{ color: "darkgreen" }} title={JSON.stringify(value)}>
+      {value.path}
+    </span>
+  );
+};
+
+const serializeBigInt = (val: any): any => {
+  if (typeof val === "bigint") {
+    // convert to number
+    return Number(val);
+  } else if (typeof val === "object") {
+    if (Array.isArray(val)) {
+      return val.map((x) => serializeBigInt(x));
+    } else {
+      const ret: { [key: string]: any } = {};
+      for (const key in val) {
+        ret[key] = serializeBigInt(val[key]);
+      }
+      return ret;
+    }
+  } else {
+    return val;
+  }
 };
 
 export default DynamicTableView;

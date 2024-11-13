@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+import { useNwbFile } from "../../misc/NwbFileContext";
 import { DirectSpikeTrainsClient } from "../Units/DirectRasterPlotUnitsItemView";
 import PSTHHistWidget from "./PSTHHistWidget";
 import { PSTHPrefs, PSTHTrialAlignedSeriesMode } from "./PSTHItemView";

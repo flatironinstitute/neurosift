@@ -13,9 +13,9 @@ import {
   DendroJobParameter,
   DendroJobRequiredResources,
   isCreateJobResponse,
-} from "app/dendro/dendro-types";
+} from "../../../misc/dendro/dendro-types";
 import { timeAgoString } from "app/timeStrings";
-import useRoute from "neurosift-lib/contexts/useRoute";
+import useRoute from "../../../contexts/useRoute";
 import {
   FunctionComponent,
   useCallback,
@@ -24,7 +24,7 @@ import {
   useReducer,
   useState,
 } from "react";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+import { useNwbFile } from "../../../misc/NwbFileContext";
 import {
   SelectDendroApiKeyComponent,
   SelectDendroComputeClientIdComponent,

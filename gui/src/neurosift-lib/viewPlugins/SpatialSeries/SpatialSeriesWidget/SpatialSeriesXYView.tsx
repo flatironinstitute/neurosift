@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Canceler } from "neurosift-lib/remote-h5-file/index";
+import { Canceler } from "../../../remote-h5-file/index";
 import {
   FunctionComponent,
   useCallback,
@@ -12,14 +12,14 @@ import {
   useTimeRange,
   useTimeseriesSelection,
   useTimeseriesSelectionInitialization,
-} from "neurosift-lib/contexts/context-timeseries-selection";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
-import { useDataset } from "../../../NwbMainView/NwbMainView";
+} from "../../../contexts/context-timeseries-selection";
+import { useNwbFile } from "../../../misc/NwbFileContext";
+import { useDataset } from "../../../misc/hooks";
 import { useTimeseriesTimestampsClient } from "../../TimeSeries/TimeseriesItemView/TimeseriesTimestampsClient";
 import TimeseriesDatasetChunkingClient from "../../TimeSeries/TimeseriesItemView/TimeseriesDatasetChunkingClient";
 import TimeseriesSelectionBar, {
   timeSelectionBarHeight,
-} from "neurosift-lib/timeseries/TimeseriesSelectionBar";
+} from "../../../timeseries/TimeseriesSelectionBar";
 import { DataSeries, Opts } from "./SpatialWorkerTypes";
 
 type Props = {

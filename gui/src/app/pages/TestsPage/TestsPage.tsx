@@ -1,5 +1,5 @@
 import { FunctionComponent } from "react";
-import { getViewPlugins } from "../NwbPage/viewPlugins/viewPlugins";
+import { getViewPlugins } from "neurosift-lib/viewPlugins/viewPlugins";
 
 type TestsPageProps = {
   width: number;

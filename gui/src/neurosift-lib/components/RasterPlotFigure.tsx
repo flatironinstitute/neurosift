@@ -1,12 +1,12 @@
-import DirectRasterPlotUnitsItemView from "app/pages/NwbPage/viewPlugins/Units/DirectRasterPlotUnitsItemView";
-import { NwbFileContext } from "neurosift-lib/misc/NwbFileContext";
+import DirectRasterPlotUnitsItemView from "../viewPlugins/Units/DirectRasterPlotUnitsItemView";
+import { NwbFileContext } from "../misc/NwbFileContext";
 import { FunctionComponent, useState } from "react";
 import {
   useFullWidth,
   useNwbFileContextValue,
   NwbFigureProps,
 } from "./NwbFigureCommon";
-import { SetupTimeseriesSelection } from "neurosift-lib/contexts/context-timeseries-selection";
+import { SetupTimeseriesSelection } from "../contexts/context-timeseries-selection";
 
 const RasterPlotFigure: FunctionComponent<NwbFigureProps> = ({
   nwb_url,

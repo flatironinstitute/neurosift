@@ -4,7 +4,7 @@ import {
   RemoteH5Dataset,
   RemoteH5FileX,
   RemoteH5Group,
-} from "neurosift-lib/remote-h5-file/index";
+} from "../../remote-h5-file/index";
 import { FunctionComponent, useEffect, useState } from "react";
 import PlaneTransformSelector, {
   PlaneTransform,

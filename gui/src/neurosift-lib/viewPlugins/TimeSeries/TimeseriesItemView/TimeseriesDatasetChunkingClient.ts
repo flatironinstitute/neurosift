@@ -3,7 +3,7 @@ import {
   Canceler,
   RemoteH5Dataset,
   RemoteH5FileX,
-} from "neurosift-lib/remote-h5-file/index";
+} from "../../../remote-h5-file/index";
 
 class TimeseriesDatasetChunkingClient {
   #chunks: { [k: number]: number[][] } = {};

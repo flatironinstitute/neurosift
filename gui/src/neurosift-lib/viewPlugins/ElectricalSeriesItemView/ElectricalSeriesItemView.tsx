@@ -1,9 +1,9 @@
 import { FunctionComponent, useMemo, useState } from "react";
 import NeurodataTimeSeriesItemView from "../TimeSeries/NeurodataTimeSeriesItemView";
-import TabWidget from "neurosift-lib/components/TabWidget";
+import TabWidget from "../../components/TabWidget";
 import EphysSummaryItemView from "../Ephys/EphysSummaryItemView";
 import { checkUrlIsLocal } from "../viewPlugins";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+import { useNwbFile } from "../../misc/NwbFileContext";
 import SpikeSortingView from "./SpikeSortingView/SpikeSortingView";
 
 type Props = {

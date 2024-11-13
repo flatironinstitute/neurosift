@@ -14,7 +14,7 @@ import {
   SortableTableWidgetColumn,
   SortableTableWidgetRow,
 } from "../../component-sortable-table";
-import { useSortingCuration } from "../../context-sorting-curation";
+import { useSortingCuration } from "neurosift-lib/contexts/context-sorting-curation";
 import {
   idToNum,
   INITIALIZE_UNITS,
@@ -29,7 +29,7 @@ import {
   defaultUnitsTableBottomToolbarOptions,
   UnitsTableBottomToolbar,
   UnitsTableBottomToolbarOptions,
-} from "../../ViewToolbar";
+} from "../../../../neurosift-lib/misc/ViewToolbar";
 import { UnitsTableViewData } from "./UnitsTableViewData";
 
 type Props = {

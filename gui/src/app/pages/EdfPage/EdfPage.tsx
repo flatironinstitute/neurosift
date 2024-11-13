@@ -3,8 +3,8 @@ import useRoute from "neurosift-lib/contexts/useRoute";
 import {
   DatasetChunkingClientInterface,
   NwbTimeseriesViewChild,
-} from "../NwbPage/viewPlugins/TimeSeries/TimeseriesItemView/NwbTimeseriesView";
-import { TimeseriesTimestampsClient } from "../NwbPage/viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesTimestampsClient";
+} from "neurosift-lib/viewPlugins/TimeSeries/TimeseriesItemView/NwbTimeseriesView";
+import { TimeseriesTimestampsClient } from "neurosift-lib/viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesTimestampsClient";
 import EDFReader from "./EDFReader";
 import {
   SetupTimeseriesSelection,

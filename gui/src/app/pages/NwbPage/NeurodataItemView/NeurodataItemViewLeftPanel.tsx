@@ -1,8 +1,8 @@
 import { FunctionComponent, PropsWithChildren } from "react";
-import TimeseriesSelectionWidget from "../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget";
+import TimeseriesSelectionWidget from "neurosift-lib/viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget";
 import { RemoteH5Group } from "neurosift-lib/remote-h5-file/index";
 import ShareTabComponent from "./ShareTabComponent";
-import { ViewPlugin } from "../viewPlugins/viewPlugins";
+import { ViewPlugin } from "neurosift-lib/viewPlugins/viewPlugins";
 import LoadInPythonComponent from "./LoadInPythonComponent";
 import ViewObjectNotesIconThing from "../ObjectNote/ViewObjectNotesIconThing";
 import DendroProvenanceForItem from "./DendroProvenanceForItem";

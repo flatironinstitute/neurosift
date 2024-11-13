@@ -1,11 +1,8 @@
-import {
-  RemoteH5FileX,
-  RemoteH5Group,
-} from "neurosift-lib/remote-h5-file/index";
-import Splitter from "neurosift-lib/components/Splitter";
+import { RemoteH5FileX, RemoteH5Group } from "../../remote-h5-file/index";
+import Splitter from "../../components/Splitter";
 import { FunctionComponent, useEffect, useState } from "react";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
-import { useGroup } from "../../NwbMainView/NwbMainView";
+import { useNwbFile } from "../../misc/NwbFileContext";
+import { useGroup } from "../../misc/hooks";
 import PlaneSegmentationView from "./PlaneSegmentationView";
 
 type Props = {

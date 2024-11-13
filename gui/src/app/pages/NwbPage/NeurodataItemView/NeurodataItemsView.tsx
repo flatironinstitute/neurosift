@@ -5,11 +5,11 @@ import {
   useNeurodataItems,
   useNwbFile,
 } from "neurosift-lib/misc/NwbFileContext";
-import TimeseriesSelectionWidget from "../viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget";
+import TimeseriesSelectionWidget from "neurosift-lib/viewPlugins/TimeSeries/TimeseriesItemView/TimeseriesSelectionWidget";
 import {
   findViewPluginsForType,
   getViewPlugins,
-} from "../viewPlugins/viewPlugins";
+} from "neurosift-lib/viewPlugins/viewPlugins";
 import ShareTabComponent from "./ShareTabComponent";
 import {
   NwbFileSpecifications,

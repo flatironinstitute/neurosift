@@ -2,7 +2,7 @@ import {
   PanDirection,
   ZoomDirection,
 } from "neurosift-lib/contexts/context-timeseries-selection";
-import { ToolbarItem } from "../ViewToolbar";
+import { ToolbarItem } from "../../../neurosift-lib/misc/ViewToolbar";
 import {
   FaArrowLeft,
   FaArrowRight,

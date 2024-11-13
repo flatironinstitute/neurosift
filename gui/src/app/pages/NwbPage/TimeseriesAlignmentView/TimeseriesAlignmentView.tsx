@@ -10,7 +10,7 @@ import {
 import { FaEye } from "react-icons/fa";
 import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
 import { useNwbOpenTabs } from "../NwbOpenTabsContext";
-import { neurodataTypeInheritsFrom } from "../neurodataSpec";
+import { neurodataTypeInheritsFrom } from "neurosift-lib/neurodataSpec";
 import { useNwbFileSpecifications } from "neurosift-lib/misc/SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 type Props = {

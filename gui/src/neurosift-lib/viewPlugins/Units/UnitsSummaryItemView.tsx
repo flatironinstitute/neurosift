@@ -2,19 +2,19 @@ import {
   RemoteH5FileLindi,
   RemoteH5FileX,
   getRemoteH5FileLindi,
-} from "neurosift-lib/remote-h5-file/index";
+} from "../../remote-h5-file/index";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import {
   AutocorrelogramsView,
   AutocorrelogramsViewData,
-} from "../../../../package/view-autocorrelograms";
-import { AutocorrelogramData } from "../../../../package/view-autocorrelograms/AutocorrelogramsViewData";
+} from "./view-autocorrelograms";
+import { AutocorrelogramData } from "./view-autocorrelograms/AutocorrelogramsViewData";
 import {
   DendroJob,
   DendroJobDefinition,
   DendroJobRequiredResources,
-} from "../../../../dendro/dendro-types";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+} from "../../misc/dendro/dendro-types";
+import { useNwbFile } from "../../misc/NwbFileContext";
 import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/DendroHelpers";
 import DendroItemView from "../CEBRA/DendroItemView";
 

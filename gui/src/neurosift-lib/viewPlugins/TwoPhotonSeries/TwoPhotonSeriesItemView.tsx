@@ -5,27 +5,27 @@ import {
   DatasetDataType,
   RemoteH5FileLindi,
   RemoteH5FileX,
-} from "neurosift-lib/remote-h5-file/index";
+} from "../../remote-h5-file/index";
 import { ArrowLeft, ArrowRight } from "@mui/icons-material";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import {
   useTimeRange,
   useTimeseriesSelection,
   useTimeseriesSelectionInitialization,
-} from "neurosift-lib/contexts/context-timeseries-selection";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
-import { useDataset } from "../../NwbMainView/NwbMainView";
+} from "../../contexts/context-timeseries-selection";
+import { useNwbFile } from "../../misc/NwbFileContext";
+import { useDataset } from "../../misc/hooks";
 import { useTimeseriesTimestampsClient } from "../TimeSeries/TimeseriesItemView/TimeseriesTimestampsClient";
 import TimeseriesSelectionBar, {
   timeSelectionBarHeight,
-} from "neurosift-lib/timeseries/TimeseriesSelectionBar";
+} from "../../timeseries/TimeseriesSelectionBar";
 import MultiRangeSlider from "./MultiRangeSlider/MultiRangeSlider";
 import PlaneTransformSelector, {
   PlaneTransform,
   defaultPlaneTransform,
 } from "./PlaneTransformSelector";
 import TwoPhotonSeriesItemViewMp4 from "./TwoPhotonSeriesItemViewMp4";
-import TabWidget from "neurosift-lib/components/TabWidget";
+import TabWidget from "../../components/TabWidget";
 import TwoPhotonSeriesMovieView from "./TwoPhotonSeriesMovieView";
 
 // const queryParams = parseQuery(window.location.href)

@@ -1,4 +1,4 @@
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+import { useNwbFile } from "../../../misc/NwbFileContext";
 import { FunctionComponent, useMemo, useReducer, useState } from "react";
 import {
   AllJobsTreeRow,
@@ -16,7 +16,7 @@ import {
   DendroJob,
   DendroJobDefinition,
   DendroJobRequiredResources,
-} from "app/dendro/dendro-types";
+} from "../../../misc/dendro/dendro-types";
 import InputChoices from "../../ElectricalSeriesItemView/SpikeSortingView/InputChoices";
 import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import { OpenInNew, Refresh } from "@mui/icons-material";

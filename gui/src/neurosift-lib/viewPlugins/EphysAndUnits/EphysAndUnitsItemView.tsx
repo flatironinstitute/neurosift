@@ -1,10 +1,10 @@
 import { FunctionComponent, useMemo } from "react";
 import NeurodataTimeSeriesItemView from "../TimeSeries/NeurodataTimeSeriesItemView";
 import UnitsItemView from "../Units/UnitsItemView";
-import Splitter from "neurosift-lib/components/Splitter";
+import Splitter from "../../components/Splitter";
 import { useDirectSpikeTrainsClientUnitSlice } from "../Units/DirectRasterPlotUnitsItemView";
-import { useSelectedUnitIds } from "neurosift-lib/contexts/context-unit-selection";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+import { useSelectedUnitIds } from "../../contexts/context-unit-selection";
+import { useNwbFile } from "../../misc/NwbFileContext";
 
 type EphysAndUnitsItemViewProps = {
   width: number;

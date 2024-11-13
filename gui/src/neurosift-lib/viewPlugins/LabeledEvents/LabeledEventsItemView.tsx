@@ -5,10 +5,10 @@ import {
   MergedRemoteH5File,
   RemoteH5File,
   RemoteH5FileX,
-} from "neurosift-lib/remote-h5-file/index";
+} from "../../remote-h5-file/index";
 import { FunctionComponent, useEffect, useState } from "react";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
-import RasterPlotView3 from "neurosift-lib/views/RasterPlotView3/RasterPlotView3";
+import { useNwbFile } from "../../misc/NwbFileContext";
+import RasterPlotView3 from "../../views/RasterPlotView3/RasterPlotView3";
 
 type Props = {
   width: number;

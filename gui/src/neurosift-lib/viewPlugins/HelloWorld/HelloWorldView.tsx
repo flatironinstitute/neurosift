@@ -1,6 +1,6 @@
 import { FunctionComponent } from "react";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
-import { useGroup } from "../../NwbMainView/NwbMainView";
+import { useNwbFile } from "../../misc/NwbFileContext";
+import { useGroup } from "../../misc/hooks";
 
 // This is an example Neurosift view plugin.
 // See ../viewPlugins.ts for how it is registered.

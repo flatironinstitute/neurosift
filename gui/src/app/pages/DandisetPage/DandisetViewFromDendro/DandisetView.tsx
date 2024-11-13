@@ -25,7 +25,7 @@ import {
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import AdvancedAssetOptionsWindow from "./AdvancedAssetOptionsWindow";
 import SimilarDandisetsView from "./SimilarDandisetsView";
-import { Expandable } from "app/pages/NwbPage/viewPlugins/Ephys/EphysSummaryItemView";
+import { Expandable } from "neurosift-lib/viewPlugins/Ephys/EphysSummaryItemView";
 
 const applicationBarColorDarkened = "#546"; // from dendro
 

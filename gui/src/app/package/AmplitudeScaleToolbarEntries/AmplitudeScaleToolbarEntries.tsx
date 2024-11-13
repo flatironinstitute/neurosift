@@ -1,5 +1,5 @@
 import { FaArrowDown, FaArrowUp, FaRegTimesCircle } from "react-icons/fa";
-import { ToolbarItem } from "../ViewToolbar";
+import { ToolbarItem } from "../../../neurosift-lib/misc/ViewToolbar";
 
 interface AmplitudeScaleToolbarProps {
   ampScaleFactor: number;

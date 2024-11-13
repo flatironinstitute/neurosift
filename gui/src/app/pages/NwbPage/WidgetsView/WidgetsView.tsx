@@ -3,7 +3,7 @@ import {
   getViewPlugins,
   ViewPlugin,
   findViewPluginsForType,
-} from "../viewPlugins/viewPlugins";
+} from "neurosift-lib/viewPlugins/viewPlugins";
 import {
   useNeurodataItems,
   useNwbFile,

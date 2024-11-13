@@ -20,10 +20,10 @@ import {
 } from "../DandisetPage/DandisetViewFromDendro/DandisetView";
 import { NwbFileContext } from "neurosift-lib/misc/NwbFileContext";
 import { tryGetLindiUrl } from "../NwbPage/NwbPage";
-import { LazyPlotlyPlotContext } from "../NwbPage/viewPlugins/CEBRA/LazyPlotlyPlot";
+import { LazyPlotlyPlotContext } from "neurosift-lib/viewPlugins/CEBRA/LazyPlotlyPlot";
 import EphysSummaryItemView, {
   Expandable,
-} from "../NwbPage/viewPlugins/Ephys/EphysSummaryItemView";
+} from "neurosift-lib/viewPlugins/Ephys/EphysSummaryItemView";
 
 type EphysSummaryPluginPageProps = {
   width: number;

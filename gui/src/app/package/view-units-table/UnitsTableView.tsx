@@ -28,9 +28,9 @@ import {
   defaultUnitsTableBottomToolbarOptions,
   UnitsTableBottomToolbar,
   UnitsTableBottomToolbarOptions,
-} from "../ViewToolbar";
+} from "../../../neurosift-lib/misc/ViewToolbar";
 import { UnitsTableViewData } from "./UnitsTableViewData";
-import { useSortingCuration } from "../context-sorting-curation";
+import { useSortingCuration } from "neurosift-lib/contexts/context-sorting-curation";
 
 type Props = {
   data: UnitsTableViewData;

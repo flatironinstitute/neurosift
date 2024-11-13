@@ -1,7 +1,7 @@
 import { useTimeRange } from "neurosift-lib/contexts/context-timeseries-selection";
 import { useMemo } from "react";
 import { TimeWidgetToolbarEntries } from "../component-time-scroll-view";
-import { Divider, ToolbarItem } from "../ViewToolbar";
+import { Divider, ToolbarItem } from "../../../neurosift-lib/misc/ViewToolbar";
 
 export type OptionalToolbarActions = {
   aboveDefault?: ToolbarItem[];

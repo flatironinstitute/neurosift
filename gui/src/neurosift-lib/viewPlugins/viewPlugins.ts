@@ -1,14 +1,11 @@
-import {
-  RemoteH5FileX,
-  RemoteH5Group,
-} from "../remote-h5-file/index";
+import { RemoteH5FileX, RemoteH5Group } from "../remote-h5-file/index";
 import { FunctionComponent } from "react";
 // import { neurodataTypeInheritanceRaw } from "../neurodataSpec"
 import BehavioralEventsItemView from "./BehavioralEvents/BehavioralEventsItemView";
 import DynamicTableView from "./DynamicTable/DynamicTableView";
 import ImageSegmentationItemView from "./ImageSegmentation/ImageSegmentationItemView";
 // import ImageSeriesItemView from "./ImageSeries/ImageSeriesItemView"
-import { NwbFileSpecifications } from "neurosift-lib/misc/SpecificationsView/SetupNwbFileSpecificationsProvider";
+import { NwbFileSpecifications } from "../misc/SpecificationsView/SetupNwbFileSpecificationsProvider";
 import { getNeurodataTypeInheritanceRaw } from "../neurodataSpec";
 import ElectricalSeriesItemView from "./ElectricalSeriesItemView/ElectricalSeriesItemView";
 import EphysAndUnitsItemView from "./EphysAndUnits/EphysAndUnitsItemView";

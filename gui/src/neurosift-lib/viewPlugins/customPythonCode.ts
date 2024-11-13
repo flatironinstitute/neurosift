@@ -1,4 +1,4 @@
-import { RemoteH5Group } from "neurosift-lib/remote-h5-file/index";
+import { RemoteH5Group } from "../remote-h5-file/index";
 
 export const getCustomPythonCodeForTimeSeries = (group: RemoteH5Group) => {
   let customCode = "";

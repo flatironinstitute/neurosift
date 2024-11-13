@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useEffect, useState } from "react";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
-import { useDatasetData, useGroup } from "../../NwbMainView/NwbMainView";
+import { useNwbFile } from "../../misc/NwbFileContext";
+import { useDatasetData, useGroup } from "../../misc/hooks";
 import NwbTimeIntervalsWidget from "./NwbTimeIntervalsWidget";
 
 type Props = {

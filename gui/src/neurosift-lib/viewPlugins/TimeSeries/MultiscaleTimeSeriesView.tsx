@@ -4,7 +4,7 @@ import {
   DendroJobDefinition,
   DendroJobRequiredResources,
   isCreateJobResponse,
-} from "app/dendro/dendro-types";
+} from "../../misc/dendro/dendro-types";
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import {
   SelectDendroApiKeyComponent,

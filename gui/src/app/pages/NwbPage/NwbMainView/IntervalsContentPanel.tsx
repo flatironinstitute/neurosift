@@ -7,8 +7,8 @@ import {
 import { FunctionComponent, useMemo } from "react";
 import { useNwbOpenTabs } from "../NwbOpenTabsContext";
 import { useSelectedItemViews } from "../SelectedItemViewsContext";
-import ViewPluginButton from "../viewPlugins/ViewPluginButton";
-import { findViewPluginsForType } from "../viewPlugins/viewPlugins";
+import ViewPluginButton from "app/ViewPluginButton";
+import { findViewPluginsForType } from "neurosift-lib/viewPlugins/viewPlugins";
 import { useGroup } from "./NwbMainView";
 import { useNwbFileSpecifications } from "neurosift-lib/misc/SpecificationsView/SetupNwbFileSpecificationsProvider";
 

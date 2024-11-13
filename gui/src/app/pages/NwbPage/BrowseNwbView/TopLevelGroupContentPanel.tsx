@@ -18,7 +18,7 @@ import {
   useNwbFile,
 } from "neurosift-lib/misc/NwbFileContext";
 import { useNwbOpenTabs } from "../NwbOpenTabsContext";
-import { findViewPluginsForType } from "../viewPlugins/viewPlugins";
+import { findViewPluginsForType } from "neurosift-lib/viewPlugins/viewPlugins";
 import { valueToElement } from "./BrowseNwbView";
 import "./nwb-attributes-table.css";
 import { useNwbFileSpecifications } from "neurosift-lib/misc/SpecificationsView/SetupNwbFileSpecificationsProvider";

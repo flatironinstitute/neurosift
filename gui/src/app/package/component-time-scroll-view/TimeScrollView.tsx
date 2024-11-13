@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import { ViewToolbar } from "../ViewToolbar";
+import { ViewToolbar } from "../../../neurosift-lib/misc/ViewToolbar";
 import { DefaultToolbarWidth } from "../component-time-scroll-view";
 import { useTimeRange } from "neurosift-lib/contexts/context-timeseries-selection";
 import { TimeseriesLayoutOpts } from "../saneslab/view-firing-rates-plot/FiringRatesPlotView";

@@ -2,7 +2,7 @@ import { FunctionComponent } from "react";
 import {
   useTimeRange,
   useTimeseriesSelection,
-} from "neurosift-lib/contexts/context-timeseries-selection";
+} from "../../../contexts/context-timeseries-selection";
 import PlayControl from "./PlayControl";
 
 type Props = {

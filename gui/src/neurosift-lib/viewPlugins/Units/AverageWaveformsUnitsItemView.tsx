@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { FunctionComponent, useEffect, useState } from "react";
-import { AverageWaveformsView } from "../../../../package/view-average-waveforms";
+import { AverageWaveformsView } from "./view-average-waveforms";
 import {
   AverageWaveformData,
   AverageWaveformsViewData,
-} from "../../../../package/view-average-waveforms/AverageWaveformsViewData";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+} from "./view-average-waveforms/AverageWaveformsViewData";
+import { useNwbFile } from "../../misc/NwbFileContext";
 
 type Props = {
   width: number;

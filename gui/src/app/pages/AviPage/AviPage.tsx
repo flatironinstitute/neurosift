@@ -12,16 +12,16 @@ import {
   DendroJobDefinition,
   DendroJobRequiredResources,
   isCreateJobResponse,
-} from "../../dendro/dendro-types";
+} from "neurosift-lib/misc/dendro/dendro-types";
 import {
   SelectDendroApiKeyComponent,
   useAllJobs,
-} from "../NwbPage/viewPlugins/CEBRA/DendroHelpers";
-import { JobInfoView } from "../NwbPage/viewPlugins/CEBRA/DendroItemView";
+} from "neurosift-lib/viewPlugins/CEBRA/DendroHelpers";
+import { JobInfoView } from "neurosift-lib/viewPlugins/CEBRA/DendroItemView";
 import {
   createDendroJobSecrets,
   isStagingUrl,
-} from "../NwbPage/viewPlugins/ElectricalSeriesItemView/SpikeSortingView/SpikeSortingView";
+} from "neurosift-lib/viewPlugins/ElectricalSeriesItemView/SpikeSortingView/SpikeSortingView";
 
 type AviPageProps = {
   width: number;

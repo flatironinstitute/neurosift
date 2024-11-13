@@ -2,7 +2,7 @@ import {
   RemoteH5FileLindi,
   RemoteH5FileX,
   getRemoteH5FileLindi,
-} from "neurosift-lib/remote-h5-file/index";
+} from "../../remote-h5-file/index";
 import {
   FunctionComponent,
   PropsWithChildren,
@@ -14,8 +14,8 @@ import {
   DendroJob,
   DendroJobDefinition,
   DendroJobRequiredResources,
-} from "../../../../dendro/dendro-types";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+} from "../../misc/dendro/dendro-types";
+import { useNwbFile } from "../../misc/NwbFileContext";
 import LazyPlotlyPlot from "../CEBRA/LazyPlotlyPlot";
 import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/DendroHelpers";
 import DendroItemView from "../CEBRA/DendroItemView";

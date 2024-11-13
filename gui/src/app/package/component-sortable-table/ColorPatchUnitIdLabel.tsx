@@ -1,5 +1,5 @@
 import { FunctionComponent } from "react";
-import { SortingCuration } from "../context-sorting-curation";
+import { SortingCuration } from "neurosift-lib/contexts/context-sorting-curation";
 import { idToNum } from "neurosift-lib/contexts/context-unit-selection";
 import { getUnitColor } from "neurosift-lib/contexts/context-unit-selection/unitColors";
 import "./SortableTableWidget.css";

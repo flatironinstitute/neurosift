@@ -6,7 +6,7 @@ import {
   DendroJobDefinition,
   DendroJobRequiredResources,
   isCreateJobResponse,
-} from "app/dendro/dendro-types";
+} from "../../../misc/dendro/dendro-types";
 import {
   FunctionComponent,
   useCallback,
@@ -14,7 +14,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+import { useNwbFile } from "../../../misc/NwbFileContext";
 import {
   SelectDendroApiKeyComponent,
   useAllJobs,
@@ -25,7 +25,7 @@ import {
 } from "../../ElectricalSeriesItemView/SpikeSortingView/SpikeSortingView";
 import { JobInfoView } from "../../CEBRA/DendroItemView";
 import SpikeDensityPlotWidget from "./SpikeDensityPlotWidget";
-import { RemoteH5FileX } from "neurosift-lib/remote-h5-file/index";
+import { RemoteH5FileX } from "../../../remote-h5-file/index";
 
 type Props = {
   width: number;

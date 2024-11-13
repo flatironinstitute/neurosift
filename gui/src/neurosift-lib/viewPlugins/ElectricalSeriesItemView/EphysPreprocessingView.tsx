@@ -1,12 +1,12 @@
-import { RemoteH5FileX } from "neurosift-lib/remote-h5-file/index";
+import { RemoteH5FileX } from "../../remote-h5-file/index";
 import {
   DendroJob,
   DendroJobDefinition,
   DendroJobRequiredResources,
-} from "app/dendro/dendro-types";
-import useRoute from "neurosift-lib/contexts/useRoute";
+} from "../../misc/dendro/dendro-types";
+import useRoute from "../../contexts/useRoute";
 import { FunctionComponent, useMemo } from "react";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+import { useNwbFile } from "../../misc/NwbFileContext";
 import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/DendroHelpers";
 import DendroItemView from "../CEBRA/DendroItemView";
 import useTimeSeriesInfo from "../TimeSeries/useTimeseriesInfo";

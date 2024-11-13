@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { FunctionComponent, useEffect, useState } from "react";
+import { useNwbFile } from "../../misc/NwbFileContext";
 import {
   AutocorrelogramsView,
   AutocorrelogramsViewData,
-} from "../../../../package/view-autocorrelograms";
-import { AutocorrelogramData } from "../../../../package/view-autocorrelograms/AutocorrelogramsViewData";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+} from "./view-autocorrelograms";
+import { AutocorrelogramData } from "./view-autocorrelograms/AutocorrelogramsViewData";
 
 type Props = {
   width: number;

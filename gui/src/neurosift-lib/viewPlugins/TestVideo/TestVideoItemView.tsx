@@ -1,8 +1,5 @@
 /* eslint-disable no-constant-condition */
-import {
-  RemoteH5FileLindi,
-  RemoteH5FileX,
-} from "neurosift-lib/remote-h5-file/index";
+import { RemoteH5FileLindi, RemoteH5FileX } from "../../remote-h5-file/index";
 import {
   FunctionComponent,
   useCallback,
@@ -10,8 +7,8 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
-import { useDataset } from "../../NwbMainView/NwbMainView";
+import { useNwbFile } from "../../misc/NwbFileContext";
+import { useDataset } from "../../misc/hooks";
 
 type Props = {
   width: number;

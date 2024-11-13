@@ -13,8 +13,8 @@ import {
   DendroJob,
   isGetJobResponse,
   isFindJobsResponse,
-} from "../../../../dendro/dendro-types";
-import { timeAgoString } from "../../../../timeStrings";
+} from "../../misc/dendro/dendro-types";
+import { timeAgoString } from "../../utils/timeStrings";
 
 export const useAllJobs = (o: {
   serviceName?: string;

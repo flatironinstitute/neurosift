@@ -4,9 +4,9 @@ import {
   DatasetDataType,
   RemoteH5Dataset,
   RemoteH5FileX,
-} from "neurosift-lib/remote-h5-file/index";
+} from "../../../remote-h5-file/index";
 import { useEffect, useState } from "react";
-import { useGroup } from "../../../NwbMainView/NwbMainView";
+import { useGroup } from "../../../misc/hooks";
 
 class TimestampFinder {
   #chunkSize = 100000;

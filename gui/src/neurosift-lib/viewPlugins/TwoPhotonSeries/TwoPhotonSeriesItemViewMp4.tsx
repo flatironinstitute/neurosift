@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
-import { RemoteH5FileLindi } from "neurosift-lib/remote-h5-file/index";
+import { useNwbFile } from "../../misc/NwbFileContext";
+import { RemoteH5FileLindi } from "../../remote-h5-file/index";
 
 type TwoPhotonSeriesItemViewMp4Props = {
   width: number;

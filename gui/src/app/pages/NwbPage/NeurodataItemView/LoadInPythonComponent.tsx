@@ -10,7 +10,10 @@ import {
   RemoteH5FileLindi,
   RemoteH5Group,
 } from "neurosift-lib/remote-h5-file/index";
-import { findViewPluginsForType, ViewPlugin } from "../viewPlugins/viewPlugins";
+import {
+  findViewPluginsForType,
+  ViewPlugin,
+} from "neurosift-lib/viewPlugins/viewPlugins";
 import { Hyperlink } from "@fi-sci/misc";
 import ModalWindow from "@fi-sci/modal-window";
 import Markdown from "neurosift-lib/components/Markdown";

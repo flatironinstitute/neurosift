@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import ModalWindow from "@fi-sci/modal-window";
+import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import { QuestionMark } from "@mui/icons-material";
 import {
   FunctionComponent,
@@ -9,23 +9,22 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useModalDialog } from "../../../../../ApplicationBar";
-import { ToolbarItem } from "../../../../../package/ViewToolbar/Toolbars";
+import { ToolbarItem } from "../../../misc/ViewToolbar/Toolbars";
 import TimeScrollView2, {
   useTimeScrollView2,
-} from "neurosift-lib/timeseries/component-time-scroll-view-2/TimeScrollView2";
+} from "../../../timeseries/component-time-scroll-view-2/TimeScrollView2";
 import {
   useTimeRange,
   useTimeseriesSelectionInitialization,
-} from "neurosift-lib/contexts/context-timeseries-selection";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
-import { useDataset } from "../../../NwbMainView/NwbMainView";
+} from "../../../contexts/context-timeseries-selection";
+import { useNwbFile } from "../../../misc/NwbFileContext";
+import { useDataset } from "../../../misc/hooks";
 import {
   TimeseriesTimestampsClient,
   useTimeseriesTimestampsClient,
 } from "./TimeseriesTimestampsClient";
 import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient";
-import { timeSelectionBarHeight } from "neurosift-lib/timeseries/TimeseriesSelectionBar";
+import { timeSelectionBarHeight } from "../../../timeseries/TimeseriesSelectionBar";
 import { DataSeries, Opts, SpikeTrainsDataForWorker } from "./WorkerTypes";
 import { SpikeTrainsClient } from "../../Units/DirectRasterPlotUnitsItemView";
 import { getUnitColor } from "app/package/view-units-table";
@@ -659,7 +658,7 @@ export const NwbTimeseriesViewChild: FunctionComponent<
     visible: helpVisible,
     handleOpen: handleOpenHelp,
     handleClose: handleCloseHelp,
-  } = useModalDialog();
+  } = useModalWindow();
 
   const additionalToolbarItems: ToolbarItem[] = useMemo(() => {
     return [

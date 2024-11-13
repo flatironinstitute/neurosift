@@ -1,12 +1,12 @@
-import NeurodataTimeIntervalsItemView from "app/pages/NwbPage/viewPlugins/TimeIntervals/NeurodataTimeIntervalsItemView";
-import { NwbFileContext } from "neurosift-lib/misc/NwbFileContext";
+import NeurodataTimeIntervalsItemView from "../viewPlugins/TimeIntervals/NeurodataTimeIntervalsItemView";
+import { NwbFileContext } from "../misc/NwbFileContext";
 import { FunctionComponent, useState } from "react";
 import {
   useFullWidth,
   useNwbFileContextValue,
   NwbFigureProps,
 } from "./NwbFigureCommon";
-import { SetupTimeseriesSelection } from "neurosift-lib/contexts/context-timeseries-selection";
+import { SetupTimeseriesSelection } from "../contexts/context-timeseries-selection";
 
 const TimeIntervalsFigure: FunctionComponent<NwbFigureProps> = ({
   nwb_url,

@@ -11,17 +11,17 @@ import {
   DendroJobDefinition,
   DendroJobRequiredResources,
   isCreateJobResponse,
-} from "../../../../dendro/dendro-types";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
-import {
-  SelectDendroApiKeyComponent,
-  useAllJobs,
-} from "../../../NwbPage/viewPlugins/CEBRA/DendroHelpers";
-import { JobInfoView } from "../../../NwbPage/viewPlugins/CEBRA/DendroItemView";
+} from "../../misc/dendro/dendro-types";
+import { useNwbFile } from "../../misc/NwbFileContext";
 import {
   createDendroJobSecrets,
   isStagingUrl,
-} from "../../../NwbPage/viewPlugins/ElectricalSeriesItemView/SpikeSortingView/SpikeSortingView";
+} from "../ElectricalSeriesItemView/SpikeSortingView/SpikeSortingView";
+import {
+  SelectDendroApiKeyComponent,
+  useAllJobs,
+} from "../CEBRA/DendroHelpers";
+import { JobInfoView } from "../CEBRA/DendroItemView";
 
 type TwoPhotonMovieViewProps = {
   width: number;

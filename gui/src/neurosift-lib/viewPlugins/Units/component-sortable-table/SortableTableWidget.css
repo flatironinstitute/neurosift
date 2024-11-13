@@ -1,0 +1,35 @@
+.SortableTableWidget .MuiTableCell-root {
+  padding-top: 1px;
+  padding-bottom: 1px;
+  padding-left: 0px;
+  padding-right: 0px;
+  font-size: 12px;
+  border: solid 1px #f0f0f0;
+}
+
+.SortableTableWidget .MuiTableRow-root.selectedRow {
+  background-color: #b5d1ff;
+}
+
+.SortableTableWidget .MuiTableRow-root.currentRow {
+  background-color: #95b1df;
+}
+
+.SortCaretSpan {
+  font-size: 16px;
+  color: gray;
+  padding-left: 3px;
+  padding-right: 5px;
+  padding-top: 2px;
+}
+
+.SortableTableWidget .unitLabel {
+  width: 10px;
+  height: 10px;
+  position: relative;
+  display: inline-block;
+}
+
+.SortableTableWidget .SortableTableCheckbox {
+  padding: 1px;
+}

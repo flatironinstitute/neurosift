@@ -1,6 +1,6 @@
 import { FunctionComponent } from "react";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
-import { useDataset } from "../../NwbMainView/NwbMainView";
+import { useNwbFile } from "../../misc/NwbFileContext";
+import { useDataset } from "../../misc/hooks";
 
 type Props = {
   width: number;

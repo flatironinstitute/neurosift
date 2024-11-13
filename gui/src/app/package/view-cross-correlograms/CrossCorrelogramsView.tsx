@@ -10,9 +10,12 @@ import {
   LockableSelectUnitsWidget,
   useLocalSelectedUnitIds,
 } from "../SelectUnitsWidget";
-import { CorrelogramPlot } from "../view-autocorrelograms";
+import CorrelogramPlot from "neurosift-lib/viewPlugins/Units/view-autocorrelograms/CorrelogramPlot";
 import { getUnitColor } from "neurosift-lib/contexts/context-unit-selection/unitColors";
-import { ToolbarItem, ViewToolbar } from "../ViewToolbar";
+import {
+  ToolbarItem,
+  ViewToolbar,
+} from "../../../neurosift-lib/misc/ViewToolbar";
 import {
   CrossCorrelogramData,
   CrossCorrelogramsViewData,

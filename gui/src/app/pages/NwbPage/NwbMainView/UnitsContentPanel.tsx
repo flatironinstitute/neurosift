@@ -3,9 +3,9 @@ import {
   RemoteH5Group,
 } from "neurosift-lib/remote-h5-file/index";
 import { FunctionComponent, useMemo } from "react";
-import DynamicTableView from "../viewPlugins/DynamicTable/DynamicTableView";
-import ViewPluginButton from "../viewPlugins/ViewPluginButton";
-import { getViewPlugins } from "../viewPlugins/viewPlugins";
+import DynamicTableView from "neurosift-lib/viewPlugins/DynamicTable/DynamicTableView";
+import ViewPluginButton from "app/ViewPluginButton";
+import { getViewPlugins } from "neurosift-lib/viewPlugins/viewPlugins";
 
 type Props = {
   nwbFile: RemoteH5FileX;

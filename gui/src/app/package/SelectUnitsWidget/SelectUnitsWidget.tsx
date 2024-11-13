@@ -1,4 +1,4 @@
-import { useSortingCuration } from "../context-sorting-curation";
+import { useSortingCuration } from "neurosift-lib/contexts/context-sorting-curation";
 import {
   SortableTableWidget,
   SortableTableWidgetRow,

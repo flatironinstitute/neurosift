@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useEffect, useState } from "react";
-import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
-import { ReferenceComponent } from "../../BrowseNwbView/BrowseNwbView";
+import { useNwbFile } from "../../misc/NwbFileContext";
+import { ReferenceComponent } from "../DynamicTable/DynamicTableView";
 
 type Props = {
   width: number;

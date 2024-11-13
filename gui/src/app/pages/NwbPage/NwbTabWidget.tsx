@@ -19,7 +19,7 @@ import TimeseriesAlignmentView from "./TimeseriesAlignmentView/TimeseriesAlignme
 import {
   getViewPlugins,
   findViewPluginsForType,
-} from "./viewPlugins/viewPlugins";
+} from "neurosift-lib/viewPlugins/viewPlugins";
 import { useNwbFileSpecifications } from "neurosift-lib/misc/SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 const NwbTabWidget: FunctionComponent<{
