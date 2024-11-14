@@ -41,7 +41,13 @@ const TestPage: FunctionComponent<TestPageProps> = ({ width, height }) => {
         chatDispatch={chatDispatch}
         openRouterKey={localStorage.getItem("openRouterKey") || null}
       />
-      <RightPanel width={0} height={0} dandisetMetadata={dandisetMetadata} />
+      <RightPanel
+        width={0}
+        height={0}
+        dandisetMetadata={dandisetMetadata}
+        dandisetId={dandisetId}
+        dandisetVersion={dandisetVersion || "draft"}
+      />
     </Splitter>
   );
 };
@@ -49,17 +55,27 @@ const TestPage: FunctionComponent<TestPageProps> = ({ width, height }) => {
 type RightPanelProps = {
   width: number;
   height: number;
+  dandisetId: string;
+  dandisetVersion: string;
   dandisetMetadata: DandisetMetadata;
 };
 
 const RightPanel: FunctionComponent<RightPanelProps> = ({
+  dandisetId,
+  dandisetVersion,
   dandisetMetadata,
   width,
   height,
 }) => {
   return (
     <div style={{ width, height, overflow: "auto" }}>
-      <h1>{dandisetMetadata.id}</h1>
+      <h1>
+        <a
+          href={`https://dandiarchive.org/dandiset/${dandisetId}/${dandisetVersion}`}
+        >
+          {dandisetMetadata.id}
+        </a>
+      </h1>
       <div>
         <NameSection dandisetMetadata={dandisetMetadata} />
         <hr />
@@ -111,7 +127,7 @@ const RightPanel: FunctionComponent<RightPanelProps> = ({
 type EditTextFieldProps = {
   label: string;
   value: string | undefined;
-  setValue: (value: string | undefined) => void;
+  setValue: (value: string) => void;
   originalValue: string;
 };
 
