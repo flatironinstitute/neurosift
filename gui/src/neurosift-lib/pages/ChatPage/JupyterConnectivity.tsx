@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
@@ -41,6 +42,7 @@ export const JupyterConnectivityProvider: FunctionComponent<
   const [jupyterServerIsAvailable, setJupyterServerIsAvailable] =
     useState(false);
   const check = useCallback(async () => {
+    console.log("---------------------- checking");
     if (mode === "jupyter-server") {
       try {
         console.log(`Fetching ${jupyterServerUrl}/api/sessions`);
@@ -79,17 +81,26 @@ export const JupyterConnectivityProvider: FunctionComponent<
       setRefreshCode((c) => c + 1);
     }
   }, [jupyterServerUrl]);
+  const value = useMemo(
+    () => ({
+      mode,
+      jupyterServerUrl,
+      jupyterServerIsAvailable,
+      refreshJupyter,
+      changeJupyterServerUrl,
+      extensionKernel,
+    }),
+    [
+      mode,
+      jupyterServerUrl,
+      jupyterServerIsAvailable,
+      refreshJupyter,
+      changeJupyterServerUrl,
+      extensionKernel,
+    ],
+  );
   return (
-    <JupyterConnectivityContext.Provider
-      value={{
-        mode,
-        jupyterServerUrl,
-        jupyterServerIsAvailable,
-        refreshJupyter,
-        changeJupyterServerUrl,
-        extensionKernel,
-      }}
-    >
+    <JupyterConnectivityContext.Provider value={value}>
       {children}
     </JupyterConnectivityContext.Provider>
   );

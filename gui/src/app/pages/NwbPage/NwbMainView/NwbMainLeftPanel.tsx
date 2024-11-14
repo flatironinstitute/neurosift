@@ -6,6 +6,9 @@ import { reportRecentlyViewedDandiset } from "app/pages/DandiPage/DandiBrowser/D
 import TabWidget from "neurosift-lib/components/TabWidget";
 import useRoute from "neurosift-lib/contexts/useRoute";
 import { useNwbFile } from "neurosift-lib/misc/NwbFileContext";
+import { chatReducer, emptyChat } from "neurosift-lib/pages/ChatPage/Chat";
+import { ChatContext } from "neurosift-lib/pages/ChatPage/ChatContext";
+import ChatWindow from "neurosift-lib/pages/ChatPage/ChatWindow";
 import { JupyterConnectivityProvider } from "neurosift-lib/pages/ChatPage/JupyterConnectivity";
 import { useSavedChats } from "neurosift-lib/pages/SavedChatsPage/savedChatsApi";
 import { RemoteH5FileX } from "neurosift-lib/remote-h5-file";
@@ -16,6 +19,7 @@ import {
   useReducer,
   useState,
 } from "react";
+import { FaPython } from "react-icons/fa";
 import {
   serializeBigInt,
   valueToElement,
@@ -25,12 +29,10 @@ import { useNwbOpenTabs } from "../NwbOpenTabsContext";
 import ViewObjectAnalysesIconThing from "../ObjectNote/ViewObjectAnalysesIconThing";
 import ViewObjectNotesIconThing from "../ObjectNote/ViewObjectNotesIconThing";
 import getAuthorizationHeaderForUrl from "../getAuthorizationHeaderForUrl";
+import JupyterWindow from "./JupyterWindow";
 import LoadInPynwbWindow from "./LoadInPynwbWindow";
 import { useDatasetData, useGroup } from "./NwbMainView";
 import SelectedNeurodataItemsWidget from "./SelectedNeurodataItemsWidget";
-import { chatReducer, emptyChat } from "neurosift-lib/pages/ChatPage/Chat";
-import { ChatContext } from "neurosift-lib/pages/ChatPage/ChatContext";
-import ChatWindow from "neurosift-lib/pages/ChatPage/ChatWindow";
 
 type Props = {
   width: number;
@@ -69,6 +71,7 @@ export const leftPanelLabelMap: {
 const tabs = [
   { id: "main", label: <ListAlt />, closeable: false },
   { id: "chat", label: <ChatIcon />, closeable: false },
+  { id: "jupyter", label: <FaPython />, closeable: false },
 ];
 
 // type ChatResource = {
@@ -124,6 +127,10 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
     }),
     [route.url, route.dandisetId],
   );
+  const { jupyterWorkspaceName, jupyterWorkspacePath } =
+    useJupyterWorkspaceNameAndPathFromRoute(route.dandisetId, route.url[0]);
+  if (!jupyterWorkspaceName || !jupyterWorkspacePath)
+    return <div>Getting workspace name and path</div>;
   return (
     <JupyterConnectivityProvider mode={"jupyter-server"}>
       <TabWidget
@@ -148,6 +155,12 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
           onLogMessage={undefined}
           onToggleLeftPanel={undefined}
           chatContext={chatContext}
+        />
+        <JupyterWindow
+          width={0}
+          height={0}
+          workspaceName={jupyterWorkspaceName}
+          workspacePath={jupyterWorkspacePath}
         />
         {/* <ChatPanel
         width={0}
@@ -602,6 +615,50 @@ export const formatUserId = (userId: string) => {
   } else {
     return userId;
   }
+};
+
+const useJupyterWorkspaceNameAndPathFromRoute = (
+  dandisetId?: string,
+  nwbUrl?: string,
+) => {
+  const [jupyterWorkspaceName, setJupyterWorkspaceName] = useState<
+    string | undefined
+  >(undefined);
+  const [jupyterWorkspacePath, setJupyterWorkspacePath] = useState<
+    string | undefined
+  >(undefined);
+  useEffect(() => {
+    getJupyterWorkspaceNameAndPathFromRoute(dandisetId, nwbUrl).then((obj) => {
+      setJupyterWorkspaceName(obj.jupyterWorkspaceName);
+      setJupyterWorkspacePath(obj.jupyterWorkspacePath);
+    });
+  }, [dandisetId, nwbUrl]);
+  return { jupyterWorkspaceName, jupyterWorkspacePath };
+};
+
+const getJupyterWorkspaceNameAndPathFromRoute = async (
+  dandisetId?: string,
+  nwbUrl?: string,
+) => {
+  const nwbUrlHash = nwbUrl ? await sha1(nwbUrl || "") : "unknown";
+  const workspaceName = `${nwbUrlHash.slice(0, 10)}`;
+  const workspacePath = dandisetId
+    ? `dandi/${dandisetId}/${workspaceName}`
+    : `other/${workspaceName}`;
+  return {
+    jupyterWorkspaceName: workspaceName,
+    jupyterWorkspacePath: workspacePath,
+  };
+};
+
+const sha1 = async (input: string) => {
+  const msgUint8 = new TextEncoder().encode(input);
+  const hashBuffer = await crypto.subtle.digest("SHA-1", msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return hashHex;
 };
 
 export default NwbMainLeftPanel;

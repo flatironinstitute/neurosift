@@ -255,6 +255,11 @@ class PythonSessionClient {
     this.#onPythonSessionStatusChangedCallbacks =
       this.#onPythonSessionStatusChangedCallbacks.filter((c) => c !== callback);
   }
+  async waitUntilIdle() {
+    while (this.#pythonSessionStatus !== "idle") {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  }
   _setPythonSessionStatus(status: PythonSessionStatus) {
     this.#pythonSessionStatus = status;
     this.#onPythonSessionStatusChangedCallbacks.forEach((callback) => {
