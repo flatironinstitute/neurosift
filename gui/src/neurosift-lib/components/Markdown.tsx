@@ -174,22 +174,75 @@ const Markdown: FunctionComponent<Props> = ({
     }),
     [onSpecialLinkClick, onRunCode, runCodeReady, files],
   );
-  const source2 = useMemo(() => {
-    const lines = source.split("\n").map((line) => {
+  const preprocessedSource = useMemo(() => {
+    const newLines: string[] = [];
+    const lines = source.split("\n");
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
       if (line.trim().startsWith("https://figurl.org/f")) {
         const url64 = base64Encode(line.trim());
-        return `<div class="figurl-figure" src64="${url64}"></div>`;
+        newLines.push(`<div class="figurl-figure" src64="${url64}"></div>`);
         // it's very difficult to the following to work - encoding issues with markdown
         // return `<iframe src="${url}" width="100%" height="400" frameBorder="0"></iframe>`;
-      } else return line;
-    });
-    return lines.join("\n");
+      } else if (
+        line
+          .trim()
+          .startsWith("<!-- mimetype: application/vnd.neurosift.figure+json")
+      ) {
+        i++;
+        const jsonLines: string[] = [];
+        while (i < lines.length) {
+          const line2 = lines[i];
+          if (line2.trim().startsWith("-->")) {
+            break;
+          }
+          jsonLines.push(line2);
+          i++;
+        }
+        const json = jsonLines.join("\n");
+        let obj = null;
+        try {
+          obj = JSON.parse(json);
+        } catch (err) {
+          console.error(
+            `Problem parsing JSON in NeurosiftFigure: ${err}`,
+            json,
+          );
+          continue;
+        }
+        if (obj) {
+          const { nwb_url, item_path, view_plugin_name, height } = obj;
+          if (!nwb_url) {
+            console.error("Missing nwb_url in NeurosiftFigure", obj);
+            continue;
+          }
+          if (!item_path) {
+            console.error("Missing item_path in NeurosiftFigure", obj);
+            continue;
+          }
+          let line0 = `<div class="neurosift_figure" nwb_url="${nwb_url}" item_path="${item_path}"`;
+          if (view_plugin_name) {
+            line0 += ` view_plugin_name="${view_plugin_name}"`;
+          }
+          if (height) {
+            line0 += ` height="${height}"`;
+          }
+          line0 += ">neurosift_figure</div>";
+          newLines.push(line0);
+        }
+      } else {
+        newLines.push(line);
+      }
+      i++;
+    }
+    return newLines.join("\n");
   }, [source]);
   return (
     <div className="markdown-body" style={{ fontSize: 16 }}>
       <ReactMarkdown
         // eslint-disable-next-line react/no-children-prop
-        children={source2}
+        children={preprocessedSource}
         remarkPlugins={[remarkGfm, remarkMathPlugin]}
         rehypePlugins={[rehypeRaw, rehypeMathJaxSvg /*, rehypeKatexPlugin*/]}
         components={components}

@@ -1,5 +1,13 @@
 import { SmallIconButton } from "@fi-sci/misc";
-import { Cancel, ClearAll, ForkLeft, Save } from "@mui/icons-material";
+import {
+  Cancel,
+  ClearAll,
+  CloudUpload,
+  Download,
+  ForkLeft,
+  Save,
+  Upload,
+} from "@mui/icons-material";
 import { FunctionComponent } from "react";
 
 type SettingsBarProps = {
@@ -9,8 +17,10 @@ type SettingsBarProps = {
   modelName: string;
   setModelName: (name: string) => void;
   onToggleLeftPanel?: () => void;
-  onSaveChat?: () => void;
+  onSaveChatToCloud?: () => void;
   onCancelScript?: () => void;
+  onDownloadChat?: () => void;
+  onUploadChat?: () => void;
 };
 
 const modelOptions = [
@@ -27,8 +37,10 @@ const SettingsBar: FunctionComponent<SettingsBarProps> = ({
   modelName,
   setModelName,
   onToggleLeftPanel,
-  onSaveChat,
+  onSaveChatToCloud,
   onCancelScript,
+  onDownloadChat,
+  onUploadChat,
 }) => {
   return (
     <span style={{ fontSize: 12, padding: 5 }}>
@@ -59,11 +71,25 @@ const SettingsBar: FunctionComponent<SettingsBarProps> = ({
           title="Toggle left panel"
         />
       )}
-      {onSaveChat && (
+      {onSaveChatToCloud && (
         <SmallIconButton
-          icon={<Save />}
-          onClick={onSaveChat}
-          title="Save chat"
+          icon={<CloudUpload />}
+          onClick={onSaveChatToCloud}
+          title="Save chat to cloud"
+        />
+      )}
+      {onDownloadChat && (
+        <SmallIconButton
+          icon={<Download />}
+          onClick={onDownloadChat}
+          title="Download chat"
+        />
+      )}
+      {onUploadChat && (
+        <SmallIconButton
+          icon={<Upload />}
+          onClick={onUploadChat}
+          title="Upload chat"
         />
       )}
       {onCancelScript && (

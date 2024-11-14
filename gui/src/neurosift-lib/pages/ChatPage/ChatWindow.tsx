@@ -35,7 +35,7 @@ import RunCodeWindow, {
   PythonSessionStatus,
   RunCodeCommunicator,
 } from "./RunCodeWindow";
-import SaveChatDialog from "./SaveChatDialog";
+import SaveChatToCloudDialog from "./SaveChatToCloudDialog";
 import SettingsBar from "./SettingsBar";
 import { useSystemMessage } from "./systemMessage";
 import ToolElement from "./ToolElement";
@@ -61,7 +61,7 @@ type ChatWindowProps = {
   onLogMessage?: (title: string, message: string) => void;
   onToggleLeftPanel?: () => void;
   chatContext: ChatContext;
-  allowSaveChat?: boolean;
+  allowSaveChatToCloud?: boolean;
 };
 
 const ChatWindow: FunctionComponent<ChatWindowProps> = ({
@@ -73,7 +73,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   onLogMessage,
   onToggleLeftPanel,
   chatContext,
-  allowSaveChat = true,
+  allowSaveChatToCloud = true,
 }) => {
   const [showRunCodeWindow, setShowRunCodeWindow] = useState(false);
   const [pythonSessionStatus, setPythonSessionStatus] =
@@ -140,7 +140,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
         chatContext={chatContext}
         onRunCode={handleRunCode}
         pythonSessionStatus={pythonSessionStatus}
-        allowSaveChat={allowSaveChat}
+        allowSaveChatToCloud={allowSaveChatToCloud}
       />
       <RunCodeWindow
         width={0}
@@ -167,7 +167,7 @@ const MainChatWindow: FunctionComponent<
   chatContext,
   onRunCode,
   pythonSessionStatus,
-  allowSaveChat = true,
+  allowSaveChatToCloud = true,
 }) => {
   const { setRoute } = useRoute();
   const inputBarHeight = 30;
@@ -250,9 +250,9 @@ const MainChatWindow: FunctionComponent<
 
   // save chat
   const {
-    handleOpen: openSaveChat,
-    handleClose: closeSaveChat,
-    visible: saveChatVisible,
+    handleOpen: openSaveChatToCloud,
+    handleClose: closeSaveChatToCloud,
+    visible: saveChatToCloudVisible,
   } = useModalWindow();
 
   // has no user messages
@@ -777,6 +777,36 @@ const MainChatWindow: FunctionComponent<
     [openToolResponse],
   );
 
+  const handleDownloadChat = useCallback(() => {
+    // download to a .nschat file
+    const blob = new Blob([JSON.stringify(chat, null, 2)], {
+      type: "application/json",
+    });
+    const fileName = prompt("Enter a file name", "chat.nschat");
+    if (!fileName) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [chat]);
+
+  const handleUploadChat = useCallback(() => {
+    // have user select a .nschat file from their machine and load it
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".nschat";
+    input.onchange = async () => {
+      if (!input.files || input.files.length === 0) return;
+      const file = input.files[0];
+      const text = await file.text();
+      const chat2 = JSON.parse(text);
+      chatDispatch({ type: "set", chat: chat2 });
+    };
+    input.click();
+  }, [chatDispatch]);
+
   return (
     <div
       style={{
@@ -980,7 +1010,9 @@ const MainChatWindow: FunctionComponent<
           modelName={modelName}
           setModelName={setModelName}
           onToggleLeftPanel={onToggleLeftPanel}
-          onSaveChat={allowSaveChat ? openSaveChat : undefined}
+          onSaveChatToCloud={
+            allowSaveChatToCloud ? openSaveChatToCloud : undefined
+          }
           onCancelScript={
             scriptExecutionStatus === "running"
               ? () => {
@@ -988,12 +1020,17 @@ const MainChatWindow: FunctionComponent<
                 }
               : undefined
           }
+          onDownloadChat={handleDownloadChat}
+          onUploadChat={handleUploadChat}
         />
       </div>
-      <ModalWindow visible={saveChatVisible} onClose={closeSaveChat}>
-        <SaveChatDialog
+      <ModalWindow
+        visible={saveChatToCloudVisible}
+        onClose={closeSaveChatToCloud}
+      >
+        <SaveChatToCloudDialog
           chat={chat}
-          onClose={closeSaveChat}
+          onClose={closeSaveChatToCloud}
           openRouterKey={openRouterKey}
           chatContext={chatContext}
         />

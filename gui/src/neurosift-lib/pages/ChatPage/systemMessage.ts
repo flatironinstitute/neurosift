@@ -159,7 +159,12 @@ export const getSystemMessage = async (
   When used with the figure_script tool, the output will be a div element with the class "neurosift_figure" and other attributes set.
 
   CAPABILITY: If the user wants to show a particular NWB item in an NWB file, you can output the following without using the figure_script tool:
-  <div class="neurosift_figure" nwb_url="[nwb_url]" item_path="[object_path]">neurosift figure</div>
+  <!-- mimetype: application/vnd.neurosift.figure+json
+  {
+    "nwb_url": "[nwb_url]",
+    "item_path": "[object_path]"
+  }
+  -->
   This is what you should do if the user asks to show or view a particular item in an NWB file.
 
   NOTE: If it is unclear what type of plot or figure is appropriate, ask them if they want matplotlib, plotly, or a neurosift figure.

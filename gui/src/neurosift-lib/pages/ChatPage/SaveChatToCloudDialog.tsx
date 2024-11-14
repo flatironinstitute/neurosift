@@ -9,14 +9,14 @@ import { ORMessage } from "./openRouterTypes";
 import chatCompletion from "./chatCompletion";
 import { Chat } from "./Chat";
 
-type SaveChatDialogProps = {
+type SaveChatToCloudDialogProps = {
   chat: Chat;
   onClose: () => void;
   openRouterKey: string | null;
   chatContext: ChatContext;
 };
 
-const SaveChatDialog: FunctionComponent<SaveChatDialogProps> = ({
+const SaveChatToCloudDialog: FunctionComponent<SaveChatToCloudDialogProps> = ({
   chat,
   onClose,
   openRouterKey,
@@ -210,4 +210,4 @@ const CopyButton: FunctionComponent<{ text: string }> = ({ text }) => {
   );
 };
 
-export default SaveChatDialog;
+export default SaveChatToCloudDialog;

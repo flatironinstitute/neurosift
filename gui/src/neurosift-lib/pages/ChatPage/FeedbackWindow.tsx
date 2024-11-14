@@ -2,7 +2,7 @@ import { FunctionComponent, useCallback, useState } from "react";
 import { Chat } from "./Chat";
 import { addSavedChat } from "../SavedChatsPage/savedChatsApi";
 import useNeurosiftSavedChats from "../SavedChatsPage/useNeurosiftSavedChats";
-import { getRecommendedChatTitle } from "./SaveChatDialog";
+import { getRecommendedChatTitle } from "./SaveChatToCloudDialog";
 import { ChatContext } from "./ChatContext";
 
 type FeedbackWindowProps = {
