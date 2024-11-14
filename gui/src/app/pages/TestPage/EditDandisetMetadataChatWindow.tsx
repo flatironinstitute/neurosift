@@ -35,6 +35,8 @@ type EditDandisetMetadataChatWindowProps = {
   chat: Chat;
   chatDispatch: (action: ChatAction) => void;
   openRouterKey: string | null;
+  dandisetId: string;
+  dandisetVersion: string;
   dandisetMetadata: Dandiset;
 };
 
@@ -46,6 +48,8 @@ const EditDandisetMetadataChatWindow: FunctionComponent<
   chat,
   chatDispatch,
   openRouterKey,
+  dandisetId,
+  dandisetVersion,
   dandisetMetadata,
 }) => {
   const inputBarHeight = 30;
@@ -113,7 +117,12 @@ const EditDandisetMetadataChatWindow: FunctionComponent<
   }, []);
 
   // system message
-  const systemMessage = useSystemMessage(tools, dandisetMetadata);
+  const systemMessage = useSystemMessage(
+    tools,
+    dandisetId,
+    dandisetVersion,
+    dandisetMetadata,
+  );
 
   // has no user messages
   const hasNoUserMessages = useMemo(() => {
@@ -698,7 +707,12 @@ const colorForRole = (role: string) => {
   return `rgb(${r},${g},${b})`;
 };
 
-const useSystemMessage = (tools: ToolItem[], dandisetMetadata: Dandiset) => {
+const useSystemMessage = (
+  tools: ToolItem[],
+  dandisetId: string,
+  dandisetVersion: string,
+  dandisetMetadata: Dandiset,
+) => {
   let systemMessage = `
 You are a helpful assistant that is responding to technical questions.
 Your responses should be concise and informative with a scientific style and certainly not informal or overly verbose.
@@ -714,14 +728,18 @@ If the user asks about something that is not related to one of these capabilitie
 
 You are helping the user edit the metadata for a Dandiset.
 
-Here is the current metadata for the Dandiset:
+Here is the information about the Dandiset:
 ========================
-${JSON.stringify(dandisetMetadata, null, 2)}
+Dandiset ID: ${dandisetId}
+Dandiset Version: ${dandisetVersion}
+Name: ${dandisetMetadata.name}
+Description: ${dandisetMetadata.description}
 ========================
 
 If the user talks about revising something, they mean revising the current metadata for the Dandiset.
 
 `;
+  // note: including all the metadata fields in the system message takes too many tokens.
 
   for (const tool of tools) {
     if (tool.detailedDescription) {

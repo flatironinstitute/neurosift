@@ -1,7 +1,7 @@
 import { FunctionComponent, useEffect, useReducer, useState } from "react";
 
 import useRoute from "neurosift-lib/contexts/useRoute";
-import { Dandiset as DandisetMetadata } from "./dandi-archive-schema";
+import { Dandiset as DandisetMetadata } from "neurosift-lib/pages/ChatPage/tools/dandi-archive-schema";
 import Splitter from "neurosift-lib/components/Splitter";
 import EditDandisetMetadataChatWindow from "./EditDandisetMetadataChatWindow";
 import { chatReducer, emptyChat } from "neurosift-lib/pages/ChatPage/Chat";
@@ -36,6 +36,8 @@ const TestPage: FunctionComponent<TestPageProps> = ({ width, height }) => {
       <EditDandisetMetadataChatWindow
         width={0}
         height={0}
+        dandisetId={dandisetId}
+        dandisetVersion={dandisetVersion || "draft"}
         dandisetMetadata={dandisetMetadata}
         chat={chat}
         chatDispatch={chatDispatch}

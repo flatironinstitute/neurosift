@@ -7,6 +7,8 @@ For a given dandiset, the JSON object which is the input argument to the provide
 
 Schema:
 {
+    "dandiset_id": "000000", // the unique identifier of the dandiset
+    "dandiset_version": "", // the version of the dandiset
     "files": [
         {
             "dandiset_id": "000000", // the unique identifier of the dandiset
@@ -29,10 +31,10 @@ Schema:
     ]
 }
 
-Here's an example where you return the files in a given Dandiset:
+Here's an example where you return the file paths and download URLs of all the files in a given Dandiset:
 
 function probe_dandiset_objects(dandiset_objects) {
-    return dandiset_objects.files;
+    return dandiset_objects.files.map(f => ({ file_path: f.file_path, download_url: f.download_url }));
 }
 
 Here's an example where you return the neurodata objects of type Units in a given Dandiset:
@@ -41,13 +43,17 @@ function probe_dandiset_objects(dandiset_objects) {
     return dandiset_objects.objects.filter(o => o.neurodata_type === "Units");
 }
 
-It's good to return the full objects in the response, so they can be used in future parts of the chat.
+It's good to limit the amount of data returned by the function, as the metadata can be very large and not good for the chat context.
+
+So for example don't just return dandiset_object.files, but select only the relevant fields.
+
+The number of files will be on the order of 10, but the number of objects could be much larger.
 
 Here's an example where you return the files that contain a Units object in a given Dandiset:
 
 function probe_dandiset_objects(dandiset_objects) {
     const objects = dandiset_objects.objects.filter(o => o.neurodata_type === "Units");
-    return dandiset_objects.files.filter(f => objects.some(o => o.file_path === f.file_path));
+    return dandiset_objects.files.filter(f => objects.some(o => o.file_path === f.file_path)).map(f => ({ file_path: f.file_path, download_url: f.download_url }));
 }
 `;
 

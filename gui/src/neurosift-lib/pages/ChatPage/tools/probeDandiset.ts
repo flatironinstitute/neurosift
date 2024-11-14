@@ -1,6 +1,7 @@
 import { ORMessage } from "../openRouterTypes";
 import chatCompletion from "../chatCompletion";
 import { ToolItem } from "../ToolItem";
+import { Dandiset } from "./dandi-archive-schema";
 
 export const probeDandisetTool: ToolItem = {
   tool: {
@@ -40,7 +41,7 @@ export const probeDandisetTool: ToolItem = {
     const { dandiset_id, user_question, instructions } = args;
 
     onLogMessage(
-      `probe_dandiset_objects query ${dandiset_id}`,
+      `probe_dandiset query ${dandiset_id}`,
       `Q: ${user_question}\nI: ${instructions}`,
     );
 
@@ -51,12 +52,17 @@ export const probeDandisetTool: ToolItem = {
       throw new Error(`Failed to fetch from ${url}`);
     }
     const rr = await resp.json();
-    const metaInformation = JSON.stringify(rr);
+
+    // it's important not to include all the metadata, as it can be very large - not good for the chat context
+    const metadata: Dandiset = rr.metadata;
+    let metaSummary = "";
+    metaSummary += `Name: ${metadata.name}\n`;
+    metaSummary += `Description: ${metadata.description}\n`;
 
     const messages: ORMessage[] = [
       {
         role: "system",
-        content: `You are an assistant that can help with Dandisets. You are going to be asked about Dandiset ${dandiset_id}. Respond with information based on the following metadata obtained from the DANDI Archive:\n\n\n\n${metaInformation}`,
+        content: `You are an assistant that can help with Dandisets. You are going to be asked about Dandiset ${dandiset_id}. Respond with information based on the following metadata obtained from the DANDI Archive:\n\n${metaSummary}\n\n`,
       },
       {
         role: "user",
