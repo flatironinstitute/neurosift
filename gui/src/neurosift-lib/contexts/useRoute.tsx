@@ -22,6 +22,8 @@ export type Route =
     }
   | {
       page: "test";
+      dandisetId?: string;
+      dandisetVersion?: string;
     }
   | {
       page: "chat";
@@ -157,6 +159,8 @@ export const RouteProvider = ({ children }: { children: React.ReactNode }) => {
     } else if (p === "/test") {
       return {
         page: "test",
+        dandisetId: (query.dandisetId as string) || undefined,
+        dandisetVersion: (query.dandisetVersion as string) || undefined,
       };
     } else if (p === "/chat") {
       return {
@@ -298,6 +302,12 @@ export const RouteProvider = ({ children }: { children: React.ReactNode }) => {
         newQuery.p = "/b/" + r.folder;
       } else if (r.page === "test") {
         newQuery.p = "/test";
+        if (r.dandisetId) {
+          newQuery.dandisetId = r.dandisetId;
+        }
+        if (r.dandisetVersion) {
+          newQuery.dandisetVersion = r.dandisetVersion;
+        }
       } else if (r.page === "chat") {
         newQuery.p = "/chat";
         if (r.chatId) {

@@ -17,7 +17,7 @@ export const getSystemMessage = async (
   In your responses you should use one or more of the capabilities, using only the tools spelled out there.
   Note that it is okay to use more than one capability in a response.
 
-  You should also respect invormation that starts with "NOTE" in all caps followed by a colon.
+  You should also respect information that starts with "NOTE" in all caps followed by a colon.
 
   If the user asks about something that is not related to one of these capabilities, you should respond with a message indicating that you are unable to help with that question.
   `;
