@@ -139,24 +139,9 @@ export const getSystemMessage = async (
   ========================
 
   CAPABILITY: If the user wants plot data in an NWB file, you should use the figure_script tool.
-  You pass in a self-contained script that uses matplotlib, plotly, or neurosift_jp (described below), and the output is one or more markdown or html text lines that you can include in your response.
-  To construct the Python script, you should use the above method of loading the data together with your knowledge of pynwb, other Python libraries, and neurosift_jp described below.
-  When constructing an example plot with matplotlib or plotly, be mindful of the size of the data you are loading. If it is too large, consider loading a subset of the data. But in that case, make sure you tell the user what you are doing. Or you can consider using neurosift_jp to handle large data.
-
-  Here is some information about neurosift_jp. neurosift_jp is a Python library that creates interactive views of NWB objects in NWB files.
-
-  The following is an example of how to use neurosift_jp to generate an interactive view of an NWB object within an NWB file.
-
-  pip install neurosift_jp
-
-  from neurosift_jp.widgets import NeurosiftFigure
-  f = NeurosiftFigure(
-      nwb_url='[nwb_url]',
-      item_path='[object_path]',
-  )
-  display(f)
-
-  When used with the figure_script tool, the output will be a div element with the class "neurosift_figure" and other attributes set.
+  You pass in a self-contained script that uses matplotlib or plotly, and the output is one or more markdown or html text lines that you can include in your response.
+  To construct the Python script, you should use the above method of loading the data together with your knowledge of pynwb and other Python libraries.
+  When constructing an example plot with matplotlib or plotly, be mindful of the size of the data you are loading. If it is too large, consider loading a subset of the data. But in that case, make sure you tell the user what you are doing.
 
   CAPABILITY: If the user wants to show a particular NWB item in an NWB file, you can output the following without using the figure_script tool:
   <!-- mimetype: application/vnd.neurosift.figure+json
@@ -166,8 +151,7 @@ export const getSystemMessage = async (
   }
   -->
   This is what you should do if the user asks to show or view a particular item in an NWB file.
-
-  NOTE: If it is unclear what type of plot or figure is appropriate, ask them if they want matplotlib, plotly, or a neurosift figure.
+  This will be an interactive view and is especially suitable for viewing large datasets that cannot be efficiently displayed in a plot.
 
   NOTE: If they are asking to "show how" or something like that, rather than to give a plot, then just provide the script and don't execute it.
 

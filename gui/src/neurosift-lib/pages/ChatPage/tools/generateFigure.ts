@@ -23,13 +23,13 @@ export const generateFigureTool: ToolItem = {
     type: "function" as any,
     function: {
       name: "figure_script",
-      description: `Generate one or more figures by executing Python code that makes use of matplotlib, plotly, or neurosift_jp. Returns one or more lines of Markdown or HTML text that can be included in the chat response (one line per figure). In case of error it returns the stderr.`,
+      description: `Generate one or more figures by executing Python code that makes use of matplotlib or plotly. Returns one or more lines of Markdown or HTML text that can be included in the chat response (one line per figure). In case of error it returns the stderr.`,
       parameters: {
         type: "object",
         properties: {
           script: {
             type: "string",
-            description: `Python code that generates one or more figures using the matplotlib, plotly, or neurosift_jp libraries.`,
+            description: `Python code that generates one or more figures using the matplotlib or plotly libraries.`,
           },
         },
       },
