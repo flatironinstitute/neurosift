@@ -26,6 +26,7 @@ import OpenNeuroDatasetPage from "./pages/OpenNeuroDatasetPage/OpenNeuroDatasetP
 import NeurosiftSavedChatsLoginPage from "./pages/NeurosiftAnnotationsLoginPage/NeurosiftAnnotationsLoginPage";
 import SavedChatsPage from "neurosift-lib/pages/SavedChatsPage/SavedChatsPage";
 import TestPage from "./pages/TestPage/TestPage";
+import NotebookPage from "./pages/NotebookPage/NotebookPage";
 
 type Props = {
   // none
@@ -152,6 +153,8 @@ const MainWindow: FunctionComponent<Props> = () => {
           <OpenNeuroPage width={width} height={H} />
         ) : route.page === "openneuro-dataset" ? (
           <OpenNeuroDatasetPage width={width} height={H} />
+        ) : route.page === "notebook" ? (
+          <NotebookPage width={width} height={height} />
         ) : (
           <div>404</div>
         )}

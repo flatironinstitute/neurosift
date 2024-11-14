@@ -16,6 +16,7 @@ import SettingsBar from "neurosift-lib/pages/ChatPage/SettingsBar";
 import ToolElement from "neurosift-lib/pages/ChatPage/ToolElement";
 import { ToolItem } from "neurosift-lib/pages/ChatPage/ToolItem";
 import ToolResponseView from "neurosift-lib/pages/ChatPage/ToolResponseView";
+import { Dandiset } from "neurosift-lib/pages/ChatPage/tools/dandi-archive-schema";
 import { dandisetObjectsTool } from "neurosift-lib/pages/ChatPage/tools/probeDandisetObjects";
 import { neurodataTypesTool } from "neurosift-lib/pages/ChatPage/tools/probeNeurodataTypes";
 import { probeNwbFileTool } from "neurosift-lib/pages/ChatPage/tools/probeNwbFile";
@@ -27,7 +28,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { Dandiset } from "./dandi-archive-schema";
 
 type EditDandisetMetadataChatWindowProps = {
   width: number;

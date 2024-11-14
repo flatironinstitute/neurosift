@@ -104,6 +104,9 @@ export type Route =
       page: "openneuro-dataset";
       datasetId: string;
       datasetVersion?: string;
+    }
+  | {
+      page: "notebook";
     };
 
 type PluginName = "EphysSummary";
@@ -284,6 +287,10 @@ export const RouteProvider = ({ children }: { children: React.ReactNode }) => {
           ? (query.datasetVersion as string)
           : undefined,
       };
+    } else if (p === "/notebook") {
+      return {
+        page: "notebook",
+      };
     } else {
       return {
         page: "home",
@@ -426,6 +433,10 @@ export const RouteProvider = ({ children }: { children: React.ReactNode }) => {
         if (r.datasetVersion) {
           newQuery.datasetVersion = r.datasetVersion;
         }
+      } else if (r.page === "notebook") {
+        newQuery = {
+          p: "/notebook",
+        };
       }
       // no longer supported
       // else if (r.page === 'avi') {
