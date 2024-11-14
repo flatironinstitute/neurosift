@@ -44,7 +44,13 @@ export const JupyterConnectivityProvider: FunctionComponent<
     if (mode === "jupyter-server") {
       try {
         console.log(`Fetching ${jupyterServerUrl}/api/sessions`);
-        const resp = await fetch(`${jupyterServerUrl}/api/sessions`);
+        const resp = await fetch(`${jupyterServerUrl}/api/sessions`, {
+          method: "GET",
+          // apparently it's import to specify the header here, otherwise it seems the header fields can violate CORS
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
         if (resp.ok) {
           setJupyterServerIsAvailable(true);
         } else {
