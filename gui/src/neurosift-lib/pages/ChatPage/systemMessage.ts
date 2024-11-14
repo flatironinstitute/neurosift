@@ -169,6 +169,8 @@ export const getSystemMessage = async (
 
   NOTE: If it is unclear what type of plot or figure is appropriate, ask them if they want matplotlib, plotly, or a neurosift figure.
 
+  NOTE: If they are asking to "show how" or something like that, rather than to give a plot, then just provide the script and don't execute it.
+
   CAPABILITY: If you need to compute or analyze data in an NWB file, you should use the compute_script tool.
   You pass in a Python script that performs the computation and prints the results to stdout.
   The output of the tool is the stdout output of the script.
