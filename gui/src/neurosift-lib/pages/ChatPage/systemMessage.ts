@@ -176,6 +176,8 @@ export const getSystemMessage = async (
    CAPABILITY: If the user wants to view an raster plot for a Units table in an NWB file, use the following:
    <div class="neurosift_figure" nwb_url="[nwb_url]" item_path="[units_path]" view_plugin_name="RasterPlot">raster plot</div>
    But it's very important that you don't include this in a code block. Just include it as plain text in your response.
+
+  CAPABILITY: If the user wants to know about the files or neurodata objects (and types) within a Dandiset, then use the probe_dandiset_objects tool.
   `;
   }
 

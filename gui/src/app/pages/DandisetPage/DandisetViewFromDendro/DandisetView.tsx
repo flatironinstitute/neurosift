@@ -161,7 +161,8 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
 
   const dendroViewsEnabled = true;
 
-  const topBarHeight = dendroViewsEnabled ? 30 : 0;
+  // const topBarHeight = dendroViewsEnabled ? 30 : 0;
+  const topBarHeight = 0; // don't show ephys summary for now
   return (
     <div style={{ position: "absolute", width, height, overflowY: "hidden" }}>
       <div
@@ -173,7 +174,7 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
           borderBottom: "solid 1px #ccc",
         }}
       >
-        {dendroViewsEnabled && (
+        {dendroViewsEnabled && topBarHeight ? (
           <Hyperlink
             onClick={() =>
               setRoute({
@@ -188,6 +189,8 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({
           >
             Ephys Summary
           </Hyperlink>
+        ) : (
+          <span />
         )}
       </div>
       <div
