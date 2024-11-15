@@ -16,7 +16,7 @@ import DandisetPage from "./pages/DandisetPage/DandisetPage";
 import EdfPage from "./pages/EdfPage/EdfPage";
 import HomePage from "./pages/HomePage/HomePage";
 import NeurosiftAnnotationsLoginPage from "./pages/NeurosiftAnnotationsLoginPage/NeurosiftAnnotationsLoginPage";
-import NwbPage from "./pages/NwbPage/NwbPage";
+import NwbPage, { JSONStringifyDeterministic } from "./pages/NwbPage/NwbPage";
 import PluginPage from "./pages/PluginPage/PluginPage";
 import ChatPage from "neurosift-lib/pages/ChatPage/ChatPage";
 import TestsPage from "./pages/TestsPage/TestsPage";
@@ -26,6 +26,7 @@ import OpenNeuroDatasetPage from "./pages/OpenNeuroDatasetPage/OpenNeuroDatasetP
 import NeurosiftSavedChatsLoginPage from "./pages/NeurosiftAnnotationsLoginPage/NeurosiftAnnotationsLoginPage";
 import SavedChatsPage from "neurosift-lib/pages/SavedChatsPage/SavedChatsPage";
 import TestPage from "./pages/TestPage/TestPage";
+import { globalChatCompletionUsage } from "neurosift-lib/pages/ChatPage/chatCompletion";
 
 type Props = {
   // none
@@ -62,6 +63,58 @@ const MainWindow: FunctionComponent<Props> = () => {
       setShowDandiPageChat(true);
     }
   }, [route]);
+
+  // chat tokens in status bar
+  const [modeForChatTokens, setModeForChatTokens] = useState<"count" | "cost">(
+    "count",
+  );
+  useEffect(() => {
+    let lastStatsString = "";
+    const timer = setInterval(() => {
+      const y = globalChatCompletionUsage;
+
+      // important to do this check so the context state is not constantly changing
+      const statsString = JSONStringifyDeterministic(y);
+      if (statsString === lastStatsString) return;
+      lastStatsString = statsString;
+
+      const s = (
+        <span style={{ cursor: "pointer" }}>
+          {y.numInputTokens > 0 || y.numOutputTokens > 0 ? (
+            <span
+              onClick={() =>
+                setModeForChatTokens((old) =>
+                  old === "count" ? "cost" : "count",
+                )
+              }
+            >
+              {modeForChatTokens === "count" && (
+                <span title="OpenRouter input/output tokens">
+                  {Math.round(y.numInputTokens / 1000)}k /{" "}
+                  {Math.round(y.numOutputTokens / 1000)}k
+                </span>
+              )}
+              {/* Assume gpt-4o and hard-coded token costs */}
+              {modeForChatTokens === "cost" && (
+                <span title="OpenRouter input/output token cost">
+                  {`$`}
+                  {Math.round(
+                    (y.numInputTokens / 1e6) * 250 +
+                      (y.numOutputTokens / 1e6) * 1000,
+                  ) / 100}
+                </span>
+              )}
+            </span>
+          ) : null}
+        </span>
+      );
+      setCustomStatusBarElement &&
+        setCustomStatusBarElement("custom-chat-tokens", s);
+    }, 250);
+    return () => {
+      clearInterval(timer);
+    };
+  }, [setCustomStatusBarElement, modeForChatTokens]);
 
   return (
     <div
