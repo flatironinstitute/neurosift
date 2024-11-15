@@ -1,6 +1,6 @@
 import { SmallIconButton } from "@fi-sci/misc";
 import ModalWindow from "@fi-sci/modal-window";
-import { Chat, Key, Note, QuestionMark } from "@mui/icons-material";
+import { Chat, Computer, Key, Note, QuestionMark } from "@mui/icons-material";
 import { AppBar, Toolbar } from "@mui/material";
 import {
   FunctionComponent,
@@ -77,6 +77,18 @@ const ApplicationBar: FunctionComponent<Props> = ({ onContextChat }) => {
           {/* <div style={{color: bannerColor, position: 'relative', top: -2}}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{star} This viewer is in alpha and is under <Hyperlink color={bannerColor} href="https://github.com/flatironinstitute/neurosift" target="_blank">active development</Hyperlink> {star}</div> */}
           <ReportDandiApiDown />
           <span style={{ marginLeft: "auto" }} />
+          <span style={{ color: "white" }}>
+            <SmallIconButton
+              icon={<Computer />}
+              title={`Learn about the online workshop`}
+              onClick={() => {
+                window.open(
+                  "https://magland.github.io/neurosift-blog/workshop",
+                );
+              }}
+            />
+          </span>
+          &nbsp; &nbsp;
           <span style={{ color: "white" }}>
             <SmallIconButton
               icon={<QuestionMark />}

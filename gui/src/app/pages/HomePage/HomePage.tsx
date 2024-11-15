@@ -14,9 +14,15 @@ const HomePage: FunctionComponent<Props> = ({ width, height }) => {
     <div style={{ padding: 20, maxWidth: 800 }}>
       <h2>Welcome to Neurosift</h2>
       <p>
-        Neurosift is a browser-based tool designed for the visualization of NWB
-        (Neurodata Without Borders) files, whether stored locally or hosted
-        remotely, and enables interactive exploration of the DANDI Archive.
+        Neurosift is a browser-based tool designed for the visualization and
+        processing of NWB (Neurodata Without Borders) files, whether stored
+        locally or hosted remotely, and enables interactive exploration and
+        analysis of the DANDI Archive.
+      </p>
+      <p>
+        <Hyperlink href="https://magland.github.io/neurosift-blog/workshop">
+          ** Register for the online workshop **
+        </Hyperlink>
       </p>
       <p>
         <a
