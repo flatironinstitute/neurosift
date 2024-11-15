@@ -222,7 +222,7 @@ const DendroItemView: FunctionComponent<DendroItemViewProps> = ({
         tags: tags ? tags : ["neurosift"],
         jobDefinition: newJobDefinition,
         requiredResources,
-        targetComputeClientIds: computeClientId ? [computeClientId] : undefined,
+        targetComputeClientIds: computeClientId ? [computeClientId] : ["*"],
         secrets,
         jobDependencies: [],
         skipCache: false,

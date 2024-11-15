@@ -181,6 +181,7 @@ const useMp4UrlForAviUrl = (
         tags,
         jobDefinition,
         requiredResources,
+        targetComputeClientIds: ["*"],
         secrets,
         jobDependencies: [],
         skipCache: false,

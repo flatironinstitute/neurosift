@@ -161,6 +161,7 @@ const useDsUrlForNwbUrl = (
         tags,
         jobDefinition,
         requiredResources,
+        targetComputeClientIds: ["*"],
         secrets,
         jobDependencies: [],
         skipCache: false,

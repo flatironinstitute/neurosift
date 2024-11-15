@@ -296,7 +296,7 @@ const submitJob = async (o: {
     tags: ["neurosift", "dandi_upload", `nwb:${nwbFileUrl}`],
     jobDefinition,
     requiredResources,
-    targetComputeClientIds: undefined,
+    targetComputeClientIds: ["*"],
     secrets,
     jobDependencies: [],
     skipCache: true,

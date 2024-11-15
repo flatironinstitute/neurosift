@@ -701,7 +701,7 @@ export const CreateJobComponent: FunctionComponent<CreateJobComponentProps> = ({
         tags,
         jobDefinition,
         requiredResources,
-        targetComputeClientIds: computeClientId ? [computeClientId] : undefined,
+        targetComputeClientIds: computeClientId ? [computeClientId] : ["*"],
         secrets,
         jobDependencies,
         skipCache: false,
