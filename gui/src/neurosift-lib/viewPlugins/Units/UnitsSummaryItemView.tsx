@@ -15,7 +15,10 @@ import {
   DendroJobRequiredResources,
 } from "../../misc/dendro/dendro-types";
 import { useNwbFile } from "../../misc/NwbFileContext";
-import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/DendroHelpers";
+import {
+  getJobOutputUrl,
+  removeLeadingSlash,
+} from "../../misc/dendro/DendroHelpers";
 import DendroItemView from "../CEBRA/DendroItemView";
 
 type Props = {

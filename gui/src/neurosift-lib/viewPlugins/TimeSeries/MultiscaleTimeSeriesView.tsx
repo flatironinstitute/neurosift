@@ -9,12 +9,12 @@ import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import {
   SelectDendroApiKeyComponent,
   useAllJobs,
-} from "../CEBRA/DendroHelpers";
+} from "../../misc/dendro/DendroHelpers";
 import {
   createDendroJobSecrets,
   isStagingUrl,
 } from "../ElectricalSeriesItemView/SpikeSortingView/SpikeSortingView";
-import { JobInfoView } from "../CEBRA/DendroItemView";
+import { JobInfoView } from "../../misc/dendro/JobInfoView";
 
 type MultiscaleTimeSeriesViewProps = {
   width: number;

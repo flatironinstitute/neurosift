@@ -1,8 +1,3 @@
-import {
-  RemoteH5FileLindi,
-  RemoteH5FileX,
-  getRemoteH5FileLindi,
-} from "../../remote-h5-file/index";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import Markdown from "../../components/Markdown";
 import {
@@ -10,18 +5,23 @@ import {
   DendroJobDefinition,
   DendroJobRequiredResources,
 } from "../../misc/dendro/dendro-types";
-import { useNwbFile } from "../../misc/NwbFileContext";
-import EmbeddingPlot3D from "./EmbeddingPlot3D";
-import EmbeddingTimePlot from "./EmbeddingTimePlot";
-import LossPlot from "./LossPlot";
 import {
   getJobOutputUrl,
   getJobParameterValue,
   removeLeadingSlash,
-} from "./DendroHelpers";
+} from "../../misc/dendro/DendroHelpers";
+import { useNwbFile } from "../../misc/NwbFileContext";
+import {
+  RemoteH5FileLindi,
+  RemoteH5FileX,
+  getRemoteH5FileLindi,
+} from "../../remote-h5-file/index";
 import DendroItemView from "./DendroItemView";
+import EmbeddingPlot3D from "./EmbeddingPlot3D";
+import EmbeddingTimePlot from "./EmbeddingTimePlot";
 import getIntrinsicDimensionMarkdown from "./getIntrinsicDimensionMarkdown";
 import getPowerSpectrumMarkdown from "./getPowerSpectrumMarkdown";
+import LossPlot from "./LossPlot";
 
 type Props = {
   width: number;

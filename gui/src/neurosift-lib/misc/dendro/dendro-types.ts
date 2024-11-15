@@ -939,7 +939,9 @@ export type GetRunnableJobResponse = {
   job: DendroJob;
 };
 
-export const isGetRunnableJobResponse = (x: any): x is GetRunnableJobResponse => {
+export const isGetRunnableJobResponse = (
+  x: any,
+): x is GetRunnableJobResponse => {
   return validateObject(x, {
     type: isEqualTo("getRunnableJobResponse"),
     job: isDendroJob,

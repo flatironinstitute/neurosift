@@ -132,45 +132,43 @@ const NwbMainLeftPanel: FunctionComponent<Props> = ({
   if (!jupyterWorkspaceName || !jupyterWorkspacePath)
     return <div>Getting workspace name and path</div>;
   return (
-    <JupyterConnectivityProvider mode={"jupyter-server"}>
-      <TabWidget
-        tabs={tabs}
-        width={width}
-        height={height}
-        currentTabId={currentTabId}
-        setCurrentTabId={setCurrentTabId}
-      >
-        <MainContent
-          width={0}
-          height={0}
-          nwbFile={nwbFile}
-          usingLindi={usingLindi}
-        />
-        <ChatWindow
-          width={0}
-          height={0}
-          chat={chat}
-          chatDispatch={chatDispatch}
-          openRouterKey={localStorage.getItem("openRouterKey") || null}
-          onLogMessage={undefined}
-          onToggleLeftPanel={undefined}
-          chatContext={chatContext}
-        />
-        <JupyterWindow
-          width={0}
-          height={0}
-          workspaceName={jupyterWorkspaceName}
-          workspacePath={jupyterWorkspacePath}
-        />
-        {/* <ChatPanel
+    <TabWidget
+      tabs={tabs}
+      width={width}
+      height={height}
+      currentTabId={currentTabId}
+      setCurrentTabId={setCurrentTabId}
+    >
+      <MainContent
+        width={0}
+        height={0}
+        nwbFile={nwbFile}
+        usingLindi={usingLindi}
+      />
+      <ChatWindow
         width={0}
         height={0}
         chat={chat}
-        setChat={setChat}
-        availableResourceUrls={availableResourceUrls}
-      /> */}
-      </TabWidget>
-    </JupyterConnectivityProvider>
+        chatDispatch={chatDispatch}
+        openRouterKey={localStorage.getItem("openRouterKey") || null}
+        onLogMessage={undefined}
+        onToggleLeftPanel={undefined}
+        chatContext={chatContext}
+      />
+      <JupyterWindow
+        width={0}
+        height={0}
+        workspaceName={jupyterWorkspaceName}
+        workspacePath={jupyterWorkspacePath}
+      />
+      {/* <ChatPanel
+      width={0}
+      height={0}
+      chat={chat}
+      setChat={setChat}
+      availableResourceUrls={availableResourceUrls}
+    /> */}
+    </TabWidget>
   );
 };
 

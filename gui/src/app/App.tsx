@@ -8,6 +8,7 @@ import {
 import { SetupNeurosiftAnnotationsProvider } from "./NeurosiftAnnotations/useNeurosiftAnnotations";
 import { SetupNeurosiftSavedChatsProvider } from "neurosift-lib/pages/SavedChatsPage/useNeurosiftSavedChats";
 import { RouteProvider } from "neurosift-lib/contexts/useRoute";
+import { JupyterConnectivityProvider } from "neurosift-lib/pages/ChatPage/JupyterConnectivity";
 
 function App() {
   const [customStatusBarStrings, customStatusBarStringsDispatch] = useReducer(
@@ -25,7 +26,9 @@ function App() {
         <RouteProvider>
           <SetupNeurosiftAnnotationsProvider>
             <SetupNeurosiftSavedChatsProvider>
-              <MainWindow />
+              <JupyterConnectivityProvider mode="jupyter-server">
+                <MainWindow />
+              </JupyterConnectivityProvider>
             </SetupNeurosiftSavedChatsProvider>
           </SetupNeurosiftAnnotationsProvider>
         </RouteProvider>

@@ -18,12 +18,12 @@ import { useNwbFile } from "../../../misc/NwbFileContext";
 import {
   SelectDendroApiKeyComponent,
   useAllJobs,
-} from "../../CEBRA/DendroHelpers";
+} from "../../../misc/dendro/DendroHelpers";
 import {
   createDendroJobSecrets,
   isStagingUrl,
 } from "../../ElectricalSeriesItemView/SpikeSortingView/SpikeSortingView";
-import { JobInfoView } from "../../CEBRA/DendroItemView";
+import { JobInfoView } from "../../../misc/dendro/JobInfoView";
 import SpikeDensityPlotWidget from "./SpikeDensityPlotWidget";
 import { RemoteH5FileX } from "../../../remote-h5-file/index";
 

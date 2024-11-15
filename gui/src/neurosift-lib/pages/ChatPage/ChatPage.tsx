@@ -13,19 +13,13 @@ import { useSavedChats } from "../SavedChatsPage/savedChatsApi";
 import { Chat, chatReducer, emptyChat } from "./Chat";
 import { ChatContext } from "./ChatContext";
 import ChatWindow from "./ChatWindow";
-import { JupyterConnectivityProvider } from "./JupyterConnectivity";
 
 type ChatPageProps = {
   width: number;
   height: number;
-  jupyterConnectivityMode?: "jupyter-server" | "jupyterlab-extension";
 };
 
-const ChatPage: FunctionComponent<ChatPageProps> = ({
-  width,
-  height,
-  jupyterConnectivityMode,
-}) => {
+const ChatPage: FunctionComponent<ChatPageProps> = ({ width, height }) => {
   const { route, setRoute } = useRoute();
   if (route.page !== "chat") throw Error("Unexpected route: " + route.page);
   const { chatId: chatIdFromRoute } = route;
@@ -53,28 +47,16 @@ const ChatPage: FunctionComponent<ChatPageProps> = ({
     return <div>Loading...</div>;
   } else if (initialChat) {
     return (
-      <ChatPageChild
-        width={width}
-        height={height}
-        initialChat={initialChat}
-        jupyterConnectivityMode={jupyterConnectivityMode}
-      />
+      <ChatPageChild width={width} height={height} initialChat={initialChat} />
     );
   } else {
-    return (
-      <ChatPageChild
-        width={width}
-        height={height}
-        initialChat={null}
-        jupyterConnectivityMode={jupyterConnectivityMode}
-      />
-    );
+    return <ChatPageChild width={width} height={height} initialChat={null} />;
   }
 };
 
 const ChatPageChild: FunctionComponent<
   ChatPageProps & { initialChat: Chat | null }
-> = ({ width, height, initialChat, jupyterConnectivityMode }) => {
+> = ({ width, height, initialChat }) => {
   const [openRouterKey, setOpenRouterKey] = useState<string | null>(null);
   const [chat, chatDispatch] = useReducer(chatReducer, emptyChat);
   const logger = useMemo(() => new Logger(), []);
@@ -96,36 +78,32 @@ const ChatPageChild: FunctionComponent<
     [],
   );
   return (
-    <JupyterConnectivityProvider
-      mode={jupyterConnectivityMode || "jupyter-server"}
+    <Splitter
+      width={width}
+      height={height}
+      direction="horizontal"
+      initialPosition={Math.min(300, width / 2)}
+      hideFirstChild={!leftPanelVisible}
     >
-      <Splitter
-        width={width}
-        height={height}
-        direction="horizontal"
-        initialPosition={Math.min(300, width / 2)}
-        hideFirstChild={!leftPanelVisible}
-      >
-        <LeftPanel
-          width={0}
-          height={0}
-          chat={chat}
-          openRouterKey={openRouterKey}
-          setOpenRouterKey={setOpenRouterKey}
-          logger={logger}
-        />
-        <ChatWindow
-          width={0}
-          height={0}
-          chat={chat}
-          chatDispatch={chatDispatch}
-          openRouterKey={openRouterKey}
-          onLogMessage={handleLogMessage}
-          onToggleLeftPanel={() => setLeftPanelVisible((prev) => !prev)}
-          chatContext={chatContext}
-        />
-      </Splitter>
-    </JupyterConnectivityProvider>
+      <LeftPanel
+        width={0}
+        height={0}
+        chat={chat}
+        openRouterKey={openRouterKey}
+        setOpenRouterKey={setOpenRouterKey}
+        logger={logger}
+      />
+      <ChatWindow
+        width={0}
+        height={0}
+        chat={chat}
+        chatDispatch={chatDispatch}
+        openRouterKey={openRouterKey}
+        onLogMessage={handleLogMessage}
+        onToggleLeftPanel={() => setLeftPanelVisible((prev) => !prev)}
+        chatContext={chatContext}
+      />
+    </Splitter>
   );
 };
 

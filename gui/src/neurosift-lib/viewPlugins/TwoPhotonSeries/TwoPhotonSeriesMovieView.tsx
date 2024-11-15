@@ -20,8 +20,8 @@ import {
 import {
   SelectDendroApiKeyComponent,
   useAllJobs,
-} from "../CEBRA/DendroHelpers";
-import { JobInfoView } from "../CEBRA/DendroItemView";
+} from "../../misc/dendro/DendroHelpers";
+import { JobInfoView } from "../../misc/dendro/JobInfoView";
 
 type TwoPhotonMovieViewProps = {
   width: number;

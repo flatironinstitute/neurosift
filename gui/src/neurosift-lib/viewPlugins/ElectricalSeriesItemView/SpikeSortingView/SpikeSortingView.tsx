@@ -32,8 +32,8 @@ import {
   useAllJobs,
   useDendroApiKey,
   useJob,
-} from "../../CEBRA/DendroHelpers";
-import { JobInfoView } from "../../CEBRA/DendroItemView";
+} from "../../../misc/dendro/DendroHelpers";
+import { JobInfoView } from "../../../misc/dendro/JobInfoView";
 import useTimeSeriesInfo from "../../TimeSeries/useTimeseriesInfo";
 import InputChoices from "./InputChoices";
 import {

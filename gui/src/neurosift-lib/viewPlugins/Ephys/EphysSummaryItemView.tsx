@@ -1,9 +1,4 @@
 import {
-  RemoteH5FileLindi,
-  RemoteH5FileX,
-  getRemoteH5FileLindi,
-} from "../../remote-h5-file/index";
-import {
   FunctionComponent,
   PropsWithChildren,
   useEffect,
@@ -15,12 +10,20 @@ import {
   DendroJobDefinition,
   DendroJobRequiredResources,
 } from "../../misc/dendro/dendro-types";
+import {
+  getJobOutputUrl,
+  removeLeadingSlash,
+} from "../../misc/dendro/DendroHelpers";
 import { useNwbFile } from "../../misc/NwbFileContext";
-import LazyPlotlyPlot from "../CEBRA/LazyPlotlyPlot";
-import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/DendroHelpers";
+import {
+  RemoteH5FileLindi,
+  RemoteH5FileX,
+  getRemoteH5FileLindi,
+} from "../../remote-h5-file/index";
 import DendroItemView from "../CEBRA/DendroItemView";
-import ElectrodeGeometryView from "./ElectrodeGeometryView";
+import LazyPlotlyPlot from "../CEBRA/LazyPlotlyPlot";
 import useTimeSeriesInfo from "../TimeSeries/useTimeseriesInfo";
+import ElectrodeGeometryView from "./ElectrodeGeometryView";
 
 type Props = {
   width: number;

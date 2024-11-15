@@ -1,13 +1,16 @@
-import { RemoteH5FileX } from "../../remote-h5-file/index";
+import { FunctionComponent, useMemo } from "react";
+import useRoute from "../../contexts/useRoute";
+import { useNwbFile } from "../../misc/NwbFileContext";
+import {
+  getJobOutputUrl,
+  removeLeadingSlash,
+} from "../../misc/dendro/DendroHelpers";
 import {
   DendroJob,
   DendroJobDefinition,
   DendroJobRequiredResources,
 } from "../../misc/dendro/dendro-types";
-import useRoute from "../../contexts/useRoute";
-import { FunctionComponent, useMemo } from "react";
-import { useNwbFile } from "../../misc/NwbFileContext";
-import { getJobOutputUrl, removeLeadingSlash } from "../CEBRA/DendroHelpers";
+import { RemoteH5FileX } from "../../remote-h5-file/index";
 import DendroItemView from "../CEBRA/DendroItemView";
 import useTimeSeriesInfo from "../TimeSeries/useTimeseriesInfo";
 

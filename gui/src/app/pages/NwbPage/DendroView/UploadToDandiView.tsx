@@ -5,7 +5,7 @@ import {
   isCreateJobResponse,
 } from "app/dendro/dendro-types";
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
-import { SelectDendroApiKeyComponent } from "neurosift-lib/viewPlugins/CEBRA/DendroHelpers";
+import { SelectDendroApiKeyComponent } from "neurosift-lib/misc/dendro/DendroHelpers";
 
 type UploadToDandiViewProps = {
   nwbFileUrl: string;

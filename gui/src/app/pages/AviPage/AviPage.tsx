@@ -16,8 +16,8 @@ import {
 import {
   SelectDendroApiKeyComponent,
   useAllJobs,
-} from "neurosift-lib/viewPlugins/CEBRA/DendroHelpers";
-import { JobInfoView } from "neurosift-lib/viewPlugins/CEBRA/DendroItemView";
+} from "neurosift-lib/misc/dendro/DendroHelpers";
+import { JobInfoView } from "neurosift-lib/misc/dendro/JobInfoView";
 import {
   createDendroJobSecrets,
   isStagingUrl,

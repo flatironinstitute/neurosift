@@ -7,7 +7,10 @@ import {
 import useRoute from "../../../contexts/useRoute";
 import { FunctionComponent, useMemo } from "react";
 import { useNwbFile } from "../../../misc/NwbFileContext";
-import { getJobOutputUrl, removeLeadingSlash } from "../../CEBRA/DendroHelpers";
+import {
+  getJobOutputUrl,
+  removeLeadingSlash,
+} from "../../../misc/dendro/DendroHelpers";
 import DendroItemView from "../../CEBRA/DendroItemView";
 import useTimeSeriesInfo from "../../TimeSeries/useTimeseriesInfo";
 

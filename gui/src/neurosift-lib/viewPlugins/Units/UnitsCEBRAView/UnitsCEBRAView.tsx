@@ -10,8 +10,8 @@ import {
   parameterElementForJob,
   rowIsVisible,
 } from "../../ElectricalSeriesItemView/SpikeSortingView/SpikeSortingView";
-import { useAllJobs, useJob } from "../../CEBRA/DendroHelpers";
-import { JobInfoView } from "../../CEBRA/DendroItemView";
+import { useAllJobs, useJob } from "../../../misc/dendro/DendroHelpers";
+import { JobInfoView } from "../../../misc/dendro/JobInfoView";
 import {
   DendroJob,
   DendroJobDefinition,

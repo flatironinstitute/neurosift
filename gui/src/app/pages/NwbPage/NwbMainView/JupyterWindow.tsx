@@ -21,14 +21,12 @@ const JupyterWindow: FunctionComponent<JupyterWindowProps> = ({
   workspaceName,
 }) => {
   return (
-    <JupyterConnectivityProvider mode="jupyter-server">
-      <JupyterWindowChild
-        width={width}
-        height={height}
-        workspaceName={workspaceName}
-        workspacePath={workspacePath}
-      />
-    </JupyterConnectivityProvider>
+    <JupyterWindowChild
+      width={width}
+      height={height}
+      workspaceName={workspaceName}
+      workspacePath={workspacePath}
+    />
   );
 };
 

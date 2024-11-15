@@ -1,5 +1,4 @@
-import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
-import { Refresh } from "@mui/icons-material";
+import { Hyperlink } from "@fi-sci/misc";
 import {
   FunctionComponent,
   useCallback,
@@ -21,19 +20,19 @@ import {
   MultipleChoiceStringSelector,
   SelectDendroApiKeyComponent,
   SelectDendroComputeClientIdComponent,
-  formatValue,
   getJobParameterValue,
   useAllJobs,
-  useJob,
   useDendroApiKey,
-} from "./DendroHelpers";
-import { RemoteH5FileX } from "../../remote-h5-file/index";
+  useJob,
+} from "../../misc/dendro/DendroHelpers";
+import JobInfoView from "../../misc/dendro/JobInfoView";
 import { useNwbFile } from "../../misc/NwbFileContext";
-import { LazyPlotlyPlotContext } from "./LazyPlotlyPlot";
+import { RemoteH5FileX } from "../../remote-h5-file/index";
 import {
   createDendroJobSecrets,
   isStagingUrl,
 } from "../ElectricalSeriesItemView/SpikeSortingView/SpikeSortingView";
+import { LazyPlotlyPlotContext } from "./LazyPlotlyPlot";
 
 type AdjustableParameterValues = { [key: string]: any };
 
@@ -262,6 +261,7 @@ const DendroItemView: FunctionComponent<DendroItemViewProps> = ({
     requiredResources,
     serviceName,
     tags,
+    nwbUrl,
   ]);
 
   const hasNoCompletedJobs = useMemo(() => {
@@ -426,46 +426,6 @@ const RequireGpuSelector: FunctionComponent<{
         onChange={(e) => setValue(e.target.checked)}
       />
       <label>Require GPU</label>
-    </div>
-  );
-};
-
-type JobInfoViewProps = {
-  job: DendroJob;
-  onRefreshJob: () => void;
-  parameterNames: string[];
-};
-
-const getJobUrl = (jobId: string) => {
-  return `https://dendro.vercel.app/job/${jobId}`;
-};
-
-export const JobInfoView: FunctionComponent<JobInfoViewProps> = ({
-  job,
-  onRefreshJob,
-  parameterNames,
-}) => {
-  const jobUrl = getJobUrl(job.jobId);
-  return (
-    <div>
-      <div>
-        {job.jobDefinition.processorName} (
-        <Hyperlink href={jobUrl} target="_blank">
-          {job.status}
-        </Hyperlink>
-        )&nbsp;
-        <SmallIconButton icon={<Refresh />} onClick={onRefreshJob} />
-      </div>
-      <table className="table" style={{ maxWidth: 300 }}>
-        <tbody>
-          {parameterNames.map((name, index) => (
-            <tr key={index}>
-              <td>{name}:</td>
-              <td>{formatValue(getJobParameterValue(job, name))}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 };
