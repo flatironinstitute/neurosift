@@ -40,9 +40,6 @@ const JupyterWindowChild: FunctionComponent<JupyterWindowProps> = ({
 }) => {
   const jupyterConnectivityState = useJupyterConnectivity();
   if (!jupyterConnectivityState.jupyterServerIsAvailable) {
-    console.log(
-      "---------------------------------------------------------------- x",
-    );
     return (
       <div style={{ padding: 30 }}>
         <p>
@@ -97,13 +94,6 @@ const JupyterWindowChild2: FunctionComponent<JupyterWindowProps> = ({
   const iframeUrl = `${url}/lab/workspaces/${workspaceName}/tree/${workspacePath}`;
 
   useEffect(() => {
-    console.log("---- jupyter connectivity state changed");
-  }, [jupyterConnectivityState]);
-
-  useEffect(() => {
-    console.log(
-      "------------------------------ yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
-    );
     let canceled = false;
     setStatus("preparing");
     setError(null);
@@ -127,8 +117,6 @@ const JupyterWindowChild2: FunctionComponent<JupyterWindowProps> = ({
       canceled = true;
     };
   }, [workspacePath, jupyterConnectivityState]);
-
-  console.log("---- status:", status);
 
   if (status === "error") {
     return (

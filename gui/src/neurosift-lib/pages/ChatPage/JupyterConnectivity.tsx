@@ -42,7 +42,6 @@ export const JupyterConnectivityProvider: FunctionComponent<
   const [jupyterServerIsAvailable, setJupyterServerIsAvailable] =
     useState(false);
   const check = useCallback(async () => {
-    console.log("---------------------- checking");
     if (mode === "jupyter-server") {
       try {
         console.log(`Fetching ${jupyterServerUrl}/api/sessions`);

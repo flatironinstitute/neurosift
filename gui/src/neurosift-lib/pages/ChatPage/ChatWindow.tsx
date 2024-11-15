@@ -323,7 +323,6 @@ const MainChatWindow: FunctionComponent<
       openConfirmOkayToRun();
       return new Promise<boolean>((resolve) => {
         const interval = setInterval(() => {
-          console.log("--- abc ---", confirmOkayToRunStatus.current);
           if (confirmOkayToRunStatus.current === "confirmed") {
             confirmOkayToRunStatus.current = "none";
             clearInterval(interval);
