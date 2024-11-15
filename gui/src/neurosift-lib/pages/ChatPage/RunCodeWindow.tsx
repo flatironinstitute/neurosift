@@ -1,5 +1,5 @@
 import { SmallIconButton } from "@fi-sci/misc";
-import { Cancel, ClearAll } from "@mui/icons-material";
+import { Cancel, ClearAll, Refresh } from "@mui/icons-material";
 import {
   FunctionComponent,
   useEffect,
@@ -252,6 +252,14 @@ const RunCodeWindow: FunctionComponent<RunCodeWindowProps> = ({
             title="Clear output"
             onClick={() => {
               dispatchOutputContent({ type: "clear-output" });
+            }}
+          />
+          &nbsp;
+          <SmallIconButton
+            icon={<Refresh />}
+            title="Refresh jupyter connection"
+            onClick={() => {
+              jupyterConnectivityState.refreshJupyter();
             }}
           />
         </div>

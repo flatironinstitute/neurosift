@@ -138,6 +138,8 @@ export const getSystemMessage = async (
   nwbfile.processing['CalciumActivity']['SegmentationVol1']
   ========================
 
+  NOTE: If you are creating a script to load particular data in an NWB file, you will want to first know what data is in the file and where. For this you should use the probe_nwb_file tool.
+
   CAPABILITY: If the user wants plot data in an NWB file, you should use the figure_script tool.
   You pass in a self-contained script that uses matplotlib or plotly, and the output is one or more markdown or html text lines that you can include in your response.
   To construct the Python script, you should use the above method of loading the data together with your knowledge of pynwb and other Python libraries.
