@@ -57,11 +57,8 @@ const loadEmbeddings = async () => {
   return globalData.embeddings;
 };
 
-console.log('--- 1')
-
 export const semanticSearchHandler = allowCors(
   async (req: VercelRequest, res: VercelResponse) => {
-    console.log('--- 2')
     const secretKey = req.headers["x-secret-key"];
     if (secretKey !== SECRET_KEY) {
       res.status(403).json({ error: "Invalid secret key" });

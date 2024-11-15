@@ -256,19 +256,25 @@ run_pending_job(
 )
 `;
   const client = new PythonSessionClient(jupyterConnectivityState);
-  const errorMessages: string[] = [];
-  client.onOutputItem((item) => {
-    if (item.type === "stderr") {
-      console.error(`Error from Jupyter when submitting job: ${item.content}`);
-      errorMessages.push(item.content);
-    } else {
-      console.log(`Output from Jupyter when submitting job: ${item.content}`);
+  try {
+    const errorMessages: string[] = [];
+    client.onOutputItem((item) => {
+      if (item.type === "stderr") {
+        console.error(
+          `Error from Jupyter when submitting job: ${item.content}`,
+        );
+        errorMessages.push(item.content);
+      } else {
+        console.log(`Output from Jupyter when submitting job: ${item.content}`);
+      }
+    });
+    await client.runCode(code);
+    await client.waitUntilIdle();
+    if (errorMessages.length > 0) {
+      throw `Error running code: ${errorMessages.join("\n")}`;
     }
-  });
-  await client.runCode(code);
-  await client.waitUntilIdle();
-  if (errorMessages.length > 0) {
-    throw `Error running code: ${errorMessages.join("\n")}`;
+  } finally {
+    client.shutdown();
   }
 };
 

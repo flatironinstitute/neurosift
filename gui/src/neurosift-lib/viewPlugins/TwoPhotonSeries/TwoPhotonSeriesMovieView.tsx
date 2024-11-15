@@ -193,7 +193,7 @@ const useMp4UrlForImageSeries = (
         tags,
         jobDefinition,
         requiredResources,
-        targetComputeClientIds: ["*"],
+        targetComputeClientIds: ['*'],
         secrets,
         jobDependencies: [],
         skipCache: false,

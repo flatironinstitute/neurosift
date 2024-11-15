@@ -139,23 +139,27 @@ const prepareWorkspace = async (
   workspacePath: string,
 ) => {
   const client = new PythonSessionClient(jupyterConnectivityState);
-  client.onOutputItem((item) => {
-    if (item.type === "stderr") {
-      console.error(
-        `Error from Jupyter when preparing workspace: ${item.content}`,
-      );
-    } else {
-      console.log(
-        `Output from Jupyter when preparing workspace: ${item.content}`,
-      );
-    }
-  });
-  await client.runCode(`
-import os
-if not os.path.exists("${workspacePath}"):
-    os.makedirs("${workspacePath}")
-`);
-  await client.waitUntilIdle();
+  try {
+    client.onOutputItem((item) => {
+      if (item.type === "stderr") {
+        console.error(
+          `Error from Jupyter when preparing workspace: ${item.content}`,
+        );
+      } else {
+        console.log(
+          `Output from Jupyter when preparing workspace: ${item.content}`,
+        );
+      }
+    });
+    await client.runCode(`
+  import os
+  if not os.path.exists("${workspacePath}"):
+      os.makedirs("${workspacePath}")
+  `);
+    await client.waitUntilIdle();
+  } finally {
+    client.shutdown();
+  }
 };
 
 export default JupyterWindow;

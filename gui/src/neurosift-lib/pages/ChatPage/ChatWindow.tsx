@@ -78,8 +78,18 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   const [showRunCodeWindow, setShowRunCodeWindow] = useState(false);
   const [pythonSessionStatus, setPythonSessionStatus] =
     useState<PythonSessionStatus>("uninitiated");
-  const runCodeCommunicator = useMemo(() => new RunCodeCommunicator(), []);
+  const [runCodeCommunicator, setRunCodeCommunicator] = useState<
+    RunCodeCommunicator | undefined
+  >(undefined);
   useEffect(() => {
+    const rcc = new RunCodeCommunicator();
+    setRunCodeCommunicator(rcc);
+    return () => {
+      rcc.shutdown();
+    };
+  }, []);
+  useEffect(() => {
+    if (!runCodeCommunicator) return;
     runCodeCommunicator.onPythonSessionStatusChanged((status) => {
       if (status === "busy") {
         setShowRunCodeWindow(true);
@@ -87,6 +97,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
     });
   }, [runCodeCommunicator]);
   useEffect(() => {
+    if (!runCodeCommunicator) return;
     setPythonSessionStatus(runCodeCommunicator.pythonSessionStatus);
     const onChange = (status: PythonSessionStatus) => {
       setPythonSessionStatus(status);
@@ -98,6 +109,7 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
   }, [runCodeCommunicator]);
   const handleRunCode = useCallback(
     async (code: string) => {
+      if (!runCodeCommunicator) return;
       setShowRunCodeWindow(true);
       runCodeCommunicator.runCode(
         code,
@@ -142,11 +154,15 @@ const ChatWindow: FunctionComponent<ChatWindowProps> = ({
         pythonSessionStatus={pythonSessionStatus}
         allowSaveChatToCloud={allowSaveChatToCloud}
       />
-      <RunCodeWindow
-        width={0}
-        height={0}
-        runCodeCommunicator={runCodeCommunicator}
-      />
+      {runCodeCommunicator ? (
+        <RunCodeWindow
+          width={0}
+          height={0}
+          runCodeCommunicator={runCodeCommunicator}
+        />
+      ) : (
+        <div />
+      )}
     </Splitter>
   );
 };

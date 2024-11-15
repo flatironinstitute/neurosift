@@ -57,6 +57,13 @@ export class RunCodeCommunicator {
     this.#onPythonSessionStatusChangedCallbacks =
       this.#onPythonSessionStatusChangedCallbacks.filter((c) => c !== callback);
   }
+  async shutdown() {
+    if (this.#pythonSessionClient) {
+      const c = this.#pythonSessionClient;
+      this.#pythonSessionClient = null;
+      await c.shutdown();
+    }
+  }
   async runCode(
     code: string,
     {
