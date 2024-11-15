@@ -22,7 +22,7 @@ export const probeNwbFileTool: ToolItem = {
       parameters: {
         type: "object",
         properties: {
-          nwb_file_url: {
+          nwb_url: {
             type: "string",
             description: "The URL of the NWB file to get information about",
           },
@@ -43,7 +43,7 @@ export const probeNwbFileTool: ToolItem = {
       openRouterKey: string | null;
     },
   ) => {
-    const urlLindi = await tryGetLindiUrl(args.nwb_file_url, args.dandiset_id);
+    const urlLindi = await tryGetLindiUrl(args.nwb_url, args.dandiset_id);
     let nwbFile: RemoteH5FileX;
     if (urlLindi) {
       nwbFile = await RemoteH5FileLindi.create(urlLindi);

@@ -5,6 +5,11 @@ const chatCompletionTimestamps: number[] = [];
 // safeguard (e.g., an infinite loop)
 const MAX_CHAT_COMPLETIONS_PER_MINUTE = 10;
 
+export const globalChatCompletionUsage = {
+  numInputTokens: 0,
+  numOutputTokens: 0,
+};
+
 const chatCompletion = async (a: {
   messages: ORMessage[];
   modelName: string;
@@ -77,10 +82,21 @@ const chatCompletion = async (a: {
   }
   const rr: {
     choices?: { message: { content: string; tool_calls?: any[] } }[];
+    usage: {
+      prompt_tokens: number;
+      completion_tokens: number;
+      total_tokens: number;
+    };
   } = await resp.json();
   if (!rr.choices) {
     console.warn(messages, tools);
     throw new Error("No choices in response");
+  }
+  try {
+    globalChatCompletionUsage.numInputTokens += rr.usage.prompt_tokens;
+    globalChatCompletionUsage.numOutputTokens += rr.usage.completion_tokens;
+  } catch (error) {
+    console.error("Failed to update globalChatCompletionUsage", error);
   }
   const choice = rr.choices[0];
   const { content: response, tool_calls: toolCalls } = choice.message;

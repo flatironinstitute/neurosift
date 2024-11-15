@@ -28,7 +28,7 @@ export const timeseriesAlignmentViewTool: ToolItem = {
       parameters: {
         type: "object",
         properties: {
-          nwb_file_url: {
+          nwb_url: {
             type: "string",
             description: "The URL of the NWB file to visualize",
           },
@@ -43,18 +43,15 @@ export const timeseriesAlignmentViewTool: ToolItem = {
   },
   detailedDescription,
   function: async (
-    args: { nwb_file_url: string; dandiset_id: string | undefined },
+    args: { nwb_url: string; dandiset_id: string | undefined },
     onLogMessage: (title: string, message: string) => void,
   ) => {
-    const { nwb_file_url, dandiset_id } = args;
+    const { nwb_url, dandiset_id } = args;
     onLogMessage(
       "timeseries_alignment_view query",
-      nwb_file_url + " (" + dandiset_id + ")",
+      nwb_url + " (" + dandiset_id + ")",
     );
-    const data = await getTimeseriesAlignmentViewData(
-      nwb_file_url,
-      dandiset_id,
-    );
+    const data = await getTimeseriesAlignmentViewData(nwb_url, dandiset_id);
     const numItems = data.items.length;
     const height = determineHeightFromNumItems(numItems);
     onLogMessage("timeseries_alignment_view response", JSON.stringify(data));
@@ -68,15 +65,15 @@ const determineHeightFromNumItems = (numItems: number) => {
 };
 
 const getTimeseriesAlignmentViewData = async (
-  nwb_file_url: string,
+  nwb_url: string,
   dandiset_id: string | undefined,
 ) => {
-  const urlLindi = await tryGetLindiUrl(nwb_file_url, dandiset_id || "");
+  const urlLindi = await tryGetLindiUrl(nwb_url, dandiset_id || "");
   let nwbFile: RemoteH5FileX;
   if (urlLindi) {
     nwbFile = await RemoteH5FileLindi.create(urlLindi);
   } else {
-    nwbFile = new RemoteH5File(nwb_file_url, {});
+    nwbFile = new RemoteH5File(nwb_url, {});
   }
   const items: {
     path: string;

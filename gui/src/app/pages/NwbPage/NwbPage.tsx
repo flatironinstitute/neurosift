@@ -38,6 +38,7 @@ import getAuthorizationHeaderForUrl from "./getAuthorizationHeaderForUrl";
 import getNwbFileInfoForChat, {
   NwbFileInfoForChat,
 } from "./getNwbFileInfoForChat";
+import { globalChatCompletionUsage } from "neurosift-lib/pages/ChatPage/chatCompletion";
 
 type Props = {
   width: number;
@@ -231,6 +232,10 @@ const NwbPageChild3: FunctionComponent<NwbPageChild3Props> = ({
       });
   }, [nwbFile, urlList]);
 
+  const [modeForChatTokens, setModeForChatTokens] = useState<"count" | "cost">(
+    "count",
+  );
+
   // status bar text
   const { setCustomStatusBarElement } = useCustomStatusBarElements();
   useEffect(() => {
@@ -238,10 +243,13 @@ const NwbPageChild3: FunctionComponent<NwbPageChild3Props> = ({
     const timer = setInterval(() => {
       if (!nwbFile) return;
       const x = globalRemoteH5FileStats;
+      const y = globalChatCompletionUsage;
 
       // important to do this check so the context state is not constantly changing
-      if (JSONStringifyDeterministic(x) === lastStatsString) return;
-      lastStatsString = JSONStringifyDeterministic(x);
+      const statsString =
+        JSONStringifyDeterministic(x) + JSONStringifyDeterministic(y);
+      if (statsString === lastStatsString) return;
+      lastStatsString = statsString;
 
       const s = (
         <span style={{ cursor: "pointer" }}>
@@ -258,6 +266,33 @@ const NwbPageChild3: FunctionComponent<NwbPageChild3Props> = ({
           </span>
           &nbsp;|&nbsp;
           <span title="Number of pending requests">{x.numPendingRequests}</span>
+          &nbsp;|&nbsp;
+          {y.numInputTokens > 0 || y.numOutputTokens > 0 ? (
+            <span
+              onClick={() =>
+                setModeForChatTokens((old) =>
+                  old === "count" ? "cost" : "count",
+                )
+              }
+            >
+              {modeForChatTokens === "count" && (
+                <span title="OpenRouter input/output tokens">
+                  {Math.round(y.numInputTokens / 1000)}k /{" "}
+                  {Math.round(y.numOutputTokens / 1000)}k
+                </span>
+              )}
+              {/* Assume gpt-4o and hard-coded token costs */}
+              {modeForChatTokens === "cost" && (
+                <span title="OpenRouter input/output token cost">
+                  {`$`}
+                  {Math.round(
+                    (y.numInputTokens / 1e6) * 250 +
+                      (y.numOutputTokens / 1e6) * 1000,
+                  ) / 100}
+                </span>
+              )}
+            </span>
+          ) : null}
           {/* &nbsp;|&nbsp; WIP
           <span title="Amount of data fetched">{formatByteCount(computeTotalBytesFetched(x))}</span> */}
         </span>
@@ -267,7 +302,7 @@ const NwbPageChild3: FunctionComponent<NwbPageChild3Props> = ({
     return () => {
       clearInterval(timer);
     };
-  }, [nwbFile, setCustomStatusBarElement]);
+  }, [nwbFile, setCustomStatusBarElement, modeForChatTokens]);
 
   const [usingLindi, setUsingLindi] = useState<boolean>(false);
 
