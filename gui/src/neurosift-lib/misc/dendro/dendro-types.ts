@@ -892,6 +892,7 @@ export const isFindJobsResponse = (x: any): x is FindJobsResponse => {
 export type GetRunnableJobsForComputeClientRequest = {
   type: "getRunnableJobsForComputeClientRequest";
   computeClientId: string;
+  jobId?: string;
 };
 
 export const isGetRunnableJobsForComputeClientRequest = (
@@ -900,6 +901,7 @@ export const isGetRunnableJobsForComputeClientRequest = (
   return validateObject(x, {
     type: isEqualTo("getRunnableJobsForComputeClientRequest"),
     computeClientId: isString,
+    jobId: optional(isString),
   });
 };
 
@@ -916,6 +918,31 @@ export const isGetRunnableJobsForComputeClientResponse = (
     type: isEqualTo("getRunnableJobsForComputeClientResponse"),
     runnableJobs: isArrayOf(isDendroJob),
     runningJobs: isArrayOf(isDendroJob),
+  });
+};
+
+// getRunnableJob
+export type GetRunnableJobRequest = {
+  type: "getRunnableJobRequest";
+  jobId: string;
+};
+
+export const isGetRunnableJobRequest = (x: any): x is GetRunnableJobRequest => {
+  return validateObject(x, {
+    type: isEqualTo("getRunnableJobRequest"),
+    jobId: isString,
+  });
+};
+
+export type GetRunnableJobResponse = {
+  type: "getRunnableJobResponse";
+  job: DendroJob;
+};
+
+export const isGetRunnableJobResponse = (x: any): x is GetRunnableJobResponse => {
+  return validateObject(x, {
+    type: isEqualTo("getRunnableJobResponse"),
+    job: isDendroJob,
   });
 };
 
