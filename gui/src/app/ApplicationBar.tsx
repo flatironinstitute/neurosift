@@ -81,11 +81,7 @@ const ApplicationBar: FunctionComponent<Props> = ({ onContextChat }) => {
             <SmallIconButton
               icon={<Computer />}
               title={`Learn about the online workshop`}
-              onClick={() => {
-                window.open(
-                  "https://magland.github.io/neurosift-blog/workshop",
-                );
-              }}
+              onClick={() => setRoute({ page: "about" })}
             />
           </span>
           &nbsp; &nbsp;
