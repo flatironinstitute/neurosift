@@ -48,6 +48,8 @@
     "codeRepository": "git+https://github.com/flatironinstitute/neurosift",
     "dateCreated": "2023-06-21",
     "datePublished": "2023-06-21",
+    "version": "0.2.13",
+    "dateModified": "2024-08-19",
     "description": "Neurosift is a browser-based tool designed for the visualization of NWB (Neurodata Without Borders) files, whether stored locally or hosted remotely, and enables interactive exploration of the DANDI Archive.\n\n",
     "license": "https://spdx.org/licenses/Apache-2.0",
     "name": "Neurosift",
