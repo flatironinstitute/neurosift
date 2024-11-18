@@ -27,6 +27,7 @@ import NeurosiftSavedChatsLoginPage from "./pages/NeurosiftAnnotationsLoginPage/
 import SavedChatsPage from "neurosift-lib/pages/SavedChatsPage/SavedChatsPage";
 import TestPage from "./pages/TestPage/TestPage";
 import { globalChatCompletionUsage } from "neurosift-lib/pages/ChatPage/chatCompletion";
+import ComputePage from "./pages/ComputePage/ComputePage";
 
 type Props = {
   // none
@@ -205,7 +206,10 @@ const MainWindow: FunctionComponent<Props> = () => {
           <OpenNeuroPage width={width} height={H} />
         ) : route.page === "openneuro-dataset" ? (
           <OpenNeuroDatasetPage width={width} height={H} />
-        ) : (
+        ) : route.page === "compute" ? (
+          <ComputePage width={width} height={H} />
+        ) :
+        (
           <div>404</div>
         )}
       </div>

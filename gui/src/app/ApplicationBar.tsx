@@ -101,7 +101,7 @@ const ApplicationBar: FunctionComponent<Props> = ({ onContextChat }) => {
                 <SmallIconButton
                   icon={<Chat />}
                   onClick={onContextChat}
-                  title={`Toggle the assistant chat window`}
+                  title={`AI chat`}
                 />
               </span>
             </>

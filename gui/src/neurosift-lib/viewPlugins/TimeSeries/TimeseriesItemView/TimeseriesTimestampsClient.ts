@@ -140,6 +140,9 @@ class IrregularTimeseriesTimestampsClient {
     return this.#estimatedSamplingFrequency;
   }
   async getDataIndexForTime(time: number): Promise<number> {
+    if (isNaN(time)) {
+      throw Error(`Invalid time in getDataIndexForTime: ${time}`);
+    }
     return await this.#timestampFinder!.getDataIndexForTime(time);
   }
   async getTimestampsForDataIndices(
