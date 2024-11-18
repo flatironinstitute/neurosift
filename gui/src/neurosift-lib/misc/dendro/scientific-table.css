@@ -1,0 +1,52 @@
+/* Table container */
+.table-container {
+  font-family: "Courier New", monospace;
+  width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+  cursor: default;
+}
+
+/* Table */
+.scientific-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12px;
+}
+
+/* Table header */
+.scientific-table th {
+  background-color: #c5af96;
+  color: #ffffff;
+  text-align: left;
+  padding: 4px 8px;
+  border: 1px solid #aaa7a7;
+}
+
+/* Table rows */
+.scientific-table tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+.scientific-table tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+/* Table data */
+.scientific-table td {
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+}
+
+/* Table hover */
+.scientific-table tbody tr:hover {
+  background-color: #ddd;
+}
+
+.scientific-table tr.selected {
+  background-color: #aad;
+}
+
+.scientific-table tr.selected:hover {
+  background-color: #ccf;
+}

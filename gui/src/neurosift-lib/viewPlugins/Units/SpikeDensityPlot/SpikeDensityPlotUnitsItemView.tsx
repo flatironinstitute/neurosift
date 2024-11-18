@@ -139,6 +139,7 @@ const SpikeDensityPlotUnitsItemView: FunctionComponent<Props> = ({
 const useMultiscaleSpikeDensityJob = (nwbUrl: string, unitsPath: string) => {
   const tags = useMemo(() => ["neurosift", "multiscale_spike_density"], []);
   const { allJobs, refreshAllJobs } = useAllJobs({
+    serviceName: "neurosift",
     tags,
     inputFileUrl: nwbUrl,
     appName: "hello_neurosift",

@@ -129,12 +129,21 @@ def _fetch_nwb_files_for_dandiset(dandiset_id, dandiset_version, *, limit=10):
                 continue
             else:
                 num_consecutive_not_nwb = 0
+            download_url = asset_obj.download_url
+
+            # make this canonical, so
+            # https://api.dandiarchive.org/api/dandisets/000946/versions/draft/assets/cc0b74c8-1d58-4872-bcad-f8969d115064/download/
+            # would be replaced by https://api.dandiarchive.org/api/assets/cc0b74c8-1d58-4872-bcad-f8969d115064/download/
+            if download_url.startswith("https://api.dandiarchive.org/api/dandisets/"):
+                parts = download_url.split("/")
+                download_url = f"https://api.dandiarchive.org/api/assets/{parts[-3]}/download/"
+
             x = NWBFile(
                 dandiset_id=dandiset_id,
                 asset_id=asset_obj.identifier,
                 size=asset_obj.size,
                 file_path=asset_obj.path,
-                download_url=asset_obj.download_url,
+                download_url=download_url,
             )
             nwb_files.append(x)
             if len(nwb_files) >= limit:

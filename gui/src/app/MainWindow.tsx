@@ -208,8 +208,7 @@ const MainWindow: FunctionComponent<Props> = () => {
           <OpenNeuroDatasetPage width={width} height={H} />
         ) : route.page === "compute" ? (
           <ComputePage width={width} height={H} />
-        ) :
-        (
+        ) : (
           <div>404</div>
         )}
       </div>

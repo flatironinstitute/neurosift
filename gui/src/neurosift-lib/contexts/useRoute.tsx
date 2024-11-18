@@ -105,9 +105,9 @@ export type Route =
       datasetId: string;
       datasetVersion?: string;
     }
-    | {
+  | {
       page: "compute";
-    }
+    };
 
 type PluginName = "EphysSummary";
 
@@ -433,8 +433,7 @@ export const RouteProvider = ({ children }: { children: React.ReactNode }) => {
         if (r.datasetVersion) {
           newQuery.datasetVersion = r.datasetVersion;
         }
-      }
-      else if (r.page === "compute") {
+      } else if (r.page === "compute") {
         newQuery = {
           p: "/compute",
         };

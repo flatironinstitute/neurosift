@@ -37,7 +37,7 @@ export const useAllJobs = (o: {
         serviceName: serviceName || "hello_world_service",
         appName,
         processorName,
-        tags: tags && tags.length > 0 ? { $all: tags } : undefined,
+        tags: tags.length > 0 ? tags : undefined,
         inputFileUrl,
       };
       const headers = {
