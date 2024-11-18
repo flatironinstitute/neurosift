@@ -1,0 +1,15 @@
+// system stu/stu.md
+// system lou/lou.md
+
+####################################################################################
+
+Prompt the user for a dandiset id, by default use 000946.
+
+For the below, process at most 10 nwb files in the dandiset.
+
+For each nwb file in the dandiset do the following
+
+* For each neurodata object with neurodata type "Units" in the nwb file, submit a multiscale spike sorting job.
+
+Print what you are doing as you go, including printing the paths of the NWB files, and jobs as they are submitted.
+
