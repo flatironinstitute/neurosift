@@ -1,4 +1,4 @@
-import { Hyperlink } from "@fi-sci/misc";
+import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
 import { FunctionComponent } from "react";
 import { FaGithub } from "react-icons/fa";
 import useRoute from "neurosift-lib/contexts/useRoute";
@@ -35,11 +35,11 @@ const HomePage: FunctionComponent<Props> = ({ width, height }) => {
       </p>
       <p>
         <Hyperlink href="https://github.com/flatironinstitute/neurosift">
-          Neurosift GitHub repository
+          Source repository <FaGithub />
         </Hyperlink>
       </p>
       <p>
-        Please fill out our{" "}
+        Fill out our{" "}
         <a
           href="https://forms.gle/8YrNf1Tnz4685TMY9"
           target="_blank"
@@ -48,12 +48,6 @@ const HomePage: FunctionComponent<Props> = ({ width, height }) => {
           feedback form
         </a>
       </p>
-      <hr />
-      <div>
-        <Hyperlink onClick={() => setRoute({ page: "tests" })}>
-          Component tests
-        </Hyperlink>
-      </div>
       <hr />
       {/* <p>
         <Hyperlink href="https://github.com/flatironinstitute/neurosift/blob/main/changelog.md">
@@ -65,10 +59,15 @@ const HomePage: FunctionComponent<Props> = ({ width, height }) => {
           Request a feature or report a bug
         </Hyperlink>
       </p>
+      <hr />
       <p>
-        <FaGithub /> If you find this project useful in your research, please{" "}
+        If you find this project useful in your research, please{" "}
         <Hyperlink href="https://github.com/flatironinstitute/neurosift">
-          give us a star on GitHub
+          star us on GitHub
+        </Hyperlink>
+        &nbsp; and{" "}
+        <Hyperlink href="https://bsky.app/profile/neurosift.app">
+          follow us on Bluesky
         </Hyperlink>
         .
       </p>
