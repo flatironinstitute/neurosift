@@ -1,5 +1,11 @@
 import JobsView from "neurosift-lib/misc/dendro/JobsView";
-import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import {
+  FunctionComponent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 type ComputePageProps = {
   width: number;
@@ -13,11 +19,10 @@ const ComputePage: FunctionComponent<ComputePageProps> = ({
   const [dandisetId, setDandisetId] = useState<string | undefined>(
     localStorage.getItem("compute-page-dandiset-id") || undefined,
   );
-  useEffect(() => {
-    if (dandisetId) {
-      localStorage.setItem("compute-page-dandiset-id", dandisetId);
-    }
-  }, [dandisetId]);
+  const onSetDandisetId = useCallback((dandisetId: string) => {
+    localStorage.setItem("compute-page-dandiset-id", dandisetId);
+    setDandisetId(dandisetId);
+  }, []);
   const tags = useMemo(() => {
     const ret = ["neurosift"];
     if (dandisetId) {
@@ -39,9 +44,18 @@ const ComputePage: FunctionComponent<ComputePageProps> = ({
         overflowY: "auto",
       }}
     >
+      <p>
+        <a
+          href="https://magland.github.io/neurosift-blog/doc/contributing_neurosift_compute"
+          target="_blank"
+          rel="noreferrer"
+        >
+          How to contribute compute resources to Neurosift
+        </a>
+      </p>
       <SelectDandisetComponent
         dandisetId={dandisetId}
-        setDandisetId={setDandisetId}
+        setDandisetId={onSetDandisetId}
       />
       <JobsView
         serviceName="neurosift"

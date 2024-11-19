@@ -26,6 +26,7 @@ import {
 import { JobInfoView } from "../../../misc/dendro/JobInfoView";
 import SpikeDensityPlotWidget from "./SpikeDensityPlotWidget";
 import { RemoteH5FileX } from "../../../remote-h5-file/index";
+import useRoute from "../../../contexts/useRoute";
 
 type Props = {
   width: number;
@@ -137,7 +138,13 @@ const SpikeDensityPlotUnitsItemView: FunctionComponent<Props> = ({
 };
 
 const useMultiscaleSpikeDensityJob = (nwbUrl: string, unitsPath: string) => {
-  const tags = useMemo(() => ["neurosift", "multiscale_spike_density"], []);
+  const { route } = useRoute();
+  const dandisetId = route.page === "nwb" ? route.dandisetId : "";
+  const tags = useMemo(() => {
+    const ret = ["neurosift", "multiscale_spike_density"];
+    if (dandisetId) ret.push(`dandiset:${dandisetId}`);
+    return ret;
+  }, [dandisetId]);
   const { allJobs, refreshAllJobs } = useAllJobs({
     serviceName: "neurosift",
     tags,
@@ -271,7 +278,13 @@ const useMultiscaleSpikeDensityJob = (nwbUrl: string, unitsPath: string) => {
 };
 
 const useRastermapJob = (nwbUrl: string, unitsPath: string) => {
-  const tags = useMemo(() => ["neurosift", "rastermap"], []);
+  const { route } = useRoute();
+  const dandisetId = route.page === "nwb" ? route.dandisetId : "";
+  const tags = useMemo(() => {
+    const ret = ["neurosift", "rastermap"];
+    if (dandisetId) ret.push(`dandiset:${dandisetId}`);
+    return ret;
+  }, [dandisetId]);
   const { allJobs, refreshAllJobs } = useAllJobs({
     serviceName: "neurosift",
     tags,

@@ -36,7 +36,7 @@ def submit_multiscale_spike_density_job(
             DendroJobParameter(name="bin_size_msec", value=10),
         ],
     )
-    submit_job(
+    job = submit_job(
         service_name="neurosift",
         job_definition=job_definition,
         required_resources=required_resources,
@@ -46,6 +46,7 @@ def submit_multiscale_spike_density_job(
         rerun_failing=False,
         delete_failing=False,
     )
+    print(f'Job {job.jobId} submitted - status: {job.status}')
 
 
 def submit_rastermap_job(
@@ -79,7 +80,7 @@ def submit_rastermap_job(
             DendroJobParameter(name="grid_upsample", value=1),
         ],
     )
-    submit_job(
+    job = submit_job(
         service_name="neurosift",
         job_definition=job_definition,
         required_resources=required_resources,
@@ -89,6 +90,7 @@ def submit_rastermap_job(
         rerun_failing=False,
         delete_failing=False,
     )
+    print(f'Job {job.jobId} submitted - status: {job.status}')
 
 
 def submit_image_series_to_mp4_job(
@@ -119,7 +121,7 @@ def submit_image_series_to_mp4_job(
             DendroJobParameter(name="duration_sec", value=duration_sec),
         ],
     )
-    submit_job(
+    job = submit_job(
         service_name="neurosift",
         job_definition=job_definition,
         required_resources=required_resources,
@@ -129,3 +131,4 @@ def submit_image_series_to_mp4_job(
         rerun_failing=False,
         delete_failing=False,
     )
+    print(f'Job {job.jobId} submitted - status: {job.status}')

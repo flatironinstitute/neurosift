@@ -22,6 +22,7 @@ import {
   useAllJobs,
 } from "../../misc/dendro/DendroHelpers";
 import { JobInfoView } from "../../misc/dendro/JobInfoView";
+import useRoute from "../../contexts/useRoute";
 
 type TwoPhotonMovieViewProps = {
   width: number;
@@ -97,12 +98,30 @@ const useMp4UrlForImageSeries = (
   refreshAllJobs: () => void;
   submitJob: (dendroApiKey: string, durationSec: number) => void;
 } => {
-  const tags = useMemo(() => ["neurosift", "image_series_to_mp4"], []);
+  const { route } = useRoute();
+  const dandisetId = route.page === "nwb" ? route.dandisetId : "";
+  const tags = useMemo(() => {
+    const ret = ["neurosift", "image_series_to_mp4"];
+    if (dandisetId) ret.push(`dandiset:${dandisetId}`);
+    return ret;
+  }, [dandisetId]);
   const serviceName = "neurosift";
+  const jobFilter = useMemo(
+    () => (job: DendroJob) => {
+      const p = job.jobDefinition.parameters.find(
+        (p) => p.name === "image_series_path",
+      );
+      if (!p) return false;
+      if (p.value !== path) return false;
+      return true;
+    },
+    [path],
+  );
   const { allJobs, refreshAllJobs } = useAllJobs({
     tags,
     inputFileUrl: nwbUrl,
     serviceName,
+    jobFilter,
   });
   const { job, incompleteJob } = useMemo(() => {
     if (!allJobs) return { job: undefined, incompleteJob: undefined };

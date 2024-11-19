@@ -149,7 +149,7 @@ const computeDurationString = (job: DendroJob) => {
 };
 
 const timeElapsedString = (durationSec: number) => {
-  if (durationSec < 120) return `${durationSec}s`;
+  if (durationSec < 120) return `${Math.floor(durationSec)}s`;
   const minutes = Math.floor(durationSec / 60);
   if (minutes < 120) return `${minutes}m`;
   const hours = Math.floor(minutes / 60);
