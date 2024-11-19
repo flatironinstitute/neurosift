@@ -3,13 +3,19 @@
 
 ####################################################################################
 
-Prompt the user for a dandiset id, by default use 000946.
+Prompt the user for a dandiset id, by default use 000946. If the user enters "*" then loop through all dandisets.
 
-For the below, process at most 10 nwb files in the dandiset.
+For the below, process at most 15 nwb files in the dandiset.
 
 For each nwb file in the dandiset do the following
 
-* For each neurodata object with neurodata type "Units" in the nwb file, submit a multiscale spike sorting job.
+* For each neurodata object with neurodata type "Units" in the nwb file, submit the following:
+    - a multiscale spike sorting job.
+    - a rastermap job
+
+* For each neurodata object with neurodata type "OnePhotonSeries" or "TwoPhotonSeries", submit the following
+    - an image series to mp4 job with duration of 60 seconds
 
 Print what you are doing as you go, including printing the paths of the NWB files, and jobs as they are submitted.
+Whenever printing a log line, also include the dandiset id.
 

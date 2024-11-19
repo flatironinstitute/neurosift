@@ -7,6 +7,12 @@ import stu
 dandisets = stu.get_all_public_dandisets()
 ```
 
+If you want to get one dandiset by ID:
+
+```python
+dandiset = stu.get_dandiset_by_id('000001')
+```
+
 Each of these is now an object with the following attributes:
 
 ```python

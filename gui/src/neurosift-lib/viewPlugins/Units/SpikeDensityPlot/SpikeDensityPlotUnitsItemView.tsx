@@ -271,8 +271,9 @@ const useMultiscaleSpikeDensityJob = (nwbUrl: string, unitsPath: string) => {
 };
 
 const useRastermapJob = (nwbUrl: string, unitsPath: string) => {
-  const tags = useMemo(() => ["neurosift", "rasteramp"], []);
+  const tags = useMemo(() => ["neurosift", "rastermap"], []);
   const { allJobs, refreshAllJobs } = useAllJobs({
+    serviceName: "neurosift",
     tags,
     inputFileUrl: nwbUrl,
     appName: "hello_rastermap",
@@ -384,7 +385,7 @@ const useRastermapJob = (nwbUrl: string, unitsPath: string) => {
         memoryGb: 4,
         timeSec: 60 * 60 * 2,
       };
-      const serviceName = "hello_world_service";
+      const serviceName = "neurosift";
       const secrets = createDendroJobSecrets({ staging: isStagingUrl(nwbUrl) });
       const req: CreateJobRequest = {
         type: "createJobRequest",

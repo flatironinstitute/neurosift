@@ -98,9 +98,11 @@ const useMp4UrlForImageSeries = (
   submitJob: (dendroApiKey: string, durationSec: number) => void;
 } => {
   const tags = useMemo(() => ["neurosift", "image_series_to_mp4"], []);
+  const serviceName = "neurosift";
   const { allJobs, refreshAllJobs } = useAllJobs({
     tags,
     inputFileUrl: nwbUrl,
+    serviceName
   });
   const { job, incompleteJob } = useMemo(() => {
     if (!allJobs) return { job: undefined, incompleteJob: undefined };
@@ -181,9 +183,8 @@ const useMp4UrlForImageSeries = (
         numCpus: 1,
         numGpus: 0,
         memoryGb: 4,
-        timeSec: 60 * 60 * 2,
+        timeSec: 60 * 60 * 1,
       };
-      const serviceName = "hello_world_service";
       const secrets = createDendroJobSecrets({ staging: isStagingUrl(nwbUrl) });
       const req: CreateJobRequest = {
         type: "createJobRequest",

@@ -338,6 +338,7 @@ export type DendroJob = {
   timestampStartingSec: number | null;
   timestampStartedSec: number | null;
   timestampFinishedSec: number | null;
+  timestampUpdatedSec?: number | null;
   canceled: boolean;
   status: DendroJobStatus;
   isRunnable: boolean;
@@ -372,6 +373,7 @@ export const isDendroJob = (x: any): x is DendroJob => {
     timestampStartingSec: isOneOf([isNumber, isNull]),
     timestampStartedSec: isOneOf([isNumber, isNull]),
     timestampFinishedSec: isOneOf([isNumber, isNull]),
+    timestampUpdatedSec: optional(isOneOf([isNumber, isNull])),
     canceled: isBoolean,
     status: isDendroJobStatus,
     isRunnable: isBoolean,
@@ -893,6 +895,7 @@ export type GetRunnableJobsForComputeClientRequest = {
   type: "getRunnableJobsForComputeClientRequest";
   computeClientId: string;
   jobId?: string;
+  singleJob?: boolean;
 };
 
 export const isGetRunnableJobsForComputeClientRequest = (
@@ -902,6 +905,7 @@ export const isGetRunnableJobsForComputeClientRequest = (
     type: isEqualTo("getRunnableJobsForComputeClientRequest"),
     computeClientId: isString,
     jobId: optional(isString),
+    singleJob: optional(isBoolean),
   });
 };
 
@@ -939,9 +943,7 @@ export type GetRunnableJobResponse = {
   job: DendroJob;
 };
 
-export const isGetRunnableJobResponse = (
-  x: any,
-): x is GetRunnableJobResponse => {
+export const isGetRunnableJobResponse = (x: any): x is GetRunnableJobResponse => {
   return validateObject(x, {
     type: isEqualTo("getRunnableJobResponse"),
     job: isDendroJob,

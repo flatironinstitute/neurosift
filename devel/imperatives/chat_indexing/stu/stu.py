@@ -1,5 +1,6 @@
-import os
+from typing import Union
 import json
+import os
 import time
 import urllib.request
 from typing import List
@@ -82,6 +83,14 @@ def get_all_public_dandisets():
         )
 
     return dandisets
+
+
+def get_dandiset_by_id(dandiset_id: str, *, dandiset_version: Union[str, None] = None):
+    return Dandiset(
+        dandiset_id=dandiset_id,
+        dandiset_version=dandiset_version if dandiset_version else "draft",
+        dandiset_url=f"https://dandiarchive.org/dandiset/{dandiset_id}",
+    )
 
 
 def upload_file(url: str, filename: str):
