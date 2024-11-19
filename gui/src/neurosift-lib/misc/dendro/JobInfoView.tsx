@@ -107,10 +107,12 @@ const JobWindow: FunctionComponent<JobWindowProps> = ({ job, onClose }) => {
     <div>
       {job.status === "pending" && (
         <p>
-          This job has not yet been picked up by a compute client. To run it manually, you will need to
-          have permission to process jobs on the neurosift dendro service (reach out to the neurosift team if you need access).
-          Then run the following after installing the dendro package (pip install --upgrade dendro) and docker (or apptainer):
-            <code>
+          This job has not yet been picked up by a compute client. To run it
+          manually, you will need to have permission to process jobs on the
+          neurosift dendro service (reach out to the neurosift team if you need
+          access). Then run the following after installing the dendro package
+          (pip install --upgrade dendro) and docker (or apptainer):
+          <code>
             <br />
             <br />
             {`export DENDRO_API_KEY="your-dendro-api-key"`}
@@ -118,7 +120,7 @@ const JobWindow: FunctionComponent<JobWindowProps> = ({ job, onClose }) => {
             {`export CONTAINER_METHOD=docker`}
             <br />
             {`dendro run-pending-job ${job.jobId}`}
-            </code>
+          </code>
         </p>
       )}
       {/* <RunOptions job={job} /> */}

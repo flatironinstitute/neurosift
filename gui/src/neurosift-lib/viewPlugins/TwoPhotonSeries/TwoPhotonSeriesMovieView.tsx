@@ -102,7 +102,7 @@ const useMp4UrlForImageSeries = (
   const { allJobs, refreshAllJobs } = useAllJobs({
     tags,
     inputFileUrl: nwbUrl,
-    serviceName
+    serviceName,
   });
   const { job, incompleteJob } = useMemo(() => {
     if (!allJobs) return { job: undefined, incompleteJob: undefined };
