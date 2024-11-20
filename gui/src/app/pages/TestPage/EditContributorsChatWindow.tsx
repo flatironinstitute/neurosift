@@ -26,6 +26,7 @@ import {
   useState,
 } from "react";
 import { editContributorsTool } from "./editContributorsTool";
+import { validateContributor } from "./dandisetMetaSchema";
 
 type EditContributorsChatWindowProps = {
   width: number;
@@ -54,6 +55,15 @@ const EditContributorsChatWindow: FunctionComponent<
   editedDandisetMetadata,
   setEditedDandisetMetadata,
 }) => {
+  useEffect(() => {
+    const { valid, errors } = validateContributor({
+      contributor: dandisetMetadata.contributor,
+    });
+    if (!valid) {
+      console.error("Error validating contributors", errors);
+      alert("Error validating contributors");
+    }
+  }, [dandisetMetadata]);
   // define the tools
   const tools: ToolItem[] = useMemo(() => {
     const ret: ToolItem[] = [];
@@ -65,7 +75,7 @@ const EditContributorsChatWindow: FunctionComponent<
     ret.push(
       editContributorsTool((obj) => {
         setEditedDandisetMetadata((old) =>
-          old ? { ...old, contributor: obj } : null,
+          old ? { ...old, contributor: obj.contributor } : null,
         );
       }),
     );
@@ -761,8 +771,6 @@ ${dandisetMetadata && JSON.stringify(dandisetMetadata.contributor, null, 2)}
 ========================
 
 As the user asks questions, assuming they are talking about this contributors metadata.
-
-
 `;
   // note: including all the metadata fields in the system message takes too many tokens.
 
