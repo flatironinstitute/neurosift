@@ -63,7 +63,7 @@ const TestPage: FunctionComponent<TestPageProps> = ({ width, height }) => {
         height={0}
         dandisetId={dandisetId}
         dandisetVersion={dandisetVersion || "draft"}
-        dandisetMetadata={dandisetMetadata}
+        dandisetMetadata={editedDandisetMetadata || dandisetMetadata}
         chat={chat}
         chatDispatch={chatDispatch}
         openRouterKey={localStorage.getItem("openRouterKey") || null}
@@ -71,7 +71,7 @@ const TestPage: FunctionComponent<TestPageProps> = ({ width, height }) => {
       <RightPanel
         width={0}
         height={0}
-        dandisetMetadata={dandisetMetadata}
+        dandisetMetadata={editedDandisetMetadata || dandisetMetadata}
         dandisetId={dandisetId}
         dandisetVersion={dandisetVersion || "draft"}
         setView={setView}

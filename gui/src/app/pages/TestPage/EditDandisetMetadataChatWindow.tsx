@@ -738,6 +738,14 @@ Description: ${dandisetMetadata.description}
 
 If the user talks about revising something, they mean revising the current metadata for the Dandiset.
 
+CAPABILITY: At this time you don't have the ability to directly change any of the metadata (except for contributors, see below). You are a prototype WIP assistant. But you can suggest things.
+You don't actually have access to the metadata at this point.
+
+CAPABILITY: You can help the user edit the "Contributors" part of the metadata. They should click on the "Contributors" link in the right panel.
+That will take them to another chat interface where they can get help editing the contributors.
+
+NOTE: In the future, the user will be able to click on other things such as "Ethics Approval", "Study Target", etc. to get help editing those parts of the metadata.
+
 `;
   // note: including all the metadata fields in the system message takes too many tokens.
 
