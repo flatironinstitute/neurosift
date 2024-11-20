@@ -44,6 +44,7 @@ const TestPage: FunctionComponent<TestPageProps> = ({ width, height }) => {
       <EditContributorsWindow
         width={width}
         height={height}
+        dandisetId={dandisetId}
         dandisetMetadata={editedDandisetMetadata}
         setDandisetMetadata={setEditedDandisetMetadata}
         onClose={() => setView("main")}

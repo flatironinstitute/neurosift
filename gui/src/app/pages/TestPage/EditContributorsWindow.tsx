@@ -16,6 +16,7 @@ import EditContributorsChatWindow from "./EditContributorsChatWindow";
 type EditContributorsWindowProps = {
   width: number;
   height: number;
+  dandisetId: string;
   dandisetMetadata: DandisetMetadata;
   setDandisetMetadata: (dandisetMetadata: DandisetMetadata) => void;
   onClose: () => void;
@@ -23,7 +24,14 @@ type EditContributorsWindowProps = {
 
 const EditContributorsWindow: FunctionComponent<
   EditContributorsWindowProps
-> = ({ dandisetMetadata, setDandisetMetadata, width, height, onClose }) => {
+> = ({
+  dandisetId,
+  dandisetMetadata,
+  setDandisetMetadata,
+  width,
+  height,
+  onClose,
+}) => {
   const [chat, chatDispatch] = useReducer(chatReducer, emptyChat);
   const [editedDandisetMetadata, setEditedDandisetMetadata] =
     useState<Dandiset | null>(null);
@@ -47,6 +55,7 @@ const EditContributorsWindow: FunctionComponent<
         <EditContributorsChatWindow
           width={0}
           height={0}
+          dandisetId={dandisetId}
           dandisetMetadata={dandisetMetadata}
           editedDandisetMetadata={editedDandisetMetadata}
           setEditedDandisetMetadata={setEditedDandisetMetadata}

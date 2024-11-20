@@ -17,9 +17,6 @@ import ToolElement from "neurosift-lib/pages/ChatPage/ToolElement";
 import { ToolItem } from "neurosift-lib/pages/ChatPage/ToolItem";
 import ToolResponseView from "neurosift-lib/pages/ChatPage/ToolResponseView";
 import { Dandiset } from "neurosift-lib/pages/ChatPage/tools/dandi-archive-schema";
-import { dandisetObjectsTool } from "neurosift-lib/pages/ChatPage/tools/probeDandisetObjects";
-import { neurodataTypesTool } from "neurosift-lib/pages/ChatPage/tools/probeNeurodataTypes";
-import { probeNwbFileTool } from "neurosift-lib/pages/ChatPage/tools/probeNwbFile";
 import {
   FunctionComponent,
   useCallback,
@@ -36,6 +33,7 @@ type EditContributorsChatWindowProps = {
   chat: Chat;
   chatDispatch: (action: ChatAction) => void;
   openRouterKey: string | null;
+  dandisetId: string;
   dandisetMetadata: Dandiset;
   editedDandisetMetadata: Dandiset;
   setEditedDandisetMetadata: React.Dispatch<
@@ -51,6 +49,7 @@ const EditContributorsChatWindow: FunctionComponent<
   chat,
   chatDispatch,
   openRouterKey,
+  dandisetId,
   dandisetMetadata,
   editedDandisetMetadata,
   setEditedDandisetMetadata,
@@ -58,11 +57,11 @@ const EditContributorsChatWindow: FunctionComponent<
   // define the tools
   const tools: ToolItem[] = useMemo(() => {
     const ret: ToolItem[] = [];
-    ret.push(dandisetObjectsTool);
-    ret.push(neurodataTypesTool);
+    // ret.push(dandisetObjectsTool);
+    // ret.push(neurodataTypesTool);
     // ret.push(probeDandisetTool);
     // ret.push(timeseriesAlignmentViewTool);
-    ret.push(probeNwbFileTool);
+    // ret.push(probeNwbFileTool);
     ret.push(
       editContributorsTool((obj) => {
         setEditedDandisetMetadata((old) =>
@@ -72,7 +71,7 @@ const EditContributorsChatWindow: FunctionComponent<
     );
     return ret;
   }, [setEditedDandisetMetadata]);
-  const systemMessage = useSystemMessage(tools, dandisetMetadata);
+  const systemMessage = useSystemMessage(tools, dandisetId, dandisetMetadata);
   // initial message at the top of the chat window
   const initialMessage = useMemo(() => {
     return `I can help you edit the contributors for ${dandisetMetadata.id}. Use natural language to tell me what I should change. You could also paste in a citation and ask me to add all the authors.`;
@@ -744,6 +743,7 @@ const colorForRole = (role: string) => {
 
 const useSystemMessage = (
   tools: ToolItem[],
+  dandisetId: string,
   dandisetMetadata: Dandiset | null,
 ) => {
   let systemMessage = `
@@ -752,6 +752,8 @@ Your responses should be concise and informative with a scientific style and cer
 
 You have the ability to modify the contributors metadata for a Dandiset.
 
+This is Dandiset ${dandisetId}.
+
 Here is the initial contributors metadata for the Dandiset:
 
 ========================
@@ -759,6 +761,7 @@ ${dandisetMetadata && JSON.stringify(dandisetMetadata.contributor, null, 2)}
 ========================
 
 As the user asks questions, assuming they are talking about this contributors metadata.
+
 
 `;
   // note: including all the metadata fields in the system message takes too many tokens.
