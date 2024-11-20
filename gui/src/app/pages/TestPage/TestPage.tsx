@@ -5,11 +5,17 @@ import { Dandiset as DandisetMetadata } from "neurosift-lib/pages/ChatPage/tools
 import Splitter from "neurosift-lib/components/Splitter";
 import EditDandisetMetadataChatWindow from "./EditDandisetMetadataChatWindow";
 import { chatReducer, emptyChat } from "neurosift-lib/pages/ChatPage/Chat";
+import { Hyperlink } from "@fi-sci/misc";
+import { Edit } from "@mui/icons-material";
+import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
+import EditContributorsWindow from "./EditContributorsWindow";
 
 type TestPageProps = {
   width: number;
   height: number;
 };
+
+type ViewMode = "main" | "edit-contributors";
 
 const TestPage: FunctionComponent<TestPageProps> = ({ width, height }) => {
   const { route } = useRoute();
@@ -19,12 +25,30 @@ const TestPage: FunctionComponent<TestPageProps> = ({ width, height }) => {
     dandisetId,
     dandisetVersion || "draft",
   );
+  const [editedDandisetMetadata, setEditedDandisetMetadata] =
+    useState<DandisetMetadata | null>(null);
+  useEffect(() => {
+    setEditedDandisetMetadata(dandisetMetadata || null);
+  }, [dandisetMetadata]);
+  const [view, setView] = useState<ViewMode>("main");
   const [chat, chatDispatch] = useReducer(chatReducer, emptyChat);
   if (!dandisetId) {
     return <div>No dandisetId in query of URL</div>;
   }
   if (!dandisetMetadata) {
     return <div>Loading dandiset metadata...</div>;
+  }
+  if (view === "edit-contributors") {
+    if (!editedDandisetMetadata) return <div>xx</div>;
+    return (
+      <EditContributorsWindow
+        width={width}
+        height={height}
+        dandisetMetadata={editedDandisetMetadata}
+        setDandisetMetadata={setEditedDandisetMetadata}
+        onClose={() => setView("main")}
+      />
+    );
   }
   return (
     <Splitter
@@ -49,6 +73,7 @@ const TestPage: FunctionComponent<TestPageProps> = ({ width, height }) => {
         dandisetMetadata={dandisetMetadata}
         dandisetId={dandisetId}
         dandisetVersion={dandisetVersion || "draft"}
+        setView={setView}
       />
     </Splitter>
   );
@@ -60,6 +85,7 @@ type RightPanelProps = {
   dandisetId: string;
   dandisetVersion: string;
   dandisetMetadata: DandisetMetadata;
+  setView: (m: ViewMode) => void;
 };
 
 const RightPanel: FunctionComponent<RightPanelProps> = ({
@@ -68,6 +94,7 @@ const RightPanel: FunctionComponent<RightPanelProps> = ({
   dandisetMetadata,
   width,
   height,
+  setView,
 }) => {
   return (
     <div style={{ width, height, overflow: "auto" }}>
@@ -83,7 +110,10 @@ const RightPanel: FunctionComponent<RightPanelProps> = ({
         <hr />
         <DescriptionSection dandisetMetadata={dandisetMetadata} />
         <hr />
-        <ContributorSection dandisetMetadata={dandisetMetadata} />
+        <ContributorSection
+          dandisetMetadata={dandisetMetadata}
+          onEdit={() => setView("edit-contributors")}
+        />
         <hr />
         <AboutSection dandisetMetadata={dandisetMetadata} />
         <hr />
@@ -189,15 +219,26 @@ const EditMultilineTextField: FunctionComponent<EditTextFieldProps> = ({
 type ReadOnlyTextFieldProps = {
   label: string;
   value: string;
+  onClick?: () => void;
 };
 
 const ReadOnlyTextField: FunctionComponent<ReadOnlyTextFieldProps> = ({
   label,
   value,
+  onClick,
 }) => {
   return (
     <div>
-      <label style={{ fontWeight: "bold" }}>{label}:&nbsp;</label>
+      <label style={{ fontWeight: "bold" }}>
+        {onClick ? (
+          <Hyperlink onClick={onClick}>
+            <Edit fontSize={"tiny" as any} /> {label}
+          </Hyperlink>
+        ) : (
+          label
+        )}
+        :&nbsp;
+      </label>
       <span>{value}</span>
     </div>
   );
@@ -235,12 +276,16 @@ const DescriptionSection: FunctionComponent<{
 
 const ContributorSection: FunctionComponent<{
   dandisetMetadata: DandisetMetadata;
-}> = ({ dandisetMetadata }) => {
+  onEdit: () => void;
+}> = ({ dandisetMetadata, onEdit }) => {
   return (
-    <ReadOnlyTextField
-      label="Contributors"
-      value={dandisetMetadata.contributor.map((c) => c.name).join(", ")}
-    />
+    <div>
+      <ReadOnlyTextField
+        label="Contributors"
+        value={dandisetMetadata.contributor.map((c) => c.name).join(", ")}
+        onClick={onEdit}
+      />
+    </div>
   );
 };
 
