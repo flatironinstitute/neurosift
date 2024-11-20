@@ -24,6 +24,7 @@ type Props = {
   onRunCode?: (code: string) => void;
   runCodeReady?: boolean;
   files?: { [name: string]: string };
+  linkTarget?: string;
 };
 
 const Markdown: FunctionComponent<Props> = ({
@@ -32,6 +33,7 @@ const Markdown: FunctionComponent<Props> = ({
   onRunCode,
   runCodeReady,
   files,
+  linkTarget,
 }) => {
   const components: Partial<
     Omit<NormalComponents, keyof SpecialComponents> & SpecialComponents
@@ -246,7 +248,7 @@ const Markdown: FunctionComponent<Props> = ({
         remarkPlugins={[remarkGfm, remarkMathPlugin]}
         rehypePlugins={[rehypeRaw, rehypeMathJaxSvg /*, rehypeKatexPlugin*/]}
         components={components}
-        linkTarget="_blank"
+        linkTarget={linkTarget || "_blank"}
       />
     </div>
   );

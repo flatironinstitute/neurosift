@@ -1,11 +1,5 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-} from "react";
-import { Route, useLocation, useNavigate } from "react-router-dom";
+import { createContext, useCallback, useContext, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export type StorageType = "h5" | "zarr" | "lindi";
 
@@ -139,7 +133,11 @@ export const RouteProvider = ({ children }: { children: React.ReactNode }) => {
         page: "home",
       };
     }
-    if (p === "/about") {
+    if (p === "/" || p === "") {
+      return {
+        page: "home",
+      };
+    } else if (p === "/about") {
       return {
         page: "about",
       };
@@ -302,7 +300,7 @@ export const RouteProvider = ({ children }: { children: React.ReactNode }) => {
     (r: Route, replaceHistory?: boolean) => {
       let newQuery: { [key: string]: string | string[] } = {};
       if (r.page === "home") {
-        newQuery = { p: "/" };
+        newQuery = { p: "" };
       } else if (r.page === "about") {
         newQuery = { p: "/about" };
       } else if (r.page === "browse") {
@@ -448,12 +446,6 @@ export const RouteProvider = ({ children }: { children: React.ReactNode }) => {
     },
     [navigate, location.pathname],
   );
-
-  useEffect(() => {
-    if (p === "/") {
-      setRoute({ page: "dandi", staging: !!query.staging }, true);
-    }
-  }, [p, setRoute, query.staging]);
 
   return (
     <RouteContext.Provider value={{ route, setRoute }}>

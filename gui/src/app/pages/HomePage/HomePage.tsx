@@ -1,78 +1,77 @@
-import { Hyperlink, SmallIconButton } from "@fi-sci/misc";
+import Markdown from "neurosift-lib/components/Markdown";
+import useRoute, { Route } from "neurosift-lib/contexts/useRoute";
 import { FunctionComponent } from "react";
-import { FaGithub } from "react-icons/fa";
-import useRoute from "neurosift-lib/contexts/useRoute";
 
 type Props = {
   width: number;
   height: number;
 };
 
+const md = `
+# Welcome to Neurosift
+
+Neurosift is a browser-based tool designed for the
+visualization and processing of NWB (Neurodata Without Borders) files,
+whether stored locally or hosted remotely,
+and enables interactive exploration and analysis of the DANDI Archive.
+
+You can use Neurosift to:
+
+* [Browse DANDI Archive](?/p=dandi)
+* [Visualize NWB files - remote or local](https://magland.github.io/neurosift-blog/talks/neurosift_INCF_assembly_sep_2024)
+* See the blog for other capabilities...
+
+
+## Learn more or get help
+
+- [GitHub repository](https://github.com/flatironinstitute/neurosift)
+- [Neurosift blog](https://magland.github.io/neurosift-blog/)
+- [Request a feature or report a bug](https://github.com/flatironinstitute/neurosift/issues)
+- [Feedback form](https://forms.gle/8YrNf1Tnz4685TMY9")
+
+## Follow us
+
+If you find this project useful in your research, please
+[star us on GitHub](https://github.com/flatironinstitute/neurosift)
+or [follow us on Bluesky](https://bsky.app/profile/neurosift.app).
+`;
+
 const HomePage: FunctionComponent<Props> = ({ width, height }) => {
   const { setRoute } = useRoute();
+  // layout
+  const chatAreaWidth = Math.min(width - 30, 800);
+  const offsetLeft = (width - chatAreaWidth) / 2;
   return (
-    <div style={{ padding: 20, maxWidth: 800 }}>
-      <h2>Welcome to Neurosift</h2>
-      <p>
-        Neurosift is a browser-based tool designed for the visualization and
-        processing of NWB (Neurodata Without Borders) files, whether stored
-        locally or hosted remotely, and enables interactive exploration and
-        analysis of the DANDI Archive.
-      </p>
-      <p>
-        <Hyperlink href="https://magland.github.io/neurosift-blog/workshop">
-          ** Register for the online workshop **
-        </Hyperlink>
-      </p>
-      <p>
-        <a
-          href="https://magland.github.io/neurosift-blog/"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Neurosift Blog
-        </a>
-      </p>
-      <p>
-        <Hyperlink href="https://github.com/flatironinstitute/neurosift">
-          Source repository <FaGithub />
-        </Hyperlink>
-      </p>
-      <p>
-        Fill out our{" "}
-        <a
-          href="https://forms.gle/8YrNf1Tnz4685TMY9"
-          target="_blank"
-          rel="noreferrer"
-        >
-          feedback form
-        </a>
-      </p>
-      <hr />
-      {/* <p>
-        <Hyperlink href="https://github.com/flatironinstitute/neurosift/blob/main/changelog.md">
-          CHANGELOG
-        </Hyperlink>
-      </p> */}
-      <p>
-        <Hyperlink href="https://github.com/flatironinstitute/neurosift/issues">
-          Request a feature or report a bug
-        </Hyperlink>
-      </p>
-      <hr />
-      <p>
-        If you find this project useful in your research, please{" "}
-        <Hyperlink href="https://github.com/flatironinstitute/neurosift">
-          star us on GitHub
-        </Hyperlink>
-        &nbsp; and{" "}
-        <Hyperlink href="https://bsky.app/profile/neurosift.app">
-          follow us on Bluesky
-        </Hyperlink>
-        .
-      </p>
+    <div
+      style={{
+        position: "absolute",
+        left: offsetLeft,
+        width: chatAreaWidth,
+        top: 0,
+        height: height,
+        overflow: "auto",
+      }}
+    >
+      <Markdown
+        source={md}
+        onSpecialLinkClick={(link) => {
+          const r = parseSpecialLink(link);
+          if (!r) return;
+          setRoute(r);
+        }}
+        linkTarget="_self"
+      />
     </div>
   );
+};
+
+const parseSpecialLink = (link: string): Route | null => {
+  if (link === "?/p=dandi") {
+    return { page: "dandi" };
+  } else if (link === "?/p=chat") {
+    return { page: "chat" };
+  }
+  return null;
 };
 
 export default HomePage;
