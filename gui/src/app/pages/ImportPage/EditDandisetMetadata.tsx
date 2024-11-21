@@ -139,6 +139,7 @@ const EditDandisetMetadata: FunctionComponent<EditDandisetMetadataProps> = ({
         height={0}
         originalDandisetMetadata={dandisetMetadata}
         dandisetMetadata={editedDandisetMetadata || dandisetMetadata}
+        setDandisetMetadata={setEditedDandisetMetadata}
         dandisetId={dandisetId}
         dandisetVersion={"draft"}
         setView={setView}
@@ -155,6 +156,7 @@ type RightPanelProps = {
   dandisetVersion: string;
   originalDandisetMetadata: DandisetMetadata;
   dandisetMetadata: DandisetMetadata;
+  setDandisetMetadata: (metadata: DandisetMetadata) => void;
   setView: (m: ViewMode) => void;
   onSaveChanges: () => void;
 };
@@ -164,6 +166,7 @@ const RightPanel: FunctionComponent<RightPanelProps> = ({
   dandisetVersion,
   originalDandisetMetadata,
   dandisetMetadata,
+  setDandisetMetadata,
   width,
   height,
   setView,
@@ -194,9 +197,20 @@ const RightPanel: FunctionComponent<RightPanelProps> = ({
         </a>
       </h1>
       <div>
-        <NameSection dandisetMetadata={dandisetMetadata} />
+        <NameSection
+          dandisetMetadata={dandisetMetadata}
+          onChange={setDandisetMetadata}
+          modified={dandisetMetadata.name !== originalDandisetMetadata.name}
+        />
         <hr />
-        <DescriptionSection dandisetMetadata={dandisetMetadata} />
+        <DescriptionSection
+          dandisetMetadata={dandisetMetadata}
+          onChange={setDandisetMetadata}
+          modified={
+            dandisetMetadata.description !==
+            originalDandisetMetadata.description
+          }
+        />
         <hr />
         <ContributorSection
           modified={
@@ -381,52 +395,69 @@ const RightPanel: FunctionComponent<RightPanelProps> = ({
 };
 
 type EditTextFieldProps = {
+  modified?: boolean;
   label: string;
   value: string | undefined;
-  setValue: (value: string) => void;
-  originalValue: string;
+  setValue: (value: string | undefined) => void;
 };
 
 const EditTextField: FunctionComponent<EditTextFieldProps> = ({
+  modified,
   label,
   value,
   setValue,
-  originalValue,
 }) => {
-  const isModified = value !== originalValue;
+  const [editedValue, setEditedValue] = useState<string | undefined>(value);
+  const isModified = value !== editedValue;
 
   return (
     <div>
-      <label style={{ fontWeight: "bold" }}>
-        {label}:&nbsp;
+      <label
+        style={{
+          fontWeight: "bold",
+          color: modified ? "darkmagenta" : "black",
+        }}
+      >
+        {label}
+        {modified ? "*" : ""}:&nbsp;
         <input
           type="text"
-          value={value || ""}
-          onChange={(event) => setValue(event.target.value)}
+          value={editedValue || ""}
+          onChange={(event) => setEditedValue(event.target.value)}
           style={{ color: isModified ? "red" : "black" }}
         />
       </label>
       {isModified && (
-        <button onClick={() => setValue(originalValue)}>Reset</button>
+        <button onClick={() => setValue(editedValue)}>Apply</button>
       )}
     </div>
   );
 };
 
 const EditMultilineTextField: FunctionComponent<EditTextFieldProps> = ({
+  modified,
   label,
   value,
   setValue,
-  originalValue,
 }) => {
-  const isModified = value !== originalValue;
+  const [editedValue, setEditedValue] = useState<string | undefined>(value);
+  const isModified = value !== editedValue;
 
   return (
-    <div style={{ maxWidth: 800, width: "100%" }}>
-      <label style={{ fontWeight: "bold" }}>{label}</label>
+    <div
+      style={{
+        maxWidth: 800,
+        width: "100%",
+        color: modified ? "darkmagenta" : "black",
+      }}
+    >
+      <label style={{ fontWeight: "bold" }}>
+        {label}
+        {modified ? "*" : ""}:&nbsp;
+      </label>
       <textarea
-        value={value || ""}
-        onChange={(event) => setValue(event.target.value)}
+        value={editedValue || ""}
+        onChange={(event) => setEditedValue(event.target.value)}
         style={{
           color: isModified ? "red" : "black",
           width: "100%",
@@ -434,7 +465,7 @@ const EditMultilineTextField: FunctionComponent<EditTextFieldProps> = ({
         }}
       />
       {isModified && (
-        <button onClick={() => setValue(originalValue)}>Reset</button>
+        <button onClick={() => setValue(editedValue)}>Apply</button>
       )}
     </div>
   );
@@ -473,30 +504,32 @@ const ReadOnlyTextField: FunctionComponent<ReadOnlyTextFieldProps> = ({
 
 const NameSection: FunctionComponent<{
   dandisetMetadata: DandisetMetadata;
-}> = ({ dandisetMetadata }) => {
-  const [editedName, setEditedName] = useState<string>(dandisetMetadata.name);
+  onChange: (metadata: DandisetMetadata) => void;
+  modified: boolean;
+}> = ({ dandisetMetadata, onChange, modified }) => {
   return (
     <EditTextField
+      modified={modified}
       label="Name"
-      value={editedName}
-      setValue={setEditedName}
-      originalValue={dandisetMetadata.name}
+      value={dandisetMetadata.name}
+      setValue={(name) => onChange({ ...dandisetMetadata, name: name || "" })}
     />
   );
 };
 
 const DescriptionSection: FunctionComponent<{
+  modified: boolean;
   dandisetMetadata: DandisetMetadata;
-}> = ({ dandisetMetadata }) => {
-  const [editedDescription, setEditedDescription] = useState<string>(
-    dandisetMetadata.description,
-  );
+  onChange: (metadata: DandisetMetadata) => void;
+}> = ({ dandisetMetadata, onChange, modified }) => {
   return (
     <EditMultilineTextField
+      modified={modified}
       label="Description"
-      value={editedDescription}
-      setValue={setEditedDescription}
-      originalValue={dandisetMetadata.description}
+      value={dandisetMetadata.description}
+      setValue={(description) =>
+        onChange({ ...dandisetMetadata, description: description || "" })
+      }
     />
   );
 };
