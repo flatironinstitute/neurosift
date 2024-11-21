@@ -1,9 +1,9 @@
 import { Hyperlink, SmallIconButton, VBoxLayout } from "@fi-sci/misc";
-import { Chat, Search } from "@mui/icons-material";
+import { Search } from "@mui/icons-material";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import { FunctionComponent, useCallback, useEffect, useState } from "react";
 import SearchResults, { applicationBarColorDarkened } from "./SearchResults";
 import { DandisetSearchResultItem, DandisetsResponse } from "./types";
-import useRoute from "neurosift-lib/contexts/useRoute";
 
 type Props = {
   width: number;
@@ -62,6 +62,15 @@ const DandiBrowser: FunctionComponent<Props> = ({ width, height }) => {
     };
   }, [searchText, stagingStr, staging]);
 
+  const handleSelectedDandiset = useCallback((dandisetId: string, dandisetVersion: string) => {
+    setRoute({
+      page: "dandiset",
+      dandisetId,
+      dandisetVersion,
+      staging: (route as any)["staging"] || false,
+    });
+  }, [route, setRoute]);
+
   return (
     <VBoxLayout
       width={width}
@@ -110,6 +119,7 @@ const DandiBrowser: FunctionComponent<Props> = ({ width, height }) => {
           height={height - searchBarHeight}
           searchResults={searchResult}
           useStaging={staging}
+          onSelectedDandiset={handleSelectedDandiset}
         />
       </div>
     </VBoxLayout>

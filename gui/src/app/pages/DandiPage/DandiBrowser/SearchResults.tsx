@@ -14,6 +14,7 @@ type SearchResultsProps = {
   height: number;
   searchResults: DandisetSearchResultItem[];
   useStaging?: boolean;
+  onSelectedDandiset?: (dandisetId: string, dandisetVersion: string) => void;
 };
 
 const defaultMinLeft = 200;
@@ -24,9 +25,10 @@ const SearchResults: FunctionComponent<SearchResultsProps> = ({
   height,
   searchResults,
   useStaging,
+  onSelectedDandiset,
 }) => {
   // const [selectedDandisetItem, setSelectedDandisetItem] = useState<DandisetSearchResultItem | null>(null)
-  const { route, setRoute } = useRoute();
+  const { route } = useRoute();
   const dandisetId = route.page === "dandiset" ? route.dandisetId : undefined;
   // useEffect(() => {
   //     // reset the selected item when the useStaging changes
@@ -44,14 +46,9 @@ const SearchResults: FunctionComponent<SearchResultsProps> = ({
 
   const setSelectedDandisetItem = useCallback(
     (dandisetId: string, dandisetVersion: string) => {
-      setRoute({
-        page: "dandiset",
-        dandisetId,
-        dandisetVersion,
-        staging: (route as any)["staging"] || false,
-      });
+      onSelectedDandiset && onSelectedDandiset(dandisetId, dandisetVersion);
     },
-    [setRoute, route],
+    [onSelectedDandiset]
   );
 
   return (
@@ -73,13 +70,13 @@ const SearchResults: FunctionComponent<SearchResultsProps> = ({
         // onImportItems={onImportItems} // not actually needed
         // onClickAsset={onClickAsset} // not actually needed
       />
-      <DandisetView
+      { dandisetId ? <DandisetView
         dandisetId={dandisetId || ""}
         width={0}
         height={0}
         // onClickAsset={(assetItem: AssetsResponseItem) => {onClickAsset(selectedItem?.identifier || '', selectedItem?.most_recent_published_version?.version || 'draft', assetItem)}}
         useStaging={useStaging}
-      />
+      /> : <div />}
     </Splitter>
   );
 };

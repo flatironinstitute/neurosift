@@ -101,6 +101,9 @@ export type Route =
     }
   | {
       page: "compute";
+    }
+  | {
+      page: "import";
     };
 
 type PluginName = "EphysSummary";
@@ -289,7 +292,12 @@ export const RouteProvider = ({ children }: { children: React.ReactNode }) => {
       return {
         page: "compute",
       };
-    } else {
+    } else if (p === "/import") {
+      return {
+        page: "import",
+      };
+    }
+    else {
       return {
         page: "home",
       };
@@ -434,6 +442,10 @@ export const RouteProvider = ({ children }: { children: React.ReactNode }) => {
       } else if (r.page === "compute") {
         newQuery = {
           p: "/compute",
+        };
+      } else if (r.page === "import") {
+        newQuery = {
+          p: "/import",
         };
       }
       // no longer supported
