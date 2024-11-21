@@ -27,7 +27,7 @@ You can use Neurosift to:
 - [GitHub repository](https://github.com/flatironinstitute/neurosift)
 - [Neurosift blog](https://magland.github.io/neurosift-blog/)
 - [Request a feature or report a bug](https://github.com/flatironinstitute/neurosift/issues)
-- [Feedback form](https://forms.gle/8YrNf1Tnz4685TMY9")
+- [Feedback form](https://forms.gle/8YrNf1Tnz4685TMY9)
 
 ## Follow us
 

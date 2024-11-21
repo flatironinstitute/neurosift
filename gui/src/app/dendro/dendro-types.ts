@@ -541,7 +541,7 @@ export type AddUserRequest = {
 export const isAddUserRequest = (x: any): x is AddUserRequest => {
   return validateObject(x, {
     type: isEqualTo("addUserRequest"),
-    user: isString,
+    userId: isString,
   });
 };
 

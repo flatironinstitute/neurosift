@@ -77,14 +77,14 @@ const ApplicationBar: FunctionComponent<Props> = ({ onContextChat }) => {
           {/* <div style={{color: bannerColor, position: 'relative', top: -2}}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{star} This viewer is in alpha and is under <Hyperlink color={bannerColor} href="https://github.com/flatironinstitute/neurosift" target="_blank">active development</Hyperlink> {star}</div> */}
           <ReportDandiApiDown />
           <span style={{ marginLeft: "auto" }} />
-          <span style={{ color: "white" }}>
+          {/* <span style={{ color: "white" }}>
             <SmallIconButton
               icon={<Computer />}
               title={`Learn about the online workshop`}
               onClick={() => setRoute({ page: "about" })}
             />
           </span>
-          &nbsp; &nbsp;
+          &nbsp; &nbsp; */}
           <span style={{ color: "white" }}>
             <SmallIconButton
               icon={<QuestionMark />}
