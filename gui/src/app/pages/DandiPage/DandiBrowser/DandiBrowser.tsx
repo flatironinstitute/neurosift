@@ -45,7 +45,7 @@ const DandiBrowser: FunctionComponent<Props> = ({ width, height }) => {
       const { headers, apiKeyProvided } = getDandiApiHeaders(staging);
       const embargoedStr = apiKeyProvided ? "true" : "false";
       const response = await fetch(
-        `https://api${stagingStr}.dandiarchive.org/api/dandisets/?page=1&page_size=50&ordering=-modified&search=${searchText}&draft=true&empty=false&embargoed=${embargoedStr}`,
+        `https://api${stagingStr}.dandiarchive.org/api/dandisets/?page=1&page_size=50&ordering=-modified&search=${searchText}&draft=true&empty=true&embargoed=${embargoedStr}`,
         {
           headers,
         },

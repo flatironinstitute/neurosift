@@ -65,7 +65,7 @@ class NeurodataObject:
 
 
 def get_all_public_dandisets():
-    url = "https://api.dandiarchive.org/api/dandisets/?page=1&page_size=5000&ordering=-modified&draft=true&empty=false&embargoed=false"
+    url = "https://api.dandiarchive.org/api/dandisets/?page=1&page_size=5000&ordering=-modified&draft=true&empty=true&embargoed=false"
     with urllib.request.urlopen(url) as response:
         X = json.loads(response.read())
 

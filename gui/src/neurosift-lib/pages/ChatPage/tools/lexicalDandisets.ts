@@ -25,7 +25,7 @@ export const lexicaltDandisetsTool = {
     onLogMessage("lexical_dandisets query", args.search_text);
     const { search_text } = args;
     const stagingStr = "";
-    const url = `https://api${stagingStr}.dandiarchive.org/api/dandisets/?page=1&page_size=20&ordering=-modified&search=${search_text}&draft=true&empty=false&embargoed=false`;
+    const url = `https://api${stagingStr}.dandiarchive.org/api/dandisets/?page=1&page_size=20&ordering=-modified&search=${search_text}&draft=true&empty=true&embargoed=false`;
     const resp = await fetch(url);
     if (!resp.ok) {
       throw new Error(`Failed to fetch from ${url}`);
