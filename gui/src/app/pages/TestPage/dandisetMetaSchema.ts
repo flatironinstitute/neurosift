@@ -72,7 +72,6 @@ export const validateContributor = (
   const validate = ajv.compile(contributorSchema2);
   const valid = validate(contributor);
   if (!valid) {
-    console.log("+++++++++++++++++++", contributorSchema2, contributor);
     return { valid: false, errors: validate.errors };
   }
   return { valid: true };

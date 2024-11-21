@@ -62,14 +62,17 @@ const DandiBrowser: FunctionComponent<Props> = ({ width, height }) => {
     };
   }, [searchText, stagingStr, staging]);
 
-  const handleSelectedDandiset = useCallback((dandisetId: string, dandisetVersion: string) => {
-    setRoute({
-      page: "dandiset",
-      dandisetId,
-      dandisetVersion,
-      staging: (route as any)["staging"] || false,
-    });
-  }, [route, setRoute]);
+  const handleSelectedDandiset = useCallback(
+    (dandisetId: string, dandisetVersion: string) => {
+      setRoute({
+        page: "dandiset",
+        dandisetId,
+        dandisetVersion,
+        staging: (route as any)["staging"] || false,
+      });
+    },
+    [route, setRoute],
+  );
 
   return (
     <VBoxLayout

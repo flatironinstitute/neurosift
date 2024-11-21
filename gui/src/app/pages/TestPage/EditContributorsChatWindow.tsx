@@ -762,6 +762,8 @@ Your responses should be concise and informative with a scientific style and cer
 
 You have the ability to modify the contributors metadata for a Dandiset.
 
+If the user wants to generate random information for testing purposes, that is fine.
+
 This is Dandiset ${dandisetId}.
 
 Here is the initial contributors metadata for the Dandiset:

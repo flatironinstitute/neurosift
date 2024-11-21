@@ -32,6 +32,7 @@ const TestPage: FunctionComponent<TestPageProps> = ({ width, height }) => {
   }, [dandisetMetadata]);
   const [view, setView] = useState<ViewMode>("main");
   const [chat, chatDispatch] = useReducer(chatReducer, emptyChat);
+  const [returnable, setReturnable] = useState<boolean>(true);
   if (!dandisetId) {
     return <div>No dandisetId in query of URL</div>;
   }
@@ -47,7 +48,7 @@ const TestPage: FunctionComponent<TestPageProps> = ({ width, height }) => {
         dandisetId={dandisetId}
         dandisetMetadata={editedDandisetMetadata}
         setDandisetMetadata={setEditedDandisetMetadata}
-        onClose={() => setView("main")}
+        setReturnable={setReturnable}
       />
     );
   }

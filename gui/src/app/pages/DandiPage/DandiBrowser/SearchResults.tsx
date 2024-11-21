@@ -48,7 +48,7 @@ const SearchResults: FunctionComponent<SearchResultsProps> = ({
     (dandisetId: string, dandisetVersion: string) => {
       onSelectedDandiset && onSelectedDandiset(dandisetId, dandisetVersion);
     },
-    [onSelectedDandiset]
+    [onSelectedDandiset],
   );
 
   return (
@@ -70,13 +70,17 @@ const SearchResults: FunctionComponent<SearchResultsProps> = ({
         // onImportItems={onImportItems} // not actually needed
         // onClickAsset={onClickAsset} // not actually needed
       />
-      { dandisetId ? <DandisetView
-        dandisetId={dandisetId || ""}
-        width={0}
-        height={0}
-        // onClickAsset={(assetItem: AssetsResponseItem) => {onClickAsset(selectedItem?.identifier || '', selectedItem?.most_recent_published_version?.version || 'draft', assetItem)}}
-        useStaging={useStaging}
-      /> : <div />}
+      {dandisetId ? (
+        <DandisetView
+          dandisetId={dandisetId || ""}
+          width={0}
+          height={0}
+          // onClickAsset={(assetItem: AssetsResponseItem) => {onClickAsset(selectedItem?.identifier || '', selectedItem?.most_recent_published_version?.version || 'draft', assetItem)}}
+          useStaging={useStaging}
+        />
+      ) : (
+        <div />
+      )}
     </Splitter>
   );
 };

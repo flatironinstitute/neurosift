@@ -296,8 +296,7 @@ export const RouteProvider = ({ children }: { children: React.ReactNode }) => {
       return {
         page: "import",
       };
-    }
-    else {
+    } else {
       return {
         page: "home",
       };

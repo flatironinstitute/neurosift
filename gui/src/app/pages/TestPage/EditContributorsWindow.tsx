@@ -19,7 +19,7 @@ type EditContributorsWindowProps = {
   dandisetId: string;
   dandisetMetadata: DandisetMetadata;
   setDandisetMetadata: (dandisetMetadata: DandisetMetadata) => void;
-  onClose: () => void;
+  setReturnable: (returnable: boolean) => void;
 };
 
 const EditContributorsWindow: FunctionComponent<
@@ -30,7 +30,7 @@ const EditContributorsWindow: FunctionComponent<
   setDandisetMetadata,
   width,
   height,
-  onClose,
+  setReturnable,
 }) => {
   const [chat, chatDispatch] = useReducer(chatReducer, emptyChat);
   const [editedDandisetMetadata, setEditedDandisetMetadata] =
@@ -43,6 +43,9 @@ const EditContributorsWindow: FunctionComponent<
     handleOpen: openManualEdit,
     handleClose: closeManualEdit,
   } = useModalWindow();
+  useEffect(() => {
+    setReturnable(editedDandisetMetadata === dandisetMetadata);
+  }, [editedDandisetMetadata, dandisetMetadata, setReturnable]);
   if (!editedDandisetMetadata) return <div>x</div>;
   return (
     <div>
@@ -77,7 +80,6 @@ const EditContributorsWindow: FunctionComponent<
             setEditedDandisetMetadata(dandisetMetadata);
           }}
           onManualEdit={openManualEdit}
-          onReturnToMainPage={onClose}
         />
       </Splitter>
       <ModalWindow visible={manualEditVisible} onClose={closeManualEdit}>
@@ -99,7 +101,6 @@ type RightPanelProps = {
   onAcceptChanges: () => void;
   onCancelChanges: () => void;
   onManualEdit: () => void;
-  onReturnToMainPage: () => void;
 };
 
 const RightPanel: FunctionComponent<RightPanelProps> = ({
@@ -110,7 +111,6 @@ const RightPanel: FunctionComponent<RightPanelProps> = ({
   onAcceptChanges,
   onCancelChanges,
   onManualEdit,
-  onReturnToMainPage,
 }) => {
   const topBarHeight = 20;
   const modified = dandisetMetadata !== editedDandisetMetadata;
@@ -145,19 +145,6 @@ const RightPanel: FunctionComponent<RightPanelProps> = ({
                 label="Cancel changes"
                 onClick={onCancelChanges}
                 disabled={!modified}
-              />
-            </span>
-            &nbsp;&nbsp;&nbsp;
-          </>
-        )}
-        {!modified && (
-          <>
-            <span style={{ color: modified ? "gray" : "black" }}>
-              <SmallIconButton
-                icon={<ExitToApp />}
-                label="Return to main metadata page"
-                onClick={onReturnToMainPage}
-                disabled={modified}
               />
             </span>
             &nbsp;&nbsp;&nbsp;

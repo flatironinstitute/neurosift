@@ -38,14 +38,18 @@ export const editContributorsTool: EditContributorsTool = (onChange) => ({
     onLogMessage: (title: string, message: string) => void,
   ) => {
     const new_contributors: string = args.new_contributors;
-    const x = JSON.parse(new_contributors);
+    let x = JSON.parse(new_contributors);
+    if (typeof x === "object" && Array.isArray(x)) {
+      // if it's an array then we need to do this:
+      x = { contributor: x };
+    }
     const { valid, errors } = validateContributor(x);
     if (!valid) {
       console.warn(x);
       console.error("Error validating new contributors", errors);
       return `Error: ${JSON.stringify(errors)}`;
     }
-    onChange(JSON.parse(new_contributors));
+    onChange(x);
     return "ok";
   },
 });
