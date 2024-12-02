@@ -353,7 +353,7 @@ const SpikeDensityPlotWidgetChild: FunctionComponent<
   }, []);
 
   if (visibleStartTimeSec === undefined) {
-    return <div>Loading...</div>;
+    return <div>Loading (visible start time is undefined)</div>;
   }
   return (
     <TimeScrollView2

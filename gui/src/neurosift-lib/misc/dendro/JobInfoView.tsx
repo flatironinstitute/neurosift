@@ -8,7 +8,7 @@ import {
   JupyterConnectivityState,
   useJupyterConnectivity,
 } from "../../pages/ChatPage/JupyterConnectivity";
-import PythonSessionClient from "neurosift-lib/pages/ChatPage/PythonSessionClient";
+import PythonSessionClient from "../../pages/ChatPage/PythonSessionClient";
 
 type JobInfoViewProps = {
   job: DendroJob;

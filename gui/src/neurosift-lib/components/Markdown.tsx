@@ -25,6 +25,7 @@ type Props = {
   runCodeReady?: boolean;
   files?: { [name: string]: string };
   linkTarget?: string;
+  divHandler?: (args: { className: string | undefined; props: any, children: any }) => JSX.Element;
 };
 
 const Markdown: FunctionComponent<Props> = ({
@@ -34,6 +35,7 @@ const Markdown: FunctionComponent<Props> = ({
   runCodeReady,
   files,
   linkTarget,
+  divHandler
 }) => {
   const components: Partial<
     Omit<NormalComponents, keyof SpecialComponents> & SpecialComponents
@@ -131,6 +133,8 @@ const Markdown: FunctionComponent<Props> = ({
               height={height2}
             />
           );
+        } else if (divHandler) {
+          return divHandler({ className, props, children });
         } else {
           return (
             <div className={className} {...props}>
@@ -174,7 +178,7 @@ const Markdown: FunctionComponent<Props> = ({
       },
       // }
     }),
-    [onSpecialLinkClick, onRunCode, runCodeReady, files],
+    [onSpecialLinkClick, onRunCode, runCodeReady, files, divHandler],
   );
   const preprocessedSource = useMemo(() => {
     const newLines: string[] = [];

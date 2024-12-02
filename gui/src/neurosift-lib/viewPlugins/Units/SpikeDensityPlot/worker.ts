@@ -64,7 +64,7 @@ async function draw() {
     canvasContext.textAlign = "center";
     canvasContext.textBaseline = "middle";
     canvasContext.font = "20px Arial";
-    canvasContext.fillText("Loading...", canvasWidth / 2, canvasHeight / 2);
+    canvasContext.fillText("Loading matrix data", canvasWidth / 2, canvasHeight / 2);
     return;
   }
   // drawCode += 1;

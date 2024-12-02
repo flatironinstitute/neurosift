@@ -39,14 +39,14 @@ or [follow us on Bluesky](https://bsky.app/profile/neurosift.app).
 const HomePage: FunctionComponent<Props> = ({ width, height }) => {
   const { setRoute } = useRoute();
   // layout
-  const chatAreaWidth = Math.min(width - 30, 800);
-  const offsetLeft = (width - chatAreaWidth) / 2;
+  const mainAreaWidth = Math.min(width - 30, 800);
+  const offsetLeft = (width - mainAreaWidth) / 2;
   return (
     <div
       style={{
         position: "absolute",
         left: offsetLeft,
-        width: chatAreaWidth,
+        width: mainAreaWidth,
         top: 0,
         height: height,
         overflow: "auto",

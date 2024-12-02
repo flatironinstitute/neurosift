@@ -1,4 +1,5 @@
 import React, {
+  CSSProperties,
   FunctionComponent,
   useCallback,
   useEffect,
@@ -373,8 +374,21 @@ const TimeScrollView2: FunctionComponent<Props> = ({
     belowDefault: additionalToolbarItems,
   });
 
+  const content2Style: CSSProperties = useMemo(()=>({
+    position: "absolute",
+    width: canvasWidth,
+    height: timeSelectionBarHeight,
+  }),[canvasWidth])
+
+  const contentStyle: CSSProperties = useMemo(()=>({
+    position: "absolute",
+    top: timeSelectionBarHeight,
+    width: canvasWidth,
+    height: canvasHeight - timeSelectionBarHeight,
+  }),[canvasWidth, canvasHeight])
+
   const content2 = showTimeSelectionBar ? (
-    <div style={{ position: "absolute", width: canvasWidth, height }}>
+    <div style={content2Style}>
       <div
         style={{
           position: "absolute",
@@ -388,12 +402,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
         />
       </div>
       <div
-        style={{
-          position: "absolute",
-          top: timeSelectionBarHeight,
-          width: canvasWidth,
-          height: height - timeSelectionBarHeight,
-        }}
+        style={contentStyle}
       >
         {content}
       </div>

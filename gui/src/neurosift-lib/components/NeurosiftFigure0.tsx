@@ -13,7 +13,7 @@ import {
   RemoteH5FileLindi,
   RemoteH5FileX,
 } from "../remote-h5-file";
-import { loadSpecifications } from "neurosift-lib/misc/SpecificationsView/SetupNwbFileSpecificationsProvider";
+import { loadSpecifications } from "../misc/SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 type NeurosiftFigure0Props = {
   nwb_url: string;

@@ -425,7 +425,7 @@ const DynamicTableView: FunctionComponent<Props> = ({
     <div
       className="dynamic-table-view"
       style={{
-        position: "absolute",
+        position: "relative",
         width,
         height,
         background: "white",

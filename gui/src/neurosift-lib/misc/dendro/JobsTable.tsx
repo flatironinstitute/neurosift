@@ -3,7 +3,7 @@ import { FunctionComponent } from "react";
 import { DendroJob, DendroJobStatus } from "./dendro-types";
 import { timeAgoString } from "../../utils/timeStrings";
 import "./scientific-table.css";
-import useRoute from "neurosift-lib/contexts/useRoute";
+import useRoute from "../../contexts/useRoute";
 
 type JobsTableProps = {
   jobs: DendroJob[];
