@@ -88,7 +88,11 @@ async function draw() {
     canvasContext.textAlign = "center";
     canvasContext.textBaseline = "middle";
     canvasContext.font = "20px Arial";
-    canvasContext.fillText("Loading plot data", canvasWidth / 2, canvasHeight / 2);
+    canvasContext.fillText(
+      "Loading plot data",
+      canvasWidth / 2,
+      canvasHeight / 2,
+    );
     return;
   }
   // drawCode += 1;

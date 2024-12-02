@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { FunctionComponent, PropsWithChildren, useEffect, useMemo, useState } from "react";
+import {
+  FunctionComponent,
+  PropsWithChildren,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { NwbFileContext } from "./NwbFileContext";
 import { RemoteH5File, RemoteH5FileLindi } from "../remote-h5-file";
 

@@ -374,18 +374,24 @@ const TimeScrollView2: FunctionComponent<Props> = ({
     belowDefault: additionalToolbarItems,
   });
 
-  const content2Style: CSSProperties = useMemo(()=>({
-    position: "absolute",
-    width: canvasWidth,
-    height: timeSelectionBarHeight,
-  }),[canvasWidth])
+  const content2Style: CSSProperties = useMemo(
+    () => ({
+      position: "absolute",
+      width: canvasWidth,
+      height: timeSelectionBarHeight,
+    }),
+    [canvasWidth],
+  );
 
-  const contentStyle: CSSProperties = useMemo(()=>({
-    position: "absolute",
-    top: timeSelectionBarHeight,
-    width: canvasWidth,
-    height: canvasHeight - timeSelectionBarHeight,
-  }),[canvasWidth, canvasHeight])
+  const contentStyle: CSSProperties = useMemo(
+    () => ({
+      position: "absolute",
+      top: timeSelectionBarHeight,
+      width: canvasWidth,
+      height: canvasHeight - timeSelectionBarHeight,
+    }),
+    [canvasWidth, canvasHeight],
+  );
 
   const content2 = showTimeSelectionBar ? (
     <div style={content2Style}>
@@ -401,11 +407,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
           height={timeSelectionBarHeight - 5}
         />
       </div>
-      <div
-        style={contentStyle}
-      >
-        {content}
-      </div>
+      <div style={contentStyle}>{content}</div>
     </div>
   ) : (
     content

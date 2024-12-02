@@ -25,7 +25,11 @@ type Props = {
   runCodeReady?: boolean;
   files?: { [name: string]: string };
   linkTarget?: string;
-  divHandler?: (args: { className: string | undefined; props: any, children: any }) => JSX.Element;
+  divHandler?: (args: {
+    className: string | undefined;
+    props: any;
+    children: any;
+  }) => JSX.Element;
 };
 
 const Markdown: FunctionComponent<Props> = ({
@@ -35,7 +39,7 @@ const Markdown: FunctionComponent<Props> = ({
   runCodeReady,
   files,
   linkTarget,
-  divHandler
+  divHandler,
 }) => {
   const components: Partial<
     Omit<NormalComponents, keyof SpecialComponents> & SpecialComponents

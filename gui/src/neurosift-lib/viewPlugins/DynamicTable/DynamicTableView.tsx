@@ -189,7 +189,7 @@ const DynamicTableView: FunctionComponent<Props> = ({
         if (ds0.shape.length > 1) {
           console.warn(
             `In DynamicTableView, skipping dataset with shape > 1: ${path}/${colname} (${ds0.shape})`,
-          )
+          );
           continue;
         }
         let d: DatasetDataType | any[] | undefined =

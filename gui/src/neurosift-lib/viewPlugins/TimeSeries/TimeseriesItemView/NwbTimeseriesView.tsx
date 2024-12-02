@@ -742,7 +742,9 @@ export const NwbTimeseriesViewChild: FunctionComponent<
             userSelect: "none",
           }}
         >
-          <div style={{ fontSize: 20, color: "blue" }}>Loading timeseries data...</div>
+          <div style={{ fontSize: 20, color: "blue" }}>
+            Loading timeseries data...
+          </div>
         </div>
       )}
       <ModalWindow visible={helpVisible} onClose={handleCloseHelp}>

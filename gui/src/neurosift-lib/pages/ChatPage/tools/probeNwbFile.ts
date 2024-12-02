@@ -48,7 +48,7 @@ export const probeNwbFileTool: ToolItem = {
     if (urlLindi) {
       nwbFile = await RemoteH5FileLindi.create(urlLindi);
     } else {
-      nwbFile = new RemoteH5File(args.url, {});
+      nwbFile = new RemoteH5File(args.nwb_url, {});
     }
     const info = await getNwbFileInfoForChat(nwbFile);
     return info;

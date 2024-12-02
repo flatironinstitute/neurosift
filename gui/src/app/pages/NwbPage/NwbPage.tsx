@@ -460,13 +460,13 @@ const getResolvedUrl = async (
   storageType: StorageType,
   o: { dandisetId?: string },
 ): Promise<{ url: string; storageType: StorageType }> => {
-  if (url.startsWith('kachery:')) {
+  if (url.startsWith("kachery:")) {
     const storageType2 = getStorageTypeForUri(url) || storageType;
     const aa = await getUrlForKacheryUri(url);
     if (!aa) {
       throw Error(`Unable to resolve kachery uri: ${url}`);
     }
-    const {url: url2} = aa;
+    const { url: url2 } = aa;
     return { url: url2, storageType: storageType2 };
   }
   const urlSearchParams = new URLSearchParams(window.location.search);
@@ -493,40 +493,40 @@ const getResolvedUrl = async (
 };
 
 const getStorageTypeForUri = (uri: string): StorageType | undefined => {
-  if (uri.endsWith('.nwb')) {
-    return 'h5';
-  }
-  else if (uri.endsWith('.lindi.json')) {
-    return 'lindi';
-  }
-  else if (uri.endsWith('.lindi.tar')) {
-    return 'lindi';
-  }
-  else {
+  if (uri.endsWith(".nwb")) {
+    return "h5";
+  } else if (uri.endsWith(".lindi.json")) {
+    return "lindi";
+  } else if (uri.endsWith(".lindi.tar")) {
+    return "lindi";
+  } else {
     return undefined;
   }
 };
 
-const urlForKacheryUriCache: { [key: string]: { url: string, size: number, foundLocally: boolean, expires: number } | undefined } = {};
+const urlForKacheryUriCache: {
+  [key: string]:
+    | { url: string; size: number; foundLocally: boolean; expires: number }
+    | undefined;
+} = {};
 
 const getUrlForKacheryUri = async (uri: string) => {
   if (urlForKacheryUriCache[uri]) {
     const x = urlForKacheryUriCache[uri];
-    if (x && (Date.now() < x.expires)) {
+    if (x && Date.now() < x.expires) {
       return x;
-    }
-    else {
+    } else {
       delete urlForKacheryUriCache[uri];
     }
   }
-  const parts = uri.split(':');
+  const parts = uri.split(":");
   if (parts.length < 4) {
-      console.warn(`Invalid kachery URI: ${uri}`);
-      return undefined;
+    console.warn(`Invalid kachery URI: ${uri}`);
+    return undefined;
   }
-  if (parts[0] !== 'kachery') {
-      console.warn(`Invalid kachery URI: ${uri}`);
-      return undefined;
+  if (parts[0] !== "kachery") {
+    console.warn(`Invalid kachery URI: ${uri}`);
+    return undefined;
   }
   const zone = parts[1];
   const alg = parts[2];
@@ -534,38 +534,46 @@ const getUrlForKacheryUri = async (uri: string) => {
   // const label = parts[4];
   const aa = await getFileDownloadUrlNewKachery(alg, hash, zone);
   if (!aa) return undefined;
-  const {url, size, foundLocally} = aa;
+  const { url, size, foundLocally } = aa;
   const expires = Date.now() + 1000 * 60 * 10; // 10 minutes
-  urlForKacheryUriCache[uri] = {url, size, foundLocally, expires};
-  return {url, size, foundLocally, sha1: hash};
-}
+  urlForKacheryUriCache[uri] = { url, size, foundLocally, expires };
+  return { url, size, foundLocally, sha1: hash };
+};
 
-const getFileDownloadUrlNewKachery = async (hashAlg: string, hash: string, zoneName: string): Promise<{url: string, size: number, foundLocally: boolean} | undefined> => {
-  const url = `https://kachery.vercel.app/api/findFile`
+const getFileDownloadUrlNewKachery = async (
+  hashAlg: string,
+  hash: string,
+  zoneName: string,
+): Promise<
+  { url: string; size: number; foundLocally: boolean } | undefined
+> => {
+  const url = `https://kachery.vercel.app/api/findFile`;
   const payload = {
-      type: 'findFileRequest',
-      hashAlg,
-      hash,
-      zoneName
-  }
+    type: "findFileRequest",
+    hashAlg,
+    hash,
+    zoneName,
+  };
   const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-          'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-  })
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
   if (!response.ok) {
-      console.warn(`Error in findFile request: ${response.status} ${response.statusText}`)
-      return undefined
+    console.warn(
+      `Error in findFile request: ${response.status} ${response.statusText}`,
+    );
+    return undefined;
   }
-  const resp = await response.json()
+  const resp = await response.json();
   return {
-      url: resp.url,
-      size: resp.size,
-      foundLocally: false
-  }
-}
+    url: resp.url,
+    size: resp.size,
+    foundLocally: false,
+  };
+};
 
 export const tryGetLindiUrl = async (url: string, dandisetId: string) => {
   if (url.endsWith(".lindi.json") || url.endsWith(".lindi.tar")) {

@@ -9,6 +9,7 @@
     "express": "^4.18.2"
   },
   "scripts": {
-    "start": "node src/index.js --jupyter-url $JUPYTER_URL --allow-origin $ALLOW_ORIGIN --port $PORT"
+    "start": "node src/index.js",
+    "start2": "node src/index.js --jupyter-url $JUPYTER_URL --allow-origin $ALLOW_ORIGIN --port $PORT"
   }
 }
