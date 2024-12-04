@@ -326,12 +326,12 @@ const lindiDatasetDataLoader = async (o: {
         dtype,
       );
       let iRet = 0;
-      for (let i = 0; i < retList.length; i++) {
-        for (let i1 = 0; i1 < i1End - i1Start; i1++) {
-          for (let i2 = 0; i2 < i2End - i2Start; i2++) {
+      for (let i1 = 0; i1 < i1End - i1Start; i1++) {
+        for (let i2 = 0; i2 < i2End - i2Start; i2++) {
+          for (let i = 0; i < retList.length; i++) {
             for (
               let i3 = 0;
-              i3 < prodShapeSizeOfAllButFirstTwoDimensions;
+              i3 < prodChunkSizeOfAllButFirstTwoDimensions;
               i3++
             ) {
               ret[iRet] =
