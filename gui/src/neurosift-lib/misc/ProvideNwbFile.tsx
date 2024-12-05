@@ -58,6 +58,7 @@ const getNwbFileFromUrl = async (nwbUrl: string, dandisetId: string) => {
   } else {
     ret = new RemoteH5File(nwbUrl, {});
   }
+  ret.sourceUrls = [nwbUrl];
   nwbFileFromUrlCache[nwbUrl] = ret;
   return ret;
 };

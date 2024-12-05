@@ -453,8 +453,8 @@ export const NwbTimeseriesViewChild: FunctionComponent<
   const [refreshValueRangeCode, setRefreshValueRangeCode] = useState<number>(0);
   useEffect(() => {
     if (!dataSeries) return;
-    let min = 0;
-    let max = 0;
+    let min = Infinity;
+    let max = -Infinity;
     for (let i = 0; i < dataSeries.length; i++) {
       const y = dataSeries[i].y;
       for (let j = 0; j < y.length; j++) {

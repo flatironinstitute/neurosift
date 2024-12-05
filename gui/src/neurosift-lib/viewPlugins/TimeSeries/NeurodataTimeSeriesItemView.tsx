@@ -1,4 +1,4 @@
-import { FunctionComponent, useMemo, useState } from "react";
+import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import NwbTimeseriesView from "./TimeseriesItemView/NwbTimeseriesView";
 import TimeSeriesViewToolbar, {
   TimeSeriesViewOpts,
@@ -7,6 +7,7 @@ import { SpikeTrainsClient } from "../Units/DirectRasterPlotUnitsItemView";
 import TabWidget from "../../components/TabWidget";
 import { useNwbFile } from "../../misc/NwbFileContext";
 import MultiscaleTimeSeriesView from "./MultiscaleTimeSeriesView";
+import { useDataset } from "../../misc/hooks";
 
 type Props = {
   width: number;
@@ -15,6 +16,9 @@ type Props = {
   condensed?: boolean;
 
   spikeTrainsClient?: SpikeTrainsClient;
+
+  initialShowAllChannels?: boolean;
+  initialChannelSeparation?: number;
 };
 
 const tabs = [
@@ -36,6 +40,8 @@ export const NeurodataTimeSeriesItemViewNext: FunctionComponent<Props> = ({
   height,
   path,
   spikeTrainsClient,
+  initialShowAllChannels,
+  initialChannelSeparation,
 }) => {
   const [currentTabId, setCurrentTabId] = useState("timeseries");
 
@@ -44,7 +50,7 @@ export const NeurodataTimeSeriesItemViewNext: FunctionComponent<Props> = ({
     throw Error("Unexpected: nwbFile is undefined (no context provider)");
 
   const nwbUrl = useMemo(() => {
-    return (nwbFile.sourceUrls || [])[0];
+    return (nwbFile.sourceUrls || [])[0] || "";
   }, [nwbFile]);
 
   return (
@@ -60,6 +66,8 @@ export const NeurodataTimeSeriesItemViewNext: FunctionComponent<Props> = ({
         height={0}
         path={path}
         spikeTrainsClient={spikeTrainsClient}
+        initialShowAllChannels={initialShowAllChannels}
+        initialChannelSeparation={initialChannelSeparation}
       />
       {nwbUrl ? (
         <MultiscaleTimeSeriesView
@@ -80,16 +88,32 @@ const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({
   height,
   path,
   spikeTrainsClient,
+  initialShowAllChannels,
+  initialChannelSeparation,
 }) => {
   const bottomToolBarHeight = 30;
+  const totalNumChannels = useTotalNumChannelsForTimeSeries(path);
   // important to start with only 1 visible channel --- if we want to default to more, do it in a useEffect after we figure out the number of channels in the dataset
   const [timeSeriesViewOpts, setTimeSeriesViewOpts] =
     useState<TimeSeriesViewOpts>({
       numVisibleChannels: 1,
       visibleStartChannel: 0,
-      autoChannelSeparation: 0.5,
+      autoChannelSeparation:
+        initialChannelSeparation !== undefined ? initialChannelSeparation : 0.5,
       colorChannels: true,
     });
+  useEffect(() => {
+    setTimeSeriesViewOpts((prev) => {
+      const newNumVisibleChannels =
+        initialShowAllChannels && totalNumChannels ? totalNumChannels : 1;
+      if (newNumVisibleChannels !== prev.numVisibleChannels) {
+        return {
+          ...prev,
+          numVisibleChannels: newNumVisibleChannels,
+        };
+      } else return prev;
+    });
+  }, [totalNumChannels, initialShowAllChannels]);
   const visibleChannelsRange = useMemo(() => {
     const { numVisibleChannels, visibleStartChannel } = timeSeriesViewOpts;
     return [visibleStartChannel, visibleStartChannel + numVisibleChannels] as [
@@ -136,6 +160,14 @@ const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({
       </div>
     </div>
   );
+};
+
+const useTotalNumChannelsForTimeSeries = (path: string) => {
+  const nwbFile = useNwbFile();
+  if (!nwbFile)
+    throw Error("Unexpected: nwbFile is undefined (no context provider)");
+  const ds = useDataset(nwbFile, path + "/data");
+  return ds ? ds.shape[1] || 1 : undefined;
 };
 
 export default NeurodataTimeSeriesItemView;

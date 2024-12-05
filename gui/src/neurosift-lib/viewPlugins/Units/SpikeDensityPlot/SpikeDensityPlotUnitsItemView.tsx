@@ -44,7 +44,7 @@ const SpikeDensityPlotUnitsItemView: FunctionComponent<Props> = ({
   if (!nwbFile) throw Error("Unexpected: nwbFile is null");
 
   const nwbUrl = useMemo(() => {
-    return (nwbFile.sourceUrls || [])[0];
+    return (nwbFile.sourceUrls || [])[0] || "";
   }, [nwbFile]);
 
   const {

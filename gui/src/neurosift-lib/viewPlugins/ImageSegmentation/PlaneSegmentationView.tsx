@@ -283,7 +283,6 @@ const Test1: FunctionComponent<{
           // NOTE: xy flip is not handled properly in this branch. My brain hurts. Any assistance appreciated.
           const aa = await client.getImageMask(j);
           if (canceled) return;
-          console.log(aa);
           const { x0: x0a, y0: y0a, w0: w0a, h0: h0a, data } = aa;
           const w0 = w0a;
           const h0 = h0a;
@@ -347,7 +346,7 @@ const Test1: FunctionComponent<{
           ctx.drawImage(offscreenCanvas, 0, 0, N1 * scale, N2 * scale);
         }
       }
-      setLoadingMessage(`Loaded ${N0} units`);
+      setLoadingMessage(`Loaded ${N0} regions`);
     };
     load();
     return () => {

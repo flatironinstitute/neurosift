@@ -126,7 +126,7 @@ const CEBRAView: FunctionComponent<Props> = ({ width, height, path }) => {
     throw Error("Unexpected: nwbFile is undefined (no context provider)");
 
   const nwbUrl = useMemo(() => {
-    return (nwbFile.sourceUrls || [])[0];
+    return (nwbFile.sourceUrls || [])[0] || "";
   }, [nwbFile]);
 
   const tags = useMemo(() => ["neurosift", "CEBRA"], []);

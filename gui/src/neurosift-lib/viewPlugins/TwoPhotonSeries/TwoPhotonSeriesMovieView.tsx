@@ -40,7 +40,7 @@ const TwoPhotonMovieView: FunctionComponent<TwoPhotonMovieViewProps> = ({
     throw Error("Unexpected: nwbFile is undefined (no context provider)");
 
   const nwbUrl = useMemo(() => {
-    return (nwbFile.sourceUrls || [])[0];
+    return (nwbFile.sourceUrls || [])[0] || "";
   }, [nwbFile]);
 
   const { mp4Url, job, incompleteJob, refreshAllJobs, submitJob } =

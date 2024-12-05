@@ -34,6 +34,7 @@ type Props = {
   path: string;
   condensed?: boolean;
   rgb?: boolean;
+  initialBrightnessFactor?: number;
 };
 
 type ImageData = {
@@ -77,6 +78,7 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
   height,
   path,
   rgb,
+  initialBrightnessFactor,
 }) => {
   // const nwbFile = useNwbFile();
   // const [useMp4, setUseMp4] = useState<boolean | undefined>(undefined);
@@ -127,6 +129,7 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
         height={0}
         path={path}
         rgb={rgb}
+        initialBrightnessFactor={initialBrightnessFactor}
       />
       <TwoPhotonSeriesMovieView width={0} height={0} path={path} />
     </TabWidget>
@@ -138,6 +141,7 @@ export const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
   height,
   path,
   rgb,
+  initialBrightnessFactor,
 }) => {
   const nwbFile = useNwbFile();
   if (!nwbFile) throw Error("Unexpected: nwbFile is null");
@@ -320,8 +324,8 @@ export const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
     if (currentMaxValue !== undefined) return;
     if (maxDataValue === undefined) return;
     setCurrentMinValue(0);
-    setCurrentMaxValue(maxDataValue);
-  }, [currentMaxValue, maxDataValue]);
+    setCurrentMaxValue(maxDataValue / (initialBrightnessFactor || 1));
+  }, [currentMaxValue, maxDataValue, initialBrightnessFactor]);
 
   return (
     <div style={{ position: "absolute", width, height }}>

@@ -28,7 +28,9 @@ const maxGridSpacingPx = 60;
 const TRUNCATE_UNCHANGED_HIGHER_ORDER_DIGITS = true;
 
 const range = (min: number, max: number, step: number, base: number) => {
-  return Array(Math.ceil((max - base) / step))
+  const v = Math.ceil((max - base) / step);
+  if (isNaN(v) || v < 1) return [];
+  return Array(v)
     .fill(0)
     .map((x, ii) => base + ii * step)
     .filter((x) => x > min);
