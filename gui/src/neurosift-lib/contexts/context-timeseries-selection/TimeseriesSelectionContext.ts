@@ -529,7 +529,7 @@ const zoomTime = (
   const anchorTimeSec =
     action.hoverTimeSec !== undefined
       ? action.hoverTimeSec
-      : state.currentTimeSec ?? state.visibleStartTimeSec + currentWindow / 2;
+      : (state.currentTimeSec ?? state.visibleStartTimeSec + currentWindow / 2);
 
   // Find the distance of the focus from the window start, as a fraction of the total window length.
   const anchorTimeFrac =

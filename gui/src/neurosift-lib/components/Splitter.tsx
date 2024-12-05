@@ -97,12 +97,12 @@ const Splitter: FunctionComponent<PropsWithChildren<Props>> = (props) => {
   }
 
   const gripThickness = adjustable
-    ? props.gripThickness ?? defaultGripThickness
+    ? (props.gripThickness ?? defaultGripThickness)
     : 0;
   const gripInnerThickness = adjustable
-    ? props.gripInnerThickness ?? defaultGripInnerThickness
+    ? (props.gripInnerThickness ?? defaultGripInnerThickness)
     : 0;
-  const gripMargin = adjustable ? props.gripMargin ?? defaultGripMargin : 0;
+  const gripMargin = adjustable ? (props.gripMargin ?? defaultGripMargin) : 0;
   const size1A = gripPositionFromLeft - gripThickness / 2 - gripMargin;
   const size1B = size1 - size1A - gripThickness - 2 * gripMargin;
 
