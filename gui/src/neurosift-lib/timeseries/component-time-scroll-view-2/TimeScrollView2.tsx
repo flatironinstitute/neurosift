@@ -40,6 +40,7 @@ type Props = {
   onMouseMove?: (e: React.MouseEvent) => void;
   onMouseOut?: (e: React.MouseEvent) => void;
   hideToolbar?: boolean;
+  showTimeseriesToolbar?: boolean; // // this is tricky... hideToolbar removes the space for the toolbar, whereas showTimeseriesToolbar=false just hides the toolbar
   shiftZoom?: boolean;
   yAxisInfo?: {
     showTicks: boolean;
@@ -53,7 +54,7 @@ type Props = {
 };
 
 const defaultMargins = {
-  left: 45,
+  left: 50,
   right: 20,
   top: 20,
   bottom: 40,
@@ -99,6 +100,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
   onMouseOut,
   onMouseUp,
   hideToolbar,
+  showTimeseriesToolbar,
   yAxisInfo,
   shiftZoom,
   additionalToolbarItems,
@@ -393,6 +395,8 @@ const TimeScrollView2: FunctionComponent<Props> = ({
     [canvasWidth, canvasHeight],
   );
 
+  console.log("--- showTimeseriesToolbar:", showTimeseriesToolbar);
+
   const content2 = showTimeSelectionBar ? (
     <div style={content2Style}>
       <div
@@ -441,6 +445,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
           height={0}
           top={showTimeSelectionBar ? timeSelectionBarHeight : 0}
           customActions={timeControlActions}
+          actuallyHideIt={showTimeseriesToolbar === false} // sorry :)
         />
         {content2}
       </Splitter>

@@ -35,6 +35,7 @@ type Props = {
   condensed?: boolean;
   rgb?: boolean;
   initialBrightnessFactor?: number;
+  showOrientationControls?: boolean;
 };
 
 type ImageData = {
@@ -79,6 +80,7 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
   path,
   rgb,
   initialBrightnessFactor,
+  showOrientationControls,
 }) => {
   // const nwbFile = useNwbFile();
   // const [useMp4, setUseMp4] = useState<boolean | undefined>(undefined);
@@ -130,6 +132,7 @@ const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
         path={path}
         rgb={rgb}
         initialBrightnessFactor={initialBrightnessFactor}
+        showOrientationControls={showOrientationControls}
       />
       <TwoPhotonSeriesMovieView width={0} height={0} path={path} />
     </TabWidget>
@@ -142,6 +145,7 @@ export const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
   path,
   rgb,
   initialBrightnessFactor,
+  showOrientationControls,
 }) => {
   const nwbFile = useNwbFile();
   if (!nwbFile) throw Error("Unexpected: nwbFile is null");
@@ -408,11 +412,15 @@ export const TwoPhotonSeriesItemViewChild: FunctionComponent<Props> = ({
           setCurrentMinValue={setCurrentMinValue}
           setCurrentMaxValue={setCurrentMaxValue}
         />
-        &nbsp;&nbsp;
-        <PlaneTransformSelector
-          planeTransform={planeTransform}
-          setPlaneTransform={setPlaneTransform}
-        />
+        {showOrientationControls !== false && (
+          <>
+            &nbsp;&nbsp;
+            <PlaneTransformSelector
+              planeTransform={planeTransform}
+              setPlaneTransform={setPlaneTransform}
+            />
+          </>
+        )}
         &nbsp;&nbsp;
         {loading && (
           <div style={{ position: "relative", top: 7 }}>
@@ -580,12 +588,15 @@ const ValueRangeSelector: FunctionComponent<ValueRangeSelectorProps> = ({
   };
   return (
     <DualRangeInput
-      label="range:"
+      // label="range:"
+      label=""
+      title="Brightness/contrast"
       min={min}
       max={max}
       value1={currentMinValue || 0}
       value2={currentMaxValue || 0}
       onChange={handleChange}
+      showValues={false}
     />
   );
 };
@@ -616,14 +627,16 @@ const RangeInput: FunctionComponent<{
 
 const DualRangeInput: FunctionComponent<{
   label: string;
+  title?: string;
   min: number;
   max: number;
   value1: number;
   value2: number;
   onChange: (minValue: number, maxValue: number) => void;
-}> = ({ label, min, max, value1, value2, onChange }) => {
+  showValues?: boolean;
+}> = ({ label, min, max, value1, value2, onChange, showValues, title }) => {
   return (
-    <div style={{ display: "flex" }}>
+    <div style={{ display: "flex" }} title={title}>
       <div style={{ position: "relative", top: 5 }}>{label}&nbsp;</div>
       <div style={{ position: "relative", top: 11 }}>
         <MultiRangeSlider
@@ -635,10 +648,14 @@ const DualRangeInput: FunctionComponent<{
           setValue2={(x) => onChange(value1, x)}
         />
       </div>
-      &nbsp;
-      <div style={{ position: "relative", top: 5 }}>
-        {value1}-{value2}
-      </div>
+      {showValues !== false && (
+        <>
+          &nbsp;
+          <div style={{ position: "relative", top: 5 }}>
+            {value1}-{value2}
+          </div>
+        </>
+      )}
     </div>
   );
 };

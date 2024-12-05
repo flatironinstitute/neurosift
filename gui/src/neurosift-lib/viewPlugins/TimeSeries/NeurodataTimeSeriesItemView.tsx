@@ -1,5 +1,7 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import NwbTimeseriesView from "./TimeseriesItemView/NwbTimeseriesView";
+import NwbTimeseriesView, {
+  TimeseriesAnnotation,
+} from "./TimeseriesItemView/NwbTimeseriesView";
 import TimeSeriesViewToolbar, {
   TimeSeriesViewOpts,
 } from "./TimeSeriesViewToolbar";
@@ -19,6 +21,10 @@ type Props = {
 
   initialShowAllChannels?: boolean;
   initialChannelSeparation?: number;
+  annotations?: TimeseriesAnnotation[];
+  yLabel?: string;
+  showTimeseriesToolbar?: boolean;
+  showTimeseriesNavbar?: boolean;
 };
 
 const tabs = [
@@ -90,6 +96,10 @@ const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({
   spikeTrainsClient,
   initialShowAllChannels,
   initialChannelSeparation,
+  annotations,
+  yLabel,
+  showTimeseriesToolbar,
+  showTimeseriesNavbar,
 }) => {
   const bottomToolBarHeight = 30;
   const totalNumChannels = useTotalNumChannelsForTimeSeries(path);
@@ -140,6 +150,10 @@ const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({
           applyConversion={timeSeriesViewOpts.applyConversion}
           spikeTrainsClient={spikeTrainsClient}
           startZoomedOut={true}
+          annotations={annotations}
+          yLabel={yLabel}
+          showTimeseriesToolbar={showTimeseriesToolbar}
+          showTimeseriesNavbar={showTimeseriesNavbar}
         />
       </div>
       <div

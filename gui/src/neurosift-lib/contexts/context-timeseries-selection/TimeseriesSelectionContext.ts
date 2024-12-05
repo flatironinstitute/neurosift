@@ -12,8 +12,8 @@ export type TimeseriesSelection = {
 
 export const defaultTimeseriesSelection: TimeseriesSelection = {};
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function, @typescript-eslint/no-unused-vars
 export const stubTimeseriesSelectionDispatch = (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   action: TimeseriesSelectionAction,
 ) => {};
 
@@ -180,6 +180,11 @@ export const useTimeseriesSelection = () => {
   const { timeseriesSelection, timeseriesSelectionDispatch } = useContext(
     TimeseriesSelectionContext,
   );
+  const resetTimeseriesSelection = useCallback(() => {
+    timeseriesSelectionDispatch({
+      type: "resetTimeseriesSelection",
+    });
+  }, [timeseriesSelectionDispatch]);
   const timeForFraction = useCallback(
     (fraction: number) => {
       const window =
@@ -233,6 +238,7 @@ export const useTimeseriesSelection = () => {
     setCurrentTime,
     setCurrentTimeFraction,
     timeForFraction,
+    resetTimeseriesSelection,
   };
 };
 
@@ -262,6 +268,10 @@ type InitializeTimeseriesSelectionTimesAction = {
   type: "initializeTimeseriesSelectionTimes";
   timeseriesStartSec: number;
   timeseriesEndSec: number;
+};
+
+type ResetTimeseriesSelectionAction = {
+  type: "resetTimeseriesSelection";
 };
 
 const defaultPanPct = 10;
@@ -315,7 +325,8 @@ export type TimeseriesSelectionAction =
   | SetVisibleTimeRangeAction
   | SetFocusTimeTimeseriesSelectionAction
   | SetFocusTimeIntervalTimeseriesSelectionAction
-  | SetSelectedElectrodeIdsTimeseriesSelectionAction;
+  | SetSelectedElectrodeIdsTimeseriesSelectionAction
+  | ResetTimeseriesSelectionAction;
 
 export const timeseriesSelectionReducer = (
   state: TimeseriesSelection,
@@ -337,6 +348,8 @@ export const timeseriesSelectionReducer = (
     return setFocusTimeInterval(state, action);
   } else if (action.type === "setSelectedElectrodeIds") {
     return setSelectedElectrodeIds(state, action);
+  } else if (action.type === "resetTimeseriesSelection") {
+    return { ...defaultTimeseriesSelection };
   } else {
     console.warn(
       `Unhandled timeseries selection action ${action.type} in timeseriesSelectionReducer.`,
@@ -369,10 +382,11 @@ const initializeTimeseriesSelectionTimes = (
       state.visibleEndTimeSec === undefined ? newEnd : state.visibleEndTimeSec,
     selectedElectrodeIds: state.selectedElectrodeIds,
   };
-  selectionIsValid(newState) ||
+  if (!selectionIsValid(newState)) {
     console.warn(
       `Bad initialization value for timeseriesSelection: start ${action.timeseriesStartSec}, end ${action.timeseriesEndSec}`,
     );
+  }
   return newState;
 };
 
@@ -515,7 +529,7 @@ const zoomTime = (
   const anchorTimeSec =
     action.hoverTimeSec !== undefined
       ? action.hoverTimeSec
-      : (state.currentTimeSec ?? state.visibleStartTimeSec + currentWindow / 2);
+      : state.currentTimeSec ?? state.visibleStartTimeSec + currentWindow / 2;
 
   // Find the distance of the focus from the window start, as a fraction of the total window length.
   const anchorTimeFrac =

@@ -130,9 +130,12 @@ const paintYLabel = (
   context.textBaseline = "middle";
   context.save();
   context.translate(
-    10,
+    15,
     (canvasHeight - bottomMargin - topMargin) / 2 + topMargin,
   );
+  context.fillStyle = "black";
+  context.font = "13px sans-serif";
+
   context.rotate(-Math.PI / 2);
   context.fillText(label, 0, 0);
   context.restore();

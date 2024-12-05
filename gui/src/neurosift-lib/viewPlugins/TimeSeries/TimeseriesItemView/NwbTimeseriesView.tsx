@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import ModalWindow, { useModalWindow } from "@fi-sci/modal-window";
 import { QuestionMark } from "@mui/icons-material";
 import {
@@ -9,25 +8,25 @@ import {
   useMemo,
   useState,
 } from "react";
-import { ToolbarItem } from "../../../misc/ViewToolbar/Toolbars";
-import TimeScrollView2, {
-  useTimeScrollView2,
-} from "../../../timeseries/component-time-scroll-view-2/TimeScrollView2";
 import {
   useTimeRange,
   useTimeseriesSelectionInitialization,
 } from "../../../contexts/context-timeseries-selection";
 import { useNwbFile } from "../../../misc/NwbFileContext";
+import { ToolbarItem } from "../../../misc/ViewToolbar/Toolbars";
 import { useDataset } from "../../../misc/hooks";
+import { timeSelectionBarHeight } from "../../../timeseries/TimeseriesSelectionBar";
+import TimeScrollView2, {
+  useTimeScrollView2,
+} from "../../../timeseries/component-time-scroll-view-2/TimeScrollView2";
+import { SpikeTrainsClient } from "../../Units/DirectRasterPlotUnitsItemView";
+import { getUnitColor } from "../../Units/view-units-table";
+import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient";
 import {
   TimeseriesTimestampsClient,
   useTimeseriesTimestampsClient,
 } from "./TimeseriesTimestampsClient";
-import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient";
-import { timeSelectionBarHeight } from "../../../timeseries/TimeseriesSelectionBar";
 import { DataSeries, Opts, SpikeTrainsDataForWorker } from "./WorkerTypes";
-import { SpikeTrainsClient } from "../../Units/DirectRasterPlotUnitsItemView";
-import { getUnitColor } from "../../Units/view-units-table";
 
 type Props = {
   width: number;
@@ -39,14 +38,25 @@ type Props = {
   applyConversion?: boolean;
   spikeTrainsClient?: SpikeTrainsClient;
   startZoomedOut?: boolean;
+  annotations?: TimeseriesAnnotation[];
+  yLabel?: string;
+  showTimeseriesToolbar?: boolean;
+  showTimeseriesNavbar?: boolean;
+};
+
+export type TimeseriesAnnotation = {
+  type: "interval";
+  data: {
+    label: string;
+    startSec: number;
+    endSec: number;
+  };
 };
 
 const gridlineOpts = {
   hideX: false,
   hideY: true,
 };
-
-const hideToolbar = false;
 
 const NwbTimeseriesView: FunctionComponent<Props> = ({
   width,
@@ -58,6 +68,10 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
   applyConversion,
   spikeTrainsClient,
   startZoomedOut,
+  annotations,
+  yLabel,
+  showTimeseriesToolbar,
+  showTimeseriesNavbar,
 }) => {
   const nwbFile = useNwbFile();
   if (!nwbFile)
@@ -105,11 +119,10 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
     autoChannelSeparation,
     applyConversion,
   ]);
-  const yLabel = useMemo(() => {
+  const yLabel0 = useMemo(() => {
     if (!dataset) return "";
-    const yLabel = applyConversion ? dataset.attrs["unit"] || "" : "";
-    return yLabel;
-  }, [dataset, applyConversion]);
+    return yLabel ? yLabel : applyConversion ? dataset.attrs["unit"] || "" : "";
+  }, [dataset, applyConversion, yLabel]);
 
   const maxVisibleDuration = useMemo(
     () =>
@@ -142,8 +155,11 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
       timeseriesTimestampsClient={timeseriesTimestampsClient}
       datasetChunkingClient={datasetChunkingClient!}
       numVisibleChannels={numVisibleChannels}
-      yLabel={yLabel}
+      yLabel={yLabel0}
       maxVisibleDuration={maxVisibleDuration}
+      annotations={annotations}
+      showTimeseriesToolbar={showTimeseriesToolbar}
+      showTimeseriesNavbar={showTimeseriesNavbar}
     />
   );
 };
@@ -171,6 +187,9 @@ type NwbTimeseriesViewChildProps = {
   numVisibleChannels?: number;
   yLabel: string;
   maxVisibleDuration?: number;
+  annotations?: TimeseriesAnnotation[];
+  showTimeseriesToolbar?: boolean;
+  showTimeseriesNavbar?: boolean;
 };
 
 export const NwbTimeseriesViewChild: FunctionComponent<
@@ -189,6 +208,9 @@ export const NwbTimeseriesViewChild: FunctionComponent<
   datasetChunkingClient,
   yLabel,
   maxVisibleDuration,
+  annotations,
+  showTimeseriesToolbar,
+  showTimeseriesNavbar,
 }) => {
   const [worker, setWorker] = useState<Worker | null>(null);
   const [canvasElement, setCanvasElement] = useState<
@@ -207,6 +229,8 @@ export const NwbTimeseriesViewChild: FunctionComponent<
     ? timeseriesTimestampsClient.endTime!
     : undefined;
   useTimeseriesSelectionInitialization(startTime, endTime);
+
+  const hideToolbar = false; // this is tricky... hideToolbar removes the space for the toolbar, whereas showTimeseriesToolbar=false just hides the toolbar
 
   const { canvasWidth, canvasHeight, margins } = useTimeScrollView2({
     width,
@@ -699,6 +723,15 @@ export const NwbTimeseriesViewChild: FunctionComponent<
     [visibleStartTimeSec, visibleEndTimeSec],
   );
 
+  // send annotations to worker
+  useEffect(() => {
+    if (!worker) return;
+    if (!annotations) return;
+    worker.postMessage({
+      annotations,
+    });
+  }, [worker, annotations]);
+
   if (visibleStartTimeSec === undefined) {
     return <div>visibleStartTimeSec is undefined</div>;
   }
@@ -728,9 +761,10 @@ export const NwbTimeseriesViewChild: FunctionComponent<
           gridlineOpts={gridlineOpts}
           yAxisInfo={yAxisInfo}
           hideToolbar={hideToolbar}
+          showTimeseriesToolbar={showTimeseriesToolbar} // see comment above
           onKeyDown={handleKeyDown}
           additionalToolbarItems={additionalToolbarItems}
-          showTimeSelectionBar={true}
+          showTimeSelectionBar={showTimeseriesNavbar !== false}
         />
       </div>
       {loading && !zoomInRequired && (

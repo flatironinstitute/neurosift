@@ -3,6 +3,7 @@ import {
   DataSeries,
   TimeseriesAnnotationFileData,
   SpikeTrainsDataForWorker,
+  TimeseriesAnnotation,
 } from "./WorkerTypes";
 
 let canvas: HTMLCanvasElement | undefined = undefined;
@@ -10,6 +11,7 @@ let opts: Opts | undefined = undefined;
 let dataSeries: DataSeries[] | undefined = undefined;
 let plotSeries: PlotSeries[] | undefined = undefined;
 let annotation: TimeseriesAnnotationFileData | undefined = undefined;
+let annotations: TimeseriesAnnotation[] | undefined = undefined;
 let spikeTrains: SpikeTrainsDataForWorker | undefined = undefined;
 let zoomInRequiredForSpikeTrains = false;
 
@@ -37,6 +39,10 @@ onmessage = function (evt) {
   if (evt.data.zoomInRequiredForSpikeTrains !== undefined) {
     console.log(evt.data.zoomInRequiredForSpikeTrains);
     zoomInRequiredForSpikeTrains = evt.data.zoomInRequiredForSpikeTrains;
+    drawDebounced();
+  }
+  if (evt.data.annotations) {
+    annotations = evt.data.annotations;
     drawDebounced();
   }
 };
@@ -175,6 +181,18 @@ async function draw() {
       visibleEndTimeSec,
       margins,
       annotation,
+    });
+  }
+
+  if (annotations) {
+    await drawAnnotations({
+      canvasContext,
+      canvasWidth,
+      canvasHeight,
+      visibleStartTimeSec,
+      visibleEndTimeSec,
+      margins,
+      annotations,
     });
   }
 }
@@ -484,6 +502,113 @@ const drawSpikeTrains = async (o: {
       canvasContext.textAlign = "center";
       canvasContext.textBaseline = "bottom";
       canvasContext.fillText(text, x0, y1);
+    }
+  }
+};
+
+const getColorIndexForLabel = (label: string) => {
+  // we need to get an integer based on the label string using a hash
+  let hash = 0;
+  for (let i = 0; i < label.length; i++) {
+    hash = label.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return hash;
+};
+
+const drawAnnotations = async (o: {
+  canvasContext: CanvasRenderingContext2D;
+  canvasWidth: number;
+  canvasHeight: number;
+  visibleStartTimeSec: number;
+  visibleEndTimeSec: number;
+  margins: { left: number; right: number; top: number; bottom: number };
+  annotations: TimeseriesAnnotation[];
+}) => {
+  const {
+    canvasContext,
+    canvasWidth,
+    canvasHeight,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    margins,
+    annotations,
+  } = o;
+
+  const annotationsFiltered = annotations.filter(
+    (aa) =>
+      aa.data.startSec <= visibleEndTimeSec &&
+      aa.data.endSec >= visibleStartTimeSec,
+  );
+
+  const colors = [
+    [255, 0, 0],
+    [0, 255, 0],
+    [0, 0, 255],
+    [255, 255, 0],
+    [255, 0, 255],
+    [0, 255, 255],
+    [255, 128, 0],
+    [255, 0, 128],
+    [128, 255, 0],
+    [0, 255, 128],
+    [128, 0, 255],
+    [0, 128, 255],
+  ] as [number, number, number][];
+  const colorsForLabels: { [key: string]: [number, number, number] } = {};
+  for (const aa of annotationsFiltered) {
+    const color = colors[getColorIndexForLabel(aa.data.label) % colors.length];
+    colorsForLabels[aa.data.label] = color;
+  }
+
+  for (const pass of ["rect", "line"]) {
+    for (const aa of annotationsFiltered) {
+      const color = colorsForLabels[aa.data.label];
+      if (aa.type === "interval") {
+        if (pass !== "rect") continue;
+        const R = {
+          x:
+            margins.left +
+            ((aa.data.startSec - visibleStartTimeSec) /
+              (visibleEndTimeSec - visibleStartTimeSec)) *
+              (canvasWidth - margins.left - margins.right),
+          y: margins.top,
+          w:
+            ((aa.data.endSec - aa.data.startSec) /
+              (visibleEndTimeSec - visibleStartTimeSec)) *
+            (canvasWidth - margins.left - margins.right),
+          h: canvasHeight - margins.top - margins.bottom,
+        };
+        canvasContext.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},0.3)`;
+        canvasContext.fillRect(R.x, R.y, R.w, R.h);
+
+        // draw text at the top of the rectangle
+        canvasContext.fillStyle = `black`;
+        const text = aa.data.label;
+        canvasContext.font = "11px Arial";
+        canvasContext.textAlign = "center";
+        canvasContext.textBaseline = "bottom";
+        canvasContext.fillText(text, R.x + R.w / 2, R.y);
+      } else {
+        if (pass !== "line") continue;
+        // no lines yet
+        // const pt1 = {
+        //   x:
+        //     margins.left +
+        //     ((aa.s - visibleStartTimeSec) /
+        //       (visibleEndTimeSec - visibleStartTimeSec)) *
+        //       (canvasWidth - margins.left - margins.right),
+        //   y: margins.top,
+        // };
+        // const pt2 = {
+        //   x: pt1.x,
+        //   y: canvasHeight - margins.bottom,
+        // };
+        // canvasContext.strokeStyle = `rgba(${color[0]},${color[1]},${color[2]},1)`;
+        // canvasContext.beginPath();
+        // canvasContext.moveTo(pt1.x, pt1.y);
+        // canvasContext.lineTo(pt2.x, pt2.y);
+        // canvasContext.stroke();
+      }
     }
   }
 };

@@ -11,6 +11,7 @@ interface Props {
   topPadding?: number;
   customActions?: any[] | null;
   useHorizontalLayout?: boolean;
+  actuallyHideIt?: boolean; // sorry :)
 }
 
 // const iconButtonStyle = {paddingLeft: 6, paddingRight: 6, paddingTop: 4, paddingBottom: 4}
@@ -221,6 +222,10 @@ const ViewToolbar: FunctionComponent<Props> = (props) => {
   const className = props.useHorizontalLayout
     ? "HorizontalToolbar"
     : "VerticalToolbar";
+
+  if (props.actuallyHideIt) {
+    return <div style={{ ...toolbarStyle }} />;
+  }
 
   return (
     <div className={className} style={{ ...toolbarStyle }}>

@@ -19,6 +19,15 @@ export type DataSeries = {
   y: number[];
 };
 
+export type TimeseriesAnnotation = {
+  type: "interval";
+  data: {
+    label: string;
+    startSec: number;
+    endSec: number;
+  };
+};
+
 export type TimeseriesAnnotationFileData = {
   type: "TimeseriesAnnotation";
   events: {
