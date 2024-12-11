@@ -576,10 +576,10 @@ const getFileDownloadUrlNewKachery = async (
 };
 
 export const tryGetLindiUrl = async (url: string, dandisetId: string) => {
-  // disable these for now because retrieval of lindi not working from Brown u.
-  if (["000248", "001195"].includes(dandisetId)) {
-    return undefined;
-  }
+  // // disable these for now because retrieval of lindi not working from Brown u.
+  // if (["000248", "001195"].includes(dandisetId)) {
+  //   return undefined;
+  // }
 
   if (url.endsWith(".lindi.json") || url.endsWith(".lindi.tar")) {
     return url;
