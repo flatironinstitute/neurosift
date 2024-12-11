@@ -48,7 +48,7 @@ export type DatasetDataType =
   | Uint16Array
   | Uint32Array;
 
-const defaultChunkSize = 1024 * 100;
+const defaultChunkSize = 1024 * 100 / 4;
 // const defaultChunkSize = 1024 * 1024 * 2
 
 export const globalRemoteH5FileStats = {
