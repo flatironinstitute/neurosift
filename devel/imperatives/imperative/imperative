@@ -41,7 +41,7 @@ def run(source_file_name):
     if os.path.exists(py_fname):
         instructions_to_compare = get_instructions_from_py_file(py_fname)
         if instructions_to_compare == instructions:
-            print('Imperative instructions have not changed. Skipping code generation.')
+            print('Instructions have not changed. Skipping code generation.')
             print('Executing code...')
             os.system(f'python {py_fname}')
             print('Done!')
