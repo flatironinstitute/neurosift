@@ -532,7 +532,7 @@ const EditDandisetMetadataChatWindow: FunctionComponent<
                   }}
                   onClick={() => handleClickSuggestedQuestion(question)}
                 >
-                  {question}
+                  Ask: {question}
                 </span>
               </span>
             ))}
