@@ -7,12 +7,14 @@ import {
 import { useEffect, useState } from "react";
 
 export const useGroup = (
-  nwbFile: RemoteH5FileX,
+  nwbFile: RemoteH5FileX | undefined,
   path: string,
 ): RemoteH5Group | undefined => {
   const [group, setGroup] = useState<RemoteH5Group | undefined>(undefined);
   useEffect(() => {
     let canceled = false;
+    setGroup(undefined);
+    if (!nwbFile) return;
     const load = async () => {
       const grp = await nwbFile.getGroup(path);
       if (canceled) return;

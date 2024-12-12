@@ -37,7 +37,6 @@ onmessage = function (evt) {
     drawDebounced();
   }
   if (evt.data.zoomInRequiredForSpikeTrains !== undefined) {
-    console.log(evt.data.zoomInRequiredForSpikeTrains);
     zoomInRequiredForSpikeTrains = evt.data.zoomInRequiredForSpikeTrains;
     drawDebounced();
   }
@@ -507,12 +506,12 @@ const drawSpikeTrains = async (o: {
 };
 
 const getColorIndexForLabel = (label: string) => {
-  // we need to get an integer based on the label string using a hash
+  // we need to get a positive integer based on the label string using a hash
   let hash = 0;
   for (let i = 0; i < label.length; i++) {
     hash = label.charCodeAt(i) + ((hash << 5) - hash);
   }
-  return hash;
+  return Math.abs(hash);
 };
 
 const drawAnnotations = async (o: {
@@ -556,7 +555,8 @@ const drawAnnotations = async (o: {
   ] as [number, number, number][];
   const colorsForLabels: { [key: string]: [number, number, number] } = {};
   for (const aa of annotationsFiltered) {
-    const color = colors[getColorIndexForLabel(aa.data.label) % colors.length];
+    const color =
+      colors[getColorIndexForLabel(aa.data.label + "*1*") % colors.length];
     colorsForLabels[aa.data.label] = color;
   }
 

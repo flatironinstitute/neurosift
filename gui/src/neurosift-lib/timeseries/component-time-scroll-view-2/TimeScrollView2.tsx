@@ -395,8 +395,6 @@ const TimeScrollView2: FunctionComponent<Props> = ({
     [canvasWidth, canvasHeight],
   );
 
-  console.log("--- showTimeseriesToolbar:", showTimeseriesToolbar);
-
   const content2 = showTimeSelectionBar ? (
     <div style={content2Style}>
       <div

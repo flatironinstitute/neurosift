@@ -10,7 +10,7 @@ import { NwbFileContext } from "./NwbFileContext";
 import { RemoteH5File, RemoteH5FileLindi } from "../remote-h5-file";
 
 type ProvideNwbFileProps = {
-  nwbUrl: string;
+  nwbUrl: string | undefined;
   dandisetId: string;
 };
 
@@ -24,20 +24,20 @@ const ProvideNwbFile: FunctionComponent<
       neurodataItems: [],
     };
   }, [nwbFile]);
-  if (!nwbFile) {
-    return <div>Loading NWB file...</div>;
-  }
   return (
     <NwbFileContext.Provider value={value}>{children}</NwbFileContext.Provider>
   );
 };
 
-const useNwbFileFromUrl = (nwbUrl: string, dandisetId: string) => {
+const useNwbFileFromUrl = (nwbUrl: string | undefined, dandisetId: string) => {
   const [nwbFile, setNwbFile] = useState<
     RemoteH5File | RemoteH5FileLindi | null
   >(null);
   useEffect(() => {
+    setNwbFile(null);
+    if (!nwbUrl) return;
     getNwbFileFromUrl(nwbUrl, dandisetId).then((val) => {
+      if (!val) throw new Error("Unexpected: no nwb file for " + nwbUrl);
       setNwbFile(val);
     });
   }, [nwbUrl, dandisetId]);
@@ -47,7 +47,11 @@ const useNwbFileFromUrl = (nwbUrl: string, dandisetId: string) => {
 const nwbFileFromUrlCache: { [key: string]: RemoteH5File | RemoteH5FileLindi } =
   {};
 
-const getNwbFileFromUrl = async (nwbUrl: string, dandisetId: string) => {
+export const getNwbFileFromUrl = async (
+  nwbUrl: string,
+  dandisetId: string,
+  o: { requireLindi?: boolean } = {},
+) => {
   if (nwbFileFromUrlCache[nwbUrl]) {
     return nwbFileFromUrlCache[nwbUrl];
   }
@@ -56,6 +60,9 @@ const getNwbFileFromUrl = async (nwbUrl: string, dandisetId: string) => {
   if (lindiUrl) {
     ret = await RemoteH5FileLindi.create(lindiUrl);
   } else {
+    if (o.requireLindi) {
+      return undefined;
+    }
     ret = new RemoteH5File(nwbUrl, {});
   }
   ret.sourceUrls = [nwbUrl];

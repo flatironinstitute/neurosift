@@ -20,11 +20,14 @@ type Props = {
   spikeTrainsClient?: SpikeTrainsClient;
 
   initialShowAllChannels?: boolean;
+  initialNumVisibleChannels?: number;
+  initialVisibleStartChannel?: number;
   initialChannelSeparation?: number;
   annotations?: TimeseriesAnnotation[];
   yLabel?: string;
   showTimeseriesToolbar?: boolean;
   showTimeseriesNavbar?: boolean;
+  showBottomToolbar?: boolean;
 };
 
 const tabs = [
@@ -47,6 +50,8 @@ export const NeurodataTimeSeriesItemViewNext: FunctionComponent<Props> = ({
   path,
   spikeTrainsClient,
   initialShowAllChannels,
+  initialNumVisibleChannels,
+  initialVisibleStartChannel,
   initialChannelSeparation,
 }) => {
   const [currentTabId, setCurrentTabId] = useState("timeseries");
@@ -73,6 +78,8 @@ export const NeurodataTimeSeriesItemViewNext: FunctionComponent<Props> = ({
         path={path}
         spikeTrainsClient={spikeTrainsClient}
         initialShowAllChannels={initialShowAllChannels}
+        initialNumVisibleChannels={initialNumVisibleChannels}
+        initialVisibleStartChannel={initialVisibleStartChannel}
         initialChannelSeparation={initialChannelSeparation}
       />
       {nwbUrl ? (
@@ -95,13 +102,16 @@ const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({
   path,
   spikeTrainsClient,
   initialShowAllChannels,
+  initialNumVisibleChannels,
+  initialVisibleStartChannel,
   initialChannelSeparation,
   annotations,
   yLabel,
   showTimeseriesToolbar,
   showTimeseriesNavbar,
+  showBottomToolbar = true,
 }) => {
-  const bottomToolBarHeight = 30;
+  const bottomToolBarHeight = showBottomToolbar ? 30 : 0;
   const totalNumChannels = useTotalNumChannelsForTimeSeries(path);
   // important to start with only 1 visible channel --- if we want to default to more, do it in a useEffect after we figure out the number of channels in the dataset
   const [timeSeriesViewOpts, setTimeSeriesViewOpts] =
@@ -112,6 +122,30 @@ const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({
         initialChannelSeparation !== undefined ? initialChannelSeparation : 0.5,
       colorChannels: true,
     });
+  useEffect(() => {
+    setTimeSeriesViewOpts((prev) => {
+      const newX = { ...prev };
+      if (initialNumVisibleChannels !== undefined) {
+        newX.numVisibleChannels = initialNumVisibleChannels;
+      }
+      if (initialVisibleStartChannel !== undefined) {
+        newX.visibleStartChannel = initialVisibleStartChannel;
+      }
+      if (initialChannelSeparation !== undefined) {
+        newX.autoChannelSeparation = initialChannelSeparation;
+      }
+      if (initialShowAllChannels) {
+        newX.numVisibleChannels = totalNumChannels || 1;
+      }
+      return newX;
+    });
+  }, [
+    initialNumVisibleChannels,
+    initialVisibleStartChannel,
+    initialChannelSeparation,
+    initialShowAllChannels,
+    totalNumChannels,
+  ]);
   useEffect(() => {
     setTimeSeriesViewOpts((prev) => {
       const newNumVisibleChannels =
@@ -164,13 +198,15 @@ const NeurodataTimeSeriesItemView: FunctionComponent<Props> = ({
           top: height - bottomToolBarHeight,
         }}
       >
-        <TimeSeriesViewToolbar
-          width={width}
-          height={bottomToolBarHeight}
-          objectPath={path}
-          timeSeriesViewOpts={timeSeriesViewOpts}
-          setTimeSeriesViewOpts={setTimeSeriesViewOpts}
-        />
+        {showBottomToolbar && (
+          <TimeSeriesViewToolbar
+            width={width}
+            height={bottomToolBarHeight}
+            objectPath={path}
+            timeSeriesViewOpts={timeSeriesViewOpts}
+            setTimeSeriesViewOpts={setTimeSeriesViewOpts}
+          />
+        )}
       </div>
     </div>
   );

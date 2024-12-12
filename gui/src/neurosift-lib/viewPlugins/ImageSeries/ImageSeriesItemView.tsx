@@ -11,6 +11,7 @@ type Props = {
   condensed?: boolean;
   initialBrightnessFactor?: number;
   showOrientationControls?: boolean;
+  throttleMsec?: number;
 };
 
 // Example: https://neurosift.app/?p=/nwb&url=https://api.dandiarchive.org/api/assets/fdaa72ee-403c-4dbf-be35-64e7f31c4c1e/download/&dandisetId=000363&dandisetVersion=0.231012.2129&tab=neurodata-item:/acquisition/SC038_111919_side_face_1-0000|ImageSeries
@@ -19,17 +20,21 @@ const ImageSeriesItemView: FunctionComponent<Props> = ({
   width,
   height,
   path,
+  condensed,
   initialBrightnessFactor,
   showOrientationControls,
+  throttleMsec,
 }) => {
   return (
     <TwoPhotonSeriesItemView
       width={width}
       height={height}
       path={path}
+      condensed={condensed}
       rgb={true}
       initialBrightnessFactor={initialBrightnessFactor}
       showOrientationControls={showOrientationControls}
+      throttleMsec={throttleMsec}
     />
   );
 };
