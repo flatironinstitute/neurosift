@@ -22,6 +22,7 @@ type Props = {
   infoMessage?: string;
   width: number;
   height: number;
+  showUnitIds?: boolean;
 };
 
 const gridlineOpts = {
@@ -40,6 +41,7 @@ const RasterPlotView3: FunctionComponent<Props> = ({
   width,
   height,
   infoMessage,
+  showUnitIds = true,
 }) => {
   const startTimeSec = spikeTrainsClient.startTimeSec!;
   const endTimeSec = spikeTrainsClient.endTimeSec!;
@@ -164,6 +166,7 @@ const RasterPlotView3: FunctionComponent<Props> = ({
       selectedUnitIds: [...selectedUnitIds],
       zoomInRequired,
       infoMessage: infoMessage || loadingMessage,
+      showUnitIds,
     };
     worker.postMessage({
       opts,
@@ -180,6 +183,7 @@ const RasterPlotView3: FunctionComponent<Props> = ({
     zoomInRequired,
     infoMessage,
     loadingMessage,
+    showUnitIds,
   ]);
 
   const unitIds = useMemo(

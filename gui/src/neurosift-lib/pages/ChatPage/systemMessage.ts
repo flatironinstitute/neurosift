@@ -155,6 +155,15 @@ export const getSystemMessage = async (
   This is what you should do if the user asks to show or view a particular item in an NWB file.
   This will be an interactive view and is especially suitable for viewing large datasets that cannot be efficiently displayed in a plot.
 
+  If the user asks for a spike density plot for a units table, you can use
+  <!-- mimetype: application/vnd.neurosift.figure+json
+  {
+    "nwb_url": "[nwb_url]",
+    "item_path": "[object_path]",
+    "view_plugin_name": "SpikeDensityPlot"
+  }
+  -->
+
   NOTE: If they are asking to "show how" or something like that, rather than to give a plot, then just provide the script and don't execute it.
 
   CAPABILITY: If you need to compute or analyze data in an NWB file, you should use the compute_script tool.

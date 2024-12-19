@@ -35,6 +35,7 @@ import {
 } from "./customPythonCode";
 import ImageSeriesItemView from "./ImageSeries/ImageSeriesItemView";
 import SpikeDensityPlotUnitsItemView from "./Units/SpikeDensityPlot/SpikeDensityPlotUnitsItemView";
+import EventsItemView from "./Events/EventsItemView";
 
 type Props = {
   width: number;
@@ -244,6 +245,16 @@ const allViewPlugins = () => {
     testLinks: [
       "https://neurosift.app/?p=/nwb&dandisetId=000568&dandisetVersion=0.230705.1633&url=https://api.dandiarchive.org/api/assets/72bebc59-e73e-4d6b-b4ab-086d054583d6/download/&tab=neurodata-item:/processing/behavior/RewardEventsLinearTrack|LabeledEvents",
     ],
+  });
+
+  // NDXEvents
+  viewPlugins.push({
+    name: "Events",
+    neurodataType: "Events",
+    defaultForNeurodataType: true,
+    component: EventsItemView,
+    isTimeView: true,
+    testLinks: [],
   });
 
   // viewPlugins.push({

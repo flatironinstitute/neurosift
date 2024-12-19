@@ -481,6 +481,9 @@ type JobPanelProps = {
 };
 
 const JobPanel: FunctionComponent<JobPanelProps> = ({
+  width,
+  height,
+
   multiscaleSpikeDensityJob,
   incompleteMultiscaleSpikeDensityJob,
   onRefreshMultiscaleSpikeDensityJob,
@@ -504,7 +507,7 @@ const JobPanel: FunctionComponent<JobPanelProps> = ({
     useState(false);
   const [dendroApiKey, setDendroApiKey] = useState("");
   return (
-    <div>
+    <div style={{ position: "absolute", width, height, overflow: "auto" }}>
       <h3>Spike density matrix</h3>
       {multiscaleSpikeDensityJob && (
         <div style={{ padding: 3 }}>

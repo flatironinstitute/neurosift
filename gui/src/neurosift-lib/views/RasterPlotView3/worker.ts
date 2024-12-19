@@ -163,17 +163,21 @@ const paintPanel = (
         context.textAlign = "right";
         context.textBaseline = "middle";
         context.font = `${pass > 1 ? "bold " : ""}12px Arial`;
-        context.fillText(pPlot.unitId + "", margins.left - 4, pPlot.y);
+        if (opts!.showUnitIds) {
+          context.fillText(pPlot.unitId + "", margins.left - 4, pPlot.y);
+        }
 
         if (pass === 3 || (pass === 2 && pPlot.hovered)) {
           context.textAlign = "left";
           context.textBaseline = "middle";
           context.font = `${pass > 1 ? "bold " : ""}12px Arial`;
-          context.fillText(
-            pPlot.unitId + "",
-            canvasWidth - margins.right + 4,
-            pPlot.y,
-          );
+          if (opts!.showUnitIds) {
+            context.fillText(
+              pPlot.unitId + "",
+              canvasWidth - margins.right + 4,
+              pPlot.y,
+            );
+          }
         }
       }
     });

@@ -18,4 +18,5 @@ export type Opts = {
   selectedUnitIds: (string | number)[];
   zoomInRequired: boolean;
   infoMessage: string | undefined;
+  showUnitIds: boolean;
 };
