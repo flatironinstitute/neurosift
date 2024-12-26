@@ -132,7 +132,7 @@ const EditDandisetMetadata: FunctionComponent<EditDandisetMetadataProps> = ({
         dandisetMetadata={editedDandisetMetadata || dandisetMetadata}
         chat={chat}
         chatDispatch={chatDispatch}
-        openRouterKey={localStorage.getItem("openRouterKey") || null}
+        openRouterKey={localStorage.getItem("openRouterKey-old") || null}
       />
       <RightPanel
         width={0}

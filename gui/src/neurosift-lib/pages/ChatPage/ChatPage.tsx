@@ -183,7 +183,7 @@ const OpenRouterKeySelector: FunctionComponent<OpenRouterKeySelectorProps> = ({
   setOpenRouterKey,
 }) => {
   useEffect(() => {
-    const k = localStorage.getItem("openRouterKey");
+    const k = localStorage.getItem("openRouterKey-old");
     if (k) {
       setOpenRouterKey(k);
     }

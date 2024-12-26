@@ -64,7 +64,7 @@ const EditContributorsWindow: FunctionComponent<
           setEditedDandisetMetadata={setEditedDandisetMetadata}
           chat={chat}
           chatDispatch={chatDispatch}
-          openRouterKey={localStorage.getItem("openRouterKey") || null}
+          openRouterKey={localStorage.getItem("openRouterKey-old") || null}
         />
         <RightPanel
           width={0}
