@@ -13,6 +13,7 @@ import {
 import Splitter from "neurosift-lib/components/Splitter";
 import { SmallIconButton } from "@fi-sci/misc";
 import { Link, OpenInBrowser, OpenInFull } from "@mui/icons-material";
+import { track } from "@vercel/analytics/react";
 
 type EdfPageProps = {
   width: number;
@@ -29,6 +30,26 @@ const EdfPage: FunctionComponent<EdfPageProps> = ({ width, height }) => {
   const { route } = useRoute();
   if (route.page !== "edf") throw Error('Unexpected: route.page is not "edf"');
   const edfUrl = route.url;
+
+  useEffect(() => {
+    let canceled = false;
+    // important to only call this once per url change
+    setTimeout(() => {
+      if (canceled) return;
+      // important to wait until the analytics is ready
+      // e.g., https://s3.amazonaws.com/openneuro.org/ds005670/sub-01/ieeg/sub-01_task-rest_ieeg.edf?versionId=CWhCYR0GKAwLffOF8SdYg1jAyM_3ir0T
+      const parts = edfUrl.split("/");
+      const datasetId = parts[4];
+      track("edf-page-viewed", {
+        url: edfUrl,
+        datasetId,
+      });
+    }, 500);
+    return () => {
+      canceled = true;
+    };
+  }, [edfUrl]);
+
   const { edfReader } = useEdfReader(edfUrl);
   const [selectedChannelIndices, setSelectedChannelIndices] = useState<
     number[]
