@@ -1,11 +1,10 @@
 """
 system hash: da39a3ee5e6b4b0d3255bfef95601890afd80709
-////////////////////////////////////////////////////////////////////////////////////////////////////
-If the AI_GENERATED_DANDISET_SUMMARIES_DIR environment variable is not set, then raise an exception telling user to set it.
-They should clone https://github.com/magland/ai_generated_dandiset_summaries.
+Check to see if this environment variable has been set: AI_GENERATED_DANDISET_SUMMARIES_DIR
+If not, raise an exception and tell user to clone https://github.com/magland/ai_generated_dandiset_summaries
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-Here's how files are organized in that repo
+Here's how the input files are organized.
 
 $AI_GENERATED_DANDISET_SUMMARIES_DIR/
     dandisets/
@@ -16,6 +15,8 @@ $AI_GENERATED_DANDISET_SUMMARIES_DIR/
         ...
 
 where 000003, 000004, etc. are the dandiset ids.
+
+The output directory is relative to the directory where this script is run.
 
 When you traverse the dandisets directory, be sure to validate that the dandiset id is a 6-digit number, and ignore the directory if it is not (print a warning).
 
@@ -80,108 +81,96 @@ AND you're going to implement caching. Each time you are going to compute an emb
 import os
 import json
 import hashlib
-import struct
-import phil
+import numpy as np
+import phil  # Assuming phil is imported as a library
+from pathlib import Path
 
+# Check environment variable
+dandiset_dir = os.getenv('AI_GENERATED_DANDISET_SUMMARIES_DIR')
+if not dandiset_dir:
+    raise Exception("Environment variable AI_GENERATED_DANDISET_SUMMARIES_DIR not set. Please clone https://github.com/magland/ai_generated_dandiset_summaries")
 
-def get_environment_variable():
-    env_var = os.getenv('AI_GENERATED_DANDISET_SUMMARIES_DIR')
-    if not env_var:
-        raise RuntimeError("Please set the environment variable AI_GENERATED_DANDISET_SUMMARIES_DIR. Clone the repository from https://github.com/magland/ai_generated_dandiset_summaries.")
-    return env_var
+output_dir = Path("output")
+cache_dir = Path("embeddings_cache")
 
+# Create necessary directories
+output_dir.mkdir(exist_ok=True)
+cache_dir.mkdir(exist_ok=True)
 
-def is_valid_dandiset_id(did):
-    return len(did) == 6 and did.isdigit()
+# Initialize empty structures
+dandiset_embeddings = {}
+dandiset_ids = []
 
+# Traverse dandisets directory
+dandisets_path = Path(dandiset_dir) / "dandisets"
+total_dandisets = sum(1 for item in dandisets_path.iterdir() if item.is_dir() and item.name.isdigit() and len(item.name) == 6)
 
-def compute_sha1_of_text(text):
-    return hashlib.sha1(text.encode('utf-8')).hexdigest()
+processed_count = 0
+for dandiset in dandisets_path.iterdir():
+    if dandiset.is_dir() and dandiset.name.isdigit() and len(dandiset.name) == 6:
+        summary_path = dandiset / "summary.md"
+        if summary_path.exists():
+            with open(summary_path, 'r') as file:
+                text = file.read()
 
+            # Compute SHA1 and check for cache
+            text_sha1 = hashlib.sha1(text.encode('utf-8')).hexdigest()
+            cache_file = cache_dir / f"{text_sha1}.json"
+            
+            if cache_file.exists():
+                print(f"Cache hit for dandiset {dandiset.name}.")
+                with open(cache_file, 'r') as cache:
+                    vec = json.load(cache)
+            else:
+                vec = phil.compute_semantic_embedding_vector(text)
+                with open(cache_file, 'w') as cache:
+                    json.dump(vec, cache)
 
-def main():
-    dir_path = get_environment_variable()
-    dandisets_dir = os.path.join(dir_path, 'dandisets')
-    
-    dandiset_embeddings = {}
-    dandiset_ids = []
-    embedding_list = []
+            dandiset_embeddings[dandiset.name] = vec
+            dandiset_ids.append(dandiset.name)
 
-    if not os.path.exists('output'):
-        os.makedirs('output')
-    if not os.path.exists('embeddings_cache'):
-        os.makedirs('embeddings_cache')
+            embedding_length = len(vec)
+            print(f"Processed dandiset {dandiset.name} ({processed_count + 1}/{total_dandisets}), embedding length: {embedding_length}")
 
-    dandiset_folders = os.listdir(dandisets_dir)
-    total_dandisets = len(dandiset_folders)
-    processed_count = 0
+            processed_count += 1
+    else:
+        if dandiset.is_dir():
+            print(f"Warning: Ignoring directory {dandiset.name} as it is not a valid 6-digit dandiset id.")
 
-    for dandiset_id in dandiset_folders:
-        if not is_valid_dandiset_id(dandiset_id):
-            print(f"Warning: Dandiset ID {dandiset_id} is not a valid 6-digit number. Skipping it.")
-            continue
+# Write dandiset_embeddings.json
+with open(output_dir / "dandiset_embeddings.json", 'w') as f:
+    json.dump(dandiset_embeddings, f)
 
-        dandiset_summary_path = os.path.join(dandisets_dir, dandiset_id, 'summary.md')
-        
-        if not os.path.exists(dandiset_summary_path):
-            print(f"Warning: No summary.md found in dandiset {dandiset_id}.")
-            continue
+# Write dandiset_ids.json
+with open(output_dir / "dandiset_ids.json", 'w') as f:
+    json.dump(dandiset_ids, f)
 
-        with open(dandiset_summary_path, 'r') as file:
-            summary_text = file.read()
+# Write dandiset_embeddings.dat
+embeddings_array = np.array([dandiset_embeddings[dandi_id] for dandi_id in dandiset_ids], dtype=np.float32)
+embeddings_array.tofile(output_dir / "dandiset_embeddings.dat")
 
-        sha1_hash = compute_sha1_of_text(summary_text)
-        cache_file_path = os.path.join('embeddings_cache', f'{sha1_hash}.json')
+# Print the sizes of the output files
+for file_name in ["dandiset_embeddings.json", "dandiset_ids.json", "dandiset_embeddings.dat"]:
+    size_mb = os.path.getsize(output_dir / file_name) / (1024 * 1024)
+    print(f"Size of {file_name}: {size_mb:.2f} MB")
 
-        if os.path.exists(cache_file_path):
-            with open(cache_file_path, 'r') as cache_file:
-                vector = json.load(cache_file)
-                print(f"Cache hit for dandiset {dandiset_id}.")
-        else:
-            vector = phil.compute_semantic_embedding_vector(summary_text)
-            with open(cache_file_path, 'w') as cache_file:
-                json.dump(vector, cache_file)
+# Write documentation file
+with open(output_dir / "doc.md", 'w') as doc_file:
+    doc_file.write(f"""
+# Dandiset Embeddings Documentation
 
-        dandiset_embeddings[dandiset_id] = vector
-        dandiset_ids.append(dandiset_id)
-        embedding_list.extend(vector)
+This directory contains the following files:
 
-        processed_count += 1
-        print(f"Processed dandiset {dandiset_id}. {processed_count} out of {total_dandisets}. Vector length: {len(vector)}")
+- **dandiset_embeddings.json**: A mapping from dandiset IDs to their semantic embedding vectors.
+- **dandiset_ids.json**: A list of dandiset IDs corresponding to the embeddings.
+- **dandiset_embeddings.dat**: A binary file containing 32-bit floating point embedding vectors.
 
-    # Write JSON output
-    with open('output/dandiset_embeddings.json', 'w') as f:
-        json.dump(dandiset_embeddings, f)
+Each embedding vector has a length of {embedding_length}.
 
-    with open('output/dandiset_ids.json', 'w') as f:
-        json.dump(dandiset_ids, f)
+These files are generated by processing summaries of dandisets for semantic analysis.
+""")
 
-    # Write binary embedding data
-    with open('output/dandiset_embeddings.dat', 'wb') as f:
-        f.write(struct.pack(f'<{len(embedding_list)}f', *embedding_list))
-
-    print(f"Output files created:")
-    print(f"dandiset_embeddings.json: {os.path.getsize('output/dandiset_embeddings.json') / (1024*1024):.2f} MB")
-    print(f"dandiset_ids.json: {os.path.getsize('output/dandiset_ids.json') / (1024*1024):.2f} MB")
-    print(f"dandiset_embeddings.dat: {os.path.getsize('output/dandiset_embeddings.dat') / (1024*1024):.2f} MB")
-
-    # Write documentation
-    with open('output/doc.md', 'w') as f:
-        f.write("""# Dandiset Embeddings Documentation
-
-The `dandiset_embeddings.json` file contains the semantic embedding vectors for each dandiset, structured as a JSON object where keys are dandiset ids, and values are lists of floats representing the embedding vectors.
-
-The `dandiset_ids.json` file contains a list of dandiset ids in the same order as their corresponding embedding vectors appear in `dandiset_embeddings.dat`.
-
-The `dandiset_embeddings.dat` file is a binary file containing 32-bit float values sequentially for the embedding vectors. The vectors appear in the same order as the ids in `dandiset_ids.json`.
-
-All embedding vectors have a length of {0}. Make sure to handle them in the appropriate manner when using them for computation or analysis.""".format(len(next(iter(dandiset_embeddings.values())))))
-
-    # Upload the files
-    phil.upload_file("https://lindi.neurosift.org/tmp/ai_generated_dandiset_summaries/dandiset_embeddings.json", "output/dandiset_embeddings.json")
-    phil.upload_file("https://lindi.neurosift.org/tmp/ai_generated_dandiset_summaries/embeddings.dat", "output/dandiset_embeddings.dat")
-    phil.upload_file("https://lindi.neurosift.org/tmp/ai_generated_dandiset_summaries/dandiset_ids.txt", "output/dandiset_ids.json")
-
-
-if __name__ == "__main__":
-    main()
+# Upload files
+phil.upload_file("https://lindi.neurosift.org/tmp/ai_generated_dandiset_summaries/dandiset_embeddings.json", str(output_dir / "dandiset_embeddings.json"))
+phil.upload_file("https://lindi.neurosift.org/tmp/ai_generated_dandiset_summaries/embeddings.dat", str(output_dir / "dandiset_embeddings.dat"))
+phil.upload_file("https://lindi.neurosift.org/tmp/ai_generated_dandiset_summaries/dandiset_ids.txt", str(output_dir / "dandiset_ids.json"))

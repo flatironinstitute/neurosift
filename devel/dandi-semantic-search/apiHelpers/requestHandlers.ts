@@ -25,9 +25,11 @@ type Embeddings = { [key: string]: number[] };
 const globalData: {
   loadingEmbeddings: boolean;
   embeddings: Embeddings | null;
+  timestampLoaded: number;
 } = {
   loadingEmbeddings: false,
   embeddings: null,
+  timestampLoaded: 0,
 };
 const loadEmbeddings = async () => {
   const timer = Date.now();
@@ -38,7 +40,10 @@ const loadEmbeddings = async () => {
     }
   }
   if (globalData.embeddings) {
-    return globalData.embeddings;
+    const elapsed = Date.now() - globalData.timestampLoaded;
+    if (elapsed < 1000 * 60 * 3) {
+      return globalData.embeddings;
+    }
   }
   globalData.loadingEmbeddings = true;
   try {
@@ -47,6 +52,7 @@ const loadEmbeddings = async () => {
       throw new Error(`Failed to fetch from ${embeddingsJsonUrl}`);
     }
     globalData.embeddings = await resp.json();
+    globalData.timestampLoaded = Date.now();
   } catch (err) {
     console.error("Problem loading embeddings");
     console.error(err);
