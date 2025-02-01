@@ -169,7 +169,7 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
             item={item}
             startTime={startTime}
             endTime={endTime}
-            width={width}
+            width={width - 4}
           />
         </div>
       ))}
@@ -226,13 +226,10 @@ const TAItemView: FunctionComponent<TAItemViewProps> = ({
   const h1 = 18;
   const h2 = 7;
   const h3 = 15;
-  const p1 =
-    ((item.startTime - (startTime || 0)) /
-      ((endTime || 1) - (startTime || 0))) *
-    width;
-  const p2 =
-    ((item.endTime - (startTime || 0)) / ((endTime || 1) - (startTime || 0))) *
-    width;
+  const rawP1 = ((item.startTime - (startTime || 0)) / ((endTime || 1) - (startTime || 0))) * width;
+  const rawP2 = ((item.endTime - (startTime || 0)) / ((endTime || 1) - (startTime || 0))) * width;
+  const p1 = Math.min(Math.max(rawP1, 0), width);
+  const p2 = Math.min(Math.max(rawP2, 0), width);
   const color = getColorForNeurodataType(item.neurodataType);
   const { openTab } = useNwbOpenTabs();
   if (item.startTime === undefined)
@@ -261,7 +258,7 @@ const TAItemView: FunctionComponent<TAItemViewProps> = ({
         style={{
           position: "absolute",
           left: p1,
-          width: p2 - p1,
+          width: Math.max(p2 - p1, 2),
           height: h2,
           top: h1,
           background: color,
