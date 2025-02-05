@@ -2,6 +2,8 @@ import { VercelRequest, VercelResponse } from "@vercel/node";
 
 const defaultAllowedOrigins = [
   "http://localhost:3000",
+  "http://localhost:5173",
+  "https://neurosift2.vercel.app",
   "https://neurosift.app",
   "https://hub.dandiarchive.org",
   "https://dandiarchive.org",
@@ -21,7 +23,7 @@ const allowCors =
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
     res.setHeader(
       "Access-Control-Allow-Headers",
-      "Authorization, Content-Type",
+      "Authorization, Content-Type, x-secret-key"
     );
     if (req.method === "OPTIONS") {
       res.status(200).end();
