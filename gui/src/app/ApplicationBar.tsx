@@ -1,7 +1,8 @@
 import { SmallIconButton } from "@fi-sci/misc";
 import ModalWindow from "@fi-sci/modal-window";
-import { Chat, Computer, Key, Note, QuestionMark } from "@mui/icons-material";
+import { Chat, Key, Note, QuestionMark } from "@mui/icons-material";
 import { AppBar, Toolbar } from "@mui/material";
+import useRoute from "neurosift-lib/contexts/useRoute";
 import {
   FunctionComponent,
   useCallback,
@@ -10,7 +11,6 @@ import {
   useState,
 } from "react";
 import ApiKeysWindow from "./ApiKeysWindow/ApiKeysWindow";
-import useRoute from "neurosift-lib/contexts/useRoute";
 
 type Props = {
   onContextChat: () => void;
