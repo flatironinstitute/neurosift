@@ -70,6 +70,9 @@ const ApplicationBar: FunctionComponent<Props> = ({ onContextChat }) => {
       }
       return url;
     }
+    else if (route.page === "home") {
+      return baseUrl + "/";
+    }
     else return "";
   }, [route]);
 
@@ -109,16 +112,6 @@ const ApplicationBar: FunctionComponent<Props> = ({ onContextChat }) => {
             />
           </span>
           &nbsp; &nbsp; */}
-          {openInNeurosiftV2Url && <span style={{ color: "white" }}>
-            <SmallIconButton
-              icon={<span style={{fontWeight: 'bold'}}>2</span>}
-              onClick={() => {
-                window.location.href = openInNeurosiftV2Url;
-              }}
-              title={`Open in Neurosift v2 (WIP)`}
-            />
-          </span>}
-          &nbsp;&nbsp;&nbsp;&nbsp;
           <span style={{ color: "white" }}>
             <SmallIconButton
               icon={<QuestionMark />}
@@ -158,6 +151,16 @@ const ApplicationBar: FunctionComponent<Props> = ({ onContextChat }) => {
               title={`Set DANDI API key`}
             />
           </span>
+          &nbsp;&nbsp;&nbsp;&nbsp;
+          {openInNeurosiftV2Url && <span style={{ color: "white" }}>
+            <SmallIconButton
+              icon={<span style={{fontWeight: 'bold'}}>2</span>}
+              onClick={() => {
+                window.location.href = openInNeurosiftV2Url;
+              }}
+              title={`Open in Neurosift v2 (WIP)`}
+            />
+          </span>}
           &nbsp;&nbsp;
           {/* {
                         signedIn && (
