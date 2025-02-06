@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import StatusBar from "./components/StatusBar";
 import HomePage from "./pages/HomePage/HomePage";
 import DandiPage from "./pages/DandiPage/DandiPage";
 import DandisetPage from "./pages/DandisetPage";
@@ -193,7 +194,7 @@ const AppContent = () => {
           top: appBarHeight + mainHeight,
         }}
       >
-        {/* Status bar */}
+        <StatusBar />
       </div>
     </div>
   );

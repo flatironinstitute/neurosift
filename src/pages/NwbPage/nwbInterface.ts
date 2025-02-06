@@ -8,6 +8,10 @@ import {
 } from "../../remote-h5-file";
 import { getCachedObject, setCachedObject } from "./nwbCache";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
+import {
+  removeStatusItem,
+  setStatusItem,
+} from "../../components/StatusBarContext";
 
 const nwbFiles: {
   [url: string]: RemoteH5FileX;
@@ -81,7 +85,17 @@ export const getNwbDataset = async (
     nwbFiles[url] = new RemoteH5File(urlResolved, {});
   }
   const f = nwbFiles[url];
-  const dataset = await f.getDataset(path);
+  let dataset;
+  const itemName = `getNwbDataset-${url}-${path}`;
+  setStatusItem(itemName, {
+    type: "text",
+    text: "d",
+  });
+  try {
+    dataset = await f.getDataset(path);
+  } finally {
+    removeStatusItem(itemName);
+  }
 
   // Cache the result if we got one
   if (dataset) {
@@ -105,7 +119,16 @@ export const getNwbDatasetData = async (
     nwbFiles[url] = new RemoteH5File(urlResolved, {});
   }
   const f = nwbFiles[url];
-  return await f.getDatasetData(path, o);
+  const itemName = `getNwbDatasetData-${url}-${path}-${JSON.stringify(o.slice)}`;
+  setStatusItem(itemName, {
+    type: "text",
+    text: "◯",
+  });
+  try {
+    return await f.getDatasetData(path, o);
+  } finally {
+    removeStatusItem(itemName);
+  }
 };
 
 export const useNwbGroup = (url: string, path: string) => {
