@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: check-format
+        name: Check Code Formatting
+        entry: devel/check_format.sh
+        language: script
+        pass_filenames: false

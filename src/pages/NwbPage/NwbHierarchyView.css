@@ -1,0 +1,56 @@
+.nwb-hierarchy-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.nwb-hierarchy-table th {
+    background-color: rgb(240, 240, 240);
+    color: rgb(33, 33, 33);
+    font-weight: 600;
+    text-align: left;
+    padding: 4px 8px;
+    border-bottom: 2px solid rgb(220, 220, 220);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.nwb-hierarchy-table td {
+    padding: 3px 8px;
+    border-bottom: 1px solid rgb(240, 240, 240);
+    vertical-align: top;
+    line-height: 1.4;
+}
+
+.nwb-hierarchy-table tbody tr:hover {
+    background-color: rgba(25, 118, 210, 0.04);
+}
+
+/* Style for the neurodata type column - using monospace for technical data */
+.nwb-hierarchy-table td:nth-child(2) {
+    color: rgb(102, 102, 102);
+    font-size: 0.8rem;
+}
+
+/* Style for the description column */
+.nwb-hierarchy-table td:nth-child(3) {
+    color: rgb(66, 66, 66);
+    font-size: 0.8rem;
+}
+
+/* Checkbox styling */
+.nwb-hierarchy-table input[type="checkbox"] {
+    margin: 0;
+    padding: 0;
+    vertical-align: middle;
+}
+
+/* Expansion controls (▼ and ►) */
+.nwb-hierarchy-table span[style*="cursor: pointer"] {
+    color: rgb(102, 102, 102);
+    font-size: 0.8rem;
+    width: 16px;
+    display: inline-block;
+    text-align: center;
+}

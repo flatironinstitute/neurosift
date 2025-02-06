@@ -1,0 +1,30 @@
+# Neurosift Project Overview
+
+Neurosift is a web application focused on visualizing and analyzing neuroscience data, particularly NWB (Neurodata Without Borders) files, and providing integration with the DANDI archive. The project is built using React and TypeScript, with a plugin-based architecture for extensible data visualization.
+
+# Core Components
+
+The project consists of several key areas:
+- NWB visualization and analysis tools in src/pages/NwbPage
+- DANDI archive integration in src/pages/dandi and src/pages/DandisetPage
+- Remote HDF5 file handling system in src/remote-h5-file
+- Extensible plugin system for different data type visualizations
+
+# Plugin Development Guidelines
+
+When creating new visualization plugins:
+1. Place new plugins in src/pages/NwbPage/plugins
+2. Follow the simple-timeseries plugin as a template
+3. Create an index.ts file for plugin registration
+4. Implement the plugin interface defined in pluginInterface.ts
+5. Register the plugin in plugins/registry.ts
+
+# File Organization
+
+- components/: Shared React components
+- pages/: Main application pages and features
+- css/: Global stylesheets
+- pages/util/: Shared utilities and helpers
+- remote-h5-file/: HDF5 file handling implementation
+
+This file serves as a living document - feel free to update it as the project evolves and new patterns emerge.

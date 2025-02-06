@@ -1,0 +1,55 @@
+.nwb-page-container {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.nwb-page-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.nwb-page-left-panel {
+    min-width: 200px;
+    max-width: 70%;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.nwb-page-right-panel {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.nwb-page-splitter {
+    width: 8px;
+    background-color: rgb(240, 240, 240);
+    cursor: col-resize;
+    transition: background-color 0.2s;
+    flex-shrink: 0;
+}
+
+.nwb-page-splitter:hover,
+.nwb-page-splitter.dragging {
+    background-color: rgb(220, 220, 220);
+}
+
+.close-button {
+    cursor: pointer;
+    color: rgb(102, 102, 102);
+    font-size: 18px;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 12px;
+    transition: background-color 0.2s;
+}
+
+.close-button:hover {
+    background-color: rgb(240, 240, 240);
+}
