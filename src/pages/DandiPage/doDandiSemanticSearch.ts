@@ -3,7 +3,8 @@ import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 
 const doDandiSemanticSearch = async (
   query: string,
-): Promise<DandisetSearchResultItem[]> => {
+  limit: number = 10,
+): Promise<{ results: DandisetSearchResultItem[]; total: number }> => {
   try {
     // First get semantic search results
     const response = await fetch(
@@ -20,15 +21,18 @@ const doDandiSemanticSearch = async (
 
     if (!response.ok) {
       console.warn("Error in semantic search:", response.statusText);
-      return [];
+      return { results: [], total: 0 };
     }
 
     const data = await response.json();
     const results = data.similarDandisetIds as string[];
 
     // Limit to a few results and fetch full dandiset info for each
+    // Return total count along with the paginated results
+    const total = results.length;
+
     const dandisets = await Promise.all(
-      results.slice(0, 10).map(async (dandisetId) => {
+      results.slice(0, limit).map(async (dandisetId) => {
         const url = `https://api.dandiarchive.org/api/dandisets/${dandisetId}`;
         const authorizationHeader = getAuthorizationHeaderForUrl(url);
         const headers = authorizationHeader
@@ -48,11 +52,16 @@ const doDandiSemanticSearch = async (
       }),
     );
 
-    // Filter out any failed requests
-    return dandisets.filter((d): d is DandisetSearchResultItem => d !== null);
+    // Filter out any failed requests and return with total
+    return {
+      results: dandisets.filter(
+        (d): d is DandisetSearchResultItem => d !== null,
+      ),
+      total,
+    };
   } catch (error) {
     console.error("Error performing semantic search:", error);
-    return [];
+    return { results: [], total: 0 };
   }
 };
 

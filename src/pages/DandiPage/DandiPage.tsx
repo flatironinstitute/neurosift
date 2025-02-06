@@ -32,13 +32,15 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
   const [searchResults, setSearchResults] = useState<
     DandisetSearchResultItem[]
   >([]);
+  const [totalResults, setTotalResults] = useState<number>(0);
+  const [currentLimit, setCurrentLimit] = useState<number>(10);
   const [searchText, setSearchText] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [lastSearchedText, setLastSearchedText] = useState("");
   const [useSemanticSearch, setUseSemanticSearch] = useState(false);
 
   const performSearch = useCallback(
-    async (searchQuery: string) => {
+    async (searchQuery: string, limit: number) => {
       setIsSearching(true);
       setSearchResults([]); // Clear results before new search
       const { headers, apiKeyProvided } = getDandiApiHeaders(staging);
@@ -48,8 +50,12 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
 
       try {
         if (useSemanticSearch) {
-          const semanticResults = await doDandiSemanticSearch(searchQuery);
-          setSearchResults(semanticResults);
+          const { results, total } = await doDandiSemanticSearch(
+            searchQuery,
+            limit,
+          );
+          setSearchResults(results);
+          setTotalResults(total);
         } else {
           const response = await fetch(
             `https://api${stagingStr}.dandiarchive.org/api/dandisets/?page=1&page_size=50&ordering=-modified&search=${searchQuery}&draft=true&empty=${emptyStr}&embargoed=${embargoedStr}`,
@@ -78,15 +84,33 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
     if (searchText) return;
     if (useSemanticSearch) {
       setSearchResults([]);
+      setTotalResults(0);
     } else {
-      performSearch("");
+      performSearch("", 10);
     }
     setRecentDandisets(getRecentDandisets());
   }, [performSearch, useSemanticSearch, searchText]);
 
+  // Reset limit when switching search modes
+  useEffect(() => {
+    setCurrentLimit(10);
+  }, [useSemanticSearch]);
+
   const handleRecentClick = (dandisetId: string) => {
     navigate(`/dandiset/${dandisetId}`);
   };
+
+  const handleSearch = useCallback(() => {
+    setCurrentLimit(10);
+    performSearch(searchText, 10);
+  }, [searchText, performSearch]);
+
+  const handleViewMore = useCallback(() => {
+    const newLimit = Math.min(currentLimit + 10, 50);
+    setCurrentLimit(newLimit);
+    performSearch(searchText, newLimit);
+  }, [currentLimit, searchText, performSearch]);
+
   return (
     <ScrollY width={width} height={height}>
       <Container maxWidth="xl" sx={{ mt: 2 }}>
@@ -142,7 +166,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
           <Button
             size="small"
             variant="contained"
-            onClick={() => !isSearching && performSearch(searchText)}
+            onClick={() => !isSearching && handleSearch()}
             disabled={isSearching}
             sx={{
               minWidth: 40,
@@ -179,7 +203,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
             }
             onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
               if (e.key === "Enter") {
-                performSearch(searchText);
+                handleSearch();
               }
             }}
           />
@@ -188,6 +212,17 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
           {searchResults.map((result: DandisetSearchResultItem) => (
             <DandisetSearchResult dandiset={result} key={result.identifier} />
           ))}
+          {useSemanticSearch &&
+            searchResults.length > 0 &&
+            searchResults.length < totalResults && (
+              <Box
+                sx={{ display: "flex", justifyContent: "center", mt: 2, mb: 2 }}
+              >
+                <Button variant="outlined" onClick={handleViewMore}>
+                  View More ({searchResults.length} of {totalResults})
+                </Button>
+              </Box>
+            )}
         </Box>
       </Container>
     </ScrollY>
