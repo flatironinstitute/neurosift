@@ -50,7 +50,7 @@ const ApplicationBar: FunctionComponent<Props> = ({ onContextChat }) => {
   // const star = <span style={{color: bannerColor, fontSize: 20}}>★</span>
 
   const openInNeurosiftV2Url = useMemo(() => {
-    const baseUrl = "https://neurosift2.vercel.app";
+    const baseUrl = "https://v2.neurosift.app";
     if (route.page === "dandi") return `${baseUrl}/dandi`;
     else if (route.page === "dandiset") return `${baseUrl}/dandiset/${route.dandisetId}`;
     else if (route.page === "nwb") {
@@ -152,15 +152,25 @@ const ApplicationBar: FunctionComponent<Props> = ({ onContextChat }) => {
             />
           </span>
           &nbsp;&nbsp;&nbsp;&nbsp;
-          {openInNeurosiftV2Url && <span style={{ color: "white" }}>
-            <SmallIconButton
-              icon={<span style={{fontWeight: 'bold'}}>2</span>}
+          {openInNeurosiftV2Url && (
+            <button
               onClick={() => {
                 window.location.href = openInNeurosiftV2Url;
               }}
-              title={`Open in Neurosift v2 (WIP)`}
-            />
-          </span>}
+              title="Open in Neurosift v2 (WIP)"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '0.7em',
+                padding: '4px 8px',
+                fontWeight: 'bold'
+              }}
+            >
+              2
+            </button>
+          )}
           &nbsp;&nbsp;
           {/* {
                         signedIn && (
