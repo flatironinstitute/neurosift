@@ -27,4 +27,15 @@ When creating new visualization plugins:
 - pages/util/: Shared utilities and helpers
 - remote-h5-file/: HDF5 file handling implementation
 
+# Pull Requests
+
+When asked to solve an issue on github, please use the command-line to do the following:
+* Create a new local branch
+* Make your changes
+* Push your changes to the remote repository
+* Create a pull request on github that includes that we are fixing the issue
+* Switch back to the main-v2 branch
+
+Also, use the search_issues tool in the MCP rather than get_issue since there seems to be a problem with the latter.
+
 This file serves as a living document - feel free to update it as the project evolves and new patterns emerge.

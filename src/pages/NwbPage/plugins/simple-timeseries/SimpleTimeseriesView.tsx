@@ -227,96 +227,103 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
           <div style={{ fontWeight: "bold" }}>Sampling frequency:</div>
           <div>{formatSamplingFrequency(info.samplingFrequency)}</div>
 
-          <div style={{ fontWeight: "bold" }}>Channels:</div>
-          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-            <span>
-              Showing {visibleChannelsStart} -{" "}
-              {Math.min(
-                visibleChannelsStart + numVisibleChannels,
-                info.totalNumChannels,
-              ) - 1}{" "}
-              of {info.totalNumChannels}
-            </span>
-            <button
-              onClick={handleDecreaseChannels}
-              disabled={numVisibleChannels <= 1}
-              style={{
-                padding: "2px 6px",
-                border: "1px solid #ccc",
-                borderRadius: "2px",
-                fontSize: "0.85rem",
-                backgroundColor: numVisibleChannels <= 1 ? "#f5f5f5" : "white",
-                cursor: numVisibleChannels <= 1 ? "default" : "pointer",
-              }}
-            >
-              /2
-            </button>
-            <button
-              onClick={handleIncreaseChannels}
-              disabled={
-                visibleChannelsStart + numVisibleChannels * 2 >
-                info.totalNumChannels
-              }
-              style={{
-                padding: "2px 6px",
-                border: "1px solid #ccc",
-                borderRadius: "2px",
-                fontSize: "0.85rem",
-                backgroundColor:
-                  visibleChannelsStart + numVisibleChannels * 2 >
-                  info.totalNumChannels
-                    ? "#f5f5f5"
-                    : "white",
-                cursor:
-                  visibleChannelsStart + numVisibleChannels * 2 >
-                  info.totalNumChannels
-                    ? "default"
-                    : "pointer",
-              }}
-            >
-              ×2
-            </button>
-            <button
-              onClick={handleShiftLeft}
-              disabled={visibleChannelsStart === 0}
-              style={{
-                padding: "2px 6px",
-                border: "1px solid #ccc",
-                borderRadius: "2px",
-                fontSize: "0.85rem",
-                backgroundColor:
-                  visibleChannelsStart === 0 ? "#f5f5f5" : "white",
-                cursor: visibleChannelsStart === 0 ? "default" : "pointer",
-              }}
-            >
-              ←
-            </button>
-            <button
-              onClick={handleShiftRight}
-              disabled={
-                visibleChannelsStart + numVisibleChannels >=
-                info.totalNumChannels
-              }
-              style={{
-                padding: "2px 6px",
-                border: "1px solid #ccc",
-                borderRadius: "2px",
-                fontSize: "0.85rem",
-                backgroundColor:
-                  visibleChannelsStart + numVisibleChannels >=
-                  info.totalNumChannels
-                    ? "#f5f5f5"
-                    : "white",
-                cursor:
-                  visibleChannelsStart + numVisibleChannels >=
-                  info.totalNumChannels
-                    ? "default"
-                    : "pointer",
-              }}
-            >
-              →
-            </button>
-          </div>
+          {info.totalNumChannels > 1 && (
+            <>
+              <div style={{ fontWeight: "bold" }}>Channels:</div>
+              <div
+                style={{ display: "flex", gap: "6px", alignItems: "center" }}
+              >
+                <span>
+                  Showing {visibleChannelsStart} -{" "}
+                  {Math.min(
+                    visibleChannelsStart + numVisibleChannels,
+                    info.totalNumChannels,
+                  ) - 1}{" "}
+                  of {info.totalNumChannels}
+                </span>
+                <button
+                  onClick={handleDecreaseChannels}
+                  disabled={numVisibleChannels <= 1}
+                  style={{
+                    padding: "2px 6px",
+                    border: "1px solid #ccc",
+                    borderRadius: "2px",
+                    fontSize: "0.85rem",
+                    backgroundColor:
+                      numVisibleChannels <= 1 ? "#f5f5f5" : "white",
+                    cursor: numVisibleChannels <= 1 ? "default" : "pointer",
+                  }}
+                >
+                  /2
+                </button>
+                <button
+                  onClick={handleIncreaseChannels}
+                  disabled={
+                    visibleChannelsStart + numVisibleChannels * 2 >
+                    info.totalNumChannels
+                  }
+                  style={{
+                    padding: "2px 6px",
+                    border: "1px solid #ccc",
+                    borderRadius: "2px",
+                    fontSize: "0.85rem",
+                    backgroundColor:
+                      visibleChannelsStart + numVisibleChannels * 2 >
+                      info.totalNumChannels
+                        ? "#f5f5f5"
+                        : "white",
+                    cursor:
+                      visibleChannelsStart + numVisibleChannels * 2 >
+                      info.totalNumChannels
+                        ? "default"
+                        : "pointer",
+                  }}
+                >
+                  ×2
+                </button>
+                <button
+                  onClick={handleShiftLeft}
+                  disabled={visibleChannelsStart === 0}
+                  style={{
+                    padding: "2px 6px",
+                    border: "1px solid #ccc",
+                    borderRadius: "2px",
+                    fontSize: "0.85rem",
+                    backgroundColor:
+                      visibleChannelsStart === 0 ? "#f5f5f5" : "white",
+                    cursor: visibleChannelsStart === 0 ? "default" : "pointer",
+                  }}
+                >
+                  ←
+                </button>
+                <button
+                  onClick={handleShiftRight}
+                  disabled={
+                    visibleChannelsStart + numVisibleChannels >=
+                    info.totalNumChannels
+                  }
+                  style={{
+                    padding: "2px 6px",
+                    border: "1px solid #ccc",
+                    borderRadius: "2px",
+                    fontSize: "0.85rem",
+                    backgroundColor:
+                      visibleChannelsStart + numVisibleChannels >=
+                      info.totalNumChannels
+                        ? "#f5f5f5"
+                        : "white",
+                    cursor:
+                      visibleChannelsStart + numVisibleChannels >=
+                      info.totalNumChannels
+                        ? "default"
+                        : "pointer",
+                  }}
+                >
+                  →
+                </button>
+              </div>
+            </>
+          )}
 
           <div style={{ fontWeight: "bold" }}>Samples:</div>
           <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
