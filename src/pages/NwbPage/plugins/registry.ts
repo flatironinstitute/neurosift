@@ -8,6 +8,7 @@ import { rasterPlugin } from "./Raster";
 import imagePlugin from "./Image";
 import { spatialSeriesPlugin } from "./SpatialSeries";
 import { imageSegmentationPlugin } from "./ImageSegmentation";
+import { timeIntervalsPlugin } from "./TimeIntervals";
 
 // List of plugins in priority order (last one is checked first)
 export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
@@ -20,6 +21,7 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   rasterPlugin,
   imagePlugin,
   imageSegmentationPlugin,
+  timeIntervalsPlugin,
 ];
 
 export const findSuitablePlugins = async (

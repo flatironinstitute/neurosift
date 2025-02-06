@@ -19,6 +19,7 @@
     "@mui/icons-material": "^6.4.2",
     "@mui/material": "^6.4.2",
     "@types/plotly.js": "^2.35.2",
+    "mathjs": "^14.2.1",
     "numcodecs": "^0.3.1",
     "pako": "^2.1.0",
     "plotly.js-dist-min": "^3.0.0",

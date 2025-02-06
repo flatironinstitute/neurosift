@@ -66,6 +66,7 @@ The following table provides example visualizations of different neurodata types
 | LabeledEvents | RewardEventsLinearTrack | 000568 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/72bebc59-e73e-4d6b-b4ab-086d054583d6/download/&dandisetId=000568&dandisetVersion=0.230705.1633&tab=/processing/behavior/RewardEventsLinearTrack) |
 | ImageSegmentation | ophys/ImageSegmentation | - | [View](https://v2.neurosift.app/nwb?url=https://dandiarchive.s3.amazonaws.com/blobs/368/fa7/368fa71e-4c93-4f7e-af15-06776ca07f34&tab=/processing/ophys/ImageSegmentation) |
 | TwoPhotonSeries | raw_suite2p_motion_corrected | 000871 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/89256db6-8926-451f-b51f-8a7ae7c3c1f8/download/&dandisetId=000871&dandisetVersion=draft&tab=/acquisition/raw_suite2p_motion_corrected) |
+| TimeIntervals | /intervals/epochs | 000954 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/dd1bdcf3-5430-4037-ad4a-1727004d38d2/download/&dandisetId=000954&dandisetVersion=draft&tab=/intervals/epochs) |
 
 URL Structure:
 ```
