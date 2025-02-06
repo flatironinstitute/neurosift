@@ -11,7 +11,8 @@ export const twoPhotonSeriesPlugin: NwbObjectViewPlugin = {
     // Check if this is a TwoPhotonSeries or OnePhotonSeries neurodata_type
     if (
       group.attrs.neurodata_type !== "TwoPhotonSeries" &&
-      group.attrs.neurodata_type !== "OnePhotonSeries"
+      group.attrs.neurodata_type !== "OnePhotonSeries" &&
+      group.attrs.neurodata_type !== "ImageSeries"
     ) {
       return false;
     }
