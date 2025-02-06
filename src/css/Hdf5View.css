@@ -1,0 +1,56 @@
+.hdf5-view-container {
+    position: relative;
+    margin-top: 10px;
+}
+
+.top-level-group {
+    margin-left: 10px;
+    user-select: none;
+}
+
+.group-title-panel {
+    cursor: pointer;
+    padding: 10px 0;
+    margin-top: 10px;
+    background: #34495e;
+    color: #fff;
+    border: solid 1px #dde4ed;
+    border-radius: 4px;
+    padding-left: 10px;
+    transition: background-color 0.2s ease;
+}
+
+.group-title-panel:hover {
+    background: #2b5797;
+}
+
+.group-title-panel.expanded {
+    background: #2b5797;
+}
+
+.group-title-panel .expander {
+    display: inline-block;
+    width: 20px;
+    text-align: center;
+}
+
+.group-title-panel .group-name {
+    margin-left: 5px;
+}
+
+.group-title-panel .group-count {
+    color: rgba(255, 255, 255, 0.8);
+    margin-left: 10px;
+}
+
+.loading-text {
+    color: #2c3e50;
+    padding: 20px;
+    text-align: center;
+}
+
+.divider {
+    border: none;
+    border-top: 1px solid #dde4ed;
+    margin: 20px 0;
+}

@@ -1,4 +1,5 @@
 import { FunctionComponent, useState } from "react";
+import "../../css/Hdf5View.css";
 import { NwbGroup, useNwbGroup } from "./nwbInterface";
 import TopLevelGroupContentPanel from "./TopLevelGroupContentPanel";
 
@@ -14,9 +15,9 @@ const Hdf5View: FunctionComponent<Props> = ({ nwbUrl, width, isExpanded }) => {
   if (!rootGroup && isExpanded) return <div>Loading...</div>;
 
   return (
-    <div style={{ position: "relative", width }}>
+    <div className="hdf5-view-container" style={{ width }}>
       {rootGroup && (
-        <div style={{ marginTop: 10 }}>
+        <div>
           {rootGroup.subgroups.map((sg) => (
             <TopLevelGroupView key={sg.name} nwbUrl={nwbUrl} name={sg.name} />
           ))}
@@ -44,25 +45,18 @@ const TopLevelGroupView: FunctionComponent<TopLevelGroupViewProps> = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
   const group = useNwbGroup(nwbUrl, "/" + name);
-  const titlePanelBackgroundColor = expanded ? "#797" : "#8a8";
-  const titlePanelTextColor = expanded ? "white" : "#fff";
   const expandable =
     group && (group.subgroups.length > 0 || group.datasets.length > 0);
   return (
-    <div style={{ marginLeft: 10, userSelect: "none" }}>
+    <div className="top-level-group">
       <div
-        style={{
-          cursor: "pointer",
-          paddingTop: 10,
-          paddingBottom: 10,
-          marginTop: 10,
-          background: titlePanelBackgroundColor,
-          color: titlePanelTextColor,
-          border: "solid 1px black",
-        }}
+        className={`group-title-panel ${expanded ? "expanded" : ""}`}
         onClick={() => expandable && setExpanded(!expanded)}
       >
-        {expandable ? expanded ? "▼" : "►" : <>&nbsp;&nbsp;&nbsp;</>} {name}{" "}
+        <span className="expander">
+          {expandable ? expanded ? "▼" : "►" : <>&nbsp;&nbsp;&nbsp;</>}
+        </span>
+        <span className="group-name">{name}</span>
         <GroupTitlePanelText name={name} group={group} nwbUrl={nwbUrl} />
       </div>
       {expanded && group && (
@@ -82,7 +76,11 @@ const GroupTitlePanelText: FunctionComponent<GroupTitlePanelTextProps> = ({
   group,
 }) => {
   if (!group) return <span>-</span>;
-  return <span>({group.subgroups.length + group.datasets.length})</span>;
+  return (
+    <span className="group-count">
+      ({group.subgroups.length + group.datasets.length})
+    </span>
+  );
 };
 
 export default Hdf5View;

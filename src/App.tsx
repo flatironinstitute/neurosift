@@ -20,7 +20,7 @@ import OpenNeuroPage from "./pages/OpenNeuroPage/OpenNeuroPage";
 import NwbPage from "./pages/NwbPage/NwbPage";
 import SettingsPage from "./pages/SettingsPage/SettingsPage";
 import GuidePage from "./pages/GuidePage/GuidePage";
-import "./App.css";
+import "./css/App.css";
 import { useWindowDimensions } from "@fi-sci/misc";
 import OpenNeuroDatasetPage from "./pages/OpenNeuroDatasetPage/OpenNeuroDatasetPage";
 

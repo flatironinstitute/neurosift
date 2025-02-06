@@ -5,12 +5,12 @@
 }
 
 .nwb-hierarchy-table th {
-    background-color: rgb(240, 240, 240);
-    color: rgb(33, 33, 33);
+    background-color: #34495e;
+    color: #fff;
     font-weight: 600;
     text-align: left;
     padding: 4px 8px;
-    border-bottom: 2px solid rgb(220, 220, 220);
+    border-bottom: 2px solid #dde4ed;
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -18,24 +18,24 @@
 
 .nwb-hierarchy-table td {
     padding: 3px 8px;
-    border-bottom: 1px solid rgb(240, 240, 240);
+    border-bottom: 1px solid #dde4ed;
     vertical-align: top;
     line-height: 1.4;
 }
 
 .nwb-hierarchy-table tbody tr:hover {
-    background-color: rgba(25, 118, 210, 0.04);
+    background-color: rgba(43, 87, 151, 0.05);
 }
 
 /* Style for the neurodata type column - using monospace for technical data */
 .nwb-hierarchy-table td:nth-child(2) {
-    color: rgb(102, 102, 102);
+    color: #34495e;
     font-size: 0.8rem;
 }
 
 /* Style for the description column */
 .nwb-hierarchy-table td:nth-child(3) {
-    color: rgb(66, 66, 66);
+    color: #2c3e50;
     font-size: 0.8rem;
 }
 
@@ -48,7 +48,7 @@
 
 /* Expansion controls (▼ and ►) */
 .nwb-hierarchy-table span[style*="cursor: pointer"] {
-    color: rgb(102, 102, 102);
+    color: #34495e;
     font-size: 0.8rem;
     width: 16px;
     display: inline-block;

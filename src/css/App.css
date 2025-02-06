@@ -6,8 +6,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: rgb(33, 33, 33);
-  background-color: rgb(250, 250, 250);
+  color: #2c3e50;
+  background-color: #f7f9fc;
 }
 
 code {
@@ -21,7 +21,7 @@ code {
 }
 
 .MuiAppBar-root {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 1px 3px rgba(43, 87, 151, 0.12);
 }
 
 .MuiToolbar-root {
@@ -42,6 +42,6 @@ code {
 }
 
 .StatusBarDiv {
-  background-color: rgba(0, 0, 0, 0.05);
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: rgba(43, 87, 151, 0.05);
+  border-top: 1px solid #dde4ed;
 }

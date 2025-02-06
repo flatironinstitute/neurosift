@@ -25,7 +25,7 @@
 
 .nwb-page-splitter {
     width: 8px;
-    background-color: rgb(240, 240, 240);
+    background-color: #dde4ed;
     cursor: col-resize;
     transition: background-color 0.2s;
     flex-shrink: 0;
@@ -33,12 +33,12 @@
 
 .nwb-page-splitter:hover,
 .nwb-page-splitter.dragging {
-    background-color: rgb(220, 220, 220);
+    background-color: rgba(43, 87, 151, 0.2);
 }
 
 .close-button {
     cursor: pointer;
-    color: rgb(102, 102, 102);
+    color: #34495e;
     font-size: 18px;
     padding: 4px;
     display: flex;
@@ -51,5 +51,5 @@
 }
 
 .close-button:hover {
-    background-color: rgb(240, 240, 240);
+    background-color: rgba(43, 87, 151, 0.05);
 }

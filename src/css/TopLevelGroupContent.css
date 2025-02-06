@@ -1,0 +1,43 @@
+.group-content-container table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+/* Group styles */
+.group-item {
+    color: #2b5797;
+}
+
+/* Dataset styles */
+.dataset-item {
+    color: #34495e;
+}
+
+/* Attribute styles */
+.attribute-item {
+    color: #2c3e50;
+}
+
+.dataset-info {
+    color: #34495e;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.debug-button {
+    margin-left: 8px;
+    color: #2c3e50;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.debug-button:hover {
+    opacity: 1;
+}
+
+.attribute-value {
+    color: #2c3e50;
+    margin-left: 4px;
+    font-family: monospace;
+    font-size: 0.9em;
+}

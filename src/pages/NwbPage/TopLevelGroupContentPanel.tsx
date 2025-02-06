@@ -16,6 +16,7 @@ import {
   NwbGroup,
 } from "./nwbInterface";
 import { valueToElement } from "./valueToElement";
+import "../../css/TopLevelGroupContent.css";
 
 type Props = {
   name: string;
@@ -327,7 +328,7 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({
   }, [groupsDatasetsState, group, excludeGroups]);
 
   return (
-    <div>
+    <div className="group-content-container">
       <table>
         <tbody>
           {tableItems.map((item) => (
@@ -350,18 +351,7 @@ type TableRowProps = {
   nwbUrl: string;
 };
 
-// groups are bluish gray
-const groupColor = "#57a";
-// datasets are greenish gray
-const datasetColor = "#5a7";
-// attributes are gray
-const attributeColor = "#555";
-
-const groupStyle = { color: groupColor };
-const datasetStyle = { color: datasetColor };
-const attributeStyle = { color: attributeColor };
-
-const expanderStyle = { color: "#222", cursor: "pointer" };
+const expanderStyle = { cursor: "pointer" };
 
 const TableRow: FunctionComponent<TableRowProps> = ({
   tableItem,
@@ -389,7 +379,7 @@ const TableRow: FunctionComponent<TableRowProps> = ({
     case "group":
       // neurodataType = tableItem.attrs["neurodata_type"];
       return (
-        <tr style={{ cursor: "pointer" }}>
+        <tr className="group-item" style={{ cursor: "pointer" }}>
           <td style={indentStyle}>
             <div>
               <span
@@ -411,7 +401,6 @@ const TableRow: FunctionComponent<TableRowProps> = ({
                     path: tableItem.path,
                   });
                 }}
-                style={groupStyle}
               >
                 {tableItem.name}
               </span>
@@ -431,7 +420,7 @@ const TableRow: FunctionComponent<TableRowProps> = ({
       );
     case "dataset":
       return (
-        <tr style={{ cursor: "pointer" }}>
+        <tr className="dataset-item" style={{ cursor: "pointer" }}>
           <td style={indentStyle}>
             <div
               onClick={() => {
@@ -447,7 +436,7 @@ const TableRow: FunctionComponent<TableRowProps> = ({
                 {tableItem.expanded ? "▼" : "►"}
               </span>
               &nbsp;
-              <span style={datasetStyle}>{tableItem.name}</span>
+              <span>{tableItem.name}</span>
               {tableItem.data && (
                 <span>
                   &nbsp;{abbreviateString(valueToElement(tableItem.data), 300)}
@@ -459,26 +448,22 @@ const TableRow: FunctionComponent<TableRowProps> = ({
       );
     case "attribute":
       return (
-        <tr style={{ cursor: "pointer" }}>
+        <tr className="attribute-item" style={{ cursor: "pointer" }}>
           <td style={indentStyle}>
             <div>
               <span>&nbsp;</span>&nbsp;
-              <span
-                style={attributeStyle}
-              >{`${tableItem.name}: ${valueToElement(tableItem.value)}`}</span>
+              <span>{`${tableItem.name}: ${valueToElement(tableItem.value)}`}</span>
             </div>
           </td>
         </tr>
       );
     case "dataset-info":
       return (
-        <tr style={{ cursor: "pointer" }}>
+        <tr className="dataset-info" style={{ cursor: "pointer" }}>
           <td style={indentStyle}>
             <div>
               <span>&nbsp;</span>&nbsp;
-              <span
-                style={datasetStyle}
-              >{`${tableItem.dataset.dtype} ${valueToElement(tableItem.dataset.shape)}`}</span>
+              <span>{`${tableItem.dataset.dtype} ${valueToElement(tableItem.dataset.shape)}`}</span>
               {tableItem.data ? (
                 <span>&nbsp;{valueToElement(tableItem.data)}</span>
               ) : (

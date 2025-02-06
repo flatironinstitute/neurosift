@@ -7,7 +7,7 @@ import { useDandisetVersionInfo } from "../DandisetPage/useDandisetVersionInfo";
 import useQueryDandiset from "../DandisetPage/useQueryDandiset";
 import MainWorkspace from "./MainWorkspace";
 import NwbOverview from "./NwbOverview";
-import "./NwbPage.css";
+import "../../css/NwbPage.css";
 import { TAB_BAR_HEIGHT, tabsStyle, tabStyle } from "./tabStyles";
 import { useNwbFileOverview } from "./useNwbFileOverview";
 
