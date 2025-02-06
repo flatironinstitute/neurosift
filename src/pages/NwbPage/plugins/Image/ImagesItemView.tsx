@@ -1,4 +1,5 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import IfHasBeenVisible from "../PSTH/PSTHItemView/IfHasBeenVisible";
 import {
   NwbDataset,
   useNwbDataset,
@@ -23,19 +24,29 @@ const ImagesItemView: FunctionComponent<Props> = ({
 }) => {
   const group = useNwbGroup(nwbUrl, path);
   if (!group) return <div>Loading group...</div>;
-  console.log("---- height", height);
   return (
     <div style={{ position: "relative", width, height, overflowY: "auto" }}>
-      {group.datasets.map((ds) => (
-        <div key={ds.path}>
-          <h3>{ds.name}</h3>
-          <ImageItem
-            nwbUrl={nwbUrl}
-            path={ds.path}
-            neurodataType={ds.attrs["neurodata_type"]}
-          />
-        </div>
-      ))}
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "20px",
+          padding: "10px",
+        }}
+      >
+        {group.datasets.map((ds) => (
+          <div style={{ minWidth: 300 }}>
+            <IfHasBeenVisible key={ds.path} width={100} height={500}>
+              <h3>{ds.name}</h3>
+              <ImageItem
+                nwbUrl={nwbUrl}
+                path={ds.path}
+                neurodataType={ds.attrs["neurodata_type"]}
+              />
+            </IfHasBeenVisible>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

@@ -51,6 +51,20 @@ After this setup, code will be automatically checked for formatting when you mak
 
 Running `./devel/format_code.sh` which will format all code in the repository.
 
+## Example Views
+
+The following table provides example visualizations of different neurodata types through Neurosift:
+
+| Neurodata Type | Name | Dandiset ID | Example Link |
+|----------------|------|-------------|----------|
+| Image | maximum_intensity_projection | 000728 | [View](http://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/f02db27e-82eb-41dd-865a-a08bb41491da/download/&dandisetId=000728&dandisetVersion=0.240827.1809&tab=/processing/ophys/SummaryImages/maximum_intensity_projection) |
+| Images | StimulusPresentation/indexed_images | 000673 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/65a7e913-45c7-48db-bf19-b9f5e910110a/download/&dandisetId=000673&dandisetVersion=0.250122.0110&tab=/stimulus/presentation/StimulusPresentation/indexed_images) |
+
+URL Structure:
+```
+https://v2.neurosift.app/nwb?url={asset_download_url}&dandisetId={id}&dandisetVersion={version}&tab={path_to_data}
+```
+
 ## License
 
 This project is licensed under the Apache 2.0 License.

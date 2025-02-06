@@ -12,7 +12,7 @@ const IfHasBeenVisible: FunctionComponent<PropsWithChildren<Props>> = ({
   height,
 }) => {
   const hasBeenVisible = useRef(false);
-  const { inView, ref } = useInView({ trackVisibility: true, delay: 400 });
+  const { inView, ref } = useInView({ trackVisibility: true, delay: 500 });
   if (inView) hasBeenVisible.current = true;
   return (
     <div ref={ref} style={{ position: "relative", width, height }}>
