@@ -4,6 +4,7 @@ const defaultAllowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
   "https://neurosift2.vercel.app",
+  "https://v2.neurosift.app",
   "https://neurosift.app",
   "https://hub.dandiarchive.org",
   "https://dandiarchive.org",
