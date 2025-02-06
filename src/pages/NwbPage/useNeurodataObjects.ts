@@ -139,8 +139,15 @@ export const useNeurodataObjects = (nwbUrl: string) => {
         neurodataParentPath: string,
       ) => {
         for (const sg of group.subgroups) {
-          if (sg.attrs["neurodata_type"]) {
-            const grp = await getNwbGroup(nwbUrl, sg.path);
+          const grp = await getNwbGroup(nwbUrl, sg.path);
+          if (!grp) continue;
+
+          // We also consider groups with a lot of children as neurodata objects
+          // because we don't want them to be expanded by default in the tree
+          // view
+          const hasALotOfChildren =
+            grp.subgroups.length >= 10 || grp.datasets.length >= 10;
+          if (sg.attrs["neurodata_type"] || hasALotOfChildren) {
             if (grp) {
               dispatch({
                 type: "addObject",
