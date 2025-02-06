@@ -1,5 +1,5 @@
 import { Box, Tab, Tabs } from "@mui/material";
-import { FunctionComponent } from "react";
+import { FunctionComponent, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import ResponsiveLayout from "../../components/ResponsiveLayout";
 import ScrollY from "../../components/ScrollY";
@@ -10,6 +10,7 @@ import NwbOverview from "./NwbOverview";
 import "../../css/NwbPage.css";
 import { TAB_BAR_HEIGHT, tabsStyle, tabStyle } from "./tabStyles";
 import { useNwbFileOverview } from "./useNwbFileOverview";
+import { track } from "@vercel/analytics/react";
 
 type NwbPageProps = {
   width: number;
@@ -24,6 +25,24 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({ width, height }) => {
   const dandisetVersion = searchParams.get("dandisetVersion") || "";
 
   const initialSplitterPosition = Math.max(200, Math.min(450, width / 3));
+
+  useEffect(() => {
+    let canceled = false;
+
+    // important to only call this once per route change
+    setTimeout(() => {
+      if (canceled) return;
+      // important to wait until the analytics is ready
+      track("nwb-page-viewed", {
+        url: nwbUrl || "",
+        dandisetId: dandisetId || "",
+        dandisetVersion: dandisetVersion || "",
+      });
+    }, 500);
+    return () => {
+      canceled = true;
+    };
+  }, [nwbUrl, dandisetId, dandisetVersion]);
 
   return (
     <ResponsiveLayout

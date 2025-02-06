@@ -24,6 +24,7 @@ import GuidePage from "./pages/GuidePage/GuidePage";
 import "./css/App.css";
 import { useWindowDimensions } from "@fi-sci/misc";
 import OpenNeuroDatasetPage from "./pages/OpenNeuroDatasetPage/OpenNeuroDatasetPage";
+import { Analytics } from "@vercel/analytics/react";
 
 const theme = createTheme({
   palette: {
@@ -206,6 +207,7 @@ function App() {
       <Router>
         <AppContent />
       </Router>
+      <Analytics />
     </ThemeProvider>
   );
 }
