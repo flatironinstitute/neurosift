@@ -1,6 +1,6 @@
-import React, { FunctionComponent } from "react";
-import SpatialSeriesXYView from "./SpatialSeriesXYView/SpatialSeriesXYView";
+import { FunctionComponent } from "react";
 import { SetupTimeseriesSelection } from "../PSTH/PSTHItemView/context-timeseries-selection";
+import SpatialSeriesXYView from "./SpatialSeriesXYView/SpatialSeriesXYView";
 
 type Props = {
   nwbUrl: string;
