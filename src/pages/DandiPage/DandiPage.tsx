@@ -44,6 +44,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
       const { headers, apiKeyProvided } = getDandiApiHeaders(staging);
       const embargoedStr = apiKeyProvided ? "true" : "false";
       const stagingStr = staging ? "-staging" : "";
+      const emptyStr = !searchQuery ? "false" : "true";
 
       try {
         if (useSemanticSearch) {
@@ -51,7 +52,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
           setSearchResults(semanticResults);
         } else {
           const response = await fetch(
-            `https://api${stagingStr}.dandiarchive.org/api/dandisets/?page=1&page_size=50&ordering=-modified&search=${searchQuery}&draft=true&empty=true&embargoed=${embargoedStr}`,
+            `https://api${stagingStr}.dandiarchive.org/api/dandisets/?page=1&page_size=50&ordering=-modified&search=${searchQuery}&draft=true&empty=${emptyStr}&embargoed=${embargoedStr}`,
             {
               headers,
             },
