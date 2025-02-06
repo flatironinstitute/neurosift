@@ -1,3 +1,4 @@
+import { behavioralEventsPlugin } from "./BehavioralEvents";
 import { defaultPlugin } from "./default";
 import { dynamicTablePlugin } from "./dynamic-table";
 import { twoPhotonSeriesPlugin } from "./TwoPhotonSeries";
@@ -14,6 +15,7 @@ import { trialAlignedSeriesPlugin } from "./TrialAlignedSeries";
 // List of plugins in priority order (last one is checked first)
 export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   defaultPlugin,
+  behavioralEventsPlugin,
   dynamicTablePlugin,
   twoPhotonSeriesPlugin,
   spatialSeriesPlugin,

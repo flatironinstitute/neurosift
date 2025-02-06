@@ -429,7 +429,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
   return (
     <div
       ref={divRef}
-      style={{ position: "absolute", width, height, background: "white" }}
+      style={{ position: "relative", width, height, background: "white" }}
     >
       <Splitter
         // ref={divRef} // removed on 2.1.24, let's see if it causes problems

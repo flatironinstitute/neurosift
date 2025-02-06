@@ -68,11 +68,7 @@ The following table provides example visualizations of different neurodata types
 | TwoPhotonSeries | raw_suite2p_motion_corrected | 000871 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/89256db6-8926-451f-b51f-8a7ae7c3c1f8/download/&dandisetId=000871&dandisetVersion=draft&tab=/acquisition/raw_suite2p_motion_corrected) |
 | TimeIntervals | /intervals/epochs | 000954 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/dd1bdcf3-5430-4037-ad4a-1727004d38d2/download/&dandisetId=000954&dandisetVersion=draft&tab=/intervals/epochs) |
 | TimeIntervals / FiberPhotometryResponseSeries / TrialAlignedSeries | DfOverFFiberPhotometryResponseSeries | 001084 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/bca70a25-e5a5-4a40-b36f-fe1088b85eb2/download/&dandisetId=001084&dandisetVersion=draft&tab=view:TrialAlignedSeries%7C/processing/behavior/TimeIntervals^/processing/ophys/DfOverFFiberPhotometryResponseSeriesGreenIsosbestic) |
-
-URL Structure:
-```
-https://v2.neurosift.app/nwb?url={asset_download_url}&dandisetId={id}&dandisetVersion={version}&tab={path_to_data}
-```
+| BehavioralEvents | behavioral_events | 000115 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/6df57370-9de8-4514-82f3-65d0f0528cde/download/&dandisetId=000115&dandisetVersion=0.210914.1732&tab=/processing/behavior/behavioral_events) |
 
 ## License
 
