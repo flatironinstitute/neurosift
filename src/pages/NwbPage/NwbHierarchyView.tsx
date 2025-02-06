@@ -49,10 +49,16 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
       } = {};
       for (const obj of neurodataObjects.objects) {
         if (defaultUnitsPath) {
-          const plugins = await findSuitablePlugins(nwbUrl, obj.path, {
-            special: true,
-            secondaryPaths: [defaultUnitsPath],
-          });
+          const objectType = obj.group ? "group" : "dataset";
+          const plugins = await findSuitablePlugins(
+            nwbUrl,
+            obj.path,
+            objectType,
+            {
+              special: true,
+              secondaryPaths: [defaultUnitsPath],
+            },
+          );
           if (plugins.length > 0) {
             newSpecialPluginsWithSecondaryPaths[obj.path] = plugins.map(
               (plugin) => ({ plugin, secondaryPaths: [defaultUnitsPath] }),
@@ -157,9 +163,11 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
     const hasActualChildren =
       obj.expanded &&
       neurodataObjects.objects.some((o) => o.parent?.path === obj.path);
-    const hasSubgroups = obj.group.subgroups.length > 0;
+    const hasSubgroupsOrSubdatasets =
+      (obj.group && obj.group.subgroups.length > 0) ||
+      (obj.group && obj.group.datasets.length > 0);
     const showExpansionControl =
-      (!obj.expanded && hasSubgroups) || hasActualChildren;
+      (!obj.expanded && hasSubgroupsOrSubdatasets) || hasActualChildren;
 
     return (
       <tr key={obj.path}>
@@ -227,7 +235,24 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
                 flexWrap: "wrap",
               }}
             >
-              <span>{name}</span>
+              <span
+                style={{ display: "flex", alignItems: "center", gap: "5px" }}
+              >
+                {obj.dataset && (
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      color: "#666",
+                      fontFamily: "monospace",
+                      position: "relative",
+                      top: "-1px",
+                    }}
+                  >
+                    ▪️
+                  </span>
+                )}
+                <span>{name}</span>
+              </span>
               {specialPluginsWithSecondaryPaths[obj.path]?.map(
                 ({ plugin, secondaryPaths }) => (
                   <button
@@ -285,8 +310,8 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
         </td>
         <td>
           <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-            <span>{obj.group.attrs.neurodata_type || "-"}</span>
-            {obj.group.attrs.neurodata_type === "Units" && (
+            <span>{obj.attrs.neurodata_type || "-"}</span>
+            {obj.attrs.neurodata_type === "Units" && (
               <span
                 onClick={(e) => {
                   e.stopPropagation();
@@ -313,7 +338,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
           </div>
         </td>
         <td style={{ maxWidth: "400px" }}>
-          {truncateDescription(obj.group.attrs.description || "", obj.path)}
+          {truncateDescription(obj.attrs.description || "", obj.path)}
         </td>
       </tr>
     );

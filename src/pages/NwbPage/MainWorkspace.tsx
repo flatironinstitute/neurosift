@@ -10,6 +10,7 @@ import { TAB_BAR_HEIGHT, tabsStyle, tabStyle } from "./tabStyles";
 import TabToolbar, { TOOLBAR_HEIGHT } from "./TabToolbar";
 
 import { findPluginByName } from "./plugins/registry";
+import { getNwbGroup } from "./nwbInterface";
 
 type MainWorkspaceProps = {
   nwbUrl: string;
@@ -30,48 +31,66 @@ const MainWorkspace = ({
   });
 
   useEffect(() => {
-    if (initialTabId) {
-      if (initialTabId.startsWith("view:")) {
-        const a = initialTabId.split("|");
-        if (a.length !== 2) {
-          console.error("Invalid tab id", initialTabId);
-          return;
+    let canceled = false;
+    const load = async () => {
+      if (initialTabId) {
+        if (initialTabId.startsWith("view:")) {
+          const a = initialTabId.split("|");
+          if (a.length !== 2) {
+            console.error("Invalid tab id", initialTabId);
+            return;
+          }
+          const pluginName = a[0].substring("view:".length);
+          const b = a[1].split("^");
+          const path = b[0];
+          const secondaryPaths = b.slice(1);
+          const plugin = findPluginByName(pluginName);
+          if (!plugin) {
+            console.error("Plugin not found:", pluginName);
+            return;
+          }
+          const objectType = await determineObjectType(nwbUrl, path);
+          if (canceled) return;
+          dispatch({
+            type: "OPEN_TAB",
+            id: initialTabId,
+            path,
+            objectType,
+            plugin,
+            secondaryPaths,
+          });
+        } else {
+          const objectType = await determineObjectType(nwbUrl, initialTabId);
+          dispatch({
+            type: "OPEN_TAB",
+            id: initialTabId,
+            path: initialTabId,
+            objectType,
+          });
         }
-        const pluginName = a[0].substring("view:".length);
-        const b = a[1].split("^");
-        const path = b[0];
-        const secondaryPaths = b.slice(1);
-        const plugin = findPluginByName(pluginName);
-        if (!plugin) {
-          console.error("Plugin not found:", pluginName);
-          return;
-        }
-        dispatch({
-          type: "OPEN_TAB",
-          id: initialTabId,
-          path,
-          plugin,
-          secondaryPaths,
-        });
-      } else {
-        dispatch({
-          type: "OPEN_TAB",
-          id: initialTabId,
-          path: initialTabId,
-        });
       }
-    }
-  }, [initialTabId]);
+    };
+    load();
+    return () => {
+      canceled = true;
+    };
+  }, [initialTabId, nwbUrl]);
 
-  const handleOpenObjectsInNewTab = (paths: string[]) => {
+  const handleOpenObjectsInNewTab = async (paths: string[]) => {
     if (paths.length === 1) {
-      dispatch({ type: "OPEN_TAB", id: paths[0], path: paths[0] });
+      const objectType = await determineObjectType(nwbUrl, paths[0]);
+      dispatch({ type: "OPEN_TAB", id: paths[0], path: paths[0], objectType });
     } else {
-      dispatch({ type: "OPEN_MULTI_TAB", paths });
+      const objectTypes: ("group" | "dataset")[] = [];
+      for (const path of paths) {
+        const objectType = await determineObjectType(nwbUrl, path);
+        objectTypes.push(objectType);
+      }
+      dispatch({ type: "OPEN_MULTI_TAB", paths, objectTypes });
     }
   };
 
-  const handleOpenObjectInNewTab = (
+  const handleOpenObjectInNewTab = async (
     path: string,
     plugin?: NwbObjectViewPlugin,
     secondaryPaths?: string[],
@@ -85,7 +104,15 @@ const MainWorkspace = ({
     if (plugin) {
       id = `view:${plugin.name}|${id}`;
     }
-    dispatch({ type: "OPEN_TAB", id, path, plugin, secondaryPaths });
+    const objectType = await determineObjectType(nwbUrl, path);
+    dispatch({
+      type: "OPEN_TAB",
+      id,
+      path,
+      objectType,
+      plugin,
+      secondaryPaths,
+    });
   };
 
   const handleCloseTab = (id: string, event: React.MouseEvent) => {
@@ -202,6 +229,7 @@ const MainWorkspace = ({
                           <NwbObjectView
                             nwbUrl={nwbUrl}
                             path={path}
+                            objectType={tab.objectTypes[index]}
                             onOpenObjectInNewTab={handleOpenObjectInNewTab}
                             plugin={undefined} // Multi-tab views don't use specific plugins
                             width={undefined}
@@ -237,6 +265,7 @@ const MainWorkspace = ({
                     <NwbObjectView
                       nwbUrl={nwbUrl}
                       path={tab.path}
+                      objectType={tab.objectType}
                       onOpenObjectInNewTab={handleOpenObjectInNewTab}
                       plugin={tab.type === "single" ? tab.plugin : undefined}
                       secondaryPaths={tab.secondaryPaths}
@@ -253,6 +282,29 @@ const MainWorkspace = ({
       </div>
     </div>
   );
+};
+
+const determineObjectType = async (
+  nwbUrl: string,
+  path: string,
+): Promise<"group" | "dataset"> => {
+  if (path === "/") {
+    return "group";
+  }
+  const parentPath = path.substring(0, path.lastIndexOf("/"));
+  const parentGroup = await getNwbGroup(nwbUrl, parentPath);
+  if (!parentGroup) {
+    console.error("Parent group not found:", parentPath);
+    return "group";
+  }
+  if (parentGroup.subgroups.find((sg) => sg.path === path)) {
+    return "group";
+  }
+  if (parentGroup.datasets.find((ds) => ds.path === path)) {
+    return "dataset";
+  }
+  console.error("Object not found:", path);
+  return "group";
 };
 
 export default MainWorkspace;

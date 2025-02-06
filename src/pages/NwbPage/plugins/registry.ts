@@ -17,6 +17,7 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
 export const findSuitablePlugins = async (
   nwbUrl: string,
   path: string,
+  objectType: "group" | "dataset",
   o: { special?: boolean; secondaryPaths?: string[] },
 ): Promise<NwbObjectViewPlugin[]> => {
   const ret: NwbObjectViewPlugin[] = [];
@@ -26,6 +27,7 @@ export const findSuitablePlugins = async (
       if (
         await plugin.canHandle({
           nwbUrl,
+          objectType,
           path,
           secondaryPaths: o.secondaryPaths,
         })

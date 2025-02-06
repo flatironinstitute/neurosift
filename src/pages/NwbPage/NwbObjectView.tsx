@@ -6,6 +6,7 @@ import { findSuitablePlugins } from "./plugins/registry";
 interface NwbObjectViewProps {
   nwbUrl: string;
   path: string;
+  objectType: "group" | "dataset";
   onOpenObjectInNewTab?: (
     path: string,
     plugin?: NwbObjectViewPlugin,
@@ -20,6 +21,7 @@ interface NwbObjectViewProps {
 const NwbObjectView: React.FC<NwbObjectViewProps> = ({
   nwbUrl,
   path,
+  objectType,
   onOpenObjectInNewTab,
   plugin,
   secondaryPaths,
@@ -41,7 +43,7 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
         if (plugin) {
           setPlugins([plugin]);
         } else {
-          const suitable = await findSuitablePlugins(nwbUrl, path, {
+          const suitable = await findSuitablePlugins(nwbUrl, path, objectType, {
             special: false,
           });
           setPlugins(suitable);
@@ -53,7 +55,7 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
       }
     };
     loadPlugin();
-  }, [path, nwbUrl, plugin]);
+  }, [path, objectType, nwbUrl, plugin]);
 
   if (loading) {
     return <CircularProgress />;
@@ -85,6 +87,7 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
               <PluginComponent
                 nwbUrl={nwbUrl}
                 path={path}
+                objectType={objectType}
                 onOpenObjectInNewTab={onOpenObjectInNewTab}
                 secondaryPaths={secondaryPaths}
                 width={componentWidth}

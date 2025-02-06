@@ -12,6 +12,7 @@ type MainTab = BaseTab & {
 export type SingleObjectTab = BaseTab & {
   type: "single";
   path: string;
+  objectType: "group" | "dataset";
   plugin?: NwbObjectViewPlugin;
   secondaryPaths?: string[];
 };
@@ -19,6 +20,7 @@ export type SingleObjectTab = BaseTab & {
 type MultiObjectTab = BaseTab & {
   type: "multi";
   paths: string[];
+  objectTypes: ("group" | "dataset")[];
 };
 
 type DynamicTab = MainTab | SingleObjectTab | MultiObjectTab;
@@ -28,10 +30,15 @@ type TabsAction =
       type: "OPEN_TAB";
       id: string;
       path: string;
+      objectType: "group" | "dataset";
       plugin?: NwbObjectViewPlugin;
       secondaryPaths?: string[];
     }
-  | { type: "OPEN_MULTI_TAB"; paths: string[] }
+  | {
+      type: "OPEN_MULTI_TAB";
+      paths: string[];
+      objectTypes: ("group" | "dataset")[];
+    }
   | { type: "CLOSE_TAB"; id: string }
   | { type: "SWITCH_TO_TAB"; id: string };
 
@@ -65,6 +72,7 @@ const tabsReducer = (state: TabsState, action: TabsAction): TabsState => {
         type: "multi",
         label: `${action.paths.length} items`,
         paths: action.paths,
+        objectTypes: action.objectTypes,
       };
 
       return {
@@ -90,6 +98,7 @@ const tabsReducer = (state: TabsState, action: TabsAction): TabsState => {
         type: "single",
         label,
         path: action.path,
+        objectType: action.objectType,
         plugin: action.plugin,
         secondaryPaths: action.secondaryPaths,
       };

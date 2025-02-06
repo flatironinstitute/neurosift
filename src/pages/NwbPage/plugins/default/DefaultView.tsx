@@ -218,10 +218,38 @@ const TreeNode: React.FC<TreeNodeProps> = ({
 type Props = {
   nwbUrl: string;
   path: string;
+  objectType: "group" | "dataset";
   onOpenObjectInNewTab?: (path: string) => void;
 };
 
 const DefaultView: React.FC<Props> = ({
+  nwbUrl,
+  path,
+  objectType,
+  onOpenObjectInNewTab,
+}) => {
+  if (objectType === "dataset") {
+    return (
+      <DefaultDatasetView
+        nwbUrl={nwbUrl}
+        path={path}
+        objectType={objectType}
+        onOpenObjectInNewTab={onOpenObjectInNewTab}
+      />
+    );
+  } else {
+    return (
+      <DefaultGroupView
+        nwbUrl={nwbUrl}
+        path={path}
+        objectType={objectType}
+        onOpenObjectInNewTab={onOpenObjectInNewTab}
+      />
+    );
+  }
+};
+
+const DefaultGroupView: React.FC<Props> = ({
   nwbUrl,
   path,
   onOpenObjectInNewTab,
@@ -237,6 +265,28 @@ const DefaultView: React.FC<Props> = ({
         nwbUrl={nwbUrl}
         indent={0}
         type="group"
+        onOpenObjectInNewTab={onOpenObjectInNewTab}
+      />
+    </div>
+  );
+};
+
+const DefaultDatasetView: React.FC<Props> = ({
+  nwbUrl,
+  path,
+  onOpenObjectInNewTab,
+}) => {
+  const dataset = useNwbDataset(nwbUrl, path);
+  if (!dataset) return <>Loading dataset...</>;
+
+  return (
+    <div style={{ padding: "20px" }}>
+      <TreeNode
+        name={path.split("/").pop() || path}
+        path={path}
+        nwbUrl={nwbUrl}
+        indent={0}
+        type="dataset"
         onOpenObjectInNewTab={onOpenObjectInNewTab}
       />
     </div>
