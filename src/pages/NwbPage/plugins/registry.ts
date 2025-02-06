@@ -1,5 +1,6 @@
 import { defaultPlugin } from "./default";
 import { dynamicTablePlugin } from "./dynamic-table";
+import { twoPhotonSeriesPlugin } from "./TwoPhotonSeries";
 import { NwbObjectViewPlugin } from "./pluginInterface";
 import { simpleTimeseriesPlugin } from "./simple-timeseries";
 import { psthPlugin } from "./PSTH";
@@ -12,6 +13,7 @@ import { imageSegmentationPlugin } from "./ImageSegmentation";
 export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   defaultPlugin,
   dynamicTablePlugin,
+  twoPhotonSeriesPlugin,
   spatialSeriesPlugin,
   simpleTimeseriesPlugin,
   psthPlugin,

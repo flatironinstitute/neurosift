@@ -65,6 +65,7 @@ The following table provides example visualizations of different neurodata types
 | SpatialSeries | pupil_location_spherical | 000728 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/a081de4c-ba98-4ba1-b828-9a8b0eeaccfd/download/&dandisetId=000728&dandisetVersion=0.240827.1809&tab=/processing/behavior/CompassDirection/pupil_location_spherical) |
 | LabeledEvents | RewardEventsLinearTrack | 000568 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/72bebc59-e73e-4d6b-b4ab-086d054583d6/download/&dandisetId=000568&dandisetVersion=0.230705.1633&tab=/processing/behavior/RewardEventsLinearTrack) |
 | ImageSegmentation | ophys/ImageSegmentation | - | [View](https://v2.neurosift.app/nwb?url=https://dandiarchive.s3.amazonaws.com/blobs/368/fa7/368fa71e-4c93-4f7e-af15-06776ca07f34&tab=/processing/ophys/ImageSegmentation) |
+| TwoPhotonSeries | raw_suite2p_motion_corrected | 000871 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/89256db6-8926-451f-b51f-8a7ae7c3c1f8/download/&dandisetId=000871&dandisetVersion=draft&tab=/acquisition/raw_suite2p_motion_corrected) |
 
 URL Structure:
 ```
