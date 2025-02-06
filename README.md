@@ -61,7 +61,7 @@ The following table provides example visualizations of different neurodata types
 | Images | StimulusPresentation/indexed_images | 000673 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/65a7e913-45c7-48db-bf19-b9f5e910110a/download/&dandisetId=000673&dandisetVersion=0.250122.0110&tab=/stimulus/presentation/StimulusPresentation/indexed_images) |
 | Units | units | 000409 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/37ca1798-b14c-4224-b8f0-037e27725336/download/&dandisetId=000409&dandisetVersion=draft&tab=/units) |
 | ElectricalSeries | neurodata_type: ElectricalSeries | 000409 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/37ca1798-b14c-4224-b8f0-037e27725336/download/&dandisetId=000409&dandisetVersion=draft&tab=/acquisition/ElectricalSeriesAp) |
-| TimeIntervals/Units/PSTH | /intervals/trials | 000409 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/37ca1798-b14c-4224-b8f0-037e27725336/download/&dandisetId=000409&dandisetVersion=draft&tab=view:PSTH|/intervals/trials^/units) |
+| TimeIntervals/Units/PSTH | /intervals/trials | 000409 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/37ca1798-b14c-4224-b8f0-037e27725336/download/&dandisetId=000409&dandisetVersion=draft&tab=view:PSTH%7C/intervals/trials^/units) |
 
 URL Structure:
 ```
