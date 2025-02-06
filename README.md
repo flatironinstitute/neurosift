@@ -2,6 +2,8 @@
 
 This repository contains a work-in-progress new version of neurosift. The current stable version is maintained at [neurosift](https://github.com/flatironinstitute/neurosift).
 
+The live version of this app can be found at [https://v2.neurosift.app](https://v2.neurosift.app).
+
 ## Getting Started
 
 Follow these steps to install and run the app locally in development mode:
