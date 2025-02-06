@@ -1,7 +1,7 @@
 import { Box, Tab, Tabs } from "@mui/material";
 import { FunctionComponent } from "react";
 import { useSearchParams } from "react-router-dom";
-import HorizontalSplitter from "../../components/HorizontalSplitter";
+import ResponsiveLayout from "../../components/ResponsiveLayout";
 import ScrollY from "../../components/ScrollY";
 import { useDandisetVersionInfo } from "../DandisetPage/useDandisetVersionInfo";
 import useQueryDandiset from "../DandisetPage/useQueryDandiset";
@@ -26,10 +26,11 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({ width, height }) => {
   const initialSplitterPosition = Math.max(200, Math.min(450, width / 3));
 
   return (
-    <HorizontalSplitter
+    <ResponsiveLayout
       width={width}
       height={height}
       initialSplitterPosition={initialSplitterPosition}
+      mobileBreakpoint={768}
     >
       <LeftArea
         nwbUrl={nwbUrl || ""}
@@ -44,7 +45,7 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({ width, height }) => {
         height={0}
         initialTabId={initialTabId || undefined}
       />
-    </HorizontalSplitter>
+    </ResponsiveLayout>
   );
 };
 
