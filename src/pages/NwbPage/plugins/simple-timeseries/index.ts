@@ -21,6 +21,10 @@ export const simpleTimeseriesPlugin: NwbObjectViewPlugin = {
       (ds) => ds.name === "external_file",
     );
 
+    const dataSubdataset = group.datasets.find((ds) => ds.name === "data");
+    const numDims = dataSubdataset?.shape.length || 0;
+    if (![1, 2].includes(numDims)) return false;
+
     return (hasTimestamps || hasStartTime) && !hasExternalFile;
   },
   component: SimpleTimeseriesView,
