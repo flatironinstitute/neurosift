@@ -38,7 +38,16 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
   const [visibleChannelsStart, setVisibleChannelsStart] = useState(0);
   const [numVisibleChannels, setNumVisibleChannels] = useState(1);
   const [visibleTimeStart, setVisibleTimeStart] = useState(0);
-  const [visibleNumSamples, setVisibleNumSamples] = useState(500);
+  const [visibleDuration, setVisibleDuration] = useState(10);
+
+  // determine visible duration to hold an estimated 500 samples based on estimated sampling frequency
+  useEffect(() => {
+    if (!timeseriesClient) return;
+    timeseriesClient.samplingFrequency().then((freq) => {
+      setVisibleDuration(500 / freq);
+    });
+  }, [timeseriesClient]);
+
   useEffect(() => {
     if (!timeseriesClient) return;
     timeseriesClient.startTime().then((t) => {
@@ -49,6 +58,7 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
   const [info, setInfo] = useState<
     | {
         visibleTimestamps: number[];
+        visibleDuration: number;
         visibleData: number[][];
         startTimestamp: number;
         totalNumSamples: number;
@@ -89,12 +99,12 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
     setVisibleChannelsStart(newStart);
   };
 
-  const handleIncreaseSamples = () => {
-    setVisibleNumSamples(visibleNumSamples * 2);
+  const handleIncreaseVisibleDuration = () => {
+    setVisibleDuration(visibleDuration * 2);
   };
 
-  const handleDecreaseSamples = () => {
-    setVisibleNumSamples(Math.max(50, Math.floor(visibleNumSamples / 2)));
+  const handleDecreaseVisibleDuration = () => {
+    setVisibleDuration(Math.max(0.1, Math.floor(visibleDuration / 2)));
   };
 
   const handleShiftTimeLeft = () => {
@@ -124,7 +134,6 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
       const tStart = visibleTimeStart;
       const samplingFrequency = await timeseriesClient.samplingFrequency();
       const numSamples = timeseriesClient.numSamples;
-      const numSamplesToLoad = visibleNumSamples;
       const visibleChannelsEnd = Math.min(
         visibleChannelsStart + numVisibleChannels,
         timeseriesClient.numChannels,
@@ -132,9 +141,9 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
       const [startTime, duration, dataResult] = await Promise.all([
         timeseriesClient.startTime(),
         timeseriesClient.duration(),
-        timeseriesClient.getDataForNumSamples(
+        timeseriesClient.getDataForTimeRange(
           tStart,
-          numSamplesToLoad,
+          tStart + visibleDuration,
           visibleChannelsStart,
           visibleChannelsEnd,
         ),
@@ -151,6 +160,7 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
 
       setInfo({
         visibleTimestamps: timestamps,
+        visibleDuration: visibleDuration,
         visibleData: reshapedData,
         startTimestamp: tStart,
         totalNumSamples: numSamples,
@@ -165,7 +175,7 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
     numVisibleChannels,
     visibleChannelsStart,
     visibleTimeStart,
-    visibleNumSamples,
+    visibleDuration,
     timeseriesClient,
   ]);
 
@@ -306,25 +316,25 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
           <div style={{ fontWeight: "bold" }}>Samples:</div>
           <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
             <span>
-              Showing {info.visibleTimestamps.length} samples starting at{" "}
+              Showing {info.visibleDuration.toFixed(2)} sec starting at{" "}
               {info.startTimestamp.toFixed(2)} s
             </span>
             <button
-              onClick={handleDecreaseSamples}
-              disabled={visibleNumSamples <= 50}
+              onClick={handleDecreaseVisibleDuration}
+              disabled={visibleDuration <= 0.2}
               style={{
                 padding: "2px 6px",
                 border: "1px solid #ccc",
                 borderRadius: "2px",
                 fontSize: "0.85rem",
-                backgroundColor: visibleNumSamples <= 50 ? "#f5f5f5" : "white",
-                cursor: visibleNumSamples <= 50 ? "default" : "pointer",
+                backgroundColor: visibleDuration <= 0.2 ? "#f5f5f5" : "white",
+                cursor: visibleDuration <= 0.2 ? "default" : "pointer",
               }}
             >
               /2
             </button>
             <button
-              onClick={handleIncreaseSamples}
+              onClick={handleIncreaseVisibleDuration}
               style={{
                 padding: "2px 6px",
                 border: "1px solid #ccc",

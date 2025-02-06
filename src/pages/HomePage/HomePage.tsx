@@ -143,14 +143,14 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
           </Typography>
           <Typography variant="body1">
             Neurosift v2 brings a streamlined experience with a new
-            architecture. The update focuses on core functionality
-            and stability through a modular plugin system. We've omitted
-            some experimental features from v1 to focus on reliability.
+            architecture. The update focuses on core functionality and stability
+            through a modular plugin system. We've omitted some experimental
+            features from v1 to focus on reliability.
           </Typography>
           <Typography variant="body2" sx={{ mt: 2, color: "text.secondary" }}>
-            Try v2 by clicking the "2" button in the current Neurosift. This version
-            will eventually replace v1 once feature parity for core functionality
-            is achieved.
+            Try v2 by clicking the "2" button in the current Neurosift. This
+            version will eventually replace v1 once feature parity for core
+            functionality is achieved.
           </Typography>
         </Paper>
 
