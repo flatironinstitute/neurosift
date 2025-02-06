@@ -36,6 +36,14 @@ const LabeledEventsPlot: FunctionComponent<Props> = ({
     return <div>Loading...</div>;
   }
 
+  // Calculate left margin based on label lengths
+  const calculateLeftMargin = (labels: string[]) => {
+    // Estimate width based on character count
+    // Using approximate pixels per character (6) plus some padding
+    const maxLabelLength = Math.max(...labels.map((label) => label.length));
+    return Math.max(40, maxLabelLength * 6 + 15); // minimum 40px, 6px per char + 15px padding
+  };
+
   const colors = [
     "#1f77b4", // blue
     "#ff7f0e", // orange
@@ -68,6 +76,8 @@ const LabeledEventsPlot: FunctionComponent<Props> = ({
     showlegend: false,
   };
 
+  const leftMargin = calculateLeftMargin(labels);
+
   return (
     <div ref={containerRef} style={{ width: "100%" }}>
       <Plot
@@ -76,7 +86,7 @@ const LabeledEventsPlot: FunctionComponent<Props> = ({
           width: containerWidth - 20,
           height: 400,
           margin: {
-            l: 50,
+            l: leftMargin,
             r: 20,
             t: 20,
             b: 50,
