@@ -35,6 +35,12 @@ export const twoPhotonSeriesPlugin: NwbObjectViewPlugin = {
       (ds) => ds.name === "starting_time",
     );
 
+    // do not allow case where we have an external file
+    const hasExternalFile = group.datasets.some(
+      (ds) => ds.name === "external_file",
+    );
+    if (hasExternalFile) return false;
+
     return hasData && (hasTimestamps || hasStartTime);
   },
   component: TwoPhotonSeriesPluginView,
