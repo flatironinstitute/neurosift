@@ -29,6 +29,9 @@ export const twoPhotonSeriesPlugin: NwbObjectViewPlugin = {
     if (dataDataset.shape.length !== 3 && dataDataset.shape.length !== 4)
       return false;
 
+    // If number of timepoints is 0, do not show
+    if (dataDataset.shape[0] === 0) return false;
+
     // Check if we have either timestamps or starting_time
     const hasTimestamps = group.datasets.some((ds) => ds.name === "timestamps");
     const hasStartTime = group.datasets.some(
