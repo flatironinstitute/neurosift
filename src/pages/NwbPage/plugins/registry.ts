@@ -11,9 +11,11 @@ import { spatialSeriesPlugin } from "./SpatialSeries";
 import { imageSegmentationPlugin } from "./ImageSegmentation";
 import { timeIntervalsPlugin } from "./TimeIntervals";
 import { trialAlignedSeriesPlugin } from "./TrialAlignedSeries";
+import { pythonScriptPlugin } from "./PythonScript";
 
 // List of plugins in priority order (last one is checked first)
 export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
+  pythonScriptPlugin,
   defaultPlugin,
   behavioralEventsPlugin,
   dynamicTablePlugin,
