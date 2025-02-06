@@ -22,6 +22,7 @@ export const rasterPlugin: NwbObjectViewPlugin = {
   component: RasterView,
   special: false,
   requiresWindowDimensions: false,
+  showInMultiView: true,
 };
 
 export default rasterPlugin;

@@ -16,6 +16,7 @@ interface NwbObjectViewProps {
   secondaryPaths?: string[];
   width: number | undefined;
   height: number | undefined;
+  inMultiView?: boolean;
 }
 
 const NwbObjectView: React.FC<NwbObjectViewProps> = ({
@@ -27,6 +28,7 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
   secondaryPaths,
   width,
   height,
+  inMultiView,
 }) => {
   const [plugins, setPlugins] = useState<NwbObjectViewPlugin[] | undefined>();
   const [loading, setLoading] = useState(true);
@@ -43,9 +45,20 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
         if (plugin) {
           setPlugins([plugin]);
         } else {
-          const suitable = await findSuitablePlugins(nwbUrl, path, objectType, {
+          let suitable = await findSuitablePlugins(nwbUrl, path, objectType, {
             special: false,
           });
+          if (inMultiView) {
+            // If we are in a multi-view, then we only use plugins that have showInMultiView set to true
+            // but if there are no such plugins, then we use the default plugin
+            let suitable2 = suitable.filter((plugin) => plugin.showInMultiView);
+            if (suitable2.length === 0) {
+              suitable2 = suitable.filter(
+                (plugin) => plugin.name === "default",
+              );
+            }
+            suitable = suitable2;
+          }
           setPlugins(suitable);
         }
       } catch (err) {

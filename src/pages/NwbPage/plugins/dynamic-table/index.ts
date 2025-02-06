@@ -10,4 +10,5 @@ export const dynamicTablePlugin: NwbObjectViewPlugin = {
     return group.attrs.colnames !== undefined;
   },
   component: DynamicTableView,
+  showInMultiView: true,
 };

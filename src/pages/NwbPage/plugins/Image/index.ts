@@ -26,6 +26,7 @@ export const imagePlugin: NwbObjectViewPlugin = {
   component: ImagePluginView,
   special: false,
   requiresWindowDimensions: true,
+  showInMultiView: true,
 };
 
 /*

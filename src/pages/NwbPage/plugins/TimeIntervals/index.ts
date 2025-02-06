@@ -20,4 +20,5 @@ export const timeIntervalsPlugin: NwbObjectViewPlugin = {
   },
   component: TimeIntervalsPluginView,
   requiresWindowDimensions: true,
+  showInMultiView: true,
 };

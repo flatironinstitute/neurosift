@@ -17,4 +17,5 @@ export const imageSegmentationPlugin: NwbObjectViewPlugin = {
   component: ImageSegmentationPluginView,
   // We need window dimensions since we're displaying image segments
   requiresWindowDimensions: true,
+  showInMultiView: true,
 };

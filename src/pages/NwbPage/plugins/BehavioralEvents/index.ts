@@ -17,4 +17,5 @@ export const behavioralEventsPlugin: NwbObjectViewPlugin = {
   },
   component: BehavioralEventsPluginView,
   requiresWindowDimensions: true,
+  showInMultiView: true,
 };

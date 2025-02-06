@@ -40,4 +40,5 @@ export const simpleTimeseriesPlugin: NwbObjectViewPlugin = {
     return (hasTimestamps || hasStartTime) && !hasExternalFile;
   },
   component: SimpleTimeseriesView,
+  showInMultiView: true,
 };

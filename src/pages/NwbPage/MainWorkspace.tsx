@@ -234,6 +234,7 @@ const MainWorkspace = ({
                             plugin={undefined} // Multi-tab views don't use specific plugins
                             width={undefined}
                             height={undefined}
+                            inMultiView={true}
                           />
                         </div>
                       ))}

@@ -39,4 +39,5 @@ export const twoPhotonSeriesPlugin: NwbObjectViewPlugin = {
   },
   component: TwoPhotonSeriesPluginView,
   requiresWindowDimensions: true,
+  showInMultiView: true,
 };
