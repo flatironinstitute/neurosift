@@ -9,6 +9,7 @@ import imagePlugin from "./Image";
 import { spatialSeriesPlugin } from "./SpatialSeries";
 import { imageSegmentationPlugin } from "./ImageSegmentation";
 import { timeIntervalsPlugin } from "./TimeIntervals";
+import { trialAlignedSeriesPlugin } from "./TrialAlignedSeries";
 
 // List of plugins in priority order (last one is checked first)
 export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
@@ -22,6 +23,7 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   imagePlugin,
   imageSegmentationPlugin,
   timeIntervalsPlugin,
+  trialAlignedSeriesPlugin,
 ];
 
 export const findSuitablePlugins = async (
