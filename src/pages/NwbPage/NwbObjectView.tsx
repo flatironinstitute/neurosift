@@ -72,7 +72,7 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
   const componentWidth = width;
   let componentHeight = height;
   if (plugins.length > 1) {
-    componentHeight = 500;
+    componentHeight = Math.max(500, ((height || 800) * 3) / 4);
   }
 
   return (
