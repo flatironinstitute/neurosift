@@ -28,7 +28,7 @@ const StatusBar: React.FC = () => {
         padding: "0 10px",
         gap: 15,
         boxSizing: "border-box",
-        fontSize: 8,
+        fontSize: 10,
       }}
     >
       {Object.entries(items).map(([name, item]) => (
@@ -40,7 +40,7 @@ const StatusBar: React.FC = () => {
 
 const StatusBarItemView: React.FC<{ item: StatusBarItem }> = ({ item }) => {
   if (item.type === "text") {
-    return <span>{item.text}</span>;
+    return <span title={item.tooltip}>{item.text}</span>;
   }
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 5 }}>

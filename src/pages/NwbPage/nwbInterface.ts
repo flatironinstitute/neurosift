@@ -47,10 +47,40 @@ export type NwbDataset = {
   attrs: { [key: string]: any };
 };
 
+type GlobalStats = {
+  numGroups: number;
+  numDatasets: number;
+  numDatasetDatas: number;
+};
+
+const globalStats: GlobalStats = {
+  numGroups: 0,
+  numDatasets: 0,
+  numDatasetDatas: 0,
+};
+
+const globalStatsUpdated = () => {
+  setStatusItem("nwbStats", {
+    type: "text",
+    text: `${globalStats.numGroups} / ${globalStats.numDatasets} / ${globalStats.numDatasetDatas}`,
+    tooltip: "Number of groups / datasets / dataset data accesses",
+  });
+  if (
+    globalStats.numGroups === 0 &&
+    globalStats.numDatasets === 0 &&
+    globalStats.numDatasetDatas === 0
+  ) {
+    removeStatusItem("nwbStats");
+  }
+};
+
 export const getNwbGroup = async (
   url: string,
   path: string,
 ): Promise<NwbGroup | undefined> => {
+  globalStats.numGroups += 1;
+  globalStatsUpdated();
+
   // Try cache first
   const cached = await getCachedObject(url, path, "group");
   if (cached) return cached as NwbGroup;
@@ -61,7 +91,18 @@ export const getNwbGroup = async (
     nwbFiles[url] = new RemoteH5File(urlResolved, {});
   }
   const f = nwbFiles[url];
-  const group = await f.getGroup(path);
+  const itemName = `getNwbGroup-${url}-${path}`;
+  setStatusItem(itemName, {
+    type: "text",
+    text: "g",
+    tooltip: `Loading NWB group: ${path}`,
+  });
+  let group;
+  try {
+    group = await f.getGroup(path);
+  } finally {
+    removeStatusItem(itemName);
+  }
 
   // Cache the result if we got one
   if (group) {
@@ -75,6 +116,9 @@ export const getNwbDataset = async (
   url: string,
   path: string,
 ): Promise<NwbDataset | undefined> => {
+  globalStats.numDatasets += 1;
+  globalStatsUpdated();
+
   // Try cache first
   const cached = await getCachedObject(url, path, "dataset");
   if (cached) return cached as NwbDataset;
@@ -90,6 +134,7 @@ export const getNwbDataset = async (
   setStatusItem(itemName, {
     type: "text",
     text: "d",
+    tooltip: `Loading NWB dataset: ${path}`,
   });
   try {
     dataset = await f.getDataset(path);
@@ -114,6 +159,9 @@ export const getNwbDatasetData = async (
     canceler?: Canceler;
   },
 ): Promise<DatasetDataType | undefined> => {
+  globalStats.numDatasetDatas += 1;
+  globalStatsUpdated();
+
   if (!nwbFiles[url]) {
     const { url: urlResolved } = await getResolvedUrl(url);
     nwbFiles[url] = new RemoteH5File(urlResolved, {});
@@ -123,6 +171,7 @@ export const getNwbDatasetData = async (
   setStatusItem(itemName, {
     type: "text",
     text: "◯",
+    tooltip: `Loading NWB dataset data: ${path}`,
   });
   try {
     return await f.getDatasetData(path, o);

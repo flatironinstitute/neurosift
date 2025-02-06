@@ -7,6 +7,7 @@ export type StatusBarItem =
   | {
       type: "text";
       text: string;
+      tooltip?: string; // Optional tooltip for text items
     };
 
 type StatusItems = { [key: string]: StatusBarItem };
