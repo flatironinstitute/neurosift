@@ -1,30 +1,29 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  useNavigate,
-} from "react-router-dom";
+import { useWindowDimensions } from "@fi-sci/misc";
+import SettingsIcon from "@mui/icons-material/Settings";
 import {
   AppBar,
-  Toolbar,
-  Typography,
   IconButton,
+  Toolbar,
   Tooltip,
+  Typography,
 } from "@mui/material";
-import SettingsIcon from "@mui/icons-material/Settings";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import {
+  Route,
+  BrowserRouter as Router,
+  Routes,
+  useNavigate,
+} from "react-router-dom";
 import StatusBar from "./components/StatusBar";
-import HomePage from "./pages/HomePage/HomePage";
+import "./css/App.css";
 import DandiPage from "./pages/DandiPage/DandiPage";
 import DandisetPage from "./pages/DandisetPage";
-import OpenNeuroPage from "./pages/OpenNeuroPage/OpenNeuroPage";
-import NwbPage from "./pages/NwbPage/NwbPage";
-import SettingsPage from "./pages/SettingsPage/SettingsPage";
 import GuidePage from "./pages/GuidePage/GuidePage";
-import "./css/App.css";
-import { useWindowDimensions } from "@fi-sci/misc";
+import HomePage from "./pages/HomePage/HomePage";
+import NwbPage from "./pages/NwbPage/NwbPage";
 import OpenNeuroDatasetPage from "./pages/OpenNeuroDatasetPage/OpenNeuroDatasetPage";
-import { Analytics } from "@vercel/analytics/react";
+import OpenNeuroPage from "./pages/OpenNeuroPage/OpenNeuroPage";
+import SettingsPage from "./pages/SettingsPage/SettingsPage";
 
 const theme = createTheme({
   palette: {
@@ -207,7 +206,6 @@ function App() {
       <Router>
         <AppContent />
       </Router>
-      <Analytics />
     </ThemeProvider>
   );
 }

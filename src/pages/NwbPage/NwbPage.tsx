@@ -26,23 +26,7 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({ width, height }) => {
 
   const initialSplitterPosition = Math.max(200, Math.min(450, width / 3));
 
-  useEffect(() => {
-    let canceled = false;
-
-    // important to only call this once per route change
-    setTimeout(() => {
-      if (canceled) return;
-      // important to wait until the analytics is ready
-      track("nwb-page-viewed", {
-        url: nwbUrl || "",
-        dandisetId: dandisetId || "",
-        dandisetVersion: dandisetVersion || "",
-      });
-    }, 500);
-    return () => {
-      canceled = true;
-    };
-  }, [nwbUrl, dandisetId, dandisetVersion]);
+  useNwbPageAnalytics(nwbUrl, dandisetId, dandisetVersion);
 
   return (
     <ResponsiveLayout
@@ -126,5 +110,35 @@ const LeftArea: FunctionComponent<LeftAreaProps> = ({
     </div>
   );
 };
+
+const useNwbPageAnalytics = (
+  nwbUrl: string,
+  dandisetId: string | null,
+  dandisetVersion: string,
+) => {
+  useEffect(() => {
+    let canceled = false;
+
+    setTimeout(() => {
+      if (canceled) return;
+      // important to only call this once per session
+      const kk = `nwb-page-viewed-${nwbUrl}-${dandisetId}-${dandisetVersion}`;
+      if (analyticsAlreadyCalled[kk]) return;
+
+      // important to wait until the analytics is ready
+      track("nwb-page-viewed", {
+        url: nwbUrl || "",
+        dandisetId: dandisetId || "",
+        dandisetVersion: dandisetVersion || "",
+      });
+      analyticsAlreadyCalled[kk] = true;
+    }, 500);
+    return () => {
+      canceled = true;
+    };
+  }, [nwbUrl, dandisetId, dandisetVersion]);
+};
+
+const analyticsAlreadyCalled: { [key: string]: boolean } = {};
 
 export default NwbPage;
