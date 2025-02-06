@@ -28,9 +28,9 @@ const theme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: "#1976d2",
-      dark: "#1565c0",
-      light: "#42a5f5",
+      main: "#2c3e50",
+      dark: "#1a2530",
+      light: "#3e5771",
       contrastText: "#ffffff",
     },
     secondary: {
@@ -53,7 +53,7 @@ const theme = createTheme({
 const AppContent = () => {
   const navigate = useNavigate();
   const { width, height } = useWindowDimensions();
-  const appBarHeight = 56; // hard-coded to match the height of the AppBar
+  const appBarHeight = 50; // hard-coded to match the height of the AppBar
   const statusBarHeight = 20;
   const mainHeight = height - appBarHeight - statusBarHeight;
   return (
@@ -79,7 +79,7 @@ const AppContent = () => {
                 height: "32px",
                 marginRight: "10px",
                 cursor: "pointer",
-                filter: "brightness(1.35) contrast(1.15) saturate(1.1)",
+                // filter: "brightness(1.35) contrast(1.15) saturate(1.1)",
               }}
               onClick={() => navigate("/")}
             />
