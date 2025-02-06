@@ -36,6 +36,14 @@ When asked to solve an issue on github, please use the command-line to do the fo
 * Create a pull request on github that includes that we are fixing the issue
 * Switch back to the main-v2 branch
 
+# View plugins
+
+When creating a new view plugin, don't forget to add it to the registry in registry.ts.
+Usually a plugin will contain an index.ts, a SometingPluginView.tsx, and a folder of helper components.
+Take a look at the SpatialSeries plugin for an example.
+
 Also, use the search_issues tool in the MCP rather than get_issue since there seems to be a problem with the latter.
+
+# Misc
 
 This file serves as a living document - feel free to update it as the project evolves and new patterns emerge.

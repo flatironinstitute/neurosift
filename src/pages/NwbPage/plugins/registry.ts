@@ -6,6 +6,7 @@ import { psthPlugin } from "./PSTH";
 import { rasterPlugin } from "./Raster";
 import imagePlugin from "./Image";
 import { spatialSeriesPlugin } from "./SpatialSeries";
+import { imageSegmentationPlugin } from "./ImageSegmentation";
 
 // List of plugins in priority order (last one is checked first)
 export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
@@ -16,6 +17,7 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   psthPlugin,
   rasterPlugin,
   imagePlugin,
+  imageSegmentationPlugin,
 ];
 
 export const findSuitablePlugins = async (

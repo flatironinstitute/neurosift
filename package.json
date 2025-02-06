@@ -15,6 +15,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@fi-sci/misc": "^0.0.10",
+    "@fi-sci/splitter": "^0.0.3",
     "@mui/icons-material": "^6.4.2",
     "@mui/material": "^6.4.2",
     "@types/plotly.js": "^2.35.2",
