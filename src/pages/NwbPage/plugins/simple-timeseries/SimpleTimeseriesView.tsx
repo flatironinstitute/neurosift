@@ -2,6 +2,7 @@ import { FunctionComponent, useEffect, useState } from "react";
 import { useNwbGroup } from "../../nwbInterface";
 import TimeseriesClient from "./TimeseriesClient";
 import TimeseriesPlot from "./TimeseriesPlot";
+import LabeledEventsPlot from "./LabeledEventsPlot";
 import "../common/loadingState.css";
 
 const formatSamplingFrequency = (freq: number): string => {
@@ -405,10 +406,18 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
           </div>
         </div>
       </div>
-      <TimeseriesPlot
-        timestamps={info.visibleTimestamps}
-        data={info.visibleData}
-      />
+      {timeseriesClient.isLabeledEvents() ? (
+        <LabeledEventsPlot
+          timestamps={info.visibleTimestamps}
+          data={info.visibleData}
+          labels={timeseriesClient.getLabels()}
+        />
+      ) : (
+        <TimeseriesPlot
+          timestamps={info.visibleTimestamps}
+          data={info.visibleData}
+        />
+      )}
     </div>
   );
 };

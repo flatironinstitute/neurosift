@@ -9,8 +9,21 @@ export const simpleTimeseriesPlugin: NwbObjectViewPlugin = {
     if (!group) return false;
 
     // Check if we have a data dataset
-    const hasData = group.datasets.some((ds) => ds.name === "data");
-    if (!hasData) return false;
+    const dataDataset = group.datasets.find((ds) => ds.name === "data");
+    if (!dataDataset) return false;
+
+    // Check if this is a LabeledEvents neurodata type
+    const isLabeledEvents =
+      dataDataset.attrs?.neurodata_type === "LabeledEvents";
+
+    // For LabeledEvents, require timestamps and labels
+    if (isLabeledEvents) {
+      const hasTimestamps = group.datasets.some(
+        (ds) => ds.name === "timestamps",
+      );
+      const hasLabels = dataDataset.attrs?.labels !== undefined;
+      return hasTimestamps && hasLabels;
+    }
 
     // Check if we have either timestamps or start_time
     const hasTimestamps = group.datasets.some((ds) => ds.name === "timestamps");
@@ -21,8 +34,7 @@ export const simpleTimeseriesPlugin: NwbObjectViewPlugin = {
       (ds) => ds.name === "external_file",
     );
 
-    const dataSubdataset = group.datasets.find((ds) => ds.name === "data");
-    const numDims = dataSubdataset?.shape.length || 0;
+    const numDims = dataDataset.shape.length || 0;
     if (![1, 2].includes(numDims)) return false;
 
     return (hasTimestamps || hasStartTime) && !hasExternalFile;

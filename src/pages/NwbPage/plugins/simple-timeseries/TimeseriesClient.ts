@@ -12,13 +12,17 @@ const isNumericTypedArray = (
 };
 
 class TimeseriesClient {
+  private labels?: string[];
+
   private constructor(
     private nwbUrl: string,
     private dataDataset: NwbDataset,
     private timestampsClient:
       | IrregularTimeseriesTimestampsClient
       | RegularTimeseriesTimestampsClient,
-  ) {}
+  ) {
+    this.labels = dataDataset.attrs?.labels;
+  }
 
   static async create(
     nwbUrl: string,
@@ -70,6 +74,14 @@ class TimeseriesClient {
     if (d.shape.length > 2)
       throw new Error("Invalid shape for timeseries data");
     return d.shape[0];
+  }
+
+  isLabeledEvents(): boolean {
+    return this.labels !== undefined;
+  }
+
+  getLabels(): string[] | undefined {
+    return this.labels;
   }
 
   private async getDataForIndices(
