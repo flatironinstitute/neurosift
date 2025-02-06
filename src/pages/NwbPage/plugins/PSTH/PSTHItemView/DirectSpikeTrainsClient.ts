@@ -3,7 +3,6 @@ import { DatasetDataType } from "../../../../../remote-h5-file";
 import { getNwbDatasetData, getNwbGroup } from "../../../nwbInterface";
 
 export class DirectSpikeTrainsClient {
-  #blockSizeSec = 60 * 1;
   #timestampFinders: { [key: number]: TimestampFinder } = {};
   constructor(
     private nwbUrl: string,
@@ -13,8 +12,9 @@ export class DirectSpikeTrainsClient {
     public startTimeSec: number,
     public endTimeSec: number,
     private spike_or_event: "spike" | "event" | undefined,
+    private d_blockSizeSec: number,
   ) {}
-  static async create(nwbUrl: string, path: string) {
+  static async create(nwbUrl: string, path: string, blockSizeSec: number = 30) {
     const group = await getNwbGroup(nwbUrl, path);
     let spike_or_event: "spike" | "event" | undefined;
     if (group && group.datasets.find((ds) => ds.name === "spike_times")) {
@@ -73,10 +73,11 @@ export class DirectSpikeTrainsClient {
       startTimeSec,
       endTimeSec,
       spike_or_event,
+      blockSizeSec,
     );
   }
   get blockSizeSec() {
-    return this.#blockSizeSec;
+    return this.d_blockSizeSec;
   }
   get totalNumSpikes() {
     if (!this.spikeTimesIndices) return undefined;

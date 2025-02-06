@@ -2,6 +2,7 @@ import { FunctionComponent, useEffect, useState } from "react";
 import { useNwbGroup } from "../../nwbInterface";
 import TimeseriesClient from "./TimeseriesClient";
 import TimeseriesPlot from "./TimeseriesPlot";
+import "../common/loadingState.css";
 
 const formatSamplingFrequency = (freq: number): string => {
   if (freq >= 1000) {
@@ -21,6 +22,7 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
 }) => {
   const [timeseriesClient, setTimeseriesClient] = useState<TimeseriesClient>();
   const [error, setError] = useState<string>();
+  const [isLoading, setIsLoading] = useState(false);
 
   const group = useNwbGroup(nwbUrl, path);
 
@@ -130,6 +132,7 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
   };
   useEffect(() => {
     if (!timeseriesClient) return;
+    setIsLoading(true);
     const load = async () => {
       const tStart = visibleTimeStart;
       const samplingFrequency = await timeseriesClient.samplingFrequency();
@@ -169,8 +172,12 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
         timeseriesStartTime: startTime,
         timeseriesDuration: duration,
       });
+      setIsLoading(false);
     };
-    load();
+    load().catch((err) => {
+      setError(err.message);
+      setIsLoading(false);
+    });
   }, [
     numVisibleChannels,
     visibleChannelsStart,
@@ -181,20 +188,17 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
 
   if (error)
     return (
-      <div>
-        <p style={{ color: "red" }}>Error: {error}</p>
+      <div className="loadingContainer" style={{ color: "#e74c3c" }}>
+        Error: {error}
       </div>
     );
 
   if (!timeseriesClient || !info)
-    return (
-      <div>
-        <p>Loading...</p>
-      </div>
-    );
+    return <div className="loadingContainer">Loading timeseries data...</div>;
 
   return (
-    <div>
+    <div style={{ position: "relative" }}>
+      {isLoading && <div className="loadingIndicator">Loading data...</div>}
       <div
         style={{
           padding: "10px",

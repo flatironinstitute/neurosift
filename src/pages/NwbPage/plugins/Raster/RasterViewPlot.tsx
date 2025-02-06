@@ -6,6 +6,9 @@ type Props = {
   plotData: {
     unitIds: string[];
     spikeTimes: number[][];
+    startTime: number;
+    duration: number;
+    totalNumUnits: number;
   };
 };
 
@@ -36,6 +39,7 @@ const RasterViewPlot = ({ plotData }: Props) => {
       title: "Spike Raster Plot",
       xaxis: {
         title: "Time (s)",
+        range: [plotData.startTime, plotData.startTime + plotData.duration],
       },
       yaxis: {
         title: "Units",
@@ -44,7 +48,7 @@ const RasterViewPlot = ({ plotData }: Props) => {
         range: [-1, plotData.unitIds.length],
       },
       showlegend: false,
-      height: Math.max(300, plotData.unitIds.length * 50), // Adjust height based on number of units
+      height: Math.max(300, plotData.unitIds.length * 30), // Slightly reduced height per unit for better display
       margin: {
         l: 70,
         r: 30,
@@ -65,6 +69,7 @@ const RasterViewPlot = ({ plotData }: Props) => {
           responsive: true,
           displayModeBar: true,
           modeBarButtonsToRemove: ["lasso2d", "select2d"],
+          scrollZoom: false, // Disable scroll zoom since we handle time/unit navigation with buttons
         }}
         style={{ width: "100%", height: "100%" }}
       />
