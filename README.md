@@ -62,6 +62,7 @@ The following table provides example visualizations of different neurodata types
 | Units | units | 000409 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/37ca1798-b14c-4224-b8f0-037e27725336/download/&dandisetId=000409&dandisetVersion=draft&tab=/units) |
 | ElectricalSeries | neurodata_type: ElectricalSeries | 000409 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/37ca1798-b14c-4224-b8f0-037e27725336/download/&dandisetId=000409&dandisetVersion=draft&tab=/acquisition/ElectricalSeriesAp) |
 | TimeIntervals/Units/PSTH | /intervals/trials | 000409 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/37ca1798-b14c-4224-b8f0-037e27725336/download/&dandisetId=000409&dandisetVersion=draft&tab=view:PSTH%7C/intervals/trials^/units) |
+| SpatialSeries | pupil_location_spherical | 000728 | [View](https://v2.neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/a081de4c-ba98-4ba1-b828-9a8b0eeaccfd/download/&dandisetId=000728&dandisetVersion=0.240827.1809&tab=/processing/behavior/CompassDirection/pupil_location_spherical) |
 
 URL Structure:
 ```

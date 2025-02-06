@@ -5,11 +5,13 @@ import { simpleTimeseriesPlugin } from "./simple-timeseries";
 import { psthPlugin } from "./PSTH";
 import { rasterPlugin } from "./Raster";
 import imagePlugin from "./Image";
+import { spatialSeriesPlugin } from "./SpatialSeries";
 
 // List of plugins in priority order (last one is checked first)
 export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   defaultPlugin,
   dynamicTablePlugin,
+  spatialSeriesPlugin,
   simpleTimeseriesPlugin,
   psthPlugin,
   rasterPlugin,

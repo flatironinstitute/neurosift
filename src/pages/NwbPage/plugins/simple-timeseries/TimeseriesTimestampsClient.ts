@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useState } from "react";
 import { DatasetDataType } from "../../../../remote-h5-file";
 import {
   getNwbDataset,
   getNwbDatasetData,
   NwbDataset,
+  useNwbGroup,
 } from "../../nwbInterface";
 
 const isNumber = (data: any | undefined): data is number => {
@@ -242,3 +244,51 @@ class TimestampFinder {
     return this.#chunks[chunkIndex][i - chunkIndex * this.#chunkSize];
   }
 }
+
+export interface TimeseriesTimestampsClient {
+  startTime: number | undefined;
+  endTime: number | undefined;
+  estimatedSamplingFrequency: number | undefined;
+  getDataIndexForTime: (time: number) => Promise<number>;
+  getTimestampsForDataIndices: (
+    i1: number,
+    i2: number,
+  ) => Promise<DatasetDataType | undefined>;
+}
+
+export const useTimeseriesTimestampsClient = (
+  nwbUrl: string,
+  objectPath: string,
+) => {
+  const group = useNwbGroup(nwbUrl, objectPath);
+  const [dataClient, setDataClient] = useState<TimeseriesTimestampsClient>();
+  useEffect(() => {
+    if (!nwbUrl) return;
+    if (!group) return;
+    let canceled = false;
+    const load = async () => {
+      if (group.datasets.find((ds) => ds.name === "timestamps")) {
+        const client = new IrregularTimeseriesTimestampsClient(
+          nwbUrl,
+          objectPath,
+        );
+        await client.initialize();
+        if (canceled) return;
+        setDataClient(client);
+      } else {
+        const client = new RegularTimeseriesTimestampsClient(
+          nwbUrl,
+          objectPath,
+        );
+        await client.initialize();
+        if (canceled) return;
+        setDataClient(client);
+      }
+    };
+    load();
+    return () => {
+      canceled = true;
+    };
+  }, [nwbUrl, objectPath, group]);
+  return dataClient;
+};
