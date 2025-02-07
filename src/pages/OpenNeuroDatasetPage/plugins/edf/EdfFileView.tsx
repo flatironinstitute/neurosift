@@ -1,6 +1,6 @@
 import { FunctionComponent } from "react";
 import { OpenNeuroPluginProps } from "../pluginInterface";
-import EdfViewer from "./EdfViewer";
+import EdfViewer from "@shared/EdfViewer/EdfViewer";
 
 const EdfFileView: FunctionComponent<OpenNeuroPluginProps> = ({
   file,

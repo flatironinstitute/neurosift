@@ -27,6 +27,7 @@ import NwbPage from "./pages/NwbPage/NwbPage";
 import OpenNeuroDatasetPage from "./pages/OpenNeuroDatasetPage/OpenNeuroDatasetPage";
 import OpenNeuroPage from "./pages/OpenNeuroPage/OpenNeuroPage";
 import SettingsPage from "./pages/SettingsPage/SettingsPage";
+import EdfPage from "./pages/EdfPage/EdfPage";
 
 const theme = createTheme({
   palette: {
@@ -76,6 +77,13 @@ const LegacyUrlHandler = () => {
         if (dandisetVersion) {
           newSearch = `?dandisetVersion=${dandisetVersion}`;
         }
+      }
+    } else if (p === "/edf") {
+      newPath = "/edf";
+      const urlParam = searchParams.get("url");
+      const versionParam = searchParams.get("versionId");
+      if (urlParam) {
+        newSearch = `?url=${urlParam}${versionParam ? `&versionId=${versionParam}` : ""}`;
       }
     } else if (p === "/nwb") {
       newPath = "/nwb";
@@ -255,6 +263,10 @@ const AppContent = () => {
           <Route
             path="/guide"
             element={<GuidePage width={width} height={mainHeight} />}
+          />
+          <Route
+            path="/edf"
+            element={<EdfPage width={width} height={mainHeight} />}
           />
         </Routes>
       </div>
