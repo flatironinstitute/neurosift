@@ -12,13 +12,13 @@ import {
   useTimeRange,
   useTimeseriesSelection,
   useTimeseriesSelectionInitialization,
-} from "../../PSTH/PSTHItemView/context-timeseries-selection";
-import { useNwbDataset } from "../../../nwbInterface";
-import { useTimeseriesTimestampsClient } from "../../simple-timeseries/TimeseriesTimestampsClient";
-import { Canceler } from "../../../../../remote-h5-file";
+} from "@shared/context-timeseries-selection";
+import { useNwbDataset } from "@nwbInterface";
+import { useTimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
+import { Canceler } from "@remote-h5-file";
 import TimeseriesSelectionBar, {
   timeSelectionBarHeight,
-} from "./TimeseriesSelectionBar";
+} from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
 
 type Props = {
   width: number;

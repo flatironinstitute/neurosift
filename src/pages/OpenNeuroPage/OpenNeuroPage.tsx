@@ -10,7 +10,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import HistoryIcon from "@mui/icons-material/History";
 import { FunctionComponent, useCallback, useEffect, useState } from "react";
-import ScrollY from "../../components/ScrollY";
+import ScrollY from "@components/ScrollY";
 import OpenNeuroDatasetResult from "./OpenNeuroDatasetResult";
 import { getRecentOpenNeuroDatasets } from "../util/recentOpenNeuroDatasets";
 import { useNavigate } from "react-router-dom";

@@ -1,5 +1,5 @@
 import { FunctionComponent } from "react";
-import { useNwbGroup } from "../../../../nwbInterface";
+import { useNwbGroup } from "@nwbInterface";
 
 type AlignToSelectionProps = {
   alignToVariables: string[];

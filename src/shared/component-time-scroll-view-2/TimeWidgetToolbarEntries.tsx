@@ -1,7 +1,7 @@
 import {
   PanDirection,
   ZoomDirection,
-} from "../PSTH/PSTHItemView/context-timeseries-selection";
+} from "@shared/context-timeseries-selection";
 import { ToolbarItem } from "./Toolbars";
 import {
   FaArrowLeft,

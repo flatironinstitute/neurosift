@@ -3,7 +3,7 @@ import PlayControl from "./PlayControl";
 import {
   useTimeRange,
   useTimeseriesSelection,
-} from "../../../../NwbPage/plugins/PSTH/PSTHItemView/context-timeseries-selection";
+} from "@shared/context-timeseries-selection";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 type Props = {

@@ -1,7 +1,7 @@
 import { Box, Button, Container, Paper, Typography, Link } from "@mui/material";
 import { FunctionComponent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ScrollY from "../../components/ScrollY";
+import ScrollY from "@components/ScrollY";
 
 type HomePageProps = {
   width: number;

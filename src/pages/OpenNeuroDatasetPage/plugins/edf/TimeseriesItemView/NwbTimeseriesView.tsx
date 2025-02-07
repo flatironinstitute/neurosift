@@ -6,19 +6,19 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useNwbDataset } from "../../../../NwbPage/nwbInterface";
+import { useNwbDataset } from "@nwbInterface";
 import {
   useTimeRange,
   useTimeseriesSelectionInitialization,
-} from "../../../../NwbPage/plugins/PSTH/PSTHItemView/context-timeseries-selection";
-import { timeSelectionBarHeight } from "../../../../NwbPage/plugins/SpatialSeries/SpatialSeriesXYView/TimeseriesSelectionBar";
+} from "@shared/context-timeseries-selection";
+import { timeSelectionBarHeight } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
 import TimeScrollView2, {
   useTimeScrollView2,
-} from "../../../../NwbPage/plugins/component-time-scroll-view-2/TimeScrollView2";
+} from "@shared/component-time-scroll-view-2/TimeScrollView2";
 import {
   TimeseriesTimestampsClient,
   useTimeseriesTimestampsClient,
-} from "../../../../NwbPage/plugins/simple-timeseries/TimeseriesTimestampsClient";
+} from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
 import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient";
 import { DataSeries, Opts } from "./WorkerTypes";
 

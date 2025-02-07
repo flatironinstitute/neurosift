@@ -1,4 +1,4 @@
-import { BaseTab, createTabsReducer } from "../../components/tabs/tabsReducer";
+import { BaseTab, createTabsReducer } from "@components/tabs/tabsReducer";
 import { OpenNeuroFile } from "./plugins/pluginInterface";
 
 type MainTab = BaseTab & {

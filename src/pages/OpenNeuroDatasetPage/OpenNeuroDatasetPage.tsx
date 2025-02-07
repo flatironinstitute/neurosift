@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import ResponsiveLayout from "../../components/ResponsiveLayout";
+import ResponsiveLayout from "@components/ResponsiveLayout";
 import { addRecentOpenNeuroDataset } from "../util/recentOpenNeuroDatasets";
 import OpenNeuroDatasetOverview from "./components/OpenNeuroDatasetOverview";
 import OpenNeuroDatasetWorkspace from "./components/OpenNeuroDatasetWorkspace";

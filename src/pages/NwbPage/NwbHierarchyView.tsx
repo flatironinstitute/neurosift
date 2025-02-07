@@ -1,5 +1,5 @@
 import { FunctionComponent, useCallback, useEffect, useState } from "react";
-import "../../css/NwbHierarchyView.css";
+import "@css/NwbHierarchyView.css";
 import { useNeurodataObjects } from "./useNeurodataObjects";
 import { findSuitablePlugins } from "./plugins/registry";
 import { NwbObjectViewPlugin } from "./plugins/pluginInterface";

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getNwbDatasetData } from "../../../../nwbInterface";
+import { getNwbDatasetData } from "@nwbInterface";
 
 export const useSortUnitsByValues = (
   nwbUrl: string,

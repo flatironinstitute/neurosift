@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import PlaneSegmentationView from "./PlaneSegmentationView";
-import { NwbGroup, useNwbGroup } from "../../../nwbInterface";
+import { NwbGroup, useNwbGroup } from "@nwbInterface";
 import { Splitter } from "@fi-sci/splitter";
 
 type Props = {

@@ -4,7 +4,7 @@ import useTimeScrollPan, { PanUpdateProperties } from "./useTimeScrollPan";
 import {
   useTimeRange,
   useTimeseriesSelection,
-} from "../PSTH/PSTHItemView/context-timeseries-selection";
+} from "@shared/context-timeseries-selection";
 
 export const suppressWheelScroll = (
   divRef: React.MutableRefObject<HTMLDivElement | null>,

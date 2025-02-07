@@ -1,17 +1,17 @@
 import { Box, Tab, Tabs } from "@mui/material";
 import { FunctionComponent, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import ResponsiveLayout from "../../components/ResponsiveLayout";
-import ScrollY from "../../components/ScrollY";
+import ResponsiveLayout from "@components/ResponsiveLayout";
+import ScrollY from "@components/ScrollY";
 import { useDandisetVersionInfo } from "../DandisetPage/useDandisetVersionInfo";
 import useQueryDandiset from "../DandisetPage/useQueryDandiset";
 import MainWorkspace from "./MainWorkspace";
 import NwbOverview from "./NwbOverview";
-import "../../css/NwbPage.css";
+import "@css/NwbPage.css";
 import { TAB_BAR_HEIGHT, tabsStyle, tabStyle } from "./tabStyles";
 import { useNwbFileOverview } from "./useNwbFileOverview";
 import { track } from "@vercel/analytics/react";
-import { setCurrentDandisetId, setTryUsingLindi } from "./nwbInterface";
+import { setCurrentDandisetId, setTryUsingLindi } from "@nwbInterface";
 
 type NwbPageProps = {
   width: number;

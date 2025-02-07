@@ -1,4 +1,4 @@
-import { useNwbDataset, useNwbGroup } from "../../nwbInterface";
+import { useNwbDataset, useNwbGroup } from "@nwbInterface";
 import ImagesItemView, { ImageItem } from "./ImagesItemView";
 
 type Props = {

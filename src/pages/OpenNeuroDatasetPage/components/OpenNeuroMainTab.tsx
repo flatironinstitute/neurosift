@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useEffect, useMemo, useReducer } from "react";
-import "../../../css/NwbHierarchyView.css";
+import "@css/NwbHierarchyView.css";
 import { OpenNeuroFile } from "../plugins/pluginInterface";
 
 type Props = {

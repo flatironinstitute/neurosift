@@ -21,10 +21,10 @@ import { ToolbarItem } from "./Toolbars";
 import {
   useTimeRange,
   useTimeseriesSelection,
-} from "../PSTH/PSTHItemView/context-timeseries-selection";
+} from "@shared/context-timeseries-selection";
 import TimeseriesSelectionBar, {
   timeSelectionBarHeight,
-} from "../SpatialSeries/SpatialSeriesXYView/TimeseriesSelectionBar";
+} from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
 import { Splitter } from "@fi-sci/splitter";
 
 const DefaultToolbarWidth = 18;

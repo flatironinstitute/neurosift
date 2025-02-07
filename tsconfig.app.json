@@ -20,7 +20,18 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    /* Path Aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@css/*": ["src/css/*"],
+      "@components/*": ["src/components/*"],
+      "@shared/*": ["src/shared/*"],
+      "@remote-h5-file": ["src/remote-h5-file"],
+      "@remote-h5-file/*": ["src/remote-h5-file/*"],
+      "@nwbInterface": ["src/pages/NwbPage/nwbInterface"]
+    }
   },
   "include": ["src"]
 }

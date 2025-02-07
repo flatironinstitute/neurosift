@@ -1,9 +1,9 @@
-import { DatasetDataType } from "../../../../remote-h5-file";
-import { getNwbDatasetData, NwbDataset, NwbGroup } from "../../nwbInterface";
+import { DatasetDataType } from "@remote-h5-file";
+import { getNwbDatasetData, NwbDataset, NwbGroup } from "@nwbInterface";
 import {
   IrregularTimeseriesTimestampsClient,
   RegularTimeseriesTimestampsClient,
-} from "./TimeseriesTimestampsClient";
+} from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
 
 const isNumericTypedArray = (
   data: DatasetDataType | undefined,

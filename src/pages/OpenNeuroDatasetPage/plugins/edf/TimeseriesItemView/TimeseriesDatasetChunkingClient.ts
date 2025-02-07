@@ -1,10 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Canceler } from "../../../../../remote-h5-file";
-import {
-  getNwbDatasetData,
-  NwbDataset,
-} from "../../../../NwbPage/nwbInterface";
+import { Canceler } from "@remote-h5-file";
+import { getNwbDatasetData, NwbDataset } from "@nwbInterface";
 
 class TimeseriesDatasetChunkingClient {
   #chunks: { [k: number]: number[][] } = {};

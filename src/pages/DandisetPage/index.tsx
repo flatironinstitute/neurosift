@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import { formatBytes } from "../util/formatBytes";
+import { formatBytes } from "@shared/util/formatBytes";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   AssetsResponseItem,
@@ -10,7 +10,7 @@ import { addRecentDandiset } from "../util/recentDandisets";
 import { useDandisetVersionInfo } from "./useDandisetVersionInfo";
 import useQueryAssets from "./useQueryAssets";
 import useQueryDandiset from "./useQueryDandiset";
-import ScrollY from "../../components/ScrollY";
+import ScrollY from "@components/ScrollY";
 
 type DandisetPageProps = {
   width: number;

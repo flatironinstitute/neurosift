@@ -1,5 +1,5 @@
 import { FunctionComponent, useMemo, useEffect, useState } from "react";
-import { useNwbGroup, getNwbDatasetData } from "../../../../nwbInterface";
+import { useNwbGroup, getNwbDatasetData } from "@nwbInterface";
 
 type GroupBySelectionProps = {
   groupByVariable: string;

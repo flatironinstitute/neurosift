@@ -1,6 +1,6 @@
 import { Box, Button, Typography } from "@mui/material";
 import { FunctionComponent } from "react";
-import { formatBytes } from "../../../util/formatBytes";
+import { formatBytes } from "@shared/util/formatBytes";
 import { OpenNeuroPluginProps } from "../pluginInterface";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 

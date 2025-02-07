@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DatasetDataType } from "../../../../../remote-h5-file";
-import { getNwbDatasetData, getNwbGroup } from "../../../nwbInterface";
+import { DatasetDataType } from "@remote-h5-file";
+import { getNwbDatasetData, getNwbGroup } from "@nwbInterface";
 
 export class DirectSpikeTrainsClient {
   #timestampFinders: { [key: number]: TimestampFinder } = {};

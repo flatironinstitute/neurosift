@@ -4,7 +4,7 @@ import { FaChevronDown, FaChevronRight } from "react-icons/fa";
 import Hdf5View from "./Hdf5View";
 import { getNwbGroup } from "./nwbInterface";
 import NwbHierarchyView from "./NwbHierarchyView";
-import "../../css/NwbPage.css";
+import "@css/NwbPage.css";
 import { SetupNwbFileSpecificationsProvider } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
 import SpecificationsView from "./SpecificationsView/SpecificationsView";
 import TimeseriesAlignmentView from "./TimeseriesAlignmentView";

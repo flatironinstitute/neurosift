@@ -9,12 +9,8 @@ import {
 } from "react";
 import { SmallIconButton } from "@fi-sci/misc";
 import { Download } from "@mui/icons-material";
-import {
-  getNwbDataset,
-  getNwbDatasetData,
-  useNwbGroup,
-} from "../../../nwbInterface";
-import { DatasetDataType } from "../../../../../remote-h5-file";
+import { getNwbDataset, getNwbDatasetData, useNwbGroup } from "@nwbInterface";
+import { DatasetDataType } from "@remote-h5-file";
 
 type Props = {
   width: number;

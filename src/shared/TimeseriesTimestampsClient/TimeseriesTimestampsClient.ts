@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-import { DatasetDataType } from "../../../../remote-h5-file";
+import { DatasetDataType } from "@remote-h5-file";
 import {
   getNwbDataset,
   getNwbDatasetData,
   NwbDataset,
   useNwbGroup,
-} from "../../nwbInterface";
+} from "@nwbInterface";
 
 const isNumber = (data: any | undefined): data is number => {
   return typeof data === "number";

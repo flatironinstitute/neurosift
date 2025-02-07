@@ -1,5 +1,5 @@
 import { FunctionComponent, useState } from "react";
-import "../../css/Hdf5View.css";
+import "@css/Hdf5View.css";
 import { NwbGroup, useNwbGroup } from "./nwbInterface";
 import TopLevelGroupContentPanel from "./TopLevelGroupContentPanel";
 

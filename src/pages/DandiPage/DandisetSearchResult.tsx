@@ -6,7 +6,7 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString();
 };
 
-import { formatBytes } from "../util/formatBytes";
+import { formatBytes } from "@shared/util/formatBytes";
 
 type Props = {
   dandiset: DandisetSearchResultItem;

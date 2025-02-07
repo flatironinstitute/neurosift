@@ -17,8 +17,8 @@ import {
   useLocation,
   useSearchParams,
 } from "react-router-dom";
-import StatusBar from "./components/StatusBar";
-import "./css/App.css";
+import StatusBar from "@components/StatusBar";
+import "@css/App.css";
 import DandiPage from "./pages/DandiPage/DandiPage";
 import DandisetPage from "./pages/DandisetPage";
 import GuidePage from "./pages/GuidePage/GuidePage";

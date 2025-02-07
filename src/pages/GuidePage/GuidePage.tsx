@@ -2,7 +2,7 @@ import { Box, Container } from "@mui/material";
 import { FunctionComponent } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import ScrollY from "../../components/ScrollY";
+import ScrollY from "@components/ScrollY";
 import markdownContent from "./guide.md?raw";
 
 type GuidePageProps = {

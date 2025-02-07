@@ -20,8 +20,8 @@ import {
   defaultUnitSelection,
   sortIds,
   unitSelectionReducer,
-} from "./context-unit-selection";
-import { useSelectedUnitIds } from "./context-unit-selection/UnitSelectionContext";
+} from "@shared/context-unit-selection";
+import { useSelectedUnitIds } from "@shared/context-unit-selection/UnitSelectionContext";
 import { DirectSpikeTrainsClient } from "./DirectSpikeTrainsClient";
 import { useSortUnitsByValues } from "./hooks/useSortUnitsBy";
 import { useTrialsFilterIndices } from "./hooks/useTrialsFilter";

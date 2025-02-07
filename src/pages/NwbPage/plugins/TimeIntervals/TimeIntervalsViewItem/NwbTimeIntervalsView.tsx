@@ -4,7 +4,7 @@ import {
   getNwbDatasetData,
   useNwbDatasetData,
   useNwbGroup,
-} from "../../../nwbInterface";
+} from "@nwbInterface";
 import NwbTimeIntervalsWidget from "./NwbTimeIntervalsWidget";
 
 type Props = {

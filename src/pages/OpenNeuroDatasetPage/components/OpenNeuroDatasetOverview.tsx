@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { FunctionComponent } from "react";
-import ScrollY from "../../../components/ScrollY";
-import { formatBytes } from "../../util/formatBytes";
+import ScrollY from "@components/ScrollY";
+import { formatBytes } from "@shared/util/formatBytes";
 
 interface OpenNeuroDatasetOverviewProps {
   width: number;

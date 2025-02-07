@@ -13,7 +13,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useTimeseriesSelection } from "../../../../NwbPage/plugins/PSTH/PSTHItemView/context-timeseries-selection";
+import { useTimeseriesSelection } from "@shared/context-timeseries-selection";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 type Props = {

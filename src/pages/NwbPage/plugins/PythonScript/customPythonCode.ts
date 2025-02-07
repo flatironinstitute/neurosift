@@ -1,4 +1,4 @@
-import { NwbGroup } from "../../nwbInterface";
+import { NwbGroup } from "@nwbInterface";
 
 export const getCustomPythonCodeForTimeSeries = (group: NwbGroup) => {
   let customCode = "";

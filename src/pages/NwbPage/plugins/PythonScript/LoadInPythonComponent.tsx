@@ -2,7 +2,7 @@ import { FunctionComponent, useMemo } from "react";
 import Markdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vs } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { NwbGroup, useNwbGroup } from "../../nwbInterface";
+import { NwbGroup, useNwbGroup } from "@nwbInterface";
 import {
   getCustomPythonCodeForTimeIntervals,
   getCustomPythonCodeForTimeSeries,

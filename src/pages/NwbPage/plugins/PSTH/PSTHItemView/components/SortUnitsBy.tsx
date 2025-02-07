@@ -1,5 +1,5 @@
 import { FunctionComponent, useMemo } from "react";
-import { useNwbGroup } from "../../../../nwbInterface";
+import { useNwbGroup } from "@nwbInterface";
 
 type SortUnitsBySelectionProps = {
   sortUnitsByVariable: [string, "asc" | "desc"] | undefined;

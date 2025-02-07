@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  useNwbGroup,
-  useNwbDataset,
-  getNwbDatasetData,
-} from "../../nwbInterface";
-import { DatasetDataType } from "../../../../remote-h5-file";
+import { useNwbGroup, useNwbDataset, getNwbDatasetData } from "@nwbInterface";
+import { DatasetDataType } from "@remote-h5-file";
 import { SmallIconButton } from "@fi-sci/misc";
 import { FaExternalLinkAlt } from "react-icons/fa";
 

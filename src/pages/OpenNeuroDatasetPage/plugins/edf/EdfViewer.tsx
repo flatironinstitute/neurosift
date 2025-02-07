@@ -3,8 +3,8 @@ import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import {
   SetupTimeseriesSelection,
   useTimeseriesSelectionInitialization,
-} from "../../../NwbPage/plugins/PSTH/PSTHItemView/context-timeseries-selection";
-import { TimeseriesTimestampsClient } from "../../../NwbPage/plugins/simple-timeseries/TimeseriesTimestampsClient";
+} from "@shared/context-timeseries-selection";
+import { TimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
 import EDFReader from "./EDFReader";
 import {
   DatasetChunkingClientInterface,

@@ -1,7 +1,7 @@
 import { Paper, Typography, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { OpenNeuroDataset } from "./OpenNeuroPage";
-import { formatBytes } from "../util/formatBytes";
+import { formatBytes } from "@shared/util/formatBytes";
 
 type Props = {
   dataset: OpenNeuroDataset;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { getNwbDatasetData, getNwbGroup } from "../../../../nwbInterface";
-import { DatasetDataType } from "../../../../../../remote-h5-file/lib/RemoteH5File";
+import { getNwbDatasetData, getNwbGroup } from "@nwbInterface";
+import { DatasetDataType } from "@remote-h5-file/lib/RemoteH5File";
 
 export const useTrialsFilterIndices = (
   trialsFilter: string | undefined,

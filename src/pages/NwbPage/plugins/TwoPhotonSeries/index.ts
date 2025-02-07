@@ -1,4 +1,4 @@
-import { getNwbGroup } from "../../nwbInterface";
+import { getNwbGroup } from "@nwbInterface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import TwoPhotonSeriesPluginView from "./TwoPhotonSeriesPluginView";
 

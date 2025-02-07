@@ -6,13 +6,10 @@ import {
   RemoteH5File,
   RemoteH5FileLindi,
   RemoteH5FileX,
-} from "../../remote-h5-file";
+} from "@remote-h5-file";
 import { getCachedObject, setCachedObject } from "./nwbCache";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
-import {
-  removeStatusItem,
-  setStatusItem,
-} from "../../components/StatusBarContext";
+import { removeStatusItem, setStatusItem } from "@components/StatusBarContext";
 
 const nwbFiles: {
   [url: string]: {

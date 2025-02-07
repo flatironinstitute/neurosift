@@ -7,7 +7,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { getNwbDatasetData, getNwbGroup } from "../nwbInterface";
+import { getNwbDatasetData, getNwbGroup } from "@nwbInterface";
 
 export const SpecificationsContext = createContext<
   NwbFileSpecifications | undefined

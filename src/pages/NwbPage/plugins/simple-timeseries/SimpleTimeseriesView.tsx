@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { useNwbGroup } from "../../nwbInterface";
+import { useNwbGroup } from "@nwbInterface";
 import TimeseriesClient from "./TimeseriesClient";
 import TimeseriesPlot from "./TimeseriesPlot";
 import LabeledEventsPlot from "./LabeledEventsPlot";

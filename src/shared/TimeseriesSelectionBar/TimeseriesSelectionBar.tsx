@@ -10,7 +10,7 @@ import {
   TimeseriesSelectionContext,
   useTimeRange,
   useTimeseriesSelection,
-} from "../../PSTH/PSTHItemView/context-timeseries-selection";
+} from "@shared/context-timeseries-selection";
 
 type Props = {
   width: number;

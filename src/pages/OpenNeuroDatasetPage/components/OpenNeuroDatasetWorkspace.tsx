@@ -1,12 +1,12 @@
 import { FunctionComponent, useEffect, useMemo, useReducer } from "react";
-import { TAB_BAR_HEIGHT, TabBar } from "../../../components/tabs/TabBar";
-import { BaseTabAction } from "../../../components/tabs/tabsReducer";
+import { TAB_BAR_HEIGHT, TabBar } from "@components/tabs/TabBar";
+import { BaseTabAction } from "@components/tabs/tabsReducer";
 import { initializePlugins } from "../plugins/init";
 import { OpenNeuroFile } from "../plugins/pluginInterface";
 import { findPluginsByFile } from "../plugins/registry";
 import { OpenNeuroTab, openNeuroTabsReducer } from "../types";
 import OpenNeuroMainTab from "./OpenNeuroMainTab";
-import ScrollY from "../../../components/ScrollY";
+import ScrollY from "@components/ScrollY";
 import TabToolbar, { TOOLBAR_HEIGHT } from "./TabToolbar";
 
 // Initialize plugins
@@ -195,7 +195,12 @@ const OpenNeuroDatasetWorkspace: FunctionComponent<
                     height={pluginContentHeight}
                     top={toolbarHeight}
                   >
-                    <Plugin file={tab.file} />
+                    {/* The plugin may or may not use the width/height */}
+                    <Plugin
+                      file={tab.file}
+                      width={width - 20}
+                      height={pluginContentHeight}
+                    />
                   </ScrollY>
                 </div>
               );

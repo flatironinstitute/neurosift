@@ -16,7 +16,7 @@ import {
   NwbGroup,
 } from "./nwbInterface";
 import { valueToElement } from "./valueToElement";
-import "../../css/TopLevelGroupContent.css";
+import "@css/TopLevelGroupContent.css";
 
 type Props = {
   name: string;

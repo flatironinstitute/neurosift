@@ -1,5 +1,5 @@
 import { FunctionComponent } from "react";
-import { SetupTimeseriesSelection } from "../PSTH/PSTHItemView/context-timeseries-selection";
+import { SetupTimeseriesSelection } from "@shared/context-timeseries-selection";
 import NwbTimeIntervalsView from "./TimeIntervalsViewItem/NwbTimeIntervalsView";
 
 type Props = {

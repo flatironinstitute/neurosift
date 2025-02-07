@@ -17,7 +17,7 @@ import { FunctionComponent, useCallback, useEffect, useState } from "react";
 import { getDandiApiHeaders } from "../util/getDandiApiHeaders";
 import { getRecentDandisets } from "../util/recentDandisets";
 import { useNavigate } from "react-router-dom";
-import ScrollY from "../../components/ScrollY";
+import ScrollY from "@components/ScrollY";
 import doDandiSemanticSearch from "./doDandiSemanticSearch";
 
 type DandiPageProps = {

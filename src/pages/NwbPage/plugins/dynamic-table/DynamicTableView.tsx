@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNwbGroup } from "../../nwbInterface";
+import { useNwbGroup } from "@nwbInterface";
 import DynamicTable from "./DynamicTable/DynamicTable";
 
 const DynamicTableView: React.FC<{ nwbUrl: string; path: string }> = ({

@@ -1,4 +1,4 @@
-import { getNwbDataset, getNwbGroup } from "../../nwbInterface";
+import { getNwbDataset, getNwbGroup } from "@nwbInterface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import ImagePluginView from "./ImagePluginView";
 

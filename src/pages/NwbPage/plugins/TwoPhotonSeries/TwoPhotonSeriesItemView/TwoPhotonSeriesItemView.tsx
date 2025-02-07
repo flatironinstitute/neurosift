@@ -1,8 +1,8 @@
 import { SmallIconButton } from "@fi-sci/misc";
 import { ArrowLeft, ArrowRight } from "@mui/icons-material";
 import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
-import { Canceler, DatasetDataType } from "../../../../../remote-h5-file";
-import { getNwbDatasetData, useNwbDataset } from "../../../nwbInterface";
+import { Canceler, DatasetDataType } from "@remote-h5-file";
+import { getNwbDatasetData, useNwbDataset } from "@nwbInterface";
 import PlaneTransformSelector, {
   defaultPlaneTransform,
   PlaneTransform,
@@ -11,11 +11,11 @@ import {
   useTimeRange,
   useTimeseriesSelection,
   useTimeseriesSelectionInitialization,
-} from "../../PSTH/PSTHItemView/context-timeseries-selection";
-import { useTimeseriesTimestampsClient } from "../../simple-timeseries/TimeseriesTimestampsClient";
+} from "@shared/context-timeseries-selection";
+import { useTimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
 import TimeseriesSelectionBar, {
   timeSelectionBarHeight,
-} from "../../SpatialSeries/SpatialSeriesXYView/TimeseriesSelectionBar";
+} from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
 import MultiRangeSlider from "./MultiRangeSlider/MultiRangeSlider";
 
 // const queryParams = parseQuery(window.location.href)
@@ -154,7 +154,7 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
     };
     load();
     return () => {
-      canceler.onCancel.forEach((f) => f());
+      canceler.onCancel.forEach((f: () => void) => f());
       canceled = true;
     };
   }, [

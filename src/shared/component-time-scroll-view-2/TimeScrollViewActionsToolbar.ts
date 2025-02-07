@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import TimeWidgetToolbarEntries from "./TimeWidgetToolbarEntries";
 import { Divider, ToolbarItem } from "./Toolbars";
-import { useTimeRange } from "../PSTH/PSTHItemView/context-timeseries-selection";
+import { useTimeRange } from "@shared/context-timeseries-selection";
 
 export type OptionalToolbarActions = {
   aboveDefault?: ToolbarItem[];

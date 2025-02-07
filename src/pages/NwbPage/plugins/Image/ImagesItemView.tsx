@@ -5,8 +5,8 @@ import {
   useNwbDataset,
   useNwbDatasetData,
   useNwbGroup,
-} from "../../nwbInterface";
-import { DatasetDataType } from "../../../../remote-h5-file";
+} from "@nwbInterface";
+import { DatasetDataType } from "@remote-h5-file";
 
 type Props = {
   width: number;

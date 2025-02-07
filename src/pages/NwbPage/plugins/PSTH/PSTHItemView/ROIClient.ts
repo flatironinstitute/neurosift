@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getNwbDataset, getNwbDatasetData } from "../../../nwbInterface";
+import { getNwbDataset, getNwbDatasetData } from "@nwbInterface";
 
 export class RoiClient {
   status: "pending" | "loading" | "loaded" | "error" = "pending";

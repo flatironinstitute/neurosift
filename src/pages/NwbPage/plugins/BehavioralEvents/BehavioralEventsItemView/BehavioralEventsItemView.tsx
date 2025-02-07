@@ -7,15 +7,15 @@ import {
   useState,
 } from "react";
 import { BehavioralEventsData, EventSeries, Opts } from "./WorkerTypes";
-import { getNwbDatasetData, useNwbGroup } from "../../../nwbInterface";
+import { getNwbDatasetData, useNwbGroup } from "@nwbInterface";
 import {
   useTimeRange,
   useTimeseriesSelectionInitialization,
-} from "../../PSTH/PSTHItemView/context-timeseries-selection";
+} from "@shared/context-timeseries-selection";
 import TimeScrollView2, {
   useTimeScrollView2,
-} from "../../component-time-scroll-view-2/TimeScrollView2";
-import { timeSelectionBarHeight } from "../../SpatialSeries/SpatialSeriesXYView/TimeseriesSelectionBar";
+} from "@shared/component-time-scroll-view-2/TimeScrollView2";
+import { timeSelectionBarHeight } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
 
 type Props = {
   width: number;

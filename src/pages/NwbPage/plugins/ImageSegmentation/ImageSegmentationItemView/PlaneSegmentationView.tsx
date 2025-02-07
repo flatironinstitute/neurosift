@@ -9,7 +9,7 @@ import {
   getNwbGroup,
   NwbDataset,
   NwbGroup,
-} from "../../../nwbInterface";
+} from "@nwbInterface";
 
 type Props = {
   width: number;

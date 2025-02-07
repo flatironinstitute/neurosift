@@ -1,5 +1,5 @@
 import { useEffect, useReducer } from "react";
-import ScrollY from "../../components/ScrollY";
+import ScrollY from "@components/ScrollY";
 import MainTab from "./MainTab";
 import NwbObjectView from "./NwbObjectView";
 import { NwbObjectViewPlugin } from "./plugins/pluginInterface";
@@ -7,10 +7,10 @@ import tabsReducer, { DynamicTab } from "./tabsReducer";
 import { TAB_BAR_HEIGHT } from "./tabStyles";
 import TabToolbar, { TOOLBAR_HEIGHT } from "./TabToolbar";
 
-import { TabBar } from "../../components/tabs/TabBar";
+import { TabBar } from "@components/tabs/TabBar";
 import { getNwbGroup } from "./nwbInterface";
 import { findPluginByName } from "./plugins/registry";
-import { BaseTabAction } from "../../components/tabs/tabsReducer";
+import { BaseTabAction } from "@components/tabs/tabsReducer";
 
 type MainWorkspaceProps = {
   nwbUrl: string;

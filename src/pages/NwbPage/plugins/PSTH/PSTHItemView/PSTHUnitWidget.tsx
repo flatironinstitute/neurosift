@@ -6,7 +6,7 @@ import PSTHRasterWidget from "./PSTHRasterWidget";
 import { RoiClient } from "./ROIClient";
 import TrialAlignedSeriesWidget from "./TrialAlignedSeriesWidget";
 import { DirectSpikeTrainsClient } from "./DirectSpikeTrainsClient";
-import { getNwbDatasetData } from "../../../nwbInterface";
+import { getNwbDatasetData } from "@nwbInterface";
 
 type Props = {
   width: number;
