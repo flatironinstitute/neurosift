@@ -1,9 +1,5 @@
+import { BaseTab } from "@components/tabs/tabsReducer";
 import { NwbObjectViewPlugin } from "./plugins/pluginInterface";
-
-type BaseTab = {
-  id: string;
-  label: string;
-};
 
 type MainTab = BaseTab & {
   type: "main";
