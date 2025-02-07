@@ -103,6 +103,19 @@ const ApplicationBar: FunctionComponent<Props> = ({ onContextChat }) => {
           </div>
           {/* <div style={{color: bannerColor, position: 'relative', top: -2}}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{star} This viewer is in alpha and is under <Hyperlink color={bannerColor} href="https://github.com/flatironinstitute/neurosift" target="_blank">active development</Hyperlink> {star}</div> */}
           <ReportDandiApiDown />
+          <a
+            href="https://github.com/flatironinstitute/neurosift/blob/main/doc/neurosift_v2_migration.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: 'yellow',
+              textDecoration: 'none',
+              marginLeft: 15,
+              fontSize: '0.9em'
+            }}
+          >
+            * Feb 18 migration *
+          </a>
           <span style={{ marginLeft: "auto" }} />
           {/* <span style={{ color: "white" }}>
             <SmallIconButton
