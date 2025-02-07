@@ -13,5 +13,5 @@ export type SimpleTimeseriesInfo = {
 export type Props = {
   nwbUrl: string;
   path: string;
-  width: number;
+  width?: number;
 };
