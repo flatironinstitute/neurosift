@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import pako from "pako";
 import {
   encodeUint8ArrayToBase64,

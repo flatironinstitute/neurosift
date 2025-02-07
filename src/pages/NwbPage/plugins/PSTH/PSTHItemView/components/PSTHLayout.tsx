@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent } from "react";
 import UnitSelectionComponent from "./UnitSelection";
 import RoiSelectionComponent from "./RoiSelection";
