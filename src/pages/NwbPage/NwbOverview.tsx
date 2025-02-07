@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import { isUsingLindi } from "./nwbInterface";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import DatasetDataView from "./DatasetDataView";
-import { NwbFileOverview } from "./types";
 import { DandisetVersionInfo } from "../DandiPage/dandi-types";
+import DatasetDataView from "./DatasetDataView";
+import { isUsingLindi } from "./nwbInterface";
+import { NwbFileOverview } from "./types";
 
 type NwbFileOverviewResult = NwbFileOverview | { error: string } | null;
 
