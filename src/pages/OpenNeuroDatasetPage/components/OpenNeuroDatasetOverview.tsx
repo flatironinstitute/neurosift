@@ -48,6 +48,17 @@ const OpenNeuroDatasetOverview: FunctionComponent<
         </Typography>
 
         <Box sx={{ mt: 2 }}>
+          <a
+            href={`https://openneuro.org/datasets/${datasetInfo.id}/versions/${snapshot.tag}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "#0066cc", textDecoration: "none" }}
+          >
+            View on OpenNeuro →
+          </a>
+        </Box>
+
+        <Box sx={{ mt: 2 }}>
           <Typography variant="subtitle2" color="text.secondary">
             Dataset Information
           </Typography>
@@ -141,17 +152,6 @@ const OpenNeuroDatasetOverview: FunctionComponent<
               </Box>
             </Box>
           )}
-
-        <Box sx={{ mt: 2 }}>
-          <a
-            href={`https://openneuro.org/datasets/${datasetInfo.id}/versions/${snapshot.tag}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: "#0066cc", textDecoration: "none" }}
-          >
-            View on OpenNeuro →
-          </a>
-        </Box>
       </div>
     </ScrollY>
   );

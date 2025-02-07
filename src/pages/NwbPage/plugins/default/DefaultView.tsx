@@ -101,7 +101,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                   e.stopPropagation();
                   onOpenObjectInNewTab(path);
                 }}
-                title="Open in new tab"
+                title="View in new tab"
                 style={{
                   cursor: "pointer",
                   fontSize: "0.7em",

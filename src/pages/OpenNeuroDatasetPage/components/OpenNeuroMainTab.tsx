@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useEffect, useMemo, useReducer } from "react";
 import "@css/NwbHierarchyView.css";
+import { formatBytes } from "@shared/util/formatBytes";
 import { OpenNeuroFile } from "../plugins/pluginInterface";
 
 type Props = {
@@ -175,12 +176,12 @@ const OpenNeuroMainTab: FunctionComponent<Props> = ({
   };
 
   return (
-    <div style={{ margin: "10px" }}>
+    <div style={{ margin: "10px", maxWidth: 750 }}>
       <table className="nwb-hierarchy-table">
         <thead>
           <tr>
             <th>Name</th>
-            <th>Type</th>
+            <th>Size</th>
           </tr>
         </thead>
         <tbody>
@@ -214,7 +215,7 @@ const OpenNeuroMainTab: FunctionComponent<Props> = ({
                     <span>{file.filename}</span>
                   </div>
                 </td>
-                <td>directory</td>
+                <td></td>
               </tr>
             ) : (
               // file
@@ -255,7 +256,7 @@ const OpenNeuroMainTab: FunctionComponent<Props> = ({
                       <span>{file.filename}</span>
                     </span>
                     <span
-                      title="Open in new tab"
+                      title="View in new tab"
                       onClick={(e) => {
                         e.stopPropagation();
                         onOpenFile(file);
@@ -281,9 +282,33 @@ const OpenNeuroMainTab: FunctionComponent<Props> = ({
                     >
                       ⧉
                     </span>
+                    {file.urls.length > 0 && (
+                      // Download
+                      <span
+                        title="Download"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(file.urls[0]);
+                        }}
+                        style={{
+                          cursor: "pointer",
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.opacity = "1";
+                          e.currentTarget.style.backgroundColor =
+                            "rgba(0,0,0,0.05)";
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.opacity = "0.7";
+                          e.currentTarget.style.backgroundColor = "transparent";
+                        }}
+                      >
+                        ⬇
+                      </span>
+                    )}
                   </div>
                 </td>
-                <td>file</td>
+                <td>{formatBytes(file.size)}</td>
               </tr>
             ),
           )}
