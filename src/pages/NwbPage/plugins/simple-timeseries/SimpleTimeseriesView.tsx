@@ -9,6 +9,7 @@ import "../common/loadingState.css";
 export const SimpleTimeseriesView: FunctionComponent<Props> = ({
   nwbUrl,
   path,
+  width,
 }) => {
   const {
     timeseriesClient,
@@ -135,6 +136,7 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
           timestamps={info.visibleTimestamps}
           data={info.visibleData}
           channelSeparation={channelSeparation}
+          width={width}
         />
       )}
     </div>

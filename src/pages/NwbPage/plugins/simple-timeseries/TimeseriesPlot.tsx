@@ -1,36 +1,19 @@
-import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
+import { FunctionComponent, useMemo } from "react";
 import Plot from "react-plotly.js";
 
 type Props = {
   timestamps?: number[];
   data?: number[][];
   channelSeparation?: number; // Factor for channel separation (0 means no separation)
+  width?: number;
 };
 
 const TimeseriesPlot: FunctionComponent<Props> = ({
   timestamps,
   data,
   channelSeparation = 0,
+  width,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState<number>(800);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      if (entries[0]?.contentRect) {
-        setContainerWidth(entries[0].contentRect.width);
-      }
-    });
-
-    resizeObserver.observe(containerRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
-
   // Memoize the transposed channel data
   const channelData = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -88,60 +71,58 @@ const TimeseriesPlot: FunctionComponent<Props> = ({
   ];
 
   return (
-    <div ref={containerRef} style={{ width: "100%" }}>
-      <Plot
-        data={separatedChannelData.map((channelValues, i) => ({
-          x: timestamps,
-          y: channelValues,
-          type: "scatter",
-          mode: "lines",
-          line: {
-            color: colors[i % colors.length],
-          },
-          name: `Channel ${i}`,
-        }))}
-        layout={{
-          width: containerWidth - 20,
-          height: 400,
-          margin: {
-            l: 50,
-            r: 20,
-            t: 20,
-            b: 50,
-          },
-          xaxis: {
-            title: {
-              text: "Time (s)",
-              font: {
-                size: 14,
-                color: "#000",
-              },
-              standoff: 10,
+    <Plot
+      data={separatedChannelData.map((channelValues, i) => ({
+        x: timestamps,
+        y: channelValues,
+        type: "scatter",
+        mode: "lines",
+        line: {
+          color: colors[i % colors.length],
+        },
+        name: `Channel ${i}`,
+      }))}
+      layout={{
+        width: (width || 700) - 20,
+        height: 400,
+        margin: {
+          l: 50,
+          r: 20,
+          t: 20,
+          b: 50,
+        },
+        xaxis: {
+          title: {
+            text: "Time (s)",
+            font: {
+              size: 14,
+              color: "#000",
             },
-            showticklabels: true,
-            showgrid: true,
+            standoff: 10,
           },
-          yaxis: {
-            title: {
-              text:
-                channelSeparation > 0 ? "Value (channels separated)" : "Value",
-              font: {
-                size: 14,
-                color: "#000",
-              },
-              standoff: 5,
+          showticklabels: true,
+          showgrid: true,
+        },
+        yaxis: {
+          title: {
+            text:
+              channelSeparation > 0 ? "Value (channels separated)" : "Value",
+            font: {
+              size: 14,
+              color: "#000",
             },
-            showticklabels: true,
-            showgrid: true,
+            standoff: 5,
           },
-          showlegend: true,
-        }}
-        config={{
-          responsive: true,
-          displayModeBar: false,
-        }}
-      />
-    </div>
+          showticklabels: true,
+          showgrid: true,
+        },
+        showlegend: true,
+      }}
+      config={{
+        responsive: true,
+        displayModeBar: false,
+      }}
+    />
   );
 };
 

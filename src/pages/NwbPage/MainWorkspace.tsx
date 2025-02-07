@@ -11,6 +11,7 @@ import { TabBar } from "@components/tabs/TabBar";
 import { getNwbGroup } from "./nwbInterface";
 import { findPluginByName } from "./plugins/registry";
 import { BaseTabAction } from "@components/tabs/tabsReducer";
+import { SetupTimeseriesSelection } from "@shared/context-timeseries-selection";
 
 type MainWorkspaceProps = {
   nwbUrl: string;
@@ -168,44 +169,46 @@ const MainWorkspace = ({
                   display: tabsState.activeTabId === tab.id ? "block" : "none",
                 }}
               >
-                <div>
-                  <TabToolbar
-                    width={width - 20}
-                    tabId={tab.id}
-                    nwbUrl={nwbUrl}
-                    paths={tab.paths}
-                  />
-                  <ScrollY
-                    width={width - 20}
-                    height={contentHeight - TOOLBAR_HEIGHT}
-                    top={TOOLBAR_HEIGHT}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 20,
-                        padding: 20,
-                      }}
+                <SetupTimeseriesSelection>
+                  <div>
+                    <TabToolbar
+                      width={width - 20}
+                      tabId={tab.id}
+                      nwbUrl={nwbUrl}
+                      paths={tab.paths}
+                    />
+                    <ScrollY
+                      width={width - 20}
+                      height={contentHeight - TOOLBAR_HEIGHT}
+                      top={TOOLBAR_HEIGHT}
                     >
-                      {tab.paths.map((path, index) => (
-                        <div key={path}>
-                          {index > 0 && <hr style={{ margin: "20px 0" }} />}
-                          <NwbObjectView
-                            nwbUrl={nwbUrl}
-                            path={path}
-                            objectType={tab.objectTypes[index]}
-                            onOpenObjectInNewTab={handleOpenObjectInNewTab}
-                            plugin={undefined} // Multi-tab views don't use specific plugins
-                            width={undefined}
-                            height={undefined}
-                            inMultiView={true}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollY>
-                </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 20,
+                          padding: 20,
+                        }}
+                      >
+                        {tab.paths.map((path, index) => (
+                          <div key={path}>
+                            {index > 0 && <hr style={{ margin: "20px 0" }} />}
+                            <NwbObjectView
+                              nwbUrl={nwbUrl}
+                              path={path}
+                              objectType={tab.objectTypes[index]}
+                              onOpenObjectInNewTab={handleOpenObjectInNewTab}
+                              plugin={undefined} // Multi-tab views don't use specific plugins
+                              width={width - 20}
+                              height={undefined}
+                              inMultiView={true}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollY>
+                  </div>
+                </SetupTimeseriesSelection>
               </div>
             );
           } else if (tab.type === "single") {
@@ -216,30 +219,32 @@ const MainWorkspace = ({
                   display: tabsState.activeTabId === tab.id ? "block" : "none",
                 }}
               >
-                <div>
-                  <TabToolbar
-                    width={width}
-                    tabId={tab.id}
-                    nwbUrl={nwbUrl}
-                    path={tab.path}
-                  />
-                  <ScrollY
-                    width={width}
-                    height={contentHeight - TOOLBAR_HEIGHT}
-                    top={TOOLBAR_HEIGHT}
-                  >
-                    <NwbObjectView
+                <SetupTimeseriesSelection>
+                  <div>
+                    <TabToolbar
+                      width={width}
+                      tabId={tab.id}
                       nwbUrl={nwbUrl}
                       path={tab.path}
-                      objectType={tab.objectType}
-                      onOpenObjectInNewTab={handleOpenObjectInNewTab}
-                      plugin={tab.type === "single" ? tab.plugin : undefined}
-                      secondaryPaths={tab.secondaryPaths}
-                      width={width - 20}
-                      height={contentHeight - TOOLBAR_HEIGHT - 5}
                     />
-                  </ScrollY>
-                </div>
+                    <ScrollY
+                      width={width}
+                      height={contentHeight - TOOLBAR_HEIGHT}
+                      top={TOOLBAR_HEIGHT}
+                    >
+                      <NwbObjectView
+                        nwbUrl={nwbUrl}
+                        path={tab.path}
+                        objectType={tab.objectType}
+                        onOpenObjectInNewTab={handleOpenObjectInNewTab}
+                        plugin={tab.type === "single" ? tab.plugin : undefined}
+                        secondaryPaths={tab.secondaryPaths}
+                        width={width - 20}
+                        height={contentHeight - TOOLBAR_HEIGHT - 5}
+                      />
+                    </ScrollY>
+                  </div>
+                </SetupTimeseriesSelection>
               </div>
             );
           }
