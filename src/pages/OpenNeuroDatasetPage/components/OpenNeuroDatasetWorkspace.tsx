@@ -99,7 +99,9 @@ const OpenNeuroDatasetWorkspace: FunctionComponent<
                       tabsState.activeTabId === tab.id ? "block" : "none",
                   }}
                 >
-                  <Plugin file={tab.file} />;
+                  <ScrollY width={width - 20} height={contentHeight} top={0}>
+                    <Plugin file={tab.file} />
+                  </ScrollY>
                 </div>
               );
             }

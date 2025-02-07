@@ -47,3 +47,8 @@ Also, use the search_issues tool in the MCP rather than get_issue since there se
 # Misc
 
 This file serves as a living document - feel free to update it as the project evolves and new patterns emerge.
+
+When asked to do something, first take a look around the project by reading as many files as you feel is necessary to get the background information needed.
+
+When asked to make a python script to explore something, make a .py file with a notebook style using "# %%" markers. Make some meaningful cells to be executed. Be sure to include a "# %%" on the first line before the imports.
+

@@ -1,6 +1,8 @@
 import { Box, Typography } from "@mui/material";
 import { FunctionComponent, useEffect, useState } from "react";
 import { OpenNeuroPluginProps } from "../pluginInterface";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 type JsonValue =
   | string
@@ -57,22 +59,21 @@ const JsonFileView: FunctionComponent<OpenNeuroPluginProps> = ({ file }) => {
     <Box
       sx={{
         mt: 2,
-        p: 2,
-        backgroundColor: "#f5f5f5",
         borderRadius: 1,
-        fontFamily: "monospace",
         overflow: "auto",
       }}
     >
-      <pre
-        style={{
+      <SyntaxHighlighter
+        language="json"
+        style={vscDarkPlus}
+        customStyle={{
           margin: 0,
-          whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
+          borderRadius: 8,
+          fontSize: "14px",
         }}
       >
         {JSON.stringify(jsonContent, null, 2)}
-      </pre>
+      </SyntaxHighlighter>
     </Box>
   );
 };

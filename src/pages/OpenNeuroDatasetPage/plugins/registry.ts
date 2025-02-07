@@ -1,4 +1,4 @@
-import { OpenNeuroPlugin } from "./pluginInterface";
+import { OpenNeuroPlugin, pluginSupportsFile } from "./pluginInterface";
 
 const plugins: OpenNeuroPlugin[] = [];
 
@@ -8,11 +8,7 @@ export const registerPlugin = (plugin: OpenNeuroPlugin) => {
 
 export const findPluginsByFile = (filename: string): OpenNeuroPlugin[] => {
   return plugins
-    .filter((plugin) =>
-      plugin.type.some((ext) =>
-        filename.toLowerCase().endsWith(ext.toLowerCase()),
-      ),
-    )
+    .filter((plugin) => pluginSupportsFile(plugin, filename))
     .sort((a, b) => (b.priority || 0) - (a.priority || 0));
 };
 
