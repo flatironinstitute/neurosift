@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { isUsingLindi } from "./nwbInterface";
 import { useNavigate } from "react-router-dom";
 import DatasetDataView from "./DatasetDataView";
 import { NwbFileOverview } from "./types";
@@ -23,6 +24,16 @@ export const NwbOverview = ({
   const navigate = useNavigate();
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showFullContributors, setShowFullContributors] = useState(false);
+
+  const [, setForceRerender] = useState(false);
+
+  // force rerender after 2 seconds to check if we are using LINDI
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setForceRerender((prev) => !prev);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const contributors =
     dandisetInfo?.metadata.contributor.map((c) => c.name).join(", ") || "";
@@ -149,6 +160,22 @@ export const NwbOverview = ({
           </table>
         ) : (
           <span>Loading...</span>
+        )}
+        {nwbUrl && isUsingLindi(nwbUrl) && (
+          <div style={{ marginTop: 12 }}>
+            <span
+              style={{
+                backgroundColor: "#e3f2fd",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                color: "#1976d2",
+                fontWeight: "bold",
+                fontSize: "0.8em",
+              }}
+            >
+              Using LINDI
+            </span>
+          </div>
         )}
       </div>
     </div>

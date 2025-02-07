@@ -11,6 +11,7 @@ import "../../css/NwbPage.css";
 import { TAB_BAR_HEIGHT, tabsStyle, tabStyle } from "./tabStyles";
 import { useNwbFileOverview } from "./useNwbFileOverview";
 import { track } from "@vercel/analytics/react";
+import { setCurrentDandisetId, setTryUsingLindi } from "./nwbInterface";
 
 type NwbPageProps = {
   width: number;
@@ -23,6 +24,11 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({ width, height }) => {
   const initialTabId = searchParams.get("tab");
   const dandisetId = searchParams.get("dandisetId");
   const dandisetVersion = searchParams.get("dandisetVersion") || "";
+  const doNotTryLindi = searchParams.get("lindi") === "0";
+
+  // for looking up lindi files
+  setCurrentDandisetId(dandisetId || "");
+  setTryUsingLindi(!doNotTryLindi);
 
   const initialSplitterPosition = Math.max(200, Math.min(450, width / 3));
 

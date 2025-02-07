@@ -4,6 +4,7 @@ import {
   Canceler,
   DatasetDataType,
   RemoteH5File,
+  RemoteH5FileLindi,
   RemoteH5FileX,
 } from "../../remote-h5-file";
 import { getCachedObject, setCachedObject } from "./nwbCache";
@@ -14,8 +15,24 @@ import {
 } from "../../components/StatusBarContext";
 
 const nwbFiles: {
-  [url: string]: RemoteH5FileX;
+  [url: string]: {
+    resolvedUrl: string;
+    remoteH5File: RemoteH5FileX;
+  };
 } = {};
+
+// for looking up lindi files
+let currentDandisetId = "";
+export const setCurrentDandisetId = (dandisetId: string) => {
+  currentDandisetId = dandisetId;
+};
+let tryUsingLindi = true;
+export const setTryUsingLindi = (val: boolean) => {
+  tryUsingLindi = val;
+};
+export const isUsingLindi = (url: string) => {
+  return nwbFiles[url]?.resolvedUrl.endsWith(".lindi.json");
+};
 
 export type NwbSubdataset = {
   name: string;
@@ -74,6 +91,38 @@ const globalStatsUpdated = () => {
   }
 };
 
+const inProgressGetRemoteH5Files: { [url: string]: boolean } = {};
+
+const getRemoteH5FileForUrl = async (url: string) => {
+  if (!nwbFiles[url]) {
+    // If not already created
+    if (inProgressGetRemoteH5Files[url]) {
+      while (inProgressGetRemoteH5Files[url]) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+      return nwbFiles[url];
+    }
+    try {
+      inProgressGetRemoteH5Files[url] = true;
+      const { url: urlResolved } = await getResolvedUrl(url);
+      if (urlResolved.endsWith(".lindi.json")) {
+        nwbFiles[url] = {
+          resolvedUrl: urlResolved,
+          remoteH5File: await RemoteH5FileLindi.create(urlResolved),
+        };
+      } else {
+        nwbFiles[url] = {
+          resolvedUrl: urlResolved,
+          remoteH5File: new RemoteH5File(urlResolved, {}),
+        };
+      }
+    } finally {
+      inProgressGetRemoteH5Files[url] = false;
+    }
+  }
+  return nwbFiles[url];
+};
+
 export const getNwbGroup = async (
   url: string,
   path: string,
@@ -85,12 +134,7 @@ export const getNwbGroup = async (
   const cached = await getCachedObject(url, path, "group");
   if (cached) return cached as NwbGroup;
 
-  // If not in cache, fetch from file
-  if (!nwbFiles[url]) {
-    const { url: urlResolved } = await getResolvedUrl(url);
-    nwbFiles[url] = new RemoteH5File(urlResolved, {});
-  }
-  const f = nwbFiles[url];
+  const f = (await getRemoteH5FileForUrl(url)).remoteH5File;
   const itemName = `getNwbGroup-${url}-${path}`;
   setStatusItem(itemName, {
     type: "text",
@@ -123,12 +167,7 @@ export const getNwbDataset = async (
   const cached = await getCachedObject(url, path, "dataset");
   if (cached) return cached as NwbDataset;
 
-  // If not in cache, fetch from file
-  if (!nwbFiles[url]) {
-    const { url: urlResolved } = await getResolvedUrl(url);
-    nwbFiles[url] = new RemoteH5File(urlResolved, {});
-  }
-  const f = nwbFiles[url];
+  const f = (await getRemoteH5FileForUrl(url)).remoteH5File;
   let dataset;
   const itemName = `getNwbDataset-${url}-${path}`;
   setStatusItem(itemName, {
@@ -162,11 +201,7 @@ export const getNwbDatasetData = async (
   globalStats.numDatasetDatas += 1;
   globalStatsUpdated();
 
-  if (!nwbFiles[url]) {
-    const { url: urlResolved } = await getResolvedUrl(url);
-    nwbFiles[url] = new RemoteH5File(urlResolved, {});
-  }
-  const f = nwbFiles[url];
+  const f = (await getRemoteH5FileForUrl(url)).remoteH5File;
   const itemName = `getNwbDatasetData-${url}-${path}-${JSON.stringify(o.slice)}`;
   setStatusItem(itemName, {
     type: "text",
@@ -218,6 +253,12 @@ export const useNwbDatasetData = (url: string, path: string) => {
 
 const getResolvedUrl = async (url: string): Promise<{ url: string }> => {
   if (isDandiAssetUrl(url)) {
+    if (currentDandisetId && tryUsingLindi) {
+      const lindiUrl = await tryGetLindiUrl(url, currentDandisetId);
+      if (lindiUrl) {
+        return { url: lindiUrl };
+      }
+    }
     const authorizationHeader = getAuthorizationHeaderForUrl(url);
     const headers = authorizationHeader
       ? { Authorization: authorizationHeader }
@@ -289,4 +330,48 @@ const getRedirectUrl = async (url: string, headers: any) => {
   // }
 
   // return null; // No redirect
+};
+
+export const tryGetLindiUrl = async (url: string, dandisetId: string) => {
+  // // disable these for now because retrieval of lindi not working from Brown u.
+  // if (["000248", "001195"].includes(dandisetId)) {
+  //   return undefined;
+  // }
+
+  if (url.endsWith(".lindi.json") || url.endsWith(".lindi.tar")) {
+    return url;
+  }
+  let assetId: string;
+  let staging: boolean;
+  if (url.startsWith("https://api-staging.dandiarchive.org/api/assets/")) {
+    staging = true;
+    assetId = url.split("/")[5];
+  } else if (
+    url.startsWith("https://api-staging.dandiarchive.org/api/dandisets/")
+  ) {
+    staging = true;
+    dandisetId = url.split("/")[5];
+    const indexOfAssetsPart = url.split("/").indexOf("assets");
+    if (indexOfAssetsPart === -1) return undefined;
+    assetId = url.split("/")[indexOfAssetsPart + 1];
+  } else if (url.startsWith("https://api.dandiarchive.org/api/assets/")) {
+    staging = false;
+    assetId = url.split("/")[5];
+  } else if (url.startsWith("https://api.dandiarchive.org/api/dandisets/")) {
+    // https://api.dandiarchive.org/api/dandisets/000246/versions/draft/assets/24190f91-44ae-4e77-8581-19dcc567a161/download/
+    staging = false;
+    dandisetId = url.split("/")[5];
+    const indexOfAssetsPart = url.split("/").indexOf("assets");
+    if (indexOfAssetsPart === -1) return undefined;
+    assetId = url.split("/")[indexOfAssetsPart + 1];
+  } else {
+    return undefined;
+  }
+  if (!dandisetId) return undefined;
+  if (!assetId) return undefined;
+  const aa = staging ? "dandi-staging" : "dandi";
+  const tryUrl = `https://lindi.neurosift.org/${aa}/dandisets/${dandisetId}/assets/${assetId}/nwb.lindi.json`;
+  const resp = await fetch(tryUrl, { method: "HEAD" });
+  if (resp.ok) return tryUrl;
+  return undefined;
 };
