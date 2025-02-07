@@ -1,4 +1,5 @@
 import { useWindowDimensions } from "@fi-sci/misc";
+import { useEffect } from "react";
 import SettingsIcon from "@mui/icons-material/Settings";
 import {
   AppBar,
@@ -13,6 +14,8 @@ import {
   BrowserRouter as Router,
   Routes,
   useNavigate,
+  useLocation,
+  useSearchParams,
 } from "react-router-dom";
 import StatusBar from "./components/StatusBar";
 import "./css/App.css";
@@ -50,6 +53,78 @@ const theme = createTheme({
     },
   },
 });
+
+const LegacyUrlHandler = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const p = searchParams.get("p");
+    if (!p) return;
+
+    let newPath = "";
+    let newSearch = "";
+
+    if (p === "/dandi") {
+      newPath = "/dandi";
+    } else if (p === "/dandiset") {
+      const dandisetId = searchParams.get("dandisetId");
+      const dandisetVersion = searchParams.get("dandisetVersion");
+      if (dandisetId) {
+        newPath = `/dandiset/${dandisetId}`;
+        if (dandisetVersion) {
+          newSearch = `?dandisetVersion=${dandisetVersion}`;
+        }
+      }
+    } else if (p === "/nwb") {
+      newPath = "/nwb";
+      const urlParam = searchParams.get("url");
+      const tabParam = searchParams.get("tab");
+
+      // Handle encoded parameters
+      const params = new URLSearchParams();
+      ["dandisetId", "dandisetVersion"].forEach((param) => {
+        const value = searchParams.get(param);
+        if (value) params.append(param, value);
+      });
+
+      // Build query string with parameters in specific order
+      const queryParts = [];
+
+      // 1. url (unencoded)
+      if (urlParam) queryParts.push(`url=${urlParam}`);
+
+      // 2. dandisetId
+      const dandisetId = searchParams.get("dandisetId");
+      if (dandisetId)
+        queryParts.push(`dandisetId=${encodeURIComponent(dandisetId)}`);
+
+      // 3. dandisetVersion
+      const dandisetVersion = searchParams.get("dandisetVersion");
+      if (dandisetVersion)
+        queryParts.push(
+          `dandisetVersion=${encodeURIComponent(dandisetVersion)}`,
+        );
+
+      // 4. tab (unencoded, only if it starts with neurodata-item:)
+      if (tabParam?.startsWith("neurodata-item:")) {
+        const path = tabParam.split("|")[0].replace("neurodata-item:", "");
+        queryParts.push(`tab=${path}`);
+      }
+
+      if (queryParts.length > 0) {
+        newSearch = "?" + queryParts.join("&");
+      }
+    }
+
+    if (newPath) {
+      navigate(newPath + newSearch, { replace: true });
+    }
+  }, [location, searchParams, navigate]);
+
+  return null;
+};
 
 const AppContent = () => {
   const navigate = useNavigate();
@@ -204,6 +279,7 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <Router>
+        <LegacyUrlHandler />
         <AppContent />
       </Router>
     </ThemeProvider>
