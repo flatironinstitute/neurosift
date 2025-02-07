@@ -68,6 +68,7 @@ const fetchDirectory = async (
     key: a.key,
     filepath: parent.filepath + "/" + a.filename,
     filename: a.filename,
+    parentId: parent.id,
     directory: a.directory,
     size: a.size,
     urls: a.urls,
@@ -133,7 +134,6 @@ const OpenNeuroMainTab: FunctionComponent<Props> = ({
       a.filepath.localeCompare(b.filepath),
     );
     const handle = (prefix: string) => {
-      console.log("--- handle", prefix);
       for (const file of alphabeticallySorted) {
         const parts = file.filepath.split("/");
         let ok = false;
@@ -157,7 +157,6 @@ const OpenNeuroMainTab: FunctionComponent<Props> = ({
   }, [loadedFiles, expandedDirectories]);
 
   const handleExpandDirectory = async (file: OpenNeuroFile) => {
-    console.log("--- handleExpandDirectory", file);
     if (expandedDirectories[file.id]) {
       expandedDirectoriesDispatch({
         type: "toggle",
@@ -166,7 +165,6 @@ const OpenNeuroMainTab: FunctionComponent<Props> = ({
       return;
     }
     const newFiles = await fetchDirectory(datasetId, snapshotTag, file);
-    console.log("--- newFiles", newFiles);
     for (const f of newFiles) {
       loadedFilesDispatch({ type: "add", file: f });
     }

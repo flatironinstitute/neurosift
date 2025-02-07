@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import ResponsiveLayout from "../../components/ResponsiveLayout";
 import { addRecentOpenNeuroDataset } from "../util/recentOpenNeuroDatasets";
 import OpenNeuroDatasetOverview from "./components/OpenNeuroDatasetOverview";
@@ -141,6 +141,7 @@ const OpenNeuroDatasetPage: FunctionComponent<OpenNeuroDatasetPageProps> = ({
   height,
 }) => {
   const { datasetId, version } = useParams();
+  const [searchParams] = useSearchParams();
   const [datasetInfo, setDatasetInfo] = useState<OpenNeuroDatasetInfo | null>(
     null,
   );
@@ -174,6 +175,7 @@ const OpenNeuroDatasetPage: FunctionComponent<OpenNeuroDatasetPageProps> = ({
   if (!datasetInfo) return <div>No dataset found</div>;
 
   const initialSplitterPosition = Math.max(300, Math.min(450, width / 3));
+  const tabFilePath = searchParams.get("tab");
 
   return (
     <ResponsiveLayout
@@ -193,9 +195,11 @@ const OpenNeuroDatasetPage: FunctionComponent<OpenNeuroDatasetPageProps> = ({
         topLevelFiles={datasetInfo.snapshot.files.map((f) => ({
           ...f,
           filepath: f.filename,
-        }))} // Convert to OpenNeuroFile
+          parentId: "",
+        }))}
         datasetId={datasetInfo.id}
         snapshotTag={datasetInfo.snapshot.tag}
+        initialTab={tabFilePath}
       />
     </ResponsiveLayout>
   );

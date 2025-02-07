@@ -5,6 +5,7 @@ export interface OpenNeuroFile {
   key: string;
   filename: string;
   filepath: string;
+  parentId: string;
   size: number;
   directory: boolean;
   urls: string[];

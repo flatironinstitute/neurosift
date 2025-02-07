@@ -3,7 +3,7 @@ import TextFileView from "./TextFileView";
 
 const textPlugin: OpenNeuroPlugin = {
   name: "text",
-  type: ["*.tsv", "*.txt", "CHANGES"],
+  type: ["*.tsv", "*.txt", "CHANGES", "README"],
   component: TextFileView,
   priority: 100,
 };

@@ -33,7 +33,6 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
   nwbUrl,
   path,
 }) => {
-  console.log("--- SpatialSeriesXYView ---", nwbUrl, path, width, height);
   const [canvasElement, setCanvasElement] = useState<
     HTMLCanvasElement | undefined
   >();
