@@ -1,16 +1,16 @@
-import CloseIcon from "@mui/icons-material/Close";
-import { Box, Tab, Tabs } from "@mui/material";
 import { useEffect, useReducer } from "react";
 import ScrollY from "../../components/ScrollY";
 import MainTab from "./MainTab";
 import NwbObjectView from "./NwbObjectView";
 import { NwbObjectViewPlugin } from "./plugins/pluginInterface";
-import tabsReducer from "./tabsReducer";
-import { TAB_BAR_HEIGHT, tabsStyle, tabStyle } from "./tabStyles";
+import tabsReducer, { DynamicTab } from "./tabsReducer";
+import { TAB_BAR_HEIGHT } from "./tabStyles";
 import TabToolbar, { TOOLBAR_HEIGHT } from "./TabToolbar";
 
-import { findPluginByName } from "./plugins/registry";
+import { TabBar } from "../../components/tabs/TabBar";
 import { getNwbGroup } from "./nwbInterface";
+import { findPluginByName } from "./plugins/registry";
+import { BaseTabAction } from "../../components/tabs/tabsReducer";
 
 type MainWorkspaceProps = {
   nwbUrl: string;
@@ -120,57 +120,22 @@ const MainWorkspace = ({
     dispatch({ type: "CLOSE_TAB", id });
   };
 
+  const handleSwitchTab = (id: string) => {
+    dispatch({ type: "SWITCH_TO_TAB", id } as BaseTabAction);
+  };
+
   const tabBarHeight = TAB_BAR_HEIGHT;
   const contentHeight = height - tabBarHeight;
 
   return (
     <div style={{ position: "absolute", width, height, overflow: "hidden" }}>
-      <div
-        style={{
-          position: "absolute",
-          width,
-          height: tabBarHeight,
-          left: 10,
-          top: 12,
-        }}
-      >
-        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 1 }}>
-          <Tabs
-            sx={tabsStyle}
-            variant="scrollable"
-            scrollButtons="auto"
-            allowScrollButtonsMobile
-            value={tabsState.activeTabId ?? 0}
-            onChange={(_, value) => {
-              if (typeof value === "string") {
-                dispatch({ type: "SWITCH_TO_TAB", id: value });
-              }
-            }}
-          >
-            <Tab key="main" label="MAIN" value="main" sx={tabStyle} />
-            {tabsState.tabs.map((tab) => (
-              <Tab
-                key={tab.id}
-                value={tab.id}
-                sx={tabStyle}
-                label={tab.label}
-                icon={<CloseIcon sx={{ fontSize: 14 }} />}
-                iconPosition="end"
-                onClick={(e: React.MouseEvent) => {
-                  // Check if click was on the icon area
-                  const rect = (
-                    e.currentTarget as HTMLElement
-                  ).getBoundingClientRect();
-                  if (e.clientX > rect.right - 30) {
-                    // Approximate icon click area
-                    handleCloseTab(tab.id, e);
-                  }
-                }}
-              />
-            ))}
-          </Tabs>
-        </Box>
-      </div>
+      <TabBar<DynamicTab>
+        tabs={tabsState.tabs}
+        activeTabId={tabsState.activeTabId}
+        onSwitchTab={handleSwitchTab}
+        onCloseTab={handleCloseTab}
+        width={width}
+      />
       <div
         style={{
           position: "absolute",

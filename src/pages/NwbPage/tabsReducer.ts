@@ -23,7 +23,7 @@ type MultiObjectTab = BaseTab & {
   objectTypes: ("group" | "dataset")[];
 };
 
-type DynamicTab = MainTab | SingleObjectTab | MultiObjectTab;
+export type DynamicTab = MainTab | SingleObjectTab | MultiObjectTab;
 
 type TabsAction =
   | {
