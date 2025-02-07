@@ -1,0 +1,710 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  FunctionComponent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useNwbDataset } from "../../../../NwbPage/nwbInterface";
+import {
+  useTimeRange,
+  useTimeseriesSelectionInitialization,
+} from "../../../../NwbPage/plugins/PSTH/PSTHItemView/context-timeseries-selection";
+import { timeSelectionBarHeight } from "../../../../NwbPage/plugins/SpatialSeries/SpatialSeriesXYView/TimeseriesSelectionBar";
+import TimeScrollView2, {
+  useTimeScrollView2,
+} from "../../../../NwbPage/plugins/component-time-scroll-view-2/TimeScrollView2";
+import {
+  TimeseriesTimestampsClient,
+  useTimeseriesTimestampsClient,
+} from "../../../../NwbPage/plugins/simple-timeseries/TimeseriesTimestampsClient";
+import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient";
+import { DataSeries, Opts } from "./WorkerTypes";
+
+type Props = {
+  width: number;
+  height: number;
+  nwbUrl: string;
+  objectPath: string;
+  visibleChannelsRange?: [number, number];
+  autoChannelSeparation?: number;
+  colorChannels?: boolean;
+  applyConversion?: boolean;
+  startZoomedOut?: boolean;
+  annotations?: TimeseriesAnnotation[];
+  yLabel?: string;
+  showTimeseriesToolbar?: boolean;
+  showTimeseriesNavbar?: boolean;
+};
+
+export type TimeseriesAnnotation = {
+  type: "interval";
+  data: {
+    label: string;
+    startSec: number;
+    endSec: number;
+  };
+};
+
+const gridlineOpts = {
+  hideX: false,
+  hideY: true,
+};
+
+const NwbTimeseriesView: FunctionComponent<Props> = ({
+  width,
+  height,
+  nwbUrl,
+  objectPath,
+  visibleChannelsRange,
+  autoChannelSeparation,
+  colorChannels,
+  applyConversion,
+  startZoomedOut,
+  annotations,
+  yLabel,
+  showTimeseriesToolbar,
+  showTimeseriesNavbar,
+}) => {
+  const dataset = useNwbDataset(nwbUrl, `${objectPath}/data`);
+  const numChannels = dataset ? dataset.shape[1] : 0;
+  const timeseriesTimestampsClient = useTimeseriesTimestampsClient(
+    nwbUrl,
+    objectPath,
+  );
+  const numVisibleChannels = useMemo(
+    () =>
+      visibleChannelsRange
+        ? visibleChannelsRange[1] - visibleChannelsRange[0]
+        : numChannels,
+    [numChannels, visibleChannelsRange],
+  );
+  // Set the datasetChunkingClient
+  const [datasetChunkingClient, setDatasetChunkingClient] = useState<
+    TimeseriesDatasetChunkingClient | undefined
+  >(undefined);
+  const chunkSize = useMemo(
+    () => (dataset ? Math.floor(3e4 / (numVisibleChannels || 1)) : 0),
+    [dataset, numVisibleChannels],
+  );
+  useEffect(() => {
+    if (!nwbUrl) return;
+    if (!dataset) return;
+    const client = new TimeseriesDatasetChunkingClient(
+      nwbUrl,
+      dataset,
+      chunkSize,
+      {
+        visibleChannelsRange,
+        autoChannelSeparation,
+        ignoreConversion: !applyConversion,
+      },
+    );
+    setDatasetChunkingClient(client);
+  }, [
+    dataset,
+    nwbUrl,
+    chunkSize,
+    visibleChannelsRange,
+    autoChannelSeparation,
+    applyConversion,
+  ]);
+  const yLabel0 = useMemo(() => {
+    if (!dataset) return "";
+    return yLabel ? yLabel : applyConversion ? dataset.attrs["unit"] || "" : "";
+  }, [dataset, applyConversion, yLabel]);
+
+  const maxVisibleDuration = useMemo(
+    () =>
+      timeseriesTimestampsClient
+        ? Math.max(
+            8e6 /
+              (numVisibleChannels || 1) /
+              (timeseriesTimestampsClient.estimatedSamplingFrequency || 1),
+            0.2,
+          )
+        : 0,
+    [numVisibleChannels, timeseriesTimestampsClient],
+  );
+
+  if (dataset?.dtype === "|O") {
+    return <div>Unable to display timeseries dataset with dtype |O</div>;
+  }
+
+  if (!timeseriesTimestampsClient) return <div>Loading data client...</div>;
+
+  return (
+    <NwbTimeseriesViewChild
+      width={width}
+      height={height}
+      autoChannelSeparation={autoChannelSeparation}
+      colorChannels={colorChannels}
+      applyConversion={applyConversion}
+      startZoomedOut={startZoomedOut}
+      timeseriesTimestampsClient={timeseriesTimestampsClient}
+      datasetChunkingClient={datasetChunkingClient!}
+      numVisibleChannels={numVisibleChannels}
+      yLabel={yLabel0}
+      maxVisibleDuration={maxVisibleDuration}
+      annotations={annotations}
+      showTimeseriesToolbar={showTimeseriesToolbar}
+      showTimeseriesNavbar={showTimeseriesNavbar}
+    />
+  );
+};
+
+export interface DatasetChunkingClientInterface {
+  chunkSize: number;
+  getConcatenatedChunk: (
+    startChunkIndex: number,
+    endChunkIndex: number,
+    canceler: { onCancel: (() => void)[] },
+  ) => Promise<{ concatenatedChunk: number[][]; completed: boolean }>;
+}
+
+type NwbTimeseriesViewChildProps = {
+  width: number;
+  height: number;
+  autoChannelSeparation?: number;
+  colorChannels?: boolean;
+  channelIndicesForColor?: number[];
+  applyConversion?: boolean;
+  startZoomedOut?: boolean;
+  timeseriesTimestampsClient: TimeseriesTimestampsClient;
+  datasetChunkingClient: DatasetChunkingClientInterface;
+  numVisibleChannels?: number;
+  yLabel: string;
+  maxVisibleDuration?: number;
+  annotations?: TimeseriesAnnotation[];
+  showTimeseriesToolbar?: boolean;
+  showTimeseriesNavbar?: boolean;
+};
+
+export const NwbTimeseriesViewChild: FunctionComponent<
+  NwbTimeseriesViewChildProps
+> = ({
+  width,
+  height,
+  autoChannelSeparation,
+  colorChannels,
+  channelIndicesForColor,
+  applyConversion,
+  startZoomedOut,
+  timeseriesTimestampsClient,
+  numVisibleChannels,
+  datasetChunkingClient,
+  yLabel,
+  maxVisibleDuration,
+  annotations,
+  showTimeseriesToolbar,
+  showTimeseriesNavbar,
+}) => {
+  const [worker, setWorker] = useState<Worker | null>(null);
+  const [canvasElement, setCanvasElement] = useState<
+    HTMLCanvasElement | undefined
+  >();
+
+  const chunkSize = datasetChunkingClient ? datasetChunkingClient.chunkSize : 0;
+
+  const { visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange } =
+    useTimeRange();
+
+  const startTime = timeseriesTimestampsClient
+    ? timeseriesTimestampsClient.startTime!
+    : undefined;
+  const endTime = timeseriesTimestampsClient
+    ? timeseriesTimestampsClient.endTime!
+    : undefined;
+  useTimeseriesSelectionInitialization(startTime, endTime);
+
+  const hideToolbar = false; // this is tricky... hideToolbar removes the space for the toolbar, whereas showTimeseriesToolbar=false just hides the toolbar
+
+  const { canvasWidth, canvasHeight, margins } = useTimeScrollView2({
+    width,
+    height: height - timeSelectionBarHeight,
+    hideToolbar,
+  });
+
+  const [overrideMaxVisibleDuration, setOverrideMaxVisibleDuration] = useState<
+    number | undefined
+  >(undefined);
+
+  // set visible time range
+  useEffect(() => {
+    if (!chunkSize) return;
+    if (!timeseriesTimestampsClient) return;
+    if (startTime === undefined) return;
+    if (endTime === undefined) return;
+    if (visibleStartTimeSec !== undefined) return;
+    if (visibleEndTimeSec !== undefined) return;
+    setVisibleTimeRange(
+      startTime,
+      startZoomedOut
+        ? endTime
+        : Math.min(
+            startTime +
+              (chunkSize /
+                timeseriesTimestampsClient.estimatedSamplingFrequency!) *
+                10,
+            endTime,
+          ),
+    );
+  }, [
+    chunkSize,
+    timeseriesTimestampsClient,
+    setVisibleTimeRange,
+    startTime,
+    endTime,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    startZoomedOut,
+  ]);
+
+  // Set startChunkIndex and endChunkIndex
+  const [startChunkIndex, setStartChunkIndex] = useState<number | undefined>(
+    undefined,
+  );
+  const [endChunkIndex, setEndChunkIndex] = useState<number | undefined>(
+    undefined,
+  );
+  const [zoomInRequired, setZoomInRequired] = useState<boolean>(false);
+  useEffect(() => {
+    if (
+      visibleStartTimeSec === undefined ||
+      visibleEndTimeSec === undefined ||
+      !timeseriesTimestampsClient
+    ) {
+      setStartChunkIndex(undefined);
+      setEndChunkIndex(undefined);
+      setZoomInRequired(false);
+      return;
+    }
+    let canceled = false;
+    const load = async () => {
+      const zoomInRequired0 =
+        maxVisibleDuration !== undefined &&
+        !overrideMaxVisibleDuration &&
+        visibleEndTimeSec - visibleStartTimeSec > maxVisibleDuration;
+      if (zoomInRequired0) {
+        setStartChunkIndex(undefined);
+        setEndChunkIndex(undefined);
+        setZoomInRequired(true);
+        return;
+      }
+      let iStart =
+        await timeseriesTimestampsClient.getDataIndexForTime(
+          visibleStartTimeSec,
+        );
+      if (canceled) return;
+      let iEnd =
+        await timeseriesTimestampsClient.getDataIndexForTime(visibleEndTimeSec);
+      if (canceled) return;
+
+      // give a buffer of one point on each side
+      if (iStart > 0) iStart--;
+      iEnd++;
+
+      const startChunkIndex = Math.floor(iStart / chunkSize);
+      const endChunkIndex = Math.floor(iEnd / chunkSize) + 1;
+      setStartChunkIndex(startChunkIndex);
+      setEndChunkIndex(endChunkIndex);
+      setZoomInRequired(zoomInRequired0);
+    };
+    load();
+    return () => {
+      canceled = true;
+    };
+  }, [
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    chunkSize,
+    timeseriesTimestampsClient,
+    numVisibleChannels,
+    maxVisibleDuration,
+    overrideMaxVisibleDuration,
+  ]);
+
+  const [dataseriesMode, setDataseriesMode] = useState<"line" | "marker">(
+    "line",
+  );
+
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const colorForChannel = useMemo(
+    () => (i: number) => {
+      if (!colorChannels) return "black";
+      const colors = [
+        "black",
+        "darkred",
+        "darkgreen",
+        "darkblue",
+        "darkorange",
+        "purple",
+        "brown",
+        "pink",
+      ];
+      return colors[i % colors.length];
+    },
+    [colorChannels],
+  );
+
+  const renderSubsampleFactor = useMemo(() => {
+    // estimate the render subsample factor so that we have about width pixels being rendered
+    if (visibleStartTimeSec === undefined) return 1;
+    if (visibleEndTimeSec === undefined) return 1;
+    if (!timeseriesTimestampsClient) return 1;
+    const sampleingRateHz =
+      timeseriesTimestampsClient.estimatedSamplingFrequency || 1;
+    const spanSec = visibleEndTimeSec - visibleStartTimeSec;
+    const numSamples = spanSec * sampleingRateHz;
+    const targetSubsampleFactor = Math.floor(numSamples / width);
+    // we're going to subsample by a power of 2 so that it doesn't change very often
+    // because we need to send new data to the worker when it changes
+    const subsampleFactor = Math.pow(
+      2,
+      Math.floor(Math.log2(targetSubsampleFactor)),
+    );
+    return subsampleFactor;
+  }, [
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    timeseriesTimestampsClient,
+    width,
+  ]);
+
+  // Set dataSeries
+  const [dataSeries, setDataSeries] = useState<DataSeries[] | undefined>(
+    undefined,
+  );
+  useEffect(() => {
+    if (startChunkIndex === undefined) return;
+    if (endChunkIndex === undefined) return;
+    if (timeseriesTimestampsClient === undefined) return;
+    if (zoomInRequired) return;
+
+    setLoading(true);
+
+    let canceler: { onCancel: (() => void)[] } | undefined = undefined;
+    let canceled = false;
+    const load = async () => {
+      let finished = false;
+      const tt = await timeseriesTimestampsClient.getTimestampsForDataIndices(
+        startChunkIndex * chunkSize,
+        endChunkIndex * chunkSize,
+      );
+      if (!tt)
+        throw Error(
+          `Unable to get timestamps for data indices ${startChunkIndex * chunkSize} to ${endChunkIndex * chunkSize}`,
+        );
+      while (!finished) {
+        try {
+          canceler = { onCancel: [] };
+          const { concatenatedChunk, completed } =
+            await datasetChunkingClient.getConcatenatedChunk(
+              startChunkIndex,
+              endChunkIndex,
+              canceler,
+            );
+          canceler = undefined;
+          if (completed) finished = true;
+          if (canceled) return;
+          const dataSeries: DataSeries[] = [];
+          for (let i = 0; i < concatenatedChunk.length; i++) {
+            let dataT = Array.from(tt);
+            let dataY = concatenatedChunk[i];
+            if (renderSubsampleFactor > 1) {
+              // this will include min/max for each subsample
+              dataT = subsampleT(dataT as any, renderSubsampleFactor);
+              dataY = subsampleY(dataY, renderSubsampleFactor);
+            }
+            dataSeries.push({
+              type: dataseriesMode,
+              title: `ch${i}`,
+              attributes: {
+                color: colorForChannel(
+                  channelIndicesForColor ? channelIndicesForColor[i] : i,
+                ),
+              },
+              t: dataT as any,
+              y: dataY,
+            });
+          }
+          setDataSeries(dataSeries);
+        } catch (err: any) {
+          if (err.message !== "canceled") {
+            throw err;
+          }
+        }
+      }
+      setLoading(false);
+    };
+    load();
+    return () => {
+      canceled = true;
+      if (canceler) canceler.onCancel.forEach((cb) => cb());
+    };
+  }, [
+    chunkSize,
+    datasetChunkingClient,
+    startChunkIndex,
+    endChunkIndex,
+    timeseriesTimestampsClient,
+    zoomInRequired,
+    dataseriesMode,
+    colorForChannel,
+    width,
+    renderSubsampleFactor,
+    channelIndicesForColor,
+  ]);
+
+  // Set valueRange
+  const [valueRange, setValueRange] = useState<
+    { min: number; max: number } | undefined
+  >(undefined);
+  const [refreshValueRangeCode, setRefreshValueRangeCode] = useState<number>(0);
+  useEffect(() => {
+    if (!dataSeries) return;
+    let min = Infinity;
+    let max = -Infinity;
+    for (let i = 0; i < dataSeries.length; i++) {
+      const y = dataSeries[i].y;
+      for (let j = 0; j < y.length; j++) {
+        if (!isNaN(y[j])) {
+          if (y[j] < min) min = y[j];
+          if (y[j] > max) max = y[j];
+        }
+      }
+    }
+    setValueRange((old) => {
+      const min2 = old ? Math.min(old.min, min) : min;
+      const max2 = old ? Math.max(old.max, max) : max;
+      return { min: min2, max: max2 };
+    });
+  }, [dataSeries, refreshValueRangeCode]);
+  useEffect(() => {
+    // refresh the value range when applyConversion or datasetChunkingClient changes
+    setValueRange(undefined);
+    setDataSeries(undefined);
+    setTimeout(() => {
+      // not ideal
+      setRefreshValueRangeCode((old) => old + 1);
+    }, 100);
+  }, [applyConversion, datasetChunkingClient]);
+
+  useEffect(() => {
+    // reset the value range
+    setValueRange(undefined);
+  }, [autoChannelSeparation]);
+
+  // set opts
+  useEffect(() => {
+    if (!worker) return;
+    if (visibleStartTimeSec === undefined) return;
+    if (visibleEndTimeSec === undefined) return;
+    const opts: Opts = {
+      canvasWidth,
+      canvasHeight,
+      margins,
+      visibleStartTimeSec,
+      visibleEndTimeSec,
+      hideLegend: true,
+      legendOpts: { location: "northeast" },
+      minValue: valueRange ? valueRange.min : 0,
+      maxValue: valueRange ? valueRange.max : 1,
+      zoomInRequired,
+    };
+    worker.postMessage({
+      opts,
+    });
+  }, [
+    canvasWidth,
+    canvasHeight,
+    margins,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    worker,
+    valueRange,
+    zoomInRequired,
+  ]);
+
+  // Set worker
+  useEffect(() => {
+    if (!canvasElement) return;
+    const worker = new Worker(new URL("./worker", import.meta.url));
+    let offscreenCanvas: OffscreenCanvas;
+    try {
+      offscreenCanvas = canvasElement.transferControlToOffscreen();
+    } catch (err) {
+      console.warn(err);
+      console.warn(
+        "Unable to transfer control to offscreen canvas (expected during dev)",
+      );
+      return;
+    }
+    worker.postMessage(
+      {
+        canvas: offscreenCanvas,
+      },
+      [offscreenCanvas],
+    );
+
+    setWorker(worker);
+
+    return () => {
+      worker.terminate();
+    };
+  }, [canvasElement]);
+
+  // Send dataseries to worker
+  useEffect(() => {
+    if (!worker) return;
+    if (!dataSeries) return;
+    worker.postMessage({
+      dataSeries,
+    });
+  }, [worker, dataSeries]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "m") {
+      setDataseriesMode((old) => (old === "line" ? "marker" : "line"));
+    }
+  }, []);
+
+  const yAxisInfo = useMemo(
+    () => ({
+      showTicks: true,
+      yMin: valueRange?.min,
+      yMax: valueRange?.max,
+      yLabel,
+    }),
+    [valueRange, yLabel],
+  );
+
+  const handleKeyDown2 = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.shiftKey && e.key === "O") {
+        if (
+          visibleStartTimeSec !== undefined &&
+          visibleEndTimeSec !== undefined
+        ) {
+          setOverrideMaxVisibleDuration(
+            (visibleEndTimeSec - visibleStartTimeSec) * 1.2,
+          );
+        }
+      }
+    },
+    [visibleStartTimeSec, visibleEndTimeSec],
+  );
+
+  // send annotations to worker
+  useEffect(() => {
+    if (!worker) return;
+    if (!annotations) return;
+    worker.postMessage({
+      annotations,
+    });
+  }, [worker, annotations]);
+
+  if (visibleStartTimeSec === undefined) {
+    return <div>visibleStartTimeSec is undefined</div>;
+  }
+  if (visibleEndTimeSec === undefined) {
+    return <div>visibleEndTimeSec is undefined</div>;
+  }
+  if (startChunkIndex === undefined && !zoomInRequired) {
+    return <div>Loading timestamps...</div>;
+  }
+  if (endChunkIndex === undefined && !zoomInRequired) {
+    return <div>endChunkIndex is undefined</div>;
+  }
+  if (timeseriesTimestampsClient === undefined) {
+    return <div>timeseriesTimestampsClient is undefined</div>;
+  }
+
+  return (
+    <div
+      style={{ position: "absolute", width, height }}
+      onKeyDown={handleKeyDown2}
+    >
+      <div style={{ position: "absolute", width, height: height }}>
+        <TimeScrollView2
+          width={width}
+          height={height}
+          onCanvasElement={setCanvasElement}
+          gridlineOpts={gridlineOpts}
+          yAxisInfo={yAxisInfo}
+          hideToolbar={hideToolbar}
+          showTimeseriesToolbar={showTimeseriesToolbar} // see comment above
+          onKeyDown={handleKeyDown}
+          showTimeSelectionBar={showTimeseriesNavbar !== false}
+        />
+      </div>
+      {loading && !zoomInRequired && (
+        <div
+          style={{
+            position: "absolute",
+            top: timeSelectionBarHeight + margins.top,
+            left: margins.left,
+            userSelect: "none",
+          }}
+        >
+          <div style={{ fontSize: 20, color: "blue" }}>
+            Loading timeseries data...
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const subsampleT = (tt: number[], renderSubsampleFactor: number) => {
+  if (renderSubsampleFactor <= 1) return tt;
+  const y = [];
+  for (let i = 0; i < tt.length; i += renderSubsampleFactor) {
+    // include min/max for each subsample
+    y.push(tt[i]);
+    if (i < tt.length - 1) {
+      y.push((tt[i] + tt[i + 1]) / 2);
+    } else {
+      y.push(tt[i]);
+    }
+  }
+  return y;
+};
+
+const subsampleY = (yy: number[], renderSubsampleFactor: number) => {
+  if (renderSubsampleFactor <= 1) return yy;
+  const y = [];
+  for (let i = 0; i < yy.length; i += renderSubsampleFactor) {
+    const minVal = minIgnoringNaN(yy.slice(i, i + renderSubsampleFactor));
+    const maxVal = maxIgnoringNaN(yy.slice(i, i + renderSubsampleFactor));
+    y.push(minVal);
+    y.push(maxVal);
+  }
+  return y;
+};
+
+const minIgnoringNaN = (y: number[]) => {
+  let minVal = Infinity;
+  for (let i = 0; i < y.length; i++) {
+    if (!isNaN(y[i])) {
+      minVal = Math.min(minVal, y[i]);
+    }
+  }
+  if (minVal === Infinity) return NaN;
+  return minVal;
+};
+
+const maxIgnoringNaN = (y: number[]) => {
+  let maxVal = -Infinity;
+  for (let i = 0; i < y.length; i++) {
+    if (!isNaN(y[i])) {
+      maxVal = Math.max(maxVal, y[i]);
+    }
+  }
+  if (maxVal === -Infinity) return NaN;
+  return maxVal;
+};
+
+export default NwbTimeseriesView;
