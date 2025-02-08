@@ -132,7 +132,9 @@ const RasterViewChild = ({
 
   const handleShiftTimeLeft = () => {
     const timeShift = visibleDuration;
-    setVisibleTimeStart(Math.max(0, visibleTimeStart - timeShift));
+    setVisibleTimeStart(
+      Math.max(spikeTrainsClient.startTimeSec, visibleTimeStart - timeShift),
+    );
   };
 
   const handleShiftTimeRight = () => {
@@ -289,7 +291,7 @@ const RasterViewChild = ({
             </button>
             <button
               onClick={handleShiftTimeLeft}
-              disabled={visibleTimeStart <= 0}
+              disabled={visibleTimeStart <= spikeTrainsClient.startTimeSec}
               style={{
                 padding: "2px 6px",
                 border: "1px solid #ccc",

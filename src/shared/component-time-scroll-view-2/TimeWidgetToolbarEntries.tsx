@@ -1,7 +1,3 @@
-import {
-  PanDirection,
-  ZoomDirection,
-} from "@shared/context-timeseries-selection";
 import { ToolbarItem } from "./Toolbars";
 import {
   FaArrowLeft,
@@ -9,6 +5,9 @@ import {
   FaSearchMinus,
   FaSearchPlus,
 } from "react-icons/fa";
+
+type ZoomDirection = "in" | "out";
+type PanDirection = "forward" | "back";
 
 interface TimeWidgetToolbarProps {
   zoomTimeseriesSelection: (direction: ZoomDirection, factor?: number) => void;

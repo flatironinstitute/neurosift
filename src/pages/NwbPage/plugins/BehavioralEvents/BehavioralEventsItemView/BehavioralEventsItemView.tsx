@@ -1,4 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { getNwbDatasetData, useNwbGroup } from "@nwbInterface";
+import TimeScrollView2, {
+  useTimeScrollView2,
+} from "@shared/component-time-scroll-view-2/TimeScrollView2";
+import {
+  useTimeseriesSelection,
+  useTimeseriesSelectionInitialization,
+} from "@shared/context-timeseries-selection-2";
+import { timeSelectionBarHeight } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
 import {
   FunctionComponent,
   useEffect,
@@ -7,15 +16,6 @@ import {
   useState,
 } from "react";
 import { BehavioralEventsData, EventSeries, Opts } from "./WorkerTypes";
-import { getNwbDatasetData, useNwbGroup } from "@nwbInterface";
-import {
-  useTimeRange,
-  useTimeseriesSelectionInitialization,
-} from "@shared/context-timeseries-selection";
-import TimeScrollView2, {
-  useTimeScrollView2,
-} from "@shared/component-time-scroll-view-2/TimeScrollView2";
-import { timeSelectionBarHeight } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
 
 type Props = {
   width: number;
@@ -163,9 +163,24 @@ const BehavioralEventsItemViewChild: FunctionComponent<ChildProps> = ({
     }
     return { startTime, endTime };
   }, [beData]);
+  const { setVisibleTimeRange, visibleStartTimeSec, visibleEndTimeSec } =
+    useTimeseriesSelection();
   useTimeseriesSelectionInitialization(startTime, endTime);
-
-  const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
+  useEffect(() => {
+    if (startTime === undefined) return;
+    if (endTime === undefined) return;
+    if (visibleStartTimeSec !== undefined) return;
+    if (visibleEndTimeSec !== undefined) return;
+    const t1 = startTime;
+    const t2 = endTime;
+    setVisibleTimeRange(t1, t2);
+  }, [
+    startTime,
+    endTime,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    setVisibleTimeRange,
+  ]);
 
   const { canvasWidth, canvasHeight, margins } = useTimeScrollView2({
     width,

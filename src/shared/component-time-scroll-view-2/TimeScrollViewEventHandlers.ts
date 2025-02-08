@@ -1,10 +1,7 @@
+import { useTimeRange } from "@shared/context-timeseries-selection-2";
 import React, { useCallback, useMemo } from "react";
 import { clearDivFocus, divExists, setDivFocus } from "./divRefHandling";
 import useTimeScrollPan, { PanUpdateProperties } from "./useTimeScrollPan";
-import {
-  useTimeRange,
-  useTimeseriesSelection,
-} from "@shared/context-timeseries-selection";
 
 export const suppressWheelScroll = (
   divRef: React.MutableRefObject<HTMLDivElement | null>,
@@ -141,7 +138,7 @@ const useTimeScrollEventHandlers = (
   divRef: React.MutableRefObject<HTMLDivElement | null>,
 ) => {
   const { panTimeseriesSelectionDeltaT } = useTimeRange();
-  const { setCurrentTimeFraction } = useTimeseriesSelection();
+  const { setCurrentTimeFraction } = useTimeRange();
 
   const clickReader = useClickReader(leftMargin, panelWidth);
   const secondsPerPixel = useMemo(

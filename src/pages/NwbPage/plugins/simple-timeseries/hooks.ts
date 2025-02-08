@@ -1,11 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from "react";
 import { useNwbGroup } from "@nwbInterface";
+import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
+import { useCallback, useEffect, useRef, useState } from "react";
 import TimeseriesClient from "./TimeseriesClient";
 import { SimpleTimeseriesInfo } from "./types";
-import {
-  useTimeRange,
-  useTimeseriesSelectionInitialization,
-} from "@shared/context-timeseries-selection";
 
 export const useTimeseriesData = (nwbUrl: string, path: string) => {
   const [timeseriesClient, setTimeseriesClient] = useState<TimeseriesClient>();
@@ -27,84 +24,74 @@ export const useTimeseriesData = (nwbUrl: string, path: string) => {
       });
   }, [nwbUrl, group]);
 
-  //   const [visibleDuration, setVisibleDuration] = useState(10);
-  //   const [visibleTimeStart, setVisibleTimeStart] = useState(0);
-  const { visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange } =
-    useTimeRange();
-  const visibleDuration = (visibleEndTimeSec || 0) - (visibleStartTimeSec || 0);
-  const visibleTimeStart = visibleStartTimeSec || 0;
+  const {
+    initializeTimeseriesSelection,
+    startTimeSec,
+    endTimeSec,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    setVisibleTimeRange,
+  } = useTimeseriesSelection();
+  useEffect(() => {
+    if (!timeseriesClient) return;
+    const initialize = async () => {
+      const startTime = await timeseriesClient.startTime();
+      const endTime = await timeseriesClient.endTime();
+      initializeTimeseriesSelection(startTime, endTime);
+    };
+    initialize();
+  }, [timeseriesClient, initializeTimeseriesSelection]);
+
   const setVisibleDuration = useCallback(
     (duration: number) => {
-      setVisibleTimeRange(visibleTimeStart, (visibleTimeStart || 0) + duration);
+      if (
+        visibleStartTimeSec === undefined ||
+        visibleEndTimeSec === undefined
+      ) {
+        if (startTimeSec === undefined || endTimeSec === undefined) return;
+        setVisibleTimeRange(startTimeSec, startTimeSec + duration);
+      } else {
+        setVisibleTimeRange(
+          visibleStartTimeSec,
+          visibleStartTimeSec + duration,
+        );
+      }
     },
-    [visibleTimeStart, setVisibleTimeRange],
+    [
+      visibleStartTimeSec,
+      visibleEndTimeSec,
+      setVisibleTimeRange,
+      startTimeSec,
+      endTimeSec,
+    ],
   );
   const setVisibleTimeStart = useCallback(
     (time: number) => {
-      setVisibleTimeRange(
-        time,
-        (time || 0) + (visibleEndTimeSec || 0) - (visibleStartTimeSec || 0),
-      );
+      if (
+        visibleStartTimeSec !== undefined &&
+        visibleEndTimeSec !== undefined
+      ) {
+        setVisibleTimeRange(
+          time,
+          time + (visibleEndTimeSec - visibleStartTimeSec),
+        );
+      }
     },
     [visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange],
   );
-
-  const [timeseriesStartTime, setTimeseriesStartTime] = useState<number>();
-  const [timeseriesDuration, setTimeseriesDuration] = useState<number>();
-  useEffect(() => {
-    if (!timeseriesClient) return;
-    timeseriesClient.startTime().then((t) => {
-      setTimeseriesStartTime(t);
-    });
-    timeseriesClient.duration().then((d) => {
-      setTimeseriesDuration(d);
-    });
-  }, [timeseriesClient]);
-
-  useTimeseriesSelectionInitialization(
-    timeseriesStartTime !== undefined && timeseriesDuration !== undefined
-      ? timeseriesStartTime
-      : 0,
-    timeseriesStartTime !== undefined && timeseriesDuration !== undefined
-      ? timeseriesStartTime + timeseriesDuration
-      : 0,
-  );
-
-  // Initialize visible time start
-  const didInitializeVisibleTimeStart = useRef(false);
-  useEffect(() => {
-    if (!timeseriesClient) return;
-    if (timeseriesStartTime === undefined) return;
-    if (timeseriesDuration === undefined) return;
-    if (didInitializeVisibleTimeStart.current) return;
-    timeseriesClient.startTime().then((t) => {
-      setVisibleTimeStart(t);
-      didInitializeVisibleTimeStart.current = true;
-    });
-  }, [
-    timeseriesClient,
-    setVisibleTimeStart,
-    timeseriesStartTime,
-    timeseriesDuration,
-  ]);
 
   // Initialize visible duration based on sampling frequency
   const didInitializeVisibleDuration = useRef(false);
   useEffect(() => {
     if (!timeseriesClient) return;
-    if (timeseriesStartTime === undefined) return;
-    if (timeseriesDuration === undefined) return;
+    if (startTimeSec === undefined) return;
+    if (endTimeSec === undefined) return;
     if (didInitializeVisibleDuration.current) return;
     timeseriesClient.samplingFrequency().then((freq) => {
       setVisibleDuration(500 / freq);
       didInitializeVisibleDuration.current = true;
     });
-  }, [
-    timeseriesClient,
-    setVisibleDuration,
-    timeseriesStartTime,
-    timeseriesDuration,
-  ]);
+  }, [timeseriesClient, startTimeSec, endTimeSec, setVisibleDuration]);
 
   // Initialize channel view state
   const [visibleChannelsStart, setVisibleChannelsStart] = useState(0);
@@ -115,7 +102,14 @@ export const useTimeseriesData = (nwbUrl: string, path: string) => {
     if (!timeseriesClient) return;
     setIsLoading(true);
     const load = async () => {
-      const tStart = visibleTimeStart;
+      const tStart =
+        visibleStartTimeSec !== undefined ? visibleStartTimeSec : startTimeSec;
+      if (tStart === undefined) return;
+      const visibleDuration =
+        visibleStartTimeSec !== undefined && visibleEndTimeSec !== undefined
+          ? visibleEndTimeSec - visibleStartTimeSec
+          : undefined;
+      if (visibleDuration === undefined) return;
       const samplingFrequency = await timeseriesClient.samplingFrequency();
       const numSamples = timeseriesClient.numSamples;
       const visibleChannelsEnd = Math.min(
@@ -160,21 +154,24 @@ export const useTimeseriesData = (nwbUrl: string, path: string) => {
       setIsLoading(false);
     });
   }, [
-    numVisibleChannels,
-    visibleChannelsStart,
-    visibleTimeStart,
-    visibleDuration,
     timeseriesClient,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    visibleChannelsStart,
+    numVisibleChannels,
+    startTimeSec,
   ]);
-
   return {
     timeseriesClient,
     error,
     isLoading,
     info,
-    visibleTimeStart,
+    visibleTimeStart: visibleStartTimeSec,
     setVisibleTimeStart,
-    visibleDuration,
+    visibleDuration:
+      visibleEndTimeSec !== undefined && visibleStartTimeSec !== undefined
+        ? visibleEndTimeSec - visibleStartTimeSec
+        : undefined,
     setVisibleDuration,
     visibleChannelsStart,
     setVisibleChannelsStart,

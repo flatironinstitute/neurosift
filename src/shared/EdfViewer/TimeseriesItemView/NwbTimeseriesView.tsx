@@ -10,7 +10,7 @@ import { useNwbDataset } from "@nwbInterface";
 import {
   useTimeRange,
   useTimeseriesSelectionInitialization,
-} from "@shared/context-timeseries-selection";
+} from "@shared/context-timeseries-selection-2";
 import { timeSelectionBarHeight } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
 import TimeScrollView2, {
   useTimeScrollView2,

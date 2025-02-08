@@ -1,9 +1,9 @@
-import React from "react";
 import ScrollY from "@components/ScrollY";
-import { SetupTimeseriesSelection } from "@shared/context-timeseries-selection";
+import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection-2/ProvideTimeseriesSelection";
+import React from "react";
 import NwbObjectView from "../NwbObjectView";
-import TabToolbar, { TOOLBAR_HEIGHT } from "../TabToolbar";
 import { NwbObjectViewPlugin } from "../plugins/pluginInterface";
+import TabToolbar, { TOOLBAR_HEIGHT } from "../TabToolbar";
 import { ObjectType } from "../Types";
 
 interface MultiTabViewProps {
@@ -30,7 +30,7 @@ const MultiTabView: React.FC<MultiTabViewProps> = ({
   onOpenObjectInNewTab,
 }) => {
   return (
-    <SetupTimeseriesSelection>
+    <ProvideTimeseriesSelection>
       <div>
         <TabToolbar
           width={width - 20}
@@ -68,7 +68,7 @@ const MultiTabView: React.FC<MultiTabViewProps> = ({
           </div>
         </ScrollY>
       </div>
-    </SetupTimeseriesSelection>
+    </ProvideTimeseriesSelection>
   );
 };
 

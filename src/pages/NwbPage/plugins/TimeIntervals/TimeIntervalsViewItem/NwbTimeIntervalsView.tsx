@@ -6,6 +6,7 @@ import {
   useNwbGroup,
 } from "@nwbInterface";
 import NwbTimeIntervalsWidget from "./NwbTimeIntervalsWidget";
+import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 
 type Props = {
   width: number;
@@ -29,6 +30,23 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
     path,
     startTimeData?.length,
   );
+
+  const { initializeTimeseriesSelection, setVisibleTimeRange } =
+    useTimeseriesSelection();
+
+  useEffect(() => {
+    if (!startTimeData || !stopTimeData) return;
+    const t1 = compute_min(startTimeData);
+    const t2 = compute_max(stopTimeData);
+    initializeTimeseriesSelection(t1, t2);
+    const t2b = Math.min(t1 + 100, t2);
+    setVisibleTimeRange(t1, t2b);
+  }, [
+    startTimeData,
+    stopTimeData,
+    initializeTimeseriesSelection,
+    setVisibleTimeRange,
+  ]);
 
   if (!startTimeData || !stopTimeData) {
     return <div>loading data...</div>;
@@ -128,6 +146,22 @@ const getDistinctValues = (values: string[]) => {
     ret.add(val);
   }
   return Array.from(ret).sort();
+};
+
+const compute_min = (data: Float32Array) => {
+  let min = data[0];
+  for (let i = 1; i < data.length; i++) {
+    if (data[i] < min) min = data[i];
+  }
+  return min;
+};
+
+const compute_max = (data: Float32Array) => {
+  let max = data[0];
+  for (let i = 1; i < data.length; i++) {
+    if (data[i] > max) max = data[i];
+  }
+  return max;
 };
 
 export default NwbTimeIntervalsView;

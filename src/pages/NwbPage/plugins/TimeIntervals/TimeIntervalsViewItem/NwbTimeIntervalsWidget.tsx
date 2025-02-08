@@ -2,7 +2,7 @@ import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import {
   useTimeRange,
   useTimeseriesSelectionInitialization,
-} from "@shared/context-timeseries-selection";
+} from "@shared/context-timeseries-selection-2";
 import TimeScrollView2, {
   useTimeScrollView2,
 } from "@shared/component-time-scroll-view-2/TimeScrollView2";

@@ -33,8 +33,8 @@ type ControlsProps = {
   info: SimpleTimeseriesInfo;
   visibleChannelsStart: number;
   numVisibleChannels: number;
-  visibleTimeStart: number;
-  visibleDuration: number;
+  visibleTimeStart?: number;
+  visibleDuration?: number;
   channelSeparation: number;
   onDecreaseChannels: () => void;
   onIncreaseChannels: () => void;
@@ -168,37 +168,38 @@ export const Controls: FunctionComponent<ControlsProps> = ({
         )}
 
         <div style={{ fontWeight: "bold" }}>Samples:</div>
-        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-          <span>
-            Showing {visibleDuration.toFixed(2)} sec starting at{" "}
-            {visibleTimeStart.toFixed(2)} s
-          </span>
-          <ControlButton
-            onClick={onDecreaseVisibleDuration}
-            disabled={visibleDuration <= 0.2}
-          >
-            /2
-          </ControlButton>
-          <ControlButton onClick={onIncreaseVisibleDuration}>×2</ControlButton>
-          <ControlButton
-            onClick={onShiftTimeLeft}
-            disabled={visibleTimeStart <= 0}
-          >
-            ←
-          </ControlButton>
-          <ControlButton
-            onClick={onShiftTimeRight}
-            disabled={
-              !info ||
-              visibleTimeStart >=
-                info.totalNumSamples / info.samplingFrequency -
-                  (info.visibleTimestamps[info.visibleTimestamps.length - 1] -
-                    info.visibleTimestamps[0])
-            }
-          >
-            →
-          </ControlButton>
-        </div>
+        {visibleTimeStart !== undefined && visibleDuration !== undefined && (
+          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+            <span>
+              Showing {visibleDuration.toFixed(2)} sec starting at{" "}
+              {visibleTimeStart.toFixed(2)} s
+            </span>
+            <ControlButton
+              onClick={onDecreaseVisibleDuration}
+              disabled={visibleDuration <= 0.2}
+            >
+              /2
+            </ControlButton>
+            <ControlButton onClick={onIncreaseVisibleDuration}>
+              ×2
+            </ControlButton>
+            <ControlButton
+              onClick={onShiftTimeLeft}
+              disabled={visibleTimeStart <= info.timeseriesStartTime}
+            >
+              ←
+            </ControlButton>
+            <ControlButton
+              onClick={onShiftTimeRight}
+              disabled={
+                visibleTimeStart + visibleDuration >=
+                info.timeseriesStartTime + info.timeseriesDuration
+              }
+            >
+              →
+            </ControlButton>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,21 +1,20 @@
 import { SmallIconButton } from "@fi-sci/misc";
 import { ArrowLeft, ArrowRight } from "@mui/icons-material";
-import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
-import { Canceler, DatasetDataType } from "@remote-h5-file";
 import { getNwbDatasetData, useNwbDataset } from "@nwbInterface";
+import { Canceler, DatasetDataType } from "@remote-h5-file";
+import {
+  useTimeseriesSelection,
+  useTimeseriesSelectionInitialization,
+} from "@shared/context-timeseries-selection-2";
+import TimeseriesSelectionBar, {
+  timeSelectionBarHeight,
+} from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
+import { useTimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
+import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
 import PlaneTransformSelector, {
   defaultPlaneTransform,
   PlaneTransform,
 } from "../../ImageSegmentation/ImageSegmentationItemView/PlaneTransformSelector";
-import {
-  useTimeRange,
-  useTimeseriesSelection,
-  useTimeseriesSelectionInitialization,
-} from "@shared/context-timeseries-selection";
-import { useTimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
-import TimeseriesSelectionBar, {
-  timeSelectionBarHeight,
-} from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
 import MultiRangeSlider from "./MultiRangeSlider/MultiRangeSlider";
 
 // const queryParams = parseQuery(window.location.href)
@@ -62,7 +61,6 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
   const { currentTime: currentTimeSource, setCurrentTime } =
     useTimeseriesSelection();
   const currentTime = useThrottledState(currentTimeSource, throttleMsec);
-  const { setVisibleTimeRange } = useTimeRange();
   useTimeseriesSelectionInitialization(
     timeseriesTimestampsClient?.startTime,
     timeseriesTimestampsClient?.endTime,
@@ -70,7 +68,7 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
   useEffect(() => {
     if (!timeseriesTimestampsClient) return;
     setCurrentTime(timeseriesTimestampsClient.startTime!);
-  }, [timeseriesTimestampsClient, setCurrentTime, setVisibleTimeRange]);
+  }, [timeseriesTimestampsClient, setCurrentTime]);
 
   const [currentPlane, setCurrentPlane] = useState<number>(0); // -1 means RGB
   const [currentMinValue, setCurrentMinValue] = useState<number | undefined>(

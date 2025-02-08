@@ -1,6 +1,6 @@
 import { FunctionComponent } from "react";
 import TwoPhotonSeriesItemView from "./TwoPhotonSeriesItemView/TwoPhotonSeriesItemView";
-import { SetupTimeseriesSelection } from "@shared/context-timeseries-selection";
+import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 
 type Props = {
   nwbUrl: string;
@@ -17,14 +17,14 @@ const TwoPhotonSeriesPluginView: FunctionComponent<Props> = ({
   height = 500,
 }) => {
   return (
-    <SetupTimeseriesSelection>
+    <ProvideTimeseriesSelection>
       <TwoPhotonSeriesItemView
         width={width}
         height={height}
         nwbUrl={nwbUrl}
         path={path}
       />
-    </SetupTimeseriesSelection>
+    </ProvideTimeseriesSelection>
   );
 };
 

@@ -13,7 +13,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useTimeseriesSelection } from "@shared/context-timeseries-selection";
+import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 type Props = {
@@ -44,7 +44,11 @@ const PlayControl: FunctionComponent<Props> = () => {
     const update = () => {
       const elapsed = (Date.now() - timer) / 1000;
       const newTime = startTime + elapsed * playbackRate;
-      setCurrentTime(newTime, { autoScrollVisibleTimeRange: true });
+
+      // TODO: figure out how to make this work
+      // setCurrentTime(newTime, { autoScrollVisibleTimeRange: true });
+      setCurrentTime(newTime);
+
       setTimeout(() => {
         // apparently it's important to use a small timeout here so the controls still work (e.g., the slider)
         if (canceled) return;

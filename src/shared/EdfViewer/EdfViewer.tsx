@@ -1,10 +1,8 @@
 import { Splitter } from "@fi-sci/splitter";
-import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import {
-  SetupTimeseriesSelection,
-  useTimeseriesSelectionInitialization,
-} from "@shared/context-timeseries-selection";
+import { useTimeseriesSelectionInitialization } from "@shared/context-timeseries-selection-2";
+import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 import { TimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
+import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import EDFReader from "./EDFReader";
 import {
   DatasetChunkingClientInterface,
@@ -59,7 +57,7 @@ const EdfViewer: FunctionComponent<EdfPageProps> = ({
     return <div>Loading timestamps client...</div>;
   if (!datasetChunkingClient) return <div>Loading chunking client...</div>;
   return (
-    <SetupTimeseriesSelection initialTimeSelection={undefined}>
+    <ProvideTimeseriesSelection>
       <Splitter
         width={width}
         height={height}
@@ -92,7 +90,7 @@ const EdfViewer: FunctionComponent<EdfPageProps> = ({
           maxVisibleDuration={maxVisibleDuration}
         />
       </Splitter>
-    </SetupTimeseriesSelection>
+    </ProvideTimeseriesSelection>
   );
 };
 

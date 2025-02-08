@@ -12,7 +12,7 @@ import {
   useTimeRange,
   useTimeseriesSelection,
   useTimeseriesSelectionInitialization,
-} from "@shared/context-timeseries-selection";
+} from "@shared/context-timeseries-selection-2";
 import { useNwbDataset } from "@nwbInterface";
 import { useTimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
 import { Canceler } from "@remote-h5-file";

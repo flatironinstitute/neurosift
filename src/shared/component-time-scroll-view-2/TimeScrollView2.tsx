@@ -21,7 +21,7 @@ import { ToolbarItem } from "./Toolbars";
 import {
   useTimeRange,
   useTimeseriesSelection,
-} from "@shared/context-timeseries-selection";
+} from "@shared/context-timeseries-selection-2";
 import TimeseriesSelectionBar, {
   timeSelectionBarHeight,
 } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
@@ -113,7 +113,8 @@ const TimeScrollView2: FunctionComponent<Props> = ({
     zoomTimeseriesSelection,
     panTimeseriesSelection,
   } = useTimeRange();
-  const { currentTime, currentTimeInterval } = useTimeseriesSelection();
+  // const { currentTime, currentTimeInterval } = useTimeseriesSelection();
+  const { currentTime } = useTimeseriesSelection();
   const timeRange = useMemo(
     () => [visibleStartTimeSec, visibleEndTimeSec] as [number, number],
     [visibleStartTimeSec, visibleEndTimeSec],
@@ -208,16 +209,17 @@ const TimeScrollView2: FunctionComponent<Props> = ({
     () => (currentTime !== undefined ? timeToPixel(currentTime) : undefined),
     [currentTime, timeToPixel],
   );
-  const currentTimeIntervalPixels = useMemo(
-    () =>
-      currentTimeInterval !== undefined
-        ? ([
-            timeToPixel(currentTimeInterval[0]),
-            timeToPixel(currentTimeInterval[1]),
-          ] as [number, number])
-        : undefined,
-    [currentTimeInterval, timeToPixel],
-  );
+
+  // const currentTimeIntervalPixels = useMemo(
+  //   () =>
+  //     currentTimeInterval !== undefined
+  //       ? ([
+  //           timeToPixel(currentTimeInterval[0]),
+  //           timeToPixel(currentTimeInterval[1]),
+  //         ] as [number, number])
+  //       : undefined,
+  //   [currentTimeInterval, timeToPixel],
+  // );
 
   const cursorLayer = useMemo(() => {
     return (
@@ -227,7 +229,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
         timeRange={timeRange}
         margins={margins}
         currentTimePixels={currentTimePixels}
-        currentTimeIntervalPixels={currentTimeIntervalPixels}
+        // currentTimeIntervalPixels={currentTimeIntervalPixels}
       />
     );
   }, [
@@ -236,7 +238,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
     timeRange,
     margins,
     currentTimePixels,
-    currentTimeIntervalPixels,
+    // currentTimeIntervalPixels,
   ]);
 
   const divRef = useRef<HTMLDivElement | null>(null);

@@ -1,5 +1,5 @@
 import { FunctionComponent } from "react";
-import { SetupTimeseriesSelection } from "@shared/context-timeseries-selection";
+import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 import NwbTimeIntervalsView from "./TimeIntervalsViewItem/NwbTimeIntervalsView";
 
 type Props = {
@@ -16,14 +16,14 @@ const TimeIntervalsPluginView: FunctionComponent<Props> = ({
   nwbUrl,
 }) => {
   return (
-    <SetupTimeseriesSelection>
+    <ProvideTimeseriesSelection>
       <NwbTimeIntervalsView
         width={width}
         height={height}
         path={path}
         nwbUrl={nwbUrl}
       />
-    </SetupTimeseriesSelection>
+    </ProvideTimeseriesSelection>
   );
 };
 

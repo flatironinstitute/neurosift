@@ -67,30 +67,36 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
   };
 
   const handleIncreaseVisibleDuration = () => {
+    if (visibleDuration === undefined) return;
     setVisibleDuration(visibleDuration * 2);
   };
 
   const handleDecreaseVisibleDuration = () => {
+    if (visibleDuration === undefined) return;
     setVisibleDuration(Math.max(0.1, Math.floor(visibleDuration / 2)));
   };
 
   const handleShiftTimeLeft = () => {
     if (!info) return;
+    if (visibleTimeStart === undefined) return;
     const timeSpan =
       (info.visibleTimestamps[info.visibleTimestamps.length - 1] -
         info.visibleTimestamps[0]) /
       2;
-    setVisibleTimeStart(Math.max(0, visibleTimeStart - timeSpan));
+    setVisibleTimeStart(
+      Math.max(info.timeseriesStartTime, visibleTimeStart - timeSpan),
+    );
   };
 
   const handleShiftTimeRight = () => {
     if (!info) return;
+    if (visibleTimeStart === undefined) return;
     const timeSpan =
       (info.visibleTimestamps[info.visibleTimestamps.length - 1] -
         info.visibleTimestamps[0]) /
       2;
     const lastPossibleStart =
-      info.totalNumSamples / info.samplingFrequency - timeSpan * 2;
+      info.timeseriesStartTime + info.timeseriesDuration - timeSpan;
     setVisibleTimeStart(
       Math.min(lastPossibleStart, visibleTimeStart + timeSpan),
     );

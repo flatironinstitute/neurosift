@@ -1,9 +1,9 @@
-import React from "react";
 import ScrollY from "@components/ScrollY";
-import { SetupTimeseriesSelection } from "@shared/context-timeseries-selection";
+import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection-2/ProvideTimeseriesSelection";
+import React from "react";
 import NwbObjectView from "../NwbObjectView";
-import TabToolbar, { TOOLBAR_HEIGHT } from "../TabToolbar";
 import { NwbObjectViewPlugin } from "../plugins/pluginInterface";
+import TabToolbar, { TOOLBAR_HEIGHT } from "../TabToolbar";
 import { ObjectType } from "../Types";
 
 interface SingleTabViewProps {
@@ -34,7 +34,7 @@ const SingleTabView: React.FC<SingleTabViewProps> = ({
   onOpenObjectInNewTab,
 }) => {
   return (
-    <SetupTimeseriesSelection>
+    <ProvideTimeseriesSelection>
       <div>
         <TabToolbar width={width} tabId={tabId} nwbUrl={nwbUrl} path={path} />
         <ScrollY
@@ -54,7 +54,7 @@ const SingleTabView: React.FC<SingleTabViewProps> = ({
           />
         </ScrollY>
       </div>
-    </SetupTimeseriesSelection>
+    </ProvideTimeseriesSelection>
   );
 };
 

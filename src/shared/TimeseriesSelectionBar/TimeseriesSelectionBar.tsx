@@ -1,16 +1,14 @@
+import {
+  useTimeRange,
+  useTimeseriesSelection,
+} from "@shared/context-timeseries-selection-2";
 import React, {
   FunctionComponent,
   useCallback,
-  useContext,
   useMemo,
   useState,
 } from "react";
 import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
-import {
-  TimeseriesSelectionContext,
-  useTimeRange,
-  useTimeseriesSelection,
-} from "@shared/context-timeseries-selection";
 
 type Props = {
   width: number;
@@ -32,9 +30,12 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({
   const { visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange } =
     useTimeRange();
   const { setCurrentTime } = useTimeseriesSelection();
-  const { timeseriesSelection } = useContext(TimeseriesSelectionContext);
-  const { timeseriesStartTimeSec, timeseriesEndTimeSec, currentTimeSec } =
-    timeseriesSelection;
+  const { timeseriesSelection } = useTimeseriesSelection();
+  const {
+    startTimeSec: timeseriesStartTimeSec,
+    endTimeSec: timeseriesEndTimeSec,
+    currentTime: currentTimeSec,
+  } = timeseriesSelection;
 
   const fracToPixel = useMemo(
     () => (frac: number) => {
@@ -69,11 +70,11 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({
     const x1 =
       visibleStartTimeSec !== undefined
         ? fracToPixel((visibleStartTimeSec - t1) / (t2 - t1))
-        : undefined;
+        : x0;
     const x2 =
       visibleEndTimeSec !== undefined
         ? fracToPixel((visibleEndTimeSec - t1) / (t2 - t1))
-        : undefined;
+        : x0;
     let y1 = x1;
     let y2 = x2;
     if (x1 !== undefined && x2 !== undefined) {
@@ -107,13 +108,18 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({
       const t1 = timeseriesStartTimeSec ?? 0;
       const t2 = timeseriesEndTimeSec ?? 1;
       const t = t1 + frac * (t2 - t1);
-      setCurrentTime(t, { autoScrollVisibleTimeRange: true });
+
+      // figure out how to make this work
+      // setCurrentTime(t, { autoScrollVisibleTimeRange: true });
+      setCurrentTime(t);
+
       const diam =
         visibleStartTimeSec !== undefined && visibleEndTimeSec !== undefined
           ? visibleEndTimeSec - visibleStartTimeSec
           : undefined;
       const v1 = diam !== undefined ? Math.max(t - diam / 2, t1) : undefined;
       const v2 = diam !== undefined && v1 !== undefined ? v1 + diam : undefined;
+      if (v1 === undefined || v2 === undefined) return;
       setVisibleTimeRange(v1, v2);
     },
     [
@@ -157,7 +163,9 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({
         newTLeft <= newCurrentT &&
         newCurrentT <= newTRight
       ) {
-        setCurrentTime(newCurrentT, { autoScrollVisibleTimeRange: false });
+        // figure out how to make this work
+        // setCurrentTime(newCurrentT, { autoScrollVisibleTimeRange: false });
+        setCurrentTime(newCurrentT);
       }
       setVisibleTimeRange(newTLeft, newTRight);
       setDragPosition({ x: 0, y: 0 });
@@ -183,13 +191,6 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({
     !validNumber(y1) ||
     !validNumber(y2)
   ) {
-    console.warn("Invalid number", {
-      x0,
-      x1,
-      x2,
-      y1,
-      y2,
-    });
     return (
       <div
         style={{
