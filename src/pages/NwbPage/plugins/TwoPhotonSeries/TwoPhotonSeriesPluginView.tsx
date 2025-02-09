@@ -17,14 +17,12 @@ const TwoPhotonSeriesPluginView: FunctionComponent<Props> = ({
   height = 500,
 }) => {
   return (
-    <ProvideTimeseriesSelection>
-      <TwoPhotonSeriesItemView
-        width={width}
-        height={height}
-        nwbUrl={nwbUrl}
-        path={path}
-      />
-    </ProvideTimeseriesSelection>
+    <TwoPhotonSeriesItemView
+      width={width}
+      height={height}
+      nwbUrl={nwbUrl}
+      path={path}
+    />
   );
 };
 

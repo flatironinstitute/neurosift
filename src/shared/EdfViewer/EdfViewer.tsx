@@ -1,6 +1,5 @@
 import { Splitter } from "@fi-sci/splitter";
 import { useTimeseriesSelectionInitialization } from "@shared/context-timeseries-selection-2";
-import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 import { TimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import EDFReader from "./EDFReader";
@@ -57,40 +56,38 @@ const EdfViewer: FunctionComponent<EdfPageProps> = ({
     return <div>Loading timestamps client...</div>;
   if (!datasetChunkingClient) return <div>Loading chunking client...</div>;
   return (
-    <ProvideTimeseriesSelection>
-      <Splitter
-        width={width}
-        height={height}
-        direction="horizontal"
-        initialPosition={initialLeftPanelPosition}
-      >
-        <LeftPanel
-          width={0}
-          height={0}
-          edfReader={edfReader}
-          selectedChannelIndices={selectedChannelIndices}
-          setSelectedChannelIndices={setSelectedChannelIndices}
-          edfUrl={edfUrl}
-          channelSeparation={channelSeparation}
-          setChannelSeparation={setChannelSeparation}
-        />
-        <NwbTimeseriesViewChild
-          width={0}
-          height={0}
-          autoChannelSeparation={undefined}
-          colorChannels={true}
-          channelIndicesForColor={selectedChannelIndices}
-          applyConversion={true}
-          // spikeTrainsClient={undefined}
-          startZoomedOut={undefined}
-          timeseriesTimestampsClient={timeseriesTimestampsClient}
-          datasetChunkingClient={datasetChunkingClient}
-          numVisibleChannels={undefined}
-          yLabel={yLabel}
-          maxVisibleDuration={maxVisibleDuration}
-        />
-      </Splitter>
-    </ProvideTimeseriesSelection>
+    <Splitter
+      width={width}
+      height={height}
+      direction="horizontal"
+      initialPosition={initialLeftPanelPosition}
+    >
+      <LeftPanel
+        width={0}
+        height={0}
+        edfReader={edfReader}
+        selectedChannelIndices={selectedChannelIndices}
+        setSelectedChannelIndices={setSelectedChannelIndices}
+        edfUrl={edfUrl}
+        channelSeparation={channelSeparation}
+        setChannelSeparation={setChannelSeparation}
+      />
+      <NwbTimeseriesViewChild
+        width={0}
+        height={0}
+        autoChannelSeparation={undefined}
+        colorChannels={true}
+        channelIndicesForColor={selectedChannelIndices}
+        applyConversion={true}
+        // spikeTrainsClient={undefined}
+        startZoomedOut={undefined}
+        timeseriesTimestampsClient={timeseriesTimestampsClient}
+        datasetChunkingClient={datasetChunkingClient}
+        numVisibleChannels={undefined}
+        yLabel={yLabel}
+        maxVisibleDuration={maxVisibleDuration}
+      />
+    </Splitter>
   );
 };
 

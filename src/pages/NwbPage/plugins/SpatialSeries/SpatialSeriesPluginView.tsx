@@ -1,5 +1,4 @@
 import { FunctionComponent } from "react";
-import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 import SpatialSeriesXYView from "./SpatialSeriesXYView/SpatialSeriesXYView";
 
 type Props = {
@@ -22,14 +21,12 @@ const SpatialSeriesPluginView: FunctionComponent<Props> = ({
   if (!width || !height) return <div>Width and height are required.</div>;
 
   return (
-    <ProvideTimeseriesSelection>
-      <SpatialSeriesXYView
-        width={width}
-        height={height}
-        nwbUrl={nwbUrl}
-        path={path}
-      />
-    </ProvideTimeseriesSelection>
+    <SpatialSeriesXYView
+      width={width}
+      height={height}
+      nwbUrl={nwbUrl}
+      path={path}
+    />
   );
 };
 

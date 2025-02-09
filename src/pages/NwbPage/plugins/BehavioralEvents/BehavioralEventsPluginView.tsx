@@ -1,6 +1,5 @@
 import { FunctionComponent } from "react";
 import BehavioralEventsItemView from "./BehavioralEventsItemView/BehavioralEventsItemView";
-import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 
 type Props = {
   nwbUrl: string;
@@ -16,14 +15,12 @@ const BehavioralEventsPluginView: FunctionComponent<Props> = ({
   height = 500,
 }) => {
   return (
-    <ProvideTimeseriesSelection>
-      <BehavioralEventsItemView
-        width={width}
-        height={height}
-        nwbUrl={nwbUrl}
-        path={path}
-      />
-    </ProvideTimeseriesSelection>
+    <BehavioralEventsItemView
+      width={width}
+      height={height}
+      nwbUrl={nwbUrl}
+      path={path}
+    />
   );
 };
 

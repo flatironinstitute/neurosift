@@ -16,14 +16,12 @@ const TimeIntervalsPluginView: FunctionComponent<Props> = ({
   nwbUrl,
 }) => {
   return (
-    <ProvideTimeseriesSelection>
-      <NwbTimeIntervalsView
-        width={width}
-        height={height}
-        path={path}
-        nwbUrl={nwbUrl}
-      />
-    </ProvideTimeseriesSelection>
+    <NwbTimeIntervalsView
+      width={width}
+      height={height}
+      path={path}
+      nwbUrl={nwbUrl}
+    />
   );
 };
 

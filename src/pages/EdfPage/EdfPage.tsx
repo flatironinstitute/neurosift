@@ -1,6 +1,7 @@
 import { FunctionComponent } from "react";
 import { useSearchParams } from "react-router-dom";
 import EdfViewer from "@shared/EdfViewer/EdfViewer";
+import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 
 type Props = {
   width: number;
@@ -22,7 +23,11 @@ const EdfPage: FunctionComponent<Props> = ({ width, height }) => {
   // Construct the full URL with versionId if provided
   const fullUrl = versionId ? `${cleanUrl}?versionId=${versionId}` : cleanUrl;
 
-  return <EdfViewer edfUrl={fullUrl} width={width} height={height} />;
+  return (
+    <ProvideTimeseriesSelection>
+      <EdfViewer edfUrl={fullUrl} width={width} height={height} />
+    </ProvideTimeseriesSelection>
+  );
 };
 
 export default EdfPage;
