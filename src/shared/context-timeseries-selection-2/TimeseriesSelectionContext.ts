@@ -48,7 +48,6 @@ export const timeseriesSelectionReducer = (
   state: TimeseriesSelectionState,
   action: TimeseriesSelectionAction,
 ): TimeseriesSelectionState => {
-  console.log("---- reducer", action.type, action);
   switch (action.type) {
     case "initializeTimeseries": {
       const newStartTimeSec =

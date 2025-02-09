@@ -1,6 +1,5 @@
 import { FunctionComponent } from "react";
 import TwoPhotonSeriesItemView from "./TwoPhotonSeriesItemView/TwoPhotonSeriesItemView";
-import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 
 type Props = {
   nwbUrl: string;
