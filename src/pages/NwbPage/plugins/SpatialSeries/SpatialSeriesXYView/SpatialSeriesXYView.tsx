@@ -1,12 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  FunctionComponent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { DataSeries, Opts } from "./SpatialWorkerTypes";
+import { FunctionComponent, useEffect, useState } from "react";
 import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient";
 import {
   useTimeRange,
@@ -19,6 +11,7 @@ import { Canceler } from "@remote-h5-file";
 import TimeseriesSelectionBar, {
   timeSelectionBarHeight,
 } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
+import PlotlyComponent from "./PlotlyComponent";
 
 type Props = {
   width: number;
@@ -27,16 +20,18 @@ type Props = {
   path: string;
 };
 
+interface PlotData {
+  x: number[];
+  y: number[];
+  t: number[];
+}
+
 const SpatialSeriesXYView: FunctionComponent<Props> = ({
   width,
   height,
   nwbUrl,
   path,
 }) => {
-  const [canvasElement, setCanvasElement] = useState<
-    HTMLCanvasElement | undefined
-  >();
-  const [worker, setWorker] = useState<Worker | null>(null);
   const [datasetChunkingClient, setDatasetChunkingClient] = useState<
     TimeseriesDatasetChunkingClient | undefined
   >(undefined);
@@ -50,13 +45,10 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
   const endTime = dataClient ? dataClient.endTime! : undefined;
   useTimeseriesSelectionInitialization(startTime, endTime);
 
-  const { setCurrentTime } = useTimeseriesSelection();
+  const { setCurrentTime, currentTime } = useTimeseriesSelection();
 
   // Set chunkSize
-  const chunkSize = useMemo(
-    () => (dataset ? Math.floor(1e4 / (dataset.shape[1] || 1)) : 0),
-    [dataset],
-  );
+  const chunkSize = dataset ? Math.floor(1e4 / (dataset.shape[1] || 1)) : 0;
 
   // set visible time range
   useEffect(() => {
@@ -149,10 +141,8 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
 
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Set dataSeries
-  const [dataSeries, setDataSeries] = useState<DataSeries | undefined>(
-    undefined,
-  );
+  // Set plotData
+  const [plotData, setPlotData] = useState<PlotData | undefined>(undefined);
   useEffect(() => {
     if (!datasetChunkingClient) return;
     if (dataset === undefined) return;
@@ -186,18 +176,14 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
           canceler = undefined;
           if (completed) finished = true;
           if (canceled) return;
-          const dataSeries: DataSeries = {
+          const data: PlotData = {
             t: Array.from(tt),
-            x: [],
-            y: [],
+            x: Array.from(concatenatedChunk[0] || []),
+            y: Array.from(concatenatedChunk[1] || []),
           };
-          for (let i = 0; i < (concatenatedChunk[0] || []).length; i++) {
-            dataSeries.x.push(concatenatedChunk[0][i]);
-            dataSeries.y.push(concatenatedChunk[1][i]);
-          }
-          setDataSeries(dataSeries);
-        } catch (err: any) {
-          if (err.message !== "canceled") {
+          setPlotData(data);
+        } catch (err: unknown) {
+          if (err instanceof Error && err.message !== "canceled") {
             throw err;
           }
         }
@@ -219,28 +205,23 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
     zoomInRequired,
   ]);
 
-  const canvasWidth = width;
-  const canvasHeight = height - timeSelectionBarHeight;
-  const margins = useMemo(
-    () => ({ left: 60, right: 20, top: 20, bottom: 30 }),
-    [],
-  );
+  const plotHeight = height - timeSelectionBarHeight;
 
   // Set valueRange
   const [valueRange, setValueRange] = useState<
     { xMin: number; xMax: number; yMin: number; yMax: number } | undefined
   >(undefined);
   useEffect(() => {
-    if (!dataSeries) return;
+    if (!plotData) return;
     let xMin = Number.POSITIVE_INFINITY;
     let xMax = Number.NEGATIVE_INFINITY;
     let yMin = Number.POSITIVE_INFINITY;
     let yMax = Number.NEGATIVE_INFINITY;
-    for (let i = 0; i < dataSeries.t.length; i++) {
-      if (dataSeries.x[i] < xMin) xMin = dataSeries.x[i];
-      if (dataSeries.x[i] > xMax) xMax = dataSeries.x[i];
-      if (dataSeries.y[i] < yMin) yMin = dataSeries.y[i];
-      if (dataSeries.y[i] > yMax) yMax = dataSeries.y[i];
+    for (let i = 0; i < plotData.x.length; i++) {
+      if (plotData.x[i] < xMin) xMin = plotData.x[i];
+      if (plotData.x[i] > xMax) xMax = plotData.x[i];
+      if (plotData.y[i] < yMin) yMin = plotData.y[i];
+      if (plotData.y[i] > yMax) yMax = plotData.y[i];
     }
     setValueRange((old) => {
       const xMin2 = old ? Math.min(old.xMin, xMin) : xMin;
@@ -249,184 +230,7 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
       const yMax2 = old ? Math.max(old.yMax, yMax) : yMax;
       return { xMin: xMin2, xMax: xMax2, yMin: yMin2, yMax: yMax2 };
     });
-  }, [dataSeries]);
-
-  // set opts
-  useEffect(() => {
-    if (!worker) return;
-    if (visibleStartTimeSec === undefined) return;
-    if (visibleEndTimeSec === undefined) return;
-    const opts: Opts = {
-      canvasWidth,
-      canvasHeight,
-      margins,
-      visibleStartTimeSec,
-      visibleEndTimeSec,
-      xMin: valueRange ? valueRange.xMin : 0,
-      xMax: valueRange ? valueRange.xMax : 1,
-      yMin: valueRange ? valueRange.yMin : 0,
-      yMax: valueRange ? valueRange.yMax : 1,
-      xAxisLabel: dataset?.attrs["unit"] || "",
-      yAxisLabel: dataset?.attrs["unit"] || "",
-      zoomInRequired,
-    };
-    worker.postMessage({
-      opts,
-    });
-  }, [
-    canvasWidth,
-    canvasHeight,
-    margins,
-    visibleStartTimeSec,
-    visibleEndTimeSec,
-    worker,
-    valueRange,
-    zoomInRequired,
-    dataset?.attrs,
-  ]);
-
-  // Set worker
-  useEffect(() => {
-    if (!canvasElement) return;
-    const worker = new Worker(new URL("./spatialWorker", import.meta.url));
-    let offscreenCanvas: OffscreenCanvas;
-    try {
-      offscreenCanvas = canvasElement.transferControlToOffscreen();
-    } catch (err) {
-      console.warn(err);
-      console.warn(
-        "Unable to transfer control to offscreen canvas (expected during dev)",
-      );
-      return;
-    }
-    worker.postMessage(
-      {
-        canvas: offscreenCanvas,
-      },
-      [offscreenCanvas],
-    );
-
-    setWorker(worker);
-
-    return () => {
-      worker.terminate();
-    };
-  }, [canvasElement]);
-
-  // Send dataseries to worker
-  useEffect(() => {
-    if (!worker) return;
-    if (!dataSeries) return;
-    worker.postMessage({
-      dataSeries,
-    });
-  }, [worker, dataSeries]);
-
-  const onCanvasElement = useCallback((elmt: HTMLCanvasElement) => {
-    setCanvasElement(elmt);
-  }, []);
-
-  const { coordToPixel, pixelToCoord } = useMemo(() => {
-    if (!valueRange)
-      return { coordToPixel: undefined, pixelToCoord: undefined };
-    const { xMin, xMax, yMin, yMax } = valueRange;
-    const scale = Math.min(
-      (canvasWidth - margins.left - margins.right) / (xMax - xMin),
-      (canvasHeight - margins.top - margins.bottom) / (yMax - yMin),
-    );
-    const offsetX =
-      (canvasWidth - margins.left - margins.right - (xMax - xMin) * scale) / 2;
-    const offsetY =
-      (canvasHeight - margins.top - margins.bottom - (yMax - yMin) * scale) / 2;
-    const coordToPixel = (p: { x: number; y: number }) => ({
-      x: !isNaN(p.x) ? margins.left + offsetX + (p.x - xMin) * scale : NaN,
-      y: !isNaN(p.y)
-        ? canvasHeight - margins.bottom - offsetY - (p.y - yMin) * scale
-        : NaN,
-    });
-    const pixelToCoord = (p: { x: number; y: number }) => ({
-      x: !isNaN(p.x) ? xMin + (p.x - margins.left - offsetX) / scale : NaN,
-      y: !isNaN(p.y)
-        ? yMin + (canvasHeight - margins.bottom - offsetY - p.y) / scale
-        : NaN,
-    });
-    return { coordToPixel, pixelToCoord };
-  }, [canvasWidth, canvasHeight, margins, valueRange]);
-
-  const [cursorCanvasElement, setCursorCanvasElement] = useState<
-    HTMLCanvasElement | undefined
-  >();
-  const { currentTime } = useTimeseriesSelection();
-  useEffect(() => {
-    if (!cursorCanvasElement) return;
-    const context = cursorCanvasElement.getContext("2d");
-    if (!context) return;
-
-    context.clearRect(0, 0, canvasWidth, canvasHeight);
-
-    if (currentTime === undefined) return;
-    if (!dataSeries) return;
-    if (!coordToPixel) return;
-
-    const i = findIndexForTime(currentTime, dataSeries.t);
-    if (i === undefined) return;
-    const x = dataSeries.x[i];
-    const y = dataSeries.y[i];
-
-    const pp = coordToPixel({ x, y });
-
-    context.fillStyle = "red";
-    context.beginPath();
-    context.arc(pp.x, pp.y, 5, 0, 2 * Math.PI);
-    context.fill();
-  }, [
-    cursorCanvasElement,
-    currentTime,
-    dataSeries,
-    coordToPixel,
-    valueRange,
-    canvasWidth,
-    canvasHeight,
-    margins,
-  ]);
-
-  const handleMouseUp = useCallback(
-    (e: React.MouseEvent) => {
-      if (!pixelToCoord) return;
-      if (!dataSeries) return;
-      if (visibleStartTimeSec === undefined) return;
-      if (visibleEndTimeSec === undefined) return;
-      const boundingRect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX - boundingRect.x;
-      const y = e.clientY - boundingRect.y;
-      const p = pixelToCoord({ x, y });
-      if (isNaN(p.x)) return;
-      if (isNaN(p.y)) return;
-      let closestT: number | undefined = undefined;
-      let closestDistance: number | undefined = undefined;
-      for (let i = 0; i < dataSeries.t.length; i++) {
-        const t = dataSeries.t[i];
-        if (t < visibleStartTimeSec || t > visibleEndTimeSec) continue;
-        const dx = p.x - dataSeries.x[i];
-        const dy = p.y - dataSeries.y[i];
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (isNaN(dist)) continue;
-        if (closestDistance === undefined || dist < closestDistance) {
-          closestDistance = dist;
-          closestT = t;
-        }
-      }
-      if (closestT === undefined) return;
-      setCurrentTime(closestT);
-    },
-    [
-      pixelToCoord,
-      dataSeries,
-      setCurrentTime,
-      visibleStartTimeSec,
-      visibleEndTimeSec,
-    ],
-  );
+  }, [plotData]);
 
   return (
     <div style={{ position: "relative", width, height }}>
@@ -443,48 +247,31 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
           position: "absolute",
           top: timeSelectionBarHeight,
           width,
-          height: height - timeSelectionBarHeight,
+          height: plotHeight,
         }}
       >
-        <canvas
-          style={{
-            position: "absolute",
-            width: canvasWidth,
-            height: canvasHeight,
-          }}
-          ref={onCanvasElement}
-          width={canvasWidth}
-          height={canvasHeight}
-        />
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          top: timeSelectionBarHeight,
-          width,
-          height: height - timeSelectionBarHeight,
-        }}
-      >
-        <canvas
-          style={{
-            position: "absolute",
-            width: canvasWidth,
-            height: canvasHeight,
-          }}
-          ref={(elmt) => {
-            if (elmt) setCursorCanvasElement(elmt);
-          }}
-          onMouseUp={handleMouseUp}
-          width={canvasWidth}
-          height={canvasHeight}
-        />
+        {plotData && (
+          <PlotlyComponent
+            data={plotData}
+            width={width}
+            height={plotHeight}
+            onPointClick={(index) => {
+              if (plotData.t[index] !== undefined) {
+                setCurrentTime(plotData.t[index]);
+              }
+            }}
+            currentTime={currentTime}
+            valueRange={valueRange}
+            unit={dataset?.attrs["unit"]}
+          />
+        )}
       </div>
       {loading && !zoomInRequired && (
         <div
           style={{
             position: "absolute",
-            top: timeSelectionBarHeight + margins.top,
-            left: margins.left,
+            top: timeSelectionBarHeight + 20,
+            left: 60,
             userSelect: "none",
           }}
         >
@@ -493,21 +280,6 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
       )}
     </div>
   );
-};
-
-const findIndexForTime = (time: number, t: number[]) => {
-  if (t.length === 0) return undefined;
-  if (time < t[0]) return undefined;
-  if (time >= t[t.length - 1]) return undefined;
-  // do a binary search (assume that t is sorted)
-  let a = 0;
-  let b = t.length - 1;
-  while (b - a > 1) {
-    const c = Math.floor((a + b) / 2);
-    if (time < t[c]) b = c;
-    else a = c;
-  }
-  return a;
 };
 
 export default SpatialSeriesXYView;
