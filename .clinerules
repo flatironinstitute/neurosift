@@ -27,14 +27,15 @@ When creating new visualization plugins:
 - pages/util/: Shared utilities and helpers
 - remote-h5-file/: HDF5 file handling implementation
 
-# Pull Requests
+# Fixing GitHub Issues
 
-When asked to solve an issue on github, please use the command-line to do the following:
-* Create a new local branch
-* Make your changes
-* Push your changes to the remote repository
-* Create a pull request on github that includes that we are fixing the issue
-* Switch back to the main-v2 branch
+When fixing a GitHub issue:
+1. Use search_issues tool to find and understand the issue (avoid get_issue)
+2. Create and switch to a new branch: `git checkout -b fix-<issue-number>-description`
+3. Make and test your changes, run `./devel/format_code.sh` before committing
+4. Push changes: `git add`, commit with "fix #<number>: description", `git push -u origin branch-name`
+5. Create PR using GitHub MCP tools, include "Fixes #<number>" in description
+6. Switch back to main-v2: `git checkout main-v2`
 
 # View plugins
 
@@ -53,4 +54,3 @@ When asked to do something, first take a look around the project by reading as m
 When asked to make a python script to explore something, make a .py file with a notebook style using "# %%" markers. Make some meaningful cells to be executed. Be sure to include a "# %%" on the first line before the imports.
 
 This repo is at https://github.com/flatironinstitute/neurosift
-
