@@ -37,6 +37,7 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
   const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
 
   const dataset = useNwbDataset(nwbUrl, `${path}/data`);
+  const unit = dataset?.attrs?.unit;
 
   const dataClient = useTimeseriesTimestampsClient(nwbUrl, path);
   // const startTime = dataClient ? dataClient.startTime! : undefined;
@@ -277,7 +278,7 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
             }}
             currentTime={currentTime}
             valueRange={valueRange}
-            unit={dataset?.attrs["unit"]}
+            unit={unit}
           />
         )}
       </div>

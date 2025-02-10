@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DandisetVersionInfo } from "../DandiPage/dandi-types";
 import DatasetDataView from "./DatasetDataView";
@@ -11,6 +11,7 @@ type NwbOverviewProps = {
   nwbFileOverview: NwbFileOverviewResult;
   nwbUrl: string | null;
   dandisetInfo: DandisetVersionInfo | null;
+  width: number;
 };
 
 const MAX_DESCRIPTION_LENGTH = 150;
@@ -20,6 +21,7 @@ export const NwbOverview = ({
   nwbFileOverview,
   nwbUrl,
   dandisetInfo,
+  width,
 }: NwbOverviewProps) => {
   const navigate = useNavigate();
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -37,6 +39,29 @@ export const NwbOverview = ({
 
   const contributors =
     dandisetInfo?.metadata.contributor.map((c) => c.name).join(", ") || "";
+  const isVertical = width < 300;
+
+  const getTableCellStyle = (isLabel = false) => {
+    if (!isVertical) {
+      return { verticalAlign: "top" };
+    }
+    return {
+      display: "block",
+      width: "100%",
+      ...(isLabel
+        ? {
+            fontWeight: "bold",
+            marginBottom: "4px",
+          }
+        : {}),
+    };
+  };
+
+  const tableStyle = {
+    width: "100%",
+    fontSize: "0.8em",
+  };
+
   return (
     <div>
       {dandisetInfo && (
@@ -59,11 +84,11 @@ export const NwbOverview = ({
               (view)
             </span>
           </h3>
-          <table style={{ width: "100%" }}>
+          <table style={tableStyle}>
             <tbody>
               <tr>
-                <td style={{ verticalAlign: "top" }}>Description</td>
-                <td>
+                <td style={getTableCellStyle(true)}>Description</td>
+                <td style={getTableCellStyle()}>
                   {showFullDescription
                     ? dandisetInfo.metadata.description
                     : dandisetInfo.metadata.description.slice(
@@ -94,8 +119,8 @@ export const NwbOverview = ({
                 </td>
               </tr>
               <tr>
-                <td style={{ verticalAlign: "top" }}>Contributors</td>
-                <td>
+                <td style={getTableCellStyle(true)}>Contributors</td>
+                <td style={getTableCellStyle()}>
                   {showFullContributors
                     ? contributors
                     : contributors.slice(0, MAX_CONTRIBUTORS_LENGTH)}
@@ -138,12 +163,12 @@ export const NwbOverview = ({
         {nwbFileOverview && "error" in nwbFileOverview ? (
           <div style={{ color: "red" }}>{nwbFileOverview.error}</div>
         ) : nwbFileOverview ? (
-          <table style={{ fontSize: "0.8em" }}>
+          <table style={tableStyle}>
             <tbody>
               {nwbFileOverview.items.map((item) => (
                 <tr key={item.path}>
-                  <td>{item.name}</td>
-                  <td>
+                  <td style={getTableCellStyle(true)}>{item.name}</td>
+                  <td style={getTableCellStyle()}>
                     <DatasetDataView
                       nwbFile={nwbUrl}
                       path={item.path}
@@ -153,8 +178,10 @@ export const NwbOverview = ({
                 </tr>
               ))}
               <tr>
-                <td>NWB Version</td>
-                <td>{nwbFileOverview.nwbVersion}</td>
+                <td style={getTableCellStyle(true)}>NWB Version</td>
+                <td style={getTableCellStyle()}>
+                  {nwbFileOverview.nwbVersion}
+                </td>
               </tr>
             </tbody>
           </table>

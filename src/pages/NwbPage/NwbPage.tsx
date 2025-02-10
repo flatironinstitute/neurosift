@@ -111,6 +111,7 @@ const LeftArea: FunctionComponent<LeftAreaProps> = ({
           nwbFileOverview={nwbFileOverview}
           nwbUrl={nwbUrl}
           dandisetInfo={dandisetVersionInfo}
+          width={width - 20}
         />
       </ScrollY>
     </div>
