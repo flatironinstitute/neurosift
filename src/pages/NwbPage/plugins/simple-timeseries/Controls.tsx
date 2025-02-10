@@ -122,7 +122,7 @@ export const Controls: FunctionComponent<ControlsProps> = ({
               <ControlButton
                 onClick={onIncreaseChannels}
                 disabled={
-                  visibleChannelsStart + numVisibleChannels * 2 >
+                  visibleChannelsStart + numVisibleChannels >=
                   info.totalNumChannels
                 }
               >

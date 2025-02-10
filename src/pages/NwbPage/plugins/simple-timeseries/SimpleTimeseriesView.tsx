@@ -41,14 +41,29 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
   }
 
   const handleIncreaseChannels = () => {
-    const newNumChannels = Math.min(
-      numVisibleChannels * 2,
-      timeseriesClient.numChannels - visibleChannelsStart,
-    );
+    const remainingChannels =
+      timeseriesClient.numChannels - visibleChannelsStart;
+    const nextPowerOfTwo = numVisibleChannels * 2;
+
+    // If next power of 2 exceeds total channels, show all remaining channels
+    const newNumChannels =
+      nextPowerOfTwo > remainingChannels ? remainingChannels : nextPowerOfTwo;
+
     setNumVisibleChannels(newNumChannels);
   };
 
   const handleDecreaseChannels = () => {
+    // If current count is equal to total channels, go to previous power of 2
+    if (numVisibleChannels === timeseriesClient.numChannels) {
+      const prevPowerOfTwo = Math.pow(
+        2,
+        Math.floor(Math.log2(numVisibleChannels - 1)),
+      );
+      setNumVisibleChannels(prevPowerOfTwo);
+      return;
+    }
+
+    // Otherwise divide by 2, but ensure at least 1 channel
     const newNumChannels = Math.max(1, Math.floor(numVisibleChannels / 2));
     setNumVisibleChannels(newNumChannels);
   };
