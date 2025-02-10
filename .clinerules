@@ -30,12 +30,17 @@ When creating new visualization plugins:
 # Fixing GitHub Issues
 
 When fixing a GitHub issue:
-1. Use search_issues tool to find and understand the issue (avoid get_issue)
+1. Use search_issues tool to find and understand the issue (avoid get_issue - see below)
 2. Create and switch to a new branch: `git checkout -b fix-<issue-number>-description`
 3. Make and test your changes, run `./devel/format_code.sh` before committing
 4. Push changes: `git add`, commit with "fix #<number>: description", `git push -u origin branch-name`
 5. Create PR using GitHub MCP tools, include "Fixes #<number>" in description
 6. Switch back to main-v2: `git checkout main-v2`
+
+**important** when searching for an ussue, use the search_issues tool with the following kind of arguments:
+{
+  "q": "repo:flatironinstitute/neurosift is:issue xxx in:number"
+}
 
 # View plugins
 
