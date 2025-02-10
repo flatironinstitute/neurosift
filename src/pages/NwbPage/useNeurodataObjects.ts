@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect, useMemo, useReducer } from "react";
+import { useEffect, useState } from "react";
 import {
   getNwbDataset,
   getNwbGroup,
@@ -7,203 +7,133 @@ import {
   NwbGroup,
 } from "./nwbInterface";
 
-type NeurodataObject = {
+export type NeurodataObject = {
   path: string;
   group?: NwbGroup;
   dataset?: NwbDataset;
   attrs: { [key: string]: any };
   parent: NeurodataObject | null;
-  expanded: boolean;
-  expanding: boolean;
+  children: NeurodataObject[];
 };
 
-type NeurodataObjectsState = {
-  objects: NeurodataObject[];
+type GroupTreeNode = {
+  group: NwbGroup;
 };
 
-export const initialNeurodataObjectsState: NeurodataObjectsState = {
-  objects: [],
-};
-
-type NeurodataObjectsAction =
-  | {
-      type: "addObject";
-      path: string;
-      group?: NwbGroup;
-      dataset?: NwbDataset;
-      parentPath: string | null;
-    }
-  | {
-      type: "setObjectExpanded";
-      path: string;
-      expanded: boolean;
-    }
-  | {
-      type: "setObjectExpanding";
-      path: string;
-      expanding: boolean;
-    }
-  | {
-      type: "clear";
-    };
-
-export const neurodataObjectsReducer = (
-  state: NeurodataObjectsState,
-  action: NeurodataObjectsAction,
-): NeurodataObjectsState => {
-  switch (action.type) {
-    case "addObject": {
-      const existing = state.objects.find((o) => o.path === action.path);
-      if (existing) return state;
-      const parent = action.parentPath
-        ? state.objects.find((o) => o.path === action.parentPath) || null
-        : null;
-      const obj: NeurodataObject = {
-        path: action.path,
-        group: action.group,
-        dataset: action.dataset,
-        attrs: action.group ? action.group.attrs : action.dataset?.attrs || {},
-        parent,
-        expanded: false,
-        expanding: false,
-      };
-      return {
-        objects: [...state.objects, obj],
-      };
-    }
-    case "setObjectExpanded": {
-      return {
-        objects: state.objects.map((o) =>
-          o.path === action.path ? { ...o, expanded: action.expanded } : o,
-        ),
-      };
-    }
-    case "setObjectExpanding": {
-      return {
-        objects: state.objects.map((o) =>
-          o.path === action.path ? { ...o, expanding: action.expanding } : o,
-        ),
-      };
-    }
-    case "clear": {
-      return initialNeurodataObjectsState;
-    }
-    default:
-      return state;
-  }
-};
-
-/**
- * A React hook that manages a hierarchical tree of NWB (Neurodata Without Borders) objects.
- *
- * This hook handles the loading and state management of neurodata objects from an NWB file.
- * A neurodata object is an HDF5 group that contains the 'neurodata_type' attribute.
- * The hook maintains an expandable tree structure where:
- * - Each object can be expanded to reveal its child neurodata objects
- * - Only groups with 'neurodata_type' attribute are included in the tree
- * - Non-neurodata groups are traversed but not included in the tree
- *
- * @param nwbUrl - URL of the NWB file to load
- * @returns {Object}
- *   - neurodataObjects: Current state containing the tree of neurodata objects
- *   - expandItem: Function to expand a neurodata object and load its children
- */
 export const useNeurodataObjects = (nwbUrl: string) => {
-  const [neurodataObjects, dispatch] = useReducer(
-    neurodataObjectsReducer,
-    initialNeurodataObjectsState,
+  const [neurodataObjects, setNeurodataObjects] = useState<NeurodataObject[]>(
+    [],
   );
+  const [loading, setLoading] = useState<boolean>(false);
 
-  // initialize root object
+  // update all the neurodata objects in a breadth-first manner
   useEffect(() => {
-    const addRootObject = async () => {
-      const group = await getNwbGroup(nwbUrl, "/");
-      if (group) {
-        dispatch({ type: "addObject", path: "/", group, parentPath: null });
-      }
+    let canceled = false;
+    const groupTree: GroupTreeNode[] = [];
+    const datasetsTree: NwbDataset[] = [];
+    const updateNeurodataObjects = () => {
+      const objects: NeurodataObject[] = [];
+      const expandGroup = (group: NwbGroup, parent: NeurodataObject | null) => {
+        for (const sg of group.subgroups) {
+          const grp = groupTree.find((node) => node.group.path === sg.path);
+          if (!grp) continue;
+          const hasALotOfChildren =
+            grp.group.subgroups.length >= 10 || grp.group.datasets.length >= 10;
+          if (sg.attrs["neurodata_type"] || hasALotOfChildren) {
+            const newObj: NeurodataObject = {
+              path: sg.path,
+              group: grp.group,
+              attrs: grp.group.attrs,
+              parent: parent,
+              children: [],
+            };
+            objects.push(newObj);
+            if (parent) parent.children.push(newObj);
+            expandGroup(grp.group, newObj);
+          } else {
+            expandGroup(grp.group, parent);
+          }
+        }
+        for (const sds of group.datasets) {
+          if (sds.attrs["neurodata_type"]) {
+            const ds = datasetsTree.find((ds) => ds.path === sds.path);
+            if (!ds) continue;
+            const newObj: NeurodataObject = {
+              path: ds.path,
+              dataset: ds,
+              attrs: ds.attrs,
+              parent: parent,
+              children: [],
+            };
+            objects.push(newObj);
+            if (parent) parent.children.push(newObj);
+          }
+        }
+      };
+      const rootGroup = groupTree.find((node) => node.group.path === "/");
+      if (!rootGroup) return;
+      objects.push({
+        path: "/",
+        group: rootGroup.group,
+        attrs: rootGroup.group.attrs,
+        parent: null,
+        children: [],
+      });
+      expandGroup(rootGroup.group, objects[0]);
+      setNeurodataObjects(objects);
     };
-    dispatch({ type: "clear" });
-    addRootObject();
-  }, [nwbUrl]);
-
-  const expandItem = useCallback(
-    async (path: string) => {
-      const obj = neurodataObjects.objects.find((o) => o.path === path);
-      if (!obj) return;
-      if (!obj.group) throw Error(`Group not found for path: ${path}`);
-      if (obj.expanded || obj.expanding) return;
-      dispatch({ type: "setObjectExpanding", path, expanding: true });
-
-      const expandGroup = async (
-        group: NwbGroup,
-        neurodataParentPath: string,
-      ) => {
+    (async () => {
+      setLoading(true);
+      // add root group
+      const rootGroup = await getNwbGroup(nwbUrl, "/");
+      if (!rootGroup) {
+        console.error("Root group not found");
+        return;
+      }
+      const groupTreeRootNode = {
+        group: rootGroup,
+        expanding: false,
+        expanded: false,
+      };
+      groupTree.push(groupTreeRootNode);
+      const queue: GroupTreeNode[] = [groupTreeRootNode];
+      let timer = Date.now();
+      while (queue.length > 0) {
+        if (canceled) return;
+        const node = queue.shift();
+        if (!node) continue;
+        const group = node.group;
         for (const sg of group.subgroups) {
           const grp = await getNwbGroup(nwbUrl, sg.path);
+          if (canceled) return;
           if (!grp) continue;
-
-          // We also consider groups with a lot of children as neurodata objects
-          // because we don't want them to be expanded by default in the tree
-          // view
-          const hasALotOfChildren =
-            grp.subgroups.length >= 10 || grp.datasets.length >= 10;
-          if (sg.attrs["neurodata_type"] || hasALotOfChildren) {
-            if (grp) {
-              dispatch({
-                type: "addObject",
-                path: sg.path,
-                group: grp,
-                parentPath: neurodataParentPath,
-              });
-            }
-          } else {
-            const grp = await getNwbGroup(nwbUrl, sg.path);
-            if (grp) {
-              await expandGroup(grp, neurodataParentPath);
-            }
-          }
+          const newNode: GroupTreeNode = { group: grp };
+          groupTree.push(newNode);
+          queue.push(newNode);
         }
-        for (const sd of group.datasets) {
-          if (sd.attrs["neurodata_type"]) {
-            const ds = await getNwbDataset(nwbUrl, sd.path);
-            if (ds) {
-              dispatch({
-                type: "addObject",
-                path: sd.path,
-                dataset: ds,
-                parentPath: neurodataParentPath,
-              });
-            }
-          }
+        for (const sds of group.datasets) {
+          const ds = await getNwbDataset(nwbUrl, sds.path);
+          if (canceled) return;
+          if (!ds) continue;
+          datasetsTree.push(ds);
         }
-      };
+        const elapsed = Date.now() - timer;
+        if (elapsed > 100) {
+          updateNeurodataObjects();
+          timer = Date.now();
+        }
+      }
+      updateNeurodataObjects();
+      setLoading(false);
+    })();
 
-      await expandGroup(obj.group, obj.path);
-      dispatch({ type: "setObjectExpanding", path, expanding: false });
-      dispatch({ type: "setObjectExpanded", path, expanded: true });
-    },
-    [nwbUrl, neurodataObjects],
-  );
-
-  // auto-expand root when it's added
-  useEffect(() => {
-    const rootObj = neurodataObjects.objects.find((o) => o.path === "/");
-    if (rootObj && !rootObj.expanded && !rootObj.expanding) {
-      expandItem("/");
-    }
-  }, [neurodataObjects, expandItem]);
-
-  const loading = useMemo(() => {
-    let loading = false;
-    neurodataObjects.objects.forEach((o) => {
-      if (o.expanding) loading = true;
-    });
-    return loading;
-  }, [neurodataObjects]);
+    return () => {
+      canceled = true;
+    };
+  }, [nwbUrl]);
 
   return {
     neurodataObjects,
-    expandItem,
     loading,
   };
 };
