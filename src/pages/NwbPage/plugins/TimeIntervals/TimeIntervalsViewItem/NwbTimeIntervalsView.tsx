@@ -28,10 +28,14 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
   );
   const { data: stopTimeData } = useNwbDatasetData(nwbUrl, `${path}/stop_time`);
 
-  const { labelFieldName, labelData } = useLabelData(
+  const [selectedColumn, setSelectedColumn] = useState<string | undefined>(
+    undefined,
+  );
+  const { labelData, availableColumns, autoSelectedColumn } = useLabelData(
     nwbUrl,
     path,
     startTimeData?.length,
+    selectedColumn,
   );
 
   const { initializeTimeseriesSelection, setVisibleTimeRange } =
@@ -83,24 +87,58 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
           top: height - bottomBarHeight,
         }}
       >
-        {labelFieldName && (
-          <div style={{ paddingLeft: 10 }}>Label: {labelFieldName}</div>
-        )}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            padding: 10,
+            gap: 10,
+          }}
+        >
+          <div>Label:</div>
+          {availableColumns.length > 0 ? (
+            <select
+              value={selectedColumn || autoSelectedColumn || ""}
+              onChange={(e) => setSelectedColumn(e.target.value || undefined)}
+              style={{ minWidth: 150 }}
+            >
+              {availableColumns.map((col) => (
+                <option key={col.name} value={col.name}>
+                  {col.name} ({col.distinctValueCount} values)
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span>No valid columns found</span>
+          )}
+        </div>
       </div>
     </div>
   );
+};
+
+type ColumnInfo = {
+  name: string;
+  score: number;
+  values: string[];
+  distinctValueCount: number;
 };
 
 const useLabelData = (
   nwbUrl: string,
   path: string,
   numRows: number | undefined,
+  userSelectedColumn?: string,
 ) => {
   const group = useNwbGroup(nwbUrl, path);
   const [labelFieldName, setLabelFieldName] = useState<string | undefined>(
     undefined,
   );
   const [labelData, setLabelData] = useState<string[] | undefined>(undefined);
+  const [availableColumns, setAvailableColumns] = useState<ColumnInfo[]>([]);
+  const [autoSelectedColumn, setAutoSelectedColumn] = useState<
+    string | undefined
+  >(undefined);
   useEffect(() => {
     let canceled = false;
     setLabelFieldName(undefined);
@@ -108,7 +146,7 @@ const useLabelData = (
     const load = async () => {
       if (!group) return;
       const colnames = (await group.attrs["colnames"]) || [];
-      const scores: { colname: string; score: number; values: string[] }[] = [];
+      const validColumns: ColumnInfo[] = [];
       for (const colname of colnames) {
         const d = await getNwbDatasetData(nwbUrl, `${path}/${colname}`, {});
         if (!d)
@@ -120,27 +158,48 @@ const useLabelData = (
           const distinctValues = getDistinctValues(values);
           if (
             distinctValues.length > 1 &&
-            distinctValues.length <= values.length / 4
+            (distinctValues.length <= values.length / 4 ||
+              distinctValues.length <= 10)
           ) {
             const score = Math.abs(distinctValues.length - 10); // we target 10 distinct values
-            scores.push({ colname, score, values });
+            validColumns.push({
+              name: colname,
+              score,
+              values,
+              distinctValueCount: distinctValues.length,
+            });
           }
         } catch (err) {
           console.warn(err);
         }
       }
-      scores.sort((a, b) => a.score - b.score);
-      if (scores.length > 0) {
-        setLabelFieldName(scores[0].colname);
-        setLabelData(scores[0].values);
+
+      validColumns.sort((a, b) => a.score - b.score);
+      setAvailableColumns(validColumns);
+
+      if (validColumns.length > 0) {
+        setAutoSelectedColumn(validColumns[0].name);
+
+        // Use user selected column if available and valid, otherwise use auto-selected
+        const columnToUse =
+          userSelectedColumn &&
+          validColumns.find((c) => c.name === userSelectedColumn)
+            ? userSelectedColumn
+            : validColumns[0].name;
+
+        const selectedColumn = validColumns.find((c) => c.name === columnToUse);
+        if (selectedColumn) {
+          setLabelFieldName(selectedColumn.name);
+          setLabelData(selectedColumn.values);
+        }
       }
     };
     load();
     return () => {
       canceled = true;
     };
-  }, [group, nwbUrl, path, numRows]);
-  return { labelFieldName, labelData };
+  }, [group, nwbUrl, path, numRows, userSelectedColumn]);
+  return { labelFieldName, labelData, availableColumns, autoSelectedColumn };
 };
 
 const getDistinctValues = (values: string[]) => {
