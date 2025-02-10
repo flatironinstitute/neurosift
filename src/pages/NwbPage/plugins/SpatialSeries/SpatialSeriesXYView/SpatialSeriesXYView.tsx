@@ -1,17 +1,16 @@
-import { FunctionComponent, useEffect, useState } from "react";
-import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient";
+import { useNwbDataset } from "@nwbInterface";
+import { Canceler } from "@remote-h5-file";
 import {
   useTimeRange,
   useTimeseriesSelection,
-  useTimeseriesSelectionInitialization,
 } from "@shared/context-timeseries-selection-2";
-import { useNwbDataset } from "@nwbInterface";
-import { useTimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
-import { Canceler } from "@remote-h5-file";
 import TimeseriesSelectionBar, {
   timeSelectionBarHeight,
 } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
+import { useTimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
+import { FunctionComponent, useEffect, useState } from "react";
 import PlotlyComponent from "./PlotlyComponent";
+import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient";
 
 type Props = {
   width: number;
@@ -35,46 +34,45 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
   const [datasetChunkingClient, setDatasetChunkingClient] = useState<
     TimeseriesDatasetChunkingClient | undefined
   >(undefined);
-  const { visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange } =
-    useTimeRange();
+  const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
 
   const dataset = useNwbDataset(nwbUrl, `${path}/data`);
 
   const dataClient = useTimeseriesTimestampsClient(nwbUrl, path);
-  const startTime = dataClient ? dataClient.startTime! : undefined;
-  const endTime = dataClient ? dataClient.endTime! : undefined;
-  useTimeseriesSelectionInitialization(startTime, endTime);
+  // const startTime = dataClient ? dataClient.startTime! : undefined;
+  // const endTime = dataClient ? dataClient.endTime! : undefined;
+  // useTimeseriesSelectionInitialization(startTime, endTime);
 
   const { setCurrentTime, currentTime } = useTimeseriesSelection();
 
   // Set chunkSize
   const chunkSize = dataset ? Math.floor(1e4 / (dataset.shape[1] || 1)) : 0;
 
-  // set visible time range
-  useEffect(() => {
-    if (!chunkSize) return;
-    if (!dataClient) return;
-    if (startTime === undefined) return;
-    if (endTime === undefined) return;
-    if (visibleStartTimeSec !== undefined) return;
-    if (visibleEndTimeSec !== undefined) return;
-    setVisibleTimeRange(
-      startTime,
-      startTime +
-        Math.min(
-          (chunkSize / dataClient.estimatedSamplingFrequency!) * 3,
-          endTime,
-        ),
-    );
-  }, [
-    chunkSize,
-    dataClient,
-    setVisibleTimeRange,
-    startTime,
-    endTime,
-    visibleStartTimeSec,
-    visibleEndTimeSec,
-  ]);
+  // // set visible time range
+  // useEffect(() => {
+  //   if (!chunkSize) return;
+  //   if (!dataClient) return;
+  //   if (startTime === undefined) return;
+  //   if (endTime === undefined) return;
+  //   if (visibleStartTimeSec !== undefined) return;
+  //   if (visibleEndTimeSec !== undefined) return;
+  //   setVisibleTimeRange(
+  //     startTime,
+  //     startTime +
+  //       Math.min(
+  //         (chunkSize / dataClient.estimatedSamplingFrequency!) * 3,
+  //         endTime,
+  //       ),
+  //   );
+  // }, [
+  //   chunkSize,
+  //   dataClient,
+  //   setVisibleTimeRange,
+  //   startTime,
+  //   endTime,
+  //   visibleStartTimeSec,
+  //   visibleEndTimeSec,
+  // ]);
 
   // Set the datasetChunkingClient
   useEffect(() => {
@@ -181,6 +179,19 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
             x: Array.from(concatenatedChunk[0] || []),
             y: Array.from(concatenatedChunk[1] || []),
           };
+          // only use the times that are in the visible time range
+          const indices: number[] = [];
+          for (let i = 0; i < data.t.length; i++) {
+            if (
+              data.t[i] >= visibleStartTimeSec &&
+              data.t[i] <= visibleEndTimeSec
+            ) {
+              indices.push(i);
+            }
+          }
+          data.t = indices.map((i) => data.t[i]);
+          data.x = indices.map((i) => data.x[i]);
+          data.y = indices.map((i) => data.y[i]);
           setPlotData(data);
         } catch (err: unknown) {
           if (err instanceof Error && err.message !== "canceled") {
@@ -203,6 +214,8 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
     dataset,
     chunkSize,
     zoomInRequired,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
   ]);
 
   const plotHeight = height - timeSelectionBarHeight;
