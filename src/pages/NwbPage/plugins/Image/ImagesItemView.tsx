@@ -23,6 +23,17 @@ const ImagesItemView: FunctionComponent<Props> = ({
   path,
 }) => {
   const group = useNwbGroup(nwbUrl, path);
+  const { imageWidth, imageHeight } = useMemo(() => {
+    if (!group) return { imageWidth: 0, imageHeight: 0 };
+    let imageWidth = 0;
+    let imageHeight = 0;
+    group.datasets.forEach((ds) => {
+      if (ds.shape.length !== 2) return;
+      if (ds.shape[0] > imageHeight) imageHeight = ds.shape[0];
+      if (ds.shape[1] > imageWidth) imageWidth = ds.shape[1];
+    });
+    return { imageWidth, imageHeight };
+  }, [group]);
   if (!group) return <div>Loading group...</div>;
   return (
     <div style={{ position: "relative", width, height, overflowY: "auto" }}>
@@ -35,8 +46,12 @@ const ImagesItemView: FunctionComponent<Props> = ({
         }}
       >
         {group.datasets.map((ds) => (
-          <div key={ds.path} style={{ minWidth: 300 }}>
-            <IfHasBeenVisible key={ds.path} width={100} height={500}>
+          <div key={ds.path} style={{ minWidth: imageWidth }}>
+            <IfHasBeenVisible
+              key={ds.path}
+              width={imageWidth}
+              height={imageHeight + 60}
+            >
               <h3>{ds.name}</h3>
               <ImageItem
                 nwbUrl={nwbUrl}
