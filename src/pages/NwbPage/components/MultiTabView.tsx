@@ -53,7 +53,7 @@ const MultiTabView: React.FC<MultiTabViewProps> = ({
           >
             {paths.map((path, index) => (
               <div key={path}>
-                {index > 0 && <hr style={{ margin: "20px 0" }} />}
+                {/* {index > 0 && <hr style={{ margin: "20px 0" }} />} */}
                 <NwbObjectView
                   nwbUrl={nwbUrl}
                   path={path}

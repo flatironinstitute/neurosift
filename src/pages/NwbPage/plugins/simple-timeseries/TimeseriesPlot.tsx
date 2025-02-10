@@ -6,6 +6,7 @@ type Props = {
   data?: number[][];
   channelSeparation?: number; // Factor for channel separation (0 means no separation)
   width?: number;
+  height?: number;
 };
 
 const TimeseriesPlot: FunctionComponent<Props> = ({
@@ -13,6 +14,7 @@ const TimeseriesPlot: FunctionComponent<Props> = ({
   data,
   channelSeparation = 0,
   width,
+  height,
 }) => {
   // Memoize the transposed channel data
   const channelData = useMemo(() => {
@@ -84,7 +86,7 @@ const TimeseriesPlot: FunctionComponent<Props> = ({
       }))}
       layout={{
         width: (width || 700) - 20,
-        height: 400,
+        height: height || 300,
         margin: {
           l: 50,
           r: 20,

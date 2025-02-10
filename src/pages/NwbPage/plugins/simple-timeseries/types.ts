@@ -14,4 +14,5 @@ export type Props = {
   nwbUrl: string;
   path: string;
   width?: number;
+  condensed?: boolean;
 };

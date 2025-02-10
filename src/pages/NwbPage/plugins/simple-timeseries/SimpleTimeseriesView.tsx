@@ -1,16 +1,14 @@
 import { FunctionComponent, useState } from "react";
 import { Props } from "./types";
-import { Controls } from "./Controls";
+import { Controls, CondensedControls } from "./Controls";
 import { useTimeseriesData } from "./hooks";
 import TimeseriesPlot from "./TimeseriesPlot";
 import LabeledEventsPlot from "./LabeledEventsPlot";
 import "../common/loadingState.css";
 
-export const SimpleTimeseriesView: FunctionComponent<Props> = ({
-  nwbUrl,
-  path,
-  width,
-}) => {
+export const SimpleTimeseriesView: FunctionComponent<
+  Props & { condensed?: boolean }
+> = ({ nwbUrl, path, width, condensed = false }) => {
   const {
     timeseriesClient,
     error,
@@ -128,24 +126,42 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
   return (
     <div style={{ position: "relative" }}>
       {isLoading && <div className="loadingIndicator">Loading data...</div>}
-      <Controls
-        info={info}
-        visibleChannelsStart={visibleChannelsStart}
-        numVisibleChannels={numVisibleChannels}
-        visibleTimeStart={visibleTimeStart}
-        visibleDuration={visibleDuration}
-        channelSeparation={channelSeparation}
-        onDecreaseChannels={handleDecreaseChannels}
-        onIncreaseChannels={handleIncreaseChannels}
-        onShiftChannelsLeft={handleShiftChannelsLeft}
-        onShiftChannelsRight={handleShiftChannelsRight}
-        onDecreaseVisibleDuration={handleDecreaseVisibleDuration}
-        onIncreaseVisibleDuration={handleIncreaseVisibleDuration}
-        onShiftTimeLeft={handleShiftTimeLeft}
-        onShiftTimeRight={handleShiftTimeRight}
-        onDecreaseChannelSeparation={handleDecreaseChannelSeparation}
-        onIncreaseChannelSeparation={handleIncreaseChannelSeparation}
-      />
+      {condensed ? (
+        <CondensedControls
+          info={info}
+          visibleChannelsStart={visibleChannelsStart}
+          numVisibleChannels={numVisibleChannels}
+          visibleTimeStart={visibleTimeStart}
+          visibleDuration={visibleDuration}
+          onDecreaseChannels={handleDecreaseChannels}
+          onIncreaseChannels={handleIncreaseChannels}
+          onShiftChannelsLeft={handleShiftChannelsLeft}
+          onShiftChannelsRight={handleShiftChannelsRight}
+          onDecreaseVisibleDuration={handleDecreaseVisibleDuration}
+          onIncreaseVisibleDuration={handleIncreaseVisibleDuration}
+          onShiftTimeLeft={handleShiftTimeLeft}
+          onShiftTimeRight={handleShiftTimeRight}
+        />
+      ) : (
+        <Controls
+          info={info}
+          visibleChannelsStart={visibleChannelsStart}
+          numVisibleChannels={numVisibleChannels}
+          visibleTimeStart={visibleTimeStart}
+          visibleDuration={visibleDuration}
+          channelSeparation={channelSeparation}
+          onDecreaseChannels={handleDecreaseChannels}
+          onIncreaseChannels={handleIncreaseChannels}
+          onShiftChannelsLeft={handleShiftChannelsLeft}
+          onShiftChannelsRight={handleShiftChannelsRight}
+          onDecreaseVisibleDuration={handleDecreaseVisibleDuration}
+          onIncreaseVisibleDuration={handleIncreaseVisibleDuration}
+          onShiftTimeLeft={handleShiftTimeLeft}
+          onShiftTimeRight={handleShiftTimeRight}
+          onDecreaseChannelSeparation={handleDecreaseChannelSeparation}
+          onIncreaseChannelSeparation={handleIncreaseChannelSeparation}
+        />
+      )}
       {timeseriesClient.isLabeledEvents() ? (
         <LabeledEventsPlot
           timestamps={info.visibleTimestamps}
@@ -158,6 +174,7 @@ export const SimpleTimeseriesView: FunctionComponent<Props> = ({
           data={info.visibleData}
           channelSeparation={channelSeparation}
           width={width}
+          height={condensed ? 200 : 350}
         />
       )}
     </div>

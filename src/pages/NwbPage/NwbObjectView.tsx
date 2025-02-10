@@ -68,7 +68,7 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
       }
     };
     loadPlugin();
-  }, [path, objectType, nwbUrl, plugin]);
+  }, [path, objectType, nwbUrl, plugin, inMultiView]);
 
   if (loading) {
     return <CircularProgress />;
@@ -105,8 +105,9 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
                 secondaryPaths={secondaryPaths}
                 width={componentWidth}
                 height={componentHeight}
+                condensed={inMultiView}
               />
-              <hr />
+              {!inMultiView && <hr />}
             </div>
           );
         })}

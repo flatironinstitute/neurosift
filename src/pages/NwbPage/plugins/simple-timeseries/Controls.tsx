@@ -48,6 +48,115 @@ type ControlsProps = {
   onIncreaseChannelSeparation: () => void;
 };
 
+export const CondensedControls: FunctionComponent<
+  Omit<
+    ControlsProps,
+    | "channelSeparation"
+    | "onDecreaseChannelSeparation"
+    | "onIncreaseChannelSeparation"
+  >
+> = ({
+  info,
+  visibleChannelsStart,
+  numVisibleChannels,
+  visibleTimeStart,
+  visibleDuration,
+  onDecreaseChannels,
+  onIncreaseChannels,
+  onShiftChannelsLeft,
+  onShiftChannelsRight,
+  onDecreaseVisibleDuration,
+  onIncreaseVisibleDuration,
+  onShiftTimeLeft,
+  onShiftTimeRight,
+}) => {
+  return (
+    <div
+      style={{
+        padding: "6px",
+        marginBottom: "10px",
+        background: "#f5f5f5",
+        borderRadius: "5px",
+        fontFamily: "sans-serif",
+        fontSize: "0.9rem",
+        display: "flex",
+        gap: "16px",
+        alignItems: "center",
+      }}
+    >
+      {info.totalNumChannels > 1 && (
+        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+          <span style={{ fontSize: "0.85rem" }}>
+            Channels {visibleChannelsStart}-
+            {Math.min(
+              visibleChannelsStart + numVisibleChannels,
+              info.totalNumChannels,
+            ) - 1}
+          </span>
+          <ControlButton
+            onClick={onDecreaseChannels}
+            disabled={numVisibleChannels <= 1}
+          >
+            /2
+          </ControlButton>
+          <ControlButton
+            onClick={onIncreaseChannels}
+            disabled={
+              visibleChannelsStart + numVisibleChannels >= info.totalNumChannels
+            }
+          >
+            ×2
+          </ControlButton>
+          <ControlButton
+            onClick={onShiftChannelsLeft}
+            disabled={visibleChannelsStart === 0}
+          >
+            ←
+          </ControlButton>
+          <ControlButton
+            onClick={onShiftChannelsRight}
+            disabled={
+              visibleChannelsStart + numVisibleChannels >= info.totalNumChannels
+            }
+          >
+            →
+          </ControlButton>
+        </div>
+      )}
+
+      {visibleTimeStart !== undefined && visibleDuration !== undefined && (
+        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+          <span style={{ fontSize: "0.85rem" }}>
+            {visibleDuration.toFixed(2)}s @ {visibleTimeStart.toFixed(2)}s
+          </span>
+          <ControlButton
+            onClick={onDecreaseVisibleDuration}
+            disabled={visibleDuration <= 0.2}
+          >
+            /2
+          </ControlButton>
+          <ControlButton onClick={onIncreaseVisibleDuration}>×2</ControlButton>
+          <ControlButton
+            onClick={onShiftTimeLeft}
+            disabled={visibleTimeStart <= info.timeseriesStartTime}
+          >
+            ←
+          </ControlButton>
+          <ControlButton
+            onClick={onShiftTimeRight}
+            disabled={
+              visibleTimeStart + visibleDuration >=
+              info.timeseriesStartTime + info.timeseriesDuration
+            }
+          >
+            →
+          </ControlButton>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const Controls: FunctionComponent<ControlsProps> = ({
   info,
   visibleChannelsStart,

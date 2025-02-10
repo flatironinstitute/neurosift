@@ -16,6 +16,7 @@ export interface NwbObjectViewPlugin {
     secondaryPaths?: string[];
     width?: number;
     height?: number;
+    condensed?: boolean;
   }>;
   special?: boolean;
   requiresWindowDimensions?: boolean;
