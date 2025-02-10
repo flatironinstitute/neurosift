@@ -60,8 +60,16 @@ export const useTabManager = ({
             plugin,
             secondaryPaths,
           });
+        } else if (initialTabId.startsWith("[")) {
+          const paths = JSON.parse(initialTabId);
+          const objectTypes = await Promise.all(
+            paths.map((path: string) => determineObjectType(nwbUrl, path)),
+          );
+          if (canceled) return;
+          dispatch({ type: "OPEN_MULTI_TAB", paths, objectTypes });
         } else {
           const objectType = await determineObjectType(nwbUrl, initialTabId);
+          if (canceled) return;
           dispatch({
             type: "OPEN_TAB",
             id: initialTabId,
