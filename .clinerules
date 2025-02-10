@@ -52,3 +52,5 @@ When asked to do something, first take a look around the project by reading as m
 
 When asked to make a python script to explore something, make a .py file with a notebook style using "# %%" markers. Make some meaningful cells to be executed. Be sure to include a "# %%" on the first line before the imports.
 
+This repo is at https://github.com/flatironinstitute/neurosift
+

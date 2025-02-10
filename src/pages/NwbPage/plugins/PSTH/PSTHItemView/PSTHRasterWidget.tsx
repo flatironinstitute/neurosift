@@ -88,6 +88,12 @@ const PSTHRasterWidget: FunctionComponent<PSTHWidgetProps> = ({
     ctx.fillText(yAxisLabel, 0, 0);
     ctx.restore();
 
+    // trial count at top of y axis
+    ctx.textAlign = "right";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "black";
+    ctx.fillText(trials.length.toString(), margins.left - 6, margins.top);
+
     // x axis labels
     if (showXAxisLabels) {
       ctx.fillStyle = "black";
