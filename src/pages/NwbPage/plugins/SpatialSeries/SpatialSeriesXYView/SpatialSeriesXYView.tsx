@@ -152,6 +152,8 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
     let canceler: Canceler | undefined = undefined;
     let canceled = false;
     const load = async () => {
+      if (visibleStartTimeSec === undefined) return;
+      if (visibleEndTimeSec === undefined) return;
       let finished = false;
       const tt = await dataClient.getTimestampsForDataIndices(
         startChunkIndex * chunkSize,
