@@ -93,21 +93,32 @@ const PlotlyComponent: FunctionComponent<Props> = ({
     width,
     height,
     margin: {
-      l: 60,
-      r: 80, // Increased right margin to accommodate colorbar
+      l: 80, // Increased left margin for y-axis title
+      r: 80, // Right margin for colorbar
       t: 20,
-      b: 40,
+      b: 60, // Increased bottom margin for x-axis title
+      pad: 0,
     },
     showlegend: false,
     xaxis: {
-      title: unit ? `X (${unit})` : "X",
+      title: {
+        text: unit ? `X (${unit})` : "X",
+        standoff: 20, // Add some space between axis and title
+      },
       range: valueRange ? [valueRange.xMin, valueRange.xMax] : undefined,
+      showgrid: true,
+      zeroline: true,
     },
     yaxis: {
-      title: unit ? `Y (${unit})` : "Y",
+      title: {
+        text: unit ? `Y (${unit})` : "Y",
+        standoff: 20, // Add some space between axis and title
+      },
       range: valueRange ? [valueRange.yMin, valueRange.yMax] : undefined,
       scaleanchor: "x",
       scaleratio: 1,
+      showgrid: true,
+      zeroline: true,
     },
     hovermode: "closest",
   };
