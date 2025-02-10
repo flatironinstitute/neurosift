@@ -1,6 +1,12 @@
-import { FunctionComponent, useCallback, useEffect, useState } from "react";
+import {
+  FunctionComponent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import "@css/NwbHierarchyView.css";
-import { useNeurodataObjects } from "./useNeurodataObjects";
+import { NeurodataObject, useNeurodataObjects } from "./useNeurodataObjects";
 import { findSuitablePlugins } from "./plugins/registry";
 import { NwbObjectViewPlugin } from "./plugins/pluginInterface";
 
@@ -24,7 +30,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
   defaultUnitsPath,
   onSetDefaultUnitsPath,
 }) => {
-  const { neurodataObjects, expandItem, loading } = useNeurodataObjects(nwbUrl);
+  const { neurodataObjects, loading } = useNeurodataObjects(nwbUrl);
   const [visiblyExpanded, setVisiblyExpanded] = useState<Set<string>>(
     new Set(["/"]),
   );
@@ -47,7 +53,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
           secondaryPaths: string[];
         }[];
       } = {};
-      for (const obj of neurodataObjects.objects) {
+      for (const obj of neurodataObjects) {
         if (defaultUnitsPath) {
           const objectType = obj.group ? "group" : "dataset";
           const plugins = await findSuitablePlugins(
@@ -69,7 +75,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
       setSpecialPluginsWithSecondaryPaths(newSpecialPluginsWithSecondaryPaths);
     };
     loadSpecialPlugins();
-  }, [nwbUrl, neurodataObjects.objects, defaultUnitsPath]);
+  }, [nwbUrl, neurodataObjects, defaultUnitsPath]);
 
   const truncateDescription = useCallback(
     (text: string, path: string) => {
@@ -131,7 +137,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
   );
 
   const renderRow = (path: string) => {
-    const obj = neurodataObjects.objects.find((o) => o.path === path);
+    const obj = neurodataObjectsByPath[path];
     if (!obj) return null;
 
     // Calculate depth by counting ancestors
@@ -160,14 +166,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
     // If expanded, check for actual children
     // If not expanded, check if it has any subgroups that could potentially be children
     const isVisiblyExpanded = visiblyExpanded.has(obj.path);
-    const hasActualChildren =
-      obj.expanded &&
-      neurodataObjects.objects.some((o) => o.parent?.path === obj.path);
-    const hasSubgroupsOrSubdatasets =
-      (obj.group && obj.group.subgroups.length > 0) ||
-      (obj.group && obj.group.datasets.length > 0);
-    const showExpansionControl =
-      (!obj.expanded && hasSubgroupsOrSubdatasets) || hasActualChildren;
+    const showExpansionControl = obj.children.length > 0;
 
     return (
       <tr key={obj.path}>
@@ -183,29 +182,22 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
             {showExpansionControl ? (
               <span
                 onClick={() => {
-                  if (!obj.expanded) {
-                    expandItem(obj.path);
-                    setVisiblyExpanded((prev) => {
-                      const next = new Set(prev);
+                  setVisiblyExpanded((prev) => {
+                    const next = new Set(prev);
+                    if (prev.has(obj.path)) {
+                      next.delete(obj.path);
+                    } else {
                       next.add(obj.path);
-                      return next;
-                    });
-                  } else {
-                    // Toggle visual expansion for already expanded nodes
-                    setVisiblyExpanded((prev) => {
-                      const next = new Set(prev);
-                      if (prev.has(obj.path)) {
-                        next.delete(obj.path);
-                      } else {
-                        next.add(obj.path);
-                      }
-                      return next;
-                    });
-                  }
+                    }
+                    return next;
+                  });
                 }}
                 style={{ cursor: "pointer", width: "20px", userSelect: "none" }}
               >
-                {obj.expanding ? "..." : isVisiblyExpanded ? "▼" : "►"}
+                {
+                  //obj.expanding ? "..." : isVisiblyExpanded ? "▼" : "►"
+                  isVisiblyExpanded ? "▼" : "►"
+                }
               </span>
             ) : (
               <span style={{ width: "20px" }}></span>
@@ -344,37 +336,43 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
     );
   };
 
-  // Recursively get all visible paths
-  const getVisiblePaths = (path: string): string[] => {
-    const obj = neurodataObjects.objects.find((o) => o.path === path);
-    if (!obj) return [];
+  const neurodataObjectsByPath = useMemo(() => {
+    // create a map of neurodata objects by path
+    const neurodataObjectsByPath: { [key: string]: NeurodataObject } = {};
+    neurodataObjects.forEach((obj) => {
+      neurodataObjectsByPath[obj.path] = obj;
+    });
+    return neurodataObjectsByPath;
+  }, [neurodataObjects]);
 
-    const result: string[] = [];
-    // Don't include root in the result, but check its expanded state
-    if (path === "/") {
-      if (obj.expanded && visiblyExpanded.has(obj.path)) {
-        const children = neurodataObjects.objects
-          .filter((o) => o.parent?.path === path)
-          .map((o) => o.path);
-        children.forEach((childPath) => {
-          result.push(...getVisiblePaths(childPath));
+  const visiblePaths = useMemo(() => {
+    // Recursively get all visible paths
+    const getVisiblePaths = (path: string): string[] => {
+      const obj = neurodataObjectsByPath[path];
+      if (!obj) return [];
+
+      const result: string[] = [];
+      // Don't include root in the result, but check its expanded state
+      if (path === "/") {
+        if (visiblyExpanded.has(obj.path)) {
+          const children = obj.children;
+          children.forEach((child) => {
+            result.push(...getVisiblePaths(child.path));
+          });
+        }
+        return result;
+      }
+      result.push(path);
+      if (visiblyExpanded.has(obj.path)) {
+        const children = obj.children;
+        children.forEach((child) => {
+          result.push(...getVisiblePaths(child.path));
         });
       }
       return result;
-    }
-    result.push(path);
-    if (obj.expanded && visiblyExpanded.has(obj.path)) {
-      const children = neurodataObjects.objects
-        .filter((o) => o.parent?.path === path)
-        .map((o) => o.path);
-      children.forEach((childPath) => {
-        result.push(...getVisiblePaths(childPath));
-      });
-    }
-    return result;
-  };
-
-  const visiblePaths = getVisiblePaths("/");
+    };
+    return getVisiblePaths("/");
+  }, [visiblyExpanded, neurodataObjectsByPath]);
 
   return (
     <div style={{ margin: "10px" }}>
