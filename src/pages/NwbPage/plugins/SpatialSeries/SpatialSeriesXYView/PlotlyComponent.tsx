@@ -34,7 +34,7 @@ const PlotlyComponent: FunctionComponent<Props> = ({
     currentTime !== undefined ? data.t.findIndex((t) => t === currentTime) : -1;
 
   // Create a gradient based on the time values
-  const colorScale = data.t.map((t, i) =>
+  const colorScale = data.t.map((_t, i) =>
     Math.round((i / (data.t.length - 1)) * 100),
   );
 
