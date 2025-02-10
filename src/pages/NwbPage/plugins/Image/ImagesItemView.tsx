@@ -35,7 +35,7 @@ const ImagesItemView: FunctionComponent<Props> = ({
         }}
       >
         {group.datasets.map((ds) => (
-          <div style={{ minWidth: 300 }}>
+          <div key={ds.path} style={{ minWidth: 300 }}>
             <IfHasBeenVisible key={ds.path} width={100} height={500}>
               <h3>{ds.name}</h3>
               <ImageItem
@@ -63,7 +63,10 @@ export const ImageItem: FunctionComponent<ImageItemProps> = ({
   neurodataType,
 }) => {
   const dataset = useNwbDataset(nwbUrl, path);
-  const data = useNwbDatasetData(nwbUrl, path);
+  const { data, errorMessage } = useNwbDatasetData(nwbUrl, path);
+  if (errorMessage) {
+    return <div>Error loading data: {errorMessage}</div>;
+  }
   if (!dataset) return <div>Loading dataset...</div>;
   if (!data) return <div>Loading data...</div>;
 

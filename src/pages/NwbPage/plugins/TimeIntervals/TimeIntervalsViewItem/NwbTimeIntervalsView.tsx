@@ -22,8 +22,11 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
   path,
 }) => {
   // const group = useGroup(nwbFile, path);
-  const startTimeData = useNwbDatasetData(nwbUrl, `${path}/start_time`);
-  const stopTimeData = useNwbDatasetData(nwbUrl, `${path}/stop_time`);
+  const { data: startTimeData } = useNwbDatasetData(
+    nwbUrl,
+    `${path}/start_time`,
+  );
+  const { data: stopTimeData } = useNwbDatasetData(nwbUrl, `${path}/stop_time`);
 
   const { labelFieldName, labelData } = useLabelData(
     nwbUrl,

@@ -206,6 +206,24 @@ export const getNwbDatasetData = async (
     tooltip: `Loading NWB dataset data: ${path}`,
   });
   try {
+    const ds = await f.getDataset(path);
+    if (!ds) {
+      throw new Error(`Dataset not found: ${path}`);
+    }
+    let totalSize = 1;
+    for (let i = 0; i < ds.shape.length; i++) {
+      if (o.slice && o.slice[i]) {
+        totalSize *= o.slice[i][1] - o.slice[i][0];
+      } else {
+        totalSize *= ds.shape[i];
+      }
+    }
+    const maxNumElements = 1e7;
+    if (totalSize > maxNumElements) {
+      throw new Error(
+        `Cannot load dataset data for ${path} because it is too large. ${totalSize} > ${maxNumElements}`,
+      );
+    }
     return await f.getDatasetData(path, o);
   } finally {
     removeStatusItem(itemName);
@@ -238,14 +256,25 @@ export const useNwbDataset = (url: string, path: string) => {
 
 export const useNwbDatasetData = (url: string, path: string) => {
   const [data, setData] = useState<any | undefined>(undefined);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(
+    undefined,
+  );
   useEffect(() => {
     const load = async () => {
-      const d = await getNwbDatasetData(url, path, {});
+      setData(undefined);
+      let d;
+      try {
+        d = await getNwbDatasetData(url, path, {});
+      } catch (err: any) {
+        console.error(`Error loading dataset data: ${err.message}`);
+        setErrorMessage(err.message);
+        return;
+      }
       setData(d);
     };
     load();
   }, [url, path]);
-  return data;
+  return { data, errorMessage };
 };
 
 const getResolvedUrl = async (url: string): Promise<{ url: string }> => {
