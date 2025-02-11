@@ -2,7 +2,7 @@
 import { useNwbGroup } from "@nwbInterface";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 import { useCallback, useEffect, useRef, useState } from "react";
-import TimeseriesClient, { ChunkedTimeseriesClient } from "./TimeseriesClient";
+import { ChunkedTimeseriesClient } from "./TimeseriesClient";
 import { SimpleTimeseriesInfo } from "./types";
 
 export const useTimeseriesClient = (nwbUrl: string, path: string) => {
@@ -32,7 +32,7 @@ export const useTimeseriesData = (
   nwbUrl: string,
   path: string,
 ): {
-  timeseriesClient: TimeseriesClient | undefined;
+  timeseriesClient: ChunkedTimeseriesClient | undefined;
   error: string | undefined;
   isLoading: boolean;
   info: SimpleTimeseriesInfo | undefined;
