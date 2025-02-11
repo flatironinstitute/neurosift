@@ -3,7 +3,7 @@ import NiftiView from "./NiftiView";
 
 const niftiPlugin: DatasetPlugin = {
   name: "nifti",
-  type: ["*.nii.gz"], // Support NIFTI files with gzip compression
+  type: ["*.nii", "*.nii.gz"], // Support NIFTI files with gzip compression
   component: NiftiView,
   priority: 1, // Higher priority than default plugin
 };

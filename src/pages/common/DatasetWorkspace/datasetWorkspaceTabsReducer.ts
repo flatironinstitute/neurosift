@@ -41,6 +41,11 @@ const customReducer = (
       };
     }
 
+    console.log(
+      "--------------- test",
+      action.file,
+      action.file.filename.split("/").pop() || action.file.filename,
+    );
     const newTab: FileTab = {
       id: action.file.id,
       label: action.file.filename.split("/").pop() || action.file.filename,

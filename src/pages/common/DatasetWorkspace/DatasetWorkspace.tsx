@@ -25,6 +25,7 @@ interface DatasetWorkspaceProps {
     parentId: string,
   ) => Promise<DatasetFile | null>;
   fetchDirectory: (file: DatasetFile) => Promise<DatasetFile[]>; // fetches the files in a directory
+  specialOpenFileHandler?: (file: DatasetFile) => boolean;
 }
 
 const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
@@ -34,6 +35,7 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
   initialTab,
   loadFileFromPath,
   fetchDirectory,
+  specialOpenFileHandler,
 }) => {
   const [tabsState, dispatch] = useReducer(datasetWorkspaceTabsReducer, {
     tabs: [],
@@ -59,6 +61,11 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
   }, [initialTab, loadFileFromPath]);
 
   const handleOpenFile = (file: DatasetFile) => {
+    if (specialOpenFileHandler) {
+      if (specialOpenFileHandler(file)) {
+        return;
+      }
+    }
     dispatch({ type: "OPEN_TAB", file });
   };
 
