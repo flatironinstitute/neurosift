@@ -233,6 +233,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
         nwbFilesOnly={nwbFilesOnly}
         setNwbFilesOnly={setNwbFilesOnly}
         incomplete={incomplete}
+        numFilesLoaded={allAssets ? allAssets.length : 0}
       />
       <DatasetWorkspace
         width={0}
@@ -254,6 +255,7 @@ type DandisetOverviewProps = {
   nwbFilesOnly: boolean;
   setNwbFilesOnly: (nwbFilesOnly: boolean) => void;
   incomplete: boolean;
+  numFilesLoaded: number;
 };
 
 const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
@@ -263,6 +265,7 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
   nwbFilesOnly,
   setNwbFilesOnly,
   incomplete,
+  numFilesLoaded,
 }) => {
   const navigate = useNavigate();
   return (
@@ -372,9 +375,7 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
               dandisetVersionInfo.metadata.assetsSummary.numberOfBytes,
             )}
           </div>
-          <div>
-            {dandisetVersionInfo.metadata.assetsSummary.numberOfFiles} files
-          </div>
+          <div>{numFilesLoaded} files loaded</div>
         </div>
       </div>
     </ScrollY>
