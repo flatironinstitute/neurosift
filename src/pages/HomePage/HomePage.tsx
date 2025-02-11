@@ -56,8 +56,11 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
                 DANDI Archive
               </Typography>
               <Typography variant="body2">
-                Browse and explore datasets from the DANDI neuroscience data
-                archive.
+                Browse and explore datasets from the{" "}
+                <Link href="https://dandiarchive.org/">
+                  DANDI neuroscience data archive
+                </Link>
+                .
               </Typography>
             </Box>
             <Box>
@@ -85,7 +88,8 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
                 OpenNeuro
               </Typography>
               <Typography variant="body2">
-                Access and visualize datasets from the OpenNeuro repository.
+                Access and visualize datasets from the{" "}
+                <Link href="https://openneuro.org/">OpenNeuro repository</Link>.
               </Typography>
             </Box>
             <Box>
