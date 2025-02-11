@@ -1,15 +1,18 @@
-import { FunctionComponent, useMemo, useState } from "react";
+import React, { FunctionComponent, useMemo, useState } from "react";
 import { Props } from "./types";
 import { Controls, CondensedControls } from "./Controls";
 import { useNwbGroup } from "@nwbInterface";
 import { useTimeseriesData } from "./hooks";
 import TimeseriesPlot from "./TimeseriesPlot";
+import TimeseriesPlotTSV2 from "./TimeseriesPlotTSV2";
 import LabeledEventsPlot from "./LabeledEventsPlot";
 import "../common/loadingState.css";
 
 export const SimpleTimeseriesView: FunctionComponent<
   Props & { condensed?: boolean }
-> = ({ nwbUrl, path, width, condensed = false }) => {
+> = ({ nwbUrl, path, width = 700, condensed = false }) => {
+  const [usePlotly, setUsePlotly] = useState(true);
+
   const {
     timeseriesClient,
     error,
@@ -132,11 +135,26 @@ export const SimpleTimeseriesView: FunctionComponent<
 
   return (
     <div style={{ position: "relative" }}>
+      <div style={{ position: "absolute", top: 5, right: 5, zIndex: 1000 }}>
+        <button
+          onClick={() => setUsePlotly((p) => !p)}
+          style={{
+            padding: "4px 8px",
+            backgroundColor: usePlotly ? "#007bff" : "#6c757d",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+        >
+          {usePlotly ? "Using Plotly" : "Using TimeScrollView2"}
+        </button>
+      </div>
       {isLoading && <div className="loadingIndicator">Loading data...</div>}
       {condensed ? (
         <CondensedControls
           info={info}
-          visibleChannelsStart={visibleChannelsStart}
+          visibleChannelsStart={visibleChannelsStart || 0}
           numVisibleChannels={numVisibleChannels}
           visibleTimeStart={visibleTimeStart}
           visibleDuration={visibleDuration}
@@ -152,7 +170,7 @@ export const SimpleTimeseriesView: FunctionComponent<
       ) : (
         <Controls
           info={info}
-          visibleChannelsStart={visibleChannelsStart}
+          visibleChannelsStart={visibleChannelsStart || 0}
           numVisibleChannels={numVisibleChannels}
           visibleTimeStart={visibleTimeStart}
           visibleDuration={visibleDuration}
@@ -177,7 +195,7 @@ export const SimpleTimeseriesView: FunctionComponent<
           visibleStartTime={visibleTimeStart || 0}
           visibleEndTime={(visibleTimeStart || 0) + (visibleDuration || 1)}
         />
-      ) : (
+      ) : usePlotly ? (
         <TimeseriesPlot
           timestamps={loadedTimestamps}
           data={loadedData}
@@ -188,6 +206,21 @@ export const SimpleTimeseriesView: FunctionComponent<
           width={width}
           height={condensed ? 200 : 350}
         />
+      ) : (
+        <div
+          style={{ position: "relative", width, height: condensed ? 200 : 350 }}
+        >
+          <TimeseriesPlotTSV2
+            timestamps={loadedTimestamps}
+            data={loadedData}
+            visibleStartTime={visibleTimeStart || 0}
+            visibleEndTime={(visibleTimeStart || 0) + (visibleDuration || 1)}
+            channelNames={channelNames}
+            channelSeparation={channelSeparation}
+            width={width}
+            height={condensed ? 200 : 350}
+          />
+        </div>
       )}
     </div>
   );

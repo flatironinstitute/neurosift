@@ -1,16 +1,7 @@
 import { FunctionComponent, useMemo } from "react";
 import Plot from "react-plotly.js";
 
-type Props = {
-  timestamps?: number[];
-  data?: number[][];
-  visibleStartTime: number;
-  visibleEndTime: number;
-  channelNames?: string[]; // Optional array of channel names
-  channelSeparation?: number; // Factor for channel separation (0 means no separation)
-  width?: number;
-  height?: number;
-};
+import { TimeseriesPlotProps as Props } from "./types";
 
 const colors = [
   "#1f77b4", // blue
@@ -23,15 +14,15 @@ const colors = [
   "#7f7f7f", // gray
 ];
 
-const TimeseriesPlot: FunctionComponent<Props> = ({
-  timestamps,
-  data,
-  visibleStartTime,
-  visibleEndTime,
+const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
+  timestamps = [],
+  data = [],
+  visibleStartTime = 0,
+  visibleEndTime = 1,
   channelSeparation = 0,
   channelNames,
-  width,
-  height,
+  width = 700,
+  height = 300,
 }) => {
   // Memoize the transposed channel data
   const channelData = useMemo(() => {
