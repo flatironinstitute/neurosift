@@ -1,100 +1,41 @@
-import { FunctionComponent, useEffect, useMemo, useReducer } from "react";
+import ScrollY from "@components/ScrollY";
 import { TAB_BAR_HEIGHT, TabBar } from "@components/tabs/TabBar";
 import { BaseTabAction } from "@components/tabs/tabsReducer";
+import { FunctionComponent, useEffect, useReducer } from "react";
 import { initializePlugins } from "../plugins/init";
-import { OpenNeuroFile } from "../plugins/pluginInterface";
+import { DatasetFile } from "../plugins/pluginInterface";
 import { findPluginsByFile } from "../plugins/registry";
-import { OpenNeuroTab, openNeuroTabsReducer } from "../types";
-import OpenNeuroMainTab from "./OpenNeuroMainTab";
-import ScrollY from "@components/ScrollY";
+import { DatasetWorkspaceTab, datasetWorkspaceTabsReducer } from "../types";
+import DatasetMainTab from "./DatasetMainTab";
 import TabToolbar, { TOOLBAR_HEIGHT } from "./TabToolbar";
 
 // Initialize plugins
 initializePlugins();
 
-interface OpenNeuroDatasetWorkspaceProps {
+interface DatasetWorkspaceProps {
   width: number;
   height: number;
-  datasetId: string;
-  snapshotTag: string;
-  topLevelFiles: OpenNeuroFile[];
+  topLevelFiles: DatasetFile[];
   initialTab?: string | null;
+  loadFileFromPath: (
+    filePath: string,
+    parentId: string,
+  ) => Promise<DatasetFile | null>;
+  fetchDirectory: (file: DatasetFile) => Promise<DatasetFile[]>; // fetches the files in a directory
 }
 
-interface OpenNeuroFileResponse {
-  id: string;
-  key: string;
-  filename: string;
-  directory: boolean;
-  size: number;
-  urls: string[];
-}
-
-const OpenNeuroDatasetWorkspace: FunctionComponent<
-  OpenNeuroDatasetWorkspaceProps
-> = ({ width, height, datasetId, snapshotTag, topLevelFiles, initialTab }) => {
-  const [tabsState, dispatch] = useReducer(openNeuroTabsReducer, {
+const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
+  width,
+  height,
+  topLevelFiles,
+  initialTab,
+  loadFileFromPath,
+  fetchDirectory,
+}) => {
+  const [tabsState, dispatch] = useReducer(datasetWorkspaceTabsReducer, {
     tabs: [],
     activeTabId: "main",
   });
-
-  const loadFileFromPath = useMemo(
-    () =>
-      async (
-        filePath: string,
-        parentId: string,
-      ): Promise<OpenNeuroFile | null> => {
-        const query =
-          `query snapshot($datasetId: ID!, $tag: String!, $tree: String!) {
-      snapshot(datasetId: $datasetId, tag: $tag) {
-        files(tree: $tree) {
-          id
-          key
-          filename
-          directory
-          size
-          urls
-        }
-      }
-    }`
-            .split("\n")
-            .join("\\n");
-
-        try {
-          const resp = await fetch("https://openneuro.org/crn/graphql", {
-            headers: { "content-type": "application/json" },
-            body: `{"operationName":"snapshot","variables":{"datasetId":"${datasetId}","tag":"${snapshotTag}","tree":"${parentId}"},"query":"${query}"}`,
-            method: "POST",
-          });
-
-          const fileName = filePath.split("/").pop();
-
-          if (!resp.ok) return null;
-          const data = await resp.json();
-          const files = data.data.snapshot.files;
-          const matchingFile = files.find(
-            (f: OpenNeuroFileResponse) => f.filename === fileName,
-          );
-
-          if (!matchingFile) return null;
-
-          return {
-            id: matchingFile.id,
-            key: matchingFile.key,
-            filepath: filePath,
-            parentId,
-            filename: matchingFile.filename,
-            directory: matchingFile.directory,
-            size: matchingFile.size,
-            urls: matchingFile.urls,
-          };
-        } catch (error) {
-          console.error("Error loading file:", error);
-          return null;
-        }
-      },
-    [datasetId, snapshotTag],
-  );
 
   // Handle initial tab opening
   useEffect(() => {
@@ -114,7 +55,7 @@ const OpenNeuroDatasetWorkspace: FunctionComponent<
     loadInitialTab();
   }, [initialTab, loadFileFromPath]);
 
-  const handleOpenFile = (file: OpenNeuroFile) => {
+  const handleOpenFile = (file: DatasetFile) => {
     dispatch({ type: "OPEN_TAB", file });
   };
 
@@ -142,7 +83,7 @@ const OpenNeuroDatasetWorkspace: FunctionComponent<
         padding: "0 10px",
       }}
     >
-      <TabBar<OpenNeuroTab>
+      <TabBar<DatasetWorkspaceTab>
         tabs={tabsState.tabs}
         activeTabId={tabsState.activeTabId}
         onSwitchTab={handleSwitchTab}
@@ -166,11 +107,10 @@ const OpenNeuroDatasetWorkspace: FunctionComponent<
           }}
         >
           <ScrollY width={width - 20} height={contentHeight}>
-            <OpenNeuroMainTab
-              datasetId={datasetId}
-              snapshotTag={snapshotTag}
+            <DatasetMainTab
               topLevelFiles={topLevelFiles}
               onOpenFile={handleOpenFile}
+              fetchDirectory={fetchDirectory}
             />
           </ScrollY>
         </div>
@@ -229,4 +169,4 @@ const OpenNeuroDatasetWorkspace: FunctionComponent<
   );
 };
 
-export default OpenNeuroDatasetWorkspace;
+export default DatasetWorkspace;

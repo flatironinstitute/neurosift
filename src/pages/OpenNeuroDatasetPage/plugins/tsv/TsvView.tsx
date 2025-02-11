@@ -1,10 +1,10 @@
 import { Box, Button, Typography, CircularProgress } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { FunctionComponent, useEffect, useState, useMemo } from "react";
-import { OpenNeuroPluginProps } from "../pluginInterface";
+import { DatasetPluginProps } from "../pluginInterface";
 import TsvTable from "./components/Table";
 
-const TsvView: FunctionComponent<OpenNeuroPluginProps> = ({ file }) => {
+const TsvView: FunctionComponent<DatasetPluginProps> = ({ file }) => {
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

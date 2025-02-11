@@ -1,7 +1,7 @@
-import { OpenNeuroPlugin } from "../pluginInterface";
+import { DatasetPlugin } from "../pluginInterface";
 import EdfFileView from "./EdfFileView";
 
-const edfPlugin: OpenNeuroPlugin = {
+const edfPlugin: DatasetPlugin = {
   name: "edf",
   type: ["*.edf"], // Handle EDF files
   component: EdfFileView,

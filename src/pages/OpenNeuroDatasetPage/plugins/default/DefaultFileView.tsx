@@ -1,10 +1,10 @@
 import { Box, Button, Typography } from "@mui/material";
 import { FunctionComponent } from "react";
 import { formatBytes } from "@shared/util/formatBytes";
-import { OpenNeuroPluginProps } from "../pluginInterface";
+import { DatasetPluginProps } from "../pluginInterface";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 
-const DefaultFileView: FunctionComponent<OpenNeuroPluginProps> = ({ file }) => {
+const DefaultFileView: FunctionComponent<DatasetPluginProps> = ({ file }) => {
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h5" gutterBottom>

@@ -1,12 +1,12 @@
 import { FunctionComponent } from "react";
 import ShareTabButton from "./ShareTabButton";
-import { OpenNeuroFile } from "../plugins/pluginInterface";
+import { DatasetFile } from "../plugins/pluginInterface";
 
 const TOOLBAR_HEIGHT = 24;
 
 type TabToolbarProps = {
   width: number;
-  file: OpenNeuroFile;
+  file: DatasetFile;
 };
 
 const TabToolbar: FunctionComponent<TabToolbarProps> = ({ width, file }) => {

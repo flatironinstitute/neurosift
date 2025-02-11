@@ -1,14 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useEffect, useMemo, useReducer } from "react";
 import "@css/NwbHierarchyView.css";
 import { formatBytes } from "@shared/util/formatBytes";
-import { OpenNeuroFile } from "../plugins/pluginInterface";
+import { DatasetFile } from "../plugins/pluginInterface";
 
 type Props = {
-  datasetId: string;
-  snapshotTag: string;
-  topLevelFiles: OpenNeuroFile[];
-  onOpenFile: (file: OpenNeuroFile) => void;
+  topLevelFiles: DatasetFile[];
+  onOpenFile: (file: DatasetFile) => void;
+  fetchDirectory: (file: DatasetFile) => Promise<DatasetFile[]>; // fetches the files in a directory
 };
 
 type ExpandedDirectoriesState = {
@@ -35,52 +33,11 @@ const expandedDirectoriesReducer = (
   }
 };
 
-const fetchDirectory = async (
-  datasetId: string,
-  snapshotTag: string,
-  parent: OpenNeuroFile,
-): Promise<OpenNeuroFile[]> => {
-  const query =
-    `query snapshot($datasetId: ID!, $tag: String!, $tree: String!) {
-    snapshot(datasetId: $datasetId, tag: $tag) {
-      files(tree: $tree) {
-        id
-        key
-        filename
-        directory
-        size
-        urls
-      }
-    }
-  }`
-      .split("\n")
-      .join("\\n");
-
-  const resp = await fetch("https://openneuro.org/crn/graphql", {
-    headers: { "content-type": "application/json" },
-    body: `{"operationName":"snapshot","variables":{"datasetId":"${datasetId}","tag":"${snapshotTag}","tree":"${parent.id}"},"query":"${query}"}`,
-    method: "POST",
-  });
-
-  if (!resp.ok) throw new Error("Failed to fetch OpenNeuro directory");
-  const data = await resp.json();
-  return data.data.snapshot.files.map((a: any) => ({
-    id: a.id,
-    key: a.key,
-    filepath: parent.filepath + "/" + a.filename,
-    filename: a.filename,
-    parentId: parent.id,
-    directory: a.directory,
-    size: a.size,
-    urls: a.urls,
-  }));
-};
-
-type LoadedFiles = OpenNeuroFile[];
+type LoadedFiles = DatasetFile[];
 
 type LoadedFilesAction = {
   type: "add";
-  file: OpenNeuroFile;
+  file: DatasetFile;
 };
 
 const loadedFilesReducer = (
@@ -109,11 +66,10 @@ const getIndent = (filepath: string, isFile: boolean) => {
   return x;
 };
 
-const OpenNeuroMainTab: FunctionComponent<Props> = ({
-  datasetId,
-  snapshotTag,
+const DatasetMainTab: FunctionComponent<Props> = ({
   topLevelFiles,
   onOpenFile,
+  fetchDirectory,
 }) => {
   const [expandedDirectories, expandedDirectoriesDispatch] = useReducer(
     expandedDirectoriesReducer,
@@ -130,7 +86,7 @@ const OpenNeuroMainTab: FunctionComponent<Props> = ({
   const filesToDisplay = useMemo(() => {
     // we need to sort the files so they appear in the nested order that they would appear in the file tree
     // and we want to exclude things if any ancestor is not expanded
-    const ret: OpenNeuroFile[] = [];
+    const ret: DatasetFile[] = [];
     const alphabeticallySorted = loadedFiles.sort((a, b) =>
       a.filepath.localeCompare(b.filepath),
     );
@@ -157,7 +113,7 @@ const OpenNeuroMainTab: FunctionComponent<Props> = ({
     return ret;
   }, [loadedFiles, expandedDirectories]);
 
-  const handleExpandDirectory = async (file: OpenNeuroFile) => {
+  const handleExpandDirectory = async (file: DatasetFile) => {
     if (expandedDirectories[file.id]) {
       expandedDirectoriesDispatch({
         type: "toggle",
@@ -165,7 +121,7 @@ const OpenNeuroMainTab: FunctionComponent<Props> = ({
       });
       return;
     }
-    const newFiles = await fetchDirectory(datasetId, snapshotTag, file);
+    const newFiles = await fetchDirectory(file);
     for (const f of newFiles) {
       loadedFilesDispatch({ type: "add", file: f });
     }
@@ -318,4 +274,4 @@ const OpenNeuroMainTab: FunctionComponent<Props> = ({
   );
 };
 
-export default OpenNeuroMainTab;
+export default DatasetMainTab;

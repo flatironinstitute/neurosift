@@ -1,8 +1,8 @@
 import { Box, Typography } from "@mui/material";
 import { FunctionComponent, useEffect, useState } from "react";
-import { OpenNeuroPluginProps } from "../pluginInterface";
+import { DatasetPluginProps } from "../pluginInterface";
 
-const TextFileView: FunctionComponent<OpenNeuroPluginProps> = ({ file }) => {
+const TextFileView: FunctionComponent<DatasetPluginProps> = ({ file }) => {
   const [textContent, setTextContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

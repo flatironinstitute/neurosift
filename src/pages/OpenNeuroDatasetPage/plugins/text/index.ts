@@ -1,7 +1,7 @@
-import { OpenNeuroPlugin } from "../pluginInterface";
+import { DatasetPlugin } from "../pluginInterface";
 import TextFileView from "./TextFileView";
 
-const textPlugin: OpenNeuroPlugin = {
+const textPlugin: DatasetPlugin = {
   name: "text",
   type: ["*.tsv", "*.txt", "CHANGES", "README"],
   component: TextFileView,

@@ -1,9 +1,9 @@
 import { FunctionComponent } from "react";
 import { Box } from "@mui/material";
-import { OpenNeuroPluginProps } from "../pluginInterface";
+import { DatasetPluginProps } from "../pluginInterface";
 import NiftiViewer from "./components/NiftiViewer";
 
-const NiftiView: FunctionComponent<OpenNeuroPluginProps> = ({
+const NiftiView: FunctionComponent<DatasetPluginProps> = ({
   file,
   width,
   height,

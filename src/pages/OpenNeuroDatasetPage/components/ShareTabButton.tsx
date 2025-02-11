@@ -1,10 +1,10 @@
 import { FunctionComponent, useState, useEffect } from "react";
 import { IconButton, Tooltip } from "@mui/material";
 import ShareIcon from "@mui/icons-material/Share";
-import { OpenNeuroFile } from "../plugins/pluginInterface";
+import { DatasetFile } from "../plugins/pluginInterface";
 
 type ShareTabButtonProps = {
-  file: OpenNeuroFile;
+  file: DatasetFile;
 };
 
 const ShareTabButton: FunctionComponent<ShareTabButtonProps> = ({ file }) => {

@@ -1,7 +1,7 @@
-import { OpenNeuroPlugin } from "../pluginInterface";
+import { DatasetPlugin } from "../pluginInterface";
 import TsvView from "./TsvView";
 
-const tsvPlugin: OpenNeuroPlugin = {
+const tsvPlugin: DatasetPlugin = {
   name: "tsv",
   type: ["*.tsv"], // Only handle TSV files
   component: TsvView,

@@ -33,6 +33,7 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    let canceled = false;
     const downloadAndProcessFile = async () => {
       try {
         setLoading(true);
@@ -52,6 +53,10 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
 
         while (true) {
           const { done, value } = await reader.read();
+          if (canceled) {
+            reader.cancel();
+            return;
+          }
 
           if (done) break;
 
@@ -62,6 +67,7 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
             setDownloadProgress((receivedLength / contentLength) * 100);
           }
         }
+        if (canceled) return;
 
         // Combine chunks into a single Uint8Array
         const allChunks = new Uint8Array(receivedLength);
@@ -103,6 +109,9 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
     };
 
     downloadAndProcessFile();
+    return () => {
+      canceled = true;
+    };
   }, [fileUrl]);
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { BaseTab, createTabsReducer } from "@components/tabs/tabsReducer";
-import { OpenNeuroFile } from "./plugins/pluginInterface";
+import { DatasetFile } from "./plugins/pluginInterface";
 
 type MainTab = BaseTab & {
   type: "main";
@@ -7,28 +7,28 @@ type MainTab = BaseTab & {
 
 type FileTab = BaseTab & {
   type: "file";
-  file: OpenNeuroFile;
+  file: DatasetFile;
 };
 
-export type OpenNeuroTab = MainTab | FileTab;
+export type DatasetWorkspaceTab = MainTab | FileTab;
 
 export type OpenNeuroTabsState = {
-  tabs: OpenNeuroTab[];
+  tabs: DatasetWorkspaceTab[];
   activeTabId: string;
 };
 
 type OpenNeuroOpenTabAction = {
   type: "OPEN_TAB";
-  file: OpenNeuroFile;
+  file: DatasetFile;
 };
 
 // Actions can be either our custom OPEN_TAB action or the base tab actions
 // The base actions (CLOSE_TAB and SWITCH_TO_TAB) are handled by the base reducer
-export type OpenNeuroTabAction = OpenNeuroOpenTabAction;
+export type DatasetWorkspaceTabAction = OpenNeuroOpenTabAction;
 
 const customReducer = (
   state: OpenNeuroTabsState,
-  action: OpenNeuroTabAction,
+  action: DatasetWorkspaceTabAction,
 ): OpenNeuroTabsState => {
   if (action.type === "OPEN_TAB") {
     const existingTab = state.tabs.find(
@@ -57,7 +57,7 @@ const customReducer = (
 };
 
 // Create a reducer that handles both custom and base actions
-export const openNeuroTabsReducer = createTabsReducer<
-  OpenNeuroTab,
-  OpenNeuroTabAction
+export const datasetWorkspaceTabsReducer = createTabsReducer<
+  DatasetWorkspaceTab,
+  DatasetWorkspaceTabAction
 >(customReducer);

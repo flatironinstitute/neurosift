@@ -1,10 +1,11 @@
-import { FunctionComponent, useEffect, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import ResponsiveLayout from "@components/ResponsiveLayout";
 import { addRecentOpenNeuroDataset } from "../util/recentOpenNeuroDatasets";
-import OpenNeuroDatasetOverview from "./components/OpenNeuroDatasetOverview";
-import OpenNeuroDatasetWorkspace from "./components/OpenNeuroDatasetWorkspace";
-import { OpenNeuroFile } from "./plugins/pluginInterface";
+import OpenNeuroDatasetOverview from "./OpenNeuroDatasetOverview";
+import DatasetWorkspace from "./components/DatasetWorkspace";
+import { DatasetFile } from "./plugins/pluginInterface";
 
 type OpenNeuroDatasetPageProps = {
   width: number;
@@ -28,7 +29,7 @@ type OpenNeuroDatasetInfo = {
       Funding?: string;
       ReferencesAndLinks?: string[];
     };
-    files: OpenNeuroFile[];
+    files: DatasetFile[];
     summary: {
       modalities: string[];
       sessions: string[];
@@ -41,6 +42,15 @@ type OpenNeuroDatasetInfo = {
     };
   };
 };
+
+interface FileResponse {
+  id: string;
+  key: string;
+  filename: string;
+  directory: boolean;
+  size: number;
+  urls: string[];
+}
 
 const fetchDatasetInfo = async (
   datasetId: string,
@@ -170,6 +180,108 @@ const OpenNeuroDatasetPage: FunctionComponent<OpenNeuroDatasetPageProps> = ({
     fetchData();
   }, [datasetId, version]);
 
+  const loadFileFromPath = useMemo(
+    () =>
+      async (
+        filePath: string,
+        parentId: string,
+      ): Promise<DatasetFile | null> => {
+        if (!datasetInfo?.snapshot.tag) return null;
+        const query =
+          `query snapshot($datasetId: ID!, $tag: String!, $tree: String!) {
+      snapshot(datasetId: $datasetId, tag: $tag) {
+        files(tree: $tree) {
+          id
+          key
+          filename
+          directory
+          size
+          urls
+        }
+      }
+    }`
+            .split("\n")
+            .join("\\n");
+
+        try {
+          const resp = await fetch("https://openneuro.org/crn/graphql", {
+            headers: { "content-type": "application/json" },
+            body: `{"operationName":"snapshot","variables":{"datasetId":"${datasetId}","tag":"${datasetInfo.snapshot.tag}","tree":"${parentId}"},"query":"${query}"}`,
+            method: "POST",
+          });
+
+          const fileName = filePath.split("/").pop();
+
+          if (!resp.ok) return null;
+          const data = await resp.json();
+          const files = data.data.snapshot.files;
+          const matchingFile = files.find(
+            (f: FileResponse) => f.filename === fileName,
+          );
+
+          if (!matchingFile) return null;
+
+          return {
+            id: matchingFile.id,
+            key: matchingFile.key,
+            filepath: filePath,
+            parentId,
+            filename: matchingFile.filename,
+            directory: matchingFile.directory,
+            size: matchingFile.size,
+            urls: matchingFile.urls,
+          };
+        } catch (error) {
+          console.error("Error loading file:", error);
+          return null;
+        }
+      },
+    [datasetId, datasetInfo?.snapshot.tag],
+  );
+
+  const fetchDirectory = useMemo(
+    () =>
+      async (parent: DatasetFile): Promise<DatasetFile[]> => {
+        const snapshotTag = datasetInfo?.snapshot.tag;
+        if (!snapshotTag) return [];
+        const query =
+          `query snapshot($datasetId: ID!, $tag: String!, $tree: String!) {
+      snapshot(datasetId: $datasetId, tag: $tag) {
+        files(tree: $tree) {
+          id
+          key
+          filename
+          directory
+          size
+          urls
+        }
+      }
+    }`
+            .split("\n")
+            .join("\\n");
+
+        const resp = await fetch("https://openneuro.org/crn/graphql", {
+          headers: { "content-type": "application/json" },
+          body: `{"operationName":"snapshot","variables":{"datasetId":"${datasetId}","tag":"${snapshotTag}","tree":"${parent.id}"},"query":"${query}"}`,
+          method: "POST",
+        });
+
+        if (!resp.ok) throw new Error("Failed to fetch OpenNeuro directory");
+        const data = await resp.json();
+        return data.data.snapshot.files.map((a: any) => ({
+          id: a.id,
+          key: a.key,
+          filepath: parent.filepath + "/" + a.filename,
+          filename: a.filename,
+          parentId: parent.id,
+          directory: a.directory,
+          size: a.size,
+          urls: a.urls,
+        }));
+      },
+    [datasetId, datasetInfo?.snapshot.tag],
+  );
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
   if (!datasetInfo) return <div>No dataset found</div>;
@@ -189,7 +301,7 @@ const OpenNeuroDatasetPage: FunctionComponent<OpenNeuroDatasetPageProps> = ({
         height={0}
         datasetInfo={datasetInfo}
       />
-      <OpenNeuroDatasetWorkspace
+      <DatasetWorkspace
         width={0}
         height={0}
         topLevelFiles={datasetInfo.snapshot.files.map((f) => ({
@@ -197,9 +309,9 @@ const OpenNeuroDatasetPage: FunctionComponent<OpenNeuroDatasetPageProps> = ({
           filepath: f.filename,
           parentId: "",
         }))}
-        datasetId={datasetInfo.id}
-        snapshotTag={datasetInfo.snapshot.tag}
         initialTab={tabFilePath}
+        loadFileFromPath={loadFileFromPath}
+        fetchDirectory={fetchDirectory}
       />
     </ResponsiveLayout>
   );

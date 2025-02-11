@@ -1,7 +1,7 @@
-import { OpenNeuroPlugin } from "../pluginInterface";
+import { DatasetPlugin } from "../pluginInterface";
 import DefaultFileView from "./DefaultFileView";
 
-const defaultPlugin: OpenNeuroPlugin = {
+const defaultPlugin: DatasetPlugin = {
   name: "default",
   // Support all file types with lowest priority
   type: ["*"],

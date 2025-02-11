@@ -1,6 +1,6 @@
 import { FunctionComponent } from "react";
 
-export interface OpenNeuroFile {
+export interface DatasetFile {
   id: string;
   key: string;
   filename: string;
@@ -11,21 +11,21 @@ export interface OpenNeuroFile {
   urls: string[];
 }
 
-export interface OpenNeuroPluginProps {
+export interface DatasetPluginProps {
   width?: number;
   height?: number;
-  file: OpenNeuroFile;
+  file: DatasetFile;
   onNavigate?: (path: string) => void;
 }
 
-export interface OpenNeuroPlugin {
+export interface DatasetPlugin {
   name: string;
   type: string[]; // Glob patterns this plugin handles (e.g. "*.tsv", "CHANGES", "dataset_description.json")
-  component: FunctionComponent<OpenNeuroPluginProps>;
+  component: FunctionComponent<DatasetPluginProps>;
   priority?: number;
 }
 
-export interface OpenNeuroPluginData {
+export interface DatasetPluginData {
   type: "file";
   content: string;
   metadata?: Record<string, unknown>;
@@ -44,7 +44,7 @@ const isGlobMatch = (pattern: string, filename: string): boolean => {
 
 // Helper function to check if a plugin supports a file type
 export const pluginSupportsFile = (
-  plugin: OpenNeuroPlugin,
+  plugin: DatasetPlugin,
   filename: string,
 ): boolean => {
   return plugin.type.some((pattern) => isGlobMatch(pattern, filename));

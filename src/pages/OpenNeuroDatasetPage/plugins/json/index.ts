@@ -1,7 +1,7 @@
-import { OpenNeuroPlugin } from "../pluginInterface";
+import { DatasetPlugin } from "../pluginInterface";
 import JsonFileView from "./JsonFileView";
 
-const jsonPlugin: OpenNeuroPlugin = {
+const jsonPlugin: DatasetPlugin = {
   name: "json",
   type: ["*.json"], // Handle JSON files, with special handling for dataset description
   component: JsonFileView,

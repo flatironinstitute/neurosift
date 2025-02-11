@@ -1,6 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import { FunctionComponent, useEffect, useState } from "react";
-import { OpenNeuroPluginProps } from "../pluginInterface";
+import { DatasetPluginProps } from "../pluginInterface";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 
@@ -12,7 +12,7 @@ type JsonValue =
   | JsonValue[]
   | { [key: string]: JsonValue };
 
-const JsonFileView: FunctionComponent<OpenNeuroPluginProps> = ({ file }) => {
+const JsonFileView: FunctionComponent<DatasetPluginProps> = ({ file }) => {
   const [jsonContent, setJsonContent] = useState<JsonValue | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
