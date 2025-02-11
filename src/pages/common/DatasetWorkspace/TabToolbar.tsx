@@ -1,6 +1,6 @@
 import { FunctionComponent } from "react";
 import ShareTabButton from "./ShareTabButton";
-import { DatasetFile } from "../plugins/pluginInterface";
+import { DatasetFile } from "./plugins/pluginInterface";
 
 const TOOLBAR_HEIGHT = 24;
 

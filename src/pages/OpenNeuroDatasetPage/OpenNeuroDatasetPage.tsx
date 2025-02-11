@@ -4,8 +4,8 @@ import { useParams, useSearchParams } from "react-router-dom";
 import ResponsiveLayout from "@components/ResponsiveLayout";
 import { addRecentOpenNeuroDataset } from "../util/recentOpenNeuroDatasets";
 import OpenNeuroDatasetOverview from "./OpenNeuroDatasetOverview";
-import DatasetWorkspace from "./components/DatasetWorkspace";
-import { DatasetFile } from "./plugins/pluginInterface";
+import { DatasetFile } from "../common/DatasetWorkspace/plugins/pluginInterface";
+import DatasetWorkspace from "../common/DatasetWorkspace/DatasetWorkspace";
 
 type OpenNeuroDatasetPageProps = {
   width: number;

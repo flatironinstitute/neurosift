@@ -2,10 +2,13 @@ import ScrollY from "@components/ScrollY";
 import { TAB_BAR_HEIGHT, TabBar } from "@components/tabs/TabBar";
 import { BaseTabAction } from "@components/tabs/tabsReducer";
 import { FunctionComponent, useEffect, useReducer } from "react";
-import { initializePlugins } from "../plugins/init";
-import { DatasetFile } from "../plugins/pluginInterface";
-import { findPluginsByFile } from "../plugins/registry";
-import { DatasetWorkspaceTab, datasetWorkspaceTabsReducer } from "../types";
+import { initializePlugins } from "./plugins/init";
+import { DatasetFile } from "./plugins/pluginInterface";
+import { findPluginsByFile } from "./plugins/registry";
+import {
+  DatasetWorkspaceTab,
+  datasetWorkspaceTabsReducer,
+} from "./datasetWorkspaceTabsReducer";
 import DatasetMainTab from "./DatasetMainTab";
 import TabToolbar, { TOOLBAR_HEIGHT } from "./TabToolbar";
 

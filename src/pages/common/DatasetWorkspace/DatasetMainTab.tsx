@@ -1,7 +1,7 @@
 import { FunctionComponent, useEffect, useMemo, useReducer } from "react";
 import "@css/NwbHierarchyView.css";
 import { formatBytes } from "@shared/util/formatBytes";
-import { DatasetFile } from "../plugins/pluginInterface";
+import { DatasetFile } from "./plugins/pluginInterface";
 
 type Props = {
   topLevelFiles: DatasetFile[];
