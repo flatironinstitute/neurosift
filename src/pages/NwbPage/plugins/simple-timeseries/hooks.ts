@@ -123,6 +123,12 @@ export const useTimeseriesData = (
   const [visibleChannelsStart, setVisibleChannelsStart] = useState(0);
   const [numVisibleChannels, setNumVisibleChannels] = useState(1);
 
+  // initialize the number of visible channels to be min(4, numChannels)
+  useEffect(() => {
+    if (!timeseriesClient) return;
+    setNumVisibleChannels(Math.min(4, timeseriesClient.numChannels));
+  }, [timeseriesClient]);
+
   // Load data when view parameters change
   useEffect(() => {
     if (!timeseriesClient) return;
