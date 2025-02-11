@@ -4,6 +4,7 @@ import Plot from "react-plotly.js";
 type Props = {
   timestamps?: number[];
   data?: number[][];
+  channelNames?: string[]; // Optional array of channel names
   channelSeparation?: number; // Factor for channel separation (0 means no separation)
   width?: number;
   height?: number;
@@ -13,6 +14,7 @@ const TimeseriesPlot: FunctionComponent<Props> = ({
   timestamps,
   data,
   channelSeparation = 0,
+  channelNames,
   width,
   height,
 }) => {
@@ -76,7 +78,7 @@ const TimeseriesPlot: FunctionComponent<Props> = ({
         line: {
           color: colors[i % colors.length],
         },
-        name: `Channel ${i}`,
+        name: channelNames ? channelNames[i] : `Channel ${i}`,
       }))}
       layout={{
         width: (width || 700) - 20,

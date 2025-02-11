@@ -107,6 +107,13 @@ class TimeseriesClient {
     });
     if (!data) throw new Error("Unable to get data");
     if (!timestamps) throw new Error("Unable to get timestamps");
+
+    // Apply conversion and offset from dataset attributes
+    let conversion = this.dataDataset.attrs?.conversion ?? 1;
+    if (isNaN(conversion)) conversion = 1;
+    let offset = this.dataDataset.attrs?.offset ?? 0;
+    if (isNaN(offset)) offset = 0;
+
     const data2: number[][] = [];
     // first fill it with zeros
     for (let i = 0; i < channelEnd - channelStart; i++) {
@@ -115,7 +122,8 @@ class TimeseriesClient {
     // need to transpose the data
     for (let i = 0; i < iEnd - iStart; i++) {
       for (let j = 0; j < channelEnd - channelStart; j++) {
-        data2[j][i] = data[i * (channelEnd - channelStart) + j];
+        data2[j][i] =
+          data[i * (channelEnd - channelStart) + j] * conversion + offset;
       }
     }
     return {

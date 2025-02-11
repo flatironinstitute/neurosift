@@ -1,6 +1,7 @@
-import { FunctionComponent, useState } from "react";
+import { FunctionComponent, useMemo, useState } from "react";
 import { Props } from "./types";
 import { Controls, CondensedControls } from "./Controls";
+import { useNwbGroup } from "@nwbInterface";
 import { useTimeseriesData } from "./hooks";
 import TimeseriesPlot from "./TimeseriesPlot";
 import LabeledEventsPlot from "./LabeledEventsPlot";
@@ -23,6 +24,16 @@ export const SimpleTimeseriesView: FunctionComponent<
     numVisibleChannels,
     setNumVisibleChannels,
   } = useTimeseriesData(nwbUrl, path);
+
+  const group = useNwbGroup(nwbUrl, path);
+  const channelNames = useMemo(() => {
+    if (!group || !timeseriesClient) return undefined;
+    if (group.attrs?.neurodata_type === "SpatialSeries") {
+      const dimensions = ["X", "Y", "Z"];
+      return dimensions.slice(0, timeseriesClient.numChannels);
+    }
+    return undefined;
+  }, [group, timeseriesClient]);
 
   const [channelSeparation, setChannelSeparation] = useState<number>(0);
 
@@ -172,6 +183,7 @@ export const SimpleTimeseriesView: FunctionComponent<
         <TimeseriesPlot
           timestamps={info.visibleTimestamps}
           data={info.visibleData}
+          channelNames={channelNames}
           channelSeparation={channelSeparation}
           width={width}
           height={condensed ? 200 : 350}
