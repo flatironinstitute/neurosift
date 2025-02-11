@@ -13,6 +13,7 @@ export const useQueryAssets = (
   dandisetResponse: DandisetSearchResultItem | null,
   dandisetVersionInfo: DandisetVersionInfo | null,
   useStaging: boolean | undefined,
+  nwbFilesOnly: boolean = false,
 ): {
   incomplete: boolean;
   assetsResponses: AssetsResponse[] | null;
@@ -31,8 +32,9 @@ export const useQueryAssets = (
     (async () => {
       let rr: AssetsResponse[] = [];
       const stagingStr = useStaging ? "-staging" : "";
+      const globFilter = nwbFilesOnly ? "&glob=*.nwb*" : "";
       let uu: string | null =
-        `https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}/versions/${dandisetVersionInfo.version}/assets/?page_size=1000&glob=*.nwb*`;
+        `https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}/versions/${dandisetVersionInfo.version}/assets/?page_size=1000${globFilter}`;
       const authorizationHeader = uu ? getAuthorizationHeaderForUrl(uu) : "";
       const headers = authorizationHeader
         ? { Authorization: authorizationHeader }
@@ -68,6 +70,7 @@ export const useQueryAssets = (
     maxNumPages,
     dandisetVersionInfo,
     setIncomplete,
+    nwbFilesOnly,
   ]);
   return { incomplete, assetsResponses };
 };

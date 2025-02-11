@@ -41,12 +41,14 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
   // todo: set dandisetVersion to route if not there yet
 
   const [maxNumPages] = useState(1);
+  const [nwbFilesOnly, setNwbFilesOnly] = useState(false);
   const { assetsResponses, incomplete } = useQueryAssets(
     dandisetId,
     maxNumPages,
     dandisetResponse || null,
     dandisetVersionInfo,
     staging,
+    nwbFilesOnly,
   );
   const allAssets: AssetsResponseItem[] | null = useMemo(() => {
     if (!assetsResponses) return null;
@@ -137,7 +139,34 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
         </div>
 
         <div style={{ marginTop: "20px" }}>
-          <h2>Assets {incomplete && "(showing partial list)"}</h2>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              marginBottom: "10px",
+            }}
+          >
+            <h2 style={{ margin: 0 }}>
+              Assets {incomplete && "(showing partial list)"}
+            </h2>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                fontSize: "14px",
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={nwbFilesOnly}
+                onChange={(e) => setNwbFilesOnly(e.target.checked)}
+              />
+              Show NWB files only
+            </label>
+          </div>
           <div style={{ marginBottom: "10px" }}>
             Total files:{" "}
             {dandisetVersionInfo.metadata.assetsSummary.numberOfFiles}
