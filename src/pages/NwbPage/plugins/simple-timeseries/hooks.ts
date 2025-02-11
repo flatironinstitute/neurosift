@@ -38,6 +38,7 @@ export const useTimeseriesData = (
   info: SimpleTimeseriesInfo | undefined;
   loadedTimestamps: number[];
   loadedData: number[][];
+  zoomInRequired: boolean;
   visibleTimeStart: number | undefined;
   setVisibleTimeStart: (time: number) => void;
   visibleDuration: number | undefined;
@@ -194,10 +195,14 @@ export const useTimeseriesData = (
       return { bufferedVisibleStartTimeSec, bufferedVisibleEndTimeSec };
     }, [timeseriesClient, visibleStartTimeSec, visibleEndTimeSec]);
 
+  // State for zoom limit warning
+  const [zoomInRequired, setZoomInRequired] = useState(false);
+
   // Load data when view parameters change
   useEffect(() => {
     if (!timeseriesClient) return;
     setIsLoading(true);
+    setZoomInRequired(false);
     const load = async () => {
       if (bufferedVisibleStartTimeSec === undefined) return;
       if (bufferedVisibleEndTimeSec === undefined) return;
@@ -205,6 +210,20 @@ export const useTimeseriesData = (
         visibleChannelsStart + numVisibleChannels,
         timeseriesClient.numChannels,
       );
+
+      // Check if we would be loading too much data
+      const estimatedDataPoints =
+        (bufferedVisibleEndTimeSec - bufferedVisibleStartTimeSec) *
+        timeseriesClient.samplingFrequency *
+        (visibleChannelsEnd - visibleChannelsStart);
+
+      console.log("estimatedDataPoints (millions", estimatedDataPoints / 1e6);
+
+      if (estimatedDataPoints > 1000000) {
+        setZoomInRequired(true);
+        setIsLoading(false);
+        return;
+      }
       const { data, timestamps } = await timeseriesClient.getDataForTimeRange(
         bufferedVisibleStartTimeSec,
         bufferedVisibleEndTimeSec,
@@ -235,6 +254,7 @@ export const useTimeseriesData = (
     info,
     loadedTimestamps,
     loadedData,
+    zoomInRequired,
     visibleTimeStart: visibleStartTimeSec,
     setVisibleTimeStart,
     visibleDuration:

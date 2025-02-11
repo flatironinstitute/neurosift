@@ -23,6 +23,7 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
   channelNames,
   width = 700,
   height = 300,
+  zoomInRequired = false,
 }) => {
   // Memoize the transposed channel data
   const channelData = useMemo(() => {
@@ -122,6 +123,30 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
     }),
     [],
   );
+
+  if (zoomInRequired) {
+    return (
+      <div
+        style={{
+          width: width - 20,
+          height,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#f8f9fa",
+          border: "1px solid #dee2e6",
+          borderRadius: "4px",
+          padding: "20px",
+          margin: "10px",
+          color: "#dc3545",
+          fontSize: "14px",
+        }}
+      >
+        Please zoom in to view the data - current view would load too many
+        points
+      </div>
+    );
+  }
 
   if (!timestamps || !data || data.length === 0) {
     return <div>Loading...</div>;

@@ -11,6 +11,20 @@ const draw = () => {
   // Clear canvas
   ctx.clearRect(0, 0, opts.canvasWidth, opts.canvasHeight);
 
+  if (opts.zoomInRequired) {
+    // Draw zoom warning message
+    ctx.fillStyle = "#dc3545"; // Bootstrap danger red
+    ctx.font = "14px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(
+      "Please zoom in to view the data - current view would load too many points",
+      opts.canvasWidth / 2,
+      opts.canvasHeight / 2,
+    );
+    return;
+  }
+
   // Calculate plot dimensions
   const plotWidth = opts.canvasWidth - opts.margins.left - opts.margins.right;
   const plotHeight = opts.canvasHeight - opts.margins.top - opts.margins.bottom;
@@ -41,8 +55,8 @@ const draw = () => {
   for (let i = 0; i < opts.data.length; i++) {
     const offset =
       (opts.data.length - 1 - i) * opts.channelSeparation * avgStdDev;
-    const channelMin = Math.min(...opts.data[i]) + offset;
-    const channelMax = Math.max(...opts.data[i]) + offset;
+    const channelMin = compute_min(opts.data[i]) + offset;
+    const channelMax = compute_max(opts.data[i]) + offset;
     yMin = Math.min(yMin, channelMin);
     yMax = Math.max(yMax, channelMax);
   }
@@ -102,3 +116,19 @@ onmessage = (e: MessageEvent) => {
     draw();
   }
 };
+
+function compute_min(arr: number[]) {
+  let min = Infinity;
+  for (let i = 0; i < arr.length; i++) {
+    min = Math.min(min, arr[i]);
+  }
+  return min;
+}
+
+function compute_max(arr: number[]) {
+  let max = -Infinity;
+  for (let i = 0; i < arr.length; i++) {
+    max = Math.max(max, arr[i]);
+  }
+  return max;
+}

@@ -20,6 +20,7 @@ export const SimpleTimeseriesView: FunctionComponent<
     info,
     loadedTimestamps,
     loadedData,
+    zoomInRequired,
     visibleTimeStart,
     setVisibleTimeStart,
     visibleDuration,
@@ -205,6 +206,7 @@ export const SimpleTimeseriesView: FunctionComponent<
           channelSeparation={channelSeparation}
           width={width}
           height={condensed ? 200 : 350}
+          zoomInRequired={zoomInRequired}
         />
       ) : (
         <div
@@ -219,6 +221,7 @@ export const SimpleTimeseriesView: FunctionComponent<
             channelSeparation={channelSeparation}
             width={width}
             height={condensed ? 200 : 350}
+            zoomInRequired={zoomInRequired}
           />
         </div>
       )}

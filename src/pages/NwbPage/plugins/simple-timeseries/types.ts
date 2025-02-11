@@ -24,6 +24,7 @@ export type TimeseriesPlotProps = {
   channelSeparation: number;
   width: number;
   height: number;
+  zoomInRequired?: boolean;
 };
 
 export type PlotOpts = {
@@ -40,4 +41,5 @@ export type PlotOpts = {
   channelSeparation: number;
   data: number[][];
   timestamps: number[];
+  zoomInRequired?: boolean;
 };

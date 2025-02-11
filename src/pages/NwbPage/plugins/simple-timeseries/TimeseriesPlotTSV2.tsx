@@ -20,6 +20,7 @@ const TimeseriesPlotTSV2: FunctionComponent<Props> = ({
   visibleStartTime,
   visibleEndTime,
   channelSeparation,
+  zoomInRequired,
 }) => {
   const [canvasElement, setCanvasElement] = useState<
     HTMLCanvasElement | undefined
@@ -72,6 +73,7 @@ const TimeseriesPlotTSV2: FunctionComponent<Props> = ({
       channelSeparation,
       data,
       timestamps,
+      zoomInRequired,
     };
 
     worker.postMessage({ opts });
@@ -84,6 +86,7 @@ const TimeseriesPlotTSV2: FunctionComponent<Props> = ({
     channelSeparation,
     data,
     timestamps,
+    zoomInRequired,
   ]);
 
   const yAxisInfo = {
