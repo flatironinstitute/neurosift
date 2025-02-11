@@ -35,10 +35,14 @@ const expandedDirectoriesReducer = (
 
 type LoadedFiles = DatasetFile[];
 
-type LoadedFilesAction = {
-  type: "add";
-  file: DatasetFile;
-};
+type LoadedFilesAction =
+  | {
+      type: "add";
+      file: DatasetFile;
+    }
+  | {
+      type: "clear";
+    };
 
 const loadedFilesReducer = (
   state: LoadedFiles,
@@ -48,6 +52,9 @@ const loadedFilesReducer = (
     case "add": {
       if (state.find((a) => a.id === action.file.id)) return state;
       return [...state, action.file];
+    }
+    case "clear": {
+      return [];
     }
     default: {
       throw Error("Unexpected action type");
@@ -78,6 +85,7 @@ const DatasetMainTab: FunctionComponent<Props> = ({
 
   const [loadedFiles, loadedFilesDispatch] = useReducer(loadedFilesReducer, []);
   useEffect(() => {
+    loadedFilesDispatch({ type: "clear" });
     for (const f of topLevelFiles) {
       loadedFilesDispatch({ type: "add", file: f });
     }
