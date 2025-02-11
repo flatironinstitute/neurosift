@@ -1,28 +1,55 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useNwbGroup } from "@nwbInterface";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 import { useCallback, useEffect, useRef, useState } from "react";
-import TimeseriesClient from "./TimeseriesClient";
+import TimeseriesClient, { ChunkedTimeseriesClient } from "./TimeseriesClient";
 import { SimpleTimeseriesInfo } from "./types";
 
-export const useTimeseriesData = (nwbUrl: string, path: string) => {
-  const [timeseriesClient, setTimeseriesClient] = useState<TimeseriesClient>();
+export const useTimeseriesClient = (nwbUrl: string, path: string) => {
+  const [timeseriesClient, setTimeseriesClient] =
+    useState<ChunkedTimeseriesClient>();
+  const [error, setError] = useState<string>();
+
+  const group = useNwbGroup(nwbUrl, path);
+
+  useEffect(() => {
+    if (!group) return;
+    const load = async () => {
+      try {
+        const client = await ChunkedTimeseriesClient.create(nwbUrl, group, {});
+        setTimeseriesClient(client);
+      } catch (err: any) {
+        setError(err.message);
+      }
+    };
+    load();
+  }, [nwbUrl, group]);
+
+  return { timeseriesClient, error };
+};
+
+export const useTimeseriesData = (
+  nwbUrl: string,
+  path: string,
+): {
+  timeseriesClient: TimeseriesClient | undefined;
+  error: string | undefined;
+  isLoading: boolean;
+  info: SimpleTimeseriesInfo | undefined;
+  visibleTimeStart: number | undefined;
+  setVisibleTimeStart: (time: number) => void;
+  visibleDuration: number | undefined;
+  setVisibleDuration: (duration: number) => void;
+  visibleChannelsStart: number;
+  setVisibleChannelsStart: (start: number) => void;
+  numVisibleChannels: number;
+  setNumVisibleChannels: (num: number) => void;
+} => {
   const [error, setError] = useState<string>();
   const [isLoading, setIsLoading] = useState(false);
   const [info, setInfo] = useState<SimpleTimeseriesInfo>();
 
-  const group = useNwbGroup(nwbUrl, path);
-
-  // Initialize timeseries client
-  useEffect(() => {
-    if (!group) return;
-    TimeseriesClient.create(nwbUrl, group)
-      .then((client) => {
-        setTimeseriesClient(client);
-      })
-      .catch((err) => {
-        setError(err.message);
-      });
-  }, [nwbUrl, group]);
+  const { timeseriesClient } = useTimeseriesClient(nwbUrl, path);
 
   const {
     initializeTimeseriesSelection,
@@ -35,8 +62,8 @@ export const useTimeseriesData = (nwbUrl: string, path: string) => {
   useEffect(() => {
     if (!timeseriesClient) return;
     const initialize = async () => {
-      const startTime = await timeseriesClient.startTime();
-      const endTime = await timeseriesClient.endTime();
+      const startTime = timeseriesClient.startTime;
+      const endTime = timeseriesClient.endTime;
       initializeTimeseriesSelection(startTime, endTime);
     };
     initialize();
@@ -87,10 +114,9 @@ export const useTimeseriesData = (nwbUrl: string, path: string) => {
     if (startTimeSec === undefined) return;
     if (endTimeSec === undefined) return;
     if (didInitializeVisibleDuration.current) return;
-    timeseriesClient.samplingFrequency().then((freq) => {
-      setVisibleDuration(500 / freq);
-      didInitializeVisibleDuration.current = true;
-    });
+    const freq = timeseriesClient.samplingFrequency;
+    setVisibleDuration(500 / freq);
+    didInitializeVisibleDuration.current = true;
   }, [timeseriesClient, startTimeSec, endTimeSec, setVisibleDuration]);
 
   // Initialize channel view state
@@ -110,36 +136,25 @@ export const useTimeseriesData = (nwbUrl: string, path: string) => {
           ? visibleEndTimeSec - visibleStartTimeSec
           : undefined;
       if (visibleDuration === undefined) return;
-      const samplingFrequency = await timeseriesClient.samplingFrequency();
+      const samplingFrequency = timeseriesClient.samplingFrequency;
       const numSamples = timeseriesClient.numSamples;
       const visibleChannelsEnd = Math.min(
         visibleChannelsStart + numVisibleChannels,
         timeseriesClient.numChannels,
       );
-      const [startTime, duration, dataResult] = await Promise.all([
-        timeseriesClient.startTime(),
-        timeseriesClient.duration(),
-        timeseriesClient.getDataForTimeRange(
-          tStart,
-          tStart + visibleDuration,
-          visibleChannelsStart,
-          visibleChannelsEnd,
-        ),
-      ]);
-
-      const { data, timestamps } = dataResult;
-
-      // Reshape the flat array into 2D array [timepoints][channels]
-      const numTimepoints = timestamps.length;
-      const numChannels = visibleChannelsEnd - visibleChannelsStart;
-      const reshapedData = Array(numTimepoints)
-        .fill(0)
-        .map((_, i) => data.slice(i * numChannels, (i + 1) * numChannels));
+      const startTime = timeseriesClient.startTime;
+      const duration = timeseriesClient.duration;
+      const { data, timestamps } = await timeseriesClient.getDataForTimeRange(
+        tStart,
+        tStart + visibleDuration,
+        visibleChannelsStart,
+        visibleChannelsEnd,
+      );
 
       setInfo({
         visibleTimestamps: timestamps,
         visibleDuration: visibleDuration,
-        visibleData: reshapedData,
+        visibleData: data,
         startTimestamp: tStart,
         totalNumSamples: numSamples,
         totalNumChannels: timeseriesClient.numChannels,

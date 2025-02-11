@@ -18,14 +18,8 @@ const TimeseriesPlot: FunctionComponent<Props> = ({
 }) => {
   // Memoize the transposed channel data
   const channelData = useMemo(() => {
-    if (!data || data.length === 0) return [];
-    const numChannels = data[0].length;
-    // Transpose the data array from [timepoints][channels] to [channels][timepoints]
-    return Array(numChannels)
-      .fill(0)
-      .map((_, channelIndex) =>
-        data.map((timepoint) => timepoint[channelIndex]),
-      );
+    if (!data) return [];
+    return data;
   }, [data]);
 
   // Memoize standard deviation calculations
