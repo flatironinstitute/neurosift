@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useNwbGroup } from "@nwbInterface";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChunkedTimeseriesClient } from "./TimeseriesClient";
 import { SimpleTimeseriesInfo } from "./types";
 
@@ -36,6 +36,8 @@ export const useTimeseriesData = (
   error: string | undefined;
   isLoading: boolean;
   info: SimpleTimeseriesInfo | undefined;
+  loadedTimestamps: number[];
+  loadedData: number[][];
   visibleTimeStart: number | undefined;
   setVisibleTimeStart: (time: number) => void;
   visibleDuration: number | undefined;
@@ -129,45 +131,88 @@ export const useTimeseriesData = (
     setNumVisibleChannels(Math.min(4, timeseriesClient.numChannels));
   }, [timeseriesClient]);
 
+  const [loadedTimestamps, setLoadedTimestamps] = useState<number[]>([]);
+  const [loadedData, setLoadedData] = useState<number[][]>([]);
+
+  useEffect(() => {
+    if (!timeseriesClient) return;
+    const tStart =
+      visibleStartTimeSec !== undefined ? visibleStartTimeSec : startTimeSec;
+    if (tStart === undefined) return;
+    const visibleDuration =
+      visibleStartTimeSec !== undefined && visibleEndTimeSec !== undefined
+        ? visibleEndTimeSec - visibleStartTimeSec
+        : undefined;
+    if (visibleDuration === undefined) return;
+    const samplingFrequency = timeseriesClient.samplingFrequency;
+    const numSamples = timeseriesClient.numSamples;
+    const startTime = timeseriesClient.startTime;
+    const duration = timeseriesClient.duration;
+    setInfo({
+      visibleDuration: visibleDuration,
+      startTimestamp: tStart,
+      totalNumSamples: numSamples,
+      totalNumChannels: timeseriesClient.numChannels,
+      samplingFrequency: samplingFrequency,
+      timeseriesStartTime: startTime,
+      timeseriesDuration: duration,
+    });
+  }, [
+    startTimeSec,
+    endTimeSec,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    timeseriesClient,
+  ]);
+
+  // The buffered visible time range changes less frequently than the visible time range
+  const { bufferedVisibleStartTimeSec, bufferedVisibleEndTimeSec } =
+    useMemo(() => {
+      if (!timeseriesClient)
+        return {
+          bufferedVisibleStartTimeSec: undefined,
+          bufferedVisibleEndTimeSec: undefined,
+        };
+      if (visibleStartTimeSec === undefined)
+        return {
+          bufferedVisibleStartTimeSec: undefined,
+          bufferedVisibleEndTimeSec: undefined,
+        };
+      if (visibleEndTimeSec === undefined)
+        return {
+          bufferedVisibleStartTimeSec: undefined,
+          bufferedVisibleEndTimeSec: undefined,
+        };
+      const chunkSizeSec = timeseriesClient.chunkSizeSec;
+      const chunkGrid = 2;
+      const bufferedVisibleStartTimeSec =
+        Math.floor(visibleStartTimeSec / (chunkSizeSec * chunkGrid)) *
+        (chunkSizeSec * chunkGrid);
+      const bufferedVisibleEndTimeSec =
+        Math.ceil(visibleEndTimeSec / (chunkSizeSec * chunkGrid)) *
+        (chunkSizeSec * chunkGrid);
+      return { bufferedVisibleStartTimeSec, bufferedVisibleEndTimeSec };
+    }, [timeseriesClient, visibleStartTimeSec, visibleEndTimeSec]);
+
   // Load data when view parameters change
   useEffect(() => {
     if (!timeseriesClient) return;
     setIsLoading(true);
     const load = async () => {
-      const tStart =
-        visibleStartTimeSec !== undefined ? visibleStartTimeSec : startTimeSec;
-      if (tStart === undefined) return;
-      const visibleDuration =
-        visibleStartTimeSec !== undefined && visibleEndTimeSec !== undefined
-          ? visibleEndTimeSec - visibleStartTimeSec
-          : undefined;
-      if (visibleDuration === undefined) return;
-      const samplingFrequency = timeseriesClient.samplingFrequency;
-      const numSamples = timeseriesClient.numSamples;
+      if (bufferedVisibleStartTimeSec === undefined) return;
+      if (bufferedVisibleEndTimeSec === undefined) return;
       const visibleChannelsEnd = Math.min(
         visibleChannelsStart + numVisibleChannels,
         timeseriesClient.numChannels,
       );
-      const startTime = timeseriesClient.startTime;
-      const duration = timeseriesClient.duration;
       const { data, timestamps } = await timeseriesClient.getDataForTimeRange(
-        tStart,
-        tStart + visibleDuration,
+        bufferedVisibleStartTimeSec,
+        bufferedVisibleEndTimeSec,
         visibleChannelsStart,
         visibleChannelsEnd,
       );
-
-      setInfo({
-        visibleTimestamps: timestamps,
-        visibleDuration: visibleDuration,
-        visibleData: data,
-        startTimestamp: tStart,
-        totalNumSamples: numSamples,
-        totalNumChannels: timeseriesClient.numChannels,
-        samplingFrequency: samplingFrequency,
-        timeseriesStartTime: startTime,
-        timeseriesDuration: duration,
-      });
+      setLoadedTimestamps(timestamps);
+      setLoadedData(data);
       setIsLoading(false);
     };
     load().catch((err) => {
@@ -176,17 +221,20 @@ export const useTimeseriesData = (
     });
   }, [
     timeseriesClient,
-    visibleStartTimeSec,
-    visibleEndTimeSec,
+    bufferedVisibleStartTimeSec,
+    bufferedVisibleEndTimeSec,
     visibleChannelsStart,
     numVisibleChannels,
     startTimeSec,
   ]);
+
   return {
     timeseriesClient,
     error,
     isLoading,
     info,
+    loadedTimestamps,
+    loadedData,
     visibleTimeStart: visibleStartTimeSec,
     setVisibleTimeStart,
     visibleDuration:

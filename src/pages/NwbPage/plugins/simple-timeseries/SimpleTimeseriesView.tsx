@@ -15,6 +15,8 @@ export const SimpleTimeseriesView: FunctionComponent<
     error,
     isLoading,
     info,
+    loadedTimestamps,
+    loadedData,
     visibleTimeStart,
     setVisibleTimeStart,
     visibleDuration,
@@ -103,10 +105,7 @@ export const SimpleTimeseriesView: FunctionComponent<
   const handleShiftTimeLeft = () => {
     if (!info) return;
     if (visibleTimeStart === undefined) return;
-    const timeSpan =
-      (info.visibleTimestamps[info.visibleTimestamps.length - 1] -
-        info.visibleTimestamps[0]) /
-      2;
+    const timeSpan = (visibleDuration || 1) / 2;
     setVisibleTimeStart(
       Math.max(info.timeseriesStartTime, visibleTimeStart - timeSpan),
     );
@@ -115,10 +114,7 @@ export const SimpleTimeseriesView: FunctionComponent<
   const handleShiftTimeRight = () => {
     if (!info) return;
     if (visibleTimeStart === undefined) return;
-    const timeSpan =
-      (info.visibleTimestamps[info.visibleTimestamps.length - 1] -
-        info.visibleTimestamps[0]) /
-      2;
+    const timeSpan = (visibleDuration || 1) / 2;
     const lastPossibleStart =
       info.timeseriesStartTime + info.timeseriesDuration - timeSpan;
     setVisibleTimeStart(
@@ -175,14 +171,18 @@ export const SimpleTimeseriesView: FunctionComponent<
       )}
       {timeseriesClient.isLabeledEvents() ? (
         <LabeledEventsPlot
-          timestamps={info.visibleTimestamps}
-          data={info.visibleData}
+          timestamps={loadedTimestamps}
+          data={loadedData}
           labels={timeseriesClient.getLabels()}
+          visibleStartTime={visibleTimeStart || 0}
+          visibleEndTime={(visibleTimeStart || 0) + (visibleDuration || 1)}
         />
       ) : (
         <TimeseriesPlot
-          timestamps={info.visibleTimestamps}
-          data={info.visibleData}
+          timestamps={loadedTimestamps}
+          data={loadedData}
+          visibleStartTime={visibleTimeStart || 0}
+          visibleEndTime={(visibleTimeStart || 0) + (visibleDuration || 1)}
           channelNames={channelNames}
           channelSeparation={channelSeparation}
           width={width}

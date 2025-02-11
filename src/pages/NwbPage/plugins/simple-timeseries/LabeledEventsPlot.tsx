@@ -5,12 +5,16 @@ import { Data } from "plotly.js";
 type Props = {
   timestamps?: number[];
   data?: number[][];
+  visibleStartTime: number;
+  visibleEndTime: number;
   labels?: string[];
 };
 
 const LabeledEventsPlot: FunctionComponent<Props> = ({
   timestamps,
   data,
+  visibleStartTime,
+  visibleEndTime,
   labels,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -102,6 +106,7 @@ const LabeledEventsPlot: FunctionComponent<Props> = ({
             },
             showticklabels: true,
             showgrid: true,
+            range: [visibleStartTime, visibleEndTime],
           },
           yaxis: {
             showticklabels: true,

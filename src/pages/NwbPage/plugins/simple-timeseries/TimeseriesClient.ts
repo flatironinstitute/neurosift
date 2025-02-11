@@ -160,7 +160,7 @@ export class ChunkedTimeseriesClient {
 
   private constructor(
     private client: TimeseriesClient,
-    private chunkSizeSec: number,
+    public chunkSizeSec: number,
     private chunkSizeNumChannels: number,
   ) {}
 

@@ -4,15 +4,30 @@ import Plot from "react-plotly.js";
 type Props = {
   timestamps?: number[];
   data?: number[][];
+  visibleStartTime: number;
+  visibleEndTime: number;
   channelNames?: string[]; // Optional array of channel names
   channelSeparation?: number; // Factor for channel separation (0 means no separation)
   width?: number;
   height?: number;
 };
 
+const colors = [
+  "#1f77b4", // blue
+  "#ff7f0e", // orange
+  "#2ca02c", // green
+  "#d62728", // red
+  "#9467bd", // purple
+  "#8c564b", // brown
+  "#e377c2", // pink
+  "#7f7f7f", // gray
+];
+
 const TimeseriesPlot: FunctionComponent<Props> = ({
   timestamps,
   data,
+  visibleStartTime,
+  visibleEndTime,
   channelSeparation = 0,
   channelNames,
   width,
@@ -53,24 +68,10 @@ const TimeseriesPlot: FunctionComponent<Props> = ({
     });
   }, [channelData, channelSeparation, avgStdDev]);
 
-  if (!timestamps || !data || data.length === 0) {
-    return <div>Loading...</div>;
-  }
-
-  const colors = [
-    "#1f77b4", // blue
-    "#ff7f0e", // orange
-    "#2ca02c", // green
-    "#d62728", // red
-    "#9467bd", // purple
-    "#8c564b", // brown
-    "#e377c2", // pink
-    "#7f7f7f", // gray
-  ];
-
-  return (
-    <Plot
-      data={separatedChannelData.map((channelValues, i) => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const plotData: any = useMemo(
+    () =>
+      separatedChannelData.map((channelValues, i) => ({
         x: timestamps,
         y: channelValues,
         type: "scatter",
@@ -79,49 +80,63 @@ const TimeseriesPlot: FunctionComponent<Props> = ({
           color: colors[i % colors.length],
         },
         name: channelNames ? channelNames[i] : `Channel ${i}`,
-      }))}
-      layout={{
-        width: (width || 700) - 20,
-        height: height || 300,
-        margin: {
-          l: 50,
-          r: 20,
-          t: 20,
-          b: 50,
-        },
-        xaxis: {
-          title: {
-            text: "Time (s)",
-            font: {
-              size: 14,
-              color: "#000",
-            },
-            standoff: 10,
-          },
-          showticklabels: true,
-          showgrid: true,
-        },
-        yaxis: {
-          title: {
-            text:
-              channelSeparation > 0 ? "Value (channels separated)" : "Value",
-            font: {
-              size: 14,
-              color: "#000",
-            },
-            standoff: 5,
-          },
-          showticklabels: true,
-          showgrid: true,
-        },
-        showlegend: true,
-      }}
-      config={{
-        responsive: true,
-        displayModeBar: false,
-      }}
-    />
+      })),
+    [channelNames, separatedChannelData, timestamps],
   );
+
+  const layout = useMemo(
+    () => ({
+      width: (width || 700) - 20,
+      height: height || 300,
+      margin: {
+        l: 50,
+        r: 20,
+        t: 20,
+        b: 50,
+      },
+      xaxis: {
+        title: {
+          text: "Time (s)",
+          font: {
+            size: 14,
+            color: "#000",
+          },
+          standoff: 10,
+        },
+        range: [visibleStartTime, visibleEndTime],
+        showticklabels: true,
+        showgrid: true,
+      },
+      yaxis: {
+        title: {
+          text: channelSeparation > 0 ? "Value (channels separated)" : "Value",
+          font: {
+            size: 14,
+            color: "#000",
+          },
+          standoff: 5,
+        },
+        showticklabels: true,
+        showgrid: true,
+      },
+      showlegend: true,
+    }),
+    [channelSeparation, height, visibleEndTime, visibleStartTime, width],
+  );
+
+  const config = useMemo(
+    () => ({
+      responsive: true,
+      displayModeBar: false,
+    }),
+    [],
+  );
+
+  if (!timestamps || !data || data.length === 0) {
+    return <div>Loading...</div>;
+  }
+
+  return <Plot data={plotData} layout={layout} config={config} />;
 };
 
 export default TimeseriesPlot;
