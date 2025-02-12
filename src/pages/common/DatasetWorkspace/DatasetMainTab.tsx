@@ -7,6 +7,7 @@ type Props = {
   topLevelFiles: DatasetFile[];
   onOpenFile: (file: DatasetFile) => void;
   fetchDirectory: (file: DatasetFile) => Promise<DatasetFile[]>; // fetches the files in a directory
+  additionalControls?: JSX.Element;
 };
 
 type ExpandedDirectoriesState = {
@@ -77,6 +78,7 @@ const DatasetMainTab: FunctionComponent<Props> = ({
   topLevelFiles,
   onOpenFile,
   fetchDirectory,
+  additionalControls,
 }) => {
   const [expandedDirectories, expandedDirectoriesDispatch] = useReducer(
     expandedDirectoriesReducer,
@@ -141,6 +143,7 @@ const DatasetMainTab: FunctionComponent<Props> = ({
 
   return (
     <div style={{ margin: "10px", maxWidth: 750 }}>
+      {additionalControls}
       <table className="nwb-hierarchy-table">
         <thead>
           <tr>

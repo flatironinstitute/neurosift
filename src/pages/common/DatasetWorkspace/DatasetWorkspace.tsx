@@ -26,6 +26,7 @@ interface DatasetWorkspaceProps {
   ) => Promise<DatasetFile | null>;
   fetchDirectory: (file: DatasetFile) => Promise<DatasetFile[]>; // fetches the files in a directory
   specialOpenFileHandler?: (file: DatasetFile) => boolean;
+  mainTabAdditionalControls?: JSX.Element;
 }
 
 const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
@@ -36,6 +37,7 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
   loadFileFromPath,
   fetchDirectory,
   specialOpenFileHandler,
+  mainTabAdditionalControls,
 }) => {
   const [tabsState, dispatch] = useReducer(datasetWorkspaceTabsReducer, {
     tabs: [],
@@ -121,6 +123,7 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
               topLevelFiles={topLevelFiles}
               onOpenFile={handleOpenFile}
               fetchDirectory={fetchDirectory}
+              additionalControls={mainTabAdditionalControls}
             />
           </ScrollY>
         </div>

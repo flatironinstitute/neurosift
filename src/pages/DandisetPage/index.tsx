@@ -1,4 +1,5 @@
 import ResponsiveLayout from "@components/ResponsiveLayout";
+import ScrollY from "@components/ScrollY";
 import { formatBytes } from "@shared/util/formatBytes";
 import {
   FunctionComponent,
@@ -19,7 +20,6 @@ import { addRecentDandiset } from "../util/recentDandisets";
 import { useDandisetVersionInfo } from "./useDandisetVersionInfo";
 import useQueryAssets from "./useQueryAssets";
 import useQueryDandiset from "./useQueryDandiset";
-import ScrollY from "@components/ScrollY";
 
 type DandisetPageProps = {
   width: number;
@@ -212,6 +212,36 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
     [dandisetId, dandisetVersionInfo, navigate],
   );
 
+  const nwbFilesOwnlyControlVisible = useMemo(() => {
+    // if nwbFilesOnly is true then we'll show the control
+    if (nwbFilesOnly) return true;
+    // if we have a partial list then we'll show the control
+    if (incomplete) return true;
+    // if some of the files are not NWB files then we'll show the control
+    if (allAssets?.some((a) => !a.path.endsWith(".nwb"))) return true;
+    // otherwise we don't show the control
+    return false;
+  }, [allAssets, nwbFilesOnly, incomplete]);
+
+  const mainTabAdditionalControls = nwbFilesOwnlyControlVisible ? (
+    <label
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "5px",
+        fontSize: "14px",
+        cursor: "pointer",
+      }}
+    >
+      <input
+        type="checkbox"
+        checked={nwbFilesOnly}
+        onChange={(e) => setNwbFilesOnly(e.target.checked)}
+      />
+      Show NWB files only
+    </label>
+  ) : undefined;
+
   if (!dandisetResponse || !dandisetVersionInfo) {
     return <div>Loading...</div>;
   }
@@ -230,8 +260,6 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
         width={0}
         height={0}
         dandisetVersionInfo={dandisetVersionInfo}
-        nwbFilesOnly={nwbFilesOnly}
-        setNwbFilesOnly={setNwbFilesOnly}
         incomplete={incomplete}
         numFilesLoaded={allAssets ? allAssets.length : 0}
       />
@@ -243,6 +271,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
         loadFileFromPath={loadFileFromPath}
         fetchDirectory={fetchDirectory}
         specialOpenFileHandler={specialOpenFileHandler}
+        mainTabAdditionalControls={mainTabAdditionalControls}
       />
     </ResponsiveLayout>
   );
@@ -252,8 +281,6 @@ type DandisetOverviewProps = {
   width: number;
   height: number;
   dandisetVersionInfo: DandisetVersionInfo;
-  nwbFilesOnly: boolean;
-  setNwbFilesOnly: (nwbFilesOnly: boolean) => void;
   incomplete: boolean;
   numFilesLoaded: number;
 };
@@ -262,8 +289,6 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
   width,
   height,
   dandisetVersionInfo,
-  nwbFilesOnly,
-  setNwbFilesOnly,
   incomplete,
   numFilesLoaded,
 }) => {
@@ -338,34 +363,6 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
           )}
         </div>
         <div style={{ marginTop: "20px" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              marginBottom: "10px",
-            }}
-          >
-            <h2 style={{ margin: 0 }}>
-              Assets {incomplete && "(showing partial list)"}
-            </h2>
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-                fontSize: "14px",
-                cursor: "pointer",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={nwbFilesOnly}
-                onChange={(e) => setNwbFilesOnly(e.target.checked)}
-              />
-              Show NWB files only
-            </label>
-          </div>
           <div style={{ marginBottom: "10px" }}>
             Total files:{" "}
             {dandisetVersionInfo.metadata.assetsSummary.numberOfFiles}
@@ -375,7 +372,10 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
               dandisetVersionInfo.metadata.assetsSummary.numberOfBytes,
             )}
           </div>
-          <div>{numFilesLoaded} files loaded</div>
+          <div>
+            {numFilesLoaded} files loaded{" "}
+            {incomplete && "(showing partial list)"}
+          </div>
         </div>
       </div>
     </ScrollY>
