@@ -181,8 +181,8 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
               if (!handledSubdirectories.has(subDir)) {
                 handledSubdirectories.add(subDir);
                 newFiles.push({
-                  id: subDir,
-                  key: subDir,
+                  id: parent.filepath + "/" + subDir,
+                  key: parent.filepath + "/" + subDir,
                   filename: subDir,
                   filepath: parent.filepath + "/" + subDir,
                   parentId: parent.id,
