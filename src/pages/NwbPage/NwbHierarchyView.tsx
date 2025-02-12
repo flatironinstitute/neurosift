@@ -85,22 +85,25 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
         }[];
       } = {};
       for (const obj of neurodataObjects) {
-        if (defaultUnitsPath) {
-          const objectType = obj.group ? "group" : "dataset";
-          const plugins = await findSuitablePlugins(
-            nwbUrl,
-            obj.path,
-            objectType,
-            {
-              special: true,
-              secondaryPaths: [defaultUnitsPath],
-            },
+        const objectType = obj.group ? "group" : "dataset";
+        const plugins = await findSuitablePlugins(
+          nwbUrl,
+          obj.path,
+          objectType,
+          {
+            special: true,
+            defaultUnitsPath,
+          },
+        );
+        if (plugins.length > 0) {
+          newSpecialPluginsWithSecondaryPaths[obj.path] = plugins.map(
+            (plugin) => ({
+              plugin,
+              secondaryPaths: plugin.requiredDefaultUnits
+                ? [defaultUnitsPath!]
+                : [],
+            }),
           );
-          if (plugins.length > 0) {
-            newSpecialPluginsWithSecondaryPaths[obj.path] = plugins.map(
-              (plugin) => ({ plugin, secondaryPaths: [defaultUnitsPath] }),
-            );
-          }
         }
       }
       setSpecialPluginsWithSecondaryPaths(newSpecialPluginsWithSecondaryPaths);
@@ -305,28 +308,58 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
                 </span>
               )}
               {specialPluginsWithSecondaryPaths[obj.path]?.map(
-                ({ plugin, secondaryPaths }) => (
-                  <button
-                    key={plugin.name}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenObjectInNewTab?.(obj.path, plugin, secondaryPaths);
-                    }}
-                    style={{
-                      padding: "2px 6px",
-                      fontSize: "12px",
-                      backgroundColor: "#f8f9fa",
-                      border: "1px solid #dee2e6",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      color: "#6c757d",
-                      marginLeft: "4px",
-                    }}
-                    title={`Open in ${plugin.name}`}
-                  >
-                    {plugin.label || plugin.name}
-                  </button>
-                ),
+                ({ plugin, secondaryPaths }) => {
+                  const pluginString = `${plugin.name}|${[obj.path, ...secondaryPaths].join("^")}`;
+                  return (
+                    <div
+                      key={plugin.name}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedItems.has(pluginString)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          setSelectedItems((prev) => {
+                            const next = new Set(prev);
+                            if (e.target.checked) {
+                              next.add(pluginString);
+                            } else {
+                              next.delete(pluginString);
+                            }
+                            return next;
+                          });
+                        }}
+                      />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenObjectInNewTab?.(
+                            obj.path,
+                            plugin,
+                            secondaryPaths,
+                          );
+                        }}
+                        style={{
+                          padding: "2px 6px",
+                          fontSize: "12px",
+                          backgroundColor: "#f8f9fa",
+                          border: "1px solid #dee2e6",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                          color: "#6c757d",
+                        }}
+                        title={`Open in ${plugin.name}`}
+                      >
+                        {plugin.label || plugin.name}
+                      </button>
+                    </div>
+                  );
+                },
               )}
             </div>
           </div>
@@ -413,11 +446,27 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
             <button
               title="Open selected in new tab"
               onClick={() => {
-                const paths: string[] = Array.from(selectedItems);
-                if (paths.length === 1) {
-                  onOpenObjectInNewTab?.(paths[0]);
-                } else if (paths.length > 1) {
-                  onOpenObjectsInNewTab?.(paths);
+                const selections: string[] = Array.from(selectedItems);
+                if (selections.length === 1) {
+                  const selection = selections[0];
+                  if (selection.includes("|")) {
+                    // Plugin selection
+                    const [pluginName, pathWithSecondary] =
+                      selection.split("|");
+                    const [path, ...secondaryPaths] =
+                      pathWithSecondary.split("^");
+                    const plugin = specialPluginsWithSecondaryPaths[path]?.find(
+                      (p) => p.plugin.name === pluginName,
+                    )?.plugin;
+                    if (plugin) {
+                      onOpenObjectInNewTab?.(path, plugin, secondaryPaths);
+                    }
+                  } else {
+                    // Regular path selection
+                    onOpenObjectInNewTab?.(selection);
+                  }
+                } else if (selections.length > 1) {
+                  onOpenObjectsInNewTab?.(selections);
                 }
                 setSelectedItems(new Set()); // Clear selection after opening
               }}

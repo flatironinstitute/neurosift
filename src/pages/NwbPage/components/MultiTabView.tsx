@@ -13,6 +13,8 @@ interface MultiTabViewProps {
   tabId: string;
   paths: string[];
   objectTypes: ObjectType[];
+  plugins: (NwbObjectViewPlugin | undefined)[];
+  secondaryPathsList: (string[] | undefined)[];
   onOpenObjectInNewTab: (
     path: string,
     plugin?: NwbObjectViewPlugin,
@@ -27,6 +29,8 @@ const MultiTabView: React.FC<MultiTabViewProps> = ({
   tabId,
   paths,
   objectTypes,
+  plugins,
+  secondaryPathsList,
   onOpenObjectInNewTab,
 }) => {
   return (
@@ -62,6 +66,8 @@ const MultiTabView: React.FC<MultiTabViewProps> = ({
                   width={width - 40} // leave space for the scrollbar
                   height={undefined}
                   inMultiView={true}
+                  plugin={plugins[index]}
+                  secondaryPaths={secondaryPathsList[index]}
                 />
               </div>
             ))}

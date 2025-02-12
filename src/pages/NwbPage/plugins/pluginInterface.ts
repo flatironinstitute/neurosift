@@ -22,4 +22,5 @@ export interface NwbObjectViewPlugin {
   special?: boolean;
   requiresWindowDimensions?: boolean;
   showInMultiView?: boolean;
+  requiredDefaultUnits?: boolean;
 }

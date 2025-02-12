@@ -79,6 +79,8 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
                   tabId={tab.id}
                   paths={tab.paths}
                   objectTypes={tab.objectTypes}
+                  plugins={tab.plugins}
+                  secondaryPathsList={tab.secondaryPathsList}
                   onOpenObjectInNewTab={handleOpenObjectInNewTab}
                 />
               </div>

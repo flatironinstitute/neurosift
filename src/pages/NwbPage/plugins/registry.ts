@@ -34,18 +34,23 @@ export const findSuitablePlugins = async (
   nwbUrl: string,
   path: string,
   objectType: "group" | "dataset",
-  o: { special?: boolean; secondaryPaths?: string[] },
+  o: { special?: boolean; defaultUnitsPath?: string },
 ): Promise<NwbObjectViewPlugin[]> => {
   const ret: NwbObjectViewPlugin[] = [];
   for (let i = 0; i < nwbObjectViewPlugins.length; i++) {
     const plugin = nwbObjectViewPlugins[i];
     if (!!plugin.special === !!o.special) {
+      if (plugin.requiredDefaultUnits && !o.defaultUnitsPath) {
+        continue;
+      }
       if (
         await plugin.canHandle({
           nwbUrl,
           objectType,
           path,
-          secondaryPaths: o.secondaryPaths,
+          secondaryPaths: plugin.requiredDefaultUnits
+            ? [o.defaultUnitsPath!]
+            : [],
         })
       ) {
         ret.push(plugin);

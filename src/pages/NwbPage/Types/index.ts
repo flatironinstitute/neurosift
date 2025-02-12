@@ -23,6 +23,8 @@ export interface MultiTab extends BaseTab {
   type: "multi";
   paths: string[];
   objectTypes: ObjectType[];
+  plugins: (NwbObjectViewPlugin | undefined)[];
+  secondaryPathsList: (string[] | undefined)[];
 }
 
 export type DynamicTab = MainTab | SingleTab | MultiTab;

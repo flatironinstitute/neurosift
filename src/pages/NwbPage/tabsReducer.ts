@@ -1,5 +1,6 @@
 import { BaseTab } from "@components/tabs/tabsReducer";
 import { NwbObjectViewPlugin } from "./plugins/pluginInterface";
+import { findPluginByName } from "./plugins/registry";
 
 type MainTab = BaseTab & {
   type: "main";
@@ -17,6 +18,8 @@ type MultiObjectTab = BaseTab & {
   type: "multi";
   paths: string[];
   objectTypes: ("group" | "dataset")[];
+  plugins: (NwbObjectViewPlugin | undefined)[];
+  secondaryPathsList: (string[] | undefined)[];
 };
 
 export type DynamicTab = MainTab | SingleObjectTab | MultiObjectTab;
@@ -63,11 +66,17 @@ const tabsReducer = (state: TabsState, action: TabsAction): TabsState => {
         };
       }
 
+      const { paths, plugins, secondaryPathsList } = getPathsAndPlugins(
+        action.paths,
+      );
+
       const newTab: MultiObjectTab = {
         id,
         type: "multi",
         label: `${action.paths.length} items`,
-        paths: action.paths,
+        paths,
+        plugins,
+        secondaryPathsList,
         objectTypes: action.objectTypes,
       };
 
@@ -129,6 +138,27 @@ const tabsReducer = (state: TabsState, action: TabsAction): TabsState => {
     default:
       return state;
   }
+};
+
+const getPathsAndPlugins = (itemStrings: string[]) => {
+  const paths: string[] = [];
+  const plugins: (NwbObjectViewPlugin | undefined)[] = [];
+  const secondaryPathsList: (string[] | undefined)[] = [];
+  for (const itemString of itemStrings) {
+    const a = itemString.split("|");
+    if (a.length <= 1) {
+      paths.push(itemString);
+      plugins.push(undefined);
+    } else {
+      const b = a[1].split("^");
+      paths.push(b[0]);
+      const s = b.slice(1); // todo: use this
+      const p = findPluginByName(a[0]);
+      plugins.push(p);
+      secondaryPathsList.push(s);
+    }
+  }
+  return { paths, plugins, secondaryPathsList };
 };
 
 export default tabsReducer;
