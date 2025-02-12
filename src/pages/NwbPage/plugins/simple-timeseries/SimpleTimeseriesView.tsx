@@ -1,12 +1,12 @@
-import React, { FunctionComponent, useMemo, useState } from "react";
-import { Props } from "./types";
-import { Controls, CondensedControls } from "./Controls";
 import { useNwbGroup } from "@nwbInterface";
+import { FunctionComponent, useMemo, useState } from "react";
+import "../common/loadingState.css";
+import { CondensedControls, Controls } from "./Controls";
 import { useTimeseriesData } from "./hooks";
+import LabeledEventsPlot from "./LabeledEventsPlot";
 import TimeseriesPlot from "./TimeseriesPlot";
 import TimeseriesPlotTSV2 from "./TimeseriesPlotTSV2";
-import LabeledEventsPlot from "./LabeledEventsPlot";
-import "../common/loadingState.css";
+import { Props } from "./types";
 
 export const SimpleTimeseriesView: FunctionComponent<
   Props & { condensed?: boolean }
