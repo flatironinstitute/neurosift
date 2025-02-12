@@ -53,10 +53,7 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
     if (endTime === undefined) return;
     if (visibleStartTimeSec !== undefined) return;
     if (visibleEndTimeSec !== undefined) return;
-    const initialVisibleDuration = Math.min(
-      1e5 / estimatedSamplingFrequency,
-      endTime - startTime,
-    );
+    const initialVisibleDuration = 1e4 / estimatedSamplingFrequency;
     setVisibleTimeRange(
       startTime,
       Math.min(startTime + initialVisibleDuration, endTime),

@@ -1,4 +1,5 @@
-import { FunctionComponent } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { FunctionComponent, useCallback, useMemo } from "react";
 import Plot from "react-plotly.js";
 import { Layout, PlotData } from "plotly.js";
 
@@ -26,108 +27,117 @@ const PlotlyComponent: FunctionComponent<Props> = ({
   width,
   height,
   onPointClick,
-  currentTime,
+  // currentTime,
   valueRange,
   unit,
 }) => {
-  const currentIndex =
-    currentTime !== undefined ? data.t.findIndex((t) => t === currentTime) : -1;
+  // const currentIndex =
+  //   currentTime !== undefined ? data.t.findIndex((t) => t === currentTime) : -1;
 
   // Create a gradient based on the time values
-  const colorScale = data.t.map((_t, i) =>
-    Math.round((i / (data.t.length - 1)) * 100),
+  const colorScale = useMemo(
+    () => data.t.map((_t, i) => Math.round((i / (data.t.length - 1)) * 100)),
+    [data.t],
   );
 
-  const traces: Partial<PlotData>[] = [
-    {
-      x: data.x,
-      y: data.y,
-      type: "scatter",
-      mode: "markers",
-      marker: {
-        size: 6,
-        color: colorScale,
-        colorscale: "Viridis",
-        opacity: 0.6,
-        showscale: true,
-        colorbar: {
-          title: "Time Progress",
-          tickmode: "array",
-          ticktext: ["Start", "End"],
-          tickvals: [0, 100],
+  const traces: Partial<PlotData>[] = useMemo(() => {
+    const traces = [
+      {
+        x: data.x,
+        y: data.y,
+        type: "scatter",
+        mode: "markers",
+        marker: {
+          size: 6,
+          color: colorScale,
+          colorscale: "Viridis",
+          opacity: 0.6,
+          showscale: true,
+          colorbar: {
+            title: "Time Progress",
+            tickmode: "array",
+            ticktext: ["Start", "End"],
+            tickvals: [0, 100],
+          },
         },
+        showlegend: false,
+      },
+      {
+        x: data.x,
+        y: data.y,
+        type: "scatter",
+        mode: "lines",
+        line: {
+          color: "#2E8B57",
+          width: 1,
+        },
+        showlegend: false,
+        hoverinfo: "skip",
+      },
+    ] as any[];
+    // Add current point if it exists
+    // if (currentIndex !== -1) {
+    //   traces.push({
+    //     x: [data.x[currentIndex]],
+    //     y: [data.y[currentIndex]],
+    //     type: "scatter",
+    //     mode: "markers",
+    //     marker: {
+    //       size: 10,
+    //       color: "red",
+    //       opacity: 1,
+    //     },
+    //     name: "Current",
+    //   });
+    // }
+    return traces;
+  }, [data, colorScale]);
+
+  const layout: Partial<Layout> = useMemo(
+    () => ({
+      width,
+      height,
+      margin: {
+        l: 80, // Increased left margin for y-axis title
+        r: 80, // Right margin for colorbar
+        t: 20,
+        b: 60, // Increased bottom margin for x-axis title
+        pad: 0,
       },
       showlegend: false,
-    },
-    {
-      x: data.x,
-      y: data.y,
-      type: "scatter",
-      mode: "lines",
-      line: {
-        color: "#2E8B57",
-        width: 1,
+      xaxis: {
+        title: {
+          text: unit ? `X (${unit})` : "X",
+          standoff: 20, // Add some space between axis and title
+        },
+        range: valueRange ? [valueRange.xMin, valueRange.xMax] : undefined,
+        showgrid: true,
+        zeroline: true,
       },
-      showlegend: false,
-      hoverinfo: "skip",
-    },
-  ];
+      yaxis: {
+        title: {
+          text: unit ? `Y (${unit})` : "Y",
+          standoff: 20, // Add some space between axis and title
+        },
+        range: valueRange ? [valueRange.yMin, valueRange.yMax] : undefined,
+        scaleanchor: "x",
+        scaleratio: 1,
+        showgrid: true,
+        zeroline: true,
+      },
+      hovermode: "closest",
+    }),
+    [valueRange, unit, width, height],
+  );
 
-  // Add current point if it exists
-  if (currentIndex !== -1) {
-    traces.push({
-      x: [data.x[currentIndex]],
-      y: [data.y[currentIndex]],
-      type: "scatter",
-      mode: "markers",
-      marker: {
-        size: 10,
-        color: "red",
-        opacity: 1,
-      },
-      name: "Current",
-    });
-  }
-
-  const layout: Partial<Layout> = {
-    width,
-    height,
-    margin: {
-      l: 80, // Increased left margin for y-axis title
-      r: 80, // Right margin for colorbar
-      t: 20,
-      b: 60, // Increased bottom margin for x-axis title
-      pad: 0,
+  const handleClick = useCallback(
+    (event: { points?: Array<{ pointIndex: number }> }) => {
+      if (!onPointClick || !event.points || event.points.length === 0) return;
+      const pointIndex = event.points[0].pointIndex;
+      onPointClick(pointIndex);
     },
-    showlegend: false,
-    xaxis: {
-      title: {
-        text: unit ? `X (${unit})` : "X",
-        standoff: 20, // Add some space between axis and title
-      },
-      range: valueRange ? [valueRange.xMin, valueRange.xMax] : undefined,
-      showgrid: true,
-      zeroline: true,
-    },
-    yaxis: {
-      title: {
-        text: unit ? `Y (${unit})` : "Y",
-        standoff: 20, // Add some space between axis and title
-      },
-      range: valueRange ? [valueRange.yMin, valueRange.yMax] : undefined,
-      scaleanchor: "x",
-      scaleratio: 1,
-      showgrid: true,
-      zeroline: true,
-    },
-    hovermode: "closest",
-  };
-
-  const handleClick = (event: { points?: Array<{ pointIndex: number }> }) => {
-    if (!onPointClick || !event.points || event.points.length === 0) return;
-    const pointIndex = event.points[0].pointIndex;
-    onPointClick(pointIndex);
-  };
+    [onPointClick],
+  );
 
   return (
     <Plot
