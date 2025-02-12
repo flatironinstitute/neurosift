@@ -39,7 +39,10 @@ export type PlotOpts = {
   visibleStartTimeSec: number;
   visibleEndTimeSec: number;
   channelSeparation: number;
+  zoomInRequired?: boolean;
+};
+
+export type PlotData = {
   data: number[][];
   timestamps: number[];
-  zoomInRequired?: boolean;
 };

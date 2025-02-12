@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import TimeScrollView2 from "@shared/component-time-scroll-view-2/TimeScrollView2";
-import { TimeseriesPlotProps as Props } from "./types";
+import { PlotData, PlotOpts, TimeseriesPlotProps as Props } from "./types";
 
 const defaultMargins = {
   left: 50,
@@ -60,23 +60,21 @@ const TimeseriesPlotTSV2: FunctionComponent<Props> = ({
     };
   }, [canvasElement]);
 
-  // Update plot when data or view changes
+  // Update plot opts
   useEffect(() => {
     if (!worker) return;
 
-    const opts = {
+    const plotOpts: PlotOpts = {
       canvasWidth: width,
       canvasHeight: height,
       margins: defaultMargins,
       visibleStartTimeSec: visibleStartTime,
       visibleEndTimeSec: visibleEndTime,
       channelSeparation,
-      data,
-      timestamps,
       zoomInRequired,
     };
 
-    worker.postMessage({ opts });
+    worker.postMessage({ plotOpts });
   }, [
     worker,
     width,
@@ -84,10 +82,19 @@ const TimeseriesPlotTSV2: FunctionComponent<Props> = ({
     visibleStartTime,
     visibleEndTime,
     channelSeparation,
-    data,
-    timestamps,
     zoomInRequired,
   ]);
+
+  // update plot data
+  useEffect(() => {
+    if (!worker) return;
+
+    const plotData: PlotData = {
+      data,
+      timestamps,
+    };
+    worker.postMessage({ plotData });
+  }, [worker, data, timestamps]);
 
   const yAxisInfo = {
     showTicks: true,

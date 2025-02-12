@@ -185,7 +185,7 @@ export const useTimeseriesData = (
           bufferedVisibleEndTimeSec: undefined,
         };
       const chunkSizeSec = timeseriesClient.chunkSizeSec;
-      const chunkGrid = 2;
+      const chunkGrid = 1;
       const bufferedVisibleStartTimeSec =
         Math.floor(visibleStartTimeSec / (chunkSizeSec * chunkGrid)) *
         (chunkSizeSec * chunkGrid);
@@ -217,9 +217,7 @@ export const useTimeseriesData = (
         timeseriesClient.samplingFrequency *
         (visibleChannelsEnd - visibleChannelsStart);
 
-      console.log("estimatedDataPoints (millions", estimatedDataPoints / 1e6);
-
-      if (estimatedDataPoints > 1000000) {
+      if (estimatedDataPoints > 5e6) {
         setZoomInRequired(true);
         setIsLoading(false);
         return;
