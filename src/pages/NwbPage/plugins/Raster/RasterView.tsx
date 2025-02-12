@@ -95,14 +95,31 @@ const RasterViewChild = ({
 
   const handleIncreaseUnits = () => {
     if (!spikeTrainsClient) return;
-    const newNumUnits = Math.min(
-      numVisibleUnits * 2,
-      spikeTrainsClient.unitIds.length - visibleUnitsStart,
-    );
+    const remainingUnits = spikeTrainsClient.unitIds.length - visibleUnitsStart;
+    if (numVisibleUnits === remainingUnits) return; // Already showing all units
+
+    const nextPowerOfTwo = numVisibleUnits * 2;
+    // If next power of 2 exceeds remaining units, show all remaining units
+    const newNumUnits =
+      nextPowerOfTwo > remainingUnits ? remainingUnits : nextPowerOfTwo;
     setNumVisibleUnits(newNumUnits);
   };
 
   const handleDecreaseUnits = () => {
+    if (!spikeTrainsClient) return;
+    // If current count is equal to total units, go to previous power of 2
+    if (
+      numVisibleUnits ===
+      spikeTrainsClient.unitIds.length - visibleUnitsStart
+    ) {
+      const prevPowerOfTwo = Math.pow(
+        2,
+        Math.floor(Math.log2(numVisibleUnits - 1)),
+      );
+      setNumVisibleUnits(prevPowerOfTwo);
+      return;
+    }
+    // Otherwise divide by 2, but ensure at least 1 unit
     const newNumUnits = Math.max(1, Math.floor(numVisibleUnits / 2));
     setNumVisibleUnits(newNumUnits);
   };
@@ -196,7 +213,7 @@ const RasterViewChild = ({
             <button
               onClick={handleIncreaseUnits}
               disabled={
-                visibleUnitsStart + numVisibleUnits * 2 > plotData.totalNumUnits
+                visibleUnitsStart + numVisibleUnits >= plotData.totalNumUnits
               }
               style={{
                 padding: "2px 6px",
