@@ -31,9 +31,9 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
   onSetDefaultUnitsPath,
 }) => {
   const { neurodataObjects, loading } = useNeurodataObjects(nwbUrl);
-  const [visiblyExpanded, setVisiblyExpanded] = useState<Set<string>>(
-    new Set(["/"]),
-  );
+  const [visiblyExpanded, setVisiblyExpanded] = useState<{
+    [path: string]: boolean | undefined;
+  }>({ "/": true });
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
     new Set(),
@@ -44,6 +44,37 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
   ] = useState<{
     [key: string]: { plugin: NwbObjectViewPlugin; secondaryPaths: string[] }[];
   }>({});
+
+  // if any objects have only a single child, and their parent is visibly expanded, expand the object
+  useEffect(() => {
+    const toNewlyExpandPaths = new Set<string>();
+    let somethingChanged = true;
+    while (somethingChanged) {
+      somethingChanged = false;
+      for (const obj of neurodataObjects) {
+        if (obj.parent && obj.children.length === 1) {
+          if (
+            visiblyExpanded[obj.path] === undefined &&
+            visiblyExpanded[obj.parent.path]
+          ) {
+            if (!toNewlyExpandPaths.has(obj.path)) {
+              toNewlyExpandPaths.add(obj.path);
+              somethingChanged = true;
+            }
+          }
+        }
+      }
+    }
+    if (toNewlyExpandPaths.size > 0) {
+      setVisiblyExpanded((prev) => {
+        const next = { ...prev };
+        toNewlyExpandPaths.forEach((path) => {
+          next[path] = true;
+        });
+        return next;
+      });
+    }
+  }, [neurodataObjects, visiblyExpanded]);
 
   useEffect(() => {
     const loadSpecialPlugins = async () => {
@@ -165,7 +196,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
 
     // If expanded, check for actual children
     // If not expanded, check if it has any subgroups that could potentially be children
-    const isVisiblyExpanded = visiblyExpanded.has(obj.path);
+    const isVisiblyExpanded = visiblyExpanded[obj.path];
     const showExpansionControl = obj.children.length > 0;
 
     return (
@@ -183,11 +214,11 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
               <span
                 onClick={() => {
                   setVisiblyExpanded((prev) => {
-                    const next = new Set(prev);
-                    if (prev.has(obj.path)) {
-                      next.delete(obj.path);
+                    const next = { ...prev };
+                    if (prev[obj.path]) {
+                      next[obj.path] = false; // important to set false rather than undefined so it doesn't get auto-expanded
                     } else {
-                      next.add(obj.path);
+                      next[obj.path] = true;
                     }
                     return next;
                   });
@@ -245,30 +276,6 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
                 )}
                 <span>{name}</span>
               </span>
-              {specialPluginsWithSecondaryPaths[obj.path]?.map(
-                ({ plugin, secondaryPaths }) => (
-                  <button
-                    key={plugin.name}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenObjectInNewTab?.(obj.path, plugin, secondaryPaths);
-                    }}
-                    style={{
-                      padding: "2px 6px",
-                      fontSize: "12px",
-                      backgroundColor: "#f8f9fa",
-                      border: "1px solid #dee2e6",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      color: "#6c757d",
-                      marginLeft: "4px",
-                    }}
-                    title={`Open in ${plugin.name}`}
-                  >
-                    {plugin.label || plugin.name}
-                  </button>
-                ),
-              )}
               {onOpenObjectInNewTab && (
                 <span
                   title="Open item in new tab"
@@ -296,6 +303,30 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
                 >
                   ⧉
                 </span>
+              )}
+              {specialPluginsWithSecondaryPaths[obj.path]?.map(
+                ({ plugin, secondaryPaths }) => (
+                  <button
+                    key={plugin.name}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenObjectInNewTab?.(obj.path, plugin, secondaryPaths);
+                    }}
+                    style={{
+                      padding: "2px 6px",
+                      fontSize: "12px",
+                      backgroundColor: "#f8f9fa",
+                      border: "1px solid #dee2e6",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      color: "#6c757d",
+                      marginLeft: "4px",
+                    }}
+                    title={`Open in ${plugin.name}`}
+                  >
+                    {plugin.label || plugin.name}
+                  </button>
+                ),
               )}
             </div>
           </div>
@@ -354,7 +385,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
       const result: string[] = [];
       // Don't include root in the result, but check its expanded state
       if (path === "/") {
-        if (visiblyExpanded.has(obj.path)) {
+        if (visiblyExpanded[obj.path]) {
           const children = obj.children;
           children.forEach((child) => {
             result.push(...getVisiblePaths(child.path));
@@ -363,7 +394,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
         return result;
       }
       result.push(path);
-      if (visiblyExpanded.has(obj.path)) {
+      if (visiblyExpanded[obj.path]) {
         const children = obj.children;
         children.forEach((child) => {
           result.push(...getVisiblePaths(child.path));
