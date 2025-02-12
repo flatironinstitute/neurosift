@@ -14,6 +14,13 @@ type Props = {
 
 const RasterViewPlot = ({ plotData }: Props) => {
   const { traces, layout } = useMemo(() => {
+    // Calculate marker size based on number of units
+    // More units -> smaller markers, fewer units -> larger markers
+    const markerSize = Math.max(
+      7,
+      Math.min(12, Math.floor(100 / plotData.unitIds.length)),
+    );
+
     // Create one trace per unit
     const traces: Data[] = plotData.unitIds.map((unitId, index) => {
       const spikeTimes = plotData.spikeTimes[index];
@@ -24,10 +31,10 @@ const RasterViewPlot = ({ plotData }: Props) => {
         type: "scatter" as const,
         name: `Unit ${unitId}`,
         marker: {
-          size: 3,
+          size: markerSize,
           symbol: "line-ns", // vertical line marker
           line: {
-            width: 1,
+            width: Math.max(1, markerSize / 4), // Scale line width with marker size
             color: "black",
           },
         },
@@ -48,7 +55,11 @@ const RasterViewPlot = ({ plotData }: Props) => {
         range: [-1, plotData.unitIds.length],
       },
       showlegend: false,
-      height: Math.max(300, plotData.unitIds.length * 30), // Slightly reduced height per unit for better display
+      height: Math.max(
+        300,
+        plotData.unitIds.length *
+          Math.max(25, Math.min(50, Math.floor(400 / plotData.unitIds.length))),
+      ), // Dynamic height per unit
       margin: {
         l: 70,
         r: 30,
