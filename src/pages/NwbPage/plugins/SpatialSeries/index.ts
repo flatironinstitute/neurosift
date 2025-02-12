@@ -3,7 +3,8 @@ import { NwbObjectViewPlugin } from "../pluginInterface";
 import SpatialSeriesPluginView from "./SpatialSeriesPluginView";
 
 export const spatialSeriesPlugin: NwbObjectViewPlugin = {
-  name: "SpatialSeries",
+  name: "SpatialSeriesXY",
+  label: "XY",
   canHandle: async ({ nwbUrl, path }: { nwbUrl: string; path: string }) => {
     const group = await getNwbGroup(nwbUrl, path);
     if (!group) return false;
@@ -36,4 +37,5 @@ export const spatialSeriesPlugin: NwbObjectViewPlugin = {
   // We need window dimensions since we're displaying a spatial plot
   requiresWindowDimensions: true,
   showInMultiView: false,
+  special: true,
 };

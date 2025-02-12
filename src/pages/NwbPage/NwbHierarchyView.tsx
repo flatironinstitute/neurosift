@@ -265,7 +265,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
                     }}
                     title={`Open in ${plugin.name}`}
                   >
-                    {plugin.name}
+                    {plugin.label || plugin.name}
                   </button>
                 ),
               )}

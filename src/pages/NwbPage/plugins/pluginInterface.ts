@@ -1,5 +1,6 @@
 export interface NwbObjectViewPlugin {
   name: string;
+  label?: string; // otherwise same as name
   // Returns whether this plugin can handle the given nwb group
   canHandle: (o: {
     nwbUrl: string;

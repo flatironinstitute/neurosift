@@ -3,6 +3,7 @@ import { Canceler } from "@remote-h5-file";
 import {
   useTimeRange,
   useTimeseriesSelection,
+  useTimeseriesSelectionInitialization,
 } from "@shared/context-timeseries-selection-2";
 import TimeseriesSelectionBar, {
   timeSelectionBarHeight,
@@ -34,15 +35,40 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
   const [datasetChunkingClient, setDatasetChunkingClient] = useState<
     TimeseriesDatasetChunkingClient | undefined
   >(undefined);
-  const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
+  const { visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange } =
+    useTimeRange();
 
   const dataset = useNwbDataset(nwbUrl, `${path}/data`);
   const unit = dataset?.attrs?.unit;
 
   const dataClient = useTimeseriesTimestampsClient(nwbUrl, path);
-  // const startTime = dataClient ? dataClient.startTime! : undefined;
-  // const endTime = dataClient ? dataClient.endTime! : undefined;
-  // useTimeseriesSelectionInitialization(startTime, endTime);
+  const startTime = dataClient ? dataClient.startTime! : undefined;
+  const endTime = dataClient ? dataClient.endTime! : undefined;
+  useTimeseriesSelectionInitialization(startTime, endTime);
+  useEffect(() => {
+    if (!dataClient) return;
+    const estimatedSamplingFrequency = dataClient.estimatedSamplingFrequency;
+    if (estimatedSamplingFrequency === undefined) return;
+    if (startTime === undefined) return;
+    if (endTime === undefined) return;
+    if (visibleStartTimeSec !== undefined) return;
+    if (visibleEndTimeSec !== undefined) return;
+    const initialVisibleDuration = Math.min(
+      1e5 / estimatedSamplingFrequency,
+      endTime - startTime,
+    );
+    setVisibleTimeRange(
+      startTime,
+      Math.min(startTime + initialVisibleDuration, endTime),
+    );
+  }, [
+    dataClient,
+    startTime,
+    endTime,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    setVisibleTimeRange,
+  ]);
 
   const { setCurrentTime, currentTime } = useTimeseriesSelection();
 
