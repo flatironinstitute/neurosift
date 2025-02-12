@@ -1,6 +1,4 @@
-import { Box, Typography, Collapse, IconButton } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import { Box, Typography } from "@mui/material";
 import ScrollY from "@components/ScrollY";
 import { FunctionComponent, useState } from "react";
 import { DandisetVersionInfo } from "../DandiPage/dandi-types";
@@ -27,17 +25,20 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
   const [contributorsExpanded, setContributorsExpanded] = useState(false);
 
   const abbreviatedDescriptionLength = 600;
+  const abbreviatedContributorsLength = 200;
   const hasLongDescription =
     dandisetVersionInfo.metadata.description?.length >
     abbreviatedDescriptionLength;
-  const initialContributors =
-    dandisetVersionInfo.metadata.contributor?.slice(0, 12) ?? [];
-  const remainingContributors =
-    dandisetVersionInfo.metadata.contributor?.slice(12) ?? [];
+  const contributorsText =
+    dandisetVersionInfo.metadata.contributor?.map((c) => c.name).join(" • ") ??
+    "";
+  const hasLongContributors =
+    contributorsText.length > abbreviatedContributorsLength;
 
   return (
     <ScrollY width={width} height={height}>
       <div style={{ padding: "15px" }}>
+        {/* Back to DANDI */}
         <div style={{ marginBottom: "15px" }}>
           <span
             onClick={() => navigate("/dandi")}
@@ -51,10 +52,12 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
           </span>
         </div>
 
+        {/* Name */}
         <Typography variant="h6" gutterBottom>
           {dandisetVersionInfo.metadata.name}
         </Typography>
 
+        {/* View on DANDI */}
         <Box sx={{ mt: 2 }}>
           <a
             href={`https://dandiarchive.org/dandiset/${dandisetVersionInfo.dandiset.identifier}/${dandisetVersionInfo.version}`}
@@ -66,34 +69,7 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
           </a>
         </Box>
 
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="subtitle2" color="text.secondary">
-            Dataset Information
-          </Typography>
-          <Box sx={{ ml: 1, mt: 1 }}>
-            <div>ID: {dandisetVersionInfo.dandiset.identifier}</div>
-            <div>Version: {dandisetVersionInfo.version}</div>
-            <div>
-              Created:{" "}
-              {new Date(dandisetVersionInfo.created).toLocaleDateString()}
-            </div>
-            <div>Status: {dandisetVersionInfo.status}</div>
-            <div>
-              Total Size:{" "}
-              {formatBytes(
-                dandisetVersionInfo.metadata.assetsSummary.numberOfBytes,
-              )}
-            </div>
-            <div>
-              Files: {dandisetVersionInfo.metadata.assetsSummary.numberOfFiles}
-            </div>
-            <div>
-              {numFilesLoaded} files loaded{" "}
-              {incomplete && "(showing partial list)"}
-            </div>
-          </Box>
-        </Box>
-
+        {/* Description */}
         {dandisetVersionInfo.metadata.description && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="subtitle2" color="text.secondary">
@@ -122,43 +98,141 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
           </Box>
         )}
 
+        {/* Contributors */}
         {dandisetVersionInfo.metadata.contributor && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="subtitle2" color="text.secondary">
               Contributors
             </Typography>
             <Box sx={{ ml: 1, mt: 1 }}>
-              {initialContributors.map((contributor, index) => (
-                <div key={index}>{contributor.name}</div>
-              ))}
-              <Collapse in={contributorsExpanded}>
-                {remainingContributors.map((contributor, index) => (
-                  <div key={index + 3}>{contributor.name}</div>
-                ))}
-              </Collapse>
-              {remainingContributors.length > 0 && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    cursor: "pointer",
-                    color: "primary.main",
-                  }}
-                  onClick={() => setContributorsExpanded(!contributorsExpanded)}
-                >
-                  <Typography variant="body2">
-                    {contributorsExpanded
-                      ? "Show less"
-                      : `Show ${remainingContributors.length} more`}
-                  </Typography>
-                  <IconButton size="small">
-                    {contributorsExpanded ? (
-                      <ExpandLessIcon />
-                    ) : (
-                      <ExpandMoreIcon />
-                    )}
-                  </IconButton>
-                </Box>
+              <div>
+                {contributorsExpanded
+                  ? contributorsText
+                  : hasLongContributors
+                    ? contributorsText.slice(0, abbreviatedContributorsLength) +
+                      "... "
+                    : contributorsText}
+                {hasLongContributors && (
+                  <span
+                    onClick={() =>
+                      setContributorsExpanded(!contributorsExpanded)
+                    }
+                    style={{ color: "#0066cc", cursor: "pointer" }}
+                  >
+                    {contributorsExpanded ? "show less" : "read more"}
+                  </span>
+                )}
+              </div>
+            </Box>
+          </Box>
+        )}
+
+        {/* Dataset information */}
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="subtitle2" color="text.secondary">
+            Dataset Information
+          </Typography>
+          <Box sx={{ ml: 1, mt: 1 }}>
+            <div>ID: {dandisetVersionInfo.dandiset.identifier}</div>
+            <div>Version: {dandisetVersionInfo.version}</div>
+            <div>
+              Created:{" "}
+              {new Date(dandisetVersionInfo.created).toLocaleDateString()}
+            </div>
+            <div>Status: {dandisetVersionInfo.status}</div>
+            <div>
+              Total Size:{" "}
+              {formatBytes(
+                dandisetVersionInfo.metadata.assetsSummary.numberOfBytes,
+              )}
+            </div>
+            <div>
+              Files: {dandisetVersionInfo.metadata.assetsSummary.numberOfFiles}
+            </div>
+            <div>
+              Number of Subjects:{" "}
+              {dandisetVersionInfo.metadata.assetsSummary.numberOfSubjects}
+            </div>
+            <div>
+              {numFilesLoaded} files loaded{" "}
+              {incomplete && "(showing partial list)"}
+            </div>
+          </Box>
+        </Box>
+
+        {/* License and Citation */}
+        {(dandisetVersionInfo.metadata.license?.length > 0 ||
+          dandisetVersionInfo.metadata.citation) && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" color="text.secondary">
+              License and Citation
+            </Typography>
+            <Box sx={{ ml: 1, mt: 1 }}>
+              {dandisetVersionInfo.metadata.license?.length > 0 && (
+                <div>
+                  License: {dandisetVersionInfo.metadata.license.join(", ")}
+                </div>
+              )}
+              {dandisetVersionInfo.metadata.citation && (
+                <div style={{ marginTop: "8px" }}>
+                  <div>Citation:</div>
+                  <div
+                    style={{
+                      marginLeft: "8px",
+                      marginTop: "4px",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {dandisetVersionInfo.metadata.citation}
+                  </div>
+                </div>
+              )}
+            </Box>
+          </Box>
+        )}
+
+        {/* Keywords */}
+        {dandisetVersionInfo.metadata.keywords?.length > 0 && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Keywords
+            </Typography>
+            <Box sx={{ ml: 1, mt: 1 }}>
+              {dandisetVersionInfo.metadata.keywords.join(", ")}
+            </Box>
+          </Box>
+        )}
+
+        {/* Species */}
+        {dandisetVersionInfo.metadata.assetsSummary.species?.length > 0 && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Species
+            </Typography>
+            <Box sx={{ ml: 1, mt: 1 }}>
+              {dandisetVersionInfo.metadata.assetsSummary.species.map(
+                (s, i) => (
+                  <div key={i}>{s.name}</div>
+                ),
+              )}
+            </Box>
+          </Box>
+        )}
+
+        {/* Research Methods */}
+        {(dandisetVersionInfo.metadata.assetsSummary.approach?.length > 0 ||
+          dandisetVersionInfo.metadata.assetsSummary.measurementTechnique
+            ?.length > 0) && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Research Methods
+            </Typography>
+            <Box sx={{ ml: 1, mt: 1 }}>
+              {dandisetVersionInfo.metadata.assetsSummary.approach?.map(
+                (a, i) => <div key={i}>Approach: {a.name}</div>,
+              )}
+              {dandisetVersionInfo.metadata.assetsSummary.measurementTechnique?.map(
+                (t, i) => <div key={i}>Technique: {t.name}</div>,
               )}
             </Box>
           </Box>
