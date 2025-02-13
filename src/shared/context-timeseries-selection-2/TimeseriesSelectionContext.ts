@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect } from "react";
+import React, { useCallback, useContext } from "react";
 import {
   PanDirection,
   panTime,
@@ -10,6 +10,7 @@ import {
 export type TimeseriesSelectionState = {
   startTimeSec: number | undefined;
   endTimeSec: number | undefined;
+  visibleTimeRangeHasBeenSetAtLeastOnce: boolean;
   visibleStartTimeSec: number | undefined;
   visibleEndTimeSec: number | undefined;
   currentTime: number | undefined;
@@ -20,6 +21,8 @@ type TimeseriesSelectionAction =
       type: "initializeTimeseries";
       startTimeSec: number;
       endTimeSec: number;
+      initialVisibleStartTimeSec: number | undefined;
+      initialVisibleEndTimeSec: number | undefined;
     }
   | {
       type: "setVisibleTimeRange";
@@ -33,10 +36,12 @@ type TimeseriesSelectionAction =
 
 export type TimeseriesSelectionContextType = {
   timeseriesSelection: TimeseriesSelectionState;
-  initializeTimeseriesSelection: (
-    startTimeSec: number,
-    endTimeSec: number,
-  ) => void;
+  initializeTimeseriesSelection: (o: {
+    startTimeSec: number;
+    endTimeSec: number;
+    initialVisibleStartTimeSec?: number;
+    initialVisibleEndTimeSec?: number;
+  }) => void;
   setVisibleTimeRange: (
     visibleStartTimeSec: number,
     visibleEndTimeSec: number,
@@ -60,20 +65,27 @@ export const timeseriesSelectionReducer = (
           ? action.endTimeSec
           : Math.max(state.endTimeSec, action.endTimeSec);
 
-      // Only adjust visible range if it's defined
       let newVisibleStartTimeSec = state.visibleStartTimeSec;
       let newVisibleEndTimeSec = state.visibleEndTimeSec;
-
-      if (
-        newVisibleStartTimeSec !== undefined &&
-        newVisibleEndTimeSec !== undefined
-      ) {
-        // Ensure visible range is within bounds
-        newVisibleStartTimeSec = Math.max(
-          newStartTimeSec,
-          newVisibleStartTimeSec,
-        );
-        newVisibleEndTimeSec = Math.min(newEndTimeSec, newVisibleEndTimeSec);
+      if (!state.visibleTimeRangeHasBeenSetAtLeastOnce) {
+        if (
+          action.initialVisibleStartTimeSec !== undefined &&
+          action.initialVisibleEndTimeSec !== undefined
+        ) {
+          // we are setting an initial visible time range
+          if (
+            state.visibleStartTimeSec === undefined ||
+            state.visibleStartTimeSec > action.initialVisibleStartTimeSec
+          ) {
+            newVisibleStartTimeSec = action.initialVisibleStartTimeSec;
+          }
+          if (
+            state.visibleEndTimeSec === undefined ||
+            state.visibleEndTimeSec < action.initialVisibleEndTimeSec
+          ) {
+            newVisibleEndTimeSec = action.initialVisibleEndTimeSec;
+          }
+        }
       }
 
       return {
@@ -81,6 +93,8 @@ export const timeseriesSelectionReducer = (
         endTimeSec: newEndTimeSec,
         visibleStartTimeSec: newVisibleStartTimeSec,
         visibleEndTimeSec: newVisibleEndTimeSec,
+        visibleTimeRangeHasBeenSetAtLeastOnce:
+          state.visibleTimeRangeHasBeenSetAtLeastOnce,
         currentTime: state.currentTime,
       };
     }
@@ -101,6 +115,7 @@ export const timeseriesSelectionReducer = (
         ...state,
         visibleStartTimeSec: newVisibleStartTimeSec,
         visibleEndTimeSec: newVisibleEndTimeSec,
+        visibleTimeRangeHasBeenSetAtLeastOnce: true,
       };
     }
     case "setCurrentTime": {
@@ -260,17 +275,4 @@ export const useTimeRange = () => {
     panTimeseriesSelectionDeltaT,
     setCurrentTimeFraction,
   };
-};
-
-// for convenience
-export const useTimeseriesSelectionInitialization = (
-  startTimeSec: number | undefined,
-  endTimeSec: number | undefined,
-) => {
-  const { initializeTimeseriesSelection } = useTimeseriesSelection();
-  useEffect(() => {
-    if (startTimeSec !== undefined && endTimeSec !== undefined) {
-      initializeTimeseriesSelection(startTimeSec, endTimeSec);
-    }
-  }, [startTimeSec, endTimeSec, initializeTimeseriesSelection]);
 };

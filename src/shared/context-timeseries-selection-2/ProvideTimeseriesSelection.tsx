@@ -10,6 +10,7 @@ const initialState: TimeseriesSelectionState = {
   endTimeSec: undefined,
   visibleStartTimeSec: undefined,
   visibleEndTimeSec: undefined,
+  visibleTimeRangeHasBeenSetAtLeastOnce: false,
   currentTime: undefined,
 };
 
@@ -22,9 +23,21 @@ export const ProvideTimeseriesSelection: React.FC<PropsWithChildren> = ({
   );
 
   const initializeTimeseriesSelection = useMemo(
-    () => (startTimeSec: number, endTimeSec: number) => {
-      dispatch({ type: "initializeTimeseries", startTimeSec, endTimeSec });
-    },
+    () =>
+      (o: {
+        startTimeSec: number;
+        endTimeSec: number;
+        initialVisibleStartTimeSec?: number;
+        initialVisibleEndTimeSec?: number;
+      }) => {
+        dispatch({
+          type: "initializeTimeseries",
+          startTimeSec: o.startTimeSec,
+          endTimeSec: o.endTimeSec,
+          initialVisibleStartTimeSec: o.initialVisibleStartTimeSec,
+          initialVisibleEndTimeSec: o.initialVisibleEndTimeSec,
+        });
+      },
     [],
   );
 

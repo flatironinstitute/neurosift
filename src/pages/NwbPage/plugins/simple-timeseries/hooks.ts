@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useNwbGroup } from "@nwbInterface";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChunkedTimeseriesClient } from "./TimeseriesClient";
 import { SimpleTimeseriesInfo } from "./types";
 
@@ -66,12 +66,15 @@ export const useTimeseriesData = (
   } = useTimeseriesSelection();
   useEffect(() => {
     if (!timeseriesClient) return;
-    const initialize = async () => {
-      const startTime = timeseriesClient.startTime;
-      const endTime = timeseriesClient.endTime;
-      initializeTimeseriesSelection(startTime, endTime);
-    };
-    initialize();
+    const startTime = timeseriesClient.startTime;
+    const endTime = timeseriesClient.endTime;
+    const freq = timeseriesClient.samplingFrequency;
+    initializeTimeseriesSelection({
+      startTimeSec: startTime,
+      endTimeSec: endTime,
+      initialVisibleStartTimeSec: startTime,
+      initialVisibleEndTimeSec: startTime + 1500 / freq,
+    });
   }, [timeseriesClient, initializeTimeseriesSelection]);
 
   const setVisibleDuration = useCallback(
@@ -111,18 +114,6 @@ export const useTimeseriesData = (
     },
     [visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange],
   );
-
-  // Initialize visible duration based on sampling frequency
-  const didInitializeVisibleDuration = useRef(false);
-  useEffect(() => {
-    if (!timeseriesClient) return;
-    if (startTimeSec === undefined) return;
-    if (endTimeSec === undefined) return;
-    if (didInitializeVisibleDuration.current) return;
-    const freq = timeseriesClient.samplingFrequency;
-    setVisibleDuration(500 / freq);
-    didInitializeVisibleDuration.current = true;
-  }, [timeseriesClient, startTimeSec, endTimeSec, setVisibleDuration]);
 
   // Initialize channel view state
   const [visibleChannelsStart, setVisibleChannelsStart] = useState(0);
@@ -200,11 +191,36 @@ export const useTimeseriesData = (
   // State for zoom limit warning
   const [zoomInRequired, setZoomInRequired] = useState(false);
 
+  useEffect(() => {
+    if (!timeseriesClient) return;
+    if (visibleStartTimeSec === undefined) return;
+    if (visibleEndTimeSec === undefined) return;
+    // Check if we would be loading too much data
+    const estimatedDataPoints =
+      (visibleEndTimeSec - visibleStartTimeSec) *
+      timeseriesClient.samplingFrequency *
+      numVisibleChannels;
+
+    if (
+      estimatedDataPoints > 5e5 &&
+      visibleEndTimeSec - visibleStartTimeSec > 0.1
+    ) {
+      setZoomInRequired(true);
+    } else {
+      setZoomInRequired(false);
+    }
+  }, [
+    timeseriesClient,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    numVisibleChannels,
+  ]);
+
   // Load data when view parameters change
   useEffect(() => {
     if (!timeseriesClient) return;
+    if (zoomInRequired) return;
     setIsLoading(true);
-    setZoomInRequired(false);
     const load = async () => {
       if (bufferedVisibleStartTimeSec === undefined) return;
       if (bufferedVisibleEndTimeSec === undefined) return;
@@ -213,17 +229,6 @@ export const useTimeseriesData = (
         timeseriesClient.numChannels,
       );
 
-      // Check if we would be loading too much data
-      const estimatedDataPoints =
-        (bufferedVisibleEndTimeSec - bufferedVisibleStartTimeSec) *
-        timeseriesClient.samplingFrequency *
-        (visibleChannelsEnd - visibleChannelsStart);
-
-      if (estimatedDataPoints > 5e6) {
-        setZoomInRequired(true);
-        setIsLoading(false);
-        return;
-      }
       const { data, timestamps } = await timeseriesClient.getDataForTimeRange(
         bufferedVisibleStartTimeSec,
         bufferedVisibleEndTimeSec,
@@ -245,6 +250,7 @@ export const useTimeseriesData = (
     visibleChannelsStart,
     numVisibleChannels,
     startTimeSec,
+    zoomInRequired,
   ]);
 
   return {

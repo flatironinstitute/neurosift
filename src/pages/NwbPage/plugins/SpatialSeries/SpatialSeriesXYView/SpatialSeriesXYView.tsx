@@ -3,7 +3,6 @@ import { Canceler } from "@remote-h5-file";
 import {
   useTimeRange,
   useTimeseriesSelection,
-  useTimeseriesSelectionInitialization,
 } from "@shared/context-timeseries-selection-2";
 import TimeseriesSelectionBar, {
   timeSelectionBarHeight,
@@ -35,8 +34,7 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
   const [datasetChunkingClient, setDatasetChunkingClient] = useState<
     TimeseriesDatasetChunkingClient | undefined
   >(undefined);
-  const { visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange } =
-    useTimeRange();
+  const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
 
   const dataset = useNwbDataset(nwbUrl, `${path}/data`);
   const unit = dataset?.attrs?.unit;
@@ -44,28 +42,24 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
   const dataClient = useTimeseriesTimestampsClient(nwbUrl, path);
   const startTime = dataClient ? dataClient.startTime! : undefined;
   const endTime = dataClient ? dataClient.endTime! : undefined;
-  useTimeseriesSelectionInitialization(startTime, endTime);
+  const { initializeTimeseriesSelection } = useTimeseriesSelection();
   useEffect(() => {
     if (!dataClient) return;
     const estimatedSamplingFrequency = dataClient.estimatedSamplingFrequency;
     if (estimatedSamplingFrequency === undefined) return;
     if (startTime === undefined) return;
     if (endTime === undefined) return;
-    if (visibleStartTimeSec !== undefined) return;
-    if (visibleEndTimeSec !== undefined) return;
     const initialVisibleDuration = 1e4 / estimatedSamplingFrequency;
-    setVisibleTimeRange(
-      startTime,
-      Math.min(startTime + initialVisibleDuration, endTime),
-    );
-  }, [
-    dataClient,
-    startTime,
-    endTime,
-    visibleStartTimeSec,
-    visibleEndTimeSec,
-    setVisibleTimeRange,
-  ]);
+    initializeTimeseriesSelection({
+      startTimeSec: startTime,
+      endTimeSec: endTime,
+      initialVisibleStartTimeSec: startTime,
+      initialVisibleEndTimeSec: Math.min(
+        startTime + initialVisibleDuration,
+        endTime,
+      ),
+    });
+  }, [dataClient, startTime, endTime, initializeTimeseriesSelection]);
 
   const { setCurrentTime, currentTime } = useTimeseriesSelection();
 

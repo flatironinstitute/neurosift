@@ -1,5 +1,4 @@
 import { Splitter } from "@fi-sci/splitter";
-import { useTimeseriesSelectionInitialization } from "@shared/context-timeseries-selection-2";
 import { TimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import EDFReader from "./EDFReader";
@@ -7,6 +6,7 @@ import {
   DatasetChunkingClientInterface,
   NwbTimeseriesViewChild,
 } from "./TimeseriesItemView/NwbTimeseriesView";
+import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 
 type EdfPageProps = {
   edfUrl: string;
@@ -38,7 +38,16 @@ const EdfViewer: FunctionComponent<EdfPageProps> = ({
     channelSeparation,
   );
   const yLabel = "";
-  useTimeseriesSelectionInitialization(0, 1);
+
+  const { initializeTimeseriesSelection } = useTimeseriesSelection();
+  useEffect(() => {
+    // todo: fix this
+    initializeTimeseriesSelection({
+      startTimeSec: 0,
+      endTimeSec: 1,
+    });
+  }, [initializeTimeseriesSelection]);
+
   const maxVisibleDuration = useMemo(() => {
     const nChannels = edfReader?.getNSignals() || 1;
     const nSamplesPerSec = edfReader?.getSignalFreqs()[0] || 1;

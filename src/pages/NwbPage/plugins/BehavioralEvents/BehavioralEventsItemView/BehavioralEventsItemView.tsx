@@ -3,10 +3,7 @@ import { getNwbDatasetData, useNwbGroup } from "@nwbInterface";
 import TimeScrollView2, {
   useTimeScrollView2,
 } from "@shared/component-time-scroll-view-2/TimeScrollView2";
-import {
-  useTimeseriesSelection,
-  useTimeseriesSelectionInitialization,
-} from "@shared/context-timeseries-selection-2";
+import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 import { timeSelectionBarHeight } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
 import {
   FunctionComponent,
@@ -163,24 +160,24 @@ const BehavioralEventsItemViewChild: FunctionComponent<ChildProps> = ({
     }
     return { startTime, endTime };
   }, [beData]);
-  const { setVisibleTimeRange, visibleStartTimeSec, visibleEndTimeSec } =
-    useTimeseriesSelection();
-  useTimeseriesSelectionInitialization(startTime, endTime);
+  const {
+    initializeTimeseriesSelection,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+  } = useTimeseriesSelection();
+
   useEffect(() => {
     if (startTime === undefined) return;
     if (endTime === undefined) return;
-    if (visibleStartTimeSec !== undefined) return;
-    if (visibleEndTimeSec !== undefined) return;
     const t1 = startTime;
     const t2 = endTime;
-    setVisibleTimeRange(t1, t2);
-  }, [
-    startTime,
-    endTime,
-    visibleStartTimeSec,
-    visibleEndTimeSec,
-    setVisibleTimeRange,
-  ]);
+    initializeTimeseriesSelection({
+      startTimeSec: startTime,
+      endTimeSec: endTime,
+      initialVisibleStartTimeSec: t1,
+      initialVisibleEndTimeSec: t2,
+    });
+  }, [startTime, endTime, initializeTimeseriesSelection]);
 
   const { canvasWidth, canvasHeight, margins } = useTimeScrollView2({
     width,

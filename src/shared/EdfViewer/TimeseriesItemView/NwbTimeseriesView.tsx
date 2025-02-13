@@ -9,7 +9,7 @@ import {
 import { useNwbDataset } from "@nwbInterface";
 import {
   useTimeRange,
-  useTimeseriesSelectionInitialization,
+  useTimeseriesSelection,
 } from "@shared/context-timeseries-selection-2";
 import { timeSelectionBarHeight } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
 import TimeScrollView2, {
@@ -207,16 +207,35 @@ export const NwbTimeseriesViewChild: FunctionComponent<
 
   const chunkSize = datasetChunkingClient ? datasetChunkingClient.chunkSize : 0;
 
-  const { visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange } =
-    useTimeRange();
+  const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
 
-  const startTime = timeseriesTimestampsClient
-    ? timeseriesTimestampsClient.startTime!
-    : undefined;
-  const endTime = timeseriesTimestampsClient
-    ? timeseriesTimestampsClient.endTime!
-    : undefined;
-  useTimeseriesSelectionInitialization(startTime, endTime);
+  const { initializeTimeseriesSelection } = useTimeseriesSelection();
+  useEffect(() => {
+    if (!timeseriesTimestampsClient) return;
+    const startTime = timeseriesTimestampsClient.startTime;
+    const endTime = timeseriesTimestampsClient.endTime;
+    if (startTime === undefined) return;
+    if (endTime === undefined) return;
+    initializeTimeseriesSelection({
+      startTimeSec: startTime,
+      endTimeSec: endTime,
+      initialVisibleStartTimeSec: startTime,
+      initialVisibleEndTimeSec: startZoomedOut
+        ? endTime
+        : Math.min(
+            startTime +
+              (chunkSize /
+                timeseriesTimestampsClient.estimatedSamplingFrequency!) *
+                10,
+            endTime,
+          ),
+    });
+  }, [
+    timeseriesTimestampsClient,
+    initializeTimeseriesSelection,
+    startZoomedOut,
+    chunkSize,
+  ]);
 
   const hideToolbar = false; // this is tricky... hideToolbar removes the space for the toolbar, whereas showTimeseriesToolbar=false just hides the toolbar
 
@@ -229,37 +248,6 @@ export const NwbTimeseriesViewChild: FunctionComponent<
   const [overrideMaxVisibleDuration, setOverrideMaxVisibleDuration] = useState<
     number | undefined
   >(undefined);
-
-  // set visible time range
-  useEffect(() => {
-    if (!chunkSize) return;
-    if (!timeseriesTimestampsClient) return;
-    if (startTime === undefined) return;
-    if (endTime === undefined) return;
-    if (visibleStartTimeSec !== undefined) return;
-    if (visibleEndTimeSec !== undefined) return;
-    setVisibleTimeRange(
-      startTime,
-      startZoomedOut
-        ? endTime
-        : Math.min(
-            startTime +
-              (chunkSize /
-                timeseriesTimestampsClient.estimatedSamplingFrequency!) *
-                10,
-            endTime,
-          ),
-    );
-  }, [
-    chunkSize,
-    timeseriesTimestampsClient,
-    setVisibleTimeRange,
-    startTime,
-    endTime,
-    visibleStartTimeSec,
-    visibleEndTimeSec,
-    startZoomedOut,
-  ]);
 
   // Set startChunkIndex and endChunkIndex
   const [startChunkIndex, setStartChunkIndex] = useState<number | undefined>(

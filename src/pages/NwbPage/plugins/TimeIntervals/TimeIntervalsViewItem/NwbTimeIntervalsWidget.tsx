@@ -1,7 +1,7 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import {
   useTimeRange,
-  useTimeseriesSelectionInitialization,
+  useTimeseriesSelection,
 } from "@shared/context-timeseries-selection-2";
 import TimeScrollView2, {
   useTimeScrollView2,
@@ -50,7 +50,15 @@ const NwbTimeIntervalsWidget: FunctionComponent<Props> = ({
     return { startTime, endTime };
   }, [startTimes, stopTimes]);
 
-  useTimeseriesSelectionInitialization(startTime, endTime);
+  const { initializeTimeseriesSelection } = useTimeseriesSelection();
+  useEffect(() => {
+    initializeTimeseriesSelection({
+      startTimeSec: startTime,
+      endTimeSec: endTime,
+      initialVisibleStartTimeSec: startTime,
+      initialVisibleEndTimeSec: endTime,
+    });
+  }, [initializeTimeseriesSelection, startTime, endTime]);
   const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
 
   const { canvasWidth, canvasHeight, margins } = useTimeScrollView2({

@@ -1,4 +1,7 @@
-import { useTimeRange } from "@shared/context-timeseries-selection-2";
+import {
+  useTimeRange,
+  useTimeseriesSelection,
+} from "@shared/context-timeseries-selection-2";
 import { FunctionComponent, useEffect, useState } from "react";
 import "../common/loadingState.css";
 import { ChunkedDirectSpikeTrainsClient } from "../PSTH/PSTHItemView/DirectSpikeTrainsClient";
@@ -83,6 +86,21 @@ const RasterViewChild = ({
     visibleUnitsStart,
     spikeTrainsClient,
   ]);
+
+  const { initializeTimeseriesSelection } = useTimeseriesSelection();
+
+  useEffect(() => {
+    if (!spikeTrainsClient) return;
+    initializeTimeseriesSelection({
+      startTimeSec: spikeTrainsClient.startTimeSec,
+      endTimeSec: spikeTrainsClient.endTimeSec,
+      initialVisibleStartTimeSec: spikeTrainsClient.startTimeSec,
+      initialVisibleEndTimeSec: Math.min(
+        spikeTrainsClient.startTimeSec + 10,
+        spikeTrainsClient.endTimeSec,
+      ),
+    });
+  }, [spikeTrainsClient, initializeTimeseriesSelection]);
 
   const handleIncreaseUnits = () => {
     if (!spikeTrainsClient) return;

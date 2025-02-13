@@ -2,10 +2,7 @@ import { SmallIconButton } from "@fi-sci/misc";
 import { ArrowLeft, ArrowRight } from "@mui/icons-material";
 import { getNwbDatasetData, useNwbDataset } from "@nwbInterface";
 import { Canceler, DatasetDataType } from "@remote-h5-file";
-import {
-  useTimeseriesSelection,
-  useTimeseriesSelectionInitialization,
-} from "@shared/context-timeseries-selection-2";
+import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 import TimeseriesSelectionBar, {
   timeSelectionBarHeight,
 } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
@@ -61,10 +58,17 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
   const { currentTime: currentTimeSource, setCurrentTime } =
     useTimeseriesSelection();
   const currentTime = useThrottledState(currentTimeSource, throttleMsec);
-  useTimeseriesSelectionInitialization(
-    timeseriesTimestampsClient?.startTime,
-    timeseriesTimestampsClient?.endTime,
-  );
+
+  const { initializeTimeseriesSelection } = useTimeseriesSelection();
+  useEffect(() => {
+    if (!timeseriesTimestampsClient) return;
+    if (timeseriesTimestampsClient.startTime === undefined) return;
+    if (timeseriesTimestampsClient.endTime === undefined) return;
+    initializeTimeseriesSelection({
+      startTimeSec: timeseriesTimestampsClient.startTime,
+      endTimeSec: timeseriesTimestampsClient.endTime,
+    });
+  }, [timeseriesTimestampsClient, initializeTimeseriesSelection]);
   useEffect(() => {
     if (!timeseriesTimestampsClient) return;
     setCurrentTime(timeseriesTimestampsClient.startTime!);

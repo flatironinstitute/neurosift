@@ -84,6 +84,12 @@ const draw = async () => {
   // Clear canvas
   ctx.clearRect(0, 0, plotOpts.canvasWidth, plotOpts.canvasHeight);
 
+  // Set up clipping region for plot area
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(plotOpts.margins.left, plotOpts.margins.top, plotWidth, plotHeight);
+  ctx.clip();
+
   // Draw traces
   ctx.lineWidth = 1;
   const colors = [
@@ -126,6 +132,9 @@ const draw = async () => {
 
     ctx.stroke();
   }
+
+  // Restore context state (removes clipping)
+  ctx.restore();
 };
 
 let drawing = false;

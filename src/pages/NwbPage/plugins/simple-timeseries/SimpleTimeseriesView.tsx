@@ -51,8 +51,12 @@ export const SimpleTimeseriesView: FunctionComponent<
     );
   }
 
-  if (!timeseriesClient || !info) {
-    return <div className="loadingContainer">Loading timeseries data...</div>;
+  if (!info) {
+    return <div className="loadingContainer">Loading info...</div>;
+  }
+
+  if (!timeseriesClient) {
+    return <div className="loadingContainer">Loading timeseries client...</div>;
   }
 
   const handleIncreaseChannels = () => {
