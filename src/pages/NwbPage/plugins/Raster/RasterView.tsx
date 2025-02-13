@@ -9,7 +9,7 @@ import RasterViewPlot from "./RasterViewPlot";
 import RasterViewPlotTSV2 from "./RasterViewPlotTSV2";
 
 type Props = {
-  width: number;
+  width?: number;
   nwbUrl: string;
   path: string;
   condensed?: boolean;
@@ -31,7 +31,7 @@ const RasterView: FunctionComponent<Props> = ({
   return (
     <RasterViewChild
       spikeTrainsClient={spikeTrainsClient}
-      width={width}
+      width={width || 500}
       condensed={condensed}
     />
   );
