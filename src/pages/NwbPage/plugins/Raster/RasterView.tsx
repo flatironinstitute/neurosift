@@ -4,6 +4,7 @@ import {
 } from "@shared/context-timeseries-selection-2";
 import { FunctionComponent, useEffect, useState } from "react";
 import "../common/loadingState.css";
+import { Controls, CondensedControls } from "./Controls";
 import { ChunkedDirectSpikeTrainsClient } from "../PSTH/PSTHItemView/DirectSpikeTrainsClient";
 import RasterViewPlot from "./RasterViewPlot";
 import RasterViewPlotTSV2 from "./RasterViewPlotTSV2";
@@ -210,188 +211,45 @@ const RasterViewChild = ({
         </button>
       </div>
       {isLoading && <div className="loadingIndicator">Loading data...</div>}
-      <div
-        style={{
-          padding: "10px",
-          marginBottom: "15px",
-          background: "#f5f5f5",
-          borderRadius: "5px",
-          fontFamily: "sans-serif",
-          fontSize: "0.9rem",
-        }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "auto 1fr",
-            gap: "4px 12px",
-            alignItems: "baseline",
-          }}
-        >
-          <div style={{ fontWeight: "bold" }}>Units:</div>
-          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-            <span>
-              Showing {visibleUnitsStart} -{" "}
-              {Math.min(
-                visibleUnitsStart + numVisibleUnits,
-                plotData.totalNumUnits,
-              ) - 1}{" "}
-              of {plotData.totalNumUnits}
-            </span>
-            <button
-              onClick={handleDecreaseUnits}
-              disabled={numVisibleUnits <= 1}
-              style={{
-                padding: "2px 6px",
-                border: "1px solid #ccc",
-                borderRadius: "2px",
-                fontSize: "0.85rem",
-                backgroundColor: numVisibleUnits <= 1 ? "#f5f5f5" : "white",
-                cursor: numVisibleUnits <= 1 ? "default" : "pointer",
-              }}
-            >
-              /2
-            </button>
-            <button
-              onClick={handleIncreaseUnits}
-              disabled={
-                visibleUnitsStart + numVisibleUnits >= plotData.totalNumUnits
-              }
-              style={{
-                padding: "2px 6px",
-                border: "1px solid #ccc",
-                borderRadius: "2px",
-                fontSize: "0.85rem",
-                backgroundColor:
-                  visibleUnitsStart + numVisibleUnits * 2 >
-                  plotData.totalNumUnits
-                    ? "#f5f5f5"
-                    : "white",
-                cursor:
-                  visibleUnitsStart + numVisibleUnits * 2 >
-                  plotData.totalNumUnits
-                    ? "default"
-                    : "pointer",
-              }}
-            >
-              ×2
-            </button>
-            <button
-              onClick={handleShiftUnitsLeft}
-              disabled={visibleUnitsStart === 0}
-              style={{
-                padding: "2px 6px",
-                border: "1px solid #ccc",
-                borderRadius: "2px",
-                fontSize: "0.85rem",
-                backgroundColor: visibleUnitsStart === 0 ? "#f5f5f5" : "white",
-                cursor: visibleUnitsStart === 0 ? "default" : "pointer",
-              }}
-            >
-              ←
-            </button>
-            <button
-              onClick={handleShiftUnitsRight}
-              disabled={
-                visibleUnitsStart + numVisibleUnits >= plotData.totalNumUnits
-              }
-              style={{
-                padding: "2px 6px",
-                border: "1px solid #ccc",
-                borderRadius: "2px",
-                fontSize: "0.85rem",
-                backgroundColor:
-                  visibleUnitsStart + numVisibleUnits >= plotData.totalNumUnits
-                    ? "#f5f5f5"
-                    : "white",
-                cursor:
-                  visibleUnitsStart + numVisibleUnits >= plotData.totalNumUnits
-                    ? "default"
-                    : "pointer",
-              }}
-            >
-              →
-            </button>
-          </div>
-
-          <div style={{ fontWeight: "bold" }}>Time Window:</div>
-          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-            <span>
-              Showing {(visibleDuration || 0).toFixed(1)} sec starting at{" "}
-              {(visibleStartTimeSec || 0).toFixed(1)} sec
-            </span>
-            <button
-              onClick={handleDecreaseVisibleDuration}
-              disabled={(visibleDuration || 0) <= blockSizeSec}
-              style={{
-                padding: "2px 6px",
-                border: "1px solid #ccc",
-                borderRadius: "2px",
-                fontSize: "0.85rem",
-                backgroundColor:
-                  (visibleDuration || 0) <= blockSizeSec ? "#f5f5f5" : "white",
-                cursor:
-                  (visibleDuration || 0) <= blockSizeSec
-                    ? "default"
-                    : "pointer",
-              }}
-            >
-              /2
-            </button>
-            <button
-              onClick={handleIncreaseVisibleDuration}
-              style={{
-                padding: "2px 6px",
-                border: "1px solid #ccc",
-                borderRadius: "2px",
-                fontSize: "0.85rem",
-                backgroundColor: "white",
-                cursor: "pointer",
-              }}
-            >
-              ×2
-            </button>
-            <button
-              onClick={handleShiftTimeLeft}
-              disabled={
-                (visibleStartTimeSec || 0) <= spikeTrainsClient.startTimeSec
-              }
-              style={{
-                padding: "2px 6px",
-                border: "1px solid #ccc",
-                borderRadius: "2px",
-                fontSize: "0.85rem",
-                backgroundColor:
-                  (visibleStartTimeSec || 0) <= spikeTrainsClient.startTimeSec
-                    ? "#f5f5f5"
-                    : "white",
-                cursor:
-                  (visibleStartTimeSec || 0) <= spikeTrainsClient.startTimeSec
-                    ? "default"
-                    : "pointer",
-              }}
-            >
-              ←
-            </button>
-            <button
-              onClick={handleShiftTimeRight}
-              style={{
-                padding: "2px 6px",
-                border: "1px solid #ccc",
-                borderRadius: "2px",
-                fontSize: "0.85rem",
-                backgroundColor: "white",
-                cursor: "pointer",
-              }}
-            >
-              →
-            </button>
-          </div>
-
-          <div style={{ fontWeight: "bold" }}>Block Size:</div>
-          <div>{blockSizeSec} seconds</div>
-        </div>
-      </div>
+      {condensed ? (
+        <CondensedControls
+          startTime={spikeTrainsClient.startTimeSec}
+          endTime={spikeTrainsClient.endTimeSec}
+          visibleUnitsStart={visibleUnitsStart}
+          numVisibleUnits={numVisibleUnits}
+          totalNumUnits={plotData.totalNumUnits}
+          visibleTimeStart={visibleStartTimeSec}
+          visibleDuration={visibleDuration}
+          blockSizeSec={blockSizeSec}
+          onDecreaseUnits={handleDecreaseUnits}
+          onIncreaseUnits={handleIncreaseUnits}
+          onShiftUnitsLeft={handleShiftUnitsLeft}
+          onShiftUnitsRight={handleShiftUnitsRight}
+          onDecreaseVisibleDuration={handleDecreaseVisibleDuration}
+          onIncreaseVisibleDuration={handleIncreaseVisibleDuration}
+          onShiftTimeLeft={handleShiftTimeLeft}
+          onShiftTimeRight={handleShiftTimeRight}
+        />
+      ) : (
+        <Controls
+          startTime={spikeTrainsClient.startTimeSec}
+          endTime={spikeTrainsClient.endTimeSec}
+          visibleUnitsStart={visibleUnitsStart}
+          numVisibleUnits={numVisibleUnits}
+          totalNumUnits={plotData.totalNumUnits}
+          visibleTimeStart={visibleStartTimeSec}
+          visibleDuration={visibleDuration}
+          blockSizeSec={blockSizeSec}
+          onDecreaseUnits={handleDecreaseUnits}
+          onIncreaseUnits={handleIncreaseUnits}
+          onShiftUnitsLeft={handleShiftUnitsLeft}
+          onShiftUnitsRight={handleShiftUnitsRight}
+          onDecreaseVisibleDuration={handleDecreaseVisibleDuration}
+          onIncreaseVisibleDuration={handleIncreaseVisibleDuration}
+          onShiftTimeLeft={handleShiftTimeLeft}
+          onShiftTimeRight={handleShiftTimeRight}
+        />
+      )}
       {usePlotly ? (
         <RasterViewPlot plotData={plotData} />
       ) : (
