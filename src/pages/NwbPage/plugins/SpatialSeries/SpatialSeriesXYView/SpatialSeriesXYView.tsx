@@ -61,7 +61,7 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
     });
   }, [dataClient, startTime, endTime, initializeTimeseriesSelection]);
 
-  const { setCurrentTime, currentTime } = useTimeseriesSelection();
+  const { currentTime } = useTimeseriesSelection();
 
   // Set chunkSize
   const chunkSize = dataset ? Math.floor(1e4 / (dataset.shape[1] || 1)) : 0;

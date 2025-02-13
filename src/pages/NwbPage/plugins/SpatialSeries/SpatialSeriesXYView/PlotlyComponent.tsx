@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { FunctionComponent, useCallback, useMemo } from "react";
-import Plot from "react-plotly.js";
 import { Layout, PlotData } from "plotly.js";
+import { FunctionComponent, useMemo } from "react";
+import Plot from "react-plotly.js";
 
 type Props = {
   data: {
