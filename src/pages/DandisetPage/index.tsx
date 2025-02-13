@@ -216,6 +216,8 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
     if (nwbFilesOnly) return true;
     // if we have a partial list then we'll show the control
     if (incomplete) return true;
+    // if none of the files are nwb then we do not show the control
+    if (allAssets?.every((a) => !a.path.endsWith(".nwb"))) return false;
     // if some of the files are not NWB files then we'll show the control
     if (allAssets?.some((a) => !a.path.endsWith(".nwb"))) return true;
     // otherwise we don't show the control
