@@ -288,11 +288,11 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
             data={plotData}
             width={width}
             height={plotHeight}
-            onPointClick={(index) => {
-              if (plotData.t[index] !== undefined) {
-                setCurrentTime(plotData.t[index]);
-              }
-            }}
+            // onPointClick={(index) => {
+            //   if (plotData.t[index] !== undefined) {
+            //     setCurrentTime(plotData.t[index]);
+            //   }
+            // }}
             currentTime={currentTime}
             valueRange={valueRange}
             unit={unit}

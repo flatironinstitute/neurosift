@@ -156,7 +156,7 @@ export const SimpleTimeseriesView: FunctionComponent<
             cursor: "pointer",
           }}
         >
-          {usePlotly ? "Using Plotly" : "Using TimeScrollView2"}
+          {usePlotly ? "Plotly" : "T"}
         </button>
       </div>
       {isLoading && <div className="loadingIndicator">Loading data...</div>}

@@ -11,7 +11,7 @@ type Props = {
   };
   width: number;
   height: number;
-  onPointClick?: (index: number) => void;
+  // onPointClick?: (index: number) => void;
   currentTime?: number;
   valueRange?: {
     xMin: number;
@@ -26,8 +26,8 @@ const PlotlyComponent: FunctionComponent<Props> = ({
   data,
   width,
   height,
-  onPointClick,
-  // currentTime,
+  // onPointClick,
+  currentTime,
   valueRange,
   unit,
 }) => {
@@ -39,6 +39,20 @@ const PlotlyComponent: FunctionComponent<Props> = ({
     () => data.t.map((_t, i) => Math.round((i / (data.t.length - 1)) * 100)),
     [data.t],
   );
+
+  const currentIndex = useMemo(() => {
+    if (currentTime === undefined) return -1;
+    let closestIndex = -1;
+    let closestDistance = Number.MAX_VALUE;
+    for (let i = 0; i < data.t.length; i++) {
+      const distance = Math.abs(data.t[i] - currentTime);
+      if (distance < closestDistance) {
+        closestIndex = i;
+        closestDistance = distance;
+      }
+    }
+    return closestIndex;
+  }, [currentTime, data.t]);
 
   const traces: Partial<PlotData>[] = useMemo(() => {
     const traces = [
@@ -76,22 +90,22 @@ const PlotlyComponent: FunctionComponent<Props> = ({
       },
     ] as any[];
     // Add current point if it exists
-    // if (currentIndex !== -1) {
-    //   traces.push({
-    //     x: [data.x[currentIndex]],
-    //     y: [data.y[currentIndex]],
-    //     type: "scatter",
-    //     mode: "markers",
-    //     marker: {
-    //       size: 10,
-    //       color: "red",
-    //       opacity: 1,
-    //     },
-    //     name: "Current",
-    //   });
-    // }
+    if (currentIndex >= 0) {
+      traces.push({
+        x: [data.x[currentIndex]],
+        y: [data.y[currentIndex]],
+        type: "scatter",
+        mode: "markers",
+        marker: {
+          size: 10,
+          color: "red",
+          opacity: 1,
+        },
+        name: "Current",
+      });
+    }
     return traces;
-  }, [data, colorScale]);
+  }, [data.x, data.y, colorScale, currentIndex]);
 
   const layout: Partial<Layout> = useMemo(
     () => ({
@@ -130,14 +144,14 @@ const PlotlyComponent: FunctionComponent<Props> = ({
     [valueRange, unit, width, height],
   );
 
-  const handleClick = useCallback(
-    (event: { points?: Array<{ pointIndex: number }> }) => {
-      if (!onPointClick || !event.points || event.points.length === 0) return;
-      const pointIndex = event.points[0].pointIndex;
-      onPointClick(pointIndex);
-    },
-    [onPointClick],
-  );
+  // const handleClick = useCallback(
+  //   (event: { points?: Array<{ pointIndex: number }> }) => {
+  //     if (!onPointClick || !event.points || event.points.length === 0) return;
+  //     const pointIndex = event.points[0].pointIndex;
+  //     onPointClick(pointIndex);
+  //   },
+  //   [onPointClick],
+  // );
 
   return (
     <Plot
@@ -147,7 +161,7 @@ const PlotlyComponent: FunctionComponent<Props> = ({
         displayModeBar: false,
         responsive: true,
       }}
-      onClick={handleClick}
+      // onClick={handleClick}
       style={{
         width: "100%",
         height: "100%",
