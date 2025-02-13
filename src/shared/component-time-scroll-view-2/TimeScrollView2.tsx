@@ -42,6 +42,7 @@ type Props = {
   hideToolbar?: boolean;
   showTimeseriesToolbar?: boolean; // // this is tricky... hideToolbar removes the space for the toolbar, whereas showTimeseriesToolbar=false just hides the toolbar
   shiftZoom?: boolean;
+  requireClickToZoom?: boolean; // Whether mouse wheel zoom requires clicking in the view first (default: true)
   yAxisInfo?: {
     showTicks: boolean;
     yMin?: number;
@@ -103,6 +104,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
   showTimeseriesToolbar,
   yAxisInfo,
   shiftZoom,
+  requireClickToZoom,
   additionalToolbarItems,
   showTimeSelectionBar,
   leftMargin,
@@ -241,8 +243,16 @@ const TimeScrollView2: FunctionComponent<Props> = ({
     // currentTimeIntervalPixels,
   ]);
 
+  const [isViewClicked, setIsViewClicked] = useState(false);
+
   const divRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => suppressWheelScroll(divRef), [divRef]);
+  useEffect(() => {
+    const allowWheelZoom = requireClickToZoom === false || isViewClicked;
+    if (allowWheelZoom) {
+      suppressWheelScroll(divRef);
+    }
+  }, [requireClickToZoom, isViewClicked]);
+
   const panelWidthSeconds =
     (visibleEndTimeSec ?? 0) - (visibleStartTimeSec ?? 0);
   // const handleWheel = useTimeScrollZoom(divRef, zoomTimeseriesSelection, {shiftZoom})
@@ -260,10 +270,17 @@ const TimeScrollView2: FunctionComponent<Props> = ({
     (e: React.WheelEvent) => {
       if (shiftZoom && !e.shiftKey) return;
       if (e.deltaY === 0) return;
+      if (requireClickToZoom !== false && !isViewClicked) return;
       const zoomsCount = -e.deltaY / 100;
       zoomTimeseriesSelection(zoomsCount > 0 ? "in" : "out", 1.1, hoverTime);
     },
-    [shiftZoom, zoomTimeseriesSelection, hoverTime],
+    [
+      shiftZoom,
+      zoomTimeseriesSelection,
+      hoverTime,
+      requireClickToZoom,
+      isViewClicked,
+    ],
   );
 
   const handleKeyDown: React.KeyboardEventHandler = useCallback(
@@ -284,6 +301,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
 
   const handleMouseDown2: React.MouseEventHandler = useCallback(
     (e) => {
+      setIsViewClicked(true);
       if (!e.shiftKey && !e.ctrlKey && !e.altKey) {
         handleMouseDown(e);
       } else {
@@ -321,6 +339,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
   const handleMouseOut2: React.MouseEventHandler = useCallback(
     (e) => {
       setHoverTime(undefined);
+      setIsViewClicked(false);
       if (!e.shiftKey && !e.ctrlKey && !e.altKey) {
         handleMouseLeave();
       }
@@ -338,7 +357,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
           width: canvasWidth,
           height: canvasHeight,
         }}
-        onWheel={handleWheel}
+        onWheel={!requireClickToZoom || isViewClicked ? handleWheel : undefined}
         onMouseDown={handleMouseDown2}
         onMouseUp={handleMouseUp2}
         onMouseMove={handleMouseMove2}
@@ -372,6 +391,8 @@ const TimeScrollView2: FunctionComponent<Props> = ({
     handleMouseUp2,
     handleMouseMove2,
     handleMouseOut2,
+    requireClickToZoom,
+    isViewClicked,
   ]);
 
   const timeControlActions = useActionToolbar({

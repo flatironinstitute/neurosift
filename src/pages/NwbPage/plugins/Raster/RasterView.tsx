@@ -395,7 +395,9 @@ const RasterViewChild = ({
       {usePlotly ? (
         <RasterViewPlot plotData={plotData} />
       ) : (
-        <div style={{ position: "relative" }}>
+        <div
+          style={{ position: "relative", width, height: condensed ? 200 : 350 }}
+        >
           <RasterViewPlotTSV2
             plotData={plotData}
             width={width}
