@@ -14,10 +14,14 @@ type ExpandedDirectoriesState = {
   [id: string]: boolean;
 };
 
-type ExpandedDirectoriesAction = {
-  type: "toggle";
-  directoryId: string;
-};
+type ExpandedDirectoriesAction =
+  | {
+      type: "toggle";
+      directoryId: string;
+    }
+  | {
+      type: "clear";
+    };
 
 const expandedDirectoriesReducer = (
   state: ExpandedDirectoriesState,
@@ -27,6 +31,9 @@ const expandedDirectoriesReducer = (
     case "toggle": {
       const directoryId = action.directoryId;
       return { ...state, [directoryId]: !state[directoryId] };
+    }
+    case "clear": {
+      return {};
     }
     default: {
       throw Error("Unexpected action type");
@@ -140,6 +147,11 @@ const DatasetMainTab: FunctionComponent<Props> = ({
       directoryId: file.id,
     });
   };
+
+  // when the top level files have changed, we're going to reset all the expanded directories
+  useEffect(() => {
+    expandedDirectoriesDispatch({ type: "clear" });
+  }, [topLevelFiles]);
 
   return (
     <div style={{ margin: "10px", maxWidth: 750 }}>
