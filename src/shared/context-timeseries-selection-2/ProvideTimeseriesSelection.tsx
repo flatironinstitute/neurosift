@@ -22,51 +22,12 @@ export const ProvideTimeseriesSelection: React.FC<PropsWithChildren> = ({
     initialState,
   );
 
-  const initializeTimeseriesSelection = useMemo(
-    () =>
-      (o: {
-        startTimeSec: number;
-        endTimeSec: number;
-        initialVisibleStartTimeSec?: number;
-        initialVisibleEndTimeSec?: number;
-      }) => {
-        dispatch({
-          type: "initializeTimeseries",
-          startTimeSec: o.startTimeSec,
-          endTimeSec: o.endTimeSec,
-          initialVisibleStartTimeSec: o.initialVisibleStartTimeSec,
-          initialVisibleEndTimeSec: o.initialVisibleEndTimeSec,
-        });
-      },
-    [],
-  );
-
-  const setVisibleTimeRange = useMemo(
-    () => (visibleStartTimeSec: number, visibleEndTimeSec: number) => {
-      dispatch({
-        type: "setVisibleTimeRange",
-        visibleStartTimeSec,
-        visibleEndTimeSec,
-      });
-    },
-    [],
-  );
-
-  const setCurrentTime = useMemo(
-    () => (currentTime: number | undefined) => {
-      dispatch({ type: "setCurrentTime", currentTime });
-    },
-    [],
-  );
-
   const value = useMemo(
     () => ({
-      initializeTimeseriesSelection,
-      setVisibleTimeRange,
-      setCurrentTime,
       timeseriesSelection: state,
+      dispatch,
     }),
-    [initializeTimeseriesSelection, setVisibleTimeRange, setCurrentTime, state],
+    [state],
   );
 
   return (

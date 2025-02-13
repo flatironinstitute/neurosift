@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useNwbGroup } from "@nwbInterface";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChunkedTimeseriesClient } from "./TimeseriesClient";
 import { SimpleTimeseriesInfo } from "./types";
 
@@ -41,10 +41,6 @@ export const useTimeseriesData = (
   loadedTimestamps: number[];
   loadedData: number[][];
   zoomInRequired: boolean;
-  visibleTimeStart: number | undefined;
-  setVisibleTimeStart: (time: number) => void;
-  visibleDuration: number | undefined;
-  setVisibleDuration: (duration: number) => void;
   visibleChannelsStart: number;
   setVisibleChannelsStart: (start: number) => void;
   numVisibleChannels: number;
@@ -62,7 +58,6 @@ export const useTimeseriesData = (
     endTimeSec,
     visibleStartTimeSec,
     visibleEndTimeSec,
-    setVisibleTimeRange,
   } = useTimeseriesSelection();
   useEffect(() => {
     if (!timeseriesClient) return;
@@ -76,44 +71,6 @@ export const useTimeseriesData = (
       initialVisibleEndTimeSec: startTime + 1500 / freq,
     });
   }, [timeseriesClient, initializeTimeseriesSelection]);
-
-  const setVisibleDuration = useCallback(
-    (duration: number) => {
-      if (
-        visibleStartTimeSec === undefined ||
-        visibleEndTimeSec === undefined
-      ) {
-        if (startTimeSec === undefined || endTimeSec === undefined) return;
-        setVisibleTimeRange(startTimeSec, startTimeSec + duration);
-      } else {
-        setVisibleTimeRange(
-          visibleStartTimeSec,
-          visibleStartTimeSec + duration,
-        );
-      }
-    },
-    [
-      visibleStartTimeSec,
-      visibleEndTimeSec,
-      setVisibleTimeRange,
-      startTimeSec,
-      endTimeSec,
-    ],
-  );
-  const setVisibleTimeStart = useCallback(
-    (time: number) => {
-      if (
-        visibleStartTimeSec !== undefined &&
-        visibleEndTimeSec !== undefined
-      ) {
-        setVisibleTimeRange(
-          time,
-          time + (visibleEndTimeSec - visibleStartTimeSec),
-        );
-      }
-    },
-    [visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange],
-  );
 
   // Initialize channel view state
   const [visibleChannelsStart, setVisibleChannelsStart] = useState(0);
@@ -261,13 +218,6 @@ export const useTimeseriesData = (
     loadedTimestamps,
     loadedData,
     zoomInRequired,
-    visibleTimeStart: visibleStartTimeSec,
-    setVisibleTimeStart,
-    visibleDuration:
-      visibleEndTimeSec !== undefined && visibleStartTimeSec !== undefined
-        ? visibleEndTimeSec - visibleStartTimeSec
-        : undefined,
-    setVisibleDuration,
     visibleChannelsStart,
     setVisibleChannelsStart,
     numVisibleChannels,

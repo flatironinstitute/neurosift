@@ -32,21 +32,19 @@ type TimeseriesSelectionAction =
   | {
       type: "setCurrentTime";
       currentTime: number | undefined;
+    }
+  | {
+      type: "zoomVisibleTimeRange";
+      factor: number;
+    }
+  | {
+      type: "translateVisibleTimeRangeFrac";
+      frac: number;
     };
 
 export type TimeseriesSelectionContextType = {
   timeseriesSelection: TimeseriesSelectionState;
-  initializeTimeseriesSelection: (o: {
-    startTimeSec: number;
-    endTimeSec: number;
-    initialVisibleStartTimeSec?: number;
-    initialVisibleEndTimeSec?: number;
-  }) => void;
-  setVisibleTimeRange: (
-    visibleStartTimeSec: number,
-    visibleEndTimeSec: number,
-  ) => void;
-  setCurrentTime: (currentTime: number | undefined) => void;
+  dispatch: (action: TimeseriesSelectionAction) => void;
 };
 
 export const timeseriesSelectionReducer = (
@@ -118,6 +116,78 @@ export const timeseriesSelectionReducer = (
         visibleTimeRangeHasBeenSetAtLeastOnce: true,
       };
     }
+    case "zoomVisibleTimeRange": {
+      let t1 = state.visibleStartTimeSec;
+      let t2 = state.visibleEndTimeSec;
+      if (t1 === undefined || t2 === undefined) {
+        return state;
+      }
+      const visibleDuration = t2 - t1;
+      const newVisibleDuration = visibleDuration * action.factor;
+      const anchorTime = t1; // anchor time is the fixed point
+      const newVisibleStartTimeSecFrac = (t1 - anchorTime) / visibleDuration;
+      const newVisibleEndTimeSecFrac = (t2 - anchorTime) / visibleDuration;
+
+      t1 = anchorTime + newVisibleStartTimeSecFrac * newVisibleDuration;
+      t2 = anchorTime + newVisibleEndTimeSecFrac * newVisibleDuration;
+
+      // ensure that the new visible time range is within the bounds
+      if (state.endTimeSec !== undefined && state.startTimeSec !== undefined) {
+        if (t2 > state.endTimeSec) {
+          const delta = t2 - state.endTimeSec;
+          t1 -= delta;
+          t2 -= delta;
+        }
+        if (t1 < state.startTimeSec) {
+          const delta = state.startTimeSec - t1;
+          t1 += delta;
+          t2 += delta;
+        }
+        if (t2 > state.endTimeSec) {
+          t2 = state.endTimeSec;
+        }
+      }
+
+      return {
+        ...state,
+        visibleStartTimeSec: t1,
+        visibleEndTimeSec: t2,
+      };
+    }
+    case "translateVisibleTimeRangeFrac": {
+      let t1 = state.visibleStartTimeSec;
+      let t2 = state.visibleEndTimeSec;
+      if (t1 === undefined || t2 === undefined) {
+        return state;
+      }
+      const visibleDuration = t2 - t1;
+      const deltaT = visibleDuration * action.frac;
+      t1 += deltaT;
+      t2 += deltaT;
+
+      // ensure that the new visible time range is within the bounds
+      if (state.endTimeSec !== undefined && state.startTimeSec !== undefined) {
+        if (t2 > state.endTimeSec) {
+          const delta = t2 - state.endTimeSec;
+          t1 -= delta;
+          t2 -= delta;
+        }
+        if (t1 < state.startTimeSec) {
+          const delta = state.startTimeSec - t1;
+          t1 += delta;
+          t2 += delta;
+        }
+        if (t2 > state.endTimeSec) {
+          t2 = state.endTimeSec;
+        }
+      }
+
+      return {
+        ...state,
+        visibleStartTimeSec: t1,
+        visibleEndTimeSec: t2,
+      };
+    }
     case "setCurrentTime": {
       return {
         ...state,
@@ -135,15 +205,79 @@ export const TimeseriesSelectionContext = React.createContext<
 
 export const useTimeseriesSelection = () => {
   const context = useContext(TimeseriesSelectionContext);
+  if (!context)
+    throw new Error(
+      "useTimeseriesSelection must be used within a TimeseriesSelectionContext",
+    );
+  const dispatch = context.dispatch;
+
+  const initializeTimeseriesSelection = useCallback(
+    (o: {
+      startTimeSec: number;
+      endTimeSec: number;
+      initialVisibleStartTimeSec?: number;
+      initialVisibleEndTimeSec?: number;
+    }) => {
+      dispatch({
+        type: "initializeTimeseries",
+        startTimeSec: o.startTimeSec,
+        endTimeSec: o.endTimeSec,
+        initialVisibleStartTimeSec: o.initialVisibleStartTimeSec,
+        initialVisibleEndTimeSec: o.initialVisibleEndTimeSec,
+      });
+    },
+    [dispatch],
+  );
+
+  const setVisibleTimeRange = useCallback(
+    (visibleStartTimeSec: number, visibleEndTimeSec: number) => {
+      dispatch({
+        type: "setVisibleTimeRange",
+        visibleStartTimeSec,
+        visibleEndTimeSec,
+      });
+    },
+    [dispatch],
+  );
+
+  const setCurrentTime = useCallback(
+    (currentTime: number | undefined) => {
+      dispatch({ type: "setCurrentTime", currentTime });
+    },
+    [dispatch],
+  );
+
+  const zoomVisibleTimeRange = useCallback(
+    (factor: number) => {
+      dispatch({
+        type: "zoomVisibleTimeRange",
+        factor,
+      });
+    },
+    [dispatch],
+  );
+
+  const translateVisibleTimeRangeFrac = useCallback(
+    (frac: number) => {
+      dispatch({
+        type: "translateVisibleTimeRangeFrac",
+        frac,
+      });
+    },
+    [dispatch],
+  );
+
   if (context === undefined) {
     throw new Error(
       "useTimeseriesSelection must be used within a TimeseriesSelectionContext.Provider",
     );
   }
   return {
-    initializeTimeseriesSelection: context.initializeTimeseriesSelection,
-    setVisibleTimeRange: context.setVisibleTimeRange,
-    setCurrentTime: context.setCurrentTime,
+    initializeTimeseriesSelection,
+    setVisibleTimeRange,
+    setCurrentTime,
+    zoomVisibleTimeRange,
+    translateVisibleTimeRangeFrac,
     timeseriesSelection: context.timeseriesSelection,
     startTimeSec: context.timeseriesSelection.startTimeSec,
     endTimeSec: context.timeseriesSelection.endTimeSec,

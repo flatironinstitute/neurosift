@@ -1,5 +1,5 @@
 import { useNwbGroup } from "@nwbInterface";
-import { FunctionComponent, useMemo, useState } from "react";
+import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import "../common/loadingState.css";
 import { CondensedControls, Controls } from "./Controls";
 import { useTimeseriesData } from "./hooks";
@@ -7,6 +7,7 @@ import LabeledEventsPlot from "./LabeledEventsPlot";
 import TimeseriesPlot from "./TimeseriesPlot";
 import TimeseriesPlotTSV2 from "./TimeseriesPlotTSV2";
 import { Props } from "./types";
+import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 
 export const SimpleTimeseriesView: FunctionComponent<
   Props & { condensed?: boolean }
@@ -21,10 +22,6 @@ export const SimpleTimeseriesView: FunctionComponent<
     loadedTimestamps,
     loadedData,
     zoomInRequired,
-    visibleTimeStart,
-    setVisibleTimeStart,
-    visibleDuration,
-    setVisibleDuration,
     visibleChannelsStart,
     setVisibleChannelsStart,
     numVisibleChannels,
@@ -43,6 +40,92 @@ export const SimpleTimeseriesView: FunctionComponent<
 
   const [channelSeparation, setChannelSeparation] = useState<number>(0);
 
+  const {
+    zoomVisibleTimeRange,
+    translateVisibleTimeRangeFrac,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+  } = useTimeseriesSelection();
+  const visibleDuration = (visibleEndTimeSec || 0) - (visibleStartTimeSec || 0);
+
+  const handleIncreaseChannels = useCallback(() => {
+    if (!timeseriesClient) return;
+    const remainingChannels =
+      timeseriesClient.numChannels - visibleChannelsStart;
+    const nextPowerOfTwo = numVisibleChannels * 2;
+
+    // If next power of 2 exceeds total channels, show all remaining channels
+    const newNumChannels =
+      nextPowerOfTwo > remainingChannels ? remainingChannels : nextPowerOfTwo;
+
+    setNumVisibleChannels(newNumChannels);
+  }, [
+    timeseriesClient,
+    visibleChannelsStart,
+    numVisibleChannels,
+    setNumVisibleChannels,
+  ]);
+
+  const handleDecreaseChannels = useCallback(() => {
+    // If current count is equal to total channels, go to previous power of 2
+    if (!timeseriesClient) return;
+    if (numVisibleChannels === timeseriesClient.numChannels) {
+      const prevPowerOfTwo = Math.pow(
+        2,
+        Math.floor(Math.log2(numVisibleChannels - 1)),
+      );
+      setNumVisibleChannels(prevPowerOfTwo);
+      return;
+    }
+
+    // Otherwise divide by 2, but ensure at least 1 channel
+    const newNumChannels = Math.max(1, Math.floor(numVisibleChannels / 2));
+    setNumVisibleChannels(newNumChannels);
+  }, [timeseriesClient, numVisibleChannels, setNumVisibleChannels]);
+
+  const handleShiftChannelsLeft = useCallback(() => {
+    const newStart = Math.max(0, visibleChannelsStart - numVisibleChannels);
+    setVisibleChannelsStart(newStart);
+  }, [visibleChannelsStart, numVisibleChannels, setVisibleChannelsStart]);
+
+  const handleShiftChannelsRight = useCallback(() => {
+    if (!timeseriesClient) return;
+    const newStart = Math.min(
+      timeseriesClient.numChannels - numVisibleChannels,
+      visibleChannelsStart + numVisibleChannels,
+    );
+    setVisibleChannelsStart(newStart);
+  }, [
+    timeseriesClient,
+    visibleChannelsStart,
+    numVisibleChannels,
+    setVisibleChannelsStart,
+  ]);
+
+  const handleIncreaseVisibleDuration = () => {
+    zoomVisibleTimeRange(2);
+  };
+
+  const handleDecreaseVisibleDuration = () => {
+    zoomVisibleTimeRange(0.5);
+  };
+
+  const handleShiftTimeLeft = () => {
+    translateVisibleTimeRangeFrac(-0.5);
+  };
+
+  const handleShiftTimeRight = () => {
+    translateVisibleTimeRangeFrac(0.5);
+  };
+
+  const handleIncreaseChannelSeparation = () => {
+    setChannelSeparation((prev) => prev + 1);
+  };
+
+  const handleDecreaseChannelSeparation = () => {
+    setChannelSeparation((prev) => Math.max(0, prev - 1));
+  };
+
   if (error) {
     return (
       <div className="loadingContainer" style={{ color: "#e74c3c" }}>
@@ -58,85 +141,6 @@ export const SimpleTimeseriesView: FunctionComponent<
   if (!timeseriesClient) {
     return <div className="loadingContainer">Loading timeseries client...</div>;
   }
-
-  const handleIncreaseChannels = () => {
-    const remainingChannels =
-      timeseriesClient.numChannels - visibleChannelsStart;
-    const nextPowerOfTwo = numVisibleChannels * 2;
-
-    // If next power of 2 exceeds total channels, show all remaining channels
-    const newNumChannels =
-      nextPowerOfTwo > remainingChannels ? remainingChannels : nextPowerOfTwo;
-
-    setNumVisibleChannels(newNumChannels);
-  };
-
-  const handleDecreaseChannels = () => {
-    // If current count is equal to total channels, go to previous power of 2
-    if (numVisibleChannels === timeseriesClient.numChannels) {
-      const prevPowerOfTwo = Math.pow(
-        2,
-        Math.floor(Math.log2(numVisibleChannels - 1)),
-      );
-      setNumVisibleChannels(prevPowerOfTwo);
-      return;
-    }
-
-    // Otherwise divide by 2, but ensure at least 1 channel
-    const newNumChannels = Math.max(1, Math.floor(numVisibleChannels / 2));
-    setNumVisibleChannels(newNumChannels);
-  };
-
-  const handleShiftChannelsLeft = () => {
-    const newStart = Math.max(0, visibleChannelsStart - numVisibleChannels);
-    setVisibleChannelsStart(newStart);
-  };
-
-  const handleShiftChannelsRight = () => {
-    const newStart = Math.min(
-      timeseriesClient.numChannels - numVisibleChannels,
-      visibleChannelsStart + numVisibleChannels,
-    );
-    setVisibleChannelsStart(newStart);
-  };
-
-  const handleIncreaseVisibleDuration = () => {
-    if (visibleDuration === undefined) return;
-    setVisibleDuration(visibleDuration * 2);
-  };
-
-  const handleDecreaseVisibleDuration = () => {
-    if (visibleDuration === undefined) return;
-    setVisibleDuration(Math.max(0.1, Math.floor(visibleDuration / 2)));
-  };
-
-  const handleShiftTimeLeft = () => {
-    if (!info) return;
-    if (visibleTimeStart === undefined) return;
-    const timeSpan = (visibleDuration || 1) / 2;
-    setVisibleTimeStart(
-      Math.max(info.timeseriesStartTime, visibleTimeStart - timeSpan),
-    );
-  };
-
-  const handleShiftTimeRight = () => {
-    if (!info) return;
-    if (visibleTimeStart === undefined) return;
-    const timeSpan = (visibleDuration || 1) / 2;
-    const lastPossibleStart =
-      info.timeseriesStartTime + info.timeseriesDuration - timeSpan;
-    setVisibleTimeStart(
-      Math.min(lastPossibleStart, visibleTimeStart + timeSpan),
-    );
-  };
-
-  const handleIncreaseChannelSeparation = () => {
-    setChannelSeparation((prev) => prev + 1);
-  };
-
-  const handleDecreaseChannelSeparation = () => {
-    setChannelSeparation((prev) => Math.max(0, prev - 1));
-  };
 
   return (
     <div style={{ position: "relative" }}>
@@ -161,7 +165,7 @@ export const SimpleTimeseriesView: FunctionComponent<
           info={info}
           visibleChannelsStart={visibleChannelsStart || 0}
           numVisibleChannels={numVisibleChannels}
-          visibleTimeStart={visibleTimeStart}
+          visibleTimeStart={visibleStartTimeSec}
           visibleDuration={visibleDuration}
           onDecreaseChannels={handleDecreaseChannels}
           onIncreaseChannels={handleIncreaseChannels}
@@ -177,7 +181,7 @@ export const SimpleTimeseriesView: FunctionComponent<
           info={info}
           visibleChannelsStart={visibleChannelsStart || 0}
           numVisibleChannels={numVisibleChannels}
-          visibleTimeStart={visibleTimeStart}
+          visibleTimeStart={visibleStartTimeSec}
           visibleDuration={visibleDuration}
           channelSeparation={channelSeparation}
           onDecreaseChannels={handleDecreaseChannels}
@@ -197,15 +201,15 @@ export const SimpleTimeseriesView: FunctionComponent<
           timestamps={loadedTimestamps}
           data={loadedData}
           labels={timeseriesClient.getLabels()}
-          visibleStartTime={visibleTimeStart || 0}
-          visibleEndTime={(visibleTimeStart || 0) + (visibleDuration || 1)}
+          visibleStartTime={visibleStartTimeSec || 0}
+          visibleEndTime={visibleEndTimeSec || 0}
         />
       ) : usePlotly ? (
         <TimeseriesPlot
           timestamps={loadedTimestamps}
           data={loadedData}
-          visibleStartTime={visibleTimeStart || 0}
-          visibleEndTime={(visibleTimeStart || 0) + (visibleDuration || 1)}
+          visibleStartTime={visibleStartTimeSec || 0}
+          visibleEndTime={visibleEndTimeSec || 0}
           channelNames={channelNames}
           channelSeparation={channelSeparation}
           width={width}
@@ -219,8 +223,8 @@ export const SimpleTimeseriesView: FunctionComponent<
           <TimeseriesPlotTSV2
             timestamps={loadedTimestamps}
             data={loadedData}
-            visibleStartTime={visibleTimeStart || 0}
-            visibleEndTime={(visibleTimeStart || 0) + (visibleDuration || 1)}
+            visibleStartTime={visibleStartTimeSec || 0}
+            visibleEndTime={visibleEndTimeSec || 0}
             channelNames={channelNames}
             channelSeparation={channelSeparation}
             width={width}

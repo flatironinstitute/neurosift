@@ -6,13 +6,21 @@ import { FunctionComponent, useEffect, useState } from "react";
 import "../common/loadingState.css";
 import { ChunkedDirectSpikeTrainsClient } from "../PSTH/PSTHItemView/DirectSpikeTrainsClient";
 import RasterViewPlot from "./RasterViewPlot";
+import RasterViewPlotTSV2 from "./RasterViewPlotTSV2";
 
 type Props = {
+  width: number;
   nwbUrl: string;
   path: string;
+  condensed?: boolean;
 };
 
-const RasterView: FunctionComponent<Props> = ({ nwbUrl, path }) => {
+const RasterView: FunctionComponent<Props> = ({
+  width,
+  condensed,
+  nwbUrl,
+  path,
+}) => {
   const spikeTrainsClient = useDirectSpikeTrainsClient(nwbUrl, path);
   if (!spikeTrainsClient)
     return (
@@ -20,7 +28,13 @@ const RasterView: FunctionComponent<Props> = ({ nwbUrl, path }) => {
         Initializing spike trains client...
       </div>
     );
-  return <RasterViewChild spikeTrainsClient={spikeTrainsClient} />;
+  return (
+    <RasterViewChild
+      spikeTrainsClient={spikeTrainsClient}
+      width={width}
+      condensed={condensed}
+    />
+  );
 };
 
 type PlotData = {
@@ -35,16 +49,23 @@ const blockSizeSec = 30;
 
 const RasterViewChild = ({
   spikeTrainsClient,
+  width,
+  condensed,
 }: {
   spikeTrainsClient: ChunkedDirectSpikeTrainsClient;
+  width: number;
+  condensed?: boolean;
 }) => {
   const [plotData, setPlotData] = useState<PlotData | null>(null);
+  const [usePlotly, setUsePlotly] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [visibleUnitsStart, setVisibleUnitsStart] = useState(0);
   const [numVisibleUnits, setNumVisibleUnits] = useState(4);
 
-  const { visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange } =
-    useTimeRange();
+  const { zoomVisibleTimeRange, translateVisibleTimeRangeFrac } =
+    useTimeseriesSelection();
+
+  const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
   const visibleDuration =
     visibleStartTimeSec !== undefined && visibleEndTimeSec !== undefined
       ? visibleEndTimeSec - visibleStartTimeSec
@@ -149,53 +170,19 @@ const RasterViewChild = ({
   };
 
   const handleIncreaseVisibleDuration = () => {
-    if (visibleDuration === undefined) return;
-    if (visibleStartTimeSec === undefined) return;
-    if (visibleEndTimeSec === undefined) return;
-    setVisibleTimeRange(
-      visibleStartTimeSec,
-      visibleEndTimeSec + visibleDuration,
-    );
+    zoomVisibleTimeRange(2);
   };
 
   const handleDecreaseVisibleDuration = () => {
-    if (visibleDuration === undefined) return;
-    if (visibleStartTimeSec === undefined) return;
-    if (visibleEndTimeSec === undefined) return;
-    setVisibleTimeRange(
-      visibleStartTimeSec,
-      visibleEndTimeSec - visibleDuration / 2,
-    );
+    zoomVisibleTimeRange(0.5);
   };
 
   const handleShiftTimeLeft = () => {
-    if (!spikeTrainsClient) return;
-    if (visibleDuration === undefined) return;
-    if (visibleStartTimeSec === undefined) return;
-    const timeShift = visibleDuration;
-    const t1 = Math.max(
-      spikeTrainsClient.startTimeSec,
-      visibleStartTimeSec - timeShift,
-    );
-    const t2 = Math.min(spikeTrainsClient.endTimeSec, visibleStartTimeSec);
-    setVisibleTimeRange(t1, t2);
+    translateVisibleTimeRangeFrac(-0.5);
   };
 
   const handleShiftTimeRight = () => {
-    if (!spikeTrainsClient) return;
-    if (visibleDuration === undefined) return;
-    if (visibleStartTimeSec === undefined) return;
-    if (visibleEndTimeSec === undefined) return;
-    const timeShift = visibleDuration;
-    const t1 = Math.max(
-      spikeTrainsClient.startTimeSec,
-      visibleStartTimeSec + timeShift,
-    );
-    const t2 = Math.min(
-      spikeTrainsClient.endTimeSec,
-      visibleEndTimeSec + timeShift,
-    );
-    setVisibleTimeRange(t1, t2);
+    translateVisibleTimeRangeFrac(0.5);
   };
 
   if (!spikeTrainsClient)
@@ -207,6 +194,21 @@ const RasterViewChild = ({
 
   return (
     <div style={{ position: "relative" }}>
+      <div style={{ position: "absolute", top: 5, right: 5, zIndex: 1000 }}>
+        <button
+          onClick={() => setUsePlotly((p) => !p)}
+          style={{
+            padding: "4px 8px",
+            backgroundColor: usePlotly ? "#007bff" : "#6c757d",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+        >
+          {usePlotly ? "Using Plotly" : "Using TimeScrollView2"}
+        </button>
+      </div>
       {isLoading && <div className="loadingIndicator">Loading data...</div>}
       <div
         style={{
@@ -390,7 +392,17 @@ const RasterViewChild = ({
           <div>{blockSizeSec} seconds</div>
         </div>
       </div>
-      <RasterViewPlot plotData={plotData} />
+      {usePlotly ? (
+        <RasterViewPlot plotData={plotData} />
+      ) : (
+        <div style={{ position: "relative" }}>
+          <RasterViewPlotTSV2
+            plotData={plotData}
+            width={width}
+            height={condensed ? 200 : 350}
+          />
+        </div>
+      )}
     </div>
   );
 };
