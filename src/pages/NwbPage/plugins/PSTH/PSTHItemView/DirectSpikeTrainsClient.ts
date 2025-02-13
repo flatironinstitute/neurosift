@@ -7,14 +7,13 @@ export class DirectSpikeTrainsClient {
   constructor(
     private nwbUrl: string,
     private path: string,
-    public unitIds: (number | string)[],
+    public unitIds: string[],
     private spikeTimesIndices: DatasetDataType,
     public startTimeSec: number,
     public endTimeSec: number,
     private spike_or_event: "spike" | "event" | undefined,
-    private d_blockSizeSec: number,
   ) {}
-  static async create(nwbUrl: string, path: string, blockSizeSec: number = 30) {
+  static async create(nwbUrl: string, path: string) {
     const group = await getNwbGroup(nwbUrl, path);
     let spike_or_event: "spike" | "event" | undefined;
     if (group && group.datasets.find((ds) => ds.name === "spike_times")) {
@@ -33,11 +32,14 @@ export class DirectSpikeTrainsClient {
     if (!unitIds) throw Error(`Unable to find unit ids for ${path}`);
 
     // if unitIds is a Typed array, convert it to a regular array
-    const unitIds2: number[] = [];
+    const unitIds2: string[] = [];
     for (let i = 0; i < unitIds.length; i++) {
-      unitIds2.push(unitIds[i]);
+      unitIds2.push(unitIds[i].toString());
     }
     unitIds = unitIds2;
+
+    // ensure strings
+    unitIds = unitIds.map((val) => val.toString());
 
     const spikeTimesIndices = await getNwbDatasetData(
       nwbUrl,
@@ -73,72 +75,40 @@ export class DirectSpikeTrainsClient {
       startTimeSec,
       endTimeSec,
       spike_or_event,
-      blockSizeSec,
     );
-  }
-  get blockSizeSec() {
-    return this.d_blockSizeSec;
   }
   get totalNumSpikes() {
     if (!this.spikeTimesIndices) return undefined;
     if (!this.spikeTimesIndices) return undefined;
     return this.spikeTimesIndices[this.spikeTimesIndices.length - 1];
   }
+  _createTimestampFinder(unitIndex: number) {
+    const i1 = unitIndex === 0 ? 0 : this.spikeTimesIndices[unitIndex - 1];
+    const i2 = this.spikeTimesIndices[unitIndex];
+    const model = {
+      length: i2 - i1,
+      getChunk: async (a1: number, a2: number) => {
+        return await getNwbDatasetData(
+          this.nwbUrl,
+          `${this.path}/${this.spike_or_event}_times`,
+          { slice: [[i1 + a1, i1 + a2]] },
+        );
+      },
+    };
+    this.#timestampFinders[unitIndex] = new TimestampFinder(model);
+  }
   numSpikesForUnit(unitId: number | string) {
-    const ii = this.unitIds.indexOf(unitId);
+    const ii = this.unitIds.indexOf(unitId.toString());
     if (ii < 0) return undefined;
     const i1 = ii === 0 ? 0 : this.spikeTimesIndices[ii - 1];
     const i2 = this.spikeTimesIndices[ii];
     return i2 - i1;
   }
-  async getData(
-    blockStartIndex: number,
-    blockEndIndex: number,
-    options: { unitIds?: (number | string)[] } = {},
-  ) {
-    const ret: {
-      unitId: number | string;
-      spikeTimesSec: number[];
-    }[] = [];
-    const t1 = this.startTimeSec! + blockStartIndex * this.blockSizeSec;
-    const t2 = this.startTimeSec! + blockEndIndex * this.blockSizeSec;
-    for (let ii = 0; ii < this.unitIds.length; ii++) {
-      if (options.unitIds) {
-        if (!options.unitIds.includes(this.unitIds[ii])) continue;
-      }
-      if (!this.#timestampFinders[ii]) {
-        const i1 = ii === 0 ? 0 : this.spikeTimesIndices[ii - 1];
-        const i2 = this.spikeTimesIndices[ii];
-
-        const model = {
-          length: i2 - i1,
-          getChunk: async (a1: number, a2: number) => {
-            return await getNwbDatasetData(
-              this.nwbUrl,
-              `${this.path}/${this.spike_or_event}_times`,
-              { slice: [[i1 + a1, i1 + a2]] },
-            );
-          },
-        };
-
-        this.#timestampFinders[ii] = new TimestampFinder(model);
-      }
-      const finder = this.#timestampFinders[ii];
-      const index1 = await finder.getDataIndexForTime(t1);
-      const index2 = await finder.getDataIndexForTime(t2);
-      const tt = await finder.getDataForIndices(index1, index2);
-      ret.push({
-        unitId: this.unitIds[ii],
-        spikeTimesSec: tt,
-      });
-    }
-    return ret;
-  }
   async getUnitSpikeTrain(
     unitId: number | string,
     o: { canceler?: { onCancel: (() => void)[] } } = {},
   ) {
-    const ii = this.unitIds.indexOf(unitId);
+    const ii = this.unitIds.indexOf(unitId.toString());
     if (ii < 0) throw Error(`Unexpected: unitId not found: ${unitId}`);
     const i1 = ii === 0 ? 0 : this.spikeTimesIndices[ii - 1];
     const i2 = this.spikeTimesIndices[ii];
@@ -153,6 +123,95 @@ export class DirectSpikeTrainsClient {
     } else {
       return [];
     }
+  }
+  async getUnitSpikeTrainForTimeRange(
+    unitId: number | string,
+    t1: number,
+    t2: number,
+    // o: { canceler?: { onCancel: (() => void)[] } } = {},
+  ) {
+    const ii = this.unitIds.indexOf(unitId.toString());
+    if (ii < 0) throw Error(`Unexpected: unitId not found: ${unitId}`);
+    if (!this.#timestampFinders[ii]) {
+      this._createTimestampFinder(ii);
+    }
+    const finder = this.#timestampFinders[ii];
+    const index1 = await finder.getDataIndexForTime(t1);
+    const index2 = await finder.getDataIndexForTime(t2);
+    const tt = await finder.getDataForIndices(index1, index2);
+    return tt;
+  }
+}
+
+export class ChunkedDirectSpikeTrainsClient {
+  #chunks: { [key: string]: number[] } = {};
+  constructor(
+    private client: DirectSpikeTrainsClient,
+    private chunkDurationSec: number,
+  ) {}
+  static async create(nwbUrl: string, path: string, chunkDurationSec = 30) {
+    const client = await DirectSpikeTrainsClient.create(nwbUrl, path);
+    return new ChunkedDirectSpikeTrainsClient(client, chunkDurationSec);
+  }
+  get totalNumSpikes() {
+    return this.client.totalNumSpikes;
+  }
+  get unitIds() {
+    return this.client.unitIds;
+  }
+  get startTimeSec() {
+    return this.client.startTimeSec;
+  }
+  get endTimeSec() {
+    return this.client.endTimeSec;
+  }
+  numSpikesForUnit(unitId: number | string) {
+    return this.client.numSpikesForUnit(unitId);
+  }
+  async _loadChunk(unitId: string, chunkIndex: number) {
+    const key = `${unitId}:${chunkIndex}`;
+    if (key in this.#chunks) return;
+    const t1 = chunkIndex * this.chunkDurationSec;
+    const t2 = (chunkIndex + 1) * this.chunkDurationSec;
+    const tt = await this.client.getUnitSpikeTrainForTimeRange(unitId, t1, t2);
+    this.#chunks[key] = tt;
+  }
+  async getUnitSpikeTrainForTimeRange(
+    unitId: number | string,
+    t1: number,
+    t2: number,
+  ) {
+    const chunkIndex1 = Math.floor(t1 / this.chunkDurationSec);
+    const chunkIndex2 = Math.floor(t2 / this.chunkDurationSec);
+
+    // ensure we have loaded the chunks
+    const promises = [];
+    for (
+      let chunkIndex = chunkIndex1;
+      chunkIndex <= chunkIndex2;
+      chunkIndex++
+    ) {
+      promises.push(this._loadChunk(unitId.toString(), chunkIndex));
+    }
+    await Promise.all(promises);
+
+    const ret: number[] = [];
+    for (
+      let chunkIndex = chunkIndex1;
+      chunkIndex <= chunkIndex2;
+      chunkIndex++
+    ) {
+      const key = `${unitId}:${chunkIndex}`;
+      const tt = this.#chunks[key];
+      const t1a = Math.max(t1, chunkIndex * this.chunkDurationSec);
+      const t2a = Math.min((chunkIndex + 1) * this.chunkDurationSec, t2);
+      for (const t of tt) {
+        if (t >= t1a && t < t2a) {
+          ret.push(t);
+        }
+      }
+    }
+    return ret;
   }
 }
 

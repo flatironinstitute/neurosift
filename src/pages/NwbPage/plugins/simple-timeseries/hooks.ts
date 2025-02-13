@@ -16,7 +16,9 @@ export const useTimeseriesClient = (nwbUrl: string, path: string) => {
     if (!group) return;
     const load = async () => {
       try {
-        const client = await ChunkedTimeseriesClient.create(nwbUrl, group, {});
+        const client = await ChunkedTimeseriesClient.create(nwbUrl, group, {
+          chunkSizeSec: 1,
+        });
         setTimeseriesClient(client);
       } catch (err: any) {
         setError(err.message);

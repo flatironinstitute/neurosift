@@ -20,9 +20,9 @@ export const rasterPlugin: NwbObjectViewPlugin = {
     return false;
   },
   component: RasterView,
-  special: false,
+  special: true,
   requiresWindowDimensions: false,
-  showInMultiView: true,
+  showInMultiView: false,
 };
 
 export default rasterPlugin;

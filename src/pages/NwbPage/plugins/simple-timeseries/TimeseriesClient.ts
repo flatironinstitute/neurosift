@@ -180,7 +180,8 @@ export class ChunkedTimeseriesClient {
       }
       const numChannels = client.numChannels;
       const chunkSizeMsec = Math.ceil(
-        (1000 * 1e6) / estSamplingFreq / numChannels,
+        // warning: if this is too large, I've notice some problems with the ChunkedTimeseriesClient
+        (1000 * 1e5) / estSamplingFreq / numChannels,
       );
       chunkSizeSec = chunkSizeMsec / 1000;
     }
