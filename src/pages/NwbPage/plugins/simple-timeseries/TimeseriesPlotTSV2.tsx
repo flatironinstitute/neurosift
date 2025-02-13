@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect, useState } from "react";
+import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import TimeScrollView2 from "@shared/component-time-scroll-view-2/TimeScrollView2";
 import { PlotData, PlotOpts, TimeseriesPlotProps as Props } from "./types";
 
@@ -10,7 +10,7 @@ const defaultMargins = {
 };
 
 const hideToolbar = true;
-const gridlineOpts = { hideX: false, hideY: false };
+const gridlineOpts = { hideX: false, hideY: true };
 
 const TimeseriesPlotTSV2: FunctionComponent<Props> = ({
   width,
@@ -96,11 +96,32 @@ const TimeseriesPlotTSV2: FunctionComponent<Props> = ({
     worker.postMessage({ plotData });
   }, [worker, data, timestamps]);
 
-  const yAxisInfo = {
-    showTicks: true,
-    yMin: undefined,
-    yMax: undefined,
-  };
+  const [yRange, setYRange] = useState<
+    { yMin: number; yMax: number } | undefined
+  >(undefined);
+
+  // Listen for worker messages
+  useEffect(() => {
+    if (!worker) return;
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data.type === "yAxisRange") {
+        setYRange({ yMin: e.data.yMin, yMax: e.data.yMax });
+      }
+    };
+    worker.addEventListener("message", handleMessage);
+    return () => {
+      worker.removeEventListener("message", handleMessage);
+    };
+  }, [worker]);
+
+  const yAxisInfo = useMemo(() => {
+    const info = {
+      showTicks: true,
+      yMin: yRange?.yMin,
+      yMax: yRange?.yMax,
+    };
+    return info;
+  }, [yRange]);
 
   return (
     <TimeScrollView2

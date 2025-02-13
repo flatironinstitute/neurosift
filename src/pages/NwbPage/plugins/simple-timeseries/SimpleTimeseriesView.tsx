@@ -11,7 +11,7 @@ import { Props } from "./types";
 export const SimpleTimeseriesView: FunctionComponent<
   Props & { condensed?: boolean }
 > = ({ nwbUrl, path, width = 700, condensed = false }) => {
-  const [usePlotly, setUsePlotly] = useState(true);
+  const [usePlotly, setUsePlotly] = useState(false);
 
   const {
     timeseriesClient,

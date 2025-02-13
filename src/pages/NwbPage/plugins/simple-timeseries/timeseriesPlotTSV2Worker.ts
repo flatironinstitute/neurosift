@@ -35,6 +35,13 @@ const doPlotDataCalculations = () => {
   const yPadding = (yMax - yMin) * 0.05;
   yMin -= yPadding;
   yMax += yPadding;
+
+  // Post yMin and yMax back to main thread
+  postMessage({
+    type: "yAxisRange",
+    yMin,
+    yMax,
+  });
 };
 
 const draw = async () => {
