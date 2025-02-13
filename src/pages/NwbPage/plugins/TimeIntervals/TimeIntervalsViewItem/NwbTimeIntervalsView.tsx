@@ -45,9 +45,13 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
     if (!startTimeData || !stopTimeData) return;
     const t1 = compute_min(startTimeData);
     const t2 = compute_max(stopTimeData);
-    initializeTimeseriesSelection(t1, t2);
     const t2b = Math.min(t1 + 100, t2);
-    setVisibleTimeRange(t1, t2b);
+    initializeTimeseriesSelection({
+      startTimeSec: t1,
+      endTimeSec: t2,
+      initialVisibleStartTimeSec: t1,
+      initialVisibleEndTimeSec: t2b,
+    });
   }, [
     startTimeData,
     stopTimeData,
