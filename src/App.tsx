@@ -115,10 +115,33 @@ const LegacyUrlHandler = () => {
           `dandisetVersion=${encodeURIComponent(dandisetVersion)}`,
         );
 
-      // 4. tab (unencoded, only if it starts with neurodata-item:)
+      // 4. tab
       if (tabParam?.startsWith("neurodata-item:")) {
         const path = tabParam.split("|")[0].replace("neurodata-item:", "");
         queryParts.push(`tab=${path}`);
+      }
+      if (tabParam?.startsWith("view:")) {
+        const b = tabParam.slice("view:".length).split("|");
+        if (b[0] === "X/Y") {
+          queryParts.push(`tab=SpatialSeriesXY|${b[1]}`);
+        }
+      }
+      if (tabParam?.startsWith("neurodata-items:")) {
+        const x = tabParam.slice("neurodata-items:".length).split("@");
+        let y = x.map((z) => {
+          if (z.startsWith("neurodata-item")) {
+            const b = z.slice("neurodata-item:".length).split("|");
+            return b[0];
+          } else if (z.startsWith("view:")) {
+            const b = z.slice("view:".length).split("|");
+            if (b[0] === "X/Y") {
+              return `SpatialSeriesXY|${b[1]}`;
+            }
+          }
+          return "";
+        });
+        y = y.filter((z) => z !== "");
+        queryParts.push(`tab=${JSON.stringify(y)}`);
       }
 
       if (queryParts.length > 0) {
