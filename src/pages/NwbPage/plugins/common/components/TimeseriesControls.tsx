@@ -143,7 +143,8 @@ export const ItemRangeControls: FunctionComponent<ItemRangeControlsProps> = ({
         <span style={{ fontWeight: 500 }}>{itemLabel}</span>
         <span style={{ color: "#868e96" }}>
           {visibleStartIndex}-
-          {Math.min(visibleStartIndex + numVisibleItems, totalNumItems) - 1}
+          {Math.min(visibleStartIndex + numVisibleItems, totalNumItems) - 1} of{" "}
+          {totalNumItems}
         </span>
       </div>
       <div style={{ marginLeft: "4px", display: "flex", gap: "4px" }}>

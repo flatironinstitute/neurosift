@@ -47,6 +47,8 @@ const paint = () => {
   ctx!.strokeStyle = "black";
   ctx!.lineWidth = 1;
 
+  const markerHeight = Math.max(2, Math.min(12, pixelsPerUnit * 0.8));
+
   plotData.spikeTimes.forEach((spikes, unitIndex) => {
     const y = margins.top + (unitIndex + 0.5) * pixelsPerUnit;
     spikes.forEach((spikeTime) => {
@@ -59,8 +61,8 @@ const paint = () => {
       const x =
         margins.left + (spikeTime - visibleStartTimeSec) * pixelsPerTimeSec;
       ctx.beginPath();
-      ctx.moveTo(x, y - 8);
-      ctx.lineTo(x, y + 8);
+      ctx.moveTo(x, y - markerHeight / 2);
+      ctx.lineTo(x, y + markerHeight / 2);
       ctx.stroke();
     });
   });

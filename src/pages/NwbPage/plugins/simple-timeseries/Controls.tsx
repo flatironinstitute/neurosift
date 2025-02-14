@@ -54,7 +54,7 @@ export const CondensedControls: FunctionComponent<ControlsProps> = ({
           visibleStartIndex={visibleChannelsStart}
           numVisibleItems={numVisibleChannels}
           totalNumItems={info.totalNumChannels}
-          itemLabel="Channels"
+          itemLabel="Chans"
           onDecreaseItems={onDecreaseChannels}
           onIncreaseItems={onIncreaseChannels}
           onShiftItemsLeft={onShiftChannelsLeft}
@@ -129,6 +129,7 @@ export const Controls: FunctionComponent<ControlsProps> = ({
               onIncreaseItems={onIncreaseChannels}
               onShiftItemsLeft={onShiftChannelsLeft}
               onShiftItemsRight={onShiftChannelsRight}
+              itemLabel="Chans"
             />
 
             {numVisibleChannels > 1 && (
