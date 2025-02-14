@@ -4,6 +4,7 @@ import React from "react";
 import NwbObjectView from "../NwbObjectView";
 import { NwbObjectViewPlugin } from "../plugins/pluginInterface";
 import TabToolbar, { TOOLBAR_HEIGHT } from "../TabToolbar";
+import ObjectHeaderBar from "./ObjectHeaderBar";
 import { ObjectType } from "../Types";
 
 interface MultiTabViewProps {
@@ -36,12 +37,7 @@ const MultiTabView: React.FC<MultiTabViewProps> = ({
   return (
     <ProvideTimeseriesSelection>
       <div>
-        <TabToolbar
-          width={width - 20}
-          tabId={tabId}
-          nwbUrl={nwbUrl}
-          paths={paths}
-        />
+        <TabToolbar width={width - 20} tabId={tabId} nwbUrl={nwbUrl} />
         <ScrollY
           width={width - 20}
           height={height - TOOLBAR_HEIGHT}
@@ -51,15 +47,15 @@ const MultiTabView: React.FC<MultiTabViewProps> = ({
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: 20,
               padding: 0,
             }}
           >
             {paths.map((path, index) => (
               <div
                 key={plugins[index] ? plugins[index].name + ":" + path : path}
+                style={{ marginBottom: 20 }}
               >
-                {/* {index > 0 && <hr style={{ margin: "20px 0" }} />} */}
+                <ObjectHeaderBar width={width - 40} path={path} />
                 <NwbObjectView
                   nwbUrl={nwbUrl}
                   path={path}

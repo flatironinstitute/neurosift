@@ -8,7 +8,6 @@ type TabToolbarProps = {
   tabId: string;
   nwbUrl: string;
   path?: string;
-  paths?: string[];
 };
 
 const TabToolbar: FunctionComponent<TabToolbarProps> = ({
@@ -16,10 +15,9 @@ const TabToolbar: FunctionComponent<TabToolbarProps> = ({
   tabId,
   nwbUrl,
   path,
-  paths,
 }) => {
-  const displayPath =
-    path || (paths && paths.length > 0 ? paths.join(", ") : "");
+  // Show path in single view only (when path prop is provided)
+  const shouldShowPath = path !== undefined;
 
   return (
     <div
@@ -32,30 +30,24 @@ const TabToolbar: FunctionComponent<TabToolbarProps> = ({
         display: "flex",
         alignItems: "center",
         padding: "0 8px",
+        gap: 12,
       }}
     >
-      <div
-        style={{
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-          minWidth: 0,
-          fontSize: "12px",
-          color: "#666",
-        }}
-      >
-        {displayPath}
-      </div>
-      <div
-        style={{
-          marginLeft: 12,
-          display: "flex",
-          alignItems: "center",
-          minWidth: 28,
-        }}
-      >
-        <ShareTabButton tabId={tabId} nwbUrl={nwbUrl} />
-      </div>
+      <ShareTabButton tabId={tabId} nwbUrl={nwbUrl} />
+      {shouldShowPath && (
+        <div
+          style={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            minWidth: 0,
+            fontSize: "12px",
+            color: "#666",
+          }}
+        >
+          {path}
+        </div>
+      )}
     </div>
   );
 };
