@@ -5,6 +5,7 @@ import ResponsiveLayout from "@components/ResponsiveLayout";
 import ScrollY from "@components/ScrollY";
 import { useDandisetVersionInfo } from "../DandisetPage/useDandisetVersionInfo";
 import useQueryDandiset from "../DandisetPage/useQueryDandiset";
+import { addRecentDandiset } from "../util/recentDandisets";
 import MainWorkspace from "./MainWorkspace";
 import NwbOverview from "./NwbOverview";
 import "@css/NwbPage.css";
@@ -33,6 +34,12 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({ width, height }) => {
   const initialSplitterPosition = Math.max(200, Math.min(450, width / 3));
 
   useNwbPageAnalytics(nwbUrl, dandisetId, dandisetVersion);
+
+  useEffect(() => {
+    if (dandisetId) {
+      addRecentDandiset(dandisetId);
+    }
+  }, [dandisetId]);
 
   return (
     <ResponsiveLayout
