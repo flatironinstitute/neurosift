@@ -28,32 +28,68 @@ export const TimeRangeControls: FunctionComponent<TimeRangeControlsProps> = ({
     return null;
 
   return (
-    <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-      <span>
-        {visibleDuration.toFixed(2)}s @ {visibleTimeStart.toFixed(2)}s
-      </span>
-      <ControlButton
-        onClick={onDecreaseVisibleDuration}
-        disabled={visibleDuration <= minDuration}
+    <div
+      style={{
+        display: "flex",
+        gap: "8px",
+        alignItems: "center",
+        background: "#f8f9fa",
+        padding: "8px 12px",
+        borderRadius: "6px",
+        border: "1px solid #e9ecef",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "0.9rem",
+          color: "#495057",
+          fontFamily:
+            "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          display: "flex",
+          alignItems: "center",
+          gap: "4px",
+          minWidth: "110px",
+        }}
       >
-        /2
-      </ControlButton>
-      <ControlButton onClick={onIncreaseVisibleDuration}>×2</ControlButton>
-      <ControlButton
-        onClick={onShiftTimeLeft}
-        disabled={visibleTimeStart <= timeseriesStartTime}
-      >
-        ←
-      </ControlButton>
-      <ControlButton
-        onClick={onShiftTimeRight}
-        disabled={
-          visibleTimeStart + visibleDuration >=
-          timeseriesStartTime + timeseriesDuration
-        }
-      >
-        →
-      </ControlButton>
+        <span style={{ fontWeight: 500 }}>{visibleDuration.toFixed(2)}s</span>
+        <span style={{ color: "#868e96" }}>at</span>
+        <span style={{ fontWeight: 500 }}>{visibleTimeStart.toFixed(2)}s</span>
+      </div>
+      <div style={{ marginLeft: "4px", display: "flex", gap: "4px" }}>
+        <ControlButton
+          onClick={onDecreaseVisibleDuration}
+          disabled={visibleDuration <= minDuration}
+          title="Zoom in (decrease time window)"
+        >
+          🔍+
+        </ControlButton>
+        <ControlButton
+          onClick={onIncreaseVisibleDuration}
+          title="Zoom out (increase time window)"
+        >
+          🔍-
+        </ControlButton>
+      </div>
+      <div style={{ display: "flex", gap: "4px" }}>
+        <ControlButton
+          onClick={onShiftTimeLeft}
+          disabled={visibleTimeStart <= timeseriesStartTime}
+          title="Move backward in time"
+        >
+          ⟵
+        </ControlButton>
+        <ControlButton
+          onClick={onShiftTimeRight}
+          disabled={
+            visibleTimeStart + visibleDuration >=
+            timeseriesStartTime + timeseriesDuration
+          }
+          title="Move forward in time"
+        >
+          ⟶
+        </ControlButton>
+      </div>
     </div>
   );
 };
@@ -80,32 +116,68 @@ export const ItemRangeControls: FunctionComponent<ItemRangeControlsProps> = ({
   onShiftItemsRight,
 }) => {
   return (
-    <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-      <span>
-        {itemLabel} {visibleStartIndex}-
-        {Math.min(visibleStartIndex + numVisibleItems, totalNumItems) - 1}
-      </span>
-      <ControlButton onClick={onDecreaseItems} disabled={numVisibleItems <= 1}>
-        /2
-      </ControlButton>
-      <ControlButton
-        onClick={onIncreaseItems}
-        disabled={visibleStartIndex + numVisibleItems >= totalNumItems}
+    <div
+      style={{
+        display: "flex",
+        gap: "8px",
+        alignItems: "center",
+        background: "#f8f9fa",
+        padding: "8px 12px",
+        borderRadius: "6px",
+        border: "1px solid #e9ecef",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "0.9rem",
+          color: "#495057",
+          fontFamily:
+            "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          display: "flex",
+          alignItems: "center",
+          gap: "4px",
+          minWidth: "70px",
+        }}
       >
-        ×2
-      </ControlButton>
-      <ControlButton
-        onClick={onShiftItemsLeft}
-        disabled={visibleStartIndex === 0}
-      >
-        ←
-      </ControlButton>
-      <ControlButton
-        onClick={onShiftItemsRight}
-        disabled={visibleStartIndex + numVisibleItems >= totalNumItems}
-      >
-        →
-      </ControlButton>
+        <span style={{ fontWeight: 500 }}>{itemLabel}</span>
+        <span style={{ color: "#868e96" }}>
+          {visibleStartIndex}-
+          {Math.min(visibleStartIndex + numVisibleItems, totalNumItems) - 1}
+        </span>
+      </div>
+      <div style={{ marginLeft: "4px", display: "flex", gap: "4px" }}>
+        <ControlButton
+          onClick={onDecreaseItems}
+          disabled={numVisibleItems <= 1}
+          title="Show fewer items"
+        >
+          －
+        </ControlButton>
+        <ControlButton
+          onClick={onIncreaseItems}
+          disabled={visibleStartIndex + numVisibleItems >= totalNumItems}
+          title="Show more items"
+        >
+          ＋
+        </ControlButton>
+      </div>
+      <div style={{ display: "flex", gap: "4px" }}>
+        <ControlButton
+          onClick={onShiftItemsLeft}
+          disabled={visibleStartIndex === 0}
+          title="Move to previous items"
+        >
+          ⟵
+        </ControlButton>
+        <ControlButton
+          onClick={onShiftItemsRight}
+          disabled={visibleStartIndex + numVisibleItems >= totalNumItems}
+          title="Move to next items"
+        >
+          ⟶
+        </ControlButton>
+      </div>
     </div>
   );
 };
@@ -155,6 +227,64 @@ export const FullLayout: FunctionComponent<{
     </div>
   </div>
 );
+
+export type SeparationControlsProps = {
+  channelSeparation: number;
+  onDecreaseChannelSeparation: () => void;
+  onIncreaseChannelSeparation: () => void;
+};
+
+export const SeparationControls: FunctionComponent<SeparationControlsProps> = ({
+  channelSeparation,
+  onDecreaseChannelSeparation,
+  onIncreaseChannelSeparation,
+}) => {
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: "8px",
+        alignItems: "center",
+        background: "#f8f9fa",
+        padding: "8px 12px",
+        borderRadius: "6px",
+        border: "1px solid #e9ecef",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "0.9rem",
+          color: "#495057",
+          fontFamily:
+            "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          display: "flex",
+          alignItems: "center",
+          gap: "4px",
+          minWidth: "70px",
+        }}
+      >
+        <span style={{ fontWeight: 500 }}>Separation</span>
+        <span style={{ color: "#868e96" }}>{channelSeparation}</span>
+      </div>
+      <div style={{ display: "flex", gap: "4px" }}>
+        <ControlButton
+          onClick={onDecreaseChannelSeparation}
+          disabled={channelSeparation <= 0}
+          title="Decrease channel separation"
+        >
+          －
+        </ControlButton>
+        <ControlButton
+          onClick={onIncreaseChannelSeparation}
+          title="Increase channel separation"
+        >
+          ＋
+        </ControlButton>
+      </div>
+    </div>
+  );
+};
 
 export const LabeledRow: FunctionComponent<{
   label: string;

@@ -5,8 +5,8 @@ let plotOpts: PlotOpts | undefined = undefined;
 let plotData: PlotData | undefined = undefined;
 
 let avgStdDev = 0;
-let yMin = 0;
-let yMax = 0;
+let yMins: number[] = [];
+let yMaxs: number[] = [];
 const doPlotDataCalculations = () => {
   avgStdDev =
     plotData!.data.length === 0
@@ -20,28 +20,16 @@ const doPlotDataCalculations = () => {
           return sum + Math.sqrt(variance);
         }, 0) / plotData!.data.length;
 
-  yMin = Infinity;
-  yMax = -Infinity;
+  yMins = [];
+  yMaxs = [];
   for (let i = 0; i < plotData!.data.length; i++) {
     const offset =
       (plotData!.data.length - 1 - i) * plotOpts!.channelSeparation * avgStdDev;
     const channelMin = compute_min(plotData!.data[i]) + offset;
     const channelMax = compute_max(plotData!.data[i]) + offset;
-    yMin = Math.min(yMin, channelMin);
-    yMax = Math.max(yMax, channelMax);
+    yMins[i] = channelMin;
+    yMaxs[i] = channelMax;
   }
-
-  // Add padding to value range
-  const yPadding = (yMax - yMin) * 0.05;
-  yMin -= yPadding;
-  yMax += yPadding;
-
-  // Post yMin and yMax back to main thread
-  postMessage({
-    type: "yAxisRange",
-    yMin,
-    yMax,
-  });
 };
 
 const draw = async () => {
@@ -64,6 +52,37 @@ const draw = async () => {
     );
     return;
   }
+
+  let yMin = compute_min(
+    yMins.map(
+      (val, i) =>
+        val +
+        (plotData!.data.length - 1 - i) *
+          plotOpts!.channelSeparation *
+          avgStdDev,
+    ),
+  );
+  let yMax = compute_max(
+    yMaxs.map(
+      (val, i) =>
+        val +
+        (plotData!.data.length - 1 - i) *
+          plotOpts!.channelSeparation *
+          avgStdDev,
+    ),
+  );
+
+  // Add padding to value range
+  const yPadding = (yMax - yMin) * 0.05;
+  yMin -= yPadding;
+  yMax += yPadding;
+
+  // Post yMin and yMax back to main thread
+  postMessage({
+    type: "yAxisRange",
+    yMin,
+    yMax,
+  });
 
   // Calculate plot dimensions
   const plotWidth =

@@ -4,11 +4,11 @@ import {
   FullLayout,
   ItemRangeControls,
   LabeledRow,
+  SeparationControls,
   TimeRangeControls,
 } from "../common/components/TimeseriesControls";
 import { SimpleTimeseriesInfo } from "./types";
 import { formatSamplingFrequency } from "./utils";
-import { ControlButton } from "../common/components/ControlButton";
 
 type ControlsProps = {
   info: SimpleTimeseriesInfo;
@@ -29,14 +29,7 @@ type ControlsProps = {
   onIncreaseChannelSeparation: () => void;
 };
 
-export const CondensedControls: FunctionComponent<
-  Omit<
-    ControlsProps,
-    | "channelSeparation"
-    | "onDecreaseChannelSeparation"
-    | "onIncreaseChannelSeparation"
-  >
-> = ({
+export const CondensedControls: FunctionComponent<ControlsProps> = ({
   info,
   visibleChannelsStart,
   numVisibleChannels,
@@ -50,6 +43,9 @@ export const CondensedControls: FunctionComponent<
   onIncreaseVisibleDuration,
   onShiftTimeLeft,
   onShiftTimeRight,
+  channelSeparation,
+  onDecreaseChannelSeparation,
+  onIncreaseChannelSeparation,
 }) => {
   return (
     <CondensedLayout>
@@ -63,6 +59,13 @@ export const CondensedControls: FunctionComponent<
           onIncreaseItems={onIncreaseChannels}
           onShiftItemsLeft={onShiftChannelsLeft}
           onShiftItemsRight={onShiftChannelsRight}
+        />
+      )}
+      {info.totalNumChannels > 1 && numVisibleChannels > 1 && (
+        <SeparationControls
+          channelSeparation={channelSeparation}
+          onDecreaseChannelSeparation={onDecreaseChannelSeparation}
+          onIncreaseChannelSeparation={onIncreaseChannelSeparation}
         />
       )}
       <TimeRangeControls
@@ -129,23 +132,11 @@ export const Controls: FunctionComponent<ControlsProps> = ({
             />
 
             {numVisibleChannels > 1 && (
-              <>
-                <span
-                  style={{ marginLeft: "12px" }}
-                  title="Visual separation between channels in units of standard deviations"
-                >
-                  Separation: {channelSeparation}
-                </span>
-                <ControlButton
-                  onClick={onDecreaseChannelSeparation}
-                  disabled={channelSeparation <= 0}
-                >
-                  -1
-                </ControlButton>
-                <ControlButton onClick={onIncreaseChannelSeparation}>
-                  +1
-                </ControlButton>
-              </>
+              <SeparationControls
+                channelSeparation={channelSeparation}
+                onDecreaseChannelSeparation={onDecreaseChannelSeparation}
+                onIncreaseChannelSeparation={onIncreaseChannelSeparation}
+              />
             )}
           </div>
         </LabeledRow>

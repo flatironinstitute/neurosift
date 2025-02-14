@@ -175,6 +175,9 @@ export const SimpleTimeseriesView: FunctionComponent<
           onIncreaseVisibleDuration={handleIncreaseVisibleDuration}
           onShiftTimeLeft={handleShiftTimeLeft}
           onShiftTimeRight={handleShiftTimeRight}
+          channelSeparation={channelSeparation}
+          onDecreaseChannelSeparation={handleDecreaseChannelSeparation}
+          onIncreaseChannelSeparation={handleIncreaseChannelSeparation}
         />
       ) : (
         <Controls
