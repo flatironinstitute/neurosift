@@ -64,6 +64,30 @@ const ApplicationBar: FunctionComponent<Props> = ({ onContextChat }) => {
           const b = a?.split("|");
           tab = b[0];
         }
+        else if (tab.startsWith("view:")) {
+          const a = tab.split(":")[1];
+          const b = a?.split("|");
+          tab = b[0];
+        }
+        else if (tab.startsWith("neurodata-items:")) {
+          const x = tab.slice("neurodata-items:".length).split("@");
+          let y = x.map((z) => {
+            if (z.startsWith("neurodata-item")) {
+              const b = z.slice("neurodata-item:".length).split("|");
+              return b[0];
+            } else if (z.startsWith("view:")) {
+              const b = z.slice("view:".length).split("|");
+              if (b[0] === "X/Y") {
+                return `SpatialSeriesXY|${b[1]}`;
+              } else if (b[0] === "RasterPlot") {
+                return `Raster|${b[1]}`;
+              }
+            }
+            return "";
+          });
+          y = y.filter((z) => z !== "");
+          tab = JSON.stringify(y);
+        }
         if (tab) {
           url += `&tab=${tab}`;
         }

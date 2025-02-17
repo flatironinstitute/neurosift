@@ -1,4 +1,4 @@
-// Converted from https://github.com/magland/pyedf
+// Converted from https://github.com/bids-standard/pyedf
 
 class RemoteFile {
   #chunkSizeBytes = 1024 * 1024 * 1;
