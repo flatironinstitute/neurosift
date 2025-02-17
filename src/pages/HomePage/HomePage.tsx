@@ -1,5 +1,6 @@
 import { Box, Button, Container, Paper, Typography, Link } from "@mui/material";
 import { FunctionComponent, useEffect, useState } from "react";
+import GitHubIcon from "@mui/icons-material/GitHub";
 import { useNavigate } from "react-router-dom";
 import ScrollY from "@components/ScrollY";
 
@@ -23,15 +24,6 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
             processing of NWB (Neurodata Without Borders) files, whether stored
             locally or hosted remotely, and enables interactive exploration and
             analysis of the online repositories such as DANDI Archive.
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 1, mb: 2 }}>
-            <Link
-              href="https://github.com/flatironinstitute/neurosift/tree/main-v2"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              View source code on GitHub
-            </Link>
           </Typography>
         </Box>
 
@@ -158,8 +150,36 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
           </Typography>
         </Paper>
 
-        {/* Add significant spacing before the build time */}
-        <Box sx={{ mt: 8, mb: 8, textAlign: "center" }}>
+        {/* GitHub link and build time */}
+        <Box
+          sx={{
+            mt: 8,
+            mb: 8,
+            textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 2,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Link
+              href="https://github.com/flatironinstitute/neurosift/tree/main-v2"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                color: "text.secondary",
+                textDecoration: "none",
+                "&:hover": { color: "primary.main" },
+              }}
+            >
+              <GitHubIcon />
+              <Typography variant="body2">View source on GitHub</Typography>
+            </Link>
+          </Box>
           <Typography
             variant="body2"
             sx={{
