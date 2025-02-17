@@ -1,12 +1,12 @@
-import React, { FunctionComponent, useEffect, useState } from "react";
-import { DatasetPluginProps } from "../pluginInterface";
+import TimeScrollView2, {
+  useTimeScrollView2,
+} from "@shared/component-time-scroll-view-2/TimeScrollView2";
 import {
   useTimeRange,
   useTimeseriesSelection,
 } from "@shared/context-timeseries-selection-2";
-import TimeScrollView2, {
-  useTimeScrollView2,
-} from "@shared/component-time-scroll-view-2/TimeScrollView2";
+import { FunctionComponent, useEffect, useState } from "react";
+import { DatasetPluginProps } from "../pluginInterface";
 import AudioPlayer from "./AudioPlayer";
 import WaveformCanvas from "./WaveformCanvas";
 
