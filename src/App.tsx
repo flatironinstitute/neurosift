@@ -136,6 +136,8 @@ const LegacyUrlHandler = () => {
             const b = z.slice("view:".length).split("|");
             if (b[0] === "X/Y") {
               return `SpatialSeriesXY|${b[1]}`;
+            } else if (b[0] === "RasterPlot") {
+              return `Raster|${b[1]}`;
             }
           }
           return "";
