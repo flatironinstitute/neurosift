@@ -7,7 +7,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { getNwbDatasetData, getNwbGroup } from "@nwbInterface";
+import { getHdf5DatasetData, getHdf5Group } from "@hdf5Interface";
 
 export const SpecificationsContext = createContext<
   NwbFileSpecifications | undefined
@@ -153,21 +153,21 @@ export const loadSpecifications = async (
   nwbUrl: string,
 ): Promise<NwbFileSpecifications> => {
   const subgroups: SpecificationsSubgroup[] = [];
-  const s = await getNwbGroup(nwbUrl, "/specifications");
+  const s = await getHdf5Group(nwbUrl, "/specifications");
   if (!s) throw Error("No specifications group");
   for (const sg of s.subgroups) {
     const A: SpecificationsSubgroup = { name: sg.name, versions: [] };
-    const x = await getNwbGroup(nwbUrl, `/specifications/${sg.name}`);
+    const x = await getHdf5Group(nwbUrl, `/specifications/${sg.name}`);
     if (!x) throw Error(`No specifications/${sg.name} group`);
     for (const vx of x.subgroups) {
       const B: SpecificationsSubgroupVersion = { version: vx.name, items: [] };
-      const y = await getNwbGroup(
+      const y = await getHdf5Group(
         nwbUrl,
         `/specifications/${sg.name}/${vx.name}`,
       );
       if (!y) throw Error(`No specifications/${sg.name}/${vx.name} group`);
       for (const itemDataset of y.datasets) {
-        const data = await getNwbDatasetData(
+        const data = await getHdf5DatasetData(
           nwbUrl,
           `/specifications/${sg.name}/${vx.name}/${itemDataset.name}`,
           {},

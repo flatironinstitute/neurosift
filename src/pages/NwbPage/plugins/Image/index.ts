@@ -1,4 +1,4 @@
-import { getNwbDataset, getNwbGroup } from "@nwbInterface";
+import { getHdf5Dataset, getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import ImagePluginView from "./ImagePluginView";
 
@@ -14,11 +14,11 @@ export const imagePlugin: NwbObjectViewPlugin = {
     objectType: "group" | "dataset";
   }) => {
     if (objectType === "dataset") {
-      const ds = await getNwbDataset(nwbUrl, path);
+      const ds = await getHdf5Dataset(nwbUrl, path);
       if (ds?.attrs.neurodata_type === "Image") return true;
     } else {
       // objectType === "group"
-      const grp = await getNwbGroup(nwbUrl, path);
+      const grp = await getHdf5Group(nwbUrl, path);
       if (grp?.attrs.neurodata_type === "Images") return true;
     }
     return false;

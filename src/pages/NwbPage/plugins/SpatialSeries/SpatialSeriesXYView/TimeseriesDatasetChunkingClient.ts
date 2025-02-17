@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Canceler } from "@remote-h5-file";
-import { getNwbDatasetData, NwbDataset } from "@nwbInterface";
+import { getHdf5DatasetData, Hdf5Dataset } from "@hdf5Interface";
 
 class TimeseriesDatasetChunkingClient {
   #chunks: { [k: number]: number[][] } = {};
   #noiseLevelForAutoSeparation: number | undefined;
   constructor(
     private nwbUrl: string,
-    private dataset: NwbDataset,
+    private dataset: Hdf5Dataset,
     public chunkSize: number,
     private o: {
       visibleChannelsRange?: [number, number];
@@ -109,7 +109,7 @@ class TimeseriesDatasetChunkingClient {
       );
     const slice: [number, number][] =
       shape.length === 1 ? [[i1, i2]] : [[i1, i2], channelSlice];
-    let data = await getNwbDatasetData(this.nwbUrl, this.dataset.path, {
+    let data = await getHdf5DatasetData(this.nwbUrl, this.dataset.path, {
       slice,
       canceler,
     });

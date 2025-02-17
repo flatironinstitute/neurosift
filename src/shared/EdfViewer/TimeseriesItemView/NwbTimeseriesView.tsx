@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useNwbDataset } from "@nwbInterface";
+import { useHdf5Dataset } from "@hdf5Interface";
 import {
   useTimeRange,
   useTimeseriesSelection,
@@ -67,7 +67,7 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
   showTimeseriesToolbar,
   showTimeseriesNavbar,
 }) => {
-  const dataset = useNwbDataset(nwbUrl, `${objectPath}/data`);
+  const dataset = useHdf5Dataset(nwbUrl, `${objectPath}/data`);
   const numChannels = dataset ? dataset.shape[1] : 0;
   const timeseriesTimestampsClient = useTimeseriesTimestampsClient(
     nwbUrl,

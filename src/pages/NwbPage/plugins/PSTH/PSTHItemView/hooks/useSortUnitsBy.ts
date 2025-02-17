@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getNwbDatasetData } from "@nwbInterface";
+import { getHdf5DatasetData } from "@hdf5Interface";
 
 export const useSortUnitsByValues = (
   nwbUrl: string,
@@ -18,9 +18,9 @@ export const useSortUnitsByValues = (
 
     let canceled = false;
     const load = async () => {
-      const dsId = await getNwbDatasetData(nwbUrl, unitsPath + "/id", {});
+      const dsId = await getHdf5DatasetData(nwbUrl, unitsPath + "/id", {});
       if (canceled) return;
-      const dsVar = await getNwbDatasetData(
+      const dsVar = await getHdf5DatasetData(
         nwbUrl,
         unitsPath + "/" + sortUnitsByVariable,
         {},

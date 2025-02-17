@@ -2,7 +2,7 @@ import { FunctionComponent, useMemo } from "react";
 import Markdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vs } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { NwbGroup, useNwbGroup } from "@nwbInterface";
+import { Hdf5Group, useHdf5Group } from "@hdf5Interface";
 import {
   getCustomPythonCodeForTimeIntervals,
   getCustomPythonCodeForTimeSeries,
@@ -15,7 +15,7 @@ type Props = {
 };
 
 const LoadInPythonWindow: FunctionComponent<Props> = ({ nwbUrl, path }) => {
-  const group = useNwbGroup(nwbUrl, path);
+  const group = useHdf5Group(nwbUrl, path);
 
   const customCode = useMemo(() => {
     if (!group) return "";
@@ -55,7 +55,7 @@ const LoadInPythonWindow: FunctionComponent<Props> = ({ nwbUrl, path }) => {
   );
 };
 
-const isTimeSeriesGroup = (group: NwbGroup) => {
+const isTimeSeriesGroup = (group: Hdf5Group) => {
   // Check if we have a data dataset
   const dataDataset = group.datasets.find((ds) => ds.name === "data");
   if (!dataDataset) return false;
@@ -74,7 +74,7 @@ const createSource = (
   nwbUrl: string,
   urlType: "hdf5" | "lindi",
   path: string,
-  group: NwbGroup,
+  group: Hdf5Group,
   customCode: string,
 ) => {
   const backtics = "```";

@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNwbGroup, useNwbDataset, getNwbDatasetData } from "@nwbInterface";
+import {
+  useHdf5Group,
+  useHdf5Dataset,
+  getHdf5DatasetData,
+} from "@hdf5Interface";
 import { DatasetDataType } from "@remote-h5-file";
 import { SmallIconButton } from "@fi-sci/misc";
 import { FaExternalLinkAlt } from "react-icons/fa";
@@ -33,13 +37,13 @@ const TreeNode: React.FC<TreeNodeProps> = ({
 }) => {
   const [expanded, setExpanded] = useState(indent === 0);
   const [datasetInfo, setDatasetInfo] = useState<DatasetInfo | null>(null);
-  const group = useNwbGroup(nwbUrl, type === "group" ? path : "");
-  const dataset = useNwbDataset(nwbUrl, type === "dataset" ? path : "");
+  const group = useHdf5Group(nwbUrl, type === "group" ? path : "");
+  const dataset = useHdf5Dataset(nwbUrl, type === "dataset" ? path : "");
 
   const viewDatasetInConsole = useCallback(async () => {
     if (type === "dataset" && dataset) {
       console.info("Loading dataset data for " + path);
-      const data = await getNwbDatasetData(nwbUrl, path, {});
+      const data = await getHdf5DatasetData(nwbUrl, path, {});
       console.info(`Dataset data for ${path}:`);
       console.info(data);
     }
@@ -50,7 +54,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
       if (type === "dataset" && expanded && dataset && !datasetInfo) {
         if (product(dataset.shape) <= 100) {
           try {
-            const data = await getNwbDatasetData(nwbUrl, path, {});
+            const data = await getHdf5DatasetData(nwbUrl, path, {});
             if (data !== undefined) {
               setDatasetInfo({
                 dtype: dataset.dtype,
@@ -250,7 +254,7 @@ const DefaultGroupView: React.FC<Props> = ({
   path,
   onOpenObjectInNewTab,
 }) => {
-  const group = useNwbGroup(nwbUrl, path);
+  const group = useHdf5Group(nwbUrl, path);
   if (!group) return <>Loading group...</>;
 
   return (
@@ -272,7 +276,7 @@ const DefaultDatasetView: React.FC<Props> = ({
   path,
   onOpenObjectInNewTab,
 }) => {
-  const dataset = useNwbDataset(nwbUrl, path);
+  const dataset = useHdf5Dataset(nwbUrl, path);
   if (!dataset) return <>Loading dataset...</>;
 
   return (

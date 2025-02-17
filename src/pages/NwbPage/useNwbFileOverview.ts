@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-import { getNwbGroup } from "./nwbInterface";
+import { getHdf5Group } from "./hdf5Interface";
 import { generalLabelMap } from "./nwbConfig";
 import { NwbFileOverview, GeneralLabelMapItem } from "./types";
 
@@ -14,7 +14,7 @@ export const useNwbFileOverview = (url: string | null) => {
     setNwbFileOverview(null);
     const load = async () => {
       try {
-        const rootGroup = await getNwbGroup(url, "/");
+        const rootGroup = await getHdf5Group(url, "/");
         if (!rootGroup) {
           const isDandiUrl = url.includes("dandi");
           const errorMessage = isDandiUrl
@@ -23,7 +23,7 @@ export const useNwbFileOverview = (url: string | null) => {
           setNwbFileOverview({ error: errorMessage });
           return;
         }
-        const generalGroup = await getNwbGroup(url, "/general");
+        const generalGroup = await getHdf5Group(url, "/general");
         const items: {
           name: string;
           path: string;

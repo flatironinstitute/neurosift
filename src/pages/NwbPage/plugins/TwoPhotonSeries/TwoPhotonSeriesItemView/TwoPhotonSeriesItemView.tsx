@@ -1,6 +1,6 @@
 import { SmallIconButton } from "@fi-sci/misc";
 import { ArrowLeft, ArrowRight } from "@mui/icons-material";
-import { getNwbDatasetData, useNwbDataset } from "@nwbInterface";
+import { getHdf5DatasetData, useHdf5Dataset } from "@hdf5Interface";
 import { Canceler, DatasetDataType } from "@remote-h5-file";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 import TimeseriesSelectionBar, {
@@ -45,7 +45,7 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
   showOrientationControls,
   throttleMsec = 100,
 }) => {
-  const dataDataset = useNwbDataset(nwbUrl, path + "/data");
+  const dataDataset = useHdf5Dataset(nwbUrl, path + "/data");
 
   const [currentImage, setCurrentImage] = useState<ImageData | undefined>(
     undefined,
@@ -133,7 +133,7 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
       // read from nwb file
       // const slice = [[frameIndex, frameIndex + 1], [0, N2], [0, N3]] as [number, number][]
       const slice = [[frameIndex, frameIndex + 1]] as [number, number][];
-      const x = await getNwbDatasetData(nwbUrl, dataDataset.path, {
+      const x = await getHdf5DatasetData(nwbUrl, dataDataset.path, {
         slice,
         canceler,
       });

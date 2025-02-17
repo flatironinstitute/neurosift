@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { FaEye } from "react-icons/fa";
-import { getNwbDatasetData, getNwbGroup } from "./nwbInterface";
+import { getHdf5DatasetData, getHdf5Group } from "./hdf5Interface";
 
 type Props = {
   nwbUrl: string;
@@ -66,7 +66,7 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
     let canceled = false;
     const handleGroup = async (path: string) => {
       setLoadingMessage(`Loading ${path}...`);
-      const gr = await getNwbGroup(nwbUrl, path);
+      const gr = await getHdf5Group(nwbUrl, path);
       if (canceled) return;
       if (!gr) return;
       const nt = gr.attrs["neurodata_type"];
@@ -81,7 +81,7 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
           );
           const dataSubdataset = gr.datasets.find((ds) => ds.name === "data");
           if (timestampsSubdataset) {
-            const v1 = await getNwbDatasetData(
+            const v1 = await getHdf5DatasetData(
               nwbUrl,
               timestampsSubdataset.path,
               {
@@ -91,7 +91,7 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
             if (canceled) return;
             if (!v1) return;
             const N = timestampsSubdataset.shape[0];
-            const v2 = await getNwbDatasetData(
+            const v2 = await getHdf5DatasetData(
               nwbUrl,
               timestampsSubdataset.path,
               {
@@ -112,7 +112,7 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
               },
             });
           } else if (startingTimeSubdataset && dataSubdataset) {
-            const v = await getNwbDatasetData(
+            const v = await getHdf5DatasetData(
               nwbUrl,
               startingTimeSubdataset.path,
               {},

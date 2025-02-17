@@ -1,4 +1,4 @@
-import { getNwbGroup } from "../nwbInterface";
+import { getHdf5Group } from "../hdf5Interface";
 import { ObjectType } from "../Types";
 
 export const determineObjectType = async (
@@ -9,7 +9,7 @@ export const determineObjectType = async (
     return "group";
   }
   const parentPath = path.substring(0, path.lastIndexOf("/"));
-  const parentGroup = await getNwbGroup(nwbUrl, parentPath);
+  const parentGroup = await getHdf5Group(nwbUrl, parentPath);
   if (!parentGroup) {
     console.error("Parent group not found:", parentPath);
     return "group";

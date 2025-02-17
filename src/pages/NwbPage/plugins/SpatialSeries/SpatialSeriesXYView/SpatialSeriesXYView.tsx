@@ -1,4 +1,4 @@
-import { useNwbDataset } from "@nwbInterface";
+import { useHdf5Dataset } from "@hdf5Interface";
 import { Canceler } from "@remote-h5-file";
 import {
   useTimeRange,
@@ -36,7 +36,7 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
   >(undefined);
   const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
 
-  const dataset = useNwbDataset(nwbUrl, `${path}/data`);
+  const dataset = useHdf5Dataset(nwbUrl, `${path}/data`);
   const unit = dataset?.attrs?.unit;
 
   const dataClient = useTimeseriesTimestampsClient(nwbUrl, path);

@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useEffect, useState } from "react";
-import { getNwbDatasetData } from "./nwbInterface";
+import { getHdf5DatasetData } from "./hdf5Interface";
 
 const useDatasetData = (url: string | null, path: string) => {
   const [data, setData] = useState<any | undefined>(undefined);
   useEffect(() => {
     if (!url) return;
     const load = async () => {
-      const d = await getNwbDatasetData(url, path, {});
+      const d = await getHdf5DatasetData(url, path, {});
       setData(d);
     };
     load();

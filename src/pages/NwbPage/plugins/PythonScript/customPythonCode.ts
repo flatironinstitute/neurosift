@@ -1,6 +1,6 @@
-import { NwbGroup } from "@nwbInterface";
+import { Hdf5Group } from "@hdf5Interface";
 
-export const getCustomPythonCodeForTimeSeries = (group: NwbGroup) => {
+export const getCustomPythonCodeForTimeSeries = (group: Hdf5Group) => {
   let customCode = "";
   if (group.datasets.find((ds) => ds.name === "starting_time")) {
     customCode = `
@@ -24,7 +24,7 @@ print(f'data shape: {data.shape}')
   return customCode;
 };
 
-export const getCustomPythonCodeForTimeIntervals = (group: NwbGroup) => {
+export const getCustomPythonCodeForTimeIntervals = (group: Hdf5Group) => {
   let customCode = "\n";
   group.datasets.forEach((ds) => {
     customCode += `${ds.name} = X['${ds.name}']\n`;
@@ -42,7 +42,7 @@ export const getCustomPythonCodeForTimeIntervals = (group: NwbGroup) => {
   return customCode;
 };
 
-export const getCustomPythonCodeForUnits = (group: NwbGroup) => {
+export const getCustomPythonCodeForUnits = (group: Hdf5Group) => {
   let customCode = "\n";
   group.datasets.forEach((ds) => {
     customCode += `${ds.name} = X['${ds.name}']\n`;

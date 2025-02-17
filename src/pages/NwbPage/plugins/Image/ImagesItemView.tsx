@@ -1,11 +1,11 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import IfHasBeenVisible from "../PSTH/PSTHItemView/IfHasBeenVisible";
 import {
-  NwbDataset,
-  useNwbDataset,
-  useNwbDatasetData,
-  useNwbGroup,
-} from "@nwbInterface";
+  Hdf5Dataset,
+  useHdf5Dataset,
+  useHdf5DatasetData,
+  useHdf5Group,
+} from "@hdf5Interface";
 import { DatasetDataType } from "@remote-h5-file";
 
 type Props = {
@@ -22,7 +22,7 @@ const ImagesItemView: FunctionComponent<Props> = ({
   nwbUrl,
   path,
 }) => {
-  const group = useNwbGroup(nwbUrl, path);
+  const group = useHdf5Group(nwbUrl, path);
   const { imageWidth, imageHeight } = useMemo(() => {
     if (!group) return { imageWidth: 0, imageHeight: 0 };
     let imageWidth = 0;
@@ -77,8 +77,8 @@ export const ImageItem: FunctionComponent<ImageItemProps> = ({
   path,
   neurodataType,
 }) => {
-  const dataset = useNwbDataset(nwbUrl, path);
-  const { data, errorMessage } = useNwbDatasetData(nwbUrl, path);
+  const dataset = useHdf5Dataset(nwbUrl, path);
+  const { data, errorMessage } = useHdf5DatasetData(nwbUrl, path);
   if (errorMessage) {
     return <div>Error loading data: {errorMessage}</div>;
   }
@@ -99,7 +99,7 @@ export const ImageItem: FunctionComponent<ImageItemProps> = ({
 };
 
 type GrayscaleImageItemProps = {
-  dataset: NwbDataset;
+  dataset: Hdf5Dataset;
   data: DatasetDataType;
 };
 
@@ -172,7 +172,7 @@ const GrayscaleImageItem: FunctionComponent<GrayscaleImageItemProps> = ({
 };
 
 type RegularImageItemProps = {
-  dataset: NwbDataset;
+  dataset: Hdf5Dataset;
   data: DatasetDataType;
 };
 
@@ -194,7 +194,7 @@ const RegularImageItem: FunctionComponent<RegularImageItemProps> = ({
 };
 
 type RGBImageItemProps = {
-  dataset: NwbDataset;
+  dataset: Hdf5Dataset;
   data: DatasetDataType;
 };
 
@@ -245,7 +245,7 @@ const RGBImageItem: FunctionComponent<RGBImageItemProps> = ({
 };
 
 type RGBAImageItemProps = {
-  dataset: NwbDataset;
+  dataset: Hdf5Dataset;
   data: DatasetDataType;
 };
 

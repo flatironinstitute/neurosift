@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DandisetVersionInfo } from "../DandiPage/dandi-types";
 import DatasetDataView from "./DatasetDataView";
-import { isUsingLindi } from "./nwbInterface";
+import { isUsingLindi } from "./hdf5Interface";
 import { NwbFileOverview } from "./types";
 
 type NwbFileOverviewResult = NwbFileOverview | { error: string } | null;

@@ -9,25 +9,25 @@ import {
 } from "react";
 import { FaRegCircle } from "react-icons/fa";
 import {
-  getNwbDataset,
-  getNwbDatasetData,
-  getNwbGroup,
-  NwbDataset,
-  NwbGroup,
-} from "./nwbInterface";
+  getHdf5Dataset,
+  getHdf5DatasetData,
+  getHdf5Group,
+  Hdf5Dataset,
+  Hdf5Group,
+} from "./hdf5Interface";
 import { valueToElement } from "./valueToElement";
 import "@css/TopLevelGroupContent.css";
 
 type Props = {
   name: string;
-  group: NwbGroup;
+  group: Hdf5Group;
   nwbUrl: string;
   excludeGroups?: boolean;
 };
 
 type GroupsDatasetsState = {
-  groups: NwbGroup[];
-  datasets: NwbDataset[];
+  groups: Hdf5Group[];
+  datasets: Hdf5Dataset[];
   datasetDatas: { [key: string]: any };
   expandedGroupPaths: string[];
   expandedDatasetPaths: string[];
@@ -36,11 +36,11 @@ type GroupsDatasetsState = {
 type GroupsDatasetsAction =
   | {
       type: "addGroup";
-      group: NwbGroup;
+      group: Hdf5Group;
     }
   | {
       type: "addDataset";
-      dataset: NwbDataset;
+      dataset: Hdf5Dataset;
     }
   | {
       type: "expandGroup";
@@ -158,7 +158,7 @@ type TableItem =
       key: string;
       type: "dataset-info";
       path: string;
-      dataset: NwbDataset;
+      dataset: Hdf5Dataset;
       data?: any;
       indent: number;
     };
@@ -183,13 +183,13 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({
   }, [group]);
   useEffect(() => {
     const process = async () => {
-      const checkLoadDataForSubdatasets = async (g: NwbGroup) => {
+      const checkLoadDataForSubdatasets = async (g: Hdf5Group) => {
         // handle the case where sub-datasets are not expanded, but we still want to retrieve the data for display
         for (const sds of g.datasets) {
           if (product(sds.shape) <= 10) {
             if (!groupsDatasetsState.expandedDatasetPaths.includes(sds.path)) {
               if (!(sds.path in groupsDatasetsState.datasetDatas)) {
-                const data = await getNwbDatasetData(nwbUrl, sds.path, {});
+                const data = await getHdf5DatasetData(nwbUrl, sds.path, {});
                 groupsDatasetsDispatch({
                   type: "setDatasetData",
                   path: sds.path,
@@ -205,7 +205,7 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({
       for (const path of groupsDatasetsState.expandedGroupPaths) {
         const g = groupsDatasetsState.groups.find((g) => g.path === path);
         if (!g) {
-          const newGroup = await getNwbGroup(nwbUrl, path);
+          const newGroup = await getHdf5Group(nwbUrl, path);
           if (newGroup) {
             groupsDatasetsDispatch({ type: "addGroup", group: newGroup });
             return; // return after loading one, because then the state will change and this will be called again
@@ -218,7 +218,7 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({
       for (const path of groupsDatasetsState.expandedDatasetPaths) {
         const d = groupsDatasetsState.datasets.find((d) => d.path === path);
         if (!d) {
-          const newDataset = await getNwbDataset(nwbUrl, path);
+          const newDataset = await getHdf5Dataset(nwbUrl, path);
           if (newDataset) {
             groupsDatasetsDispatch({ type: "addDataset", dataset: newDataset });
             return; // return after loading one, because then the state will change and this will be called again
@@ -230,7 +230,7 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({
         if (d) {
           if (!(path in groupsDatasetsState.datasetDatas)) {
             if (product(d.shape) <= 100) {
-              const data = await getNwbDatasetData(nwbUrl, path, {});
+              const data = await getHdf5DatasetData(nwbUrl, path, {});
               groupsDatasetsDispatch({ type: "setDatasetData", path, data });
               return; // return after loading one, because then the state will change and this will be called again
             }
@@ -368,7 +368,7 @@ const TableRow: FunctionComponent<TableRowProps> = ({
   const viewDatasetInDebugConsole = useCallback(
     async (path: string) => {
       console.info("Loading dataset data for " + path);
-      const data = await getNwbDatasetData(nwbUrl, path, {});
+      const data = await getHdf5DatasetData(nwbUrl, path, {});
       console.info(`Dataset data for ${path}:`);
       console.info(data);
     },

@@ -1,5 +1,5 @@
 import { FunctionComponent, useMemo, useEffect, useState } from "react";
-import { useNwbGroup, getNwbDatasetData } from "@nwbInterface";
+import { useHdf5Group, getHdf5DatasetData } from "@hdf5Interface";
 
 type GroupBySelectionProps = {
   groupByVariable: string;
@@ -23,7 +23,7 @@ const GroupBySelectionComponent: FunctionComponent<GroupBySelectionProps> = ({
   groupByVariableCategories,
   setGroupByVariableCategories,
 }) => {
-  const group = useNwbGroup(nwbUrl, path);
+  const group = useHdf5Group(nwbUrl, path);
   const options = useMemo(
     () =>
       (group?.datasets || [])
@@ -49,7 +49,7 @@ const GroupBySelectionComponent: FunctionComponent<GroupBySelectionProps> = ({
         if (ds.shape.length !== 1) continue;
         const slice =
           ds.shape[0] < 1000 ? undefined : ([[0, 1000]] as [number, number][]); // just check the first 1000 values
-        const dd = await getNwbDatasetData(nwbUrl, path + "/" + option, {
+        const dd = await getHdf5DatasetData(nwbUrl, path + "/" + option, {
           slice,
         });
         if (!dd) throw Error(`Unable to get data for ${path}/${option}`);

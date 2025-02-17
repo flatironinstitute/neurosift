@@ -1,11 +1,11 @@
-import { getNwbGroup } from "@nwbInterface";
+import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import { SimpleTimeseriesView } from "./SimpleTimeseriesView";
 
 export const simpleTimeseriesPlugin: NwbObjectViewPlugin = {
   name: "SimpleTimeseries",
   canHandle: async ({ nwbUrl, path }: { nwbUrl: string; path: string }) => {
-    const group = await getNwbGroup(nwbUrl, path);
+    const group = await getHdf5Group(nwbUrl, path);
     if (!group) return false;
 
     // Check if we have a data dataset

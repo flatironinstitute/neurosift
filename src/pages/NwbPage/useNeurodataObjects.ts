@@ -1,23 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import {
-  getNwbDataset,
-  getNwbGroup,
-  NwbDataset,
-  NwbGroup,
-} from "./nwbInterface";
+  getHdf5Dataset,
+  getHdf5Group,
+  Hdf5Dataset,
+  Hdf5Group,
+} from "./hdf5Interface";
 
 export type NeurodataObject = {
   path: string;
-  group?: NwbGroup;
-  dataset?: NwbDataset;
+  group?: Hdf5Group;
+  dataset?: Hdf5Dataset;
   attrs: { [key: string]: any };
   parent: NeurodataObject | null;
   children: NeurodataObject[];
 };
 
 type GroupTreeNode = {
-  group: NwbGroup;
+  group: Hdf5Group;
 };
 
 export const useNeurodataObjects = (nwbUrl: string) => {
@@ -30,10 +30,13 @@ export const useNeurodataObjects = (nwbUrl: string) => {
   useEffect(() => {
     let canceled = false;
     const groupTree: GroupTreeNode[] = [];
-    const datasetsTree: NwbDataset[] = [];
+    const datasetsTree: Hdf5Dataset[] = [];
     const updateNeurodataObjects = () => {
       const objects: NeurodataObject[] = [];
-      const expandGroup = (group: NwbGroup, parent: NeurodataObject | null) => {
+      const expandGroup = (
+        group: Hdf5Group,
+        parent: NeurodataObject | null,
+      ) => {
         for (const sg of group.subgroups) {
           const grp = groupTree.find((node) => node.group.path === sg.path);
           if (!grp) continue;
@@ -85,7 +88,7 @@ export const useNeurodataObjects = (nwbUrl: string) => {
     (async () => {
       setLoading(true);
       // add root group
-      const rootGroup = await getNwbGroup(nwbUrl, "/");
+      const rootGroup = await getHdf5Group(nwbUrl, "/");
       if (!rootGroup) {
         console.error("Root group not found");
         return;
@@ -104,7 +107,7 @@ export const useNeurodataObjects = (nwbUrl: string) => {
         if (!node) continue;
         const group = node.group;
         for (const sg of group.subgroups) {
-          const grp = await getNwbGroup(nwbUrl, sg.path);
+          const grp = await getHdf5Group(nwbUrl, sg.path);
           if (canceled) return;
           if (!grp) continue;
           const newNode: GroupTreeNode = { group: grp };
@@ -112,7 +115,7 @@ export const useNeurodataObjects = (nwbUrl: string) => {
           queue.push(newNode);
         }
         for (const sds of group.datasets) {
-          const ds = await getNwbDataset(nwbUrl, sds.path);
+          const ds = await getHdf5Dataset(nwbUrl, sds.path);
           if (canceled) return;
           if (!ds) continue;
           datasetsTree.push(ds);

@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useEffect, useState } from "react";
 import {
-  getNwbDatasetData,
-  useNwbDatasetData,
-  useNwbGroup,
-} from "@nwbInterface";
+  getHdf5DatasetData,
+  useHdf5DatasetData,
+  useHdf5Group,
+} from "@hdf5Interface";
 import NwbTimeIntervalsWidget from "./NwbTimeIntervalsWidget";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 
@@ -22,11 +22,14 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
   path,
 }) => {
   // const group = useGroup(nwbFile, path);
-  const { data: startTimeData } = useNwbDatasetData(
+  const { data: startTimeData } = useHdf5DatasetData(
     nwbUrl,
     `${path}/start_time`,
   );
-  const { data: stopTimeData } = useNwbDatasetData(nwbUrl, `${path}/stop_time`);
+  const { data: stopTimeData } = useHdf5DatasetData(
+    nwbUrl,
+    `${path}/stop_time`,
+  );
 
   const [selectedColumn, setSelectedColumn] = useState<string | undefined>(
     undefined,
@@ -134,7 +137,7 @@ const useLabelData = (
   numRows: number | undefined,
   userSelectedColumn?: string,
 ) => {
-  const group = useNwbGroup(nwbUrl, path);
+  const group = useHdf5Group(nwbUrl, path);
   const [labelFieldName, setLabelFieldName] = useState<string | undefined>(
     undefined,
   );
@@ -152,7 +155,7 @@ const useLabelData = (
       const colnames = (await group.attrs["colnames"]) || [];
       const validColumns: ColumnInfo[] = [];
       for (const colname of colnames) {
-        const d = await getNwbDatasetData(nwbUrl, `${path}/${colname}`, {});
+        const d = await getHdf5DatasetData(nwbUrl, `${path}/${colname}`, {});
         if (!d)
           throw Error(`Unable to get dataset data for ${path}/${colname}`);
         if (canceled) return;

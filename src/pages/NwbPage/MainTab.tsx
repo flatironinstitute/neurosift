@@ -2,7 +2,7 @@ import { Box, Grid, Paper } from "@mui/material";
 import { useEffect, useReducer, useState } from "react";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
 import Hdf5View from "./Hdf5View";
-import { getNwbGroup } from "./nwbInterface";
+import { getHdf5Group } from "./hdf5Interface";
 import NwbHierarchyView from "./NwbHierarchyView";
 import "@css/NwbPage.css";
 import { SetupNwbFileSpecificationsProvider } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
@@ -36,7 +36,7 @@ const MainTab = ({
   // Check if /units exists and has neurodata_type "Units"
   useEffect(() => {
     const checkUnits = async () => {
-      const group = await getNwbGroup(nwbUrl, "/units");
+      const group = await getHdf5Group(nwbUrl, "/units");
       if (group && group.attrs.neurodata_type === "Units") {
         setDefaultUnitsPath("/units");
       }

@@ -4,17 +4,17 @@ import PlaneTransformSelector, {
   PlaneTransform,
 } from "./PlaneTransformSelector";
 import {
-  getNwbDataset,
-  getNwbDatasetData,
-  getNwbGroup,
-  NwbDataset,
-  NwbGroup,
-} from "@nwbInterface";
+  getHdf5Dataset,
+  getHdf5DatasetData,
+  getHdf5Group,
+  Hdf5Dataset,
+  Hdf5Group,
+} from "@hdf5Interface";
 
 type Props = {
   width: number;
   height: number;
-  imageSegmentationGroup: NwbGroup;
+  imageSegmentationGroup: Hdf5Group;
   nwbUrl: string;
   selectedSegmentationName: string;
 };
@@ -30,8 +30,8 @@ type UnitMask = {
 
 const blockSize = 50;
 class PlaneSegmentationClient {
-  #imageMaskDataset: NwbDataset | undefined;
-  #pixelMaskDataset: NwbDataset | undefined;
+  #imageMaskDataset: Hdf5Dataset | undefined;
+  #pixelMaskDataset: Hdf5Dataset | undefined;
   #pixelMaskIndex: number[] | undefined;
   #pixelMaskImageSize: number[] | undefined; // in the case of pixel mask, we unfortunately do not have any direct way to get the image size
   #blocks: { [i: number]: UnitMask[] } = {};
@@ -40,16 +40,16 @@ class PlaneSegmentationClient {
     private objectPath: string,
   ) {}
   async initialize() {
-    this.#imageMaskDataset = await getNwbDataset(
+    this.#imageMaskDataset = await getHdf5Dataset(
       this.nwbUrl,
       `${this.objectPath}/image_mask`,
     );
-    this.#pixelMaskDataset = await getNwbDataset(
+    this.#pixelMaskDataset = await getHdf5Dataset(
       this.nwbUrl,
       `${this.objectPath}/pixel_mask`,
     );
     if (this.#pixelMaskDataset) {
-      this.#pixelMaskIndex = (await getNwbDatasetData(
+      this.#pixelMaskIndex = (await getHdf5DatasetData(
         this.nwbUrl,
         `${this.objectPath}/pixel_mask_index`,
         {},
@@ -91,7 +91,7 @@ class PlaneSegmentationClient {
   async getPixelMask(index: number) {
     const i1 = index > 0 ? this.#pixelMaskIndex![index - 1] : 0;
     const i2 = this.#pixelMaskIndex![index];
-    const data = await getNwbDatasetData(
+    const data = await getHdf5DatasetData(
       this.nwbUrl,
       `${this.objectPath}/pixel_mask`,
       { slice: [[i1, i2]] },
@@ -104,7 +104,7 @@ class PlaneSegmentationClient {
     if (this.#blocks[chunkIndex]) return this.#blocks[chunkIndex];
     const i1 = chunkIndex * blockSize;
     const i2 = Math.min(this.shape[0], i1 + blockSize);
-    const data = await getNwbDatasetData(
+    const data = await getHdf5DatasetData(
       this.nwbUrl,
       `${this.objectPath}/image_mask`,
       {
@@ -161,19 +161,22 @@ const determineImageSizeFromNwbFileContext = async (
     We need to determine it from the context. In other words, the sibling objects.
     */
   let parentPath = objectPath.split("/").slice(0, -1).join("/");
-  let parentGroup = await getNwbGroup(nwbUrl, parentPath);
+  let parentGroup = await getHdf5Group(nwbUrl, parentPath);
   if (!parentGroup)
     throw Error(`Unable to get parent group for determining image size`);
   if (parentGroup.attrs["neurodata_type"] === "ImageSegmentation") {
     // need to go up one more level
     parentPath = parentPath.split("/").slice(0, -1).join("/");
-    parentGroup = await getNwbGroup(nwbUrl, parentPath);
+    parentGroup = await getHdf5Group(nwbUrl, parentPath);
     if (!parentGroup)
       throw Error(`Unable to get parent group for determining image size`);
   }
   for (const sg of parentGroup.subgroups) {
     if (sg.attrs["neurodata_type"] === "Images") {
-      const imagesGroup = await getNwbGroup(nwbUrl, `${parentPath}/${sg.name}`);
+      const imagesGroup = await getHdf5Group(
+        nwbUrl,
+        `${parentPath}/${sg.name}`,
+      );
       if (!imagesGroup) {
         continue;
       }

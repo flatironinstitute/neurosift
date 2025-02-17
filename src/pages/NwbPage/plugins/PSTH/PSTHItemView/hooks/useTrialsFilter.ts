@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getNwbDatasetData, getNwbGroup } from "@nwbInterface";
+import { getHdf5DatasetData, getHdf5Group } from "@hdf5Interface";
 import { DatasetDataType } from "@remote-h5-file/lib/RemoteH5File";
 
 export const useTrialsFilterIndices = (
@@ -19,7 +19,7 @@ export const useTrialsFilterIndices = (
     let canceled = false;
 
     const load = async () => {
-      const grp = await getNwbGroup(nwbUrl, path);
+      const grp = await getHdf5Group(nwbUrl, path);
       if (!grp) {
         console.warn(`Unable to get group: ${path}`);
         return;
@@ -37,7 +37,11 @@ export const useTrialsFilterIndices = (
 
       for (const colname of colnames) {
         if (trialsFilter.includes(colname)) {
-          const dsd = await getNwbDatasetData(nwbUrl, path + "/" + colname, {});
+          const dsd = await getHdf5DatasetData(
+            nwbUrl,
+            path + "/" + colname,
+            {},
+          );
           if (!dsd) {
             console.warn(`Unable to get data for ${path}/${colname}`);
             return;

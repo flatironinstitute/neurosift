@@ -25,6 +25,9 @@ const DefaultFileView: FunctionComponent<DatasetPluginProps> = ({ file }) => {
           <Typography>
             <strong>ID:</strong> {file.id}
           </Typography>
+          <Typography>
+            <strong>URLs:</strong> {file.urls.join(", ")}
+          </Typography>
         </Box>
       </Box>
 

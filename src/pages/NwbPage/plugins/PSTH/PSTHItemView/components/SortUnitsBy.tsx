@@ -1,5 +1,5 @@
 import { FunctionComponent, useMemo } from "react";
-import { useNwbGroup } from "@nwbInterface";
+import { useHdf5Group } from "@hdf5Interface";
 
 type SortUnitsBySelectionProps = {
   sortUnitsByVariable: [string, "asc" | "desc"] | undefined;
@@ -11,7 +11,7 @@ type SortUnitsBySelectionProps = {
 const SortUnitsBySelectionComponent: FunctionComponent<
   SortUnitsBySelectionProps
 > = ({ sortUnitsByVariable, setSortUnitsByVariable, nwbUrl, unitsPath }) => {
-  const group = useNwbGroup(nwbUrl, unitsPath);
+  const group = useHdf5Group(nwbUrl, unitsPath);
   const colnames = useMemo(() => group?.attrs?.colnames || undefined, [group]);
   const variableNames: string[] | undefined = useMemo(
     () =>

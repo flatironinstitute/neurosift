@@ -9,7 +9,11 @@ import {
 } from "react";
 import { SmallIconButton } from "@fi-sci/misc";
 import { Download } from "@mui/icons-material";
-import { getNwbDataset, getNwbDatasetData, useNwbGroup } from "@nwbInterface";
+import {
+  getHdf5Dataset,
+  getHdf5DatasetData,
+  useHdf5Group,
+} from "@hdf5Interface";
 import { DatasetDataType } from "@remote-h5-file";
 
 type Props = {
@@ -133,7 +137,7 @@ const DynamicTable: FunctionComponent<Props> = ({
   setSelectedRowIds,
 }) => {
   const [data, dataDispatch] = useReducer(dataReducer, {});
-  const group = useNwbGroup(nwbUrl, path);
+  const group = useHdf5Group(nwbUrl, path);
   const [columnSortState, columnSortDispatch] = useReducer(
     columnSortReducer,
     {},
@@ -176,7 +180,7 @@ const DynamicTable: FunctionComponent<Props> = ({
       let timer = Date.now();
       let toDispatch: { key: string; data: any[] }[] = [];
       for (const colname of colnames) {
-        const ds0 = await getNwbDataset(nwbUrl, path + "/" + colname);
+        const ds0 = await getHdf5Dataset(nwbUrl, path + "/" + colname);
         if (!ds0) {
           console.warn(
             `In DynamicTableView, dataset not found: ${path}/${colname}`,
@@ -189,7 +193,7 @@ const DynamicTable: FunctionComponent<Props> = ({
           );
           continue;
         }
-        let d: DatasetDataType | any[] | undefined = await getNwbDatasetData(
+        let d: DatasetDataType | any[] | undefined = await getHdf5DatasetData(
           nwbUrl,
           path + "/" + colname,
           {},

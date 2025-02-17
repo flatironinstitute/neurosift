@@ -1,4 +1,4 @@
-import { useNwbGroup } from "@nwbInterface";
+import { useHdf5Group } from "@hdf5Interface";
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import "../common/loadingState.css";
 import { CondensedControls, Controls } from "./Controls";
@@ -28,7 +28,7 @@ export const SimpleTimeseriesView: FunctionComponent<
     setNumVisibleChannels,
   } = useTimeseriesData(nwbUrl, path);
 
-  const group = useNwbGroup(nwbUrl, path);
+  const group = useHdf5Group(nwbUrl, path);
   const channelNames = useMemo(() => {
     if (!group || !timeseriesClient) return undefined;
     if (group.attrs?.neurodata_type === "SpatialSeries") {

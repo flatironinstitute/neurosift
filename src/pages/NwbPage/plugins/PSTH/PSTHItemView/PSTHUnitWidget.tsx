@@ -6,7 +6,7 @@ import PSTHRasterWidget from "./PSTHRasterWidget";
 import { RoiClient } from "./ROIClient";
 import TrialAlignedSeriesWidget from "./TrialAlignedSeriesWidget";
 import { DirectSpikeTrainsClient } from "./DirectSpikeTrainsClient";
-import { getNwbDatasetData } from "@nwbInterface";
+import { getHdf5DatasetData } from "@hdf5Interface";
 
 type Props = {
   width: number;
@@ -244,7 +244,7 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
   useEffect(() => {
     let canceled = false;
     const load = async () => {
-      const times = await getNwbDatasetData(
+      const times = await getHdf5DatasetData(
         nwbUrl,
         path + "/" + alignToVariable,
         {},
@@ -267,7 +267,7 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
     if (!groupByVariable) return;
     let canceled = false;
     const load = async () => {
-      const vals = await getNwbDatasetData(
+      const vals = await getHdf5DatasetData(
         nwbUrl,
         path + "/" + groupByVariable,
         {},
@@ -528,7 +528,7 @@ const PSTHGroupLegend: FunctionComponent<PSTHGroupLegendProps> = ({
   useEffect(() => {
     let canceled = false;
     const load = async () => {
-      const vals = await getNwbDatasetData(
+      const vals = await getHdf5DatasetData(
         nwbUrl,
         path + "/" + groupByVariable,
         {},

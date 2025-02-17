@@ -1,4 +1,4 @@
-import { getNwbDatasetData, NwbDataset, NwbGroup } from "@nwbInterface";
+import { getHdf5DatasetData, Hdf5Dataset, Hdf5Group } from "@hdf5Interface";
 import {
   IrregularTimeseriesTimestampsClient,
   RegularTimeseriesTimestampsClient,
@@ -9,7 +9,7 @@ class TimeseriesClient {
 
   private constructor(
     private nwbUrl: string,
-    private dataDataset: NwbDataset,
+    private dataDataset: Hdf5Dataset,
     private timestampsClient:
       | IrregularTimeseriesTimestampsClient
       | RegularTimeseriesTimestampsClient,
@@ -22,7 +22,7 @@ class TimeseriesClient {
 
   static async create(
     nwbUrl: string,
-    group: NwbGroup,
+    group: Hdf5Group,
   ): Promise<TimeseriesClient> {
     const dataDataset = group.datasets.find((ds) => ds.name === "data");
     if (!dataDataset) throw new Error("No data dataset found");
@@ -99,7 +99,7 @@ class TimeseriesClient {
       iStart,
       iEnd,
     );
-    const data = await getNwbDatasetData(this.nwbUrl, this.dataDataset.path, {
+    const data = await getHdf5DatasetData(this.nwbUrl, this.dataDataset.path, {
       slice: [
         [iStart, iEnd],
         [channelStart, channelEnd],
@@ -166,7 +166,7 @@ export class ChunkedTimeseriesClient {
 
   static async create(
     nwbUrl: string,
-    group: NwbGroup,
+    group: Hdf5Group,
     {
       chunkSizeSec,
       chunkSizeNumChannels,

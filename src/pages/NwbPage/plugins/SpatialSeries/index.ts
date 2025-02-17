@@ -1,4 +1,4 @@
-import { getNwbGroup } from "@nwbInterface";
+import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import SpatialSeriesPluginView from "./SpatialSeriesPluginView";
 
@@ -6,7 +6,7 @@ export const spatialSeriesPlugin: NwbObjectViewPlugin = {
   name: "SpatialSeriesXY",
   label: "XY",
   canHandle: async ({ nwbUrl, path }: { nwbUrl: string; path: string }) => {
-    const group = await getNwbGroup(nwbUrl, path);
+    const group = await getHdf5Group(nwbUrl, path);
     if (!group) return false;
 
     // Check if this is a SpatialSeries neurodata_type

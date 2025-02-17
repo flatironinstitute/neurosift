@@ -1,6 +1,6 @@
 import { FunctionComponent, useState } from "react";
 import "@css/Hdf5View.css";
-import { NwbGroup, useNwbGroup } from "./nwbInterface";
+import { Hdf5Group, useHdf5Group } from "./hdf5Interface";
 import TopLevelGroupContentPanel from "./TopLevelGroupContentPanel";
 
 type Props = {
@@ -10,7 +10,7 @@ type Props = {
 };
 
 const Hdf5View: FunctionComponent<Props> = ({ nwbUrl, width, isExpanded }) => {
-  const rootGroup = useNwbGroup(nwbUrl, "/");
+  const rootGroup = useHdf5Group(nwbUrl, "/");
 
   if (!rootGroup && isExpanded) return <div>Loading...</div>;
 
@@ -44,7 +44,7 @@ const TopLevelGroupView: FunctionComponent<TopLevelGroupViewProps> = ({
   name,
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const group = useNwbGroup(nwbUrl, "/" + name);
+  const group = useHdf5Group(nwbUrl, "/" + name);
   const expandable =
     group && (group.subgroups.length > 0 || group.datasets.length > 0);
   return (
@@ -68,7 +68,7 @@ const TopLevelGroupView: FunctionComponent<TopLevelGroupViewProps> = ({
 
 type GroupTitlePanelTextProps = {
   name: string;
-  group: NwbGroup | undefined;
+  group: Hdf5Group | undefined;
   nwbUrl: string;
 };
 

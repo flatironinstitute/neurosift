@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { getNwbDatasetData, useNwbGroup } from "@nwbInterface";
+import { getHdf5DatasetData, useHdf5Group } from "@hdf5Interface";
 import TimeScrollView2, {
   useTimeScrollView2,
 } from "@shared/component-time-scroll-view-2/TimeScrollView2";
@@ -76,7 +76,7 @@ const BehavioralEventsItemView: FunctionComponent<Props> = ({
     seriesNames: [],
     series: {},
   });
-  const group = useNwbGroup(nwbUrl, path);
+  const group = useHdf5Group(nwbUrl, path);
   useEffect(() => {
     if (!group) return;
     let canceled = false;
@@ -87,14 +87,14 @@ const BehavioralEventsItemView: FunctionComponent<Props> = ({
       const seriesNames = timeSeriesGroups.map((grp) => grp.name);
       beDataDispatch({ type: "SET_SERIES_NAMES", seriesNames });
       for (const grp of timeSeriesGroups) {
-        const timestampsData = await getNwbDatasetData(
+        const timestampsData = await getHdf5DatasetData(
           nwbUrl,
           grp.path + "/timestamps",
           {},
         );
         if (canceled) return;
         if (!timestampsData) throw Error("Unexpected: timestampsData is null");
-        const dataData = await getNwbDatasetData(
+        const dataData = await getHdf5DatasetData(
           nwbUrl,
           grp.path + "/data",
           {},

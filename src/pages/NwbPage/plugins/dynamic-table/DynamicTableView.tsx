@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNwbGroup } from "@nwbInterface";
+import { useHdf5Group } from "@hdf5Interface";
 import DynamicTable from "./DynamicTable/DynamicTable";
 
 const DynamicTableView: React.FC<{ nwbUrl: string; path: string }> = ({
@@ -24,7 +24,7 @@ const DynamicTableView: React.FC<{ nwbUrl: string; path: string }> = ({
     return () => observer.disconnect();
   }, [updateWidth]);
 
-  const group = useNwbGroup(nwbUrl, path);
+  const group = useHdf5Group(nwbUrl, path);
   return (
     <div ref={containerRef} style={{ width: "100%", height: 350 }}>
       {group ? (

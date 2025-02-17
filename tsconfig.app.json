@@ -30,7 +30,7 @@
       "@shared/*": ["src/shared/*"],
       "@remote-h5-file": ["src/remote-h5-file"],
       "@remote-h5-file/*": ["src/remote-h5-file/*"],
-      "@nwbInterface": ["src/pages/NwbPage/nwbInterface"]
+      "@hdf5Interface": ["src/pages/NwbPage/hdf5Interface"],
     }
   },
   "include": ["src"]

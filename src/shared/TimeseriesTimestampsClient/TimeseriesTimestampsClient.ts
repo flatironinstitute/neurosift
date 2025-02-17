@@ -2,11 +2,11 @@
 import { useEffect, useState } from "react";
 import { DatasetDataType } from "@remote-h5-file";
 import {
-  getNwbDataset,
-  getNwbDatasetData,
-  NwbDataset,
-  useNwbGroup,
-} from "@nwbInterface";
+  getHdf5Dataset,
+  getHdf5DatasetData,
+  Hdf5Dataset,
+  useHdf5Group,
+} from "@hdf5Interface";
 
 const isNumber = (data: any | undefined): data is number => {
   return typeof data === "number";
@@ -22,7 +22,7 @@ export class IrregularTimeseriesTimestampsClient {
     private objectPath: string,
   ) {}
   async initialize() {
-    const timestampsDataset = await getNwbDataset(
+    const timestampsDataset = await getHdf5Dataset(
       this.nwbUrl,
       `${this.objectPath}/timestamps`,
     );
@@ -82,7 +82,7 @@ export class IrregularTimeseriesTimestampsClient {
     i1: number,
     i2: number,
   ): Promise<DatasetDataType | undefined> {
-    const ret = await getNwbDatasetData(
+    const ret = await getHdf5DatasetData(
       this.nwbUrl,
       `${this.objectPath}/timestamps`,
       { slice: [[i1, i2]] },
@@ -103,11 +103,11 @@ export class RegularTimeseriesTimestampsClient {
     private objectPath: string,
   ) {}
   async initialize() {
-    const startingTimeDataset = await getNwbDataset(
+    const startingTimeDataset = await getHdf5Dataset(
       this.nwbUrl,
       `${this.objectPath}/starting_time`,
     );
-    const startingTime = await getNwbDatasetData(
+    const startingTime = await getHdf5DatasetData(
       this.nwbUrl,
       `${this.objectPath}/starting_time`,
       {},
@@ -116,7 +116,7 @@ export class RegularTimeseriesTimestampsClient {
       throw Error(
         `Problem getting starting_time dataset: ${this.objectPath}/starting_time`,
       );
-    const dataDataset = await getNwbDataset(
+    const dataDataset = await getHdf5Dataset(
       this.nwbUrl,
       `${this.objectPath}/data`,
     );
@@ -177,7 +177,7 @@ class TimestampFinder {
   #chunks: { [key: number]: DatasetDataType } = {};
   constructor(
     private nwbUrl: string,
-    private timestampsDataset: NwbDataset,
+    private timestampsDataset: Hdf5Dataset,
     // private estimatedSamplingFrequency: number,
   ) {}
   async getDataIndexForTime(time: number): Promise<number> {
@@ -230,7 +230,7 @@ class TimestampFinder {
       let a2 = (chunkIndex + 1) * this.#chunkSize;
       if (a2 > this.timestampsDataset.shape[0])
         a2 = this.timestampsDataset.shape[0];
-      const chunk = await getNwbDatasetData(
+      const chunk = await getHdf5DatasetData(
         this.nwbUrl,
         this.timestampsDataset.path,
         { slice: [[a1, a2]] },
@@ -260,7 +260,7 @@ export const useTimeseriesTimestampsClient = (
   nwbUrl: string,
   objectPath: string,
 ) => {
-  const group = useNwbGroup(nwbUrl, objectPath);
+  const group = useHdf5Group(nwbUrl, objectPath);
   const [dataClient, setDataClient] = useState<TimeseriesTimestampsClient>();
   useEffect(() => {
     if (!nwbUrl) return;

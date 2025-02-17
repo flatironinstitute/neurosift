@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useNwbGroup } from "@nwbInterface";
+import { useHdf5Group } from "@hdf5Interface";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 import { useEffect, useMemo, useState } from "react";
 import { ChunkedTimeseriesClient } from "./TimeseriesClient";
@@ -10,7 +10,7 @@ export const useTimeseriesClient = (nwbUrl: string, path: string) => {
     useState<ChunkedTimeseriesClient>();
   const [error, setError] = useState<string>();
 
-  const group = useNwbGroup(nwbUrl, path);
+  const group = useHdf5Group(nwbUrl, path);
 
   useEffect(() => {
     if (!group) return;

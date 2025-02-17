@@ -11,7 +11,7 @@ export default defineConfig({
       '@components': path.resolve(__dirname, './src/components'),
       '@shared': path.resolve(__dirname, './src/shared'),
       '@remote-h5-file': path.resolve(__dirname, './src/remote-h5-file'),
-      '@nwbInterface': path.resolve(__dirname, './src/pages/NwbPage/nwbInterface'),
+      '@hdf5Interface': path.resolve(__dirname, './src/pages/NwbPage/hdf5Interface'),
     }
   }
 })

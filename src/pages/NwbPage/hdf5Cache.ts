@@ -5,9 +5,9 @@ interface CachedItem {
   timestamp: number;
 }
 
-const DB_NAME = "neurosift-nwb-cache";
+const DB_NAME = "neurosift-hdf5-cache";
 const DB_VERSION = 1;
-const STORE_NAME = "nwb-objects";
+const STORE_NAME = "hdf5-objects";
 const MAX_CACHED_ITEMS = 1000; // Clear cache when this many items are stored
 
 let db: IDBDatabase | undefined = undefined;

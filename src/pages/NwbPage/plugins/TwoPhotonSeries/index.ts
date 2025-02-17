@@ -1,11 +1,11 @@
-import { getNwbGroup } from "@nwbInterface";
+import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import TwoPhotonSeriesPluginView from "./TwoPhotonSeriesPluginView";
 
 export const twoPhotonSeriesPlugin: NwbObjectViewPlugin = {
   name: "TwoPhotonSeries",
   canHandle: async ({ nwbUrl, path }: { nwbUrl: string; path: string }) => {
-    const group = await getNwbGroup(nwbUrl, path);
+    const group = await getHdf5Group(nwbUrl, path);
     if (!group) return false;
 
     // Check if this is a TwoPhotonSeries or OnePhotonSeries neurodata_type

@@ -1,4 +1,4 @@
-import { getNwbGroup } from "@nwbInterface";
+import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import TrialAlignedPluginView from "./TrialAlignedPluginView";
 
@@ -15,12 +15,12 @@ export const trialAlignedSeriesPlugin: NwbObjectViewPlugin = {
   }) => {
     if (!secondaryPaths) return false;
     if (secondaryPaths.length !== 1) return false;
-    const group = await getNwbGroup(nwbUrl, path);
+    const group = await getHdf5Group(nwbUrl, path);
     if (!group) return false;
     if (group.attrs["neurodata_type"] !== "TimeIntervals") return false;
 
     const secondaryPath = secondaryPaths[0];
-    const secondaryGroup = await getNwbGroup(nwbUrl, secondaryPath);
+    const secondaryGroup = await getHdf5Group(nwbUrl, secondaryPath);
     if (!secondaryGroup) return false;
     if (
       ![

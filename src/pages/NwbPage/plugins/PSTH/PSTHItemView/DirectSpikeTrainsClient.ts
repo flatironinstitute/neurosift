@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { DatasetDataType } from "@remote-h5-file";
-import { getNwbDatasetData, getNwbGroup } from "@nwbInterface";
+import { getHdf5DatasetData, getHdf5Group } from "@hdf5Interface";
 
 export class DirectSpikeTrainsClient {
   #timestampFinders: { [key: number]: TimestampFinder } = {};
@@ -14,7 +14,7 @@ export class DirectSpikeTrainsClient {
     private spike_or_event: "spike" | "event" | undefined,
   ) {}
   static async create(nwbUrl: string, path: string) {
-    const group = await getNwbGroup(nwbUrl, path);
+    const group = await getHdf5Group(nwbUrl, path);
     let spike_or_event: "spike" | "event" | undefined;
     if (group && group.datasets.find((ds) => ds.name === "spike_times")) {
       spike_or_event = "spike";
@@ -26,9 +26,11 @@ export class DirectSpikeTrainsClient {
     } else {
       spike_or_event = undefined;
     }
-    let unitIds = (await getNwbDatasetData(nwbUrl, `${path}/id`, {})) as any as
-      | any[]
-      | undefined;
+    let unitIds = (await getHdf5DatasetData(
+      nwbUrl,
+      `${path}/id`,
+      {},
+    )) as any as any[] | undefined;
     if (!unitIds) throw Error(`Unable to find unit ids for ${path}`);
 
     // if unitIds is a Typed array, convert it to a regular array
@@ -41,12 +43,12 @@ export class DirectSpikeTrainsClient {
     // ensure strings
     unitIds = unitIds.map((val) => val.toString());
 
-    const spikeTimesIndices = await getNwbDatasetData(
+    const spikeTimesIndices = await getHdf5DatasetData(
       nwbUrl,
       `${path}/${spike_or_event}_times_index`,
       {},
     );
-    const v1 = await getNwbDatasetData(
+    const v1 = await getHdf5DatasetData(
       nwbUrl,
       `${path}/${spike_or_event}_times`,
       {
@@ -56,7 +58,7 @@ export class DirectSpikeTrainsClient {
     const n = spikeTimesIndices
       ? spikeTimesIndices[spikeTimesIndices.length - 1]
       : 0;
-    const v2 = await getNwbDatasetData(
+    const v2 = await getHdf5DatasetData(
       nwbUrl,
       `${path}/${spike_or_event}_times`,
       {
@@ -88,7 +90,7 @@ export class DirectSpikeTrainsClient {
     const model = {
       length: i2 - i1,
       getChunk: async (a1: number, a2: number) => {
-        return await getNwbDatasetData(
+        return await getHdf5DatasetData(
           this.nwbUrl,
           `${this.path}/${this.spike_or_event}_times`,
           { slice: [[i1 + a1, i1 + a2]] },
@@ -113,7 +115,7 @@ export class DirectSpikeTrainsClient {
     const i1 = ii === 0 ? 0 : this.spikeTimesIndices[ii - 1];
     const i2 = this.spikeTimesIndices[ii];
     const path = this.path;
-    const tt0 = await getNwbDatasetData(
+    const tt0 = await getHdf5DatasetData(
       this.nwbUrl,
       `${path}/${this.spike_or_event}_times`,
       { slice: [[i1, i2]], canceler: o.canceler },

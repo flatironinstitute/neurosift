@@ -1,5 +1,5 @@
 import { FunctionComponent } from "react";
-import { useNwbGroup } from "@nwbInterface";
+import { useHdf5Group } from "@hdf5Interface";
 
 type AlignToSelectionProps = {
   alignToVariables: string[];
@@ -14,7 +14,7 @@ const AlignToSelectionComponent: FunctionComponent<AlignToSelectionProps> = ({
   nwbUrl,
   path,
 }) => {
-  const group = useNwbGroup(nwbUrl, path);
+  const group = useHdf5Group(nwbUrl, path);
   const options = (group?.datasets || [])
     .map((ds) => ds.name)
     .filter((name) => name.endsWith("_time") || name.endsWith("_times"));

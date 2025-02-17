@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getNwbDataset, getNwbDatasetData } from "@nwbInterface";
+import { getHdf5Dataset, getHdf5DatasetData } from "@hdf5Interface";
 
 export class RoiClient {
   status: "pending" | "loading" | "loaded" | "error" = "pending";
@@ -15,7 +15,7 @@ export class RoiClient {
   ) {
     (async () => {
       this.status = "loading";
-      const a = await getNwbDatasetData(nwbUrl, this.roiPath + "/data", {
+      const a = await getHdf5DatasetData(nwbUrl, this.roiPath + "/data", {
         canceler: this.canceler /*, slice: [[0, 1000]]*/,
       });
       if (!a) throw Error("No data in RoiClient");
@@ -31,18 +31,18 @@ export class RoiClient {
         ? additionalPaths[0]
         : undefined;
     if (!roiPath) throw Error("Unexpected: no roiPath");
-    const ds = await getNwbDataset(nwbUrl, roiPath + "/data");
+    const ds = await getHdf5Dataset(nwbUrl, roiPath + "/data");
     if (!ds) throw Error("Unable to get dataset: " + roiPath);
     const numRois = ds.shape[1];
     const roiIndices = Array.from({ length: numRois }, (_, i) => i);
     let timestamps: number[];
 
-    const timestampsDataset = await getNwbDataset(
+    const timestampsDataset = await getHdf5Dataset(
       nwbUrl,
       roiPath + "/timestamps",
     );
     if (timestampsDataset) {
-      const timestampsDatasetData = await getNwbDatasetData(
+      const timestampsDatasetData = await getHdf5DatasetData(
         nwbUrl,
         roiPath + "/timestamps",
         {},
@@ -54,7 +54,7 @@ export class RoiClient {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       timestamps = timestampsDatasetData as any as number[];
     } else {
-      const startingTimeDataset = await getNwbDataset(
+      const startingTimeDataset = await getHdf5Dataset(
         nwbUrl,
         roiPath + "/starting_time",
       );
@@ -66,7 +66,7 @@ export class RoiClient {
             roiPath +
             "/starting_time",
         );
-      const startingTimeDatasetData = await getNwbDatasetData(
+      const startingTimeDatasetData = await getHdf5DatasetData(
         nwbUrl,
         roiPath + "/starting_time",
         {},

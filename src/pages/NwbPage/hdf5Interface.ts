@@ -7,11 +7,11 @@ import {
   RemoteH5FileLindi,
   RemoteH5FileX,
 } from "@remote-h5-file";
-import { getCachedObject, setCachedObject } from "./nwbCache";
+import { getCachedObject, setCachedObject } from "./hdf5Cache";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 import { removeStatusItem, setStatusItem } from "@components/StatusBarContext";
 
-const nwbFiles: {
+const hdf5Files: {
   [url: string]: {
     resolvedUrl: string;
     remoteH5File: RemoteH5FileX;
@@ -28,10 +28,10 @@ export const setTryUsingLindi = (val: boolean) => {
   tryUsingLindi = val;
 };
 export const isUsingLindi = (url: string) => {
-  return nwbFiles[url]?.resolvedUrl.endsWith(".lindi.json");
+  return hdf5Files[url]?.resolvedUrl.endsWith(".lindi.json");
 };
 
-export type NwbSubdataset = {
+export type Hdf5Subdataset = {
   name: string;
   path: string;
 
@@ -40,20 +40,20 @@ export type NwbSubdataset = {
   attrs: { [key: string]: any };
 };
 
-export type NwbSubgroup = {
+export type Hdf5Subgroup = {
   name: string;
   path: string;
   attrs: { [key: string]: any };
 };
 
-export type NwbGroup = {
+export type Hdf5Group = {
   path: string;
-  subgroups: NwbSubgroup[];
-  datasets: NwbSubdataset[];
+  subgroups: Hdf5Subgroup[];
+  datasets: Hdf5Subdataset[];
   attrs: { [key: string]: any };
 };
 
-export type NwbDataset = {
+export type Hdf5Dataset = {
   name: string;
   path: string;
   shape: number[];
@@ -74,7 +74,7 @@ const globalStats: GlobalStats = {
 };
 
 const globalStatsUpdated = () => {
-  setStatusItem("nwbStats", {
+  setStatusItem("hdf5Stats", {
     type: "text",
     text: `${globalStats.numGroups} / ${globalStats.numDatasets} / ${globalStats.numDatasetDatas}`,
     tooltip: "Number of groups / datasets / dataset data accesses",
@@ -84,31 +84,31 @@ const globalStatsUpdated = () => {
     globalStats.numDatasets === 0 &&
     globalStats.numDatasetDatas === 0
   ) {
-    removeStatusItem("nwbStats");
+    removeStatusItem("hdf5Stats");
   }
 };
 
 const inProgressGetRemoteH5Files: { [url: string]: boolean } = {};
 
 const getRemoteH5FileForUrl = async (url: string) => {
-  if (!nwbFiles[url]) {
+  if (!hdf5Files[url]) {
     // If not already created
     if (inProgressGetRemoteH5Files[url]) {
       while (inProgressGetRemoteH5Files[url]) {
         await new Promise((resolve) => setTimeout(resolve, 50));
       }
-      return nwbFiles[url];
+      return hdf5Files[url];
     }
     try {
       inProgressGetRemoteH5Files[url] = true;
       const { url: urlResolved } = await getResolvedUrl(url);
       if (urlResolved.endsWith(".lindi.json")) {
-        nwbFiles[url] = {
+        hdf5Files[url] = {
           resolvedUrl: urlResolved,
           remoteH5File: await RemoteH5FileLindi.create(urlResolved),
         };
       } else {
-        nwbFiles[url] = {
+        hdf5Files[url] = {
           resolvedUrl: urlResolved,
           remoteH5File: new RemoteH5File(urlResolved, {}),
         };
@@ -117,26 +117,26 @@ const getRemoteH5FileForUrl = async (url: string) => {
       inProgressGetRemoteH5Files[url] = false;
     }
   }
-  return nwbFiles[url];
+  return hdf5Files[url];
 };
 
-export const getNwbGroup = async (
+export const getHdf5Group = async (
   url: string,
   path: string,
-): Promise<NwbGroup | undefined> => {
+): Promise<Hdf5Group | undefined> => {
   globalStats.numGroups += 1;
   globalStatsUpdated();
 
   // Try cache first
   const cached = await getCachedObject(url, path, "group");
-  if (cached) return cached as NwbGroup;
+  if (cached) return cached as Hdf5Group;
 
   const f = (await getRemoteH5FileForUrl(url)).remoteH5File;
-  const itemName = `getNwbGroup-${url}-${path}`;
+  const itemName = `getHdf5Group-${url}-${path}`;
   setStatusItem(itemName, {
     type: "text",
     text: "g",
-    tooltip: `Loading NWB group: ${path}`,
+    tooltip: `Loading HDF5 group: ${path}`,
   });
   let group;
   try {
@@ -153,24 +153,24 @@ export const getNwbGroup = async (
   return group;
 };
 
-export const getNwbDataset = async (
+export const getHdf5Dataset = async (
   url: string,
   path: string,
-): Promise<NwbDataset | undefined> => {
+): Promise<Hdf5Dataset | undefined> => {
   globalStats.numDatasets += 1;
   globalStatsUpdated();
 
   // Try cache first
   const cached = await getCachedObject(url, path, "dataset");
-  if (cached) return cached as NwbDataset;
+  if (cached) return cached as Hdf5Dataset;
 
   const f = (await getRemoteH5FileForUrl(url)).remoteH5File;
   let dataset;
-  const itemName = `getNwbDataset-${url}-${path}`;
+  const itemName = `getHdf5Dataset-${url}-${path}`;
   setStatusItem(itemName, {
     type: "text",
     text: "d",
-    tooltip: `Loading NWB dataset: ${path}`,
+    tooltip: `Loading HDF5 dataset: ${path}`,
   });
   try {
     dataset = await f.getDataset(path);
@@ -186,7 +186,7 @@ export const getNwbDataset = async (
   return dataset;
 };
 
-export const getNwbDatasetData = async (
+export const getHdf5DatasetData = async (
   url: string,
   path: string,
   o: {
@@ -199,11 +199,11 @@ export const getNwbDatasetData = async (
   globalStatsUpdated();
 
   const f = (await getRemoteH5FileForUrl(url)).remoteH5File;
-  const itemName = `getNwbDatasetData-${url}-${path}-${JSON.stringify(o.slice)}`;
+  const itemName = `getHdf5DatasetData-${url}-${path}-${JSON.stringify(o.slice)}`;
   setStatusItem(itemName, {
     type: "text",
     text: "◯",
-    tooltip: `Loading NWB dataset data: ${path}`,
+    tooltip: `Loading HDF5 dataset data: ${path}`,
   });
   try {
     const ds = await f.getDataset(path);
@@ -230,11 +230,11 @@ export const getNwbDatasetData = async (
   }
 };
 
-export const useNwbGroup = (url: string, path: string) => {
-  const [group, setGroup] = useState<NwbGroup | undefined>(undefined);
+export const useHdf5Group = (url: string, path: string) => {
+  const [group, setGroup] = useState<Hdf5Group | undefined>(undefined);
   useEffect(() => {
     const load = async () => {
-      const g = await getNwbGroup(url, path);
+      const g = await getHdf5Group(url, path);
       setGroup(g);
     };
     load();
@@ -242,11 +242,11 @@ export const useNwbGroup = (url: string, path: string) => {
   return group;
 };
 
-export const useNwbDataset = (url: string, path: string) => {
-  const [dataset, setDataset] = useState<NwbDataset | undefined>(undefined);
+export const useHdf5Dataset = (url: string, path: string) => {
+  const [dataset, setDataset] = useState<Hdf5Dataset | undefined>(undefined);
   useEffect(() => {
     const load = async () => {
-      const d = await getNwbDataset(url, path);
+      const d = await getHdf5Dataset(url, path);
       setDataset(d);
     };
     load();
@@ -254,7 +254,7 @@ export const useNwbDataset = (url: string, path: string) => {
   return dataset;
 };
 
-export const useNwbDatasetData = (url: string, path: string) => {
+export const useHdf5DatasetData = (url: string, path: string) => {
   const [data, setData] = useState<any | undefined>(undefined);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(
     undefined,
@@ -264,7 +264,7 @@ export const useNwbDatasetData = (url: string, path: string) => {
       setData(undefined);
       let d;
       try {
-        d = await getNwbDatasetData(url, path, {});
+        d = await getHdf5DatasetData(url, path, {});
       } catch (err: any) {
         console.error(`Error loading dataset data: ${err.message}`);
         setErrorMessage(err.message);

@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import PlaneSegmentationView from "./PlaneSegmentationView";
-import { NwbGroup, useNwbGroup } from "@nwbInterface";
+import { Hdf5Group, useHdf5Group } from "@hdf5Interface";
 import { Splitter } from "@fi-sci/splitter";
 
 type Props = {
@@ -17,7 +17,7 @@ const ImageSegmentationItemView: FunctionComponent<Props> = ({
   nwbUrl,
   path,
 }) => {
-  const group = useNwbGroup(nwbUrl, path);
+  const group = useHdf5Group(nwbUrl, path);
 
   const [selectedSegmentationName, setSelectedSegmentationName] = useState<
     string | undefined
@@ -61,7 +61,7 @@ const ImageSegmentationItemView: FunctionComponent<Props> = ({
 type LeftPanelProps = {
   width: number;
   height: number;
-  group: NwbGroup;
+  group: Hdf5Group;
   nwbUrl: string;
   selectedSegmentationName?: string;
   setSelectedSegmentationName: (name: string) => void;
