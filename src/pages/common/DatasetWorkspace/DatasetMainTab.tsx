@@ -1,4 +1,10 @@
-import { FunctionComponent, useEffect, useMemo, useReducer } from "react";
+import {
+  FunctionComponent,
+  useEffect,
+  useMemo,
+  useReducer,
+  useState,
+} from "react";
 import "@css/NwbHierarchyView.css";
 import { formatBytes } from "@shared/util/formatBytes";
 import { DatasetFile } from "./plugins/pluginInterface";
@@ -81,6 +87,14 @@ const getIndent = (filepath: string, isFile: boolean) => {
   return x;
 };
 
+const LoadingSpinner = () => (
+  <span
+    style={{ display: "inline-block", animation: "spin 1s linear infinite" }}
+  >
+    ⌛
+  </span>
+);
+
 const DatasetMainTab: FunctionComponent<Props> = ({
   topLevelFiles,
   onOpenFile,
@@ -93,6 +107,9 @@ const DatasetMainTab: FunctionComponent<Props> = ({
   );
 
   const [loadedFiles, loadedFilesDispatch] = useReducer(loadedFilesReducer, []);
+  const [loadingDirectories, setLoadingDirectories] = useState<{
+    [key: string]: boolean;
+  }>({});
   useEffect(() => {
     loadedFilesDispatch({ type: "clear" });
     for (const f of topLevelFiles) {
@@ -138,14 +155,25 @@ const DatasetMainTab: FunctionComponent<Props> = ({
       });
       return;
     }
-    const newFiles = await fetchDirectory(file);
-    for (const f of newFiles) {
-      loadedFilesDispatch({ type: "add", file: f });
+    setLoadingDirectories((prev) => ({ ...prev, [file.id]: true }));
+    try {
+      const newFiles = await fetchDirectory(file);
+      for (const f of newFiles) {
+        loadedFilesDispatch({ type: "add", file: f });
+      }
+      expandedDirectoriesDispatch({
+        type: "toggle",
+        directoryId: file.id,
+      });
+    } catch (error) {
+      console.error("Error fetching directory contents:", error);
+    } finally {
+      setLoadingDirectories((prev) => {
+        const next = { ...prev };
+        delete next[file.id];
+        return next;
+      });
     }
-    expandedDirectoriesDispatch({
-      type: "toggle",
-      directoryId: file.id,
-    });
   };
 
   // when the top level files have changed, we're going to reset all the expanded directories
@@ -189,7 +217,13 @@ const DatasetMainTab: FunctionComponent<Props> = ({
                         userSelect: "none",
                       }}
                     >
-                      {expandedDirectories[file.id] ? "▼" : "►"}
+                      {loadingDirectories[file.id] ? (
+                        <LoadingSpinner />
+                      ) : expandedDirectories[file.id] ? (
+                        "▼"
+                      ) : (
+                        "►"
+                      )}
                     </span>
                     <span>{file.filename}</span>
                   </div>
@@ -296,5 +330,20 @@ const DatasetMainTab: FunctionComponent<Props> = ({
     </div>
   );
 };
+
+const keyframes = `
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+`;
+
+const styleSheet = document.createElement("style");
+styleSheet.textContent = keyframes;
+document.head.appendChild(styleSheet);
 
 export default DatasetMainTab;
