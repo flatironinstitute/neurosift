@@ -11,6 +11,7 @@ import {
 } from "./datasetWorkspaceTabsReducer";
 import DatasetMainTab from "./DatasetMainTab";
 import TabToolbar, { TOOLBAR_HEIGHT } from "./TabToolbar";
+import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 
 // Initialize plugins
 initializePlugins();
@@ -148,12 +149,14 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
                     height={pluginContentHeight}
                     top={toolbarHeight}
                   >
-                    {/* The plugin may or may not use the width/height */}
-                    <Plugin
-                      file={tab.file}
-                      width={width - 20}
-                      height={pluginContentHeight}
-                    />
+                    <ProvideTimeseriesSelection>
+                      {/* The plugin may or may not use the width/height */}
+                      <Plugin
+                        file={tab.file}
+                        width={width - 20}
+                        height={pluginContentHeight}
+                      />
+                    </ProvideTimeseriesSelection>
                   </ScrollY>
                 </div>
               );
