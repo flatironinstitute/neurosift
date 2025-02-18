@@ -157,7 +157,7 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
             gap: 2,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
             <Link
               href="https://github.com/flatironinstitute/neurosift/tree/main-v2"
               target="_blank"
@@ -173,6 +173,22 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
             >
               <GitHubIcon />
               <Typography variant="body2">View source on GitHub</Typography>
+            </Link>
+            <Link
+              href="https://github.com/flatironinstitute/neurosift/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                color: "text.secondary",
+                textDecoration: "none",
+                "&:hover": { color: "primary.main" },
+              }}
+            >
+              <GitHubIcon />
+              <Typography variant="body2">Submit Feedback / Issues</Typography>
             </Link>
           </Box>
           <Typography

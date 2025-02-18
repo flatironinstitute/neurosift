@@ -60,4 +60,4 @@ When asked to make a python script to explore something, make a .py file with a 
 
 This repo is at https://github.com/flatironinstitute/neurosift
 
-After completing any task, ask the user if they want you to update the changelog, and if so, edit CHANGELOG.md accordingly.
+After completing any task, edit CHANGELOG.md accordingly.
