@@ -1,5 +1,9 @@
 # Changes
 
+## February 18, 2025
+- Added support for hide=1 query parameter
+- Migration to v2 deployed
+
 ## February 17, 2025
 - Added SNIRF file support with HDF5 viewer integration
 - Added loading indicator when expanding directories in the file browser
