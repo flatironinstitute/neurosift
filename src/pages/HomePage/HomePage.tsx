@@ -17,13 +17,13 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
       <Container maxWidth="md" sx={{ mt: 4 }}>
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom>
-            Welcome to Neurosift (v2)
+            Welcome to Neurosift
           </Typography>
           <Typography variant="body1" sx={{ mb: 3 }}>
-            Neurosift is a browser-based tool designed for the visualization and
-            processing of NWB (Neurodata Without Borders) files, whether stored
-            locally or hosted remotely, and enables interactive exploration and
-            analysis of the online repositories such as DANDI Archive.
+            Neurosift is a browser-based tool designed for the visualization of
+            neuroscience data with a focus on NWB (Neurodata Without Borders)
+            files, and enables interactive exploration of the DANDI Archive and
+            OpenNeuro online repositories.
           </Typography>
         </Box>
 

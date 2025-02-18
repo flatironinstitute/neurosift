@@ -1,6 +1,6 @@
 # neurosift (v2)
 
-Neurosift is a browser-based tool designed for the visualization of neuroscience data with a focus on NWB (Neurodata Without Borders) filesy, and enables interactive exploration of the [DANDI Archive](https://dandiarchive.org/) and [OpenNeuro](https://openneuro.org/) online repositories.
+Neurosift is a browser-based tool designed for the visualization of neuroscience data with a focus on NWB (Neurodata Without Borders) files, and enables interactive exploration of the [DANDI Archive](https://dandiarchive.org/) and [OpenNeuro](https://openneuro.org/) online repositories.
 
 This branch contains the new (v2) version of neurosift. The previous (v1) version is available on the [main branch](https://github.com/flatironinstitute/neurosift/tree/main).
 

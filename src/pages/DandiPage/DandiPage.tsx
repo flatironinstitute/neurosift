@@ -8,7 +8,9 @@ import {
   Stack,
   FormControlLabel,
   Switch,
+  Link,
 } from "@mui/material";
+import LaunchIcon from "@mui/icons-material/Launch";
 import SearchIcon from "@mui/icons-material/Search";
 import HistoryIcon from "@mui/icons-material/History";
 import DandisetSearchResult from "./DandisetSearchResult";
@@ -117,10 +119,14 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
         <Typography variant="h4" component="h1" gutterBottom>
           DANDI Archive Browser
         </Typography>
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          Browse and visualize datasets from the DANDI neuroscience data
-          archive.
-        </Typography>
+        <Box sx={{ mb: 2 }}>
+          <Link
+            href="https://dandiarchive.org/"
+            sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+          >
+            Visit DANDI Archive website <LaunchIcon sx={{ fontSize: 16 }} />
+          </Link>
+        </Box>
         {recentDandisets.length > 0 && (
           <Box sx={{ mb: 0.5 }}>
             <Stack direction="row" spacing={1} alignItems="center">

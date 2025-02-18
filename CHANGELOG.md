@@ -3,6 +3,7 @@
 ## February 18, 2025
 - Added support for hide=1 query parameter
 - Migration to v2 deployed
+- Added external website links to DANDI and OpenNeuro browser pages
 
 ## February 17, 2025
 - Added SNIRF file support with HDF5 viewer integration

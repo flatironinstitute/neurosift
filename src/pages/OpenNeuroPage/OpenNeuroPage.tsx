@@ -6,7 +6,9 @@ import {
   Button,
   Chip,
   Stack,
+  Link,
 } from "@mui/material";
+import LaunchIcon from "@mui/icons-material/Launch";
 import SearchIcon from "@mui/icons-material/Search";
 import HistoryIcon from "@mui/icons-material/History";
 import { FunctionComponent, useCallback, useEffect, useState } from "react";
@@ -196,10 +198,14 @@ const OpenNeuroPage: FunctionComponent<OpenNeuroPageProps> = ({
         <Typography variant="h4" component="h1" gutterBottom>
           OpenNeuro Browser
         </Typography>
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          Browse and visualize datasets from OpenNeuro, an open platform for
-          sharing neuroimaging data.
-        </Typography>
+        <Box sx={{ mb: 2 }}>
+          <Link
+            href="https://openneuro.org/"
+            sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+          >
+            Visit OpenNeuro website <LaunchIcon sx={{ fontSize: 16 }} />
+          </Link>
+        </Box>
         {recentDatasets.length > 0 && (
           <Box sx={{ mb: 0.5 }}>
             <Stack direction="row" spacing={1} alignItems="center">
