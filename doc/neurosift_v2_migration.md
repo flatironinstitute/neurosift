@@ -1,16 +1,14 @@
-# Neurosift v2 Migration Notice
+# Neurosift v2 Migration Complete
 
-Neurosift will be migrating to v2 (https://v2.neurosift.app) on February 18th, 2025.
+Neurosift migrated to v2 on February 18th, 2025.
+
+You can still access the previous version at v1.neurosift.app, or by clicking the "1" button in the upper-right part of any window.
 
 ## What's New in v2
 
 * Streamlined experience with new architecture
 * Core functionality and stability improvements through modular plugin system
 * Focus on reliability by omitting experimental features from v1
-
-## Testing v2
-
-You can try v2 today by clicking the "2" button in the current Neurosift interface.
 
 ## Questions or Concerns?
 
