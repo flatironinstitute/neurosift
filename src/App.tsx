@@ -269,7 +269,7 @@ const AppContent = () => {
 
                     window.location.href = v1Url;
                   }}
-                  sx={{ ml: 2 }}
+                  sx={{ ml: 2, fontSize: "0.75rem", padding: "4px" }}
                 >
                   1
                 </IconButton>
