@@ -50,7 +50,7 @@ const ApplicationBar: FunctionComponent<Props> = ({ onContextChat }) => {
   // const star = <span style={{color: bannerColor, fontSize: 20}}>★</span>
 
   const openInNeurosiftV2Url = useMemo(() => {
-    const baseUrl = "https://v2.neurosift.app";
+    const baseUrl = "https://neurosift.app";
     if (route.page === "dandi") return `${baseUrl}/dandi`;
     else if (route.page === "dandiset") return `${baseUrl}/dandiset/${route.dandisetId}`;
     else if (route.page === "nwb") {
