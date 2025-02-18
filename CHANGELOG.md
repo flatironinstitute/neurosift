@@ -1,7 +1,7 @@
 # Changes
 
 ## February 18, 2025
-- Added support for hide=1 query parameter
+- Added support for embedded=1 query parameter
 - Added feedback/issues link on home page footer
 - Migration to v2 deployed
 - Added external website links to DANDI and OpenNeuro browser pages

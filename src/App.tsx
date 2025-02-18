@@ -153,13 +153,13 @@ const LegacyUrlHandler = () => {
     }
 
     if (newPath) {
-      // Preserve hide=1 if present
-      const hideParam = searchParams.get("hide");
+      // Preserve embedded=1 if present
+      const hideParam = searchParams.get("embedded");
       if (hideParam === "1") {
         if (newSearch) {
-          newSearch += "&hide=1";
+          newSearch += "&embedded=1";
         } else {
-          newSearch = "?hide=1";
+          newSearch = "?embedded=1";
         }
       }
       navigate(newPath + newSearch, { replace: true });
@@ -173,7 +173,7 @@ const AppContent = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { width, height } = useWindowDimensions();
-  const hideAppBar = searchParams.get("hide") === "1";
+  const hideAppBar = searchParams.get("embedded") === "1";
   const appBarHeight = hideAppBar ? 0 : 50; // hard-coded to match the height of the AppBar
   const statusBarHeight = 20;
   const mainHeight = height - appBarHeight - statusBarHeight;
