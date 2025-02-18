@@ -152,6 +152,15 @@ const LegacyUrlHandler = () => {
     }
 
     if (newPath) {
+      // Preserve hide=1 if present
+      const hideParam = searchParams.get("hide");
+      if (hideParam === "1") {
+        if (newSearch) {
+          newSearch += "&hide=1";
+        } else {
+          newSearch = "?hide=1";
+        }
+      }
       navigate(newPath + newSearch, { replace: true });
     }
   }, [location, searchParams, navigate]);
@@ -161,8 +170,10 @@ const LegacyUrlHandler = () => {
 
 const AppContent = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { width, height } = useWindowDimensions();
-  const appBarHeight = 50; // hard-coded to match the height of the AppBar
+  const hideAppBar = searchParams.get("hide") === "1";
+  const appBarHeight = hideAppBar ? 0 : 50; // hard-coded to match the height of the AppBar
   const statusBarHeight = 20;
   const mainHeight = height - appBarHeight - statusBarHeight;
   return (
@@ -170,81 +181,83 @@ const AppContent = () => {
       className="AppContentDiv"
       style={{ position: "absolute", width, height, overflow: "hidden" }}
     >
-      <div
-        className="AppBarDiv"
-        style={{
-          position: "absolute",
-          width,
-          height: appBarHeight,
-          overflow: "hidden",
-        }}
-      >
-        <AppBar position="static">
-          <Toolbar>
-            <img
-              src="/neurosift-logo.png"
-              alt="Neurosift Logo"
-              style={{
-                height: "32px",
-                marginRight: "10px",
-                cursor: "pointer",
-                // filter: "brightness(1.35) contrast(1.15) saturate(1.1)",
-              }}
-              onClick={() => navigate("/")}
-            />
-            <Typography
-              variant="h6"
-              component="div"
-              sx={{
-                flexGrow: 1,
-                cursor: "pointer",
-                "&:hover": {
-                  opacity: 0.8,
-                },
-              }}
-              onClick={() => navigate("/")}
-            >
-              Neurosift (v2)
-            </Typography>
-            <Tooltip title="Settings">
-              <IconButton
-                color="inherit"
-                onClick={() => navigate("/settings")}
-                sx={{ ml: 2 }}
-              >
-                <SettingsIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="View this in Neurosift v1">
-              <IconButton
-                color="inherit"
-                onClick={() => {
-                  const loc = window.location;
-                  const path = loc.pathname;
-                  const search = loc.search;
-
-                  let v1Url = "https://neurosift.app";
-
-                  if (path === "/dandi") {
-                    v1Url += "?p=/dandi";
-                  } else if (path.startsWith("/dandiset/")) {
-                    const dandisetId = path.split("/").pop();
-                    v1Url += `?p=/dandiset&dandisetId=${dandisetId}`;
-                  } else if (path === "/nwb") {
-                    // Convert search params to append to ?p=/nwb
-                    v1Url += `?p=/nwb${search.replace("?", "&")}`;
-                  }
-
-                  window.location.href = v1Url;
+      {!hideAppBar && (
+        <div
+          className="AppBarDiv"
+          style={{
+            position: "absolute",
+            width,
+            height: appBarHeight,
+            overflow: "hidden",
+          }}
+        >
+          <AppBar position="static">
+            <Toolbar>
+              <img
+                src="/neurosift-logo.png"
+                alt="Neurosift Logo"
+                style={{
+                  height: "32px",
+                  marginRight: "10px",
+                  cursor: "pointer",
+                  // filter: "brightness(1.35) contrast(1.15) saturate(1.1)",
                 }}
-                sx={{ ml: 2 }}
+                onClick={() => navigate("/")}
+              />
+              <Typography
+                variant="h6"
+                component="div"
+                sx={{
+                  flexGrow: 1,
+                  cursor: "pointer",
+                  "&:hover": {
+                    opacity: 0.8,
+                  },
+                }}
+                onClick={() => navigate("/")}
               >
-                1
-              </IconButton>
-            </Tooltip>
-          </Toolbar>
-        </AppBar>
-      </div>
+                Neurosift (v2)
+              </Typography>
+              <Tooltip title="Settings">
+                <IconButton
+                  color="inherit"
+                  onClick={() => navigate("/settings")}
+                  sx={{ ml: 2 }}
+                >
+                  <SettingsIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="View this in Neurosift v1">
+                <IconButton
+                  color="inherit"
+                  onClick={() => {
+                    const loc = window.location;
+                    const path = loc.pathname;
+                    const search = loc.search;
+
+                    let v1Url = "https://neurosift.app";
+
+                    if (path === "/dandi") {
+                      v1Url += "?p=/dandi";
+                    } else if (path.startsWith("/dandiset/")) {
+                      const dandisetId = path.split("/").pop();
+                      v1Url += `?p=/dandiset&dandisetId=${dandisetId}`;
+                    } else if (path === "/nwb") {
+                      // Convert search params to append to ?p=/nwb
+                      v1Url += `?p=/nwb${search.replace("?", "&")}`;
+                    }
+
+                    window.location.href = v1Url;
+                  }}
+                  sx={{ ml: 2 }}
+                >
+                  1
+                </IconButton>
+              </Tooltip>
+            </Toolbar>
+          </AppBar>
+        </div>
+      )}
 
       <div
         className="AppContentMainDiv"
