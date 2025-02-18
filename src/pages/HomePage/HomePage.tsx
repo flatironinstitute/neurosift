@@ -17,7 +17,7 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
       <Container maxWidth="md" sx={{ mt: 4 }}>
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom>
-            Welcome to Neurosift v2 (Beta)
+            Welcome to Neurosift (v2)
           </Typography>
           <Typography variant="body1" sx={{ mb: 3 }}>
             Neurosift is a browser-based tool designed for the visualization and
@@ -142,11 +142,6 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
             architecture. The update focuses on core functionality and stability
             through a modular plugin system. We've omitted some experimental
             features from v1 to focus on reliability.
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 2, color: "text.secondary" }}>
-            Try v2 by clicking the "2" button in the current Neurosift. This
-            version will eventually replace v1 once feature parity for core
-            functionality is achieved.
           </Typography>
         </Paper>
 

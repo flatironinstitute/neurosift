@@ -204,7 +204,7 @@ const AppContent = () => {
               }}
               onClick={() => navigate("/")}
             >
-              Neurosift v2 (Beta)
+              Neurosift (v2)
             </Typography>
             <Tooltip title="Settings">
               <IconButton
