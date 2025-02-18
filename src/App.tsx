@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import SettingsIcon from "@mui/icons-material/Settings";
 import {
   AppBar,
+  Button,
   IconButton,
   Toolbar,
   Tooltip,
@@ -227,6 +228,25 @@ const AppContent = () => {
                   <SettingsIcon />
                 </IconButton>
               </Tooltip>
+              <Button
+                color="inherit"
+                onClick={() => {
+                  window.open(
+                    "https://github.com/flatironinstitute/neurosift/blob/main/doc/neurosift_v2_migration.md",
+                    "_blank",
+                  );
+                }}
+                sx={{
+                  ml: 2,
+                  textTransform: "none",
+                  border: "1px solid rgba(255, 255, 255, 0.3)",
+                  "&:hover": {
+                    border: "1px solid rgba(255, 255, 255, 0.6)",
+                  },
+                }}
+              >
+                Neurosift was updated
+              </Button>
               <Tooltip title="View this in Neurosift v1">
                 <IconButton
                   color="inherit"
@@ -235,7 +255,7 @@ const AppContent = () => {
                     const path = loc.pathname;
                     const search = loc.search;
 
-                    let v1Url = "https://neurosift.app";
+                    let v1Url = "https://v1.neurosift.app";
 
                     if (path === "/dandi") {
                       v1Url += "?p=/dandi";
