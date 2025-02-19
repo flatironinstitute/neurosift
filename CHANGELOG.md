@@ -1,6 +1,7 @@
 # Changes
 
 ## February 19, 2025
+- Add SpikeDensity plugin view for NWB files
 - Added job resubmission capability for failed jobs
 
 ## February 18, 2025

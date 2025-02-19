@@ -2,9 +2,11 @@ import { JobStatusHandler } from "@jobManager/components/JobStatusHandler";
 import { useNeurosiftJob } from "@jobManager/useNeurosiftJob";
 import { FunctionComponent, useMemo } from "react";
 import "../common/loadingState.css";
+import SpikeDensityPlotWidget from "./SpikeDensityPlotWidget";
 
 type Props = {
   width?: number;
+  height?: number;
   nwbUrl: string;
   path: string;
   condensed?: boolean;
@@ -20,7 +22,12 @@ interface JobInput {
   bin_size_msec: number;
 }
 
-const SpikeDensityView: FunctionComponent<Props> = ({ nwbUrl, path }) => {
+const SpikeDensityView: FunctionComponent<Props> = ({
+  width,
+  height,
+  nwbUrl,
+  path,
+}) => {
   const input: JobInput = useMemo<JobInput>(
     () => ({
       nwb_url: nwbUrl,
@@ -51,7 +58,13 @@ const SpikeDensityView: FunctionComponent<Props> = ({ nwbUrl, path }) => {
     return <div>No results available</div>;
   }
 
-  return <div>{result.output_url}</div>;
+  return (
+    <SpikeDensityPlotWidget
+      width={width || 800}
+      height={height || 600}
+      multiscaleSpikeDensityOutputUrl={result.output_url}
+    />
+  );
 };
 
 export default SpikeDensityView;

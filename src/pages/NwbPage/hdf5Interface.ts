@@ -107,6 +107,11 @@ const getRemoteH5FileForUrl = async (url: string) => {
           resolvedUrl: urlResolved,
           remoteH5File: await RemoteH5FileLindi.create(urlResolved),
         };
+      } else if (urlResolved.endsWith(".lindi.tar")) {
+        hdf5Files[url] = {
+          resolvedUrl: urlResolved,
+          remoteH5File: await RemoteH5FileLindi.create(urlResolved),
+        };
       } else {
         hdf5Files[url] = {
           resolvedUrl: urlResolved,
