@@ -52,8 +52,9 @@ export const JobStatusHandler: FunctionComponent<Props> = ({
                   marginBottom: "15px",
                 }}
               >
-                docker run
-                ghcr.io/flatironinstitute/neurosift-job-runner:main-v2 {jobId}
+                docker run --pull=always
+                ghcr.io/flatironinstitute/neurosift-job-runner:main-v2 run-job{" "}
+                {jobId}
               </code>
               <code
                 style={{
