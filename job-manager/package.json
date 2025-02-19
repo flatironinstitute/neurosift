@@ -1,0 +1,25 @@
+{
+  "name": "job-manager",
+  "version": "1.0.0",
+  "description": "Job manager service for Neurosift",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@types/mongodb": "^4.0.7",
+    "@types/node": "^20.11.24",
+    "@types/react": "^18.2.61",
+    "@types/react-dom": "^18.2.19",
+    "axios": "^1.7.9",
+    "mongodb": "^6.3.0",
+    "mongoose": "^8.2.0",
+    "next": "^14.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.3.3"
+  }
+}

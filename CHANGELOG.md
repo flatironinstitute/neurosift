@@ -1,6 +1,7 @@
 # Changes
 
 ## February 18, 2025
+- Added distributed job processing system (neurosift-job-manager)
 - Added support for embedded=1 query parameter
 - Added feedback/issues link on home page footer
 - Migration to v2 deployed

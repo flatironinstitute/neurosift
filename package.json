@@ -35,6 +35,7 @@
     "react-plotly.js": "^2.6.0",
     "react-router-dom": "^7.1.4",
     "react-syntax-highlighter": "^15.6.1",
+    "react-use": "^17.6.0",
     "remark-gfm": "^4.0.0"
   },
   "devDependencies": {

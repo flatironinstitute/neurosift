@@ -1,4 +1,10 @@
 import { registerPlugin } from "./registry";
+
+const isDevMode = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get("dev") === "1";
+};
+
 import defaultPlugin from "./default";
 import jsonPlugin from "./json";
 import textPlugin from "./text";
@@ -7,10 +13,14 @@ import niftiPlugin from "./nifti";
 import tsvPlugin from "./tsv";
 import wavPlugin from "./wav";
 import snirfPlugin from "./snirf";
+import textLetterCountPlugin from "./text-letter-count";
 
 // Register plugins in order of priority
 export const initializePlugins = () => {
   registerPlugin(tsvPlugin); // Register TSV plugin first (priority 200)
+  if (isDevMode()) {
+    registerPlugin(textLetterCountPlugin); // Register before text plugin to take precedence
+  }
   registerPlugin(textPlugin);
   registerPlugin(jsonPlugin);
   registerPlugin(edfPlugin);

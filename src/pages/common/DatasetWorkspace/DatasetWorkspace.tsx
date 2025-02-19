@@ -131,9 +131,13 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
         {tabsState.tabs.map((tab) => {
           if (tab.type === "file") {
             const plugins = findPluginsByFile(tab.file.filename);
-            const Plugin = plugins[0]?.component; // Use the highest priority plugin
 
-            if (Plugin) {
+            if (plugins.length > 0) {
+              const pluginHeight =
+                plugins.length > 1
+                  ? Math.min(600, (pluginContentHeight * 2) / 3)
+                  : pluginContentHeight;
+
               return (
                 <div
                   key={tab.id}
@@ -146,16 +150,27 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
                   <TabToolbar width={width - 20} file={tab.file} />
                   <ScrollY
                     width={width - 20}
-                    height={pluginContentHeight}
+                    height={contentHeight - toolbarHeight}
                     top={toolbarHeight}
                   >
                     <ProvideTimeseriesSelection>
-                      {/* The plugin may or may not use the width/height */}
-                      <Plugin
-                        file={tab.file}
-                        width={width - 20}
-                        height={pluginContentHeight}
-                      />
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "20px",
+                        }}
+                      >
+                        {plugins.map((plugin, index) => (
+                          <div key={index}>
+                            <plugin.component
+                              file={tab.file}
+                              width={width - 20}
+                              height={pluginHeight}
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </ProvideTimeseriesSelection>
                   </ScrollY>
                 </div>
