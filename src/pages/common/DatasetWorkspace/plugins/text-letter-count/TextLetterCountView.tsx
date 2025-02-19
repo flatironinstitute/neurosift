@@ -5,7 +5,6 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useInterval } from "react-use";
 
 // Hard-coded for now - would come from environment in production
 // const NSJM_API_BASE_URL = 'http://localhost:3000/api'
@@ -41,6 +40,7 @@ const TextLetterCountView: FunctionComponent<DatasetPluginProps> = ({
   const [job, setJob] = useState<Job | null>(null);
   const [result, setResult] = useState<JobResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const input = useMemo(() => ({ fileUrl, version: 3 }), [fileUrl]);
 
@@ -114,6 +114,7 @@ const TextLetterCountView: FunctionComponent<DatasetPluginProps> = ({
 
   const fetchJobStatus = useCallback(async () => {
     if (!jobId) return;
+    setIsRefreshing(true);
 
     try {
       const response = await fetch(`${NSJM_API_BASE_URL}/jobs/${jobId}`, {
@@ -142,17 +143,14 @@ const TextLetterCountView: FunctionComponent<DatasetPluginProps> = ({
       setError(
         `Failed to fetch job status: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
+    } finally {
+      setIsRefreshing(false);
     }
   }, [jobId]);
 
   useEffect(() => {
     fetchJobStatus();
   }, [fetchJobStatus]);
-
-  useInterval(
-    fetchJobStatus,
-    job?.status === "pending" || job?.status === "running" ? 5000 : null,
-  );
 
   if (error) {
     return <div style={{ color: "red" }}>Error: {error}</div>;
@@ -168,7 +166,7 @@ const TextLetterCountView: FunctionComponent<DatasetPluginProps> = ({
 
   if (!job || job.status === "pending" || job.status === "running") {
     return (
-      <div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         {job?.status === "pending" ? (
           <div
             style={{
@@ -203,7 +201,7 @@ const TextLetterCountView: FunctionComponent<DatasetPluginProps> = ({
               >
                 apptainer exec
                 docker://ghcr.io/flatironinstitute/neurosift-job-runner:main-v2
-                python3 run-job.py {jobId}
+                python3 /app/run-job.py {jobId}
               </code>
 
               <p>Or for local development:</p>
@@ -221,7 +219,7 @@ const TextLetterCountView: FunctionComponent<DatasetPluginProps> = ({
             </div>
           </div>
         ) : (
-          <>
+          <div>
             <p>Processing... {job?.progress || 0}%</p>
             <div
               style={{
@@ -238,8 +236,20 @@ const TextLetterCountView: FunctionComponent<DatasetPluginProps> = ({
                 }}
               />
             </div>
-          </>
+          </div>
         )}
+        <div>
+          <button
+            onClick={fetchJobStatus}
+            disabled={isRefreshing}
+            style={{
+              opacity: isRefreshing ? 0.7 : 1,
+              cursor: isRefreshing ? "not-allowed" : "pointer",
+            }}
+          >
+            {isRefreshing ? "Refreshing..." : "Refresh Status"}
+          </button>
+        </div>
       </div>
     );
   }
