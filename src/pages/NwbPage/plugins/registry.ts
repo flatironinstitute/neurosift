@@ -12,6 +12,7 @@ import { imageSegmentationPlugin } from "./ImageSegmentation";
 import { timeIntervalsPlugin } from "./TimeIntervals";
 import { trialAlignedSeriesPlugin } from "./TrialAlignedSeries";
 import { pythonScriptPlugin } from "./PythonScript";
+import spikeDensityPlugin from "./SpikeDensity";
 
 // List of plugins in priority order (last one is checked first)
 export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
@@ -28,6 +29,7 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   imageSegmentationPlugin,
   timeIntervalsPlugin,
   trialAlignedSeriesPlugin,
+  spikeDensityPlugin,
 ];
 
 export const findSuitablePlugins = async (

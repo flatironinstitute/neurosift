@@ -4,12 +4,12 @@ on:
   push:
     branches: [ main-v2 ]
     paths:
-      - 'job-manager/job-runner/**'
+      - 'neurosift_job_runner/**'
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}-job-runner
+  IMAGE_NAME: neurosift-job-runner
 
 jobs:
   build-and-push:
@@ -38,7 +38,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: job-manager/job-runner
+          context: neurosift_job_manager
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

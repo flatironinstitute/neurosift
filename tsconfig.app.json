@@ -31,6 +31,7 @@
       "@remote-h5-file": ["src/remote-h5-file"],
       "@remote-h5-file/*": ["src/remote-h5-file/*"],
       "@hdf5Interface": ["src/pages/NwbPage/hdf5Interface"],
+      "@jobManager/*": ["src/jobManager/*"]
     }
   },
   "include": ["src"]

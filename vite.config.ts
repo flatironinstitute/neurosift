@@ -12,6 +12,7 @@ export default defineConfig({
       '@shared': path.resolve(__dirname, './src/shared'),
       '@remote-h5-file': path.resolve(__dirname, './src/remote-h5-file'),
       '@hdf5Interface': path.resolve(__dirname, './src/pages/NwbPage/hdf5Interface'),
+      "@jobManager": path.resolve(__dirname, "./src/jobManager")
     }
   }
 })

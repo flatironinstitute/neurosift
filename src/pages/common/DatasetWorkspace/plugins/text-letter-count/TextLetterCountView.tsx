@@ -1,261 +1,69 @@
-import {
-  FunctionComponent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
-// Hard-coded for now - would come from environment in production
-// const NSJM_API_BASE_URL = 'http://localhost:3000/api'
-const NSJM_API_BASE_URL = "https://neurosift-job-manager.vercel.app/api";
-
-// For now this is hard-coded in the UI -- try to figure out how to make this more secure
-const NSJM_API_SUBMIT_KEY = "d38b9460ae73a5e4690dd03b13c4a1dc";
-
+import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import { DatasetPluginProps } from "../pluginInterface";
+import { useNeurosiftJob } from "@jobManager/useNeurosiftJob";
+import { JobStatusHandler } from "@jobManager/components/JobStatusHandler";
 
 interface LetterCounts {
   [key: string]: number;
 }
 
-interface JobResult {
+interface Result {
   letterCounts: LetterCounts;
   totalLetters: number;
 }
 
-interface Job {
-  _id: string;
-  status: "pending" | "running" | "completed" | "failed";
-  progress: number;
-  output?: string;
-  error?: string;
+interface JobResult {
+  outputUrl: string; // for the result.json
+}
+
+interface JobInput {
+  fileUrl: string;
+  version: number;
 }
 
 const TextLetterCountView: FunctionComponent<DatasetPluginProps> = ({
   file,
 }) => {
   const fileUrl = file.urls[0];
-  const [jobId, setJobId] = useState<string | null>(null);
-  const [job, setJob] = useState<Job | null>(null);
-  const [result, setResult] = useState<JobResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const input = useMemo<JobInput>(() => ({ fileUrl, version: 6 }), [fileUrl]);
 
-  const input = useMemo(() => ({ fileUrl, version: 3 }), [fileUrl]);
+  const {
+    job,
+    result: jobResult,
+    error,
+    isRefreshing,
+    submitJob,
+    fetchJobStatus,
+  } = useNeurosiftJob<JobInput, JobResult>("text-letter-count", input);
 
-  // Check for existing job on component mount
+  const [result, setResult] = useState<Result | null>(null);
   useEffect(() => {
-    const findExistingJob = async () => {
-      try {
-        const response = await fetch(`${NSJM_API_BASE_URL}/jobs/search`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${NSJM_API_SUBMIT_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            type: "text-letter-count",
-            input,
-          }),
-        });
-
-        if (response.ok) {
-          const jobs = await response.json();
-          // Get most recent job if any exist
-          if (jobs.length > 0) {
-            const mostRecentJob = jobs[0]; // API returns sorted by createdAt desc
-            setJobId(mostRecentJob._id);
-            setJob(mostRecentJob);
-            if (mostRecentJob.status === "completed" && mostRecentJob.output) {
-              const outputObject = JSON.parse(mostRecentJob.output);
-              const outputUrl = outputObject.outputUrl;
-              const resultResponse = await fetch(outputUrl);
-              const resultData = await resultResponse.json();
-              setResult(resultData);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error finding existing job:", error);
-        // Don't set error state here - just let user start a new job if needed
-      }
-    };
-
-    findExistingJob();
-  }, [input]);
-
-  const submitJob = useCallback(async () => {
-    try {
-      const response = await fetch(`${NSJM_API_BASE_URL}/jobs`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${NSJM_API_SUBMIT_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          type: "text-letter-count",
-          input,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error submitting job: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      setJobId(data.jobId);
-    } catch (error: unknown) {
-      setError(
-        `Failed to submit job: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+    if (jobResult) {
+      fetch(jobResult.outputUrl)
+        .then((response) => response.json())
+        .then((data) => setResult(data));
     }
-  }, [input]);
+  }, [jobResult]);
 
-  const fetchJobStatus = useCallback(async () => {
-    if (!jobId) return;
-    setIsRefreshing(true);
-
-    try {
-      const response = await fetch(`${NSJM_API_BASE_URL}/jobs/${jobId}`, {
-        headers: {
-          Authorization: `Bearer ${NSJM_API_SUBMIT_KEY}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error fetching job status: ${response.statusText}`);
-      }
-
-      const job = await response.json();
-      setJob(job);
-
-      if (job.status === "completed" && job.output) {
-        const outputObject = JSON.parse(job.output);
-        const outputUrl = outputObject.outputUrl;
-        const response = await fetch(outputUrl);
-        const resultData = await response.json();
-        setResult(resultData);
-      } else if (job.status === "failed") {
-        setError(job.error || "Job failed");
-      }
-    } catch (error: unknown) {
-      setError(
-        `Failed to fetch job status: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [jobId]);
-
-  useEffect(() => {
-    fetchJobStatus();
-  }, [fetchJobStatus]);
-
-  if (error) {
-    return <div style={{ color: "red" }}>Error: {error}</div>;
-  }
-
-  if (!jobId) {
+  if (job?.status !== "completed") {
     return (
-      <div>
-        <button onClick={submitJob}>Analyze Letter Frequencies</button>
-      </div>
+      <JobStatusHandler
+        job={job}
+        error={error}
+        isRefreshing={isRefreshing}
+        onSubmit={submitJob}
+        onRefresh={fetchJobStatus}
+        submitButtonLabel="Analyze Letter Frequencies"
+      />
     );
   }
 
-  if (!job || job.status === "pending" || job.status === "running") {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-        {job?.status === "pending" ? (
-          <div
-            style={{
-              padding: "10px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              backgroundColor: "#f5f5f5",
-            }}
-          >
-            <div>
-              <p>To process this job using Docker or Apptainer:</p>
-              <code
-                style={{
-                  display: "block",
-                  padding: "10px",
-                  backgroundColor: "#fff",
-                  overflowX: "auto",
-                  marginBottom: "15px",
-                }}
-              >
-                docker run
-                ghcr.io/flatironinstitute/neurosift-job-runner:main-v2 {jobId}
-              </code>
-              <code
-                style={{
-                  display: "block",
-                  padding: "10px",
-                  backgroundColor: "#fff",
-                  overflowX: "auto",
-                  marginBottom: "15px",
-                }}
-              >
-                apptainer exec
-                docker://ghcr.io/flatironinstitute/neurosift-job-runner:main-v2
-                python3 /app/run-job.py {jobId}
-              </code>
-
-              <p>Or for local development:</p>
-              <code
-                style={{
-                  display: "block",
-                  padding: "10px",
-                  backgroundColor: "#fff",
-                  overflowX: "auto",
-                }}
-              >
-                cd job-manager && pip install -r requirements.txt && python3
-                run-job.py {jobId}
-              </code>
-            </div>
-          </div>
-        ) : (
-          <div>
-            <p>Processing... {job?.progress || 0}%</p>
-            <div
-              style={{
-                width: "200px",
-                height: "20px",
-                border: "1px solid #ccc",
-              }}
-            >
-              <div
-                style={{
-                  width: `${job?.progress || 0}%`,
-                  height: "100%",
-                  backgroundColor: "#4CAF50",
-                }}
-              />
-            </div>
-          </div>
-        )}
-        <div>
-          <button
-            onClick={fetchJobStatus}
-            disabled={isRefreshing}
-            style={{
-              opacity: isRefreshing ? 0.7 : 1,
-              cursor: isRefreshing ? "not-allowed" : "pointer",
-            }}
-          >
-            {isRefreshing ? "Refreshing..." : "Refresh Status"}
-          </button>
-        </div>
-      </div>
-    );
+  if (!jobResult) {
+    return <div>Job completed but no result found</div>;
   }
 
   if (!result) {
-    return <div>No results available</div>;
+    return <div>Loading result...</div>;
   }
 
   return (

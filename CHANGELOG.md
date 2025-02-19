@@ -1,5 +1,8 @@
 # Changes
 
+## February 19, 2025
+- Added job resubmission capability for failed jobs
+
 ## February 18, 2025
 - Added distributed job processing system (neurosift-job-manager)
 - Added support for embedded=1 query parameter

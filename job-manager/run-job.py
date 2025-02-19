@@ -33,12 +33,12 @@ def get_upload_urls(job_id: str, file_name: str, size: int) -> tuple[str, str]:
     return result["uploadUrl"], result["downloadUrl"]
 
 
-def upload_to_memobin(data: Dict[str, Any], job_id: str) -> str:
+def upload_to_memobin(data: Dict[str, Any], job_id: str, file_base_name: str) -> str:
     """Upload data to memobin and return the URL."""
     data_bytes = json.dumps(data).encode("utf-8")
     size = len(data_bytes)
 
-    upload_url, download_url = get_upload_urls(job_id, "result.json", size)
+    upload_url, download_url = get_upload_urls(job_id, file_base_name, size)
 
     response = requests.put(
         upload_url, data=data_bytes, headers={"Content-Type": "application/json"}
@@ -113,7 +113,7 @@ def process_text_letter_count_job(job: Dict[str, Any]):
             "letterCounts": sorted_counts,
             "totalLetters": sum(sorted_counts.values()),
         }
-        memobin_url = upload_to_memobin(result, job["_id"])
+        memobin_url = upload_to_memobin(result, job["_id"], "result.json")
         logging.info("Uploaded results to memobin")
 
         # Complete the job
