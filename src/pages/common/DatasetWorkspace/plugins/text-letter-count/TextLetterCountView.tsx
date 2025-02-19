@@ -42,7 +42,7 @@ const TextLetterCountView: FunctionComponent<DatasetPluginProps> = ({
   const [result, setResult] = useState<JobResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const input = useMemo(() => ({ fileUrl, version: 2 }), [fileUrl]);
+  const input = useMemo(() => ({ fileUrl, version: 3 }), [fileUrl]);
 
   // Check for existing job on component mount
   useEffect(() => {
@@ -179,7 +179,7 @@ const TextLetterCountView: FunctionComponent<DatasetPluginProps> = ({
             }}
           >
             <div>
-              <p>To process this job using Docker:</p>
+              <p>To process this job using Docker or Apptainer:</p>
               <code
                 style={{
                   display: "block",
@@ -189,8 +189,21 @@ const TextLetterCountView: FunctionComponent<DatasetPluginProps> = ({
                   marginBottom: "15px",
                 }}
               >
-                docker run ghcr.io/flatironinstitute/neurosift-job-runner{" "}
-                {jobId}
+                docker run
+                ghcr.io/flatironinstitute/neurosift-job-runner:main-v2 {jobId}
+              </code>
+              <code
+                style={{
+                  display: "block",
+                  padding: "10px",
+                  backgroundColor: "#fff",
+                  overflowX: "auto",
+                  marginBottom: "15px",
+                }}
+              >
+                apptainer exec
+                docker://ghcr.io/flatironinstitute/neurosift-job-runner:main-v2
+                python3 run-job.py {jobId}
               </code>
 
               <p>Or for local development:</p>
