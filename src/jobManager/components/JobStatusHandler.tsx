@@ -7,7 +7,7 @@ type Props = {
   isRefreshing: boolean;
   onSubmit: () => void;
   onRefresh: () => void;
-  submitButtonLabel?: string;
+  jobLabel: string;
 };
 
 export const JobStatusHandler: FunctionComponent<Props> = ({
@@ -16,12 +16,12 @@ export const JobStatusHandler: FunctionComponent<Props> = ({
   isRefreshing,
   onSubmit,
   onRefresh,
-  submitButtonLabel = "Submit Job",
+  jobLabel,
 }) => {
   if (!job) {
     return (
       <div>
-        <button onClick={onSubmit}>{submitButtonLabel}</button>
+        <button onClick={onSubmit}>Submit {jobLabel}</button>
       </div>
     );
   }
@@ -41,6 +41,7 @@ export const JobStatusHandler: FunctionComponent<Props> = ({
             }}
           >
             <div>
+              <p>{jobLabel}</p>
               <p>To process this job using Docker or Apptainer:</p>
               <code
                 style={{
@@ -137,10 +138,35 @@ export const JobStatusHandler: FunctionComponent<Props> = ({
             color: "#d32f2f",
           }}
         >
-          {error ? `Error: ${error}` : "Job failed"}
+          `${jobLabel} failed: ${error}`
         </div>
         <div>
           <button onClick={onSubmit}>Resubmit Job</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (job.status === "completed") {
+    return (
+      <div
+        style={{
+          padding: "10px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "15px",
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: "#f0f9f1",
+            border: "1px solid #a5d6a7",
+            borderRadius: "4px",
+            padding: "10px",
+            color: "#1b5e20",
+          }}
+        >
+          {jobLabel} completed successfully
         </div>
       </div>
     );

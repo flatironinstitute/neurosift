@@ -53,7 +53,7 @@ const TextLetterCountView: FunctionComponent<DatasetPluginProps> = ({
         isRefreshing={isRefreshing}
         onSubmit={submitJob}
         onRefresh={fetchJobStatus}
-        submitButtonLabel="Analyze Letter Frequencies"
+        jobLabel="Analyze Letter Frequencies"
       />
     );
   }

@@ -1,8 +1,10 @@
 # Changes
 
 ## February 19, 2025
+- Added horizontal spacing around splitter bar in HorizontalSplitter component
 - Add SpikeDensity plugin view for NWB files
 - Added job resubmission capability for failed jobs
+- Added optional rastermap sorting to SpikeDensity plugin with UI controls for computing and toggling the sorting
 
 ## February 18, 2025
 - Added distributed job processing system (neurosift-job-manager)

@@ -2,6 +2,7 @@ import React, {
   FunctionComponent,
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -11,6 +12,8 @@ export interface HorizontalSplitterProps {
   initialSplitterPosition: number;
   children: [React.ReactNode, React.ReactNode]; // Exactly two children required
 }
+
+const SPLITTER_WIDTH = 8; // Width of the splitter handle area in pixels
 
 const HorizontalSplitter: FunctionComponent<HorizontalSplitterProps> = ({
   width,
@@ -22,6 +25,7 @@ const HorizontalSplitter: FunctionComponent<HorizontalSplitterProps> = ({
     initialSplitterPosition,
   );
   const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = useCallback(() => {
     setIsDragging(true);
@@ -31,11 +35,13 @@ const HorizontalSplitter: FunctionComponent<HorizontalSplitterProps> = ({
     if (!isDragging) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const newPosition = e.clientX;
+      if (!containerRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const relativeX = e.clientX - containerRect.left;
       // Constrain position to reasonable bounds (minimum 100px from either edge)
       const constrainedPosition = Math.max(
         100,
-        Math.min(width - 100, newPosition),
+        Math.min(width - 100, relativeX),
       );
       setSplitterPosition(constrainedPosition);
     };
@@ -62,11 +68,12 @@ const HorizontalSplitter: FunctionComponent<HorizontalSplitterProps> = ({
     setSplitterPosition((prev) => Math.max(100, Math.min(width - 100, prev)));
   }, [width]);
 
-  const leftPanelWidth = splitterPosition;
-  const rightPanelWidth = width - splitterPosition;
+  const leftPanelWidth = splitterPosition - SPLITTER_WIDTH / 2;
+  const rightPanelWidth = width - splitterPosition - SPLITTER_WIDTH / 2;
 
   return (
     <div
+      ref={containerRef}
       style={{
         position: "relative",
         width,
@@ -91,9 +98,9 @@ const HorizontalSplitter: FunctionComponent<HorizontalSplitterProps> = ({
       <div
         style={{
           position: "absolute",
-          left: splitterPosition - 4,
+          left: splitterPosition - SPLITTER_WIDTH / 2,
           top: 0,
-          width: 8,
+          width: SPLITTER_WIDTH,
           height,
           cursor: "col-resize",
           backgroundColor: isDragging ? "#666" : "transparent",
@@ -104,7 +111,7 @@ const HorizontalSplitter: FunctionComponent<HorizontalSplitterProps> = ({
         <div
           style={{
             position: "absolute",
-            left: 4,
+            left: SPLITTER_WIDTH / 2,
             top: 0,
             width: 1,
             height: "100%",
@@ -115,7 +122,7 @@ const HorizontalSplitter: FunctionComponent<HorizontalSplitterProps> = ({
       <div
         style={{
           position: "absolute",
-          left: splitterPosition,
+          left: splitterPosition + SPLITTER_WIDTH / 2,
           top: 0,
           width: rightPanelWidth,
           height,
