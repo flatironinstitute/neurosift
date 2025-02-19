@@ -46,7 +46,7 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
           setPlugins([plugin]);
         } else {
           let suitable = await findSuitablePlugins(nwbUrl, path, objectType, {
-            special: false,
+            launchableFromTable: false,
           });
           if (inMultiView) {
             // If we are in a multi-view, then we only use plugins that have showInMultiView set to true
@@ -90,27 +90,24 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
 
   return (
     <div style={{ position: "relative", width, height }}>
-      {plugins
-        .slice()
-        .reverse() // reverse it because the most specialized plugins come last
-        .map((plugin) => {
-          const PluginComponent = plugin.component;
-          return (
-            <div key={plugin.name}>
-              <PluginComponent
-                nwbUrl={nwbUrl}
-                path={path}
-                objectType={objectType}
-                onOpenObjectInNewTab={onOpenObjectInNewTab}
-                secondaryPaths={secondaryPaths}
-                width={componentWidth}
-                height={componentHeight}
-                condensed={inMultiView}
-              />
-              {!inMultiView && <hr />}
-            </div>
-          );
-        })}
+      {plugins.slice().map((plugin) => {
+        const PluginComponent = plugin.component;
+        return (
+          <div key={plugin.name}>
+            <PluginComponent
+              nwbUrl={nwbUrl}
+              path={path}
+              objectType={objectType}
+              onOpenObjectInNewTab={onOpenObjectInNewTab}
+              secondaryPaths={secondaryPaths}
+              width={componentWidth}
+              height={componentHeight}
+              condensed={inMultiView}
+            />
+            {!inMultiView && <hr />}
+          </div>
+        );
+      })}
     </div>
   );
 };

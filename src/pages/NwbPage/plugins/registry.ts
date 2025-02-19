@@ -14,49 +14,52 @@ import { trialAlignedSeriesPlugin } from "./TrialAlignedSeries";
 import { pythonScriptPlugin } from "./PythonScript";
 import spikeDensityPlugin from "./SpikeDensity";
 
-// List of plugins in priority order (last one is checked first)
+// List of plugins in order they will appear in the UI when a single object is being viewed
 export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
-  pythonScriptPlugin,
-  defaultPlugin,
   behavioralEventsPlugin,
   dynamicTablePlugin,
   twoPhotonSeriesPlugin,
   spatialSeriesPlugin,
   simpleTimeseriesPlugin,
   psthPlugin,
-  rasterPlugin,
   imagePlugin,
   imageSegmentationPlugin,
   timeIntervalsPlugin,
   trialAlignedSeriesPlugin,
+
+  rasterPlugin,
   spikeDensityPlugin,
+
+  defaultPlugin,
+  pythonScriptPlugin,
 ];
 
 export const findSuitablePlugins = async (
   nwbUrl: string,
   path: string,
   objectType: "group" | "dataset",
-  o: { special?: boolean; defaultUnitsPath?: string },
+  o: { launchableFromTable?: boolean; defaultUnitsPath?: string },
 ): Promise<NwbObjectViewPlugin[]> => {
   const ret: NwbObjectViewPlugin[] = [];
   for (let i = 0; i < nwbObjectViewPlugins.length; i++) {
     const plugin = nwbObjectViewPlugins[i];
-    if (!!plugin.special === !!o.special) {
-      if (plugin.requiredDefaultUnits && !o.defaultUnitsPath) {
-        continue;
-      }
-      if (
-        await plugin.canHandle({
-          nwbUrl,
-          objectType,
-          path,
-          secondaryPaths: plugin.requiredDefaultUnits
-            ? [o.defaultUnitsPath!]
-            : [],
-        })
-      ) {
-        ret.push(plugin);
-      }
+    if (o.launchableFromTable && !plugin.launchableFromTable) {
+      continue;
+    }
+    if (plugin.requiredDefaultUnits && !o.defaultUnitsPath) {
+      continue;
+    }
+    if (
+      await plugin.canHandle({
+        nwbUrl,
+        objectType,
+        path,
+        secondaryPaths: plugin.requiredDefaultUnits
+          ? [o.defaultUnitsPath!]
+          : [],
+      })
+    ) {
+      ret.push(plugin);
     }
   }
   return ret;

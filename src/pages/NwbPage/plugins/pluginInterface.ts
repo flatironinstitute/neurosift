@@ -19,7 +19,7 @@ export interface NwbObjectViewPlugin {
     height?: number;
     condensed?: boolean;
   }>;
-  special?: boolean;
+  launchableFromTable?: boolean;
   requiresWindowDimensions?: boolean;
   showInMultiView?: boolean;
   requiredDefaultUnits?: boolean;

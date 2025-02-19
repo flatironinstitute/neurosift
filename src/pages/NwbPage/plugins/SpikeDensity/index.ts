@@ -20,7 +20,7 @@ export const spikeDensityPlugin: NwbObjectViewPlugin = {
     return false;
   },
   component: SpikeDensityView,
-  special: true,
+  launchableFromTable: true,
   requiresWindowDimensions: false,
   showInMultiView: false,
 };

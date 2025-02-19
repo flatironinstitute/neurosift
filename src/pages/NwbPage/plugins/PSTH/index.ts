@@ -25,6 +25,7 @@ export const psthPlugin: NwbObjectViewPlugin = {
     return true;
   },
   component: PSTHView,
-  special: true,
+  launchableFromTable: true,
   requiresWindowDimensions: true,
+  requiredDefaultUnits: true,
 };

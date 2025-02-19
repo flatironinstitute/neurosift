@@ -33,6 +33,6 @@ export const trialAlignedSeriesPlugin: NwbObjectViewPlugin = {
     return true;
   },
   component: TrialAlignedPluginView,
-  special: true,
+  launchableFromTable: true,
   requiresWindowDimensions: true,
 };

@@ -24,7 +24,7 @@ export const imagePlugin: NwbObjectViewPlugin = {
     return false;
   },
   component: ImagePluginView,
-  special: false,
+  launchableFromTable: false,
   requiresWindowDimensions: true,
   showInMultiView: true,
 };

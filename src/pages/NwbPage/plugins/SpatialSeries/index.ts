@@ -37,5 +37,5 @@ export const spatialSeriesPlugin: NwbObjectViewPlugin = {
   // We need window dimensions since we're displaying a spatial plot
   requiresWindowDimensions: true,
   showInMultiView: false,
-  special: true,
+  launchableFromTable: true,
 };

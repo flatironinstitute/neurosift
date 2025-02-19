@@ -20,7 +20,7 @@ export const rasterPlugin: NwbObjectViewPlugin = {
     return false;
   },
   component: RasterView,
-  special: true,
+  launchableFromTable: true,
   requiresWindowDimensions: false,
   showInMultiView: false,
 };

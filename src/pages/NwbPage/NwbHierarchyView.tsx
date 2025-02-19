@@ -39,8 +39,8 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
     new Set(),
   );
   const [
-    specialPluginsWithSecondaryPaths,
-    setSpecialPluginsWithSecondaryPaths,
+    launchablePluginsWithSecondaryPaths,
+    setLaunchablePluginsWithSecondaryPaths,
   ] = useState<{
     [key: string]: { plugin: NwbObjectViewPlugin; secondaryPaths: string[] }[];
   }>({});
@@ -77,8 +77,8 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
   }, [neurodataObjects, visiblyExpanded]);
 
   useEffect(() => {
-    const loadSpecialPlugins = async () => {
-      const newSpecialPluginsWithSecondaryPaths: {
+    const loadLaunchablePlugins = async () => {
+      const newLaunchablePluginsWithSecondaryPaths: {
         [key: string]: {
           plugin: NwbObjectViewPlugin;
           secondaryPaths: string[];
@@ -91,12 +91,12 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
           obj.path,
           objectType,
           {
-            special: true,
+            launchableFromTable: true,
             defaultUnitsPath,
           },
         );
         if (plugins.length > 0) {
-          newSpecialPluginsWithSecondaryPaths[obj.path] = plugins.map(
+          newLaunchablePluginsWithSecondaryPaths[obj.path] = plugins.map(
             (plugin) => ({
               plugin,
               secondaryPaths: plugin.requiredDefaultUnits
@@ -106,9 +106,11 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
           );
         }
       }
-      setSpecialPluginsWithSecondaryPaths(newSpecialPluginsWithSecondaryPaths);
+      setLaunchablePluginsWithSecondaryPaths(
+        newLaunchablePluginsWithSecondaryPaths,
+      );
     };
-    loadSpecialPlugins();
+    loadLaunchablePlugins();
   }, [nwbUrl, neurodataObjects, defaultUnitsPath]);
 
   const truncateDescription = useCallback(
@@ -307,7 +309,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
                   ⧉
                 </span>
               )}
-              {specialPluginsWithSecondaryPaths[obj.path]?.map(
+              {launchablePluginsWithSecondaryPaths[obj.path]?.map(
                 ({ plugin, secondaryPaths }) => {
                   const pluginString = `${plugin.name}|${[obj.path, ...secondaryPaths].join("^")}`;
                   return (
@@ -455,9 +457,9 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
                       selection.split("|");
                     const [path, ...secondaryPaths] =
                       pathWithSecondary.split("^");
-                    const plugin = specialPluginsWithSecondaryPaths[path]?.find(
-                      (p) => p.plugin.name === pluginName,
-                    )?.plugin;
+                    const plugin = launchablePluginsWithSecondaryPaths[
+                      path
+                    ]?.find((p) => p.plugin.name === pluginName)?.plugin;
                     if (plugin) {
                       onOpenObjectInNewTab?.(path, plugin, secondaryPaths);
                     }
