@@ -1,5 +1,5 @@
-import { Paper, Typography, Box } from "@mui/material";
-import { DandisetSearchResultItem } from "./dandi-types";
+import { Paper, Typography, Box, Chip } from "@mui/material";
+import { DandisetAdvancedSearchResult } from "./dandi-types";
 import { useNavigate } from "react-router-dom";
 
 const formatDate = (dateString: string) => {
@@ -9,7 +9,7 @@ const formatDate = (dateString: string) => {
 import { formatBytes } from "@shared/util/formatBytes";
 
 type Props = {
-  dandiset: DandisetSearchResultItem;
+  dandiset: DandisetAdvancedSearchResult;
 };
 
 const DandisetSearchResult = ({ dandiset }: Props) => {
@@ -55,7 +55,17 @@ const DandisetSearchResult = ({ dandiset }: Props) => {
       {version && (
         <Box sx={{ display: "flex", gap: 4 }}>
           <Typography variant="body2">Version: {version.version}</Typography>
-          <Typography variant="body2">Files: {version.asset_count}</Typography>
+          <Typography variant="body2">
+            Files: {version.asset_count}
+            {dandiset.matching_files_count !== undefined && (
+              <Chip
+                size="small"
+                label={`${dandiset.matching_files_count} matching`}
+                color="primary"
+                sx={{ ml: 1, height: 20 }}
+              />
+            )}
+          </Typography>
           <Typography variant="body2">
             Size: {formatBytes(version.size)}
           </Typography>

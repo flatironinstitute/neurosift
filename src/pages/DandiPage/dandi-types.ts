@@ -1,4 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+export type DandisetAdvancedSearchResult = DandisetSearchResultItem & {
+  matching_files_count?: number;
+};
+
 export type DandisetSearchResultItem = {
   identifier: string;
   created: string;

@@ -6,8 +6,6 @@ import {
   Button,
   Chip,
   Stack,
-  FormControlLabel,
-  Switch,
   Link,
 } from "@mui/material";
 import LaunchIcon from "@mui/icons-material/Launch";
@@ -21,6 +19,10 @@ import { getRecentDandisets } from "../util/recentDandisets";
 import { useNavigate } from "react-router-dom";
 import ScrollY from "@components/ScrollY";
 import doDandiSemanticSearch from "./doDandiSemanticSearch";
+import { SearchModeToggle } from "./components/SearchModeToggle";
+import { AdvancedSearchPanel } from "./components/AdvancedSearchPanel";
+import { useNeurodataTypesIndex } from "./hooks/useNeurodataTypesIndex";
+import { doAdvancedSearch } from "./services/doAdvancedSearch";
 
 type DandiPageProps = {
   width: number;
@@ -40,18 +42,35 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [lastSearchedText, setLastSearchedText] = useState("");
   const [useSemanticSearch, setUseSemanticSearch] = useState(false);
+  const [useAdvancedSearch, setUseAdvancedSearch] = useState(false);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+
+  const {
+    index,
+    uniqueTypes,
+    loading: loadingTypes,
+    error: typesError,
+  } = useNeurodataTypesIndex(useAdvancedSearch);
 
   const performSearch = useCallback(
     async (searchQuery: string, limit: number) => {
       setIsSearching(true);
       setSearchResults([]); // Clear results before new search
-      const { headers, apiKeyProvided } = getDandiApiHeaders(staging);
-      const embargoedStr = apiKeyProvided ? "true" : "false";
-      const stagingStr = staging ? "-staging" : "";
-      const emptyStr = !searchQuery ? "false" : "true";
 
       try {
-        if (useSemanticSearch) {
+        if (useAdvancedSearch && index) {
+          if (selectedTypes.length === 0) {
+            setTotalResults(0);
+            return;
+          }
+          const { results, total } = await doAdvancedSearch(
+            index,
+            selectedTypes,
+            limit,
+          );
+          setSearchResults(results);
+          setTotalResults(total);
+        } else if (useSemanticSearch) {
           const { results, total } = await doDandiSemanticSearch(
             searchQuery,
             limit,
@@ -59,11 +78,14 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
           setSearchResults(results);
           setTotalResults(total);
         } else {
+          const { headers, apiKeyProvided } = getDandiApiHeaders(staging);
+          const embargoedStr = apiKeyProvided ? "true" : "false";
+          const stagingStr = staging ? "-staging" : "";
+          const emptyStr = !searchQuery ? "false" : "true";
+
           const response = await fetch(
             `https://api${stagingStr}.dandiarchive.org/api/dandisets/?page=1&page_size=50&ordering=-modified&search=${searchQuery}&draft=true&empty=${emptyStr}&embargoed=${embargoedStr}`,
-            {
-              headers,
-            },
+            { headers },
           );
           if (response.status === 200) {
             const json = await response.json();
@@ -78,34 +100,55 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
         setLastSearchedText(searchQuery);
       }
     },
-    [staging, useSemanticSearch],
+    [staging, useSemanticSearch, useAdvancedSearch, index, selectedTypes],
   );
 
   // Perform initial search with empty string when component mounts
   useEffect(() => {
     if (searchText) return;
-    if (useSemanticSearch) {
+    if (useSemanticSearch || useAdvancedSearch) {
       setSearchResults([]);
       setTotalResults(0);
     } else {
       performSearch("", 10);
     }
     setRecentDandisets(getRecentDandisets());
-  }, [performSearch, useSemanticSearch, searchText]);
+  }, [performSearch, useSemanticSearch, useAdvancedSearch, searchText]);
 
-  // Reset limit when switching search modes
+  // Reset limit and results when switching search modes
   useEffect(() => {
     setCurrentLimit(10);
-  }, [useSemanticSearch]);
+    setSearchResults([]);
+    setTotalResults(0);
+    // Clear selected types when advanced search is disabled
+    if (!useAdvancedSearch) {
+      setSelectedTypes([]);
+    }
+  }, [useSemanticSearch, useAdvancedSearch]);
+
+  // Trigger search when types are selected in advanced mode
+  useEffect(() => {
+    if (useAdvancedSearch && selectedTypes.length > 0) {
+      performSearch(searchText, currentLimit);
+    }
+  }, [
+    selectedTypes,
+    useAdvancedSearch,
+    performSearch,
+    searchText,
+    currentLimit,
+  ]);
 
   const handleRecentClick = (dandisetId: string) => {
     navigate(`/dandiset/${dandisetId}`);
   };
 
   const handleSearch = useCallback(() => {
-    setCurrentLimit(10);
-    performSearch(searchText, 10);
-  }, [searchText, performSearch]);
+    if (!useAdvancedSearch || selectedTypes.length > 0) {
+      setCurrentLimit(10);
+      performSearch(searchText, 10);
+    }
+  }, [searchText, performSearch, useAdvancedSearch, selectedTypes]);
 
   const handleViewMore = useCallback(() => {
     const newLimit = Math.min(currentLimit + 10, 50);
@@ -158,67 +201,77 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
           </Box>
         )}
         <Box sx={{ mb: 1 }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={useSemanticSearch}
-                onChange={(e) => setUseSemanticSearch(e.target.checked)}
-              />
-            }
-            label="Use semantic search"
+          <SearchModeToggle
+            useSemanticSearch={useSemanticSearch}
+            onSemanticSearchChange={setUseSemanticSearch}
+            useAdvancedSearch={useAdvancedSearch}
+            onAdvancedSearchChange={setUseAdvancedSearch}
           />
         </Box>
-        <Box sx={{ display: "flex", gap: 1, mb: 2, position: "relative" }}>
-          <Button
-            size="small"
-            variant="contained"
-            onClick={() => !isSearching && handleSearch()}
-            disabled={isSearching}
-            sx={{
-              minWidth: 40,
-              borderRadius: 2,
-              boxShadow: "none",
-              opacity: isSearching ? 0.6 : 1,
-              "&:hover": {
-                boxShadow: "none",
-              },
-            }}
-          >
-            <SearchIcon />
-          </Button>
-          <TextField
-            fullWidth
-            size="small"
-            variant="outlined"
-            sx={{
-              "& .MuiOutlinedInput-root": {
+        {useAdvancedSearch && (
+          <Box sx={{ mb: 2 }}>
+            <AdvancedSearchPanel
+              neurodataTypes={uniqueTypes}
+              selectedTypes={selectedTypes}
+              onSelectedTypesChange={setSelectedTypes}
+              loading={loadingTypes}
+              error={typesError}
+            />
+          </Box>
+        )}
+        {!useAdvancedSearch && (
+          <Box sx={{ display: "flex", gap: 1, mb: 2, position: "relative" }}>
+            <Button
+              size="small"
+              variant="contained"
+              onClick={() => !isSearching && handleSearch()}
+              disabled={isSearching}
+              sx={{
+                minWidth: 40,
                 borderRadius: 2,
-                backgroundColor:
-                  searchText !== lastSearchedText
-                    ? "rgba(0, 0, 0, 0.02)"
-                    : "transparent",
-                "& fieldset": {
-                  borderColor: "rgba(0, 0, 0, 0.15)",
+                boxShadow: "none",
+                opacity: isSearching ? 0.6 : 1,
+                "&:hover": {
+                  boxShadow: "none",
                 },
-              },
-            }}
-            placeholder="Search for Dandisets..."
-            value={searchText}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setSearchText(e.target.value)
-            }
-            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-              if (e.key === "Enter") {
-                handleSearch();
+              }}
+            >
+              <SearchIcon />
+            </Button>
+            <TextField
+              fullWidth
+              size="small"
+              variant="outlined"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  backgroundColor:
+                    searchText !== lastSearchedText
+                      ? "rgba(0, 0, 0, 0.02)"
+                      : "transparent",
+                  "& fieldset": {
+                    borderColor: "rgba(0, 0, 0, 0.15)",
+                  },
+                },
+              }}
+              placeholder="Search for Dandisets..."
+              value={searchText}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSearchText(e.target.value)
               }
-            }}
-          />
-        </Box>
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                if (e.key === "Enter") {
+                  handleSearch();
+                }
+              }}
+            />
+          </Box>
+        )}
         <Box>
           {searchResults.map((result: DandisetSearchResultItem) => (
             <DandisetSearchResult dandiset={result} key={result.identifier} />
           ))}
-          {useSemanticSearch &&
+          {(useSemanticSearch || useAdvancedSearch) &&
             searchResults.length > 0 &&
             searchResults.length < totalResults && (
               <Box

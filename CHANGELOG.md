@@ -1,6 +1,8 @@
 # Changes
 
 ## February 19, 2025
+- Added advanced search mode for DANDI Archive Browser with neurodata type filtering
+- Added matching files count indicator for advanced search results in DANDI Archive Browser
 - Added horizontal spacing around splitter bar in HorizontalSplitter component
 - Add SpikeDensity plugin view for NWB files
 - Added job resubmission capability for failed jobs
