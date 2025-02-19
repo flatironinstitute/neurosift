@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: neurosift-job-runner
+  IMAGE_NAME: flatironinstitute/neurosift-job-runner
 
 jobs:
   build-and-push:
