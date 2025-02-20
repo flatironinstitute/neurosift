@@ -1,4 +1,4 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useEffect, useState } from "react";
 import { Job } from "../useNeurosiftJob";
 
 type Props = {
@@ -18,10 +18,38 @@ export const JobStatusHandler: FunctionComponent<Props> = ({
   onRefresh,
   jobLabel,
 }) => {
+  const [hasApiKey, setHasApiKey] = useState(false);
+
+  useEffect(() => {
+    const apiKey = localStorage.getItem("neurosiftApiKey");
+    setHasApiKey(!!apiKey && apiKey.trim() !== "");
+  }, []);
+
   if (!job) {
     return (
       <div>
-        <button onClick={onSubmit}>Submit {jobLabel}</button>
+        <button
+          onClick={onSubmit}
+          disabled={!hasApiKey}
+          style={{
+            opacity: hasApiKey ? 1 : 0.6,
+            cursor: hasApiKey ? "pointer" : "not-allowed",
+          }}
+        >
+          Submit {jobLabel}
+        </button>
+        {!hasApiKey && (
+          <div
+            style={{
+              marginTop: "10px",
+              marginLeft: "5px",
+              fontSize: "0.9em",
+              color: "#633",
+            }}
+          >
+            Set your Neurosift API key in the settings page to submit jobs
+          </div>
+        )}
       </div>
     );
   }
