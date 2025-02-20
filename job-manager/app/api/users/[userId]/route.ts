@@ -108,9 +108,8 @@ export async function PUT(
   const authHeader = request.headers.get('Authorization');
   const isAdmin = adminKey && authHeader?.split(' ')[1] === adminKey;
 
-  // Users can only update their own details unless they're admin
-  if (!isAdmin && auth.userId !== params.userId) {
-    return new NextResponse('Unauthorized', { status: 401 });
+  if (!isAdmin) {
+    return new NextResponse('Unauthorized - Admin access required', { status: 401 });
   }
 
   try {

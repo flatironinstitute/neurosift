@@ -11,10 +11,12 @@ logging.basicConfig(
 )
 
 DEFAULT_API_BASE_URL = os.getenv(
-    # "NEUROSIFT_API_BASE_URL", "https://neurosift-job-manager.vercel.app/api"
-    "NEUROSIFT_API_BASE_URL",
-    "http://localhost:3000/api",
+    "NEUROSIFT_API_BASE_URL", "https://neurosift-job-manager.vercel.app/api"
 )
+# DEFAULT_API_BASE_URL = os.getenv(
+#     "NEUROSIFT_API_BASE_URL",
+#     "http://localhost:3000/api",
+# )
 
 
 def get_upload_urls(

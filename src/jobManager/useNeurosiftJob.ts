@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 
-const NSJM_API_BASE_URL = "http://localhost:3000/api";
-// const NSJM_API_BASE_URL = "https://neurosift-job-manager.vercel.app/api";
+// const NSJM_API_BASE_URL = "http://localhost:3000/api";
+const NSJM_API_BASE_URL = "https://neurosift-job-manager.vercel.app/api";
 
 export interface Job {
   _id: string;

@@ -14,8 +14,8 @@ logging.basicConfig(
 )
 
 # Configuration
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:3000/api")
-# API_BASE_URL = os.getenv("API_BASE_URL", "https://neurosift-job-manager.vercel.app/api")
+# API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:3000/api")
+API_BASE_URL = os.getenv("API_BASE_URL", "https://neurosift-job-manager.vercel.app/api")
 
 
 def get_upload_urls(job_id: str, file_name: str, size: int) -> tuple[str, str]:
