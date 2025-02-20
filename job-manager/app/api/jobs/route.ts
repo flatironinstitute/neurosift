@@ -47,9 +47,9 @@ export async function OPTIONS() {
  * 5. Return the job ID (either new or existing)
  */
 export async function POST(request: NextRequest) {
-  // Job creation still requires API key for security
-  const authError = validateApiKey(request);
-  if (authError) return authError;
+  // Validate API key and get user info
+  const auth = await validateApiKey(request);
+  if (auth instanceof NextResponse) return auth;
 
   try {
     const body = await request.json();
@@ -64,10 +64,11 @@ export async function POST(request: NextRequest) {
     // Convert input to string if it's an object
     const inputString = typeof input === 'object' ? JSON.stringify(input) : input.toString();
 
-    // Check for existing job with same type and input
+    // Check for existing job with same type, input, and user
     const existingJob = await Job.findOne({
       type,
       input: inputString,
+      userId: auth.userId,
       status: { $in: ['pending', 'running', 'completed'] }
     });
 
@@ -79,7 +80,8 @@ export async function POST(request: NextRequest) {
       type,
       input: inputString,
       status: 'pending',
-      progress: 0
+      progress: 0,
+      userId: auth.userId
     };
 
     const job = await Job.create(newJob);

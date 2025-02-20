@@ -36,6 +36,62 @@ async function connectDB() {
   return cached.conn;
 }
 
+// User interface
+export interface IUser {
+  userId: string;
+  name: string;
+  email: string;
+  researchDescription: string;
+  apiKey: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IUserDocument extends IUser, Document {}
+
+// User schema
+const userSchema = new mongoose.Schema<IUserDocument>({
+  userId: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  name: {
+    type: String,
+    required: true
+  },
+  email: {
+    type: String,
+    required: true
+  },
+  researchDescription: {
+    type: String,
+    required: true
+  },
+  apiKey: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+// Update the updatedAt field on save
+userSchema.pre('save', function(next) {
+  this.updatedAt = new Date();
+  next();
+});
+
+// Create indexes for fast lookups
+userSchema.index({ apiKey: 1 }, { unique: true });
+
 // Job interface
 export interface IJob {
   status: 'pending' | 'running' | 'completed' | 'failed';
@@ -44,6 +100,7 @@ export interface IJob {
   progress: number;
   output?: string;
   error?: string;
+  userId: string;  // Reference to user who created the job
   createdAt: Date;
   updatedAt: Date;
 }
@@ -73,6 +130,10 @@ const jobSchema = new mongoose.Schema<IJobDocument>({
   },
   output: String,
   error: String,
+  userId: {
+    type: String,
+    required: true
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -83,7 +144,7 @@ const jobSchema = new mongoose.Schema<IJobDocument>({
   }
 });
 
-// Create compound index on type and input
+// Create compound indexes
 jobSchema.index({ type: 1, input: 1 });
 
 // Update the updatedAt field on save
@@ -93,5 +154,6 @@ jobSchema.pre('save', function(next) {
 });
 
 export const Job: Model<IJobDocument> = mongoose.models.Job || mongoose.model('Job', jobSchema);
+export const User: Model<IUserDocument> = mongoose.models.User || mongoose.model('User', userSchema);
 
 export default connectDB;

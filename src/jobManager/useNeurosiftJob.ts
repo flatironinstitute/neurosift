@@ -1,8 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 
-// Hard-coded for now - would come from environment in production
-const NSJM_API_BASE_URL = "https://neurosift-job-manager.vercel.app/api";
-const NSJM_API_SUBMIT_KEY = "d38b9460ae73a5e4690dd03b13c4a1dc";
+const NSJM_API_BASE_URL = "http://localhost:3000/api";
+// const NSJM_API_BASE_URL = "https://neurosift-job-manager.vercel.app/api";
 
 export interface Job {
   _id: string;
@@ -29,7 +28,11 @@ export const useNeurosiftJob = <InputType, ResultType>(
         const response = await fetch(`${NSJM_API_BASE_URL}/jobs/search`, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${NSJM_API_SUBMIT_KEY}`,
+            ...(localStorage.getItem("neurosiftApiKey")
+              ? {
+                  Authorization: `Bearer ${localStorage.getItem("neurosiftApiKey")}`,
+                }
+              : {}),
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -64,7 +67,11 @@ export const useNeurosiftJob = <InputType, ResultType>(
       const response = await fetch(`${NSJM_API_BASE_URL}/jobs`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${NSJM_API_SUBMIT_KEY}`,
+          ...(localStorage.getItem("neurosiftApiKey")
+            ? {
+                Authorization: `Bearer ${localStorage.getItem("neurosiftApiKey")}`,
+              }
+            : {}),
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -93,7 +100,11 @@ export const useNeurosiftJob = <InputType, ResultType>(
     try {
       const response = await fetch(`${NSJM_API_BASE_URL}/jobs/${jobId}`, {
         headers: {
-          Authorization: `Bearer ${NSJM_API_SUBMIT_KEY}`,
+          ...(localStorage.getItem("neurosiftApiKey")
+            ? {
+                Authorization: `Bearer ${localStorage.getItem("neurosiftApiKey")}`,
+              }
+            : {}),
         },
       });
 

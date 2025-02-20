@@ -39,16 +39,15 @@ export async function OPTIONS() {
  *   - Success: Array of matching jobs (limited to 100, sorted by creation date)
  *   - Error: 500 for server errors
  *
- * Accepted API keys: 'submit' or 'fulfill'
- *
  * The endpoint will:
  * 1. Build a query based on provided filters
  * 2. Return the most recent 100 matching jobs
  */
 export async function POST(request: NextRequest) {
-  // Accept either submit or fulfill API keys
-  const submitKeyError = validateApiKey(request);
-  if (submitKeyError) return submitKeyError;
+  const authResult = await validateApiKey(request);
+  if (authResult instanceof NextResponse) {
+    return authResult;
+  }
 
   try {
     const body = await request.json();

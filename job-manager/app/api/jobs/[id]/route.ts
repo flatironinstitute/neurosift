@@ -72,8 +72,6 @@ export async function GET(
  *   - Success: Updated job object
  *   - Error: 404 if job not found, 500 for server errors
  *
- * Required API key: 'fulfill'
- *
  * Only specified fields will be updated, maintaining data integrity
  */
 export async function PATCH(

@@ -1,5 +1,13 @@
 # Changes
 
+## February 20, 2025
+- Added user management interface in Settings page for administrators
+- Added admin secret key field in Settings for accessing user management
+- Added ability to create, edit, and delete users with research descriptions
+- Added user list view with basic information display
+- Added confirmation dialog for user deletion to prevent accidental removal
+- Added API key viewing capability for administrators with copy to clipboard functionality
+
 ## February 19, 2025
 - Added advanced search mode for DANDI Archive Browser with neurodata type filtering
 - Added matching files count indicator for advanced search results in DANDI Archive Browser
