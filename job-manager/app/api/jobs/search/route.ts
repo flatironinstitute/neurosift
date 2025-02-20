@@ -6,10 +6,9 @@
  * by creation date and limited to prevent overwhelming responses.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB, { Job, IJob } from '../../../../lib/db';
-import { validateApiKey } from '../../../../middleware/auth';
 import { FilterQuery } from 'mongoose';
+import { NextRequest, NextResponse } from 'next/server';
+import connectDB, { IJob, Job } from '../../../../lib/db';
 
 /**
  * Handle CORS preflight requests
@@ -44,10 +43,11 @@ export async function OPTIONS() {
  * 2. Return the most recent 100 matching jobs
  */
 export async function POST(request: NextRequest) {
-  const authResult = await validateApiKey(request);
-  if (authResult instanceof NextResponse) {
-    return authResult;
-  }
+  // no auth needed for searching jobs
+  // const authResult = await validateApiKey(request);
+  // if (authResult instanceof NextResponse) {
+  //   return authResult;
+  // }
 
   try {
     const body = await request.json();
