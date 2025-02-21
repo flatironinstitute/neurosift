@@ -406,12 +406,15 @@ const aiRouteContextDescription = `
 Navigate to a new route in the Neurosift application.
 
 Possible routes are:
+/ (Home page)
 /dandi (Browse DANDI - once you get there then you'll be able to do searches)
 /dandiset/:dandisetId (View a DANDI dataset)
 /openneuro (Browse OpenNeuro - once you get there then you'll be able to do searches)
 /openneuro-dataset/:datasetId (View an OpenNeuro dataset)
 /settings (View the settings page to set API keys)
 /guide (View the NWB Viewer Guide)
+
+If the user wants to search for a dandiset or a dataset, then you should first navigate to the appropriate route, and then you can see what interactions are available at that point.
 `;
 
 export default App;
