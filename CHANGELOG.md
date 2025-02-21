@@ -1,5 +1,8 @@
 # Changes
 
+## February 21, 2025
+- Added AI Context system for parent window communication
+
 ## February 20, 2025
 - Added user management interface in Settings page for administrators
 - Added admin secret key field in Settings for accessing user management
