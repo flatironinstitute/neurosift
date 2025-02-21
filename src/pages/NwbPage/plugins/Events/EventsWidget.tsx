@@ -1,0 +1,158 @@
+import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import {
+  useTimeRange,
+  useTimeseriesSelection,
+} from "@shared/context-timeseries-selection-2";
+import TimeScrollView2, {
+  useTimeScrollView2,
+} from "@shared/component-time-scroll-view-2/TimeScrollView2";
+import { timeSelectionBarHeight } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
+
+type Props = {
+  width: number;
+  height: number;
+  times: number[];
+};
+
+const gridlineOpts = {
+  hideX: false,
+  hideY: true,
+};
+
+const yAxisInfo = {
+  showTicks: false,
+  yMin: undefined,
+  yMax: undefined,
+};
+
+const hideToolbar = false;
+
+const EventsWidget: FunctionComponent<Props> = ({ width, height, times }) => {
+  const [canvasElement, setCanvasElement] = useState<
+    HTMLCanvasElement | undefined
+  >();
+
+  const { startTime, endTime } = useMemo(() => {
+    let startTime = Number.MAX_VALUE;
+    let endTime = Number.MIN_VALUE;
+    for (let i = 0; i < times.length; i++) {
+      if (!isNaN(times[i])) {
+        startTime = Math.min(startTime, times[i]);
+        endTime = Math.max(endTime, times[i]);
+      }
+    }
+    return { startTime, endTime };
+  }, [times]);
+
+  const { initializeTimeseriesSelection } = useTimeseriesSelection();
+  useEffect(() => {
+    initializeTimeseriesSelection({
+      startTimeSec: startTime,
+      endTimeSec: endTime,
+      initialVisibleStartTimeSec: startTime,
+      initialVisibleEndTimeSec: endTime,
+    });
+  }, [initializeTimeseriesSelection, startTime, endTime]);
+
+  const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
+
+  const { canvasWidth, canvasHeight, margins } = useTimeScrollView2({
+    width,
+    height: height - timeSelectionBarHeight,
+    hideToolbar,
+  });
+
+  const timeToPixel = useMemo(
+    () => (t: number) => {
+      if (visibleStartTimeSec === undefined) return 0;
+      if (visibleEndTimeSec === undefined) return 0;
+      return (
+        margins.left +
+        ((t - visibleStartTimeSec) /
+          (visibleEndTimeSec - visibleStartTimeSec)) *
+          (canvasWidth - margins.left - margins.right)
+      );
+    },
+    [
+      visibleStartTimeSec,
+      visibleEndTimeSec,
+      canvasWidth,
+      margins.left,
+      margins.right,
+    ],
+  );
+
+  useEffect(() => {
+    if (!canvasElement) return;
+    if (visibleStartTimeSec === undefined) return;
+    if (visibleEndTimeSec === undefined) return;
+    const ctx = canvasElement.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    const y1 = margins.top + 20;
+    const y2 = canvasHeight - margins.bottom - 20;
+
+    let timer = Date.now();
+    let canceled = false;
+
+    (async () => {
+      // Draw the events
+      for (let i = 0; i < times.length; i++) {
+        const elapsed = Date.now() - timer;
+        if (elapsed > 20) {
+          // take a break so we don't block the UI
+          await new Promise((r) => setTimeout(r, 1));
+          timer = Date.now();
+        }
+        if (canceled) return;
+
+        const x = timeToPixel(times[i]);
+
+        if (x < 0) continue;
+        if (x > canvasWidth) continue;
+
+        // Draw a vertical line for the event
+        ctx.beginPath();
+        ctx.moveTo(x, y1);
+        ctx.lineTo(x, y2);
+        ctx.strokeStyle = "#2196f3"; // Use a blue color for events
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw a small circle at the top of the line
+        ctx.beginPath();
+        ctx.arc(x, y1 + 5, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = "#2196f3";
+        ctx.fill();
+      }
+    })();
+
+    return () => {
+      canceled = true;
+    };
+  }, [
+    canvasElement,
+    canvasWidth,
+    canvasHeight,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    times,
+    timeToPixel,
+    margins,
+  ]);
+
+  return (
+    <TimeScrollView2
+      width={width}
+      height={height}
+      onCanvasElement={setCanvasElement}
+      gridlineOpts={gridlineOpts}
+      yAxisInfo={yAxisInfo}
+      hideToolbar={hideToolbar}
+      showTimeSelectionBar={true}
+    />
+  );
+};
+
+export default EventsWidget;
