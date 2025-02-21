@@ -101,7 +101,7 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
               onOpenObjectInNewTab={onOpenObjectInNewTab}
               secondaryPaths={secondaryPaths}
               width={componentWidth}
-              height={componentHeight}
+              height={componentHeight || 300}
               condensed={inMultiView}
             />
             {!inMultiView && <hr />}
