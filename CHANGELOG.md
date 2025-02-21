@@ -2,6 +2,7 @@
 
 ## February 21, 2025
 - Added AI Context system for parent window communication
+- Added IntervalSeries plugin view for NWB files that visualizes alternating positive/negative interval data
 
 ## February 20, 2025
 - Added user management interface in Settings page for administrators

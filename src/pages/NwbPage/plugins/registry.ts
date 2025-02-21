@@ -13,9 +13,12 @@ import { timeIntervalsPlugin } from "./TimeIntervals";
 import { trialAlignedSeriesPlugin } from "./TrialAlignedSeries";
 import { pythonScriptPlugin } from "./PythonScript";
 import spikeDensityPlugin from "./SpikeDensity";
+import { intervalSeriesPlugin } from "./IntervalSeries";
 
 // List of plugins in order they will appear in the UI when a single object is being viewed
 export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
+  intervalSeriesPlugin,
+
   behavioralEventsPlugin,
   dynamicTablePlugin,
   twoPhotonSeriesPlugin,
