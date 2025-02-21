@@ -149,7 +149,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
         {
           id: "dandi_search",
           description:
-            "Perform a search. Be sure to provide the searchText parameter.",
+            "Perform a search. Be sure to provide the searchText parameter. This is appropriate if you are search for exact matches. For more general searches, use dandi_semantic_search.",
           parameters: {
             searchText: {
               type: "string",
@@ -175,7 +175,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
         {
           id: "dandi_semantic_search",
           description:
-            "Perform a semantic search. Be sure to provide the searchText parameter.",
+            "Perform a semantic search. Be sure to provide the searchText parameter. This is appropriate if you are searching for similar content to the provided text.",
           parameters: {
             searchText: {
               type: "string",
