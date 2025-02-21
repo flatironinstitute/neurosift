@@ -1,9 +1,10 @@
 import { useWindowDimensions } from "@fi-sci/misc";
 import {
-  AIContextProvider,
-  ComponentRegistrationForAI,
-  useAIContext,
-} from "./AIContext";
+  AIComponentRegistryProvider,
+  AIRegisteredComponent,
+  AIComponentCallback,
+  useAIComponentRegistry,
+} from "./ai-integration/AIComponentRegistry";
 import { useEffect } from "react";
 import SettingsIcon from "@mui/icons-material/Settings";
 import {
@@ -177,45 +178,9 @@ const LegacyUrlHandler = () => {
 const AppContent = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const location = useLocation();
-  const { registerComponentForAI, unregisterComponentForAI } = useAIContext();
 
-  useEffect(() => {
-    const registration: ComponentRegistrationForAI = {
-      id: "App",
-      context: {
-        currentRoute: location.pathname,
-        params: Object.fromEntries(searchParams.entries()),
-      },
-      callbacks: [
-        {
-          id: "navigate",
-          description: aiRouteContextDescription,
-          parameters: {
-            route: {
-              type: "string",
-              description: "The route to navigate to. Be sure to provide this.",
-            },
-          },
-          callback: (parameters) => {
-            if (!parameters.route) {
-              console.warn("No route provided to navigate to", parameters);
-              return;
-            }
-            navigate(parameters.route);
-          },
-        },
-      ],
-    };
-    registerComponentForAI(registration);
-    return () => unregisterComponentForAI("route");
-  }, [
-    location,
-    searchParams,
-    navigate,
-    registerComponentForAI,
-    unregisterComponentForAI,
-  ]);
+  useRegisterAIComponent();
+
   const { width, height } = useWindowDimensions();
   const hideAppBar = searchParams.get("embedded") === "1";
   const appBarHeight = hideAppBar ? 0 : 50; // hard-coded to match the height of the AppBar
@@ -393,14 +358,56 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <Router>
-        <AIContextProvider>
+        <AIComponentRegistryProvider>
           <LegacyUrlHandler />
           <AppContent />
-        </AIContextProvider>
+        </AIComponentRegistryProvider>
       </Router>
     </ThemeProvider>
   );
 }
+
+const useRegisterAIComponent = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const { registerComponentForAI, unregisterComponentForAI } =
+    useAIComponentRegistry();
+
+  useEffect(() => {
+    const registration: AIRegisteredComponent = {
+      id: "App",
+      context: {
+        currentRoute: location.pathname,
+        params: Object.fromEntries(searchParams.entries()),
+      },
+      callbacks: [
+        {
+          id: "navigate",
+          description: aiRouteContextDescription,
+          parameters: {
+            route: {
+              type: "string",
+              description: "The route to navigate to. Be sure to provide this.",
+              required: true,
+            },
+          },
+          callback: (params: { route: string }) => {
+            navigate(params.route);
+          },
+        } as AIComponentCallback,
+      ],
+    };
+    registerComponentForAI(registration);
+    return () => unregisterComponentForAI("route");
+  }, [
+    location,
+    searchParams,
+    navigate,
+    registerComponentForAI,
+    unregisterComponentForAI,
+  ]);
+};
 
 const aiRouteContextDescription = `
 Navigate to a new route in the Neurosift application.

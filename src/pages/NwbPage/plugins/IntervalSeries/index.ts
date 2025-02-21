@@ -11,4 +11,5 @@ export const intervalSeriesPlugin: NwbObjectViewPlugin = {
     // check if timestamps and data exist
     return true; // The actual check will happen in the view component
   },
+  showInMultiView: true,
 };

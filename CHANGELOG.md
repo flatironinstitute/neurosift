@@ -3,6 +3,7 @@
 ## February 21, 2025
 - Added AI Context system for parent window communication
 - Added IntervalSeries plugin view for NWB files that visualizes alternating positive/negative interval data
+- Updated OpenNeuro Browser's search mechanism to use a more robust state management pattern with scheduled search functionality
 
 ## February 20, 2025
 - Added user management interface in Settings page for administrators

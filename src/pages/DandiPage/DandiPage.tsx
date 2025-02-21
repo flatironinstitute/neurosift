@@ -15,9 +15,9 @@ import {
 import { FunctionComponent, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  AIComponentContext,
-  ComponentRegistrationForAI,
-  useAIContext,
+  AIComponentCallback,
+  AIRegisteredComponent,
+  useAIComponentRegistry,
 } from "../../AIContext";
 import { getDandiApiHeaders } from "../util/getDandiApiHeaders";
 import { getRecentDandisets } from "../util/recentDandisets";
@@ -127,95 +127,15 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
     [index, selectedTypes, staging],
   );
 
-  // Perform initial search with empty string when component mounts
-  const { registerComponentForAI, unregisterComponentForAI } = useAIContext();
-
-  useEffect(() => {
-    const context: AIComponentContext = {
-      searchText,
-      searchResults,
-      totalResults,
-      isSearching,
-      useSemanticSearch,
-      useAdvancedSearch,
-      selectedTypes,
-      lastSearchedText,
-    };
-
-    const registration: ComponentRegistrationForAI = {
-      id: "DandiPage",
-      context,
-      callbacks: [
-        {
-          id: "dandi_search",
-          description:
-            "Perform a search. Be sure to provide the searchText parameter. This is appropriate if you are search for exact matches. For more general searches, use dandi_semantic_search.",
-          parameters: {
-            searchText: {
-              type: "string",
-              description: "Text to search for",
-            },
-          },
-          callback: (parameters) => {
-            if (!parameters.searchText) {
-              console.warn(
-                "dandi_search callback requires a searchText parameter",
-              );
-              return;
-            }
-            setSearchState({
-              searchText: parameters.searchText,
-              useSemanticSearch: false,
-              useAdvancedSearch: false,
-              currentLimit: 10,
-              scheduledSearch: true,
-            });
-          },
-        },
-        {
-          id: "dandi_semantic_search",
-          description:
-            "Perform a semantic search. Be sure to provide the searchText parameter. This is appropriate if you are searching for similar content to the provided text.",
-          parameters: {
-            searchText: {
-              type: "string",
-              description:
-                "A natural language query. Dandisets with similar content will be returned.",
-            },
-          },
-          callback: (parameters) => {
-            if (!parameters.searchText) {
-              console.warn(
-                "dandi_semantic_search callback requires a searchText parameter",
-                parameters,
-              );
-              return;
-            }
-            setSearchState({
-              searchText: parameters.searchText,
-              useSemanticSearch: true,
-              useAdvancedSearch: false,
-              currentLimit: 10,
-              scheduledSearch: true,
-            });
-          },
-        },
-      ],
-    };
-    registerComponentForAI(registration);
-    return () => unregisterComponentForAI("dandi-search");
-  }, [
-    registerComponentForAI,
-    unregisterComponentForAI,
-    searchText,
+  useRegisterAIComponent({
+    searchState,
     searchResults,
     totalResults,
     isSearching,
-    useSemanticSearch,
-    useAdvancedSearch,
     selectedTypes,
     lastSearchedText,
-  ]);
+    setSearchState,
+  });
 
   useEffect(() => {
     if (searchText) return;
@@ -411,6 +331,112 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
       </Container>
     </ScrollY>
   );
+};
+
+const useRegisterAIComponent = ({
+  searchResults,
+  totalResults,
+  isSearching,
+  selectedTypes,
+  lastSearchedText,
+  searchState,
+  setSearchState,
+}: {
+  searchResults: DandisetSearchResultItem[];
+  totalResults: number;
+  isSearching: boolean;
+  selectedTypes: string[];
+  lastSearchedText: string;
+  searchState: SearchState;
+  setSearchState: (state: SearchState) => void;
+}) => {
+  const { registerComponentForAI, unregisterComponentForAI } =
+    useAIComponentRegistry();
+  useEffect(() => {
+    const { searchText, useSemanticSearch, useAdvancedSearch } = searchState;
+    const context = {
+      searchText,
+      searchResults,
+      totalResults,
+      isSearching,
+      useSemanticSearch,
+      useAdvancedSearch,
+      selectedTypes,
+      lastSearchedText,
+    };
+    const registration: AIRegisteredComponent = {
+      id: "DandiPage",
+      context,
+      callbacks: [
+        {
+          id: "dandi_search",
+          description:
+            "Perform a search. Be sure to provide the searchText parameter. This is appropriate if you are search for exact matches. For more general searches, use dandi_semantic_search.",
+          parameters: {
+            searchText: {
+              type: "string",
+              description: "Text to search for",
+            },
+          },
+          callback: (parameters: { searchText: string }) => {
+            if (!parameters.searchText) {
+              console.warn(
+                "dandi_search callback requires a searchText parameter",
+              );
+              return;
+            }
+            setSearchState({
+              searchText: parameters.searchText,
+              useSemanticSearch: false,
+              useAdvancedSearch: false,
+              currentLimit: 10,
+              scheduledSearch: true,
+            });
+          },
+        } as AIComponentCallback,
+        {
+          id: "dandi_semantic_search",
+          description:
+            "Perform a semantic search. Be sure to provide the searchText parameter. This is appropriate if you are searching for similar content to the provided text.",
+          parameters: {
+            searchText: {
+              type: "string",
+              description:
+                "A natural language query. Dandisets with similar content will be returned.",
+            },
+          },
+          callback: (parameters) => {
+            if (!parameters.searchText) {
+              console.warn(
+                "dandi_semantic_search callback requires a searchText parameter",
+                parameters,
+              );
+              return;
+            }
+            setSearchState({
+              searchText: parameters.searchText,
+              useSemanticSearch: true,
+              useAdvancedSearch: false,
+              currentLimit: 10,
+              scheduledSearch: true,
+            });
+          },
+        },
+      ],
+    };
+    registerComponentForAI(registration);
+    return () => unregisterComponentForAI("route");
+  }, [
+    registerComponentForAI,
+    unregisterComponentForAI,
+    searchState,
+    searchResults,
+    totalResults,
+    isSearching,
+    selectedTypes,
+    lastSearchedText,
+    setSearchState,
+  ]);
 };
 
 export default DandiPage;

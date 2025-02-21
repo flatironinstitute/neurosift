@@ -12,6 +12,11 @@ import LaunchIcon from "@mui/icons-material/Launch";
 import SearchIcon from "@mui/icons-material/Search";
 import HistoryIcon from "@mui/icons-material/History";
 import { FunctionComponent, useCallback, useEffect, useState } from "react";
+import {
+  AIComponentCallback,
+  AIRegisteredComponent,
+  useAIComponentRegistry,
+} from "../../AIContext";
 import ScrollY from "@components/ScrollY";
 import OpenNeuroDatasetResult from "./OpenNeuroDatasetResult";
 import { getRecentOpenNeuroDatasets } from "../util/recentOpenNeuroDatasets";
@@ -157,40 +162,153 @@ const fetchONDatasets = async (
   return graphQLResponse.data.datasets.edges.map((edge) => edge.node);
 };
 
+const useRegisterAIComponent = ({
+  searchState,
+  searchResults,
+  isSearching,
+  lastSearchedText,
+  setSearchState,
+}: {
+  searchState: SearchState;
+  searchResults: OpenNeuroDataset[];
+  isSearching: boolean;
+  lastSearchedText: string;
+  setSearchState: (
+    state: SearchState | ((prev: SearchState) => SearchState),
+  ) => void;
+}) => {
+  const { registerComponentForAI, unregisterComponentForAI } =
+    useAIComponentRegistry();
+
+  useEffect(() => {
+    const context = {
+      searchText: searchState.searchText,
+      // let's only communicate some of the details
+      searchResults: searchResults.map((result) => ({
+        id: result.id,
+        name: result.latestSnapshot.description.Name,
+        authors: result.latestSnapshot.description.Authors,
+      })),
+      isSearching,
+      lastSearchedText,
+    };
+
+    const registration: AIRegisteredComponent = {
+      id: "OpenNeuroPage",
+      context,
+      callbacks: [
+        {
+          id: "openneuro_search",
+          description:
+            "Perform a search for OpenNeuro datasets. Provide the searchText parameter with keywords to search for datasets.",
+          parameters: {
+            searchText: {
+              type: "string",
+              description:
+                "Text to search for in dataset names, descriptions, and authors",
+            },
+          },
+          callback: (parameters: { searchText: string }) => {
+            if (!parameters.searchText) {
+              console.warn(
+                "openneuro_search callback requires a searchText parameter",
+              );
+              return;
+            }
+            setSearchState((prev: SearchState) => ({
+              ...prev,
+              searchText: parameters.searchText,
+              scheduledSearch: true,
+            }));
+          },
+        } as AIComponentCallback,
+      ],
+    };
+
+    registerComponentForAI(registration);
+    return () => unregisterComponentForAI("OpenNeuroPage");
+  }, [
+    registerComponentForAI,
+    unregisterComponentForAI,
+    searchState,
+    searchResults,
+    isSearching,
+    lastSearchedText,
+    setSearchState,
+  ]);
+};
+
+type SearchState = {
+  searchText: string;
+  currentLimit: number;
+  scheduledSearch: boolean;
+};
+
 const OpenNeuroPage: FunctionComponent<OpenNeuroPageProps> = ({
   width,
   height,
 }) => {
   const navigate = useNavigate();
-  const [searchText, setSearchText] = useState("");
+  const [searchState, setSearchState] = useState<SearchState>({
+    searchText: "",
+    currentLimit: 25,
+    scheduledSearch: false,
+  });
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<OpenNeuroDataset[]>([]);
   const [lastSearchedText, setLastSearchedText] = useState("");
   const [recentDatasets, setRecentDatasets] = useState<string[]>([]);
 
-  const performSearch = useCallback(async (searchQuery: string) => {
+  const { searchText } = searchState;
+
+  const performSearch = useCallback(async (searchState: SearchState) => {
     setIsSearching(true);
     setSearchResults([]);
     try {
-      const results = await fetchONDatasets(searchQuery);
+      const results = await fetchONDatasets(searchState.searchText);
       setSearchResults(results);
     } catch (error) {
       console.error("Error fetching results:", error);
     } finally {
       setIsSearching(false);
-      setLastSearchedText(searchQuery);
+      setLastSearchedText(searchState.searchText);
     }
   }, []);
 
   useEffect(() => {
     if (searchText) return;
-    performSearch("");
+    setSearchState((prev: SearchState) => ({ ...prev, scheduledSearch: true }));
     setRecentDatasets(getRecentOpenNeuroDatasets());
-  }, [performSearch, searchText]);
+  }, [searchText]);
+
+  useEffect(() => {
+    if (searchState.scheduledSearch) {
+      setSearchState((prev: SearchState) => ({
+        ...prev,
+        scheduledSearch: false,
+      }));
+      performSearch(searchState);
+    }
+  }, [searchState, performSearch]);
 
   const handleRecentClick = (datasetId: string) => {
     navigate(`/openneuro-dataset/${datasetId}`);
   };
+
+  const handleSearch = useCallback(() => {
+    setSearchState((prev: SearchState) => ({
+      ...prev,
+      scheduledSearch: true,
+    }));
+  }, []);
+
+  useRegisterAIComponent({
+    searchState,
+    searchResults,
+    isSearching,
+    lastSearchedText,
+    setSearchState,
+  });
 
   return (
     <ScrollY width={width} height={height}>
@@ -240,7 +358,7 @@ const OpenNeuroPage: FunctionComponent<OpenNeuroPageProps> = ({
           <Button
             size="small"
             variant="contained"
-            onClick={() => !isSearching && performSearch(searchText)}
+            onClick={() => !isSearching && handleSearch()}
             disabled={isSearching}
             sx={{
               minWidth: 40,
@@ -273,11 +391,14 @@ const OpenNeuroPage: FunctionComponent<OpenNeuroPageProps> = ({
             placeholder="Search OpenNeuro datasets..."
             value={searchText}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setSearchText(e.target.value)
+              setSearchState((prev: SearchState) => ({
+                ...prev,
+                searchText: e.target.value,
+              }))
             }
             onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
               if (e.key === "Enter") {
-                performSearch(searchText);
+                handleSearch();
               }
             }}
           />
