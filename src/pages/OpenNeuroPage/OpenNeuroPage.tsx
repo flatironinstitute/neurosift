@@ -162,82 +162,6 @@ const fetchONDatasets = async (
   return graphQLResponse.data.datasets.edges.map((edge) => edge.node);
 };
 
-const useRegisterAIComponent = ({
-  searchState,
-  searchResults,
-  isSearching,
-  lastSearchedText,
-  setSearchState,
-}: {
-  searchState: SearchState;
-  searchResults: OpenNeuroDataset[];
-  isSearching: boolean;
-  lastSearchedText: string;
-  setSearchState: (
-    state: SearchState | ((prev: SearchState) => SearchState),
-  ) => void;
-}) => {
-  const { registerComponentForAI, unregisterComponentForAI } =
-    useAIComponentRegistry();
-
-  useEffect(() => {
-    const context = {
-      searchText: searchState.searchText,
-      // let's only communicate some of the details
-      searchResults: searchResults.map((result) => ({
-        id: result.id,
-        name: result.latestSnapshot.description.Name,
-        authors: result.latestSnapshot.description.Authors,
-      })),
-      isSearching,
-      lastSearchedText,
-    };
-
-    const registration: AIRegisteredComponent = {
-      id: "OpenNeuroPage",
-      context,
-      callbacks: [
-        {
-          id: "openneuro_search",
-          description:
-            "Perform a search for OpenNeuro datasets. Provide the searchText parameter with keywords to search for datasets.",
-          parameters: {
-            searchText: {
-              type: "string",
-              description:
-                "Text to search for in dataset names, descriptions, and authors",
-            },
-          },
-          callback: (parameters: { searchText: string }) => {
-            if (!parameters.searchText) {
-              console.warn(
-                "openneuro_search callback requires a searchText parameter",
-              );
-              return;
-            }
-            setSearchState((prev: SearchState) => ({
-              ...prev,
-              searchText: parameters.searchText,
-              scheduledSearch: true,
-            }));
-          },
-        } as AIComponentCallback,
-      ],
-    };
-
-    registerComponentForAI(registration);
-    return () => unregisterComponentForAI("OpenNeuroPage");
-  }, [
-    registerComponentForAI,
-    unregisterComponentForAI,
-    searchState,
-    searchResults,
-    isSearching,
-    lastSearchedText,
-    setSearchState,
-  ]);
-};
-
 type SearchState = {
   searchText: string;
   currentLimit: number;
@@ -411,6 +335,82 @@ const OpenNeuroPage: FunctionComponent<OpenNeuroPageProps> = ({
       </Container>
     </ScrollY>
   );
+};
+
+const useRegisterAIComponent = ({
+  searchState,
+  searchResults,
+  isSearching,
+  lastSearchedText,
+  setSearchState,
+}: {
+  searchState: SearchState;
+  searchResults: OpenNeuroDataset[];
+  isSearching: boolean;
+  lastSearchedText: string;
+  setSearchState: (
+    state: SearchState | ((prev: SearchState) => SearchState),
+  ) => void;
+}) => {
+  const { registerComponentForAI, unregisterComponentForAI } =
+    useAIComponentRegistry();
+
+  useEffect(() => {
+    const context = {
+      searchText: searchState.searchText,
+      // let's only communicate some of the details
+      searchResults: searchResults.map((result) => ({
+        id: result.id,
+        name: result.latestSnapshot.description.Name,
+        authors: result.latestSnapshot.description.Authors,
+      })),
+      isSearching,
+      lastSearchedText,
+    };
+
+    const registration: AIRegisteredComponent = {
+      id: "OpenNeuroPage",
+      context,
+      callbacks: [
+        {
+          id: "openneuro_search",
+          description:
+            "Perform a search for OpenNeuro datasets. Provide the searchText parameter with keywords to search for datasets.",
+          parameters: {
+            searchText: {
+              type: "string",
+              description:
+                "Text to search for in dataset names, descriptions, and authors",
+            },
+          },
+          callback: (parameters: { searchText: string }) => {
+            if (!parameters.searchText) {
+              console.warn(
+                "openneuro_search callback requires a searchText parameter",
+              );
+              return;
+            }
+            setSearchState((prev: SearchState) => ({
+              ...prev,
+              searchText: parameters.searchText,
+              scheduledSearch: true,
+            }));
+          },
+        } as AIComponentCallback,
+      ],
+    };
+
+    registerComponentForAI(registration);
+    return () => unregisterComponentForAI("OpenNeuroPage");
+  }, [
+    registerComponentForAI,
+    unregisterComponentForAI,
+    searchState,
+    searchResults,
+    isSearching,
+    lastSearchedText,
+    setSearchState,
+  ]);
 };
 
 export default OpenNeuroPage;
