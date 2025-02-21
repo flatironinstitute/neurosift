@@ -422,6 +422,8 @@ Possible routes are:
 /guide (View the NWB Viewer Guide)
 
 If the user wants to search for a dandiset or a dataset, then you should first navigate to the appropriate route, and then you can see what interactions are available at that point.
+
+When you call the navigate callback, be sure that the callbackId is "navigate" and that you provide the route parameter with the route you want to navigate to.
 `;
 
 export default App;
