@@ -159,7 +159,11 @@ export const SimpleTimeseriesView: FunctionComponent<
           {usePlotly ? "Plotly" : "."}
         </button>
       </div>
-      {isLoading && <div className="loadingIndicator">Loading data...</div>}
+      {isLoading && (
+        <div className="loadingIndicator">
+          Loading data (SimpleTimeseriesView)...
+        </div>
+      )}
       {condensed ? (
         <CondensedControls
           info={info}

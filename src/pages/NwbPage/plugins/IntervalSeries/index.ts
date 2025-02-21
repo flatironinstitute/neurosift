@@ -1,3 +1,4 @@
+import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import IntervalSeriesPluginView from "./IntervalSeriesPluginView";
 
@@ -8,7 +9,9 @@ export const intervalSeriesPlugin: NwbObjectViewPlugin = {
   requiresWindowDimensions: true,
   async canHandle(o) {
     if (o.objectType !== "group") return false;
-    // check if timestamps and data exist
+    const group = await getHdf5Group(o.nwbUrl, o.path);
+    if (!group) return false;
+    if (group.attrs.neurodata_type !== "IntervalSeries") return false;
     return true; // The actual check will happen in the view component
   },
   showInMultiView: true,

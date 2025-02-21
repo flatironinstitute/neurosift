@@ -83,7 +83,7 @@ export const ImageItem: FunctionComponent<ImageItemProps> = ({
     return <div>Error loading data: {errorMessage}</div>;
   }
   if (!dataset) return <div>Loading dataset...</div>;
-  if (!data) return <div>Loading data...</div>;
+  if (!data) return <div>Loading data (ImageItem)...</div>;
 
   if (neurodataType === "GrayscaleImage") {
     return <GrayscaleImageItem dataset={dataset} data={data} />;

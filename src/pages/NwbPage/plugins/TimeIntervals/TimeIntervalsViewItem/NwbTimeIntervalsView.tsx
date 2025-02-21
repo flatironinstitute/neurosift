@@ -63,7 +63,7 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
   ]);
 
   if (!startTimeData || !stopTimeData) {
-    return <div>loading data...</div>;
+    return <div>loading data (NwbTimeIntervalsView)...</div>;
   }
 
   const bottomBarHeight = 50;

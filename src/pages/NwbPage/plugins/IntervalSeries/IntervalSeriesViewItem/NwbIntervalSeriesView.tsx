@@ -55,7 +55,7 @@ const NwbIntervalSeriesView: FunctionComponent<Props> = ({
   }, [timestamps, initializeTimeseriesSelection]);
 
   if (!timestamps || !intervalData) {
-    return <div>Loading data...</div>;
+    return <div>Loading data (NwbIntervalSeriesView)...</div>;
   }
 
   return (

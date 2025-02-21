@@ -210,7 +210,9 @@ const RasterViewChild = ({
           {usePlotly ? "Plotly" : "."}
         </button>
       </div>
-      {isLoading && <div className="loadingIndicator">Loading data...</div>}
+      {isLoading && (
+        <div className="loadingIndicator">Loading data (RasterView)...</div>
+      )}
       {condensed ? (
         <CondensedControls
           startTime={spikeTrainsClient.startTimeSec}
