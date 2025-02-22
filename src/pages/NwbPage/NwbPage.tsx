@@ -13,6 +13,7 @@ import { TAB_BAR_HEIGHT, tabsStyle, tabStyle } from "./tabStyles";
 import { useNwbFileOverview } from "./useNwbFileOverview";
 import { track } from "@vercel/analytics/react";
 import { setCurrentDandisetId, setTryUsingLindi } from "@hdf5Interface";
+import useTakeInitialQueryParameter from "../util/useTakeInitialQueryValue";
 
 type NwbPageProps = {
   width: number;
@@ -22,10 +23,11 @@ type NwbPageProps = {
 const NwbPage: FunctionComponent<NwbPageProps> = ({ width, height }) => {
   const [searchParams] = useSearchParams();
   const nwbUrl = searchParams.get("url") || "";
-  const initialTabId = searchParams.get("tab");
   const dandisetId = searchParams.get("dandisetId");
   const dandisetVersion = searchParams.get("dandisetVersion") || "";
   const doNotTryLindi = searchParams.get("lindi") === "0";
+
+  const initialTabId = useTakeInitialQueryParameter("tab");
 
   // for looking up lindi files
   setCurrentDandisetId(dandisetId || "");

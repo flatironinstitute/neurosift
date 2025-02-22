@@ -6,7 +6,8 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { AIComponentCallback, useAIComponentRegistry } from "../../AIContext";
 import DatasetWorkspace from "../common/DatasetWorkspace/DatasetWorkspace";
 import { DatasetFile } from "../common/DatasetWorkspace/plugins/pluginInterface";
 import {
@@ -15,11 +16,11 @@ import {
   DandisetVersionInfo,
 } from "../DandiPage/dandi-types";
 import { addRecentDandiset } from "../util/recentDandisets";
+import useTakeInitialQueryParameter from "../util/useTakeInitialQueryValue";
 import DandisetOverview from "./DandisetOverview";
 import { useDandisetVersionInfo } from "./useDandisetVersionInfo";
 import useQueryAssets from "./useQueryAssets";
 import useQueryDandiset from "./useQueryDandiset";
-import { AIComponentCallback, useAIComponentRegistry } from "../../AIContext";
 
 type DandisetPageProps = {
   width: number;
@@ -32,7 +33,6 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
 }) => {
   const navigate = useNavigate();
   const { dandisetId } = useParams();
-  const [searchParams] = useSearchParams();
   const staging = false;
   const dandisetResponse: DandisetSearchResultItem | undefined | null =
     useQueryDandiset(dandisetId, staging);
@@ -243,12 +243,13 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
     </label>
   ) : undefined;
 
+  const initialTabId = useTakeInitialQueryParameter("tab");
+
   if (!dandisetResponse || !dandisetVersionInfo) {
     return <div>Loading...</div>;
   }
 
   const initialSplitterPosition = Math.max(500, Math.min(650, (width * 2) / 5));
-  const tabFilePath = searchParams.get("tab");
 
   return (
     <ResponsiveLayout
@@ -268,7 +269,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
         width={0}
         height={0}
         topLevelFiles={topLevelFiles}
-        initialTab={tabFilePath}
+        initialTab={initialTabId}
         loadFileFromPath={loadFileFromPath}
         fetchDirectory={fetchDirectory}
         specialOpenFileHandler={specialOpenFileHandler}

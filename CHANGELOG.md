@@ -1,5 +1,8 @@
 # Changes
 
+## February 22, 2025
+- Remove tab parameter from URL query string once page has been loaded
+
 ## February 21, 2025
 - Added Events plugin view for NWB files that visualizes event timestamps with vertical markers
 - Added AI Context system for parent window communication
