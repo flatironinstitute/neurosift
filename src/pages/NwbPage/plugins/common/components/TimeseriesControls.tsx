@@ -194,7 +194,6 @@ export const CondensedLayout: FunctionComponent<{
   <div
     style={{
       padding: "6px",
-      marginBottom: "10px",
       background: "#f5f5f5",
       borderRadius: "5px",
       fontFamily: "sans-serif",
@@ -220,7 +219,6 @@ export const FullLayout: FunctionComponent<{
     <div
       style={{
         padding: "10px",
-        marginBottom: "15px",
         background: "#f5f5f5",
         borderRadius: "5px",
         fontFamily: "sans-serif",
@@ -306,7 +304,7 @@ export const LabeledRow: FunctionComponent<{
   children: React.ReactNode;
 }> = ({ label, children }) => (
   <>
-    <div style={{ fontWeight: "bold" }}>{label}:</div>
+    <div style={{ fontWeight: "bold" }}>{label && `${label}:`}</div>
     <div>{children}</div>
   </>
 );
