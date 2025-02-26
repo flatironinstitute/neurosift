@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.scripts]
-neurosift-job-runner = "neurosift_job_runner_2.cli:main"
+neurosift-job-runner-2 = "neurosift_job_runner_2.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/neurosift_job_runner_2"]
