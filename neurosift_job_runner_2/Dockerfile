@@ -14,3 +14,15 @@ ENV PATH=/opt/conda/bin:$PATH
 RUN pip uninstall opencv-python -y
 RUN conda install -y -c conda-forge opencv
 
+# Copy the package files
+COPY pyproject.toml /app/
+COPY src /app/src/
+
+# Install the package and its dependencies
+RUN pip install --no-cache-dir -e .
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+
+# Set the entry point to the CLI command
+ENTRYPOINT ["neurosift-job-runner-2"]
