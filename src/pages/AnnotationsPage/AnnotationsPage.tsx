@@ -144,7 +144,26 @@ const AnnotationsPage: FunctionComponent<Props> = ({ width, height }) => {
                     <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
                       {annotation.tags.map((tag: string, index: number) => {
                         let chipProps = {};
-                        if (tag.startsWith("dandiset:")) {
+                        // Check for URL tag in nwb_file annotations
+                        if (
+                          annotation.targetType === "nwb_file" &&
+                          tag.startsWith("url:")
+                        ) {
+                          const url = tag.slice(4); // Remove "url:" prefix
+                          const dandisetTag = annotation.tags.find((t) =>
+                            t.startsWith("dandiset:"),
+                          );
+                          const dandisetId = dandisetTag?.split(":")[1];
+                          chipProps = {
+                            onClick: () =>
+                              navigate(
+                                `/nwb?url=${url}${
+                                  dandisetId ? `&dandisetId=${dandisetId}` : ""
+                                }`,
+                              ),
+                            clickable: true,
+                          };
+                        } else if (tag.startsWith("dandiset:")) {
                           const dandisetId = tag.split(":")[1];
                           chipProps = {
                             onClick: () => navigate(`/dandiset/${dandisetId}`),

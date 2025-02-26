@@ -1,11 +1,7 @@
 # Changes
 
 ## February 26, 2025
-- Refactored annotations to support multiple resource types:
-  - Made components generic and reusable
-  - Added support for OpenNeuro dataset annotations
-- Added dedicated annotations page:
-  - Displays all user annotations in a compact table format
+- Added annotations support for NWB files:
   - Shows titles, content, types, targets, and tags
   - Features clickable dandiset tags that navigate to the corresponding dandiset page
   - Includes creation and update timestamps
@@ -39,6 +35,11 @@
 ## February 24, 2025
 - Added AI context integration for DandisetOverview component to provide comprehensive dataset information including name, description, contributors, dataset details, license, citation, keywords, species, and research methods
 - Improved visibility of x-axis label in Raster Plot by adjusting font properties and grid display
+
+## February 22, 2025
+- Remove tab parameter from URL query string once page has been loaded
+ods
+- Imprve visibility of x-axis label in Rater Plot by adjusting font properties and grid display
 
 ## February 22, 2025
 - Remove tab parameter from URL query string once page has been loaded

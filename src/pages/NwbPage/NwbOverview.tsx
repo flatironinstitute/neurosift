@@ -4,6 +4,7 @@ import { DandisetVersionInfo } from "../DandiPage/dandi-types";
 import DatasetDataView from "./DatasetDataView";
 import { isUsingLindi } from "./hdf5Interface";
 import { NwbFileOverview } from "./types";
+import NwbAnnotations from "./components/NwbAnnotations";
 
 type NwbFileOverviewResult = NwbFileOverview | { error: string } | null;
 
@@ -203,6 +204,21 @@ export const NwbOverview = ({
               Using LINDI
             </span>
           </div>
+        )}
+        {nwbUrl && (
+          <>
+            <hr
+              style={{
+                margin: "15px 0",
+                border: "none",
+                borderTop: "1px solid #ddd",
+              }}
+            />
+            <NwbAnnotations
+              nwbUrl={nwbUrl}
+              dandisetId={dandisetInfo?.dandiset.identifier}
+            />
+          </>
         )}
       </div>
     </div>
