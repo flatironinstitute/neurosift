@@ -5,6 +5,7 @@ import { Annotation } from "../../common/useResourceAnnotations";
 import DandisetPage from "../../../pages/DandisetPage";
 import { Link } from "react-router";
 import OpenNeuroDatasetPage from "../../../pages/OpenNeuroDatasetPage/OpenNeuroDatasetPage";
+import NwbPage from "../../../pages/NwbPage/NwbPage";
 
 interface Props {
   annotation: Annotation;
@@ -55,14 +56,27 @@ const ExpandableAnnotationCard: React.FC<Props> = ({ annotation, width }) => {
               <DandisetPage
                 width={width}
                 height={500}
-                dandisetId={getDandisetIdFromTags(annotation.tags)}
+                dandisetId={
+                  getDandisetIdFromTags(annotation.tags) || "no-such-tag"
+                }
               />
             )}
             {annotation.targetType === "openneuro_dataset" && (
               <OpenNeuroDatasetPage
                 width={width}
                 height={500}
-                datasetId={getOpenNeuroDatasetIdFromTags(annotation.tags)}
+                datasetId={
+                  getOpenNeuroDatasetIdFromTags(annotation.tags) ||
+                  "no-such-tag"
+                }
+              />
+            )}
+            {annotation.targetType === "nwb_file" && (
+              <NwbPage
+                width={width}
+                height={800}
+                dandisetId={getDandisetIdFromTags(annotation.tags)}
+                nwbUrl={getUrlFromTags(annotation.tags) || "no-such-tag"}
               />
             )}
           </Box>
@@ -93,6 +107,16 @@ const LinkForAnnotation: React.FC<{ annotation: Annotation }> = ({
         </Typography>
       </Link>
     );
+  } else if (annotation.targetType === "nwb_file") {
+    return (
+      <Link
+        to={`/nwb?url=${getUrlFromTags(annotation.tags)}&dandisetId=${getDandisetIdFromTags(annotation.tags)}`}
+      >
+        <Typography variant="h6" gutterBottom>
+          {annotation.title}
+        </Typography>
+      </Link>
+    );
   } else {
     return (
       <Typography variant="h6" gutterBottom>
@@ -102,16 +126,20 @@ const LinkForAnnotation: React.FC<{ annotation: Annotation }> = ({
   }
 };
 
-const getDandisetIdFromTags = (tags: string[]): string => {
+const getDandisetIdFromTags = (tags: string[]): string | undefined => {
   const dandisetTag = tags.find((tag) => tag.startsWith("dandiset:"));
-  if (!dandisetTag) return "no-such-tag";
+  if (!dandisetTag) return undefined;
   return dandisetTag.slice("dandiset:".length);
 };
 
-const getOpenNeuroDatasetIdFromTags = (tags: string[]): string => {
+const getOpenNeuroDatasetIdFromTags = (tags: string[]): string | undefined => {
   const openneuroDatasetTag = tags.find((tag) => tag.startsWith("openneuro:"));
-  if (!openneuroDatasetTag) return "no-such-tag";
+  if (!openneuroDatasetTag) return undefined;
   return openneuroDatasetTag.slice("openneuro:".length);
+};
+
+const getUrlFromTags = (tags: string[]): string | undefined | undefined => {
+  return tags.find((tag) => tag.startsWith("url:"))?.slice("url:".length);
 };
 
 export default ExpandableAnnotationCard;

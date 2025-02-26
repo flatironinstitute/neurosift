@@ -18,12 +18,19 @@ import { setCurrentDandisetId, setTryUsingLindi } from "@hdf5Interface";
 type NwbPageProps = {
   width: number;
   height: number;
+  dandisetId?: string;
+  nwbUrl?: string;
 };
 
-const NwbPage: FunctionComponent<NwbPageProps> = ({ width, height }) => {
+const NwbPage: FunctionComponent<NwbPageProps> = ({
+  width,
+  height,
+  dandisetId: dandisetIdProp,
+  nwbUrl: nwbUrlProp,
+}) => {
   const [searchParams] = useSearchParams();
-  const nwbUrl = searchParams.get("url") || "";
-  const dandisetId = searchParams.get("dandisetId");
+  const nwbUrl = nwbUrlProp || searchParams.get("url") || "";
+  const dandisetId = dandisetIdProp || searchParams.get("dandisetId");
   const dandisetVersion = searchParams.get("dandisetVersion") || "";
   const doNotTryLindi = searchParams.get("lindi") === "0";
 
