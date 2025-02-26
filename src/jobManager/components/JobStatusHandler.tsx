@@ -8,6 +8,7 @@ type Props = {
   onSubmit: () => void;
   onRefresh: () => void;
   jobLabel: string;
+  imageName: string; // neurosift-job-runner or neurosift-job-runner-2
 };
 
 export const JobStatusHandler: FunctionComponent<Props> = ({
@@ -17,7 +18,9 @@ export const JobStatusHandler: FunctionComponent<Props> = ({
   onSubmit,
   onRefresh,
   jobLabel,
+  imageName,
 }) => {
+  const imageNameWithUnderscores = imageName.split("-").join("_");
   const [hasApiKey, setHasApiKey] = useState(false);
 
   useEffect(() => {
@@ -80,9 +83,8 @@ export const JobStatusHandler: FunctionComponent<Props> = ({
                   marginBottom: "15px",
                 }}
               >
-                docker run --pull=always
-                ghcr.io/flatironinstitute/neurosift-job-runner:main-v2 run-job{" "}
-                {jobId}
+                docker run --pull=always ghcr.io/flatironinstitute/{imageName}
+                :main-v2 run-job {jobId}
               </code>
               <code
                 style={{
@@ -93,9 +95,9 @@ export const JobStatusHandler: FunctionComponent<Props> = ({
                   marginBottom: "15px",
                 }}
               >
-                apptainer exec
-                docker://ghcr.io/flatironinstitute/neurosift-job-runner:main-v2
-                neurosift-job-runner run-job {jobId}
+                apptainer exec docker://ghcr.io/flatironinstitute/{imageName}
+                :main-v2
+                {imageName} run-job {jobId}
               </code>
 
               <p>Or for local development:</p>
@@ -107,7 +109,7 @@ export const JobStatusHandler: FunctionComponent<Props> = ({
                   overflowX: "auto",
                 }}
               >
-                pip install -e neurosift_job_runner && neurosift-job-runner
+                pip install -e {imageNameWithUnderscores} && {imageName}
                 run-job {jobId}
               </code>
             </div>

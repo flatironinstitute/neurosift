@@ -54,6 +54,7 @@ const TextLetterCountView: FunctionComponent<DatasetPluginProps> = ({
         onSubmit={submitJob}
         onRefresh={fetchJobStatus}
         jobLabel="Analyze Letter Frequencies"
+        imageName="neurosift-job-runner"
       />
     );
   }

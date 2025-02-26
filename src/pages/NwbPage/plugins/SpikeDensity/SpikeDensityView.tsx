@@ -98,6 +98,7 @@ const SpikeDensityView: FunctionComponent<Props> = ({
       onSubmit={submitJob}
       onRefresh={fetchJobStatus}
       jobLabel={label}
+      imageName="neurosift-job-runner"
     />
   );
 
