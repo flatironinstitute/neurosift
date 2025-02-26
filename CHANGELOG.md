@@ -2,6 +2,14 @@
 
 ## February 26, 2025
 - Added GitHub Actions workflow for pull requests that checks code formatting and build status
+- Added annotations feature to Dandiset pages:
+  - Users can add, view, and expand markdown-formatted notes
+  - Notes are displayed with user attribution and timestamps
+  - Notes appear in collapsible sections at the bottom of the dandiset overview
+  - Added ability to edit and delete notes owned by the current user
+  - Added edit form with title and content fields
+  - Added ownership verification through job manager API
+  - Added confirmation dialog before note deletion
 
 ## February 25, 2025
 - Improved TimeIntervals visualization with interactive Plotly-based view that shows hover information and uses transparency to indicate overlapping intervals (fixes #278)

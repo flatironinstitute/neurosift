@@ -1,4 +1,5 @@
 import { Box, Typography } from "@mui/material";
+import DandisetAnnotations from "./components/DandisetAnnotations";
 import ScrollY from "@components/ScrollY";
 import { FunctionComponent, useState } from "react";
 import useRegisterDandisetOverviewAIComponent from "./useRegisterDandisetOverviewAIComponent";
@@ -245,6 +246,11 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
             </Box>
           </Box>
         )}
+
+        {/* Notes */}
+        <DandisetAnnotations
+          dandisetId={dandisetVersionInfo.dandiset.identifier}
+        />
       </div>
     </ScrollY>
   );

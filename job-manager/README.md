@@ -41,15 +41,3 @@ A distributed job processing system that allows the Neurosift UI to submit proce
 To stop the services:
 1. Stop the API server  Ctrl+C in their terminal
 2. Stop MongoDB: `docker compose down`
-
-## Running a job
-
-1. Install Python dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. Start the compute client:
-   ```bash
-   ./run-job.py <JOB_ID>
-   ```
