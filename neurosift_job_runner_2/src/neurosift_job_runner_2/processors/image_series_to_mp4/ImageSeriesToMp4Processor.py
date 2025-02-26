@@ -25,8 +25,6 @@ class ImageSeriesToMp4Processor:
     @staticmethod
     def run(context: ImageSeriesToMp4Context):
         import lindi
-        from scipy.stats import zscore
-        from rastermap import Rastermap
 
         image_series_path = context.image_series_path
         duration_sec = context.duration_sec
