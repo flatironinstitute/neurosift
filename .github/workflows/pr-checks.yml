@@ -1,0 +1,46 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches: [ main-v2 ]
+
+jobs:
+  check-format-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Set up Python
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    # Set up Node.js
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    # Install Python dependencies
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black
+
+    # Install npm dependencies
+    - name: Install npm dependencies
+      run: npm ci
+
+    # Check formatting
+    - name: Check Python formatting
+      run: black --check .
+
+    - name: Check TypeScript/JavaScript formatting
+      run: npm run format:check
+
+    # Build check
+    - name: Build
+      run: npm run build

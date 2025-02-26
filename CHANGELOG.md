@@ -1,5 +1,8 @@
 # Changes
 
+## February 26, 2025
+- Added GitHub Actions workflow for pull requests that checks code formatting and build status
+
 ## February 25, 2025
 - Improved TimeIntervals visualization with interactive Plotly-based view that shows hover information and uses transparency to indicate overlapping intervals (fixes #278)
 - Improved TimeIntervals plot by removing the top line and adjusting rectangles to start at y=0 for cleaner visualization

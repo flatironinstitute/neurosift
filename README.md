@@ -31,13 +31,29 @@ Follow these steps to install and run the app locally in development mode:
 
 Pull requests are welcomed. If you have suggestions, improvements, or bug fixes, please feel free to open a pull request.
 
-### Code Formatting
+Prior to submitting a pull request please be sure that the following two commands run successfully:
 
-This project uses pre-commit hooks to automatically check format code before each commit. The formatting includes:
+```bash
+./devel/check_format.sh
+
+npm run build
+```
+
+If the check_format.sh fails then you will want to run the following command to format the code:
+
+```bash
+./devel/format_code.sh
+```
+
+The formatting includes:
 - Python code formatting using black
 - TypeScript/JavaScript code formatting using npm scripts
 
-To set up the pre-commit hooks after cloning the repository:
+### Pre-commit hooks
+
+You can use a pre-commit hook to automatically check format code before each commit.
+
+After cloning the repository:
 
 1. Install pre-commit:
 ```bash
@@ -49,9 +65,7 @@ pip install pre-commit
 pre-commit install
 ```
 
-After this setup, code will be automatically checked for formatting when you make a commit.
-
-Running `./devel/format_code.sh` which will format all code in the repository.
+After this setup, code will be automatically checked for formatting when you make a commit via `./devel/format_code.sh`.
 
 ## Example Views
 
