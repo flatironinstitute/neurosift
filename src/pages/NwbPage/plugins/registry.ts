@@ -24,7 +24,6 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
 
   behavioralEventsPlugin,
   dynamicTablePlugin,
-  imageSeriesMp4Plugin,
   twoPhotonSeriesPlugin,
   spatialSeriesPlugin,
   simpleTimeseriesPlugin,
@@ -33,6 +32,8 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   imageSegmentationPlugin,
   timeIntervalsPlugin,
   trialAlignedSeriesPlugin,
+
+  imageSeriesMp4Plugin,
 
   rasterPlugin,
   spikeDensityPlugin,
