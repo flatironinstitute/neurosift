@@ -18,6 +18,8 @@ RUN conda install -y -c conda-forge opencv
 COPY pyproject.toml /app/
 COPY src /app/src/
 
+WORKDIR /app
+
 # Install the package and its dependencies
 RUN pip install --no-cache-dir -e .
 
