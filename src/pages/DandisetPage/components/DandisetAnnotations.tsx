@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography, Button, Link } from "@mui/material";
 import { Add as AddIcon } from "@mui/icons-material";
 import { useAnnotations } from "../hooks/useAnnotations";
 import AnnotationsList from "./AnnotationsList";
@@ -58,6 +58,8 @@ const DandisetAnnotations: React.FC<DandisetAnnotationsProps> = ({
     );
   }
 
+  const hasApiKey = !!localStorage.getItem("neurosiftApiKey");
+
   return (
     <Box sx={{ mt: 2 }}>
       <Box
@@ -71,7 +73,7 @@ const DandisetAnnotations: React.FC<DandisetAnnotationsProps> = ({
         <Typography variant="subtitle2" color="text.secondary">
           Notes
         </Typography>
-        {!showNewForm && (
+        {!showNewForm && hasApiKey && (
           <Button
             startIcon={<AddIcon />}
             size="small"
@@ -81,6 +83,14 @@ const DandisetAnnotations: React.FC<DandisetAnnotationsProps> = ({
           </Button>
         )}
       </Box>
+
+      {!hasApiKey && (
+        <Typography color="text.secondary" sx={{ mb: 2 }}>
+          To add or edit notes, please go to the{" "}
+          <Link href="/settings">settings page</Link> and enter a Neurosift API
+          key.
+        </Typography>
+      )}
 
       {showNewForm && (
         <NewAnnotationForm
