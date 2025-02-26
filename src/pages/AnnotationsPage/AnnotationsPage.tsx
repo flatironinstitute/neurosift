@@ -12,11 +12,7 @@ import {
   Chip,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { Annotation as BaseAnnotation } from "../../pages/DandisetPage/hooks/useAnnotations";
-
-interface Annotation extends BaseAnnotation {
-  tags: string[];
-}
+import { Annotation } from "../common/useResourceAnnotations";
 
 const ANNOTATION_API_BASE_URL =
   "https://neurosift-annotation-manager.vercel.app/api";
@@ -146,17 +142,22 @@ const AnnotationsPage: FunctionComponent<Props> = ({ width, height }) => {
                   <TableCell>{annotation.targetType}</TableCell>
                   <TableCell>
                     <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-                      {annotation.tags.map((tag, index) => {
-                        const isDandisetTag = tag.startsWith("dandiset:");
-                        const chipProps = isDandisetTag
-                          ? {
-                              onClick: () => {
-                                const dandisetId = tag.split(":")[1];
-                                navigate(`/dandiset/${dandisetId}`);
-                              },
-                              clickable: true,
-                            }
-                          : {};
+                      {annotation.tags.map((tag: string, index: number) => {
+                        let chipProps = {};
+                        if (tag.startsWith("dandiset:")) {
+                          const dandisetId = tag.split(":")[1];
+                          chipProps = {
+                            onClick: () => navigate(`/dandiset/${dandisetId}`),
+                            clickable: true,
+                          };
+                        } else if (tag.startsWith("openneuro:")) {
+                          const datasetId = tag.split(":")[1];
+                          chipProps = {
+                            onClick: () =>
+                              navigate(`/openneuro-dataset/${datasetId}`),
+                            clickable: true,
+                          };
+                        }
                         return (
                           <Chip
                             key={index}
@@ -165,7 +166,12 @@ const AnnotationsPage: FunctionComponent<Props> = ({ width, height }) => {
                             variant="outlined"
                             sx={{
                               maxWidth: 150,
-                              cursor: isDandisetTag ? "pointer" : "default",
+                              cursor: Object.prototype.hasOwnProperty.call(
+                                chipProps,
+                                "onClick",
+                              )
+                                ? "pointer"
+                                : "default",
                             }}
                             {...chipProps}
                           />

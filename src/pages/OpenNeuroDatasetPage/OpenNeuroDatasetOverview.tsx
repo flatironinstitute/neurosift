@@ -1,5 +1,6 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Divider } from "@mui/material";
 import { FunctionComponent } from "react";
+import ResourceAnnotations from "../common/ResourceAnnotations";
 import ScrollY from "@components/ScrollY";
 import { formatBytes } from "@shared/util/formatBytes";
 import { OpenNeuroDatasetInfo } from "./types";
@@ -54,6 +55,16 @@ const OpenNeuroDatasetOverview: FunctionComponent<
             <div>Downloads: {snapshot.analytics.downloads}</div>
           </Box>
         </Box>
+
+        <Divider sx={{ my: 3 }} />
+
+        <ResourceAnnotations
+          targetId={datasetInfo.id}
+          targetType="openneuro_dataset"
+          tags={[`openneuro:${datasetInfo.id}`]}
+        />
+
+        <Divider sx={{ my: 3 }} />
 
         {snapshot.summary && (
           <Box sx={{ mt: 2 }}>

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { useUserInfoCache } from "./useUserInfoCache";
+import { useUserInfoCache } from "../DandisetPage/hooks/useUserInfoCache";
 
 const ANNOTATION_API_BASE_URL =
   "https://neurosift-annotation-manager.vercel.app/api";
@@ -16,6 +16,7 @@ export interface Annotation {
   data: {
     content: string;
   };
+  tags: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,7 +26,11 @@ interface AnnotationUpdate {
   content?: string;
 }
 
-export const useAnnotations = (dandisetId: string) => {
+export const useResourceAnnotations = (
+  targetId: string,
+  targetType: string,
+  tags: string[],
+) => {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,8 +40,9 @@ export const useAnnotations = (dandisetId: string) => {
     setIsLoading(true);
     setError(null);
     try {
+      const tagsQueryParam = tags.map((tag) => `tags=${tag}`).join("&");
       const response = await fetch(
-        `${ANNOTATION_API_BASE_URL}/annotations?tags=dandiset:${dandisetId}&targetType=dandiset&type=note`,
+        `${ANNOTATION_API_BASE_URL}/annotations?${tagsQueryParam}&targetType=${targetType}&type=note`,
         {
           headers: {
             ...(localStorage.getItem("neurosiftApiKey")
@@ -64,7 +70,7 @@ export const useAnnotations = (dandisetId: string) => {
     } finally {
       setIsLoading(false);
     }
-  }, [dandisetId, getUserInfo]);
+  }, [targetType, tags, getUserInfo]);
 
   const createAnnotation = useCallback(
     async (title: string, content: string) => {
@@ -82,8 +88,9 @@ export const useAnnotations = (dandisetId: string) => {
           body: JSON.stringify({
             title,
             type: "note",
-            targetType: "dandiset",
-            tags: [`dandiset:${dandisetId}`],
+            targetType,
+            targetId,
+            tags,
             data: { content },
           }),
         });
@@ -102,7 +109,7 @@ export const useAnnotations = (dandisetId: string) => {
         return false;
       }
     },
-    [dandisetId, fetchAnnotations],
+    [targetType, targetId, tags, fetchAnnotations],
   );
 
   useEffect(() => {

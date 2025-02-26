@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { ExpandMore, ExpandLess, Edit, Delete } from "@mui/icons-material";
 import ReactMarkdown from "react-markdown";
-import { Annotation } from "../hooks/useAnnotations";
+import { Annotation } from "./useResourceAnnotations";
 
 interface AnnotationsListProps {
   annotations: Annotation[];

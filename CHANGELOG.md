@@ -1,6 +1,9 @@
 # Changes
 
 ## February 26, 2025
+- Refactored annotations to support multiple resource types:
+  - Made components generic and reusable
+  - Added support for OpenNeuro dataset annotations
 - Added dedicated annotations page:
   - Displays all user annotations in a compact table format
   - Shows titles, content, types, targets, and tags
