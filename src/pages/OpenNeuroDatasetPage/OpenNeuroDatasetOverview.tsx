@@ -58,14 +58,6 @@ const OpenNeuroDatasetOverview: FunctionComponent<
 
         <Divider sx={{ my: 3 }} />
 
-        <ResourceAnnotations
-          targetId={datasetInfo.id}
-          targetType="openneuro_dataset"
-          tags={[`openneuro:${datasetInfo.id}`]}
-        />
-
-        <Divider sx={{ my: 3 }} />
-
         {snapshot.summary && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="subtitle2" color="text.secondary">
@@ -144,6 +136,13 @@ const OpenNeuroDatasetOverview: FunctionComponent<
               </Box>
             </Box>
           )}
+        <Divider sx={{ my: 3 }} />
+
+        <ResourceAnnotations
+          targetId={datasetInfo.id}
+          targetType="openneuro_dataset"
+          tags={[`openneuro:${datasetInfo.id}`]}
+        />
       </div>
     </ScrollY>
   );
