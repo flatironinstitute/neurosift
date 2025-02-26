@@ -1,6 +1,7 @@
 # Changes
 
 ## February 26, 2025
+- MP4 views for TwoPhotonSeries and OnePhotonSeries for NWB files (uses job manager)
 - Added annotations support for NWB files:
   - Shows titles, content, types, targets, and tags
   - Features clickable dandiset tags that navigate to the corresponding dandiset page
