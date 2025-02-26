@@ -6,13 +6,11 @@ import AnnotationsList from "./AnnotationsList";
 import NewAnnotationForm from "./NewAnnotationForm";
 
 interface ResourceAnnotationsProps {
-  targetId: string;
   targetType: string;
   tags: string[];
 }
 
 const ResourceAnnotations: React.FC<ResourceAnnotationsProps> = ({
-  targetId,
   targetType,
   tags,
 }) => {
@@ -25,7 +23,7 @@ const ResourceAnnotations: React.FC<ResourceAnnotationsProps> = ({
     deleteAnnotation,
     updateAnnotation,
     getCurrentUserId,
-  } = useResourceAnnotations(targetId, targetType, tags);
+  } = useResourceAnnotations(targetType, tags);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>();
 
   useEffect(() => {

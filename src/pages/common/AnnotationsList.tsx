@@ -10,6 +10,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Chip,
+  Stack,
 } from "@mui/material";
 import { ExpandMore, ExpandLess, Edit, Delete } from "@mui/icons-material";
 import ReactMarkdown from "react-markdown";
@@ -21,13 +23,17 @@ interface AnnotationsListProps {
   onDelete?: (id: string) => Promise<void>;
   onUpdate?: (
     id: string,
-    updates: { title: string; content: string },
+    updates: { title: string; content: string; tags?: string[] },
   ) => Promise<void>;
 }
 
 interface EditFormProps {
   annotation: Annotation;
-  onSubmit: (updates: { title: string; content: string }) => Promise<void>;
+  onSubmit: (updates: {
+    title: string;
+    content: string;
+    tags?: string[];
+  }) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -38,12 +44,25 @@ const EditForm: React.FC<EditFormProps> = ({
 }) => {
   const [title, setTitle] = useState(annotation.title);
   const [content, setContent] = useState(annotation.data.content);
+  const [tags, setTags] = useState<string[]>(annotation.tags || []);
+  const [newTag, setNewTag] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleAddTag = () => {
+    if (newTag.trim() && !tags.includes(newTag.trim())) {
+      setTags([...tags, newTag.trim()]);
+      setNewTag("");
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter((tag) => tag !== tagToRemove));
+  };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      await onSubmit({ title, content });
+      await onSubmit({ title, content, tags });
     } finally {
       setIsSubmitting(false);
     }
@@ -70,7 +89,43 @@ const EditForm: React.FC<EditFormProps> = ({
         multiline
         rows={4}
       />
-      <Box sx={{ mt: 2, display: "flex", gap: 1, justifyContent: "flex-end" }}>
+      <Box sx={{ mt: 2 }}>
+        <Typography variant="subtitle2" gutterBottom>
+          Tags
+        </Typography>
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ mb: 1, flexWrap: "wrap", gap: 1 }}
+        >
+          {tags.map((tag) => (
+            <Chip
+              key={tag}
+              label={tag}
+              onDelete={() => handleRemoveTag(tag)}
+              size="small"
+            />
+          ))}
+        </Stack>
+        <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+          <TextField
+            size="small"
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleAddTag();
+              }
+            }}
+            placeholder="Add a tag"
+          />
+          <Button onClick={handleAddTag} variant="outlined" size="small">
+            Add
+          </Button>
+        </Box>
+      </Box>
+      <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
         <Button onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </Button>
@@ -90,7 +145,11 @@ const AnnotationItem: React.FC<{
   annotation: Annotation;
   isOwner: boolean;
   onDelete?: () => Promise<void>;
-  onUpdate?: (updates: { title: string; content: string }) => Promise<void>;
+  onUpdate?: (updates: {
+    title: string;
+    content: string;
+    tags?: string[];
+  }) => Promise<void>;
 }> = ({ annotation, isOwner, onDelete, onUpdate }) => {
   const [expanded, setExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -113,7 +172,11 @@ const AnnotationItem: React.FC<{
     }
   };
 
-  const handleUpdate = async (updates: { title: string; content: string }) => {
+  const handleUpdate = async (updates: {
+    title: string;
+    content: string;
+    tags?: string[];
+  }) => {
     if (!onUpdate) return;
     await onUpdate(updates);
     setIsEditing(false);
@@ -140,6 +203,18 @@ const AnnotationItem: React.FC<{
           <Typography variant="caption" color="text.secondary">
             By: {annotation.userName || annotation.userId} •{" "}
             {new Date(annotation.createdAt).toLocaleDateString()}
+            {annotation.tags && annotation.tags.length > 0 && (
+              <Box sx={{ mt: 0.5 }}>
+                {annotation.tags.map((tag) => (
+                  <Chip
+                    key={tag}
+                    label={tag}
+                    size="small"
+                    sx={{ mr: 0.5, mb: 0.5 }}
+                  />
+                ))}
+              </Box>
+            )}
           </Typography>
         </Box>
         {isOwner && !isEditing && (

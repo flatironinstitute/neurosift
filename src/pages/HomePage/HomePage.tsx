@@ -2,6 +2,7 @@ import { Box, Button, Container, Paper, Typography, Link } from "@mui/material";
 import { FunctionComponent, useEffect, useState } from "react";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import EditNoteIcon from "@mui/icons-material/EditNote";
+import HighlightedViews from "./components/HighlightedViews";
 import { useNavigate } from "react-router-dom";
 import ScrollY from "@components/ScrollY";
 
@@ -12,6 +13,7 @@ type HomePageProps = {
 
 const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
   const navigate = useNavigate();
+  const [showHighlightedViews, setShowHighlightedViews] = useState(false);
 
   return (
     <ScrollY width={width} height={height}>
@@ -230,8 +232,20 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
           >
             <BuildTimeFooter />
           </Typography>
+          <Box sx={{ mt: 2 }}>
+            <Button
+              variant="text"
+              onClick={() => setShowHighlightedViews((prev) => !prev)}
+              sx={{ color: "text.secondary" }}
+            >
+              {showHighlightedViews
+                ? "Hide Highlighted Views"
+                : "Show Highlighted Views"}
+            </Button>
+          </Box>
         </Box>
       </Container>
+      {showHighlightedViews && <HighlightedViews width={width} />}
     </ScrollY>
   );
 };

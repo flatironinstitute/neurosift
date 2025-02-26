@@ -10,7 +10,6 @@ const DandisetAnnotations: React.FC<DandisetAnnotationsProps> = ({
 }) => {
   return (
     <ResourceAnnotations
-      targetId={dandisetId}
       targetType="dandiset"
       tags={[`dandiset:${dandisetId}`]}
     />

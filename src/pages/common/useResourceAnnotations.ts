@@ -12,7 +12,6 @@ export interface Annotation {
   userId: string;
   userName?: string;
   targetType: string;
-  targetId: string;
   data: {
     content: string;
   };
@@ -24,11 +23,11 @@ export interface Annotation {
 interface AnnotationUpdate {
   title?: string;
   content?: string;
+  tags?: string[];
 }
 
 export const useResourceAnnotations = (
-  targetId: string,
-  targetType: string,
+  targetType: string | undefined,
   tags: string[],
 ) => {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
@@ -36,13 +35,24 @@ export const useResourceAnnotations = (
   const [error, setError] = useState<string | null>(null);
   const { getUserInfo } = useUserInfoCache();
 
+  // important: we stringify the tags to avoid unnecessary re-renders
+  const tagsStringified = JSON.stringify(tags);
+
   const fetchAnnotations = useCallback(async () => {
+    const tagsUnstringified: string[] = JSON.parse(tagsStringified);
     setIsLoading(true);
     setError(null);
     try {
-      const tagsQueryParam = tags.map((tag) => `tags=${tag}`).join("&");
+      const tagsQueryParam = tagsUnstringified
+        .map((tag) => `tags=${tag}`)
+        .join("&");
+      let q = `${tagsQueryParam}`;
+      if (targetType) {
+        q += `&targetType=${targetType}`;
+      }
+      q += `&type=note`;
       const response = await fetch(
-        `${ANNOTATION_API_BASE_URL}/annotations?${tagsQueryParam}&targetType=${targetType}&type=note`,
+        `${ANNOTATION_API_BASE_URL}/annotations?${q}`,
         {
           headers: {
             ...(localStorage.getItem("neurosiftApiKey")
@@ -70,10 +80,11 @@ export const useResourceAnnotations = (
     } finally {
       setIsLoading(false);
     }
-  }, [targetType, tags, getUserInfo]);
+  }, [targetType, tagsStringified, getUserInfo]);
 
   const createAnnotation = useCallback(
     async (title: string, content: string) => {
+      const tagsUnstringified: string[] = JSON.parse(tagsStringified);
       try {
         const response = await fetch(`${ANNOTATION_API_BASE_URL}/annotations`, {
           method: "POST",
@@ -89,8 +100,7 @@ export const useResourceAnnotations = (
             title,
             type: "note",
             targetType,
-            targetId,
-            tags,
+            tags: tagsUnstringified,
             data: { content },
           }),
         });
@@ -109,7 +119,7 @@ export const useResourceAnnotations = (
         return false;
       }
     },
-    [targetType, targetId, tags, fetchAnnotations],
+    [targetType, tagsStringified, fetchAnnotations],
   );
 
   useEffect(() => {
@@ -189,6 +199,7 @@ export const useResourceAnnotations = (
             id,
             data: updates.content ? { content: updates.content } : undefined,
             ...(updates.title ? { title: updates.title } : {}),
+            ...(updates.tags ? { tags: updates.tags } : {}),
           }),
         });
 

@@ -139,7 +139,6 @@ const OpenNeuroDatasetOverview: FunctionComponent<
         <Divider sx={{ my: 3 }} />
 
         <ResourceAnnotations
-          targetId={datasetInfo.id}
           targetType="openneuro_dataset"
           tags={[`openneuro:${datasetInfo.id}`]}
         />

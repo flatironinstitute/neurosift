@@ -15,9 +15,7 @@ const NwbAnnotations: React.FC<NwbAnnotationsProps> = ({
     ...(dandisetId ? [`dandiset:${dandisetId}`] : []),
   ];
 
-  return (
-    <ResourceAnnotations targetId={nwbUrl} targetType="nwb_file" tags={tags} />
-  );
+  return <ResourceAnnotations targetType="nwb_file" tags={tags} />;
 };
 
 export default NwbAnnotations;

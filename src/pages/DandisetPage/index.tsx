@@ -24,24 +24,27 @@ import useRegisterAIComponent from "./useRegisterAIComponent";
 type DandisetPageProps = {
   width: number;
   height: number;
+  dandisetId?: string; // Optional prop to override the URL parameter
 };
 
 const DandisetPage: FunctionComponent<DandisetPageProps> = ({
   width,
   height,
+  dandisetId: propDandisetId,
 }) => {
   const navigate = useNavigate();
-  const { dandisetId } = useParams();
+  const { dandisetId: urlDandisetId } = useParams();
+  const effectiveDandisetId = propDandisetId || urlDandisetId;
   const staging = false;
   const dandisetResponse: DandisetSearchResultItem | undefined | null =
-    useQueryDandiset(dandisetId, staging);
+    useQueryDandiset(effectiveDandisetId, staging);
 
   // todo: get dandisetVersion from the route
   const dandisetVersion = "";
 
   const dandisetVersionInfo: DandisetVersionInfo | null =
     useDandisetVersionInfo(
-      dandisetId,
+      effectiveDandisetId,
       dandisetVersion || "",
       staging,
       dandisetResponse || null,
@@ -52,7 +55,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
   const [maxNumPages] = useState(1);
   const [nwbFilesOnly, setNwbFilesOnly] = useState(false);
   const { assetsResponses, incomplete } = useQueryAssets(
-    dandisetId,
+    effectiveDandisetId,
     maxNumPages,
     dandisetResponse || null,
     dandisetVersionInfo,
@@ -69,10 +72,10 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
   }, [assetsResponses]);
 
   useEffect(() => {
-    if (dandisetId) {
-      addRecentDandiset(dandisetId);
+    if (effectiveDandisetId) {
+      addRecentDandiset(effectiveDandisetId);
     }
-  }, [dandisetId, staging]);
+  }, [effectiveDandisetId, staging]);
 
   const topLevelFiles: DatasetFile[] = useMemo(() => {
     if (!allAssets) return [];
@@ -191,13 +194,13 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
     (file: DatasetFile) => {
       if (file.filepath.endsWith(".nwb")) {
         navigate(
-          `/nwb?url=${file.urls[0]}&dandisetId=${dandisetId}&dandisetVersion=${dandisetVersionInfo?.version}`,
+          `/nwb?url=${file.urls[0]}&dandisetId=${effectiveDandisetId}&dandisetVersion=${dandisetVersionInfo?.version}`,
         );
         return true;
       }
       return false;
     },
-    [dandisetId, dandisetVersionInfo, navigate],
+    [effectiveDandisetId, dandisetVersionInfo, navigate],
   );
 
   const nwbFilesOwnlyControlVisible = useMemo(() => {
@@ -237,7 +240,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
 
   // Register AI component
   useRegisterAIComponent({
-    dandisetId,
+    dandisetId: effectiveDandisetId,
     dandisetVersionInfo,
     allAssets,
     nwbFilesOnly,

@@ -113,7 +113,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { id, type, targetType, tags, data } = body;
+    const { id, type, title, targetType, tags, data } = body;
 
     if (!id) {
       return new NextResponse('Missing annotation ID', { status: 400 });
@@ -142,6 +142,7 @@ export async function PUT(request: NextRequest) {
     const updateData: any = {};
     if (type) updateData.type = type;
     if (targetType) updateData.targetType = targetType;
+    if (title) updateData.title = title;
     if (tags) updateData.tags = tags;
     if (data) updateData.data = data;
 

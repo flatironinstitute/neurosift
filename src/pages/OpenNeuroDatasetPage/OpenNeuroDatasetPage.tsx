@@ -12,6 +12,7 @@ import { OpenNeuroDatasetInfo } from "./types";
 type OpenNeuroDatasetPageProps = {
   width: number;
   height: number;
+  datasetId?: string;
 };
 
 interface FileResponse {
@@ -120,8 +121,10 @@ const fetchDatasetInfo = async (
 const OpenNeuroDatasetPage: FunctionComponent<OpenNeuroDatasetPageProps> = ({
   width,
   height,
+  datasetId: datasetIdProp,
 }) => {
-  const { datasetId, version } = useParams();
+  const { datasetId: datasetIdFromParams, version } = useParams();
+  const datasetId = datasetIdProp || datasetIdFromParams;
   const [searchParams] = useSearchParams();
   const [datasetInfo, setDatasetInfo] = useState<OpenNeuroDatasetInfo | null>(
     null,

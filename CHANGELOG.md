@@ -1,6 +1,7 @@
 # Changes
 
 ## February 26, 2025
+- Added highlighted views section to home page showing expandable annotated views
 - MP4 views for TwoPhotonSeries and OnePhotonSeries for NWB files (uses job manager)
 - Added annotations support for NWB files:
   - Shows titles, content, types, targets, and tags
@@ -16,6 +17,7 @@
   - Added edit form with title and content fields
   - Added ownership verification through job manager API
   - Added confirmation dialog before note deletion
+  - Added ability to add and manage custom tags for annotations
 
 ## February 25, 2025
 - Improved TimeIntervals visualization with interactive Plotly-based view that shows hover information and uses transparency to indicate overlapping intervals (fixes #278)
