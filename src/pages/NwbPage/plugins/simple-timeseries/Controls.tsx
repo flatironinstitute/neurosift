@@ -103,41 +103,50 @@ export const Controls: FunctionComponent<ControlsProps> = ({
   return (
     <FullLayout>
       <LabeledRow label="">
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            Start: {info.timeseriesStartTime.toFixed(2)} s, Duration: {info.timeseriesDuration.toFixed(2)} s, {formatSamplingFrequency(info.samplingFrequency)}
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center" }}>
+            Start: {info.timeseriesStartTime.toFixed(2)} s, Duration:{" "}
+            {info.timeseriesDuration.toFixed(2)} s,{" "}
+            {formatSamplingFrequency(info.samplingFrequency)}
           </div>
-            <TimeRangeControls
-              visibleTimeStart={visibleTimeStart}
-              visibleDuration={visibleDuration}
-              timeseriesStartTime={info.timeseriesStartTime}
-              timeseriesDuration={info.timeseriesDuration}
-              onDecreaseVisibleDuration={onDecreaseVisibleDuration}
-              onIncreaseVisibleDuration={onIncreaseVisibleDuration}
-              onShiftTimeLeft={onShiftTimeLeft}
-              onShiftTimeRight={onShiftTimeRight}
-            />
-            {info.totalNumChannels > 1 && (
-              <>
-                <ItemRangeControls
-                  visibleStartIndex={visibleChannelsStart}
-                  numVisibleItems={numVisibleChannels}
-                  totalNumItems={info.totalNumChannels}
-                  onDecreaseItems={onDecreaseChannels}
-                  onIncreaseItems={onIncreaseChannels}
-                  onShiftItemsLeft={onShiftChannelsLeft}
-                  onShiftItemsRight={onShiftChannelsRight}
-                  itemLabel="Channels"
+          <TimeRangeControls
+            visibleTimeStart={visibleTimeStart}
+            visibleDuration={visibleDuration}
+            timeseriesStartTime={info.timeseriesStartTime}
+            timeseriesDuration={info.timeseriesDuration}
+            onDecreaseVisibleDuration={onDecreaseVisibleDuration}
+            onIncreaseVisibleDuration={onIncreaseVisibleDuration}
+            onShiftTimeLeft={onShiftTimeLeft}
+            onShiftTimeRight={onShiftTimeRight}
+          />
+          {info.totalNumChannels > 1 && (
+            <>
+              <ItemRangeControls
+                visibleStartIndex={visibleChannelsStart}
+                numVisibleItems={numVisibleChannels}
+                totalNumItems={info.totalNumChannels}
+                onDecreaseItems={onDecreaseChannels}
+                onIncreaseItems={onIncreaseChannels}
+                onShiftItemsLeft={onShiftChannelsLeft}
+                onShiftItemsRight={onShiftChannelsRight}
+                itemLabel="Channels"
+              />
+              {numVisibleChannels > 1 && (
+                <SeparationControls
+                  channelSeparation={channelSeparation}
+                  onDecreaseChannelSeparation={onDecreaseChannelSeparation}
+                  onIncreaseChannelSeparation={onIncreaseChannelSeparation}
                 />
-                {numVisibleChannels > 1 && (
-                  <SeparationControls
-                    channelSeparation={channelSeparation}
-                    onDecreaseChannelSeparation={onDecreaseChannelSeparation}
-                    onIncreaseChannelSeparation={onIncreaseChannelSeparation}
-                  />
-                )}
-              </>
-            )}
+              )}
+            </>
+          )}
         </div>
       </LabeledRow>
     </FullLayout>
