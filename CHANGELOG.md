@@ -1,6 +1,12 @@
 # Changes
 
 ## February 26, 2025
+- Added dedicated annotations page:
+  - Displays all user annotations in a compact table format
+  - Shows titles, content, types, targets, and tags
+  - Features clickable dandiset tags that navigate to the corresponding dandiset page
+  - Includes creation and update timestamps
+  - Requires Neurosift API key for access
 - Added GitHub Actions workflow for pull requests that checks code formatting and build status
 - Added annotations feature to Dandiset pages:
   - Users can add, view, and expand markdown-formatted notes

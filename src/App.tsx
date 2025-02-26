@@ -34,6 +34,7 @@ import OpenNeuroDatasetPage from "./pages/OpenNeuroDatasetPage/OpenNeuroDatasetP
 import OpenNeuroPage from "./pages/OpenNeuroPage/OpenNeuroPage";
 import SettingsPage from "./pages/SettingsPage/SettingsPage";
 import EdfPage from "./pages/EdfPage/EdfPage";
+import AnnotationsPage from "./pages/AnnotationsPage/AnnotationsPage";
 import { sendUrlUpdate } from "./ai-integration/messaging/windowMessaging";
 
 const theme = createTheme({
@@ -346,6 +347,10 @@ const AppContent = () => {
           <Route
             path="/edf"
             element={<EdfPage width={width} height={mainHeight} />}
+          />
+          <Route
+            path="/annotations"
+            element={<AnnotationsPage width={width} height={mainHeight} />}
           />
         </Routes>
       </div>

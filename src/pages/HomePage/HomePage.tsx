@@ -1,6 +1,7 @@
 import { Box, Button, Container, Paper, Typography, Link } from "@mui/material";
 import { FunctionComponent, useEffect, useState } from "react";
 import GitHubIcon from "@mui/icons-material/GitHub";
+import EditNoteIcon from "@mui/icons-material/EditNote";
 import { useNavigate } from "react-router-dom";
 import ScrollY from "@components/ScrollY";
 
@@ -190,6 +191,22 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
               <GitHubIcon />
               <Typography variant="body2">Submit Feedback / Issues</Typography>
             </Link>
+            <Typography
+              component="span"
+              onClick={() => navigate("/annotations")}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                color: "text.secondary",
+                textDecoration: "none",
+                cursor: "pointer",
+                "&:hover": { color: "primary.main" },
+              }}
+            >
+              <EditNoteIcon />
+              <Typography variant="body2">Annotations</Typography>
+            </Typography>
           </Box>
           <Typography
             variant="body2"
