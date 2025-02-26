@@ -31,11 +31,14 @@ Follow these steps to install and run the app locally in development mode:
 
 Pull requests are welcomed. If you have suggestions, improvements, or bug fixes, please feel free to open a pull request.
 
-Prior to submitting a pull request please be sure that the following two commands run successfully:
+Prior to submitting a pull request please be sure that the following commands run successfully:
 
 ```bash
-./devel/check_format.sh
+# Prerequisites:
+# pip install black
+# npm install
 
+./devel/check_format.sh
 npm run build
 ```
 
