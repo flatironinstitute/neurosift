@@ -104,7 +104,6 @@ const LeftArea: FunctionComponent<LeftAreaProps> = ({
     nwbUrl,
     dandisetId,
     dandisetVersion,
-    nwbFileOverview,
   });
 
   return (
