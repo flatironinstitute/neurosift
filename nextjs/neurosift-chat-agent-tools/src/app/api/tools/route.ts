@@ -131,15 +131,19 @@ where XXXXXX is the dandiset ID and XXXXX is the version.
     }
   },
   {
-    name: "nwb_file_neurodata_objects",
+    name: "nwb_file_info",
     description: `
-Get a list of neurodata objects from an NWB file on DANDI.
+Get information about an NWB file, including neurodata objects, file format, version, and session details.
 
-The output provides an array of neurodata objects, each containing:
-- path: path to the object within the NWB file
-- neurodata_type
+The output provides:
+- neurodataObjects: array of objects with:
+  - path: path to the object within the NWB file
+  - neurodata_type: type of the object
+  - description
+  - shape: for datasets, array indicating dimensions
+- metadata: dictionary of metadata key-value pairs
 
-In order to load one of these in Python you would do the following
+To access the data in Python:
 
 \`\`\`python
 import lindi
@@ -154,7 +158,6 @@ Now X is an h5py-like object (either a dataset or a group) that you can use to a
 Be careful not to load too much data at once, as it can be slow and use a lot of memory.
 
 If you are in an IDE (e.g., Cline), you may consider making a .py script in tmp_scripts/, and it might be nice to make it have notebook cells using "# %%" delimiters.
-You could then use your judgement and ask to run the script.
 `,
     parameters: {
       type: "object",

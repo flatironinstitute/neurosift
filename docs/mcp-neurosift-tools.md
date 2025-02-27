@@ -51,9 +51,9 @@ Once installed, the MCP server provides tools for:
 
 - `dandi_search`: Search for datasets in the DANDI archive
 - `dandi_semantic_search`: Semantic search for DANDI datasets using natural language
-- `dandiset_info`: Get detailed information about a specific DANDI dataset
+- `dandiset_info`: Get detailed information about a specific DANDI dataset including neurodata objects and metadata
 - `dandiset_assets`: List assets/files in a DANDI dataset
-- `nwb_file_neurodata_objects`: Get neurodata objects from an NWB file
+- `nwb_file_info`: Get information about an NWB file including neurodata objects
 - `openneuro_search`: Search for datasets on OpenNeuro
 - `dandi_list_neurodata_types`: List all unique neurodata types in DANDI archive
 - `dandi_search_by_neurodata_type`: Search for datasets containing specific neurodata types

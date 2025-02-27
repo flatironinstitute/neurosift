@@ -223,16 +223,29 @@ export class ReferenceFileSystemClient {
   }
 }
 
+// function _base64ToArrayBuffer(base64: string) {
+//   const binary_string = window.atob(base64);
+//   const bytes = new Uint8Array(binary_string.length);
+//   for (let i = 0; i < binary_string.length; i++) {
+//     bytes[i] = binary_string.charCodeAt(i);
+//   }
+//   if (bytes.buffer) {
+//     return bytes.buffer
+//   }
+//   else return bytes as any as ArrayBuffer;
+// }
+
 function _base64ToArrayBuffer(base64: string) {
-  const binary_string = window.atob(base64);
+  // do not use window because we are in node
+  const binary_string = Buffer.from(base64, "base64").toString("binary");
   const bytes = new Uint8Array(binary_string.length);
   for (let i = 0; i < binary_string.length; i++) {
     bytes[i] = binary_string.charCodeAt(i);
   }
   if (bytes.buffer) {
-    return bytes.buffer
+    return bytes.buffer;
   }
-  else return bytes as any as ArrayBuffer;
+  return bytes as any as ArrayBuffer;
 }
 
 export default ReferenceFileSystemClient;
