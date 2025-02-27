@@ -1,10 +1,6 @@
+import StatusBar from "@components/StatusBar";
+import "@css/App.css";
 import { useWindowDimensions } from "@fi-sci/misc";
-import {
-  AIComponentRegistryProvider,
-  AIRegisteredComponent,
-  useAIComponentRegistry,
-} from "./ai-integration/AIComponentRegistry";
-import { useEffect } from "react";
 import SettingsIcon from "@mui/icons-material/Settings";
 import {
   AppBar,
@@ -15,27 +11,32 @@ import {
   Typography,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { useEffect } from "react";
 import {
+  NavigateFunction,
   Route,
   BrowserRouter as Router,
   Routes,
-  useNavigate,
   useLocation,
+  useNavigate,
   useSearchParams,
 } from "react-router-dom";
-import StatusBar from "@components/StatusBar";
-import "@css/App.css";
+import {
+  AIComponentRegistryProvider,
+  AIRegisteredComponent,
+  useAIComponentRegistry,
+} from "./ai-integration/AIComponentRegistry";
+import { sendUrlUpdate } from "./ai-integration/messaging/windowMessaging";
+import AnnotationsPage from "./pages/AnnotationsPage/AnnotationsPage";
 import DandiPage from "./pages/DandiPage/DandiPage";
 import DandisetPage from "./pages/DandisetPage";
+import EdfPage from "./pages/EdfPage/EdfPage";
 import GuidePage from "./pages/GuidePage/GuidePage";
 import HomePage from "./pages/HomePage/HomePage";
 import NwbPage from "./pages/NwbPage/NwbPage";
 import OpenNeuroDatasetPage from "./pages/OpenNeuroDatasetPage/OpenNeuroDatasetPage";
 import OpenNeuroPage from "./pages/OpenNeuroPage/OpenNeuroPage";
 import SettingsPage from "./pages/SettingsPage/SettingsPage";
-import EdfPage from "./pages/EdfPage/EdfPage";
-import AnnotationsPage from "./pages/AnnotationsPage/AnnotationsPage";
-import { sendUrlUpdate } from "./ai-integration/messaging/windowMessaging";
 
 const theme = createTheme({
   palette: {
@@ -180,7 +181,7 @@ const AppContent = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  useRegisterAIComponent();
+  useRegisterAIComponent({ navigate });
 
   const location = useLocation();
   useEffect(() => {
@@ -384,10 +385,11 @@ function App() {
   );
 }
 
-const useRegisterAIComponent = () => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const location = useLocation();
+const useRegisterAIComponent = ({
+  navigate,
+}: {
+  navigate: NavigateFunction;
+}) => {
   const { registerComponentForAI, unregisterComponentForAI } =
     useAIComponentRegistry();
 
@@ -395,17 +397,35 @@ const useRegisterAIComponent = () => {
     const registration: AIRegisteredComponent = {
       id: "App",
       context: aiContextDescription,
-      callbacks: [],
+      callbacks: [
+        {
+          id: "navigate",
+          description: `
+Navigate to a specific page.
+
+/ - Home page
+/dandi - DANDI Archive
+/dandiset/:dandisetId - Dandiset page
+/nwb?dandisetId=:dandisetId&dandisetVersion=:dandisetVersion&url=:url - NWB page
+/openneuro - OpenNeuro page
+/openneuro-dataset/:datasetId - OpenNeuro dataset page
+/settings - Settings page
+`,
+          parameters: {
+            path: {
+              type: "string",
+              description: "Path to navigate to",
+            },
+          },
+          callback: ({ path }: { path: string }) => {
+            navigate(path);
+          },
+        },
+      ],
     };
     registerComponentForAI(registration);
-    return () => unregisterComponentForAI("route");
-  }, [
-    location,
-    searchParams,
-    navigate,
-    registerComponentForAI,
-    unregisterComponentForAI,
-  ]);
+    return () => unregisterComponentForAI("App");
+  }, [registerComponentForAI, unregisterComponentForAI, navigate]);
 };
 
 const aiContextDescription = `

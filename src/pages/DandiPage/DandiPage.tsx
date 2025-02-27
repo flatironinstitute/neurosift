@@ -123,15 +123,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
     [index, selectedTypes, staging],
   );
 
-  useRegisterAIComponent({
-    searchState,
-    searchResults,
-    totalResults,
-    isSearching,
-    selectedTypes,
-    lastSearchedText,
-    setSearchState,
-  });
+  useRegisterAIComponent();
 
   useEffect(() => {
     if (searchText) return;
@@ -329,46 +321,17 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
   );
 };
 
-const useRegisterAIComponent = ({
-  searchResults,
-  totalResults,
-  isSearching,
-  selectedTypes,
-  lastSearchedText,
-  searchState,
-  setSearchState,
-}: {
-  searchResults: DandisetSearchResultItem[];
-  totalResults: number;
-  isSearching: boolean;
-  selectedTypes: string[];
-  lastSearchedText: string;
-  searchState: SearchState;
-  setSearchState: (state: SearchState) => void;
-}) => {
+const useRegisterAIComponent = () => {
   const { registerComponentForAI, unregisterComponentForAI } =
     useAIComponentRegistry();
   useEffect(() => {
-    const { useSemanticSearch, useAdvancedSearch } = searchState;
-    let context = `
+    const context = `
 The user is viewing the Dandi page where they can search for Dandisets.
 They can either perform a text search, a semantic search, or search by neurodata types.
 A text search will return exact matches for the provided text.
 A semantic search will return Dandisets with similar content to the provided text.
 An advanced search will return Dandisets that match the selected neurodata types.
 `;
-    if (isSearching) {
-      context += "The user is currently performing a search.";
-    } else if (searchResults.length > 0) {
-      context += `The user has a performed a search and has received ${searchResults.length} results.`;
-      if (useAdvancedSearch) {
-        context += `The user has performed an advanced search with the following neurodata types: ${selectedTypes.join(", ")}.`;
-      } else if (useSemanticSearch) {
-        context += `The user has performed a semantic search with the following query: ${lastSearchedText}.`;
-      } else {
-        context += `The user has performed a text search with the following query: ${lastSearchedText}.`;
-      }
-    }
     const registration: AIRegisteredComponent = {
       id: "DandiPage",
       context,
@@ -376,17 +339,7 @@ An advanced search will return Dandisets that match the selected neurodata types
     };
     registerComponentForAI(registration);
     return () => unregisterComponentForAI("DandiPage");
-  }, [
-    registerComponentForAI,
-    unregisterComponentForAI,
-    searchResults,
-    totalResults,
-    isSearching,
-    selectedTypes,
-    lastSearchedText,
-    searchState,
-    setSearchState,
-  ]);
+  }, [registerComponentForAI, unregisterComponentForAI]);
 };
 
 export default DandiPage;

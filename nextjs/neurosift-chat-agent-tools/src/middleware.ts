@@ -1,28 +1,19 @@
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
-const allowedOrigins = [
-  'https://neurosift.app',
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'https://thac.vercel.app'
-];
+import { handleCorsHeaders, handleOptionsRequest } from '@/lib/cors';
+import { NextResponse } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const response = NextResponse.next();
-  const origin = request.headers.get('origin');
-
-  if (origin && allowedOrigins.includes(origin)) {
-    response.headers.set('Access-Control-Allow-Origin', origin);
-    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+  if (request.method === 'OPTIONS') {
+    return handleOptionsRequest(request);
   }
 
-  return response;
+  const response = NextResponse.next();
+  return handleCorsHeaders(response, request.headers.get('origin'));
 }
 
 export const config = {
-  matcher: '/api/:path*',
+  matcher: [
+    '/api/:path*',
+    '/((?!_next/static|_next/image|favicon.ico).*)'
+  ]
 };

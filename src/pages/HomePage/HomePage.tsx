@@ -5,6 +5,7 @@ import EditNoteIcon from "@mui/icons-material/EditNote";
 import HighlightedViews from "./components/HighlightedViews";
 import { useNavigate } from "react-router-dom";
 import ScrollY from "@components/ScrollY";
+import { AIRegisteredComponent, useAIComponentRegistry } from "../../AIContext";
 
 type HomePageProps = {
   width: number;
@@ -14,6 +15,8 @@ type HomePageProps = {
 const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
   const navigate = useNavigate();
   const [showHighlightedViews, setShowHighlightedViews] = useState(false);
+
+  useRegisterAIComponent();
 
   return (
     <ScrollY width={width} height={height}>
@@ -269,5 +272,27 @@ const BuildTimeFooter: FunctionComponent = () => {
 
   return buildTime ? <span>Built: {buildTime}</span> : null;
 };
+
+const useRegisterAIComponent = () => {
+  const { registerComponentForAI, unregisterComponentForAI } =
+    useAIComponentRegistry();
+
+  useEffect(() => {
+    const registration: AIRegisteredComponent = {
+      id: "HomePage",
+      context: aiContextDescription,
+      callbacks: [],
+    };
+    registerComponentForAI(registration);
+    return () => unregisterComponentForAI("HomePage");
+  }, [registerComponentForAI, unregisterComponentForAI]);
+};
+
+const aiContextDescription = `
+The user is viewing the Home page.
+They can navigate to the DANDI Archive, OpenNeuro, or the NWB Viewer Guide.
+They can also view the source code on GitHub, submit feedback or issues, or view annotations.
+The user can also show or hide highlighted views.
+`;
 
 export default HomePage;

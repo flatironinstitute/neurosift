@@ -242,9 +242,6 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
   useRegisterAIComponent({
     dandisetId: effectiveDandisetId,
     dandisetVersionInfo,
-    allAssets,
-    nwbFilesOnly,
-    incomplete,
     nwbFilesOwnlyControlVisible,
   });
 

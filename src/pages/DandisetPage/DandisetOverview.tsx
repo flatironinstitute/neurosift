@@ -2,7 +2,6 @@ import { Box, Typography } from "@mui/material";
 import DandisetAnnotations from "./components/DandisetAnnotations";
 import ScrollY from "@components/ScrollY";
 import { FunctionComponent, useState } from "react";
-import useRegisterDandisetOverviewAIComponent from "./useRegisterDandisetOverviewAIComponent";
 import { DandisetVersionInfo } from "../DandiPage/dandi-types";
 import { useNavigate } from "react-router-dom";
 import { formatBytes } from "@shared/util/formatBytes";
@@ -22,13 +21,6 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
   incomplete,
   numFilesLoaded,
 }) => {
-  // Register AI component
-  useRegisterDandisetOverviewAIComponent({
-    dandisetVersionInfo,
-    incomplete,
-    numFilesLoaded,
-  });
-
   const navigate = useNavigate();
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [contributorsExpanded, setContributorsExpanded] = useState(false);
