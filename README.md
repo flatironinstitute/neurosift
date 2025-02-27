@@ -89,6 +89,10 @@ The following table provides example visualizations of different neurodata types
 | TimeIntervals / FiberPhotometryResponseSeries / TrialAlignedSeries | DfOverFFiberPhotometryResponseSeries | 001084 | [View](https://neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/bca70a25-e5a5-4a40-b36f-fe1088b85eb2/download/&dandisetId=001084&dandisetVersion=draft&tab=view:TrialAlignedSeries%7C/processing/behavior/TimeIntervals^/processing/ophys/DfOverFFiberPhotometryResponseSeriesGreenIsosbestic) |
 | BehavioralEvents | behavioral_events | 000115 | [View](https://neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/6df57370-9de8-4514-82f3-65d0f0528cde/download/&dandisetId=000115&dandisetVersion=0.210914.1732&tab=/processing/behavior/behavioral_events) |
 
+## MCP Tools for Cline
+
+Neurosift provides MCP (Model Context Protocol) tools that can be used with Cline in VSCode to interact with the DANDI archive and explore neuroscience data programmatically. For installation and usage instructions, see [docs/mcp-neurosift-tools.md](docs/mcp-neurosift-tools.md).
+
 ## License
 
 This project is licensed under the Apache 2.0 License.

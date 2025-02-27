@@ -3,6 +3,7 @@
 ## February 27, 2025
 - Implemented neurosift-chat-agent-tools
 - Created neurosift-tools MCP that interfaces with the chat agent tools (for claude/cline access to DANDI, etc)
+- Added documentation for installing neurosift-tools MCP server in Cline
 
 ## February 26, 2025
 - Added highlighted views section to home page showing expandable annotated views
