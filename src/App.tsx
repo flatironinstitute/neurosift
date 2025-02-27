@@ -185,7 +185,7 @@ const AppContent = () => {
 
   const location = useLocation();
   useEffect(() => {
-    // send to thac
+    // send to neurosift-chat
     sendUrlUpdate(
       window.location.protocol +
         "//" +
