@@ -27,6 +27,7 @@ The Neurosift Tools MCP server provides access to DANDI archive functionality an
    ```
    ~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json
    ```
+   (This file can also be accessed from the Cline settings in VSCode)
 
 4. Add the neurosift-tools configuration to your settings:
    ```json
