@@ -137,7 +137,7 @@ export class RemoteH5File {
         },
         dummyCanceler,
       );
-    } catch (e) {
+    } catch {
       this.#datasetCache[path] = { success: false };
       return undefined;
     }

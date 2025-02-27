@@ -1,5 +1,9 @@
 # Changes
 
+## February 27, 2025
+- Implemented neurosift-chat-agent-tools
+- Created neurosift-tools MCP that interfaces with the chat agent tools (for claude/cline access to DANDI, etc)
+
 ## February 26, 2025
 - Added highlighted views section to home page showing expandable annotated views
 - MP4 views for TwoPhotonSeries and OnePhotonSeries for NWB files (uses job manager)

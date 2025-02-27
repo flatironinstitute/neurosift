@@ -131,6 +131,47 @@ where XXXXXX is the dandiset ID and XXXXX is the version.
     }
   },
   {
+    name: "nwb_file_neurodata_objects",
+    description: `
+Get a list of neurodata objects from an NWB file on DANDI.
+
+The output provides an array of neurodata objects, each containing:
+- path: path to the object within the NWB file
+- neurodata_type
+
+In order to load one of these in Python you would do the following
+
+\`\`\`python
+import lindi
+
+url = '<NWB file URL>'
+f = lindi.LindiH5pyFile.from_hdf5_file(url)
+X = f['<path to neurodata object>']
+\`\`\`
+
+Now X is an h5py-like object (either a dataset or a group) that you can use to access the data.
+
+Be careful not to load too much data at once, as it can be slow and use a lot of memory.
+
+If you are in an IDE (e.g., Cline), you may consider making a .py script in tmp_scripts/, and it might be nice to make it have notebook cells using "# %%" delimiters.
+You could then use your judgement and ask to run the script.
+`,
+    parameters: {
+      type: "object",
+      required: ["dandiset_id", "nwb_file_url"],
+      properties: {
+        dandiset_id: {
+          type: "string",
+          description: "DANDI dataset ID"
+        },
+        nwb_file_url: {
+          type: "string",
+          description: "URL of the NWB file in the DANDI archive"
+        }
+      }
+    }
+  },
+  {
     name: "openneuro_search",
     description: "Search for datasets on OpenNeuro",
     parameters: {
@@ -145,6 +186,55 @@ where XXXXXX is the dandiset ID and XXXXX is the version.
           type: "number",
           description: "Maximum number of results",
           default: 25
+        }
+      }
+    }
+  },
+  {
+    name: "dandi_list_neurodata_types",
+    description: `
+Get a list of all unique neurodata types found in DANDI archive NWB files.
+
+Returns an array of strings, each representing a unique neurodata type.
+The types are sorted alphabetically.`,
+    parameters: {
+      type: "object",
+      required: [],
+      properties: {}
+    }
+  },
+  {
+    name: "dandi_search_by_neurodata_type",
+    description: `
+Search for datasets in the DANDI archive that contain ALL of the specified neurodata types.
+Case-insensitive matching is used.
+
+The output takes the form:
+{
+  results: {
+    id: string;
+    version: string;
+    name: string;
+    asset_count: number;
+    size: number;
+  }[]
+  total: number;  // Total number of matching datasets
+}`,
+    parameters: {
+      type: "object",
+      required: ["types"],
+      properties: {
+        types: {
+          type: "array",
+          items: {
+            type: "string"
+          },
+          description: "Array of neurodata types - datasets must contain ALL of these types"
+        },
+        limit: {
+          type: "number",
+          description: "Maximum number of results",
+          default: 10
         }
       }
     }
