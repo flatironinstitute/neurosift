@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main-v2 ]
     paths:
-      - 'neurosift_job_runner/**'
+      - 'job_runners/neurosift_job_runner/**'
   workflow_dispatch:
 
 env:
@@ -38,7 +38,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: neurosift_job_runner
+          context: job_runners/neurosift_job_runner
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
