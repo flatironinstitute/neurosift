@@ -31,6 +31,12 @@ export const isUsingLindi = (url: string) => {
   return hdf5Files[url]?.resolvedUrl.endsWith(".lindi.json");
 };
 
+export const getLindiUrl = (url: string) => {
+  return hdf5Files[url]?.resolvedUrl.endsWith(".lindi.json")
+    ? hdf5Files[url].resolvedUrl
+    : undefined;
+};
+
 export type Hdf5Subdataset = {
   name: string;
   path: string;

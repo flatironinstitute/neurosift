@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DandisetVersionInfo } from "../DandiPage/dandi-types";
 import DatasetDataView from "./DatasetDataView";
-import { isUsingLindi } from "./hdf5Interface";
+import { isUsingLindi, getLindiUrl } from "./hdf5Interface";
+
 import { NwbFileOverview } from "./types";
 import NwbAnnotations from "./components/NwbAnnotations";
 
@@ -29,6 +30,7 @@ export const NwbOverview = ({
   const [showFullContributors, setShowFullContributors] = useState(false);
 
   const [, setForceRerender] = useState(false);
+  const [showLindiDownload, setShowLindiDownload] = useState(false);
 
   // force rerender after 2 seconds to check if we are using LINDI
   useEffect(() => {
@@ -191,18 +193,55 @@ export const NwbOverview = ({
         )}
         {nwbUrl && isUsingLindi(nwbUrl) && (
           <div style={{ marginTop: 12 }}>
-            <span
+            <div
               style={{
-                backgroundColor: "#e3f2fd",
-                padding: "4px 8px",
-                borderRadius: "4px",
-                color: "#1976d2",
-                fontWeight: "bold",
-                fontSize: "0.8em",
+                cursor: "pointer",
+                display: "inline-block",
               }}
+              onClick={() => setShowLindiDownload(!showLindiDownload)}
             >
-              Using LINDI
-            </span>
+              <span
+                style={{
+                  backgroundColor: "#e3f2fd",
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  color: "#1976d2",
+                  fontWeight: "bold",
+                  fontSize: "0.8em",
+                }}
+                title="Click to show download options"
+              >
+                Using LINDI {showLindiDownload ? "▼" : "▶"}
+              </span>
+            </div>
+            {showLindiDownload && nwbUrl && (
+              <div style={{ marginTop: 8, marginLeft: 12 }}>
+                <div
+                  style={{ fontSize: "0.8em", color: "#666", marginBottom: 4 }}
+                >
+                  This file has a LINDI representation available, which provides
+                  optimized access to the NWB data.
+                </div>
+                <div>
+                  <a
+                    href={getLindiUrl(nwbUrl)}
+                    download
+                    style={{
+                      display: "inline-block",
+                      padding: "4px 12px",
+                      backgroundColor: "#e3f2fd",
+                      color: "#1976d2",
+                      textDecoration: "none",
+                      borderRadius: "4px",
+                      fontSize: "0.8em",
+                      border: "1px solid #1976d2",
+                    }}
+                  >
+                    Download LINDI file
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
         )}
         {nwbUrl && (

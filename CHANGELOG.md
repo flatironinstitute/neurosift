@@ -1,5 +1,8 @@
 # Changes
 
+## February 28, 2025
+- Added LINDI file download feature in NWB Overview
+
 ## February 27, 2025
 - Implemented neurosift-chat-agent-tools
 - Created neurosift-tools MCP that interfaces with the chat agent tools (for claude/cline access to DANDI, etc)
