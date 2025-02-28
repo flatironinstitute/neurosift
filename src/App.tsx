@@ -13,7 +13,6 @@ import {
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useEffect } from "react";
 import {
-  NavigateFunction,
   Route,
   BrowserRouter as Router,
   Routes,
@@ -21,11 +20,7 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
-import {
-  AIComponentRegistryProvider,
-  AIRegisteredComponent,
-  useAIComponentRegistry,
-} from "./ai-integration/AIComponentRegistry";
+import { AIComponentRegistryProvider } from "./ai-integration/AIComponentRegistry";
 import { sendUrlUpdate } from "./ai-integration/messaging/windowMessaging";
 import AnnotationsPage from "./pages/AnnotationsPage/AnnotationsPage";
 import DandiPage from "./pages/DandiPage/DandiPage";
@@ -181,7 +176,7 @@ const AppContent = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  useRegisterAIComponent({ navigate });
+  // useRegisterAIComponent({ navigate });
 
   const location = useLocation();
   useEffect(() => {
@@ -385,52 +380,52 @@ function App() {
   );
 }
 
-const useRegisterAIComponent = ({
-  navigate,
-}: {
-  navigate: NavigateFunction;
-}) => {
-  const { registerComponentForAI, unregisterComponentForAI } =
-    useAIComponentRegistry();
+// const useRegisterAIComponent = ({
+//   navigate,
+// }: {
+//   navigate: NavigateFunction;
+// }) => {
+//   const { registerComponentForAI, unregisterComponentForAI } =
+//     useAIComponentRegistry();
 
-  useEffect(() => {
-    const registration: AIRegisteredComponent = {
-      id: "App",
-      context: aiContextDescription,
-      callbacks: [
-        {
-          id: "navigate",
-          description: `
-Navigate to a specific page.
+//   useEffect(() => {
+//     const registration: AIRegisteredComponent = {
+//       id: "App",
+//       context: aiContextDescription,
+//       callbacks: [
+//         {
+//           id: "navigate",
+//           description: `
+// Navigate to a specific page.
 
-/ - Home page
-/dandi - DANDI Archive
-/dandiset/:dandisetId - Dandiset page
-/nwb?dandisetId=:dandisetId&dandisetVersion=:dandisetVersion&url=:url - NWB page
-/openneuro - OpenNeuro page
-/openneuro-dataset/:datasetId - OpenNeuro dataset page
-/settings - Settings page
-`,
-          parameters: {
-            path: {
-              type: "string",
-              description: "Path to navigate to",
-            },
-          },
-          callback: ({ path }: { path: string }) => {
-            navigate(path);
-          },
-        },
-      ],
-    };
-    registerComponentForAI(registration);
-    return () => unregisterComponentForAI("App");
-  }, [registerComponentForAI, unregisterComponentForAI, navigate]);
-};
+// / - Home page
+// /dandi - DANDI Archive
+// /dandiset/:dandisetId - Dandiset page
+// /nwb?dandisetId=:dandisetId&dandisetVersion=:dandisetVersion&url=:url - NWB page
+// /openneuro - OpenNeuro page
+// /openneuro-dataset/:datasetId - OpenNeuro dataset page
+// /settings - Settings page
+// `,
+//           parameters: {
+//             path: {
+//               type: "string",
+//               description: "Path to navigate to",
+//             },
+//           },
+//           callback: ({ path }: { path: string }) => {
+//             navigate(path);
+//           },
+//         },
+//       ],
+//     };
+//     registerComponentForAI(registration);
+//     return () => unregisterComponentForAI("App");
+//   }, [registerComponentForAI, unregisterComponentForAI, navigate]);
+// };
 
-const aiContextDescription = `
-The user can click the Neurosift logo or title to navigate to the home page.
-The user can click the Settings icon in the upper right part of the window to navigate to the settings page where they can configure Neurosift including setting API keys.
-`;
+// const aiContextDescription = `
+// The user can click the Neurosift logo or title to navigate to the home page.
+// The user can click the Settings icon in the upper right part of the window to navigate to the settings page where they can configure Neurosift including setting API keys.
+// `;
 
 export default App;
