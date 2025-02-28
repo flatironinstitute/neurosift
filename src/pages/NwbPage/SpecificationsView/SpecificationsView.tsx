@@ -1,5 +1,7 @@
 import { FunctionComponent } from "react";
 import { useNwbFileSpecifications } from "./SetupNwbFileSpecificationsProvider";
+import ExpandableTableCell from "../../../components/ExpandableTableCell";
+import "../../../css/nwb-table-expandable.css";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 type SpecificationsViewProps = {};
@@ -83,18 +85,24 @@ const SpecificationsView: FunctionComponent<SpecificationsViewProps> = () => {
                   ? ns.contact
                   : ns.contact.join(", ")}
               </td>
-              <td>{abbr(ns.doc)}</td>
-              <td>{ns.full_name}</td>
               <td>
-                {ns.schema
-                  .map((s) =>
-                    "namespace" in s
-                      ? s.namespace
-                      : "source" in s
-                        ? s.source
-                        : "",
-                  )
-                  .join(", ")}
+                <ExpandableTableCell content={ns.doc} />
+              </td>
+              <td>
+                <ExpandableTableCell content={ns.full_name} />
+              </td>
+              <td>
+                <ExpandableTableCell
+                  content={ns.schema
+                    .map((s) =>
+                      "namespace" in s
+                        ? s.namespace
+                        : "source" in s
+                          ? s.source
+                          : "",
+                    )
+                    .join(", ")}
+                />
               </td>
             </tr>
           ))}
@@ -120,9 +128,15 @@ const SpecificationsView: FunctionComponent<SpecificationsViewProps> = () => {
                 {/* </Hyperlink> */}
               </td>
               <td>{ds.neurodata_type_inc}</td>
-              <td>{abbr(JSON.stringify(ds.dtype))}</td>
-              <td>{abbr(JSON.stringify(ds.dims))}</td>
-              <td>{abbr(JSON.stringify(ds.attributes))}</td>
+              <td>
+                <ExpandableTableCell content={JSON.stringify(ds.dtype)} />
+              </td>
+              <td>
+                <ExpandableTableCell content={JSON.stringify(ds.dims)} />
+              </td>
+              <td>
+                <ExpandableTableCell content={JSON.stringify(ds.attributes)} />
+              </td>
             </tr>
           ))}
         </tbody>
@@ -149,9 +163,15 @@ const SpecificationsView: FunctionComponent<SpecificationsViewProps> = () => {
               </td>
               <td>{g.neurodata_type_inc}</td>
               <td>{g.default_name}</td>
-              <td>{abbr(g.doc)}</td>
-              <td>{abbr(JSON.stringify(g.datasets))}</td>
-              <td>{abbr(JSON.stringify(g.groups))}</td>
+              <td>
+                <ExpandableTableCell content={g.doc} />
+              </td>
+              <td>
+                <ExpandableTableCell content={JSON.stringify(g.datasets)} />
+              </td>
+              <td>
+                <ExpandableTableCell content={JSON.stringify(g.groups)} />
+              </td>
             </tr>
           ))}
         </tbody>
@@ -243,13 +263,5 @@ const SpecificationsView: FunctionComponent<SpecificationsViewProps> = () => {
 //     </div>
 //   );
 // };
-
-const abbr = (s: string) => abbreviate(s, 60);
-
-const abbreviate = (s: string, maxLength: number) => {
-  if (!s) return "";
-  if (s.length <= maxLength) return s;
-  return s.slice(0, maxLength - 3) + "...";
-};
 
 export default SpecificationsView;

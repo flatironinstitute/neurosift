@@ -6,7 +6,8 @@ export const allowedOrigins = [
   'http://localhost:3001',
   'http://localhost:5173',
   'http://localhost:5174',
-  'https://neurosift-chat.vercel.app'
+  'https://neurosift-chat.vercel.app',
+  'https://chat.neurosift.app',
 ];
 
 export const corsHeaders = {
