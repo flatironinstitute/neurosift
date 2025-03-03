@@ -1,5 +1,8 @@
 # Changes
 
+## March 3, 2025
+- Added Usage Script section to NWB page showing Python code examples
+
 ## February 28, 2025
 - Added LINDI file download feature in NWB Overview
 

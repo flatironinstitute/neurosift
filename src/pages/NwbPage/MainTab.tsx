@@ -1,4 +1,5 @@
 import { Box, Grid, Paper } from "@mui/material";
+import NwbUsageScript from "./components/NwbUsageScript";
 import { useEffect, useReducer, useState } from "react";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
 import Hdf5View from "./Hdf5View";
@@ -69,6 +70,12 @@ const MainTab = ({
         {
           type: "specifications" as const,
           label: "Specifications",
+          closeable: false as const,
+          defaultExpanded: false,
+        },
+        {
+          type: "usageScript" as const,
+          label: "Python Usage",
           closeable: false as const,
           defaultExpanded: false,
         },
@@ -153,6 +160,9 @@ const MainTab = ({
                       <SetupNwbFileSpecificationsProvider nwbUrl={nwbUrl}>
                         <SpecificationsView />
                       </SetupNwbFileSpecificationsProvider>
+                    )}
+                    {view.type === "usageScript" && (
+                      <NwbUsageScript nwbUrl={nwbUrl} />
                     )}
                   </Box>
                 )}

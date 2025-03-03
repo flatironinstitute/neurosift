@@ -22,6 +22,12 @@ export type MainPanelView =
       label: string;
       closeable: false;
       defaultExpanded: boolean;
+    }
+  | {
+      type: "usageScript";
+      label: string;
+      closeable: false;
+      defaultExpanded: boolean;
     };
 
 type ViewsAction =
@@ -41,6 +47,7 @@ const viewsReducer = (
         if (v.type === "TimeseriesAlignment") return true;
         if (v.type === "Hdf5View") return true;
         if (v.type === "specifications") return true;
+        if (v.type === "usageScript") return true;
         return false;
       });
       if (exists) return state;
@@ -55,6 +62,7 @@ const viewsReducer = (
         if (v.type === "TimeseriesAlignment") return false;
         if (v.type === "Hdf5View") return false;
         if (v.type === "specifications") return false;
+        if (v.type === "usageScript") return false;
         return true;
       });
 
