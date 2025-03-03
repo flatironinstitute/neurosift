@@ -39,7 +39,11 @@ const NwbUsageScript: FunctionComponent<Props> = ({ nwbUrl }) => {
           return;
         }
         const script = await response.text();
-        const header = `import pynwb
+        const header = `# This script is suitable to be included as a part of a prompt to an LLM.
+# It teaches the LLM how to access the data in this particular NWB file using lindi and pynwb.
+# This is an experimental feature and is under development.
+
+import pynwb
 import lindi
 
 # Load ${nwbUrl}
