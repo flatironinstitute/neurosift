@@ -3,8 +3,8 @@ import {
   getHdf5Dataset,
   getHdf5DatasetData,
   getHdf5Group,
-} from "@hdf5Interface";
-import { RemoteH5Group } from "@remote-h5-file";
+} from "./hdf5Interface";
+import { RemoteH5Group } from "./remote-h5-file";
 
 const createUsageScriptForNwbFile = async (nwbUrl: string) => {
   let s = "";
