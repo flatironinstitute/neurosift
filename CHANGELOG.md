@@ -1,5 +1,8 @@
 # Changes
 
+# March 4, 2025
+- Use JavaScript for NWB usage scripts rather than loading from precomputed usage.py
+
 ## March 3, 2025
 - Added Usage Script section to NWB page showing Python code examples
 

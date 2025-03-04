@@ -1,8 +1,15 @@
-import { FunctionComponent, useEffect, useState, useCallback } from "react";
+import {
+  FunctionComponent,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import Markdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vs } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { getLindiUrl } from "../hdf5Interface";
+import createUsageScriptForNwbFile from "./createUsageScriptForNwbFile";
 
 type Props = {
   nwbUrl: string;
@@ -12,34 +19,11 @@ const NwbUsageScript: FunctionComponent<Props> = ({ nwbUrl }) => {
   const [scriptContent, setScriptContent] = useState<string | undefined>(
     undefined,
   );
-  const [headerContent, setHeaderContent] = useState<string | undefined>(
-    undefined,
-  );
   const [error, setError] = useState<string | undefined>(undefined);
 
-  useEffect(() => {
-    const getUsageScript = async () => {
-      const lindiUrl = getLindiUrl(nwbUrl);
-      if (!lindiUrl) {
-        setError("LINDI file was not found");
-        return;
-      }
-
-      // Replace nwb.lindi.json with usage.py in the URL
-      const usageUrl = lindiUrl.replace("nwb.lindi.json", "usage.py");
-
-      try {
-        const response = await fetch(usageUrl);
-        if (!response.ok) {
-          if (response.status === 404) {
-            setError("Usage script was not found");
-          } else {
-            setError(`Error fetching usage script: ${response.statusText}`);
-          }
-          return;
-        }
-        const script = await response.text();
-        const header = `# This script is suitable to be included as a part of a prompt to an LLM.
+  const headerContent = useMemo(() => {
+    const lindiUrl = getLindiUrl(nwbUrl);
+    return `# This script is suitable to be included as a part of a prompt to an LLM.
 # It teaches the LLM how to access the data in this particular NWB file using lindi and pynwb.
 # This is an experimental feature and is under development.
 
@@ -47,14 +31,50 @@ import pynwb
 import lindi
 
 # Load ${nwbUrl}
-f = lindi.LindiH5pyFile.from_lindi_file("${lindiUrl}")
+${
+  lindiUrl
+    ? `f = lindi.LindiH5pyFile.from_lindi_file("${lindiUrl}")`
+    : `f = lindi.LindiH5pyFile.from_hdf5_file("${nwbUrl}")`
+}
 nwb = pynwb.NWBHDF5IO(file=f, mode='r').read()
 
 `;
-        setHeaderContent(header);
-        setScriptContent(script);
+  }, [nwbUrl]);
+
+  useEffect(() => {
+    // const getUsageScriptFromUrl = async () => {
+    //   const lindiUrl = getLindiUrl(nwbUrl);
+    //   if (!lindiUrl) {
+    //     setError("LINDI file was not found");
+    //     return;
+    //   }
+
+    //   // Replace nwb.lindi.json with usage.py in the URL
+    //   const usageUrl = lindiUrl.replace("nwb.lindi.json", "usage.py");
+
+    //   try {
+    //     const response = await fetch(usageUrl);
+    //     if (!response.ok) {
+    //       if (response.status === 404) {
+    //         setError("Usage script was not found");
+    //       } else {
+    //         setError(`Error fetching usage script: ${response.statusText}`);
+    //       }
+    //       return;
+    //     }
+    //     const script = await response.text();
+    //     setScriptContent(script);
+    //   } catch (error) {
+    //     setError(`Error fetching usage script: ${error}`);
+    //   }
+    // };
+    const getUsageScript = async () => {
+      if (!nwbUrl) return;
+      try {
+        const x = await createUsageScriptForNwbFile(nwbUrl);
+        setScriptContent(x);
       } catch (error) {
-        setError(`Error fetching usage script: ${error}`);
+        setError(`Error creating usage script: ${error}`);
       }
     };
     getUsageScript();
