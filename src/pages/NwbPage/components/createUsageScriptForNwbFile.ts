@@ -182,24 +182,54 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
   for (const obj of moduleObjects) {
     s += `\n`;
     s += `${obj.variableName} = ${obj.objectExpression} # (${obj.neurodataType}) ${obj.description}\n`;
-    if (obj.neurodataType === "TimeSeries") {
+
+    // TimeSeries or ElectricalSeries
+    if (["TimeSeries", "ElectricalSeries"].includes(obj.neurodataType)) {
       const dataDataset = obj.group.datasets.find((x) => x.name === "data");
-      const timestampsDataset = obj.group.datasets.find(
-        (x) => x.name === "timestamps",
-      );
-      const startingTimeDataset = obj.group.datasets.find(
-        (x) => x.name === "starting_time",
-      );
 
       if (dataDataset) {
         s += `${obj.variableName}.data # (h5py.Dataset) shape ${shapeToString(dataDataset.shape)}; dtype ${dataDataset.dtype}\n`;
       }
-      if (timestampsDataset) {
-        s += `${obj.variableName}.timestamps # (h5py.Dataset) shape ${shapeToString(timestampsDataset.shape)}; dtype ${timestampsDataset.dtype}\n`;
-      } else if (startingTimeDataset) {
-        s += `${obj.variableName}.starting_time # ${getDatasetValueString(nwbUrl, startingTimeDataset.path)}\n`;
-        s += `${obj.variableName}.rate # ${getDatasetAttrString(nwbUrl, startingTimeDataset.path, "rate")}\n`;
+    }
+
+    // ImageSeries
+    if (["ImageSeries"].includes(obj.neurodataType)) {
+      const externalFileDataset = obj.group.datasets.find(
+        (x) => x.name === "external_file",
+      );
+      if (externalFileDataset) {
+        s += `# Data for ${obj.variableName} is in an external file: ${await getDatasetValueString(nwbUrl, externalFileDataset.path)}\n`;
       }
+    }
+
+    // TimeIntervals
+    if (obj.neurodataType === "TimeIntervals") {
+      const startTimeDataset = obj.group.datasets.find(
+        (x) => x.name === "start_time",
+      );
+      const stopTimeDataset = obj.group.datasets.find(
+        (x) => x.name === "stop_time",
+      );
+      if (startTimeDataset) {
+        s += `${obj.variableName}["start_time"].data # (h5py.Dataset) shape ${shapeToString(startTimeDataset.shape)}; dtype ${startTimeDataset.dtype}\n`;
+      }
+      if (stopTimeDataset) {
+        s += `${obj.variableName}["stop_time"].data # (h5py.Dataset) shape ${shapeToString(stopTimeDataset.shape)}; dtype ${stopTimeDataset.dtype}\n`;
+      }
+    }
+
+    // timestamps or starting time (applies to anything that has timestamps or starting_time)
+    const timestampsDataset = obj.group.datasets.find(
+      (x) => x.name === "timestamps",
+    );
+    const startingTimeDataset = obj.group.datasets.find(
+      (x) => x.name === "starting_time",
+    );
+    if (timestampsDataset) {
+      s += `${obj.variableName}.timestamps # (h5py.Dataset) shape ${shapeToString(timestampsDataset.shape)}; dtype ${timestampsDataset.dtype}\n`;
+    } else if (startingTimeDataset) {
+      s += `${obj.variableName}.starting_time # ${await getDatasetValueString(nwbUrl, startingTimeDataset.path)}\n`;
+      s += `${obj.variableName}.rate # ${await getDatasetAttrString(nwbUrl, startingTimeDataset.path, "rate")}\n`;
     }
   }
 
@@ -223,7 +253,6 @@ const getGroupNameFromPath = (path: string) => {
 const getDatasetValueString = async (nwbUrl: string, datasetPath: string) => {
   try {
     const d = await getHdf5DatasetData(nwbUrl, datasetPath, {});
-    if (!d) return "";
     return valueToString2(d);
   } catch {
     return "";
@@ -236,7 +265,6 @@ const getDatasetValueStringList = async (
 ) => {
   try {
     const d = await getHdf5DatasetData(nwbUrl, datasetPath, {});
-    if (!d) return [];
     if (!Array.isArray(d)) return [valueToString2(d)];
     return d.map((v: any) => valueToString2(v));
   } catch {
@@ -257,43 +285,5 @@ const getDatasetAttrString = async (
     return "";
   }
 };
-
-/*
-nwb.session_description # (str) 489
-nwb.identifier # (str) 489
-nwb.session_start_time # (datetime) 2022-07-08 00:00:00-05:00
-nwb.file_create_date # (datetime) 2024-10-11 00:00:00-05:00
-nwb.timestamps_reference_time # (datetime) 2022-07-08 00:00:00-05:00
-nwb.experimenter # (List[str]) ['Armstrong, Alex', 'Vlasov, Yurii']
-nwb.experiment_description # (str) Barrel cortex electrophysiology during tactile VR whisker-guided navigation
-nwb.session_id # (str)
-nwb.institution # (str) University of Illinois
-nwb.keywords # (List[str]) ['barrel cortex', 'behavior', 'VR', 'S1', 'decision making']
-nwb.protocol # (str) 20138
-nwb.lab # (str) Vlasov BioLab
-nwb.acquisition["cor_pos"] # (TimeSeries) VR feedback signal
-nwb.acquisition["distance_abs"] # (TimeSeries) Absolute distance (cm) in trial
-nwb.acquisition["distance_for"] # (TimeSeries) Forward distance (cm) in trial
-nwb.acquisition["distance_lat"] # (TimeSeries) Lateral distance (cm) in trial
-nwb.acquisition["speed_abs"] # (TimeSeries) Absolute speed (cm/s)
-nwb.acquisition["speed_for"] # (TimeSeries) Forward speed (cm/s)
-nwb.acquisition["speed_lat"] # (TimeSeries) Lateral speed (cm/s)
-nwb.acquisition["trial"] # (TimeSeries) Trial number
-nwb.acquisition["ts_local"] # (TimeSeries) Local timing in trial
-nwb.trials # (TimeIntervals)
-nwb.intervals["trials"] # (TimeIntervals) experimental trials
-nwb.units # (Units)
-nwb.subject # (Subject)
-
-nwb.subject.age # (str) P63D
-nwb.subject.age__reference # (str) birth
-nwb.subject.description # (str) 489
-nwb.subject.genotype # (str) Scnn1a-TG3-Cre x Ai32
-nwb.subject.sex # (str) F
-nwb.subject.species # (str) Mus musculus
-nwb.subject.subject_id # (str) 489
-nwb.subject.weight # (str) 0.02 kg
-nwb.subject.date_of_birth # (datetime) 2022-05-01 00:00:00-05:00
-*/
 
 export default createUsageScriptForNwbFile;
