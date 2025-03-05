@@ -55,7 +55,8 @@ const DandisetSearchResult = ({ dandiset, notebookUrls }: Props) => {
           Created: {formatDate(dandiset.created)}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Modified: {formatDate(dandiset.modified)}
+          Modified:{" "}
+          {formatDate(dandiset.draft_version?.modified || dandiset.modified)}
         </Typography>
       </Box>
       <Box sx={{ mb: 1 }}>

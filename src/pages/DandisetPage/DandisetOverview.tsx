@@ -172,6 +172,10 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
               Created:{" "}
               {new Date(dandisetVersionInfo.created).toLocaleDateString()}
             </div>
+            <div>
+              Modified:{" "}
+              {new Date(dandisetVersionInfo.modified).toLocaleDateString()}
+            </div>
             <div>Status: {dandisetVersionInfo.status}</div>
             <div>
               Total Size:{" "}
