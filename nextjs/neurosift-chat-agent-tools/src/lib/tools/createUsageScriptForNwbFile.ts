@@ -232,6 +232,55 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
     }
   }
 
+  // units
+  const handleUnits = async () => {
+    try {
+      const unitsGroup = await getHdf5Group(nwbUrl, "/units");
+      if (!unitsGroup) return;
+      const idDataset = await getHdf5Dataset(nwbUrl, "/units/id");
+      if (!idDataset) return;
+      const colnames = unitsGroup.attrs.colnames;
+      if (!colnames) {
+        throw new Error("units group does not have colnames attribute");
+      }
+      if (!Array.isArray(colnames)) {
+        throw new Error("units group colnames attribute is not an array");
+      }
+      const idData = await getHdf5DatasetData(nwbUrl, "/units/id", {});
+      if (!idData) {
+        throw new Error("Unable to load units/id dataset data");
+      }
+      const numUnits = idData.length;
+      s += "\n";
+      s += `units = nwb.units # (Units)\n`;
+      s += `units.colnames # (Tuple[str]) (${colnames.map((x) => `"${x}"`).join(", ")})\n`;
+      s += `unit_ids = units["id"].data # len(unit_ids) == ${numUnits} (number of units is ${numUnits})\n`;
+      for (const colname of colnames) {
+        const dataset = unitsGroup.datasets.find((x) => x.name === colname);
+        if (!dataset) {
+          throw new Error(`Unable to find dataset for column ${colname}`);
+        }
+        const index_dataset = unitsGroup.datasets.find(
+          (x) => x.name === `${colname}_index`,
+        );
+        if (!index_dataset) {
+          s += `units["${colname}"].data # (np.ndarray) shape ${shapeToString(dataset.shape)}; dtype ${dataset.dtype}; ${dataset.attrs.description}\n`;
+        } else {
+          s += `unit_index = 0 # Can range from 0 to ${numUnits - 1}\n`;
+          if (colname === "spike_times") {
+            s += `units["${colname}"][unit_index] # (np.array) spike times for unit at index unit_index\n`;
+          } else {
+            s += `units["${colname}"][unit_index] # (np.ndarray) vector of data for unit at index unit_index\n`;
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Problem loading units");
+      console.error(e);
+    }
+  };
+  await handleUnits();
+
   return s;
 };
 
