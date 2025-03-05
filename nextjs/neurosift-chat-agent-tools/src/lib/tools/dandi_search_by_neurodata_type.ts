@@ -62,12 +62,17 @@ export async function searchByNeurodataType(types: string[], limit: number = 10)
       throw new Error(`DANDI API error: ${response.statusText}`);
     }
     const item = await response.json();
+    
+
     let version;
-    if (item.most_recent_published_version) {
-      version = item.most_recent_published_version;
-    } else {
-      version = item.draft_version;
-    }
+    // if (item.most_recent_published_version) {
+    //   version = item.most_recent_published_version;
+    // } else {
+    //   version = item.draft_version;
+    // }
+    // for now, let's always use draft versions
+    version = item.draft_version;
+
     if (!version) {
       console.warn("Failed to get version for dandiset");
       continue;

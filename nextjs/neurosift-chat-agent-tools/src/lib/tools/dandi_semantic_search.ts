@@ -145,11 +145,14 @@ export async function dandiSemanticSearch(
     }
     const item = await response.json();
     let version;
-    if (item.most_recent_published_version) {
-      version = item.most_recent_published_version;
-    } else {
-      version = item.draft_version;
-    }
+    // if (item.most_recent_published_version) {
+    //   version = item.most_recent_published_version;
+    // } else {
+    //   version = item.draft_version;
+    // }
+    // for now, let's always use draft versions
+    version = item.draft_version;
+
     if (!version) {
       throw new Error("Failed to get version for dandiset");
     }

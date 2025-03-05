@@ -18,9 +18,11 @@ export const useDandisetVersionInfo = (
     setDandisetVersionInfo(null);
     if (!dandisetResponse) return;
     (async () => {
-      const { most_recent_published_version, draft_version } =
-        dandisetResponse || {};
-      const V = most_recent_published_version || draft_version;
+      // const { most_recent_published_version, draft_version } =
+      const { draft_version } = dandisetResponse || {};
+      // const V = most_recent_published_version || draft_version;
+      // for now, let's always use draft versions
+      const V = draft_version;
       const dsVersion = dandisetVersion || (V ? V.version : "draft");
       const dvi = await fetchDandisetVersionInfo(
         dandisetId || "",
