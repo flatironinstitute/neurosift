@@ -23,6 +23,7 @@ import { SearchModeToggle } from "./components/SearchModeToggle";
 import { DandisetSearchResultItem, DandisetsResponse } from "./dandi-types";
 import doDandiSemanticSearch from "./doDandiSemanticSearch";
 import { useNeurodataTypesIndex } from "./hooks/useNeurodataTypesIndex";
+import { useDandisetNotebooks } from "./hooks/useDandisetNotebooks";
 import { doAdvancedSearch } from "./services/doAdvancedSearch";
 
 type DandiPageProps = {
@@ -56,6 +57,9 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
     currentLimit: 10,
     scheduledSearch: false,
   });
+
+  // Get notebook URLs for all dandisets
+  const { notebookUrls } = useDandisetNotebooks();
 
   const { searchText, useSemanticSearch, useAdvancedSearch } = searchState;
 
@@ -302,7 +306,11 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
         )}
         <Box>
           {searchResults.map((result: DandisetSearchResultItem) => (
-            <DandisetSearchResult dandiset={result} key={result.identifier} />
+            <DandisetSearchResult
+              dandiset={result}
+              key={result.identifier}
+              notebookUrls={notebookUrls[result.identifier]}
+            />
           ))}
           {(useSemanticSearch || useAdvancedSearch) &&
             searchResults.length > 0 &&

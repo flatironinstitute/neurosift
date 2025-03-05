@@ -1,5 +1,8 @@
 # Changes
 
+## March 5, 2025
+- Added notebook buttons to dataset pages, showing links from notebook-tagged notes
+
 # March 4, 2025
 - Use JavaScript for NWB usage scripts rather than loading from precomputed usage.py
 

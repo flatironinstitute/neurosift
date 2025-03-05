@@ -1,10 +1,11 @@
-import { Box, Typography } from "@mui/material";
-import DandisetAnnotations from "./components/DandisetAnnotations";
 import ScrollY from "@components/ScrollY";
-import { FunctionComponent, useState } from "react";
-import { DandisetVersionInfo } from "../DandiPage/dandi-types";
-import { useNavigate } from "react-router-dom";
+import { MenuBook } from "@mui/icons-material";
+import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import { formatBytes } from "@shared/util/formatBytes";
+import { FunctionComponent, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { DandisetVersionInfo } from "../DandiPage/dandi-types";
+import DandisetAnnotations from "./components/DandisetAnnotations";
 
 type DandisetOverviewProps = {
   width: number;
@@ -14,6 +15,18 @@ type DandisetOverviewProps = {
   numFilesLoaded: number;
 };
 
+const findNotebookUrls = (annotations: any[]): string[] => {
+  const notebookNotes =
+    annotations?.filter((note) => note.tags?.includes("notebook")) || [];
+
+  return notebookNotes
+    .map((note) => {
+      const firstLine = note.data.content.split("\n")[0].trim();
+      return firstLine.startsWith("http") ? firstLine : undefined;
+    })
+    .filter((url): url is string => url !== undefined);
+};
+
 const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
   width,
   height,
@@ -21,6 +34,12 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
   incomplete,
   numFilesLoaded,
 }) => {
+  const [notebookUrls, setNotebookUrls] = useState<string[]>([]);
+
+  const handleAnnotationsUpdate = (annotations: any[]) => {
+    const urls = findNotebookUrls(annotations);
+    setNotebookUrls(urls);
+  };
   const navigate = useNavigate();
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [contributorsExpanded, setContributorsExpanded] = useState(false);
@@ -58,8 +77,8 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
           {dandisetVersionInfo.metadata.name}
         </Typography>
 
-        {/* View on DANDI */}
-        <Box sx={{ mt: 2 }}>
+        {/* View on DANDI and Notebooks */}
+        <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 2 }}>
           <a
             href={`https://dandiarchive.org/dandiset/${dandisetVersionInfo.dandiset.identifier}/${dandisetVersionInfo.version}`}
             target="_blank"
@@ -68,6 +87,19 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
           >
             View on DANDI →
           </a>
+          {notebookUrls.map((url) => (
+            <Tooltip key={url} title={`Open notebook at ${url}`}>
+              <IconButton
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                size="small"
+                color="primary"
+              >
+                <MenuBook />
+              </IconButton>
+            </Tooltip>
+          ))}
         </Box>
 
         {/* Description */}
@@ -242,6 +274,7 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
         {/* Notes */}
         <DandisetAnnotations
           dandisetId={dandisetVersionInfo.dandiset.identifier}
+          onAnnotationsUpdate={handleAnnotationsUpdate}
         />
       </div>
     </ScrollY>

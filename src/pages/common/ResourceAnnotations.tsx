@@ -8,11 +8,13 @@ import NewAnnotationForm from "./NewAnnotationForm";
 interface ResourceAnnotationsProps {
   targetType: string;
   tags: string[];
+  onAnnotationsUpdate?: (annotations: any[]) => void;
 }
 
 const ResourceAnnotations: React.FC<ResourceAnnotationsProps> = ({
   targetType,
   tags,
+  onAnnotationsUpdate,
 }) => {
   const [showNewForm, setShowNewForm] = useState(false);
   const {
@@ -33,6 +35,12 @@ const ResourceAnnotations: React.FC<ResourceAnnotationsProps> = ({
     };
     fetchUserId();
   }, [getCurrentUserId]);
+
+  useEffect(() => {
+    if (annotations) {
+      onAnnotationsUpdate?.(annotations);
+    }
+  }, [annotations, onAnnotationsUpdate]);
 
   const handleDelete = async (id: string) => {
     await deleteAnnotation(id);

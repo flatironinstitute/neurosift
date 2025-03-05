@@ -1,4 +1,12 @@
-import { Paper, Typography, Box, Chip } from "@mui/material";
+import {
+  Paper,
+  Typography,
+  Box,
+  Chip,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import { MenuBook } from "@mui/icons-material";
 import { DandisetAdvancedSearchResult } from "./dandi-types";
 import { useNavigate } from "react-router-dom";
 
@@ -10,9 +18,10 @@ import { formatBytes } from "@shared/util/formatBytes";
 
 type Props = {
   dandiset: DandisetAdvancedSearchResult;
+  notebookUrls?: string[];
 };
 
-const DandisetSearchResult = ({ dandiset }: Props) => {
+const DandisetSearchResult = ({ dandiset, notebookUrls }: Props) => {
   const navigate = useNavigate();
   const version =
     dandiset.most_recent_published_version || dandiset.draft_version;
@@ -53,7 +62,7 @@ const DandisetSearchResult = ({ dandiset }: Props) => {
         </Typography>
       </Box>
       {version && (
-        <Box sx={{ display: "flex", gap: 4 }}>
+        <Box sx={{ display: "flex", gap: 4, alignItems: "center" }}>
           <Typography variant="body2">Version: {version.version}</Typography>
           <Typography variant="body2">
             Files: {version.asset_count}
@@ -69,6 +78,20 @@ const DandisetSearchResult = ({ dandiset }: Props) => {
           <Typography variant="body2">
             Size: {formatBytes(version.size)}
           </Typography>
+          {notebookUrls?.map((url) => (
+            <Tooltip key={url} title={`Open notebook at ${url}`}>
+              <IconButton
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                size="small"
+                color="primary"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MenuBook />
+              </IconButton>
+            </Tooltip>
+          ))}
         </Box>
       )}
       {dandiset.embargo_status !== "OPEN" && (
