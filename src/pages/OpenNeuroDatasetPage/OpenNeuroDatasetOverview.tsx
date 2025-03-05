@@ -1,5 +1,5 @@
 import { Box, Typography, Divider, IconButton, Tooltip } from "@mui/material";
-import { FunctionComponent, useState } from "react";
+import { FunctionComponent, useCallback, useState } from "react";
 import { MenuBook } from "@mui/icons-material";
 import ResourceAnnotations from "../common/ResourceAnnotations";
 import ScrollY from "@components/ScrollY";
@@ -32,11 +32,11 @@ const OpenNeuroDatasetOverview: FunctionComponent<
   const [notebookUrls, setNotebookUrls] = useState<string[]>([]);
   const [, setAnnotations] = useState<any[]>([]);
 
-  const handleAnnotationsUpdate = (annotations: any[]) => {
+  const handleAnnotationsUpdate = useCallback((annotations: any[]) => {
     setAnnotations(annotations);
     const urls = findNotebookUrls(annotations);
     setNotebookUrls(urls);
-  };
+  }, []);
 
   // Register AI overview component
   useRegisterOpenNeuroDatasetOverviewAIComponent({

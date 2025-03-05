@@ -2,7 +2,7 @@ import ScrollY from "@components/ScrollY";
 import { MenuBook } from "@mui/icons-material";
 import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import { formatBytes } from "@shared/util/formatBytes";
-import { FunctionComponent, useState } from "react";
+import { FunctionComponent, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DandisetVersionInfo } from "../DandiPage/dandi-types";
 import DandisetAnnotations from "./components/DandisetAnnotations";
@@ -36,10 +36,10 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
 }) => {
   const [notebookUrls, setNotebookUrls] = useState<string[]>([]);
 
-  const handleAnnotationsUpdate = (annotations: any[]) => {
+  const handleAnnotationsUpdate = useCallback((annotations: any[]) => {
     const urls = findNotebookUrls(annotations);
     setNotebookUrls(urls);
-  };
+  }, []);
   const navigate = useNavigate();
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [contributorsExpanded, setContributorsExpanded] = useState(false);
