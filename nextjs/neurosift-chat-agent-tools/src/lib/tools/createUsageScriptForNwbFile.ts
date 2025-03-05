@@ -159,7 +159,10 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
     group: RemoteH5Group;
   }[] = [];
 
-  const processContainerGroup = async (containerGroup: RemoteH5Group, containerGroupExpression: string) => {
+  const processContainerGroup = async (
+    containerGroup: RemoteH5Group,
+    containerGroupExpression: string,
+  ) => {
     for (const x of containerGroup.subgroups) {
       const group = await getHdf5Group(nwbUrl, x.path);
       if (group && x.attrs.neurodata_type) {
@@ -174,12 +177,12 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
           description,
           group,
         });
-        if (["ProcessingModule", "LFP"].includes(neurodataType)) {
+        if (["ProcessingModule", "LFP", "Fluorescence", "ImageSegmentation"].includes(neurodataType)) {
           await processContainerGroup(group, objectExpression);
         }
       }
     }
-  }
+  };
   for (const group of moduleGroups) {
     await processContainerGroup(group, `nwb.${nameFromPath(group.path)}`);
   }
@@ -189,7 +192,7 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
     s += `${obj.variableName} = ${obj.objectExpression} # (${obj.neurodataType}) ${obj.description}\n`;
 
     // TimeSeries or ElectricalSeries
-    if (["TimeSeries", "ElectricalSeries"].includes(obj.neurodataType)) {
+    if (["TimeSeries", "ElectricalSeries", "RoiResponseSeries"].includes(obj.neurodataType)) {
       const dataDataset = obj.group.datasets.find((x) => x.name === "data");
 
       if (dataDataset) {
@@ -202,7 +205,8 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
         (x) => x.name === "electrodes",
       );
       if (electrodesDataset) {
-        const electrodesDatasetNeurodataType = electrodesDataset.attrs.neurodata_type;
+        const electrodesDatasetNeurodataType =
+          electrodesDataset.attrs.neurodata_type;
         s += `electrodes = ${obj.variableName}.electrodes # (${electrodesDatasetNeurodataType}) num. electrodes: ${electrodesDataset.shape[0]}\n`;
         if (electrodesDatasetNeurodataType === "DynamicTableRegion") {
           s += `# This is a reference into the nwb.ec_electrodes table and can be used in the same way\n`;
@@ -239,6 +243,29 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
       }
     }
 
+    if (["OnePhotonSeries", "TwoPhotonSeries"].includes(obj.neurodataType)) {
+      // TODO: handle imaging plane more thoroughly. Example: https://neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/193fee16-550e-4a8f-aab8-2383f6d57a03/download/&dandisetId=001174&dandisetVersion=draft
+      s += `${obj.variableName}.imaging_plane # (ImagingPlane)\n`;
+      const dataDataset = obj.group.datasets.find((x) => x.name === "data");
+      if (dataDataset) {
+        if (dataDataset.shape.length === 3) {
+          s += `${obj.variableName}.data # (h5py.Dataset) shape ${shapeToString(dataDataset.shape)} [ num_frames, num_rows, num_columns ]; dtype ${dataDataset.dtype}\n`;
+        } else {
+          s += `${obj.variableName}.data # (h5py.Dataset) shape ${shapeToString(dataDataset.shape)}; dtype ${dataDataset.dtype}\n`;
+        }
+      }
+    }
+
+    if (["PlaneSegmentation"].includes(obj.neurodataType)) {
+      const imageMaskDataset = await getHdf5Dataset(
+        nwbUrl,
+        `${obj.group.path}/image_mask`,
+      );
+      if (imageMaskDataset) {
+        s += `${obj.variableName}["image_mask"].data # (h5py.Dataset) shape ${shapeToString(imageMaskDataset.shape)} [ num_masks, num_rows, num_columns ]; dtype ${imageMaskDataset.dtype}\n`;
+      }
+    }
+
     // timestamps or starting time (applies to anything that has timestamps or starting_time)
     const timestampsDataset = obj.group.datasets.find(
       (x) => x.name === "timestamps",
@@ -249,15 +276,22 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
     if (timestampsDataset) {
       s += `${obj.variableName}.timestamps # (h5py.Dataset) shape ${shapeToString(timestampsDataset.shape)}; dtype ${timestampsDataset.dtype}\n`;
     } else if (startingTimeDataset) {
-      s += `${obj.variableName}.starting_time # ${await getDatasetValueString(nwbUrl, startingTimeDataset.path)}\n`;
-      s += `${obj.variableName}.rate # ${await getDatasetAttrString(nwbUrl, startingTimeDataset.path, "rate")}\n`;
+      s += `${obj.variableName}.starting_time # ${await getDatasetValueString(nwbUrl, startingTimeDataset.path)} sec\n`;
+      s += `${obj.variableName}.rate # ${await getDatasetAttrString(nwbUrl, startingTimeDataset.path, "rate")} Hz\n`;
     }
   }
 
   // extracellular ephys electrodes
-  const handleECElectrodes = async (expression: string, ecElectrodesGroup: RemoteH5Group, typeName: string) => {
+  const handleECElectrodes = async (
+    expression: string,
+    ecElectrodesGroup: RemoteH5Group,
+    typeName: string,
+  ) => {
     try {
-      const idDataset = await getHdf5Dataset(nwbUrl, "/general/extracellular_ephys/electrodes/id");
+      const idDataset = await getHdf5Dataset(
+        nwbUrl,
+        "/general/extracellular_ephys/electrodes/id",
+      );
       if (!idDataset) return;
       const colnames = ecElectrodesGroup.attrs.colnames;
       if (!colnames) {
@@ -266,7 +300,11 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
       if (!Array.isArray(colnames)) {
         throw new Error("electrodes group colnames attribute is not an array");
       }
-      const idData = await getHdf5DatasetData(nwbUrl, "/general/extracellular_ephys/electrodes/id", {});
+      const idData = await getHdf5DatasetData(
+        nwbUrl,
+        "/general/extracellular_ephys/electrodes/id",
+        {},
+      );
       if (!idData) {
         throw new Error("Unable to load electrodes/id dataset data");
       }
@@ -276,21 +314,29 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
       s += `electrodes.colnames # (Tuple[str]) (${colnames.map((x) => `"${x}"`).join(", ")})\n`;
       s += `electrode_ids = electrodes["id"].data[:] # len(electrode_ids) == ${numElectrodes} (number of electrodes is ${numElectrodes})\n`;
       for (const colname of colnames) {
-        const dataset = ecElectrodesGroup.datasets.find((x) => x.name === colname);
+        const dataset = ecElectrodesGroup.datasets.find(
+          (x) => x.name === colname,
+        );
         if (!dataset) {
           throw new Error(`Unable to find dataset for column ${colname}`);
         }
         s += `electrodes["${colname}"].data[:] # (np.ndarray) shape ${shapeToString(dataset.shape)}; dtype ${dataset.dtype}; ${dataset.attrs.description}\n`;
       }
-    }
-    catch (e) {
+    } catch (e) {
       console.error("Problem loading extracellular ephys electrodes");
       console.error(e);
     }
-  }
-  const ecElectrodesGroup = await getHdf5Group(nwbUrl, "/general/extracellular_ephys/electrodes");
+  };
+  const ecElectrodesGroup = await getHdf5Group(
+    nwbUrl,
+    "/general/extracellular_ephys/electrodes",
+  );
   if (ecElectrodesGroup) {
-    await handleECElectrodes("nwb.ec_electrodes", ecElectrodesGroup, "DynamicTable");
+    await handleECElectrodes(
+      "nwb.ec_electrodes",
+      ecElectrodesGroup,
+      "DynamicTable",
+    );
   }
 
   // units

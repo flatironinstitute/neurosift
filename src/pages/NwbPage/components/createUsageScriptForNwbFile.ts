@@ -177,7 +177,14 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
           description,
           group,
         });
-        if (["ProcessingModule", "LFP"].includes(neurodataType)) {
+        if (
+          [
+            "ProcessingModule",
+            "LFP",
+            "Fluorescence",
+            "ImageSegmentation",
+          ].includes(neurodataType)
+        ) {
           await processContainerGroup(group, objectExpression);
         }
       }
@@ -192,7 +199,11 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
     s += `${obj.variableName} = ${obj.objectExpression} # (${obj.neurodataType}) ${obj.description}\n`;
 
     // TimeSeries or ElectricalSeries
-    if (["TimeSeries", "ElectricalSeries"].includes(obj.neurodataType)) {
+    if (
+      ["TimeSeries", "ElectricalSeries", "RoiResponseSeries"].includes(
+        obj.neurodataType,
+      )
+    ) {
       const dataDataset = obj.group.datasets.find((x) => x.name === "data");
 
       if (dataDataset) {
@@ -243,6 +254,29 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
       }
     }
 
+    if (["OnePhotonSeries", "TwoPhotonSeries"].includes(obj.neurodataType)) {
+      // TODO: handle imaging plane more thoroughly. Example: https://neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/193fee16-550e-4a8f-aab8-2383f6d57a03/download/&dandisetId=001174&dandisetVersion=draft
+      s += `${obj.variableName}.imaging_plane # (ImagingPlane)\n`;
+      const dataDataset = obj.group.datasets.find((x) => x.name === "data");
+      if (dataDataset) {
+        if (dataDataset.shape.length === 3) {
+          s += `${obj.variableName}.data # (h5py.Dataset) shape ${shapeToString(dataDataset.shape)} [ num_frames, num_rows, num_columns ]; dtype ${dataDataset.dtype}\n`;
+        } else {
+          s += `${obj.variableName}.data # (h5py.Dataset) shape ${shapeToString(dataDataset.shape)}; dtype ${dataDataset.dtype}\n`;
+        }
+      }
+    }
+
+    if (["PlaneSegmentation"].includes(obj.neurodataType)) {
+      const imageMaskDataset = await getHdf5Dataset(
+        nwbUrl,
+        `${obj.group.path}/image_mask`,
+      );
+      if (imageMaskDataset) {
+        s += `${obj.variableName}["image_mask"].data # (h5py.Dataset) shape ${shapeToString(imageMaskDataset.shape)} [ num_masks, num_rows, num_columns ]; dtype ${imageMaskDataset.dtype}\n`;
+      }
+    }
+
     // timestamps or starting time (applies to anything that has timestamps or starting_time)
     const timestampsDataset = obj.group.datasets.find(
       (x) => x.name === "timestamps",
@@ -253,8 +287,8 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
     if (timestampsDataset) {
       s += `${obj.variableName}.timestamps # (h5py.Dataset) shape ${shapeToString(timestampsDataset.shape)}; dtype ${timestampsDataset.dtype}\n`;
     } else if (startingTimeDataset) {
-      s += `${obj.variableName}.starting_time # ${await getDatasetValueString(nwbUrl, startingTimeDataset.path)}\n`;
-      s += `${obj.variableName}.rate # ${await getDatasetAttrString(nwbUrl, startingTimeDataset.path, "rate")}\n`;
+      s += `${obj.variableName}.starting_time # ${await getDatasetValueString(nwbUrl, startingTimeDataset.path)} sec\n`;
+      s += `${obj.variableName}.rate # ${await getDatasetAttrString(nwbUrl, startingTimeDataset.path, "rate")} Hz\n`;
     }
   }
 
