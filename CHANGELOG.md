@@ -1,6 +1,7 @@
 # Changes
 
 ## March 5, 2025
+- Improve NWB python usage to include containers and ec_electrodes
 - Switch to always using draft versions of dandisets
 - Added notebook buttons to dataset pages, showing links from notebook-tagged notes
 
