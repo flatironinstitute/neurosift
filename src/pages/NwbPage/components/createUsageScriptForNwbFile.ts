@@ -183,6 +183,8 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
             "LFP",
             "Fluorescence",
             "ImageSegmentation",
+            "PupilTracking",
+            "EyeTracking",
           ].includes(neurodataType)
         ) {
           await processContainerGroup(group, objectExpression);
@@ -329,6 +331,17 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
     // Units
     if (obj.neurodataType === "Units") {
       handleUnits(obj.group, `${obj.objectExpression}`);
+    }
+
+    // Images
+    if (obj.neurodataType === "Images") {
+      for (const ds of obj.group.datasets) {
+        const nt = ds.attrs.neurodata_type;
+        const description = ds.attrs.description || "";
+        if (nt === "GrayscaleImage") {
+          s += `${obj.variableName}["${ds.name}"].data # (h5py.Dataset) shape ${shapeToString(ds.shape)}; dtype ${ds.dtype}; ${description}\n`;
+        }
+      }
     }
 
     // timestamps or starting time (applies to anything that has timestamps or starting_time)
