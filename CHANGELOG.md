@@ -1,5 +1,8 @@
 # Changes
 
+## March 7, 2025
+- Updated @niivue/niivue from 0.49.0 to 0.51.0
+
 ## March 5, 2025
 - Improve NWB python usage to include containers and ec_electrodes
 - Switch to always using draft versions of dandisets
