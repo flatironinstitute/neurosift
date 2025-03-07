@@ -29,7 +29,7 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
   path,
 }) => {
   // Default to Plotly view as it addresses the issues in the GitHub ticket
-  const [viewMode, setViewMode] = useState<ViewMode>("plotly");
+  const [viewMode, setViewMode] = useState<ViewMode>("canvas");
 
   // Get all hooks at the top level to avoid React hooks rules violations
   const { data: startTimeData } = useHdf5DatasetData(
@@ -265,8 +265,8 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
               }}
             >
               {viewMode === "canvas"
-                ? "Switch to Interactive View"
-                : "Switch to Simple View"}
+                ? "Switch to Plotly View"
+                : "Switch to Neurosift View"}
             </button>
           </div>
         </div>

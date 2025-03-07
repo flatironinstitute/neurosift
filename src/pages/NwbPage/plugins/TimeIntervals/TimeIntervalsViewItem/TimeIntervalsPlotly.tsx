@@ -19,134 +19,107 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
   labels,
   startTimes,
   stopTimes,
-  additionalData,
+  // additionalData,
 }) => {
+  // Get the visible time range from the context
+  const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
+
+  // Filter data points and shapes based on visible time range
+  const filteredStartTimes = useMemo(() => {
+    if (visibleStartTimeSec === undefined || visibleEndTimeSec === undefined) {
+      return startTimes;
+    }
+    return startTimes.filter((_, i) => {
+      // Include intervals that overlap with the visible range
+      return (
+        stopTimes[i] >= visibleStartTimeSec &&
+        startTimes[i] <= visibleEndTimeSec
+      );
+    });
+  }, [startTimes, stopTimes, visibleStartTimeSec, visibleEndTimeSec]);
+
+  const filteredStopTimes = useMemo(() => {
+    if (visibleStartTimeSec === undefined || visibleEndTimeSec === undefined) {
+      return stopTimes;
+    }
+    return stopTimes.filter((_, i) => {
+      return (
+        stopTimes[i] >= visibleStartTimeSec &&
+        startTimes[i] <= visibleEndTimeSec
+      );
+    });
+  }, [startTimes, stopTimes, visibleStartTimeSec, visibleEndTimeSec]);
+
+  const filteredLabels = useMemo(() => {
+    if (
+      !labels ||
+      visibleStartTimeSec === undefined ||
+      visibleEndTimeSec === undefined
+    ) {
+      return labels;
+    }
+    return labels.filter((_, i) => {
+      return (
+        stopTimes[i] >= visibleStartTimeSec &&
+        startTimes[i] <= visibleEndTimeSec
+      );
+    });
+  }, [labels, startTimes, stopTimes, visibleStartTimeSec, visibleEndTimeSec]);
+
+  // const filteredAdditionalData = useMemo(() => {
+  //   if (!additionalData || visibleStartTimeSec === undefined || visibleEndTimeSec === undefined) {
+  //     return additionalData;
+  //   }
+  //   const filtered: Record<string, any[]> = {};
+  //   Object.entries(additionalData).forEach(([key, values]) => {
+  //     filtered[key] = values.filter((_, i) => {
+  //       return stopTimes[i] >= visibleStartTimeSec && startTimes[i] <= visibleEndTimeSec;
+  //     });
+  //   });
+  //   return filtered;
+  // }, [additionalData, startTimes, stopTimes, visibleStartTimeSec, visibleEndTimeSec]);
+
   // Get distinct labels and assign them to rows
   const distinctLabels = useMemo(() => {
-    if (!labels) return [];
-    return Array.from(new Set(labels)).sort();
-  }, [labels]);
-
-  // Create a simple scatter plot with invisible points for hover
-  const scatterData = useMemo(() => {
-    if (!labels || distinctLabels.length === 0) {
-      // Single row case
-      const hoverTexts = startTimes.map((start, i) => {
-        return `Start: ${start.toFixed(3)}<br>Stop: ${stopTimes[i].toFixed(3)}<br>Duration: ${(stopTimes[i] - start).toFixed(3)}`;
-      });
-
-      return [
-        {
-          x: startTimes.map((_, i) => (startTimes[i] + stopTimes[i]) / 2), // Center of interval
-          y: Array(startTimes.length).fill(0.3), // Position in the middle of the rectangle
-          mode: "markers",
-          marker: { opacity: 0 }, // Invisible markers
-          text: hoverTexts,
-          hoverinfo: "text",
-          showlegend: false,
-        },
-      ];
-    }
-
-    // Create a trace for each distinct label
-    return distinctLabels.map((label, rowIndex) => {
-      // Find all intervals with this label
-      const indices = [];
-      for (let i = 0; i < labels.length; i++) {
-        if (labels[i] === label) {
-          indices.push(i);
-        }
-      }
-
-      // Create hover text with all available data
-      const hoverTexts = indices.map((i) => {
-        let text = `Label: ${labels[i]}<br>Start: ${startTimes[i].toFixed(3)}<br>Stop: ${stopTimes[i].toFixed(3)}<br>Duration: ${(stopTimes[i] - startTimes[i]).toFixed(3)}`;
-
-        // Add any additional data columns
-        if (additionalData) {
-          Object.entries(additionalData).forEach(([key, values]) => {
-            if (values[i] !== undefined) {
-              text += `<br>${key}: ${values[i]}`;
-            }
-          });
-        }
-
-        return text;
-      });
-
-      // Calculate the y-position for hover points based on the rectangle position
-      const rectHeight = 0.4 / distinctLabels.length;
-      const yPos = 0.1 + rowIndex * rectHeight + rectHeight / 2; // Middle of the rectangle
-
-      return {
-        x: indices.map((i) => (startTimes[i] + stopTimes[i]) / 2), // Center of interval
-        y: Array(indices.length).fill(yPos),
-        mode: "markers",
-        marker: { opacity: 0 }, // Invisible markers
-        text: hoverTexts,
-        hoverinfo: "text",
-        name: label,
-      };
-    });
-  }, [labels, startTimes, stopTimes, distinctLabels, additionalData]);
+    if (!filteredLabels) return [];
+    return Array.from(new Set(filteredLabels)).sort();
+  }, [filteredLabels]);
 
   // Create shapes for the intervals
   const shapes = useMemo(() => {
     const result: Partial<Shape>[] = [];
 
-    if (!labels || distinctLabels.length === 0) {
-      // Single row case
-      for (let i = 0; i < startTimes.length; i++) {
-        result.push({
-          type: "rect",
-          x0: startTimes[i],
-          x1: stopTimes[i],
-          y0: 0.0, // Start at y=0
-          y1: 0.4, // Height of rectangle
-          fillcolor: "rgba(100, 100, 100, 0.7)",
-          line: {
-            width: 1,
-            color: "rgba(70, 70, 70, 0.9)",
-          },
-          layer: "below" as const,
-        });
-      }
-    } else {
-      // Multiple labels case - stack them vertically just above the x-axis
-      const rectHeight = 0.4 / distinctLabels.length; // Divide vertical space
+    if (!filteredStartTimes || !filteredStopTimes || !filteredLabels)
+      return result;
 
-      for (let i = 0; i < startTimes.length; i++) {
-        if (!labels[i]) continue;
+    for (let i = 0; i < filteredStartTimes.length; i++) {
+      if (!filteredLabels[i]) continue;
 
-        const rowIndex = distinctLabels.indexOf(labels[i]);
-        if (rowIndex === -1) continue;
+      const rowIndex = distinctLabels.indexOf(filteredLabels[i]);
+      if (rowIndex === -1) continue;
 
-        // Calculate vertical position based on label
-        const y0 = 0.0 + rowIndex * rectHeight;
-        const y1 = y0 + rectHeight;
+      // Calculate vertical position based on label
+      const y0 = 0.0 + rowIndex;
+      const y1 = y0 + 1;
 
-        result.push({
-          type: "rect",
-          x0: startTimes[i],
-          x1: stopTimes[i],
-          y0: y0,
-          y1: y1,
-          fillcolor: lightColors[rowIndex % lightColors.length],
-          line: {
-            width: 1,
-            color: darkenColor(lightColors[rowIndex % lightColors.length]),
-          },
-          layer: "below" as const,
-          opacity: 0.7,
-        });
-      }
+      result.push({
+        type: "rect",
+        x0: filteredStartTimes[i],
+        x1: filteredStopTimes[i],
+        y0: y0,
+        y1: y1,
+        fillcolor: lightColors[rowIndex % lightColors.length],
+        line: {
+          width: 1,
+          color: darkenColor(lightColors[rowIndex % lightColors.length]),
+        },
+        layer: "below" as const,
+        opacity: 0.7,
+      });
     }
 
     return result;
-  }, [labels, startTimes, stopTimes, distinctLabels]);
-
-  // Get the visible time range from the context
-  const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
+  }, [filteredLabels, filteredStartTimes, filteredStopTimes, distinctLabels]);
 
   // Layout configuration
   const layout: Partial<Layout> = useMemo(
@@ -186,12 +159,12 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
         tickvals: distinctLabels.map((_, i) => i),
         ticktext: distinctLabels,
         // Position all rectangles just above the x-axis
-        range: [0, distinctLabels.length > 0 ? 0.9 : 0.4],
+        range: [0, distinctLabels.length],
         zeroline: false, // Remove the zero line
         showticklabels: false, // Hide y-axis tick labels
         showline: false, // Hide the y-axis line
       },
-      hovermode: "closest",
+      hovermode: "x unified",
       showlegend: true,
       legend: {
         orientation: "h",
@@ -215,7 +188,7 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
 
   return (
     <Plot
-      data={scatterData}
+      data={[]}
       layout={layout}
       config={{
         displayModeBar: true,

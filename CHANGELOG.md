@@ -2,6 +2,8 @@
 
 ## March 7, 2025
 - Updated @niivue/niivue from 0.49.0 to 0.51.0
+- Enhanced TimeIntervals visualization to filter data based on visible time range
+- Fix hover functionality to TimeIntervals plot to display additional data and interval information
 
 ## March 5, 2025
 - Improve NWB python usage to include containers and ec_electrodes
