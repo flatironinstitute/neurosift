@@ -70,9 +70,10 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
 
         nv.setSliceType(viewType);
         setLoading(false);
-      } catch (err) {
+      } catch (err: any) {
+        console.error(err);
         setError(
-          err instanceof Error ? err.message : "Failed to load NIFTI file",
+          `Failed to load NIFTI file: ${err.message || "An unknown error occurred"}`,
         );
         setLoading(false);
       }
