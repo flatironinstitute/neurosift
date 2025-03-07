@@ -4,6 +4,7 @@
 - Updated @niivue/niivue from 0.49.0 to 0.51.0
 - Enhanced TimeIntervals visualization to filter data based on visible time range
 - Fix hover functionality to TimeIntervals plot to display additional data and interval information
+- Fixed hover-over effect for time intervals in TimeIntervalsPlotly component (Issue #286)
 
 ## March 5, 2025
 - Improve NWB python usage to include containers and ec_electrodes

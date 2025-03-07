@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useTimeRange } from "@shared/context-timeseries-selection-2";
-import { Layout, Shape } from "plotly.js";
+import { Data, Layout, Shape } from "plotly.js";
 import { FunctionComponent, useMemo } from "react";
 import Plot from "react-plotly.js";
 
@@ -19,7 +19,7 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
   labels,
   startTimes,
   stopTimes,
-  // additionalData,
+  additionalData,
 }) => {
   // Get the visible time range from the context
   const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
@@ -66,18 +66,31 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
     });
   }, [labels, startTimes, stopTimes, visibleStartTimeSec, visibleEndTimeSec]);
 
-  // const filteredAdditionalData = useMemo(() => {
-  //   if (!additionalData || visibleStartTimeSec === undefined || visibleEndTimeSec === undefined) {
-  //     return additionalData;
-  //   }
-  //   const filtered: Record<string, any[]> = {};
-  //   Object.entries(additionalData).forEach(([key, values]) => {
-  //     filtered[key] = values.filter((_, i) => {
-  //       return stopTimes[i] >= visibleStartTimeSec && startTimes[i] <= visibleEndTimeSec;
-  //     });
-  //   });
-  //   return filtered;
-  // }, [additionalData, startTimes, stopTimes, visibleStartTimeSec, visibleEndTimeSec]);
+  const filteredAdditionalData = useMemo(() => {
+    if (
+      !additionalData ||
+      visibleStartTimeSec === undefined ||
+      visibleEndTimeSec === undefined
+    ) {
+      return additionalData;
+    }
+    const filtered: Record<string, any[]> = {};
+    Object.entries(additionalData).forEach(([key, values]) => {
+      filtered[key] = values.filter((_, i) => {
+        return (
+          stopTimes[i] >= visibleStartTimeSec &&
+          startTimes[i] <= visibleEndTimeSec
+        );
+      });
+    });
+    return filtered;
+  }, [
+    additionalData,
+    startTimes,
+    stopTimes,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+  ]);
 
   // Get distinct labels and assign them to rows
   const distinctLabels = useMemo(() => {
@@ -164,7 +177,7 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
         showticklabels: false, // Hide y-axis tick labels
         showline: false, // Hide the y-axis line
       },
-      hovermode: "x unified",
+      hovermode: "closest",
       showlegend: true,
       legend: {
         orientation: "h",
@@ -186,9 +199,99 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
     ],
   );
 
+  // Create data traces for each distinct label
+  const plotData = useMemo(() => {
+    if (!filteredLabels || !filteredStartTimes || !filteredStopTimes)
+      return [] as Data[];
+
+    // Create a data trace for each distinct label
+    return distinctLabels.map((label, labelIndex) => {
+      // Find all intervals with this label
+      const indices = filteredLabels
+        .map((l, i) => (l === label ? i : -1))
+        .filter((i) => i !== -1);
+
+      // Create arrays for x and y coordinates - each interval needs both start and end points
+      const xValues: number[] = [];
+      const yValues: number[] = [];
+      const hoverTexts: string[] = [];
+
+      // For each interval with this label, add its start and end points
+      indices.forEach((i) => {
+        const startTime = filteredStartTimes[i];
+        const stopTime = filteredStopTimes[i];
+        const midTime = (startTime + stopTime) / 2;
+
+        // Add midpoint of the interval to show hover info
+        xValues.push(midTime);
+        yValues.push(labelIndex + 0.5); // Center of the row
+
+        // Create hover text with interval details
+        let hoverText =
+          `<b>${label}</b><br>` +
+          `Start: ${startTime.toFixed(3)}s<br>` +
+          `End: ${stopTime.toFixed(3)}s<br>` +
+          `Duration: ${(stopTime - startTime).toFixed(3)}s`;
+
+        // Add any additional data to hover text, excluding the label field itself
+        if (filteredAdditionalData) {
+          Object.entries(filteredAdditionalData).forEach(([key, values]) => {
+            // Skip the field that contains the label itself and any "labels" field
+            if (
+              values[i] !== undefined &&
+              key !== "labels" &&
+              values[i] !== label
+            ) {
+              hoverText += `<br>${key}: ${values[i]}`;
+            }
+          });
+        }
+
+        hoverTexts.push(hoverText);
+      });
+
+      return {
+        x: xValues,
+        y: yValues,
+        text: hoverTexts,
+        name: label,
+        mode: "markers" as const,
+        type: "scatter" as const,
+        marker: {
+          color: lightColors[labelIndex % lightColors.length],
+          size: 1, // Very small marker
+          symbol: "circle",
+          opacity: 0.0, // Completely transparent
+        },
+        line: {
+          color: lightColors[labelIndex % lightColors.length],
+          width: 0, // No line
+        },
+        fill: "toself",
+        fillcolor: lightColors[labelIndex % lightColors.length],
+        legendgroup: label,
+        hoverinfo: "text" as const,
+        hoverlabel: {
+          bgcolor: "#FFF",
+          bordercolor: darkenColor(
+            lightColors[labelIndex % lightColors.length],
+          ),
+          font: { family: "Arial", size: 12 },
+        },
+        showlegend: true,
+      } as Data;
+    });
+  }, [
+    filteredLabels,
+    filteredStartTimes,
+    filteredStopTimes,
+    distinctLabels,
+    filteredAdditionalData,
+  ]);
+
   return (
     <Plot
-      data={[]}
+      data={plotData}
       layout={layout}
       config={{
         displayModeBar: true,

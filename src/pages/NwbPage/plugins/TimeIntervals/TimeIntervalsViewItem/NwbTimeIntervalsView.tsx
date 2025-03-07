@@ -28,8 +28,8 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
   nwbUrl,
   path,
 }) => {
-  // Default to Plotly view as it addresses the issues in the GitHub ticket
-  const [viewMode, setViewMode] = useState<ViewMode>("canvas");
+  // Default to Plotly view now that we've fixed the hover functionality
+  const [viewMode, setViewMode] = useState<ViewMode>("plotly");
 
   // Get all hooks at the top level to avoid React hooks rules violations
   const { data: startTimeData } = useHdf5DatasetData(
