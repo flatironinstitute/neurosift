@@ -9,6 +9,8 @@ import {
   InputLabel,
 } from "@mui/material";
 import { Niivue, SLICE_TYPE } from "@niivue/niivue";
+import { getRedirectUrl, isDandiAssetUrl } from "@hdf5Interface";
+import getAuthorizationHeaderForUrl from "../../../../../util/getAuthorizationHeaderForUrl";
 
 interface NiftiViewerProps {
   fileUrl: string;
@@ -61,9 +63,22 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
         setLoading(true);
         setError(null);
 
+        let redirectUrl: string | null = fileUrl;
+        if (isDandiAssetUrl(fileUrl)) {
+          const authorizationHeader = getAuthorizationHeaderForUrl(fileUrl);
+          const headers = authorizationHeader
+            ? { Authorization: authorizationHeader }
+            : undefined;
+          redirectUrl = await getRedirectUrl(fileUrl, headers);
+          if (!redirectUrl) {
+            throw new Error("Failed to get redirect URL");
+          }
+          console.info(`Redirecting to: ${redirectUrl}`);
+        }
+
         await nv.loadVolumes([
           {
-            url: fileUrl,
+            url: redirectUrl,
             colormap: "gray",
           },
         ]);

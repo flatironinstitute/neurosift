@@ -306,7 +306,7 @@ const getResolvedUrl = async (url: string): Promise<{ url: string }> => {
   return { url };
 };
 
-const isDandiAssetUrl = (url: string) => {
+export const isDandiAssetUrl = (url: string) => {
   if (url.startsWith("https://api-staging.dandiarchive.org/")) {
     return true;
   }
@@ -339,7 +339,7 @@ const headRequest = async (url: string, headers?: any) => {
   return response;
 };
 
-const getRedirectUrl = async (url: string, headers: any) => {
+export const getRedirectUrl = async (url: string, headers: any) => {
   // const response = await fetch(url, {
   //   method: "HEAD",
   //   headers,
@@ -360,6 +360,9 @@ const getRedirectUrl = async (url: string, headers: any) => {
   if (response.url) {
     const redirectUrl = response.url;
     return redirectUrl;
+  } else {
+    console.warn(`No redirect for ${url}`);
+    return null;
   }
 
   // if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
