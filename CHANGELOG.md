@@ -1,5 +1,9 @@
 # Changes
 
+## March 8, 2025
+- Added caching system to useQueryAssets for improved performance when loading DANDI assets
+- Added "Load more files" button to DandisetPage that exponentially loads pages (1->2->4->8), with file count indicator showing loaded/total files
+
 ## March 7, 2025
 - Updated @niivue/niivue from 0.49.0 to 0.51.0
 - Enhanced TimeIntervals visualization to filter data based on visible time range
