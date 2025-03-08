@@ -1,15 +1,24 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { getRedirectUrl, isDandiAssetUrl } from "@hdf5Interface";
 import {
   Box,
-  LinearProgress,
-  Typography,
-  Select,
-  MenuItem,
+  Button,
+  Checkbox,
   FormControl,
-  InputLabel,
+  FormControlLabel,
+  LinearProgress,
+  MenuItem,
+  Select,
+  Typography,
 } from "@mui/material";
-import { Niivue, SLICE_TYPE } from "@niivue/niivue";
-import { getRedirectUrl, isDandiAssetUrl } from "@hdf5Interface";
+import { Niivue, SHOW_RENDER } from "@niivue/niivue";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import getAuthorizationHeaderForUrl from "../../../../../util/getAuthorizationHeaderForUrl";
 
 interface NiftiViewerProps {
@@ -18,17 +27,6 @@ interface NiftiViewerProps {
   height?: number;
 }
 
-// Using NiiVue's built-in slice types
-const ViewType = {
-  Axial: SLICE_TYPE.AXIAL,
-  Coronal: SLICE_TYPE.CORONAL,
-  Sagittal: SLICE_TYPE.SAGITTAL,
-  Multiplanar: SLICE_TYPE.MULTIPLANAR,
-  Render: SLICE_TYPE.RENDER,
-} as const;
-
-type ViewTypeValue = (typeof ViewType)[keyof typeof ViewType];
-
 const NiftiViewer: React.FC<NiftiViewerProps> = ({
   fileUrl,
   width = 800,
@@ -36,13 +34,38 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
 }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [sliceType, setSliceType] = useState<number>(3); // Default to A+C+S+R
+  const [normalizeGraph, setNormalizeGraph] = useState<boolean>(false);
+  const [perVolumeRange, setPerVolumeRange] = useState<boolean>(false);
+  const [perVolumeContrast, setPerVolumeContrast] = useState<boolean>(false);
+  const [currentVolume, setCurrentVolume] = useState<number>(0);
   const canvasId = useMemo(
     () => `gl-canvas-${Math.random().toString(36).slice(2, 11)}`,
     [],
   );
-  const [viewType, setViewType] = useState<ViewTypeValue>(ViewType.Multiplanar);
   const niivueRef = useRef<Niivue | null>(null);
   const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
+
+  const handleFrameChange = useCallback(
+    (volume: any, index: any) => {
+      if (!perVolumeContrast || !volume) return;
+      volume.calMinMax(index);
+      if (niivueRef.current) {
+        niivueRef.current.updateGLVolume();
+        const str = `frame ${index} intensity ${volume.cal_min.toFixed(2)}..${volume.cal_max.toFixed(2)}`;
+        console.log(str);
+      }
+    },
+    [perVolumeContrast],
+  );
+
+  const [locationString, setLocationString] = useState<string>("");
+
+  function handleLocationChange(data: any) {
+    if (data.string) {
+      setLocationString(data.string);
+    }
+  }
 
   // Initialize NiiVue viewer
   useEffect(() => {
@@ -50,15 +73,10 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
       return;
     }
 
-    const nv = new Niivue({
-      dragAndDropEnabled: true,
-    });
-
-    niivueRef.current = nv;
-    nv.attachTo(canvasId);
-
     // Load the volume
     const loadVolume = async () => {
+      // sleep for 3 seconds
+      await new Promise((resolve) => setTimeout(resolve, 3000));
       try {
         setLoading(true);
         setError(null);
@@ -76,14 +94,29 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
           console.info(`Redirecting to: ${redirectUrl}`);
         }
 
-        await nv.loadVolumes([
+        const volumeList1 = [
           {
             url: redirectUrl,
-            colormap: "gray",
+            name: "volume.nii.gz",
+            limitFrames4D: 5,
           },
-        ]);
+        ];
+        const nv1 = new Niivue({
+          onLocationChange: handleLocationChange,
+          onFrameChange: handleFrameChange,
+          logLevel: "debug",
+        } as any);
+        nv1.attachTo(canvasId);
+        nv1.setRadiologicalConvention(false);
+        nv1.setSliceType(nv1.sliceTypeMultiplanar);
+        nv1.graph.autoSizeMultiplanar = true;
+        nv1.opts.multiplanarShowRender = SHOW_RENDER.ALWAYS;
+        nv1.graph.normalizeValues = false;
+        nv1.graph.opacity = 1.0;
 
-        nv.setSliceType(viewType);
+        await nv1.loadVolumes(volumeList1);
+
+        niivueRef.current = nv1;
         setLoading(false);
       } catch (err: any) {
         console.error(err);
@@ -96,26 +129,15 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
 
     loadVolume();
 
+    // Cleanup function
     return () => {
       if (niivueRef.current) {
         // Clear all volumes and dispose of WebGL resources
         niivueRef.current.volumes = [];
         niivueRef.current.drawScene();
-        niivueRef.current = null;
       }
     };
-  }, [fileUrl, canvasId, viewType, canvas]);
-
-  // Update view type when changed
-  useEffect(() => {
-    if (niivueRef.current) {
-      niivueRef.current.setSliceType(viewType);
-    }
-  }, [viewType]);
-
-  const handleViewTypeChange = (event: { target: { value: string } }) => {
-    setViewType(Number(event.target.value) as ViewTypeValue);
-  };
+  }, [fileUrl, canvasId, canvas, handleFrameChange]);
 
   if (error) {
     return (
@@ -124,6 +146,11 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
       </Box>
     );
   }
+
+  // Helper function to safely get nFrame4D
+  const getNFrame4D = () => {
+    return niivueRef.current?.volumes[0]?.nFrame4D ?? 0;
+  };
 
   return (
     <Box sx={{ width, p: 2 }}>
@@ -134,20 +161,124 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
             <LinearProgress />
           </div>
         ) : (
-          <FormControl sx={{ minWidth: 200 }}>
-            <InputLabel>View Type</InputLabel>
-            <Select
-              value={viewType.toString()}
-              onChange={handleViewTypeChange}
-              label="View Type"
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              flexWrap: "wrap",
+            }}
+          >
+            <FormControl size="small">
+              <Select
+                value={sliceType}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  setSliceType(value);
+                  if (niivueRef.current) {
+                    niivueRef.current.setSliceType(value);
+                  }
+                }}
+                sx={{ minWidth: 120 }}
+              >
+                <MenuItem value={0}>Axial</MenuItem>
+                <MenuItem value={1}>Coronal</MenuItem>
+                <MenuItem value={2}>Sagittal</MenuItem>
+                <MenuItem value={4}>Render</MenuItem>
+                <MenuItem value={3}>A+C+S+R</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={normalizeGraph}
+                  onChange={(e) => {
+                    setNormalizeGraph(e.target.checked);
+                    if (niivueRef.current) {
+                      niivueRef.current.graph.normalizeValues =
+                        e.target.checked;
+                      niivueRef.current.updateGLVolume();
+                    }
+                  }}
+                />
+              }
+              label="normalize graph"
+            />
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={perVolumeRange}
+                  onChange={(e) => {
+                    setPerVolumeRange(e.target.checked);
+                    if (niivueRef.current) {
+                      niivueRef.current.graph.isRangeCalMinMax =
+                        e.target.checked;
+                      niivueRef.current.updateGLVolume();
+                    }
+                  }}
+                />
+              }
+              label="per-volume graph range"
+            />
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={perVolumeContrast}
+                  onChange={(e) => {
+                    setPerVolumeContrast(e.target.checked);
+                    if (niivueRef.current?.volumes[0]) {
+                      handleFrameChange(
+                        niivueRef.current.volumes[0],
+                        currentVolume,
+                      );
+                    }
+                  }}
+                />
+              }
+              label="per-volume contrast"
+            />
+
+            <Button
+              onClick={() => {
+                const volume = niivueRef.current?.volumes[0];
+                if (!volume) return;
+                const newVol = Math.max(0, currentVolume - 1);
+                setCurrentVolume(newVol);
+                niivueRef.current?.setFrame4D(volume.id, newVol);
+              }}
             >
-              <MenuItem value={SLICE_TYPE.AXIAL}>Axial</MenuItem>
-              <MenuItem value={SLICE_TYPE.CORONAL}>Coronal</MenuItem>
-              <MenuItem value={SLICE_TYPE.SAGITTAL}>Sagittal</MenuItem>
-              <MenuItem value={SLICE_TYPE.MULTIPLANAR}>Multiplanar</MenuItem>
-              <MenuItem value={SLICE_TYPE.RENDER}>3D Render</MenuItem>
-            </Select>
-          </FormControl>
+              back
+            </Button>
+
+            <Button
+              onClick={() => {
+                const volume = niivueRef.current?.volumes[0];
+                if (!volume) return;
+                const newVol = Math.min(currentVolume + 1, getNFrame4D() - 1);
+                setCurrentVolume(newVol);
+                niivueRef.current?.setFrame4D(volume.id, newVol);
+              }}
+            >
+              forward
+            </Button>
+
+            <Button
+              onClick={() => {
+                const volume = niivueRef.current?.volumes[0];
+                if (!volume) return;
+                const total = volume.nTotalFrame4D;
+                const current = volume.nFrame4D;
+                alert(
+                  `4D images can be slow to load. Click the '...' icon below the graph to see the entire dataset. Currently displaying ${current} of ${total} frames.`,
+                );
+              }}
+            >
+              about
+            </Button>
+          </Box>
         )}
       </Box>
       <Box sx={{ position: "relative", height }}>
@@ -161,6 +292,13 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
           }}
         />
       </Box>
+      {!loading && (
+        <Box sx={{ mt: 1, p: 1, borderTop: "1px solid #ccc" }}>
+          <Typography variant="body2" color="textSecondary">
+            {locationString || "Click image to see voxel information"}
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 };
