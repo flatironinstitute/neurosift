@@ -1,5 +1,5 @@
+import { Alert, Box, Button } from "@mui/material";
 import { FunctionComponent, useState } from "react";
-import { Box, Button, Alert, Typography } from "@mui/material";
 import { DatasetPluginProps } from "../pluginInterface";
 import NiftiViewer from "./components/NiftiViewer";
 
