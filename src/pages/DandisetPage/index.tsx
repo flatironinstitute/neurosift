@@ -291,8 +291,6 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
         width={0}
         height={0}
         dandisetVersionInfo={dandisetVersionInfo}
-        incomplete={incomplete}
-        numFilesLoaded={allAssets ? allAssets.length : 0}
       />
       <DatasetWorkspace
         width={0}

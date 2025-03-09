@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import ScrollY from "@components/ScrollY";
 import { MenuBook } from "@mui/icons-material";
 import { Box, IconButton, Tooltip, Typography } from "@mui/material";
@@ -11,8 +12,6 @@ type DandisetOverviewProps = {
   width: number;
   height: number;
   dandisetVersionInfo: DandisetVersionInfo;
-  incomplete: boolean;
-  numFilesLoaded: number;
 };
 
 const findNotebookUrls = (annotations: any[]): string[] => {
@@ -31,8 +30,6 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
   width,
   height,
   dandisetVersionInfo,
-  incomplete,
-  numFilesLoaded,
 }) => {
   const [notebookUrls, setNotebookUrls] = useState<string[]>([]);
 
@@ -189,10 +186,6 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
             <div>
               Number of Subjects:{" "}
               {dandisetVersionInfo.metadata.assetsSummary.numberOfSubjects}
-            </div>
-            <div>
-              {numFilesLoaded} files loaded{" "}
-              {incomplete && "(showing partial list)"}
             </div>
           </Box>
         </Box>

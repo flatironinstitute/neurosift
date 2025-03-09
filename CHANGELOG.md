@@ -1,6 +1,8 @@
 # Changes
 
 ## March 8, 2025
+- Added experimental lazy loading implementation for DANDI assets with `?lazy=true` URL parameter
+## March 8, 2025
 - Added caching system to useQueryAssets for improved performance when loading DANDI assets
 - Added "Load more files" button to DandisetPage that exponentially loads pages (1->2->4->8), with file count indicator showing loaded/total files
 
