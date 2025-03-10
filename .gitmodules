@@ -1,0 +1,3 @@
+[submodule "src/pages/common/DatasetWorkspace/plugins/nifti/components/niivue_dist"]
+	path = src/pages/common/DatasetWorkspace/plugins/nifti/components/niivue_dist
+	url = https://github.com/magland/tmp_niivue_dist

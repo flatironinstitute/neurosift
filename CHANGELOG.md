@@ -2,6 +2,7 @@
 
 ## March 10, 2025
 - Added plot-vision mcp
+- Added niivue_dist git submodule for NIFTI visualization
 
 ## March 8, 2025
 - Added lazy loading implementation for DANDI assets on Dandiset page

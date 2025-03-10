@@ -11,7 +11,7 @@ import {
   Select,
   Typography,
 } from "@mui/material";
-import { Niivue, SHOW_RENDER } from "@niivue/niivue";
+import { Niivue, SHOW_RENDER } from "./niivue_dist";
 import React, {
   useCallback,
   useEffect,
