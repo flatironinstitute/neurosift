@@ -73,13 +73,16 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
       return;
     }
 
+    let nv1: Niivue | null = null;
+
     // Load the volume
     const loadVolume = async () => {
-      // sleep for 3 seconds
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      // sleep for 0.5 seconds
+      await new Promise((resolve) => setTimeout(resolve, 500));
       try {
         setLoading(true);
         setError(null);
+        niivueRef.current = null;
 
         let redirectUrl: string | null = fileUrl;
         if (isDandiAssetUrl(fileUrl)) {
@@ -101,7 +104,7 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
             limitFrames4D: 5,
           },
         ];
-        const nv1 = new Niivue({
+        nv1 = new Niivue({
           onLocationChange: handleLocationChange,
           onFrameChange: handleFrameChange,
           logLevel: "debug",
@@ -131,10 +134,8 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
 
     // Cleanup function
     return () => {
-      if (niivueRef.current) {
-        // Clear all volumes and dispose of WebGL resources
-        niivueRef.current.volumes = [];
-        niivueRef.current.drawScene();
+      if (nv1) {
+        // need to clean up the viewer (not sure how to do that)
       }
     };
   }, [fileUrl, canvasId, canvas, handleFrameChange]);

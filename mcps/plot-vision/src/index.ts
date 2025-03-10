@@ -57,7 +57,7 @@ class PlotVisionServer {
       tools: [
         {
           name: 'analyze_plot',
-          description: 'Analyze a scientific plot using GPT-4 Vision',
+          description: 'Analyze a scientific plot using an LLM',
           inputSchema: {
             type: 'object',
             properties: {
@@ -103,7 +103,7 @@ class PlotVisionServer {
         const response = await axios.post(
           'https://openrouter.ai/api/v1/chat/completions',
           {
-            model: 'anthropic/claude-3-opus',
+            model: 'anthropic/claude-3.5-sonnet',
             messages: [
               {
                 role: 'system',
