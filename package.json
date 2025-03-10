@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "postinstall": "git submodule update --init --recursive",
     "dev": "./devel/generate_build_info.sh && vite",
     "build": "./devel/generate_build_info.sh && tsc -b && vite build",
     "lint": "eslint .",
