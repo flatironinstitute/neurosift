@@ -8,20 +8,16 @@ const NiftiView: FunctionComponent<DatasetPluginProps> = ({
   width,
   height,
 }) => {
-  const [loadState, setLoadState] = useState<
-    "initial" | "confirmed" | "attempted_bypass"
-  >("initial");
+  const [loadState, setLoadState] = useState<"initial" | "confirmed">(
+    "initial",
+  );
   const fileUrl = file.urls[0];
   const fileSizeMB = file.size / (1024 * 1024);
   const isLargeFile = fileSizeMB > 100;
   const isVeryLargeFile = fileSizeMB > 2000;
 
   const handleConfirm = () => {
-    if (isVeryLargeFile) {
-      setLoadState("attempted_bypass");
-    } else {
-      setLoadState("confirmed");
-    }
+    setLoadState("confirmed");
   };
 
   return (
@@ -59,7 +55,7 @@ const NiftiView: FunctionComponent<DatasetPluginProps> = ({
               sx={{ mt: 2 }}
             >
               {isVeryLargeFile
-                ? "Bypass Warning"
+                ? "Bypass Warning (not recommended)"
                 : isLargeFile
                   ? "Load Anyway"
                   : "Load"}
@@ -74,28 +70,6 @@ const NiftiView: FunctionComponent<DatasetPluginProps> = ({
               ? "Loading large files may impact performance."
               : "Click to proceed with loading the file."}
           </>
-        </Alert>
-      ) : loadState === "attempted_bypass" ? (
-        <Alert
-          severity="warning"
-          sx={{
-            p: 4,
-            m: 4,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            fontSize: "1.2rem",
-            "& .MuiAlert-message": {
-              fontSize: "1.2rem",
-              textAlign: "center",
-              mb: 2,
-            },
-            maxWidth: 500,
-          }}
-        >
-          Actually just kidding, I&apos;m not going to let you load that file
-          because {fileSizeMB.toFixed(1)} MB is too big. If you really want to
-          load this file, file an issue or create a PR.
         </Alert>
       ) : (
         <NiftiViewer
