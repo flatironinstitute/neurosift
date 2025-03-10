@@ -1,8 +1,10 @@
 # Changes
 
+## March 10, 2025
+- Added plot-vision mcp
+
 ## March 8, 2025
-- Added lazy loading implementation for DANDI assets with `?lazy=true` URL parameter
-## March 8, 2025
+- Added lazy loading implementation for DANDI assets on Dandiset page
 - Added caching system to useQueryAssets for improved performance when loading DANDI assets
 - Added "Load more files" button to DandisetPage that exponentially loads pages (1->2->4->8), with file count indicator showing loaded/total files
 
