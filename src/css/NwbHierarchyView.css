@@ -54,3 +54,22 @@
     display: inline-block;
     text-align: center;
 }
+
+/* Partial load indicator */
+.nwb-hierarchy-partial-load {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    border: 1px solid #ffeeba;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nwb-hierarchy-partial-load::before {
+    content: "⚠️";
+    font-size: 1rem;
+}

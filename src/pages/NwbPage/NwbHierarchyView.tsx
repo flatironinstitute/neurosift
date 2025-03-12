@@ -30,7 +30,8 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
   defaultUnitsPath,
   onSetDefaultUnitsPath,
 }) => {
-  const { neurodataObjects, loading } = useNeurodataObjects(nwbUrl);
+  const { neurodataObjects, loading, partialLoad } =
+    useNeurodataObjects(nwbUrl);
   const [visiblyExpanded, setVisiblyExpanded] = useState<{
     [path: string]: boolean | undefined;
   }>({ "/": true });
@@ -442,6 +443,12 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
 
   return (
     <div style={{ margin: "10px" }}>
+      {partialLoad && (
+        <div className="nwb-hierarchy-partial-load">
+          Only a subset of objects is being shown because there are too many
+          objects to load.
+        </div>
+      )}
       {selectedItems.size > 0 && (
         <div style={{ marginBottom: "10px", display: "flex", gap: "10px" }}>
           {onOpenObjectInNewTab && (

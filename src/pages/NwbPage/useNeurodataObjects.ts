@@ -26,11 +26,14 @@ export const useNeurodataObjects = (nwbUrl: string) => {
   );
   const [loading, setLoading] = useState<boolean>(false);
 
+  const [partialLoad, setPartialLoad] = useState<boolean>(false);
+
   // update all the neurodata objects in a breadth-first manner
   useEffect(() => {
     let canceled = false;
     const groupTree: GroupTreeNode[] = [];
     const datasetsTree: Hdf5Dataset[] = [];
+    let partialLoad = false;
     const updateNeurodataObjects = () => {
       const objects: NeurodataObject[] = [];
       const expandGroup = (
@@ -84,6 +87,7 @@ export const useNeurodataObjects = (nwbUrl: string) => {
       });
       expandGroup(rootGroup.group, objects[0]);
       setNeurodataObjects(objects);
+      setPartialLoad(partialLoad);
     };
     (async () => {
       setLoading(true);
@@ -106,7 +110,11 @@ export const useNeurodataObjects = (nwbUrl: string) => {
         const node = queue.shift();
         if (!node) continue;
         const group = node.group;
-        for (const sg of group.subgroups) {
+        let subgroups = group.subgroups.slice(0, 200);
+        if (subgroups.length < group.subgroups.length) {
+          partialLoad = true;
+        }
+        for (const sg of subgroups) {
           const grp = await getHdf5Group(nwbUrl, sg.path);
           if (canceled) return;
           if (!grp) continue;
@@ -121,7 +129,7 @@ export const useNeurodataObjects = (nwbUrl: string) => {
           datasetsTree.push(ds);
         }
         const elapsed = Date.now() - timer;
-        if (elapsed > 100) {
+        if (elapsed > 2000) {
           updateNeurodataObjects();
           timer = Date.now();
         }
@@ -138,5 +146,6 @@ export const useNeurodataObjects = (nwbUrl: string) => {
   return {
     neurodataObjects,
     loading,
+    partialLoad,
   };
 };
