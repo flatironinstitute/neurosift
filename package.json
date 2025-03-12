@@ -18,7 +18,6 @@
     "@fi-sci/splitter": "^0.0.3",
     "@mui/icons-material": "^6.4.2",
     "@mui/material": "^6.4.2",
-    "@niivue/niivue": "^0.51.0",
     "@types/plotly.js": "^2.35.2",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@vercel/analytics": "^1.4.1",

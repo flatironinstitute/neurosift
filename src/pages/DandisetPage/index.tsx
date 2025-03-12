@@ -52,11 +52,15 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
 
   // todo: set dandisetVersion to route if not there yet
 
-  const [maxNumPages] = useState(1);
+  const [maxNumPages, setMaxNumPages] = useState(1);
   const [nwbFilesOnly, setNwbFilesOnly] = useState(false);
-  const { assetsResponses, incomplete } = useQueryAssets(
+
+  const handleLoadMore = useCallback(() => {
+    setMaxNumPages((prev) => prev * 2);
+  }, []);
+  const { assetsResponses, incomplete, totalCount } = useQueryAssets(
     effectiveDandisetId,
-    maxNumPages,
+    maxNumPages, // numPages parameter (using existing state variable)
     dandisetResponse || null,
     dandisetVersionInfo,
     staging,
@@ -216,24 +220,49 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
     return false;
   }, [allAssets, nwbFilesOnly, incomplete]);
 
-  const mainTabAdditionalControls = nwbFilesOwnlyControlVisible ? (
-    <label
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "5px",
-        fontSize: "14px",
-        cursor: "pointer",
-      }}
-    >
-      <input
-        type="checkbox"
-        checked={nwbFilesOnly}
-        onChange={(e) => setNwbFilesOnly(e.target.checked)}
-      />
-      Show NWB files only
-    </label>
-  ) : undefined;
+  const mainTabAdditionalControls = (
+    <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
+      {nwbFilesOwnlyControlVisible && (
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            fontSize: "14px",
+            cursor: "pointer",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={nwbFilesOnly}
+            onChange={(e) => setNwbFilesOnly(e.target.checked)}
+          />
+          Show NWB files only
+        </label>
+      )}
+      {incomplete && (
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span style={{ fontSize: "14px" }}>
+            {allAssets ? allAssets.length : 0} / {totalCount || "?"} files
+          </span>
+          <button
+            onClick={handleLoadMore}
+            style={{
+              padding: "4px 12px",
+              fontSize: "14px",
+              cursor: "pointer",
+              backgroundColor: "#007bff",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+            }}
+          >
+            Load more files
+          </button>
+        </div>
+      )}
+    </div>
+  );
 
   const [searchParams] = useSearchParams();
   const initialTabId = searchParams.get("tab");
@@ -262,8 +291,6 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
         width={0}
         height={0}
         dandisetVersionInfo={dandisetVersionInfo}
-        incomplete={incomplete}
-        numFilesLoaded={allAssets ? allAssets.length : 0}
       />
       <DatasetWorkspace
         width={0}

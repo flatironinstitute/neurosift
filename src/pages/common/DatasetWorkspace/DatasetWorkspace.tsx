@@ -1,7 +1,7 @@
 import ScrollY from "@components/ScrollY";
 import { TAB_BAR_HEIGHT, TabBar } from "@components/tabs/TabBar";
 import { BaseTabAction } from "@components/tabs/tabsReducer";
-import { FunctionComponent, useEffect, useReducer } from "react";
+import { FunctionComponent, useEffect, useReducer, useRef } from "react";
 import { initializePlugins } from "./plugins/init";
 import { DatasetFile } from "./plugins/pluginInterface";
 import { findPluginsByFile } from "./plugins/registry";
@@ -46,9 +46,11 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
   });
 
   // Handle initial tab opening
+  const initialTabLoaded = useRef(false);
   useEffect(() => {
     const loadInitialTab = async () => {
       if (initialTab) {
+        if (initialTabLoaded.current) return;
         const pp = initialTab.split("|");
         const filePath = pp[0];
         const parentId = pp[1];
@@ -57,6 +59,7 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
           console.error(`Failed to find file for path: ${filePath}`);
           return;
         }
+        initialTabLoaded.current = true;
         dispatch({ type: "OPEN_TAB", file });
       }
     };

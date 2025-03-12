@@ -1,9 +1,19 @@
 # Changes
 
+## March 10, 2025
+- Added plot-vision mcp
+- Added niivue_dist git submodule for NIFTI visualization
+
+## March 8, 2025
+- Added lazy loading implementation for DANDI assets on Dandiset page
+- Added caching system to useQueryAssets for improved performance when loading DANDI assets
+- Added "Load more files" button to DandisetPage that exponentially loads pages (1->2->4->8), with file count indicator showing loaded/total files
+
 ## March 7, 2025
 - Updated @niivue/niivue from 0.49.0 to 0.51.0
 - Enhanced TimeIntervals visualization to filter data based on visible time range
 - Fix hover functionality to TimeIntervals plot to display additional data and interval information
+- Fixed hover-over effect for time intervals in TimeIntervalsPlotly component (Issue #286)
 
 ## March 5, 2025
 - Improve NWB python usage to include containers and ec_electrodes

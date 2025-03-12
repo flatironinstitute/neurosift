@@ -24,7 +24,7 @@ import { AIComponentRegistryProvider } from "./ai-integration/AIComponentRegistr
 import { sendUrlUpdate } from "./ai-integration/messaging/windowMessaging";
 import AnnotationsPage from "./pages/AnnotationsPage/AnnotationsPage";
 import DandiPage from "./pages/DandiPage/DandiPage";
-import DandisetPage from "./pages/DandisetPage";
+import DandisetPageContainer from "./pages/DandisetPage/DandisetPageContainer";
 import EdfPage from "./pages/EdfPage/EdfPage";
 import GuidePage from "./pages/GuidePage/GuidePage";
 import HomePage from "./pages/HomePage/HomePage";
@@ -318,7 +318,9 @@ const AppContent = () => {
           />
           <Route
             path="/dandiset/:dandisetId"
-            element={<DandisetPage width={width} height={mainHeight} />}
+            element={
+              <DandisetPageContainer width={width} height={mainHeight} />
+            }
           />
           <Route
             path="/openneuro"

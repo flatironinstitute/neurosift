@@ -1,5 +1,5 @@
+import { Alert, Box, Button } from "@mui/material";
 import { FunctionComponent, useState } from "react";
-import { Box, Button, Alert } from "@mui/material";
 import { DatasetPluginProps } from "../pluginInterface";
 import NiftiViewer from "./components/NiftiViewer";
 
@@ -8,17 +8,21 @@ const NiftiView: FunctionComponent<DatasetPluginProps> = ({
   width,
   height,
 }) => {
-  const [userConfirmedLoad, setUserConfirmedLoad] = useState(false);
+  const [loadState, setLoadState] = useState<"initial" | "confirmed">(
+    "initial",
+  );
   const fileUrl = file.urls[0];
-  const isLargeFile = file.size > 100 * 1024 * 1024; // 100 MB
+  const fileSizeMB = file.size / (1024 * 1024);
+  const isLargeFile = fileSizeMB > 100;
+  const isVeryLargeFile = fileSizeMB > 2000;
 
   const handleConfirm = () => {
-    setUserConfirmedLoad(true);
+    setLoadState("confirmed");
   };
 
   return (
     <Box sx={{ width: "100%", height: "100%", overflow: "auto" }}>
-      {!userConfirmedLoad ? (
+      {loadState === "initial" ? (
         <Alert
           severity={isLargeFile ? "warning" : "info"}
           sx={{
@@ -50,17 +54,22 @@ const NiftiView: FunctionComponent<DatasetPluginProps> = ({
               onClick={handleConfirm}
               sx={{ mt: 2 }}
             >
-              {isLargeFile ? "Load Anyway" : "Load"}
+              {isVeryLargeFile
+                ? "Bypass Warning (not recommended)"
+                : isLargeFile
+                  ? "Load Anyway"
+                  : "Load"}
             </Button>
           }
         >
-          This NIFTI file is {(file.size / (1024 * 1024)).toFixed(1)} MB in
-          size.
-          <br />
-          <br />
-          {isLargeFile
-            ? "Loading large files may impact performance."
-            : "Click to proceed with loading the file."}
+          <>
+            This NIFTI file is {fileSizeMB.toFixed(1)} MB in size.
+            <br />
+            <br />
+            {isLargeFile || isVeryLargeFile
+              ? "Loading large files may impact performance."
+              : "Click to proceed with loading the file."}
+          </>
         </Alert>
       ) : (
         <NiftiViewer
