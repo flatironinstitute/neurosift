@@ -76,7 +76,7 @@ const AnnotationItem: React.FC<{
             backgroundColor: "action.hover",
           },
         }}
-        onClick={() => !isEditing && setExpanded(!expanded)}
+        onClick={() => !isEditing && annotation.type !== "chat" && setExpanded(!expanded)}
       >
         <Box sx={{ flexGrow: 1 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: "medium" }}>
