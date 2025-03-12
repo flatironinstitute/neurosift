@@ -27,6 +27,7 @@ interface AnnotationUpdate {
 }
 
 export const useResourceAnnotations = (
+  annotationType: string,
   targetType: string | undefined,
   tags: string[],
 ) => {
@@ -50,7 +51,7 @@ export const useResourceAnnotations = (
       if (targetType) {
         q += `&targetType=${targetType}`;
       }
-      q += `&type=note`;
+      q += `&type=${annotationType}`;
       const response = await fetch(
         `${ANNOTATION_API_BASE_URL}/annotations?${q}`,
         {
@@ -98,7 +99,7 @@ export const useResourceAnnotations = (
           },
           body: JSON.stringify({
             title,
-            type: "note",
+            type: annotationType,
             targetType,
             tags: tagsUnstringified,
             data: { content },

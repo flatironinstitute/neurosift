@@ -25,7 +25,7 @@ const ResourceAnnotations: React.FC<ResourceAnnotationsProps> = ({
     deleteAnnotation,
     updateAnnotation,
     getCurrentUserId,
-  } = useResourceAnnotations(targetType, tags);
+  } = useResourceAnnotations("note", targetType, tags);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>();
 
   useEffect(() => {

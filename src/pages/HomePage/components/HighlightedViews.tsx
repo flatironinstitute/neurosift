@@ -4,9 +4,11 @@ import { useResourceAnnotations } from "../../common/useResourceAnnotations";
 import ExpandableAnnotationCard from "./ExpandableAnnotationCard";
 
 const HighlightedViews: React.FC<{ width: number }> = ({ width }) => {
-  const { annotations, isLoading, error } = useResourceAnnotations(undefined, [
-    "highlighted",
-  ]);
+  const { annotations, isLoading, error } = useResourceAnnotations(
+    "note",
+    undefined,
+    ["highlighted"],
+  );
 
   // Sort annotations by updatedAt, most recent first
   const sortedAnnotations = [...annotations].sort(
