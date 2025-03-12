@@ -1,5 +1,6 @@
 import React from "react";
 import ResourceAnnotations from "../../common/ResourceAnnotations";
+import { isInNeurosiftChat } from "src/ai-integration/messaging/windowMessaging";
 
 interface DandisetAnnotationsProps {
   dandisetId: string;
@@ -19,13 +20,15 @@ const DandisetAnnotations: React.FC<DandisetAnnotationsProps> = ({
         onAnnotationsUpdate={onNoteAnnotationsUpdate}
         expandBlobs={true}
       />
-      <ResourceAnnotations
-        annotationType="chat"
-        targetType="dandiset"
-        tags={[`dandiset:${dandisetId}`]}
-        onAnnotationsUpdate={undefined}
-        expandBlobs={false}
-      />
+      {isInNeurosiftChat() && (
+        <ResourceAnnotations
+          annotationType="chat"
+          targetType="dandiset"
+          tags={[`dandiset:${dandisetId}`]}
+          onAnnotationsUpdate={undefined}
+          expandBlobs={false}
+        />
+      )}
     </>
   );
 };
