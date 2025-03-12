@@ -177,11 +177,13 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
             <div>
               Total Size:{" "}
               {formatBytes(
-                dandisetVersionInfo.metadata.assetsSummary.numberOfBytes,
+                // dandisetVersionInfo.metadata.assetsSummary.numberOfBytes,
+                dandisetVersionInfo.size,
               )}
             </div>
             <div>
-              Files: {dandisetVersionInfo.metadata.assetsSummary.numberOfFiles}
+              {/* Files: {dandisetVersionInfo.metadata.assetsSummary.numberOfFiles} */}
+              Files: {dandisetVersionInfo.asset_count}
             </div>
             {/* <div>
               Number of Subjects:{" "}
