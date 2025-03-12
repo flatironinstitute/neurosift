@@ -53,6 +53,20 @@ export type AIContextUpdateMessage =
       url: string;
     };
 
+export type AISetChatMessage = {
+  type: "setChat";
+  chatJson: string;
+};
+
+export type AIRequestChatMessage = {
+  type: "requestChat";
+};
+
+export type AIReportChatMessage = {
+  type: "reportChat";
+  chatJson: string;
+};
+
 /**
  * Shape of messages received from parent window for callback execution
  */
@@ -65,10 +79,20 @@ export interface AICallbackMessage {
   };
 }
 
+export interface OtherMessage {
+  type: "reportNeurosiftChat";
+}
+
 /**
  * Union type of all possible message types
  */
-export type AIMessage = AIContextUpdateMessage | AICallbackMessage;
+export type AIMessage =
+  | AIContextUpdateMessage
+  | AICallbackMessage
+  | OtherMessage
+  | AISetChatMessage
+  | AIRequestChatMessage
+  | AIReportChatMessage;
 
 /**
  * Core functionality provided by the AI Component Registry

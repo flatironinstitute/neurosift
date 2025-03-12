@@ -1,5 +1,9 @@
 # Changes
 
+## March 12, 2025
+- Added blob storage system for large annotation content with expandable retrieval
+- Added single annotation endpoint with blob expansion support
+
 ## March 10, 2025
 - Added plot-vision mcp
 - Added niivue_dist git submodule for NIFTI visualization

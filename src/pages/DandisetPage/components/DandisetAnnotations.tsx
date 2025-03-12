@@ -3,19 +3,30 @@ import ResourceAnnotations from "../../common/ResourceAnnotations";
 
 interface DandisetAnnotationsProps {
   dandisetId: string;
-  onAnnotationsUpdate?: (annotations: any[]) => void;
+  onNoteAnnotationsUpdate?: (annotations: any[]) => void;
 }
 
 const DandisetAnnotations: React.FC<DandisetAnnotationsProps> = ({
   dandisetId,
-  onAnnotationsUpdate,
+  onNoteAnnotationsUpdate,
 }) => {
   return (
-    <ResourceAnnotations
-      targetType="dandiset"
-      tags={[`dandiset:${dandisetId}`]}
-      onAnnotationsUpdate={onAnnotationsUpdate}
-    />
+    <>
+      <ResourceAnnotations
+        annotationType="note"
+        targetType="dandiset"
+        tags={[`dandiset:${dandisetId}`]}
+        onAnnotationsUpdate={onNoteAnnotationsUpdate}
+        expandBlobs={true}
+      />
+      <ResourceAnnotations
+        annotationType="chat"
+        targetType="dandiset"
+        tags={[`dandiset:${dandisetId}`]}
+        onAnnotationsUpdate={undefined}
+        expandBlobs={false}
+      />
+    </>
   );
 };
 

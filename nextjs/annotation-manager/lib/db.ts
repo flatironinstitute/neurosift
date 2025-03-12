@@ -84,12 +84,44 @@ const userSchema = new mongoose.Schema<IUserDocument>({
 });
 
 // Update the updatedAt field on save
-userSchema.pre('save', function(next) {
+userSchema.pre('save', function(this: IUserDocument, next: () => void) {
   this.updatedAt = new Date();
   next();
 });
 
 // Annotation interface
+// Blob interface
+export interface IBlob {
+  id: string;
+  content: string;
+  annotationId: string;
+  createdAt: Date;
+}
+
+export type IBlobDocument = Document & IBlob;
+
+// Blob schema
+const blobSchema = new mongoose.Schema<IBlobDocument>({
+  id: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  content: {
+    type: String,
+    required: true
+  },
+  annotationId: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
 export interface IAnnotation {
   id: string;
   title: string;
@@ -146,7 +178,7 @@ const annotationSchema = new mongoose.Schema<IAnnotationDocument>({
 });
 
 // Update the updatedAt field on save
-annotationSchema.pre('save', function(next) {
+annotationSchema.pre('save', function(this: IAnnotationDocument, next: () => void) {
   this.updatedAt = new Date();
   next();
 });
@@ -159,5 +191,6 @@ annotationSchema.index({ type: 1 });
 
 export const User: Model<IUserDocument> = mongoose.models.User || mongoose.model('User', userSchema);
 export const Annotation: Model<IAnnotationDocument> = mongoose.models.Annotation || mongoose.model('Annotation', annotationSchema);
+export const Blob: Model<IBlobDocument> = mongoose.models.Blob || mongoose.model('Blob', blobSchema);
 
 export default connectDB;

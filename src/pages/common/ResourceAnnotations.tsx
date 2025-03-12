@@ -1,20 +1,29 @@
 import React, { useState, useEffect } from "react";
 import { Box, Typography, Button, Link } from "@mui/material";
 import { Add as AddIcon } from "@mui/icons-material";
-import { useResourceAnnotations } from "./useResourceAnnotations";
+import { Annotation, useResourceAnnotations } from "./useResourceAnnotations";
 import AnnotationsList from "./AnnotationsList";
 import NewAnnotationForm from "./NewAnnotationForm";
+import {
+  isInNeurosiftChat,
+  requestAndGetChatJsonFromNeurosiftChat,
+  sendSetChatMessage,
+} from "../../ai-integration/messaging/windowMessaging";
 
 interface ResourceAnnotationsProps {
+  annotationType: string;
   targetType: string;
   tags: string[];
   onAnnotationsUpdate?: (annotations: any[]) => void;
+  expandBlobs: boolean;
 }
 
 const ResourceAnnotations: React.FC<ResourceAnnotationsProps> = ({
+  annotationType,
   targetType,
   tags,
   onAnnotationsUpdate,
+  expandBlobs,
 }) => {
   const [showNewForm, setShowNewForm] = useState(false);
   const {
@@ -25,7 +34,8 @@ const ResourceAnnotations: React.FC<ResourceAnnotationsProps> = ({
     deleteAnnotation,
     updateAnnotation,
     getCurrentUserId,
-  } = useResourceAnnotations("note", targetType, tags);
+    loadAnnotationWithExpandedBlob,
+  } = useResourceAnnotations(annotationType, targetType, tags, { expandBlobs });
   const [currentUserId, setCurrentUserId] = useState<string | undefined>();
 
   useEffect(() => {
@@ -53,17 +63,52 @@ const ResourceAnnotations: React.FC<ResourceAnnotationsProps> = ({
     await updateAnnotation(id, updates);
   };
 
-  const handleSubmitNote = async (title: string, content: string) => {
+  const handleSubmitAnnotation = async (title: string, content: string) => {
     const success = await createAnnotation(title, content);
     if (success) {
       setShowNewForm(false);
     }
   };
 
+  const handleOpenChat = async (annotation: Annotation) => {
+    if (!isInNeurosiftChat()) {
+      window.alert("No Neurosift chat found. See https://chat.neurosift.app");
+      return;
+    }
+    const annotationExpanded = await loadAnnotationWithExpandedBlob(
+      annotation.id,
+    );
+    if (!annotationExpanded) {
+      return;
+    }
+    const chatContent = JSON.parse(annotationExpanded.data.content);
+    sendSetChatMessage(JSON.stringify(chatContent));
+  };
+
+  const handleAddChat = async () => {
+    if (!isInNeurosiftChat()) {
+      window.alert("No Neurosift chat found. See https://chat.neurosift.app");
+      return;
+    }
+    const chatJson = await requestAndGetChatJsonFromNeurosiftChat();
+    if (!chatJson) {
+      window.alert("No chat found in Neurosift chat");
+      return;
+    }
+    const chatTitle = prompt("Enter chat title");
+    if (!chatTitle) {
+      return;
+    }
+    const success = await createAnnotation(chatTitle, chatJson);
+    if (!success) {
+      window.alert("Failed to create chat");
+    }
+  };
+
   if (error) {
     return (
       <Typography color="error" sx={{ mt: 1 }}>
-        Error loading notes: {error}
+        Error loading annotations: {error}
       </Typography>
     );
   }
@@ -81,15 +126,32 @@ const ResourceAnnotations: React.FC<ResourceAnnotationsProps> = ({
         }}
       >
         <Typography variant="subtitle2" color="text.secondary">
-          Notes
+          {annotationType === "note"
+            ? "Notes"
+            : annotationType === "chat"
+              ? "Chats"
+              : "Annotations"}
         </Typography>
         {!showNewForm && hasApiKey && (
           <Button
             startIcon={<AddIcon />}
             size="small"
-            onClick={() => setShowNewForm(true)}
+            onClick={() => {
+              if (annotationType === "note") {
+                setShowNewForm(true);
+              } else if (annotationType === "chat") {
+                handleAddChat();
+              } else {
+                setShowNewForm(true);
+              }
+            }}
           >
-            Add Note
+            Add{" "}
+            {annotationType === "note"
+              ? "Note"
+              : annotationType === "chat"
+                ? "Chat"
+                : "Annotation"}
           </Button>
         )}
       </Box>
@@ -104,7 +166,8 @@ const ResourceAnnotations: React.FC<ResourceAnnotationsProps> = ({
 
       {showNewForm && (
         <NewAnnotationForm
-          onSubmit={handleSubmitNote}
+          annotationType={annotationType}
+          onSubmit={handleSubmitAnnotation}
           onCancel={() => setShowNewForm(false)}
         />
       )}
@@ -119,6 +182,7 @@ const ResourceAnnotations: React.FC<ResourceAnnotationsProps> = ({
           currentUserId={currentUserId}
           onDelete={handleDelete}
           onUpdate={handleUpdate}
+          onOpenChat={handleOpenChat}
         />
       )}
     </Box>

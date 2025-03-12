@@ -173,9 +173,11 @@ const OpenNeuroDatasetOverview: FunctionComponent<
         <Divider sx={{ my: 3 }} />
 
         <ResourceAnnotations
+          annotationType="note"
           targetType="openneuro_dataset"
           tags={[`openneuro:${datasetInfo.id}`]}
           onAnnotationsUpdate={handleAnnotationsUpdate}
+          expandBlobs={true}
         />
       </div>
     </ScrollY>

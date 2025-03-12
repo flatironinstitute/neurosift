@@ -8,6 +8,7 @@ const HighlightedViews: React.FC<{ width: number }> = ({ width }) => {
     "note",
     undefined,
     ["highlighted"],
+    { expandBlobs: true },
   );
 
   // Sort annotations by updatedAt, most recent first

@@ -33,7 +33,7 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
 }) => {
   const [notebookUrls, setNotebookUrls] = useState<string[]>([]);
 
-  const handleAnnotationsUpdate = useCallback((annotations: any[]) => {
+  const handleNoteAnnotationsUpdate = useCallback((annotations: any[]) => {
     const urls = findNotebookUrls(annotations);
     setNotebookUrls(urls);
   }, []);
@@ -271,7 +271,7 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
         {/* Notes */}
         <DandisetAnnotations
           dandisetId={dandisetVersionInfo.dandiset.identifier}
-          onAnnotationsUpdate={handleAnnotationsUpdate}
+          onNoteAnnotationsUpdate={handleNoteAnnotationsUpdate}
         />
       </div>
     </ScrollY>

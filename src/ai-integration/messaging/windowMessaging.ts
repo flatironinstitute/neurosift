@@ -2,7 +2,13 @@ import {
   AIContextUpdateMessage,
   AIMessage,
   AIRegisteredComponent,
+  AIRequestChatMessage,
+  AISetChatMessage,
 } from "../types";
+
+const globalNeurosiftChat = {
+  neurosiftChatReported: false,
+};
 
 /**
  * Sends an AI context update message to the parent window
@@ -29,6 +35,37 @@ export function sendContextUpdate(
   };
 
   window.parent.postMessage(message, "*");
+}
+
+export function sendSetChatMessage(chatJson: string): void {
+  if (window.parent === window) return;
+
+  const message: AISetChatMessage = {
+    type: "setChat",
+    chatJson,
+  };
+
+  window.parent.postMessage(message, "*");
+}
+
+let chatJsonReceived: string | null = null;
+export async function requestAndGetChatJsonFromNeurosiftChat(): Promise<
+  string | null
+> {
+  const message: AIRequestChatMessage = {
+    type: "requestChat",
+  };
+  chatJsonReceived = null;
+  window.parent.postMessage(message, "*");
+
+  const timer = Date.now();
+  while (!chatJsonReceived && Date.now() - timer < 5000) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  if (!chatJsonReceived) {
+    return null;
+  }
+  return chatJsonReceived;
 }
 
 export function sendUrlUpdate(url: string): void {
@@ -71,5 +108,13 @@ export function handleAIMessage(
 
     // Type assertion since parameters are validated by the parent window
     callback.callback(parameters as Record<string, unknown>);
+  } else if (event.data.type === "reportNeurosiftChat") {
+    globalNeurosiftChat.neurosiftChatReported = true;
+  } else if (event.data.type === "reportChat") {
+    chatJsonReceived = event.data.chatJson;
   }
 }
+
+export const isInNeurosiftChat = () => {
+  return globalNeurosiftChat.neurosiftChatReported;
+};

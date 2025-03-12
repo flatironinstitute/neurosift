@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
-import connectDB, { User, Annotation } from '../../../lib/db';
+import * as crypto from 'crypto';
+import connectDB, { User, Annotation, Blob, IAnnotationDocument } from '../../../lib/db';
 
 /**
  * Handle CORS preflight requests
@@ -36,8 +36,22 @@ export async function GET(request: NextRequest) {
     if (userId) query.userId = userId;
     if (tags && tags.length > 0) query.tags = { $all: tags };
 
-    const annotations = await Annotation.find(query).sort({ createdAt: -1 });
-    return NextResponse.json({ annotations });
+  const annotations = await Annotation.find(query).sort({ createdAt: -1 });
+  const expandBlobs = searchParams.get('expandBlobs') === 'true';
+  
+  const results = await Promise.all(annotations.map(async (annotation: IAnnotationDocument) => {
+    const result = annotation.toObject();
+    if (expandBlobs && typeof result.data === 'object' && result.data.content && result.data.content.startsWith('blob:')) {
+      const blobId = result.data.content.substring(5);
+      const blob = await Blob.findOne({ id: blobId });
+      if (blob) {
+        result.data.content = blob.content;
+      }
+    }
+    return result;
+  }));
+
+  return NextResponse.json({ annotations: results });
   } catch (error) {
     console.error('Error listing annotations:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
@@ -76,14 +90,32 @@ export async function POST(request: NextRequest) {
       return new NextResponse('Invalid targetType', { status: 400 });
     }
 
+    const annotationId = crypto.randomBytes(16).toString('hex');
+    let finalData = data;
+
+    // Check if data content is larger than 10000 bytes
+    if (typeof data === 'object' && data.content && Buffer.from(data.content).length > 10000) {
+      const blobId = crypto.randomBytes(16).toString('hex');
+      await Blob.create({
+        id: blobId,
+        content: data.content,
+        annotationId,
+        createdAt: new Date()
+      });
+      finalData = {
+        ...data,
+        content: `blob:${blobId}`
+      };
+    }
+
     const newAnnotation = await Annotation.create({
-      id: crypto.randomBytes(16).toString('hex'),
+      id: annotationId,
       title,
       type,
       userId: user.userId,
       targetType,
       tags: tags || [],
-      data
+      data: finalData
     });
 
     return NextResponse.json({ annotation: newAnnotation });
@@ -138,13 +170,41 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Update fields if provided
+    // Initialize update data
     const updateData: any = {};
     if (type) updateData.type = type;
     if (targetType) updateData.targetType = targetType;
     if (title) updateData.title = title;
     if (tags) updateData.tags = tags;
-    if (data) updateData.data = data;
+
+    // Handle blob update if data is provided
+    let finalData = data;
+    if (data !== undefined) {
+      // If current data is a blob, delete it
+      if (typeof annotation.data === 'object' && annotation.data.content && annotation.data.content.startsWith('blob:')) {
+        const oldBlobId = annotation.data.content.substring(5);
+        await Blob.deleteOne({ id: oldBlobId });
+      }
+
+      // If new data is large enough, create new blob
+      if (typeof data === 'object' && data.content && Buffer.from(data.content).length > 10000) {
+        const blobId = crypto.randomBytes(16).toString('hex');
+        await Blob.create({
+          id: blobId,
+          content: data.content,
+          annotationId: id,
+          createdAt: new Date()
+        });
+        finalData = {
+          ...data,
+          content: `blob:${blobId}`
+        };
+      }
+    }
+
+    if (data !== undefined) {
+      updateData.data = finalData;
+    }
 
     const updatedAnnotation = await Annotation.findOneAndUpdate(
       { id },
@@ -195,7 +255,15 @@ export async function DELETE(request: NextRequest) {
       return new NextResponse('Unauthorized - Not the annotation owner', { status: 403 });
     }
 
-    await Annotation.deleteOne({ id });
+    const existingAnnotation = await Annotation.findOne({ id });
+    if (existingAnnotation) {
+      // Check if the annotation data is a blob reference
+      if (typeof annotation.data === 'object' && annotation.data.content && annotation.data.content.startsWith('blob:')) {
+        const blobId = annotation.data.content.substring(5);
+        await Blob.deleteOne({ id: blobId });
+      }
+      await Annotation.deleteOne({ id });
+    }
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error('Error deleting annotation:', error);

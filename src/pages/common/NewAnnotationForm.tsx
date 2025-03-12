@@ -3,11 +3,13 @@ import { Box, Button, TextField, Typography } from "@mui/material";
 import ReactMarkdown from "react-markdown";
 
 interface NewAnnotationFormProps {
+  annotationType: string;
   onSubmit: (title: string, content: string) => Promise<void>;
   onCancel: () => void;
 }
 
 const NewAnnotationForm: React.FC<NewAnnotationFormProps> = ({
+  annotationType,
   onSubmit,
   onCancel,
 }) => {
@@ -98,7 +100,12 @@ const NewAnnotationForm: React.FC<NewAnnotationFormProps> = ({
           variant="contained"
           disabled={!title.trim() || !content.trim()}
         >
-          Add Note
+          Add{" "}
+          {annotationType === "note"
+            ? "Note"
+            : annotationType === "chat"
+              ? "Chat"
+              : "Annotation"}
         </Button>
       </Box>
     </Box>

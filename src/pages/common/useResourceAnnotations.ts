@@ -30,6 +30,9 @@ export const useResourceAnnotations = (
   annotationType: string,
   targetType: string | undefined,
   tags: string[],
+  o: {
+    expandBlobs?: boolean;
+  },
 ) => {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -52,6 +55,9 @@ export const useResourceAnnotations = (
         q += `&targetType=${targetType}`;
       }
       q += `&type=${annotationType}`;
+      if (o.expandBlobs) {
+        q += "&expandBlobs=true";
+      }
       const response = await fetch(
         `${ANNOTATION_API_BASE_URL}/annotations?${q}`,
         {
@@ -220,6 +226,41 @@ export const useResourceAnnotations = (
     [fetchAnnotations],
   );
 
+  const loadAnnotationWithExpandedBlob = useCallback(
+    async (id: string): Promise<Annotation | null> => {
+      try {
+        const response = await fetch(
+          `${ANNOTATION_API_BASE_URL}/annotations/${id}?expandBlobs=true`,
+          {
+            headers: {
+              ...(localStorage.getItem("neurosiftApiKey")
+                ? {
+                    Authorization: `Bearer ${localStorage.getItem("neurosiftApiKey")}`,
+                  }
+                : {}),
+            },
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to load annotation");
+        }
+
+        const data = await response.json();
+        const annotation: Annotation = data.annotation;
+        const info = await getUserInfo(annotation.userId);
+        annotation.userName = info?.name || annotation.userId;
+        return annotation;
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to load annotation",
+        );
+        return null;
+      }
+    },
+    [getUserInfo],
+  );
+
   return {
     annotations,
     isLoading,
@@ -229,5 +270,6 @@ export const useResourceAnnotations = (
     updateAnnotation,
     getCurrentUserId,
     refreshAnnotations: fetchAnnotations,
+    loadAnnotationWithExpandedBlob,
   };
 };
