@@ -183,10 +183,10 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
             <div>
               Files: {dandisetVersionInfo.metadata.assetsSummary.numberOfFiles}
             </div>
-            <div>
+            {/* <div>
               Number of Subjects:{" "}
               {dandisetVersionInfo.metadata.assetsSummary.numberOfSubjects}
-            </div>
+            </div> */}
           </Box>
         </Box>
 

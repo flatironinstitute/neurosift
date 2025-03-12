@@ -49,9 +49,11 @@ export async function getDandisetInfo(
     contributor: data.contributor.map((c: { name: string }) => c.name),
     dateCreated: data.dateCreated,
     description: data.description,
-    numberOfBytes: data.assetsSummary?.numberOfBytes,
-    numberOfFiles: data.assetsSummary?.numberOfFiles,
-    numberOfSubjects: data.assetsSummary?.numberOfSubjects,
+    numberOfBytes: data.size,
+    // numberOfBytes: data.assetsSummary?.numberOfBytes,
+    numberOfFiles: data.asset_count,
+    // numberOfFiles: data.assetsSummary?.numberOfFiles,
+    // numberOfSubjects: data.assetsSummary?.numberOfSubjects,
     variableMeasured: data.assetsSummary?.variableMeasured,
     measurementTechnique: data.assetsSummary?.measurementTechnique
   };
