@@ -1,6 +1,6 @@
 import React from "react";
 import ResourceAnnotations from "../../common/ResourceAnnotations";
-import { isInNeurosiftChat } from "src/ai-integration/messaging/windowMessaging";
+import { isInNeurosiftChat } from "../../../ai-integration/messaging/windowMessaging";
 
 interface DandisetAnnotationsProps {
   dandisetId: string;
