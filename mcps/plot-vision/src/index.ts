@@ -63,7 +63,7 @@ class PlotVisionServer {
             properties: {
               image_path: {
                 type: 'string',
-                description: 'Path to the PNG image file to analyze',
+                description: 'The full path to the PNG image file to analyze. It is important to provide the full path.',
               },
               additional_instructions: {
                 type: 'string',
@@ -103,7 +103,9 @@ class PlotVisionServer {
         const response = await axios.post(
           'https://openrouter.ai/api/v1/chat/completions',
           {
-            model: 'anthropic/claude-3.5-sonnet',
+            // model: 'anthropic/claude-3.5-sonnet',
+            // gpt-4o is much more accurate for interpretting plots than claude-3.5-sonnet
+            model: 'openai/gpt-4o',
             messages: [
               {
                 role: 'system',

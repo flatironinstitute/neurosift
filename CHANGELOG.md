@@ -1,5 +1,8 @@
 # Changes
 
+## March 14, 2025
+- Added Notebook section in NwbPage that displays nbfiddle.org in an iframe
+
 ## March 12, 2025
 - Added blob storage system for large annotation content with expandable retrieval
 - Added single annotation endpoint with blob expansion support

@@ -79,6 +79,12 @@ const MainTab = ({
           closeable: false as const,
           defaultExpanded: false,
         },
+        {
+          type: "notebook" as const,
+          label: "Notebook",
+          closeable: false as const,
+          defaultExpanded: false,
+        },
       ];
 
       // Initialize each view
@@ -163,6 +169,16 @@ const MainTab = ({
                     )}
                     {view.type === "usageScript" && (
                       <NwbUsageScript nwbUrl={nwbUrl} />
+                    )}
+                    {view.type === "notebook" && (
+                      <iframe
+                        src="https://nbfiddle.org"
+                        style={{
+                          width: "100%",
+                          height: "600px",
+                          border: "none",
+                        }}
+                      />
                     )}
                   </Box>
                 )}

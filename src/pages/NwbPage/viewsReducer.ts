@@ -28,6 +28,12 @@ export type MainPanelView =
       label: string;
       closeable: false;
       defaultExpanded: boolean;
+    }
+  | {
+      type: "notebook";
+      label: string;
+      closeable: false;
+      defaultExpanded: boolean;
     };
 
 type ViewsAction =
@@ -48,6 +54,7 @@ const viewsReducer = (
         if (v.type === "Hdf5View") return true;
         if (v.type === "specifications") return true;
         if (v.type === "usageScript") return true;
+        if (v.type === "notebook") return true;
         return false;
       });
       if (exists) return state;
@@ -63,6 +70,7 @@ const viewsReducer = (
         if (v.type === "Hdf5View") return false;
         if (v.type === "specifications") return false;
         if (v.type === "usageScript") return false;
+        if (v.type === "notebook") return false;
         return true;
       });
 
