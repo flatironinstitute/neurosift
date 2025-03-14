@@ -100,6 +100,13 @@ const MainTab = ({
     }
   }, [views.length]);
 
+  const [nwbUrlHash, setNwbUrlHash] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    computeSha1Hash(nwbUrl).then((hash) => {
+      setNwbUrlHash(hash);
+    });
+  }, [nwbUrl]);
+
   return (
     <span className="MainTab">
       <Grid container spacing={0}>
@@ -170,9 +177,9 @@ const MainTab = ({
                     {view.type === "usageScript" && (
                       <NwbUsageScript nwbUrl={nwbUrl} />
                     )}
-                    {view.type === "notebook" && (
+                    {view.type === "notebook" && nwbUrlHash && (
                       <iframe
-                        src="https://nbfiddle.org"
+                        src={`https://nbfiddle.org?localname=${nwbUrlHash}`}
                         style={{
                           width: "100%",
                           height: "600px",
@@ -190,5 +197,14 @@ const MainTab = ({
     </span>
   );
 };
+
+async function computeSha1Hash(x: string) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(x);
+  const hash = await window.crypto.subtle.digest("SHA-1", data);
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
 
 export default MainTab;
