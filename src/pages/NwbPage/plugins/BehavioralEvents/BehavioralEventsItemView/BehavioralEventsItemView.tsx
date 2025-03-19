@@ -155,8 +155,10 @@ const BehavioralEventsItemViewChild: FunctionComponent<ChildProps> = ({
     for (const series of x) {
       const t1 = series.timestamps[0];
       const t2 = series.timestamps[series.timestamps.length - 1];
-      startTime = Math.min(startTime, t1);
-      endTime = Math.max(endTime, t2);
+      if (!isNaN(t1) && !isNaN(t2) && t1 !== undefined && t2 !== undefined) {
+        startTime = Math.min(startTime, t1);
+        endTime = Math.max(endTime, t2);
+      }
     }
     return { startTime, endTime };
   }, [beData]);
@@ -171,6 +173,7 @@ const BehavioralEventsItemViewChild: FunctionComponent<ChildProps> = ({
     if (endTime === undefined) return;
     const t1 = startTime;
     const t2 = endTime;
+    console.log(startTime, endTime, t1, t2);
     initializeTimeseriesSelection({
       startTimeSec: startTime,
       endTimeSec: endTime,
