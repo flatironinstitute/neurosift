@@ -145,6 +145,11 @@ const MainTab = ({
                       if (next.has(view.type)) {
                         next.delete(view.type);
                       } else {
+                        if (view.type === "notebook") {
+                          // if we are opening the notebook, then we should also open the usage
+                          // so that the usage context can get passed to the notebook
+                          next.add("usageScript");
+                        }
                         next.add(view.type);
                       }
                       return next;

@@ -109,7 +109,7 @@ nwb = pynwb.NWBHDF5IO(file=f, mode='r').read()
   onNwbUsage(fullContent);
 
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column" }}>
       <button
         id="copy-script-button"
         onClick={handleCopyClick}
@@ -124,24 +124,26 @@ nwb = pynwb.NWBHDF5IO(file=f, mode='r').read()
       >
         Copy Script
       </button>
-      <Markdown
-        components={{
-          code(props) {
-            const { children, className } = props;
-            const match = /language-(\w+)/.exec(className || "");
-            const language = match ? match[1] : "";
-            return language ? (
-              <SyntaxHighlighter style={vs} language={language} PreTag="div">
-                {String(children).replace(/\n$/, "")}
-              </SyntaxHighlighter>
-            ) : (
-              <code className={className}>{children}</code>
-            );
-          },
-        }}
-      >
-        {fullContent}
-      </Markdown>
+      <div style={{ maxHeight: 300, overflow: "auto" }}>
+        <Markdown
+          components={{
+            code(props) {
+              const { children, className } = props;
+              const match = /language-(\w+)/.exec(className || "");
+              const language = match ? match[1] : "";
+              return language ? (
+                <SyntaxHighlighter style={vs} language={language} PreTag="div">
+                  {String(children).replace(/\n$/, "")}
+                </SyntaxHighlighter>
+              ) : (
+                <code className={className}>{children}</code>
+              );
+            },
+          }}
+        >
+          {fullContent}
+        </Markdown>
+      </div>
     </div>
   );
 };
