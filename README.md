@@ -16,10 +16,13 @@ Follow these steps to install and run the app locally in development mode:
    cd neurosift
    ```
 
-2. **Install dependencies:**
+2. **Initialize git submodules and install dependencies:**
    ```bash
+   git submodule update --init --recursive
    npm install
    ```
+
+   Note: The niivue_dist submodule is required for NIFTI file visualization. If you skip initializing submodules, you may encounter errors when trying to view NIFTI files.
 
 3. **Start the development server:**
    ```bash
