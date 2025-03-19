@@ -1,5 +1,8 @@
 # Changes
 
+## March 19, 2025
+- Reduced spacing between plots in the dashboard for a tighter, more compact layout
+
 ## March 14, 2025
 - Added Notebook section in NwbPage that displays nbfiddle.org in an iframe
 
