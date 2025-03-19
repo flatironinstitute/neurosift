@@ -31,7 +31,11 @@ export const SimpleTimeseriesView: FunctionComponent<
   const group = useHdf5Group(nwbUrl, path);
   const channelNames = useMemo(() => {
     if (!group || !timeseriesClient) return undefined;
-    if (group.attrs?.neurodata_type === "SpatialSeries") {
+    if (
+      ["SpatialSeries", "PoseEstimationSeries"].includes(
+        group.attrs?.neurodata_type,
+      )
+    ) {
       const dimensions = ["X", "Y", "Z"];
       return dimensions.slice(0, timeseriesClient.numChannels);
     }

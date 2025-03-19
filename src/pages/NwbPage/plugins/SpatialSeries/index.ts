@@ -9,8 +9,14 @@ export const spatialSeriesPlugin: NwbObjectViewPlugin = {
     const group = await getHdf5Group(nwbUrl, path);
     if (!group) return false;
 
-    // Check if this is a SpatialSeries neurodata_type
-    if (group.attrs.neurodata_type !== "SpatialSeries") return false;
+    // Check if this is a SpatialSeries or PoseEstimationSeries neurodata_type
+    if (
+      !["SpatialSeries", "PoseEstimationSeries"].includes(
+        group.attrs.neurodata_type,
+      )
+    ) {
+      return false;
+    }
 
     // Check if we have a data dataset
     const hasData = group.datasets.some((ds) => ds.name === "data");
