@@ -22,6 +22,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Update submodules
+      - name: Update submodules
+        run: git submodule update --init --recursive
+
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:

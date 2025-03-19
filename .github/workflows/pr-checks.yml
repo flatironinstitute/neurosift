@@ -11,6 +11,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    # Update submodules
+    - name: Update submodules
+      run: git submodule update --init --recursive
+
     # Set up Python
     - name: Set up Python
       uses: actions/setup-python@v5
