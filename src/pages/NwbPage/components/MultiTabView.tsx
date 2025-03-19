@@ -53,7 +53,7 @@ const MultiTabView: React.FC<MultiTabViewProps> = ({
             {paths.map((path, index) => (
               <div
                 key={plugins[index] ? plugins[index].name + ":" + path : path}
-                style={{ marginBottom: 20 }}
+                style={{ marginBottom: 8 }}
               >
                 <ObjectHeaderBar width={width - 40} path={path} />
                 <NwbObjectView
