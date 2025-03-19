@@ -13,9 +13,10 @@ import createUsageScriptForNwbFile from "./createUsageScriptForNwbFile";
 
 type Props = {
   nwbUrl: string;
+  onNwbUsage: (usage: string) => void;
 };
 
-const NwbUsageScript: FunctionComponent<Props> = ({ nwbUrl }) => {
+const NwbUsageScript: FunctionComponent<Props> = ({ nwbUrl, onNwbUsage }) => {
   const [scriptContent, setScriptContent] = useState<string | undefined>(
     undefined,
   );
@@ -23,9 +24,8 @@ const NwbUsageScript: FunctionComponent<Props> = ({ nwbUrl }) => {
 
   const headerContent = useMemo(() => {
     const lindiUrl = getLindiUrl(nwbUrl);
-    return `# This script is suitable to be included as a part of a prompt to an LLM.
-# It teaches the LLM how to access the data in this particular NWB file using lindi and pynwb.
-# This is an experimental feature and is under development.
+    return `# This script shows how to load this in Python using PyNWB and LINDI
+# It assumes you have installed PyNWB and LINDI (pip install pynwb lindi)
 
 import pynwb
 import lindi
@@ -106,6 +106,7 @@ nwb = pynwb.NWBHDF5IO(file=f, mode='r').read()
   }
 
   const fullContent = `\`\`\`python\n${headerContent}${scriptContent}\n\`\`\``;
+  onNwbUsage(fullContent);
 
   return (
     <div>

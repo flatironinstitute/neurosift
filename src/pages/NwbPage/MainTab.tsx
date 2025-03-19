@@ -1,11 +1,11 @@
+import "@css/NwbPage.css";
 import { Box, Grid, Paper } from "@mui/material";
-import NwbUsageScript from "./components/NwbUsageScript";
 import { useEffect, useReducer, useState } from "react";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
-import Hdf5View from "./Hdf5View";
+import NwbUsageScript from "./components/NwbUsageScript";
 import { getHdf5Group } from "./hdf5Interface";
+import Hdf5View from "./Hdf5View";
 import NwbHierarchyView from "./NwbHierarchyView";
-import "@css/NwbPage.css";
 import { SetupNwbFileSpecificationsProvider } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
 import SpecificationsView from "./SpecificationsView/SpecificationsView";
 import TimeseriesAlignmentView from "./TimeseriesAlignmentView";
@@ -33,6 +33,11 @@ const MainTab = ({
   const [defaultUnitsPath, setDefaultUnitsPath] = useState<string | undefined>(
     undefined,
   );
+  const [notebookIframeElement, setNotebookIframeElement] =
+    useState<HTMLIFrameElement | null>(null);
+  const [isNotebookIframeLoaded, setIsNotebookIframeLoaded] = useState(false);
+  const [nwbUrlHash, setNwbUrlHash] = useState<string | undefined>(undefined);
+  const [nwbUsage, setNwbUsage] = useState<string | undefined>(undefined);
 
   // Check if /units exists and has neurodata_type "Units"
   useEffect(() => {
@@ -100,12 +105,25 @@ const MainTab = ({
     }
   }, [views.length]);
 
-  const [nwbUrlHash, setNwbUrlHash] = useState<string | undefined>(undefined);
   useEffect(() => {
     computeSha1Hash(nwbUrl).then((hash) => {
       setNwbUrlHash(hash);
     });
   }, [nwbUrl]);
+
+  // Handle notebook iframe messaging
+  useEffect(() => {
+    const iframe = notebookIframeElement;
+    if (!iframe || !nwbUsage || !isNotebookIframeLoaded) return;
+
+    iframe.contentWindow?.postMessage(
+      {
+        type: "nbfiddle_parent_context",
+        context: nwbUsage,
+      },
+      "*",
+    );
+  }, [notebookIframeElement, nwbUsage, isNotebookIframeLoaded]);
 
   return (
     <span className="MainTab">
@@ -175,16 +193,21 @@ const MainTab = ({
                       </SetupNwbFileSpecificationsProvider>
                     )}
                     {view.type === "usageScript" && (
-                      <NwbUsageScript nwbUrl={nwbUrl} />
+                      <NwbUsageScript
+                        nwbUrl={nwbUrl}
+                        onNwbUsage={setNwbUsage}
+                      />
                     )}
                     {view.type === "notebook" && nwbUrlHash && (
                       <iframe
+                        ref={(el) => setNotebookIframeElement(el)}
                         src={`https://nbfiddle.org?localname=${nwbUrlHash}`}
                         style={{
                           width: "100%",
                           height: "600px",
                           border: "none",
                         }}
+                        onLoad={() => setIsNotebookIframeLoaded(true)}
                       />
                     )}
                   </Box>
