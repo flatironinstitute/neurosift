@@ -12,11 +12,17 @@ const doPlotDataCalculations = () => {
     plotData!.data.length === 0
       ? 0
       : plotData!.data.reduce((sum, channel) => {
+          const channelWithoutNaN = channel.filter((val) => !isNaN(val));
+          if (channelWithoutNaN.length === 0) return sum;
           const mean =
-            channel.reduce((sum, val) => sum + val, 0) / channel.length;
-          const squaredDiffs = channel.map((val) => Math.pow(val - mean, 2));
+            channelWithoutNaN.reduce((sum, val) => sum + val, 0) /
+            channelWithoutNaN.length;
+          const squaredDiffs = channelWithoutNaN.map((val) =>
+            Math.pow(val - mean, 2),
+          );
           const variance =
-            squaredDiffs.reduce((sum, val) => sum + val, 0) / channel.length;
+            squaredDiffs.reduce((sum, val) => sum + val, 0) /
+            channelWithoutNaN.length;
           return sum + Math.sqrt(variance);
         }, 0) / plotData!.data.length;
 
@@ -202,6 +208,7 @@ onmessage = (e: MessageEvent) => {
 function compute_min(arr: number[]) {
   let min = Infinity;
   for (let i = 0; i < arr.length; i++) {
+    if (isNaN(arr[i])) continue;
     min = Math.min(min, arr[i]);
   }
   return min;
@@ -210,6 +217,7 @@ function compute_min(arr: number[]) {
 function compute_max(arr: number[]) {
   let max = -Infinity;
   for (let i = 0; i < arr.length; i++) {
+    if (isNaN(arr[i])) continue;
     max = Math.max(max, arr[i]);
   }
   return max;

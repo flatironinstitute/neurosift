@@ -298,17 +298,6 @@ export const useTimeRange = () => {
   } = useTimeseriesSelection();
   const zoomTimeseriesSelection = useCallback(
     (direction: ZoomDirection, factor?: number, hoverTimeSec?: number) => {
-      console.log(
-        "--- zooming",
-        visibleStartTimeSec,
-        visibleEndTimeSec,
-        currentTime,
-        startTimeSec,
-        endTimeSec,
-        direction,
-        factor,
-        hoverTimeSec,
-      );
       const newTimeseriesSelection = zoomTime(
         {
           visibleStartTimeSec,
