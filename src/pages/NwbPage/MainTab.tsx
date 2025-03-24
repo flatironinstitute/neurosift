@@ -206,7 +206,7 @@ const MainTab = ({
                     {view.type === "notebook" && nwbUrlHash && (
                       <iframe
                         ref={(el) => setNotebookIframeElement(el)}
-                        src={`https://nbfiddle.org?localname=${nwbUrlHash}`}
+                        src={`https://nbfiddle.app?localname=${nwbUrlHash}&embedded=1&ref=neurosift`}
                         style={{
                           width: "100%",
                           height: "600px",
