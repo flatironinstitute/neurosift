@@ -10,15 +10,15 @@ The Neurosift Tools MCP server provides access to DANDI archive functionality an
 
 ## Installation Steps
 
-1. Clone the neurosift-v2 repository:
+1. Clone the neurosift-mcps repository:
    ```bash
-   git clone https://github.com/flatironinstitute/neurosift.git
-   cd neurosift
+   git clone https://github.com/magland/neurosift-mcps.git
+   cd neurosift-mcps
    ```
 
 2. Build the neurosift-tools MCP server:
    ```bash
-   cd mcps/neurosift-tools
+   cd neurosift-tools
    npm install
    npm run build
    ```
@@ -35,7 +35,7 @@ The Neurosift Tools MCP server provides access to DANDI archive functionality an
      "mcpServers": {
        "neurosift-tools": {
          "command": "node",
-         "args": ["PATH_TO_REPO/mcps/neurosift-tools/build/index.js"],
+         "args": ["PATH/neurosift-mcps/neurosift-tools/build/index.js"],
          "disabled": false,
          "autoApprove": []
        }
@@ -43,7 +43,7 @@ The Neurosift Tools MCP server provides access to DANDI archive functionality an
    }
    ```
 
-   Note: Replace `PATH_TO_REPO` with the actual path where you cloned the neurosift repository.
+   Note: Replace `PATH/neurosift-mcps` with the actual path where you cloned the neurosift repository.
 
 ## Available Tools
 
@@ -83,7 +83,7 @@ For local development of the neurosift-chat-agent-tools API, you can configure t
   "mcpServers": {
     "neurosift-tools": {
       "command": "node",
-      "args": ["PATH_TO_REPO/mcps/neurosift-tools/build/index.js"],
+      "args": ["PATH/mcps/neurosift-tools/build/index.js"],
       "env": {
         "NEUROSIFT_TOOLS_API_URL": "http://localhost:3001/api"
       },

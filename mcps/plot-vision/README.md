@@ -1,1 +1,0 @@
-# plot-vision MCP Server
