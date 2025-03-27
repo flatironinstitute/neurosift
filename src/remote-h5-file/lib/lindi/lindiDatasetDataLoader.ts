@@ -167,7 +167,7 @@ const lindiDatasetDataLoader = async (o: {
   const i2StartChunk = ndims > 1 ? Math.floor(i2Start / chunkShape[1]) : 0;
   const i2EndChunk = ndims > 1 ? Math.floor((i2End - 1) / chunkShape[1]) : 0;
   if (i1StartChunk === i1EndChunk && i2StartChunk === i2EndChunk) {
-    // With respect to the first two dimenions,
+    // With respect to the first two dimensions,
     // we are entirely within a single chunk.
 
     if (prodMacroChunkShapeAllButFirstTwoDimensions === 1) {

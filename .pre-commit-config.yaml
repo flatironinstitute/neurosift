@@ -6,3 +6,9 @@ repos:
         entry: devel/check_format.sh
         language: script
         pass_filenames: false
+
+  - repo: https://github.com/codespell-project/codespell
+    # Configuration for codespell is in .codespellrc
+    rev: v2.4.1
+    hooks:
+      - id: codespell
