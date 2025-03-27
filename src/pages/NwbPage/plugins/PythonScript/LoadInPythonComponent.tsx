@@ -77,19 +77,19 @@ const createSource = (
   group: Hdf5Group,
   customCode: string,
 ) => {
-  const backtics = "```";
-  // const backtic = "`";
+  const backticks = "```";
+  // const backtick = "`";
   // const nt = group.attrs.neurodata_type
   return `
 
-${backtics}bash
+${backticks}bash
 # Prerequisites:
 pip install --upgrade lindi
-${backtics}
+${backticks}
 
 ---
 
-${backtics}python
+${backticks}python
 
 import lindi
 
@@ -101,7 +101,7 @@ ${urlType === "lindi" ? "f = lindi.LindiH5pyFile.from_lindi_file(url)" : "f = li
 # load the neurodata object (${group.attrs.neurodata_type})
 X = f['${path}']
 ${customCode}
-${backtics}
+${backticks}
 
 ---
 
