@@ -150,6 +150,13 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
   if (stimulusGroup) {
     moduleGroups.push(stimulusGroup);
   }
+  const stimulusPresentationGroup = await getHdf5Group(
+    nwbUrl,
+    "/stimulus/presentation",
+  );
+  if (stimulusPresentationGroup) {
+    moduleGroups.push(stimulusPresentationGroup);
+  }
 
   const moduleObjects: {
     variableName: string;
@@ -193,7 +200,13 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
     }
   };
   for (const group of moduleGroups) {
-    await processContainerGroup(group, `nwb.${nameFromPath(group.path)}`);
+    let expression = `nwb.${nameFromPath(group.path)}`;
+    if (group.path === "/stimulus/presentation") {
+      // special case for stimulus presentation
+      expression = `nwb.stimulus`;
+    }
+
+    await processContainerGroup(group, expression);
   }
 
   const handleUnits = async (unitsGroup: RemoteH5Group, expr: string) => {
@@ -246,7 +259,7 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
     s += `\n`;
     s += `${obj.variableName} = ${obj.objectExpression} # (${obj.neurodataType}) ${obj.description}\n`;
 
-    // TimeSeries or ElectricalSeries
+    // TimeSeries or ElectricalSeries or RoiResponseSeries or SpatialSeries
     if (
       [
         "TimeSeries",
@@ -271,7 +284,7 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
           electrodesDataset.attrs.neurodata_type;
         s += `electrodes = ${obj.variableName}.electrodes # (${electrodesDatasetNeurodataType}) num. electrodes: ${electrodesDataset.shape[0]}\n`;
         if (electrodesDatasetNeurodataType === "DynamicTableRegion") {
-          s += `# This is a reference into the nwb.ec_electrodes table and can be used in the same way\n`;
+          s += `# This is a reference into the nwb.electrodes table and can be used in the same way\n`;
           s += `# For example, electrode_ids = electrodes["id"].data[:] # len(electrode_ids) == ${electrodesDataset.shape[0]}\n`;
           s += `# And the other columns can be accessed in the same way\n`;
           s += `# It's the same table, but a subset of the rows.\n`;
@@ -291,17 +304,8 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
 
     // TimeIntervals
     if (obj.neurodataType === "TimeIntervals") {
-      const startTimeDataset = obj.group.datasets.find(
-        (x) => x.name === "start_time",
-      );
-      const stopTimeDataset = obj.group.datasets.find(
-        (x) => x.name === "stop_time",
-      );
-      if (startTimeDataset) {
-        s += `${obj.variableName}["start_time"].data # (h5py.Dataset) shape ${shapeToString(startTimeDataset.shape)}; dtype ${startTimeDataset.dtype}\n`;
-      }
-      if (stopTimeDataset) {
-        s += `${obj.variableName}["stop_time"].data # (h5py.Dataset) shape ${shapeToString(stopTimeDataset.shape)}; dtype ${stopTimeDataset.dtype}\n`;
+      for (const ds of obj.group.datasets) {
+        s += `${obj.variableName}["${ds.name}"] # (h5py.Dataset) shape ${shapeToString(ds.shape)}; dtype ${ds.dtype} ${ds.attrs.description}\n`;
       }
     }
 
@@ -341,6 +345,23 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
         if (nt === "GrayscaleImage") {
           s += `${obj.variableName}["${ds.name}"].data # (h5py.Dataset) shape ${shapeToString(ds.shape)}; dtype ${ds.dtype}; ${description}\n`;
         }
+      }
+    }
+
+    // IndexSeries
+    if (obj.neurodataType === "IndexSeries") {
+      const dataDataset = obj.group.datasets.find((x) => x.name === "data");
+      if (dataDataset) {
+        s += `${obj.variableName}.data # (h5py.Dataset) shape ${shapeToString(dataDataset.shape)}; dtype ${dataDataset.dtype}\n`;
+      }
+      const indexedImages = obj.group.subgroups.find(
+        (x) => x.name === "indexed_images",
+      );
+      if (indexedImages) {
+        s += `${obj.variableName}.indexed_images # Images\n`;
+        s += `for k in ${obj.variableName}.indexed_images.images.keys():\n`;
+        s += `    image = ${obj.variableName}.indexed_images.images[k]\n`;
+        s += `    print(f'Image {k}: {image.data.shape})')\n`;
       }
     }
 
@@ -411,7 +432,7 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
   );
   if (ecElectrodesGroup) {
     await handleECElectrodes(
-      "nwb.ec_electrodes",
+      "nwb.electrodes",
       ecElectrodesGroup,
       "DynamicTable",
     );
