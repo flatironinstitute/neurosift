@@ -43,7 +43,7 @@ The Neurosift Tools MCP server provides access to DANDI archive functionality an
    }
    ```
 
-   Note: Replace `PATH/neurosift-mcps` with the actual path where you cloned the neurosift repository.
+   Note: Replace `PATH/neurosift-mcps` with the actual path where you cloned the neurosift-mcps repository.
 
 ## Available Tools
 

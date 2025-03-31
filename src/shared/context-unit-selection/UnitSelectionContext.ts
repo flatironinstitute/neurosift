@@ -119,7 +119,7 @@ export const unitSelectionReducer = (
       if (a.newUnitOrder && a.newUnitOrder.length >= 1) {
         return {
           ...s,
-          // selectedUnitIds: new Set<number | string>(), // don't initialze here, to support case of selection initialized via state
+          // selectedUnitIds: new Set<number | string>(), // don't initialize here, to support case of selection initialized via state
           orderedUnitIds: sortIds([
             ...new Set([...a.newUnitOrder, ...s.orderedUnitIds]),
           ]),
