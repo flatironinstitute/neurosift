@@ -7,6 +7,12 @@ import { FunctionComponent, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DandisetVersionInfo } from "../DandiPage/dandi-types";
 import DandisetAnnotations from "./components/DandisetAnnotations";
+import { Annotation } from "../common/useResourceAnnotations";
+
+interface NotebookInfo {
+  annotation: Annotation;
+  url: string;
+}
 
 type DandisetOverviewProps = {
   width: number;
@@ -14,16 +20,21 @@ type DandisetOverviewProps = {
   dandisetVersionInfo: DandisetVersionInfo;
 };
 
-const findNotebookUrls = (annotations: any[]): string[] => {
-  const notebookNotes =
+const findNotebookInfos = (annotations: any[]): NotebookInfo[] => {
+  const notebookAnnotations: Annotation[] =
     annotations?.filter((note) => note.tags?.includes("notebook")) || [];
 
-  return notebookNotes
-    .map((note) => {
-      const firstLine = note.data.content.split("\n")[0].trim();
-      return firstLine.startsWith("http") ? firstLine : undefined;
+  return notebookAnnotations
+    .map((annotation) => {
+      const lines = annotation.data.content.split("\n");
+      const url = lines[0].trim();
+      if (!url.startsWith("http")) return undefined;
+      return {
+        annotation,
+        url: url,
+      };
     })
-    .filter((url): url is string => url !== undefined);
+    .filter((notebookInfo) => notebookInfo !== undefined) as NotebookInfo[];
 };
 
 const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
@@ -31,11 +42,12 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
   height,
   dandisetVersionInfo,
 }) => {
-  const [notebookUrls, setNotebookUrls] = useState<string[]>([]);
+  const [notebooks, setNotebooks] = useState<NotebookInfo[]>([]);
+  const [showNotebooksTable, setShowNotebooksTable] = useState(false);
 
   const handleNoteAnnotationsUpdate = useCallback((annotations: any[]) => {
-    const urls = findNotebookUrls(annotations);
-    setNotebookUrls(urls);
+    const notebookInfo = findNotebookInfos(annotations);
+    setNotebooks(notebookInfo);
   }, []);
   const navigate = useNavigate();
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
@@ -74,8 +86,8 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
           {dandisetVersionInfo.metadata.name}
         </Typography>
 
-        {/* View on DANDI and Notebooks */}
-        <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 2 }}>
+        {/* View on DANDI */}
+        <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
           <a
             href={`https://dandiarchive.org/dandiset/${dandisetVersionInfo.dandiset.identifier}/${dandisetVersionInfo.version}`}
             target="_blank"
@@ -84,20 +96,77 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
           >
             View on DANDI →
           </a>
-          {notebookUrls.map((url) => (
-            <Tooltip key={url} title={`Open notebook at ${url}`}>
-              <IconButton
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                size="small"
-                color="primary"
-              >
-                <MenuBook />
-              </IconButton>
-            </Tooltip>
-          ))}
         </Box>
+
+        {/* Notebooks */}
+        {notebooks.length > 0 && (
+          <Box sx={{ mt: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Notebooks
+              </Typography>
+              <Tooltip
+                title={showNotebooksTable ? "Hide notebooks" : "Show notebooks"}
+              >
+                <IconButton
+                  onClick={() => setShowNotebooksTable(!showNotebooksTable)}
+                  size="small"
+                  color="primary"
+                >
+                  <MenuBook />
+                </IconButton>
+              </Tooltip>
+            </Box>
+            {showNotebooksTable && (
+              <Box sx={{ ml: 1, mt: 1 }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #ccc" }}>
+                      <th style={{ textAlign: "left", padding: "8px" }}>
+                        Title
+                      </th>
+                      <th style={{ textAlign: "left", padding: "8px" }}>
+                        Date
+                      </th>
+                      <th style={{ textAlign: "left", padding: "8px" }}>
+                        NBFiddle
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {notebooks.map((notebook, index) => (
+                      <tr
+                        key={index}
+                        style={{ borderBottom: "1px solid #eee" }}
+                      >
+                        <td style={{ padding: "8px" }}>
+                          <a
+                            href={notebook.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: "#0066cc", textDecoration: "none" }}
+                          >
+                            {notebook.annotation.title}
+                          </a>
+                        </td>
+                        <td style={{ padding: "8px" }}>
+                          {new Date(
+                            notebook.annotation.updatedAt,
+                          ).toLocaleDateString()}
+                        </td>
+                        <td style={{ padding: "8px" }}>
+                          <a href={`https://nbfiddle.app/?url=${notebook.url}`}>
+                            nbfiddle
+                          </a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Box>
+            )}
+          </Box>
+        )}
 
         {/* Description */}
         {dandisetVersionInfo.metadata.description && (

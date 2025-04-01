@@ -1,5 +1,8 @@
 # Changes
 
+## April 1, 2025
+- Improve Dandi notebook access for Dandiset
+
 ## March 19, 2025
 - Reduced spacing between plots in the dashboard for a tighter, more compact layout
 

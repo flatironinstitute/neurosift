@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
   const annotations = await Annotation.find(query).sort({ createdAt: -1 });
   const expandBlobs = searchParams.get('expandBlobs') === 'true';
-  
+
   const results = await Promise.all(annotations.map(async (annotation: IAnnotationDocument) => {
     const result = annotation.toObject();
     if (expandBlobs && typeof result.data === 'object' && result.data.content && result.data.content.startsWith('blob:')) {
@@ -176,6 +176,8 @@ export async function PUT(request: NextRequest) {
     if (targetType) updateData.targetType = targetType;
     if (title) updateData.title = title;
     if (tags) updateData.tags = tags;
+
+    updateData.updatedAt = new Date();
 
     // Handle blob update if data is provided
     let finalData = data;

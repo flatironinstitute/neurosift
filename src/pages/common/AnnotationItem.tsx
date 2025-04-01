@@ -86,7 +86,7 @@ const AnnotationItem: React.FC<{
           </Typography>
           <Typography variant="caption" color="text.secondary">
             By: {annotation.userName || annotation.userId} •{" "}
-            {new Date(annotation.createdAt).toLocaleDateString()}
+            {new Date(annotation.updatedAt).toLocaleDateString()}
             {annotation.tags && annotation.tags.length > 0 && (
               <Box sx={{ mt: 0.5 }}>
                 {annotation.tags.map((tag) => (
