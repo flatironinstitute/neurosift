@@ -97,7 +97,6 @@ const globalStatsUpdated = () => {
 const inProgressGetRemoteH5Files: { [url: string]: boolean } = {};
 
 const getRemoteH5FileForUrl = async (url: string) => {
-  console.log("----- a", url);
   if (!hdf5Files[url]) {
     // If not already created
     if (inProgressGetRemoteH5Files[url]) {
