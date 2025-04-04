@@ -29,7 +29,12 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({
   nwbUrl: nwbUrlProp,
 }) => {
   const [searchParams] = useSearchParams();
-  const nwbUrl = nwbUrlProp || searchParams.get("url") || "";
+  // + gets converted to a space. Not sure how else to do this
+  const nwbUrl =
+    nwbUrlProp ||
+    (searchParams.get("url")
+      ? decodeURIComponent(searchParams.get("url") || "").replace(/ /g, "+")
+      : "");
   const dandisetId = dandisetIdProp || searchParams.get("dandisetId");
   const dandisetVersion = searchParams.get("dandisetVersion") || "";
   const doNotTryLindi = searchParams.get("lindi") === "0";

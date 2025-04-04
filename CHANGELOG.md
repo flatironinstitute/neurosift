@@ -1,5 +1,8 @@
 # Changes
 
+## April 4, 2025
+- Fixed handling of '+' characters in URL parameters for NWB file viewing
+
 ## April 1, 2025
 - Improve Dandi notebook access for Dandiset
 
