@@ -107,15 +107,26 @@ export class RegularTimeseriesTimestampsClient {
       this.nwbUrl,
       `${this.objectPath}/starting_time`,
     );
-    const startingTime = await getHdf5DatasetData(
+    let startingTime: DatasetDataType | number = await getHdf5DatasetData(
       this.nwbUrl,
       `${this.objectPath}/starting_time`,
       {},
     );
-    if (!isNumber(startingTime))
+    if (typeof startingTime === "object") {
+      // This shouldn't happen but it does in https://neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/0688bd66-b965-4dc9-af51-c1d2d2d30bd6/download/&dandisetId=001348&dandisetVersion=0.250401.1556&tab=/acquisition/data_00019_AD0
+      try {
+        startingTime = startingTime[0];
+      } catch {
+        console.warn(
+          `Unable to get starting_time dataset: ${this.objectPath}/starting_time`,
+        );
+      }
+    }
+    if (!isNumber(startingTime)) {
       throw Error(
         `Problem getting starting_time dataset: ${this.objectPath}/starting_time`,
       );
+    }
     const dataDataset = await getHdf5Dataset(
       this.nwbUrl,
       `${this.objectPath}/data`,
