@@ -30,8 +30,12 @@ export const TimeRangeControls: FunctionComponent<TimeRangeControlsProps> = ({
   const { setVisibleTimeRange } = useTimeseriesSelection();
   const [editingDuration, setEditingDuration] = React.useState(false);
   const [editingStartTime, setEditingStartTime] = React.useState(false);
-  const [inputDuration, setInputDuration] = React.useState(visibleDuration?.toFixed(2) || "");
-  const [inputStartTime, setInputStartTime] = React.useState(visibleTimeStart?.toFixed(2) || "");
+  const [inputDuration, setInputDuration] = React.useState(
+    visibleDuration?.toFixed(2) || "",
+  );
+  const [inputStartTime, setInputStartTime] = React.useState(
+    visibleTimeStart?.toFixed(2) || "",
+  );
   const durationInputRef = React.useRef<HTMLInputElement>(null);
   const startTimeInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -112,7 +116,7 @@ export const TimeRangeControls: FunctionComponent<TimeRangeControlsProps> = ({
       }
     } else {
       // Zoom in (decrease visible duration)
-      for (let i = 0; i < Math.log2(1/ratio); i++) {
+      for (let i = 0; i < Math.log2(1 / ratio); i++) {
         onDecreaseVisibleDuration();
       }
     }
@@ -120,7 +124,11 @@ export const TimeRangeControls: FunctionComponent<TimeRangeControlsProps> = ({
 
   const applyStartTimeChange = () => {
     const newStartTime = parseFloat(inputStartTime);
-    if (isNaN(newStartTime) || newStartTime < timeseriesStartTime || newStartTime > timeseriesStartTime + timeseriesDuration - visibleDuration) {
+    if (
+      isNaN(newStartTime) ||
+      newStartTime < timeseriesStartTime ||
+      newStartTime > timeseriesStartTime + timeseriesDuration - visibleDuration
+    ) {
       // Reset to current value if invalid
       setInputStartTime(visibleTimeStart.toFixed(2));
       return;
@@ -136,7 +144,7 @@ export const TimeRangeControls: FunctionComponent<TimeRangeControlsProps> = ({
     // Fallback to the old implementation if setVisibleTimeRange is not available
     const difference = newStartTime - visibleTimeStart;
     const shiftAmount = difference / visibleDuration;
-    
+
     if (difference > 0) {
       // Shift right
       for (let i = 0; i < Math.ceil(shiftAmount * 2); i++) {
@@ -194,9 +202,9 @@ export const TimeRangeControls: FunctionComponent<TimeRangeControlsProps> = ({
             }}
           />
         ) : (
-          <span 
-            style={{ 
-              color: "#868e96", 
+          <span
+            style={{
+              color: "#868e96",
               marginLeft: "8px",
               cursor: "pointer",
               textDecoration: "underline dashed",
@@ -227,8 +235,8 @@ export const TimeRangeControls: FunctionComponent<TimeRangeControlsProps> = ({
             }}
           />
         ) : (
-          <span 
-            style={{ 
+          <span
+            style={{
               fontWeight: 500,
               cursor: "pointer",
               textDecoration: "underline dashed",

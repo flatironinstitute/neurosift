@@ -248,7 +248,7 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
               ))}
             </select>
           ) : (
-            <span>No valid columns found</span>
+            <span>Default (no categorical columns)</span>
           )}
 
           <div style={{ marginLeft: "auto" }}>
@@ -350,6 +350,12 @@ const useLabelData = (
           setLabelFieldName(selectedColumn.name);
           setLabelData(selectedColumn.values);
         }
+      } else if (numRows) {
+        // If no valid categorical columns found but we know the number of rows,
+        // provide a default label array with the same constant value for all intervals
+        setLabelFieldName("default");
+        // Create an array filled with "Interval" strings
+        setLabelData(Array(numRows).fill("Interval"));
       }
     };
     load();
