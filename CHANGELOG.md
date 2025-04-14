@@ -1,5 +1,8 @@
 # Changes
 
+## April 13, 2025
+- Fixed TimeIntervals widget to properly render when no categorical columns are available (Issue #302)
+
 ## April 4, 2025
 - Fixed handling of '+' characters in URL parameters for NWB file viewing
 
