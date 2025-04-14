@@ -1,5 +1,8 @@
 # Changes
 
+## April 13, 2025
+- Added direct editing of time window values in timeseries visualizations (Issue #303). Users can now click on the duration and start time values to edit them directly. Press ESC to exit
+
 ## April 4, 2025
 - Fixed handling of '+' characters in URL parameters for NWB file viewing
 
