@@ -107,11 +107,12 @@ export class RegularTimeseriesTimestampsClient {
       this.nwbUrl,
       `${this.objectPath}/starting_time`,
     );
-    let startingTime: DatasetDataType | number = await getHdf5DatasetData(
-      this.nwbUrl,
-      `${this.objectPath}/starting_time`,
-      {},
-    );
+    let startingTime: DatasetDataType | number | undefined =
+      await getHdf5DatasetData(
+        this.nwbUrl,
+        `${this.objectPath}/starting_time`,
+        {},
+      );
     if (typeof startingTime === "object") {
       // This shouldn't happen but it does in https://neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/0688bd66-b965-4dc9-af51-c1d2d2d30bd6/download/&dandisetId=001348&dandisetVersion=0.250401.1556&tab=/acquisition/data_00019_AD0
       try {
