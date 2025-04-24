@@ -221,6 +221,30 @@ The output takes the form:
         }
       }
     }
+  },
+  {
+    name: "pynwb_docs_semantic_search",
+    description:
+`
+Semantic search for pynwb usage documents using natural language. Semantic embeddings are used to find pynwb documents relevant to the query text.
+
+The output is { results: string[] } where each string is the content of a pynwb document.
+`,
+    parameters: {
+      type: "object",
+      required: ["query"],
+      properties: {
+        query: {
+          type: "string",
+          description: "Natural language query text"
+        },
+        limit: {
+          type: "number",
+          description: "Maximum number of results (must be <= 20)",
+          default: 4
+        }
+      }
+    }
   }
 ];
 

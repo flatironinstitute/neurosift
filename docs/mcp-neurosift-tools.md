@@ -57,6 +57,7 @@ Once installed, the MCP server provides tools for:
 - `openneuro_search`: Search for datasets on OpenNeuro
 - `dandi_list_neurodata_types`: List all unique neurodata types in DANDI archive
 - `dandi_search_by_neurodata_type`: Search for datasets containing specific neurodata types
+- `pynwb_docs_semantic_search`: Semantic search for NWB documentation using natural language
 
 ## Verification
 
