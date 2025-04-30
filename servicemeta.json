@@ -1,0 +1,31 @@
+{
+    "@context": "https://servicemeta.apps.tc.humanbrainproject.eu/context/servicemeta.jsonld",
+    "type": "WebApplication",
+    "alternateName": "neurosift",
+    "author": [
+        {
+            "type": "Person",
+            "affiliation": {
+                "type": "Organization",
+                "name": "Flatiron Institute"
+            },
+            "email": "jmagland@flatironinstitute.org",
+            "familyName": "Magland",
+            "givenName": "Jeremy"
+        },
+        {
+            "type": "Person",
+            "affiliation": {
+                "type": "Organization",
+                "name": "CatalystNeuro"
+            },
+            "email": "ben.dichter@catalystneuro.com",
+            "familyName": "Dichter",
+            "givenName": "Benjamin"
+        }
+    ],
+    "documentation": "https://github.com/flatironinstitute/neurosift",
+    "identifier": "https://doi.org/10.21105/joss.06590",
+    "name": "neurosift",
+    "url": "https://neurosift.app"
+}
