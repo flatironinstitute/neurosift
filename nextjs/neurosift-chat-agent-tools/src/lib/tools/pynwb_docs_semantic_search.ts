@@ -137,7 +137,7 @@ interface DandiSearchResult {
 export async function pynwbDocsSemanticSearch(
   query: string,
   limit: number = 10
-): Promise<string[]> {
+): Promise<{docUrl: string, docText: string}[]> {
   const embeddings = await loadEmbeddings();
   if (!embeddings) {
     throw new Error("Failed to load embeddings");
@@ -154,17 +154,28 @@ export async function pynwbDocsSemanticSearch(
   docItems = docItems.slice(0, limit);
 
   // Get full details for each dataset using DANDI API
-  const ret: string[] = [];
+  const ret: {docUrl: string, docText: string}[] = [];
   // Download them
   for (const docItem of docItems) {
     const path = docItem.path;
-    const url = `${baseUrl}/${path}`;
-    const response = await fetch(url);
+    const docUrl = `${baseUrl}/${path}`;
+    const response = await fetch(docUrl);
     if (!response.ok) {
-      throw new Error(`Failed to fetch from ${url}`);
+      throw new Error(`Failed to fetch from ${docUrl}`);
+    }
+    let docUrl2 = docUrl;
+    if (docUrl.startsWith("https://magland.github.io/ragdbfor_pynwb/summaries/pynwb/docs/gallery/")) {
+      // we want
+      // https://magland.github.io/ragdbfor_pynwb/summaries/pynwb/docs/gallery/domain/ecephys.py.summary.md
+      // to get mapped to
+      // https://pynwb.readthedocs.io/en/latest/tutorials/domain/ecephys.html
+
+      const a = docUrl.slice("https://magland.github.io/ragdbfor_pynwb/summaries/pynwb/docs/gallery/".length);
+      const b = a.split(".py.summary.md")[0];
+      docUrl2 = `https://pynwb.readthedocs.io/en/latest/tutorials/${b}.html`;
     }
     const docText = await response.text();
-    ret.push(docText);
+    ret.push({docUrl: docUrl2, docText});
   }
   return ret;
 }

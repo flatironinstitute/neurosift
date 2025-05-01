@@ -228,7 +228,7 @@ The output takes the form:
 `
 Semantic search for pynwb usage documents using natural language. Semantic embeddings are used to find pynwb documents relevant to the query text.
 
-The output is { results: string[] } where each string is the content of a pynwb document.
+The output is { results: {docUrl: string, docText: string}[] } where docUrl is the URL of a pynwb document and docText is the content of the document.
 `,
     parameters: {
       type: "object",
