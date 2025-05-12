@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { TabBar } from "@components/tabs/TabBar";
 import { TAB_BAR_HEIGHT } from "./tabStyles";
 import { useTabManager } from "./TabManager";
 import TabContent from "./components/TabContent";
 import SingleTabView from "./components/SingleTabView";
 import MultiTabView from "./components/MultiTabView";
-import { DynamicTab } from "./Types";
+import AuthErrorNotification from "./components/AuthErrorNotification";
+import { DynamicTab } from "./Types/index";
+import { hasAuthError, isDandiAssetUrl } from "./hdf5Interface";
 
 interface MainWorkspaceProps {
   nwbUrl: string;
@@ -27,12 +29,56 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
     handleCloseTab,
     handleSwitchTab,
   } = useTabManager({ nwbUrl, initialTabId });
+  
+  const [showAuthError, setShowAuthError] = useState(false);
 
   const tabBarHeight = TAB_BAR_HEIGHT;
   const contentHeight = height - tabBarHeight;
+  
+  // Check for authentication errors
+  useEffect(() => {
+    if (nwbUrl) {
+      const checkAuthError = () => {
+        const hasError = hasAuthError(nwbUrl);
+        setShowAuthError(hasError);
+      };
+      
+      // Check immediately
+      checkAuthError();
+      
+      // Also set up interval to periodically check for auth errors as they might
+      // be detected during data loading after component mount
+      const intervalId = setInterval(checkAuthError, 1000);
+      
+      return () => {
+        clearInterval(intervalId);
+      };
+    }
+  }, [nwbUrl]);
+
+  // Debug logs
+  useEffect(() => {
+    if (isDandiAssetUrl(nwbUrl)) {
+      console.log('MainWorkspace - DANDI URL detected:', nwbUrl);
+      console.log('MainWorkspace - Current auth errors:', hasAuthError(nwbUrl));
+    }
+  }, [nwbUrl, showAuthError]);
 
   return (
     <div style={{ position: "absolute", width, height, overflow: "hidden" }}>
+      {/* Error notification as overlay */}
+      {showAuthError && isDandiAssetUrl(nwbUrl) && (
+        <div style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1000,
+        }}>
+          <AuthErrorNotification dandiUrl={nwbUrl} />
+        </div>
+      )}
+      
       <TabBar
         tabs={tabsState.tabs}
         activeTabId={tabsState.activeTabId}
