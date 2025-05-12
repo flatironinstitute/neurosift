@@ -1,5 +1,8 @@
 # Changes
 
+## May 12, 2025
+- Improved error message formatting for large datasets to display sizes in human-readable form (Issue #187)
+
 ## April 13, 2025
 - Fixed TimeIntervals widget to properly render when no categorical columns are available (Issue #302)
 
