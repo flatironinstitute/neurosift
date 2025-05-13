@@ -226,9 +226,11 @@ The output takes the form:
     name: "pynwb_docs_semantic_search",
     description:
 `
-Semantic search for pynwb usage documents using natural language. Semantic embeddings are used to find pynwb documents relevant to the query text.
+Semantic search for pynwb usage documents using natural language. Semantic embeddings are used to find pynwb or neuroconv documents relevant to the query text.
 
-The output is { results: {docUrl: string, docText: string}[] } where docUrl is the URL of a pynwb document and docText is the content of the document.
+The output is { results: {docUrl: string, docText: string}[] } where docUrl is the URL of a pynwb or neuroconv document and docText is the content of the document.
+
+Use prefix "pynwb" to search for pynwb documents and "neuroconv" to search for neuroconv documents.
 `,
     parameters: {
       type: "object",
@@ -242,6 +244,11 @@ The output is { results: {docUrl: string, docText: string}[] } where docUrl is t
           type: "number",
           description: "Maximum number of results (must be <= 20)",
           default: 4
+        },
+        prefix: {
+          type: "string",
+          description: "Prefix to filter documents (e.g., 'pynwb' or 'neuroconv')",
+          default: "pynwb"
         }
       }
     }

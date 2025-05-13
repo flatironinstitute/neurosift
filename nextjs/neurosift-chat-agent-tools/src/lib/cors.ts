@@ -8,6 +8,7 @@ export const allowedOrigins = [
   'http://localhost:5174',
   'https://neurosift-chat.vercel.app',
   'https://chat.neurosift.app',
+  'https://magland.github.io'
 ];
 
 export const corsHeaders = {

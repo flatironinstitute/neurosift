@@ -126,17 +126,10 @@ const cosineSimilarity = (a: Float32Array, b: Float32Array) => {
   return sum / Math.sqrt(sum_a) / Math.sqrt(sum_b);
 };
 
-interface DandiSearchResult {
-  id: string;
-  version: string;
-  name: string;
-  asset_count: number;
-  size: number;
-}
-
 export async function pynwbDocsSemanticSearch(
   query: string,
-  limit: number = 10
+  limit: number = 10,
+  prefix: "pynwb" | "neuroconv" = "pynwb"
 ): Promise<{docUrl: string, docText: string}[]> {
   const embeddings = await loadEmbeddings();
   if (!embeddings) {
@@ -148,12 +141,11 @@ export async function pynwbDocsSemanticSearch(
     throw new Error("Failed to get embedding for query");
   }
   let docItems = findSimilarDocuments(
-    embeddings,
+    embeddings.filter((item) => item.path.startsWith("summaries/" + prefix + "/")),
     queryEmbedding.embedding
   );
   docItems = docItems.slice(0, limit);
 
-  // Get full details for each dataset using DANDI API
   const ret: {docUrl: string, docText: string}[] = [];
   // Download them
   for (const docItem of docItems) {
@@ -173,6 +165,11 @@ export async function pynwbDocsSemanticSearch(
       const a = docUrl.slice("https://magland.github.io/ragdbfor_pynwb/summaries/pynwb/docs/gallery/".length);
       const b = a.split(".py.summary.md")[0];
       docUrl2 = `https://pynwb.readthedocs.io/en/latest/tutorials/${b}.html`;
+    }
+    else if (docUrl.startsWith("https://magland.github.io/ragdbfor_pynwb/summaries/neuroconv/docs/conversion_examples_gallery/")) {
+      const a = docUrl.slice("https://magland.github.io/ragdbfor_pynwb/summaries/neuroconv/docs/conversion_examples_gallery/".length);
+      const b = a.split(".rst.summary.md")[0];
+      docUrl2 = `https://neuroconv.readthedocs.io/en/main/conversion_examples_gallery/${b}.html`;
     }
     const docText = await response.text();
     ret.push({docUrl: docUrl2, docText});

@@ -38,22 +38,22 @@ export const hasAuthError = (url: string): boolean => {
   if (authenticationErrors[url]) {
     return true;
   }
-  
+
   // If we get a direct URL but the stored error might be from the pre-redirection URL
   const keys = Object.keys(authenticationErrors);
   for (const key of keys) {
-    // Look for a URL that has the same asset ID 
-    if (url.includes('/assets/') && key.includes('/assets/')) {
-      const urlAssetId = url.split('/assets/')[1]?.split('/')[0];
-      const keyAssetId = key.split('/assets/')[1]?.split('/')[0];
-      
+    // Look for a URL that has the same asset ID
+    if (url.includes("/assets/") && key.includes("/assets/")) {
+      const urlAssetId = url.split("/assets/")[1]?.split("/")[0];
+      const keyAssetId = key.split("/assets/")[1]?.split("/")[0];
+
       if (urlAssetId && keyAssetId && urlAssetId === keyAssetId) {
-        console.log('Asset ID match found for auth error:', urlAssetId);
+        console.log("Asset ID match found for auth error:", urlAssetId);
         return true;
       }
     }
   }
-  
+
   return false;
 };
 
@@ -62,15 +62,15 @@ export const clearAuthError = (url: string): void => {
     delete authenticationErrors[url];
     return;
   }
-  
+
   // Also try to clear by asset ID
-  if (url.includes('/assets/')) {
-    const urlAssetId = url.split('/assets/')[1]?.split('/')[0];
+  if (url.includes("/assets/")) {
+    const urlAssetId = url.split("/assets/")[1]?.split("/")[0];
     const keys = Object.keys(authenticationErrors);
-    
+
     for (const key of keys) {
-      if (key.includes('/assets/')) {
-        const keyAssetId = key.split('/assets/')[1]?.split('/')[0];
+      if (key.includes("/assets/")) {
+        const keyAssetId = key.split("/assets/")[1]?.split("/")[0];
         if (urlAssetId && keyAssetId && urlAssetId === keyAssetId) {
           delete authenticationErrors[key];
         }
@@ -409,17 +409,17 @@ export const getRedirectUrl = async (url: string, headers: any) => {
   // So instead, we do a HEAD request with no redirect option, and then look at the response.url
   try {
     const response = await headRequest(url, headers);
-    
+
     // Check for authentication errors (typically 401 or 403)
     if (response.status === 401 || response.status === 403) {
       console.warn(`Authentication error for ${url}: ${response.status}`);
       authenticationErrors[url] = true;
-      console.log('Authentication errors map:', authenticationErrors);
+      console.log("Authentication errors map:", authenticationErrors);
     } else if (response.ok) {
       // Clear any previous auth errors if the request succeeded
       delete authenticationErrors[url];
     }
-    
+
     if (response.url) {
       const redirectUrl = response.url;
       return redirectUrl;
