@@ -1,5 +1,6 @@
 import React, { FunctionComponent } from "react";
 import { ControlButton } from "./ControlButton";
+import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 
 export type TimeRangeControlsProps = {
   visibleTimeStart?: number;
@@ -26,8 +27,136 @@ export const TimeRangeControls: FunctionComponent<TimeRangeControlsProps> = ({
   minDuration = 0.2,
   label = "Time Window",
 }) => {
+  const { setVisibleTimeRange } = useTimeseriesSelection();
+  const [editingDuration, setEditingDuration] = React.useState(false);
+  const [editingStartTime, setEditingStartTime] = React.useState(false);
+  const [inputDuration, setInputDuration] = React.useState(
+    visibleDuration?.toFixed(2) || "",
+  );
+  const [inputStartTime, setInputStartTime] = React.useState(
+    visibleTimeStart?.toFixed(2) || "",
+  );
+  const durationInputRef = React.useRef<HTMLInputElement>(null);
+  const startTimeInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    setInputDuration(visibleDuration?.toFixed(2) || "");
+  }, [visibleDuration]);
+
+  React.useEffect(() => {
+    setInputStartTime(visibleTimeStart?.toFixed(2) || "");
+  }, [visibleTimeStart]);
+
   if (visibleTimeStart === undefined || visibleDuration === undefined)
     return null;
+
+  const handleDurationClick = () => {
+    setEditingDuration(true);
+    // Focus the input after rendering
+    setTimeout(() => durationInputRef.current?.focus(), 0);
+  };
+
+  const handleStartTimeClick = () => {
+    setEditingStartTime(true);
+    // Focus the input after rendering
+    setTimeout(() => startTimeInputRef.current?.focus(), 0);
+  };
+
+  const handleDurationBlur = () => {
+    setEditingDuration(false);
+    applyDurationChange();
+  };
+
+  const handleStartTimeBlur = () => {
+    setEditingStartTime(false);
+    applyStartTimeChange();
+  };
+
+  const handleDurationKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      setEditingDuration(false);
+      applyDurationChange();
+    } else if (e.key === "Escape") {
+      setEditingDuration(false);
+      setInputDuration(visibleDuration.toFixed(2));
+    }
+  };
+
+  const handleStartTimeKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      setEditingStartTime(false);
+      applyStartTimeChange();
+    } else if (e.key === "Escape") {
+      setEditingStartTime(false);
+      setInputStartTime(visibleTimeStart.toFixed(2));
+    }
+  };
+
+  const applyDurationChange = () => {
+    const newDuration = parseFloat(inputDuration);
+    if (isNaN(newDuration) || newDuration < minDuration) {
+      // Reset to current value if invalid
+      setInputDuration(visibleDuration.toFixed(2));
+      return;
+    }
+
+    // Use the timeseriesSelection context for precise control when possible
+    if (setVisibleTimeRange) {
+      const newEndTime = visibleTimeStart + newDuration;
+      setVisibleTimeRange(visibleTimeStart, newEndTime);
+      return;
+    }
+
+    // Fallback to the old implementation if setVisibleTimeRange is not available
+    const ratio = newDuration / visibleDuration;
+    if (ratio > 1) {
+      // Zoom out (increase visible duration)
+      for (let i = 0; i < Math.log2(ratio); i++) {
+        onIncreaseVisibleDuration();
+      }
+    } else {
+      // Zoom in (decrease visible duration)
+      for (let i = 0; i < Math.log2(1 / ratio); i++) {
+        onDecreaseVisibleDuration();
+      }
+    }
+  };
+
+  const applyStartTimeChange = () => {
+    const newStartTime = parseFloat(inputStartTime);
+    if (
+      isNaN(newStartTime) ||
+      newStartTime < timeseriesStartTime ||
+      newStartTime > timeseriesStartTime + timeseriesDuration - visibleDuration
+    ) {
+      // Reset to current value if invalid
+      setInputStartTime(visibleTimeStart.toFixed(2));
+      return;
+    }
+
+    // Use the timeseriesSelection context for precise control when possible
+    if (setVisibleTimeRange) {
+      const newEndTime = newStartTime + visibleDuration;
+      setVisibleTimeRange(newStartTime, newEndTime);
+      return;
+    }
+
+    // Fallback to the old implementation if setVisibleTimeRange is not available
+    const difference = newStartTime - visibleTimeStart;
+    const shiftAmount = difference / visibleDuration;
+
+    if (difference > 0) {
+      // Shift right
+      for (let i = 0; i < Math.ceil(shiftAmount * 2); i++) {
+        onShiftTimeRight();
+      }
+    } else if (difference < 0) {
+      // Shift left
+      for (let i = 0; i < Math.ceil(Math.abs(shiftAmount) * 2); i++) {
+        onShiftTimeLeft();
+      }
+    }
+  };
 
   return (
     <div
@@ -51,15 +180,75 @@ export const TimeRangeControls: FunctionComponent<TimeRangeControlsProps> = ({
           display: "flex",
           alignItems: "center",
           gap: "4px",
-          minWidth: "110px",
+          minWidth: "130px",
         }}
       >
         <span style={{ fontWeight: 500 }}>{label}</span>
-        <span style={{ color: "#868e96", marginLeft: "8px" }}>
-          {visibleDuration.toFixed(2)}s
-        </span>
+        {editingDuration ? (
+          <input
+            ref={durationInputRef}
+            type="text"
+            value={inputDuration}
+            onChange={(e) => setInputDuration(e.target.value)}
+            onBlur={handleDurationBlur}
+            onKeyDown={handleDurationKeyDown}
+            style={{
+              width: "60px",
+              padding: "2px 4px",
+              border: "1px solid #ced4da",
+              borderRadius: "4px",
+              fontSize: "0.9rem",
+              marginLeft: "8px",
+            }}
+          />
+        ) : (
+          <span
+            style={{
+              color: "#868e96",
+              marginLeft: "8px",
+              cursor: "pointer",
+              textDecoration: "underline dashed",
+              textDecorationColor: "#adb5bd",
+              textUnderlineOffset: "2px",
+            }}
+            onClick={handleDurationClick}
+            title="Click to edit duration"
+          >
+            {visibleDuration.toFixed(2)}s
+          </span>
+        )}
         <span style={{ color: "#868e96" }}>at</span>
-        <span style={{ fontWeight: 500 }}>{visibleTimeStart.toFixed(2)}s</span>
+        {editingStartTime ? (
+          <input
+            ref={startTimeInputRef}
+            type="text"
+            value={inputStartTime}
+            onChange={(e) => setInputStartTime(e.target.value)}
+            onBlur={handleStartTimeBlur}
+            onKeyDown={handleStartTimeKeyDown}
+            style={{
+              width: "60px",
+              padding: "2px 4px",
+              border: "1px solid #ced4da",
+              borderRadius: "4px",
+              fontSize: "0.9rem",
+            }}
+          />
+        ) : (
+          <span
+            style={{
+              fontWeight: 500,
+              cursor: "pointer",
+              textDecoration: "underline dashed",
+              textDecorationColor: "#adb5bd",
+              textUnderlineOffset: "2px",
+            }}
+            onClick={handleStartTimeClick}
+            title="Click to edit start time"
+          >
+            {visibleTimeStart.toFixed(2)}s
+          </span>
+        )}
       </div>
       <div style={{ marginLeft: "4px", display: "flex", gap: "4px" }}>
         <ControlButton

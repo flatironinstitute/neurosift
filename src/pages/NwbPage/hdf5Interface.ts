@@ -18,6 +18,11 @@ const hdf5Files: {
   };
 } = {};
 
+// Authentication error tracking
+export const authenticationErrors: {
+  [url: string]: boolean;
+} = {};
+
 // for looking up lindi files
 let currentDandisetId = "";
 export const setCurrentDandisetId = (dandisetId: string) => {
@@ -26,6 +31,52 @@ export const setCurrentDandisetId = (dandisetId: string) => {
 let tryUsingLindi = true;
 export const setTryUsingLindi = (val: boolean) => {
   tryUsingLindi = val;
+};
+
+export const hasAuthError = (url: string): boolean => {
+  // Direct match
+  if (authenticationErrors[url]) {
+    return true;
+  }
+
+  // If we get a direct URL but the stored error might be from the pre-redirection URL
+  const keys = Object.keys(authenticationErrors);
+  for (const key of keys) {
+    // Look for a URL that has the same asset ID
+    if (url.includes("/assets/") && key.includes("/assets/")) {
+      const urlAssetId = url.split("/assets/")[1]?.split("/")[0];
+      const keyAssetId = key.split("/assets/")[1]?.split("/")[0];
+
+      if (urlAssetId && keyAssetId && urlAssetId === keyAssetId) {
+        console.log("Asset ID match found for auth error:", urlAssetId);
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
+export const clearAuthError = (url: string): void => {
+  if (authenticationErrors[url]) {
+    delete authenticationErrors[url];
+    return;
+  }
+
+  // Also try to clear by asset ID
+  if (url.includes("/assets/")) {
+    const urlAssetId = url.split("/assets/")[1]?.split("/")[0];
+    const keys = Object.keys(authenticationErrors);
+
+    for (const key of keys) {
+      if (key.includes("/assets/")) {
+        const keyAssetId = key.split("/assets/")[1]?.split("/")[0];
+        if (urlAssetId && keyAssetId && urlAssetId === keyAssetId) {
+          delete authenticationErrors[key];
+        }
+      }
+    }
+  }
 };
 export const isUsingLindi = (url: string) => {
   return hdf5Files[url]?.resolvedUrl.endsWith(".lindi.json");
@@ -361,12 +412,32 @@ export const getRedirectUrl = async (url: string, headers: any) => {
   // and then look at the Location response header.
   // However, we run into mysterious cors problems
   // So instead, we do a HEAD request with no redirect option, and then look at the response.url
-  const response = await headRequest(url, headers);
-  if (response.url) {
-    const redirectUrl = response.url;
-    return redirectUrl;
-  } else {
-    console.warn(`No redirect for ${url}`);
+  try {
+    const response = await headRequest(url, headers);
+
+    // Check for authentication errors (typically 401 or 403)
+    if (response.status === 401 || response.status === 403) {
+      console.warn(`Authentication error for ${url}: ${response.status}`);
+      authenticationErrors[url] = true;
+      console.log("Authentication errors map:", authenticationErrors);
+    } else if (response.ok) {
+      // Clear any previous auth errors if the request succeeded
+      delete authenticationErrors[url];
+    }
+
+    if (response.url) {
+      const redirectUrl = response.url;
+      return redirectUrl;
+    } else {
+      console.warn(`No redirect for ${url}`);
+      return null;
+    }
+  } catch (error) {
+    console.error(`Error during request for ${url}:`, error);
+    // If we're getting network errors with embargoed content, mark as auth error
+    if (isDandiAssetUrl(url) && !headers?.Authorization) {
+      authenticationErrors[url] = true;
+    }
     return null;
   }
 
