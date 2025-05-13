@@ -13,7 +13,10 @@ import "@css/NwbPage.css";
 import { TAB_BAR_HEIGHT, tabsStyle, tabStyle } from "./tabStyles";
 import { useNwbFileOverview } from "./useNwbFileOverview";
 import { track } from "@vercel/analytics/react";
-import { setCurrentDandisetId, setTryUsingLindi } from "@hdf5Interface";
+import { 
+  setCurrentDandisetId, 
+  setTryUsingLindi, 
+} from "@hdf5Interface";
 
 type NwbPageProps = {
   width: number;

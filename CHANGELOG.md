@@ -1,5 +1,11 @@
 # Changes
 
+## May 12, 2025
+- Added permission error notification for embargoed DANDI datasets (Issue #297)
+  - Added error detection for unauthorized access attempts
+  - Added UI notification with guidance on how to provide API key credentials
+  - Added direct links to settings page and DANDI archive for obtaining API keys
+
 ## April 13, 2025
 - Added direct editing of time window values in timeseries visualizations (Issue #303). Users can now click on the duration and start time values to edit them directly. Press ESC to exit
 - Fixed TimeIntervals widget to properly render when no categorical columns are available (Issue #302)
