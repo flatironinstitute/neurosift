@@ -1,3 +1,5 @@
+import { NwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
+
 export interface NwbObjectViewPlugin {
   name: string;
   label?: string; // otherwise same as name
@@ -7,6 +9,7 @@ export interface NwbObjectViewPlugin {
     path: string;
     objectType: "group" | "dataset";
     secondaryPaths?: string[];
+    specifications?: NwbFileSpecifications;
   }) => Promise<boolean>;
   // Component to render the view
   component: React.ComponentType<{
