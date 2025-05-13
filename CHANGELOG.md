@@ -1,6 +1,7 @@
 # Changes
 
 ## May 12, 2025
+- Improved error message formatting for large datasets to display sizes in human-readable form (Issue #187)
 - Added permission error notification for embargoed DANDI datasets (Issue #297)
   - Added error detection for unauthorized access attempts
   - Added UI notification with guidance on how to provide API key credentials
