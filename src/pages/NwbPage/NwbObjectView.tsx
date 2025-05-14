@@ -2,6 +2,7 @@ import { CircularProgress } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { NwbObjectViewPlugin } from "./plugins/pluginInterface";
 import { findSuitablePlugins } from "./plugins/registry";
+import { useNwbFileSpecifications } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 interface NwbObjectViewProps {
   nwbUrl: string;
@@ -33,6 +34,8 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
   const [plugins, setPlugins] = useState<NwbObjectViewPlugin[] | undefined>();
   const [loading, setLoading] = useState(true);
 
+  const specifications = useNwbFileSpecifications();
+
   useEffect(() => {
     if (plugin) {
       setPlugins([plugin]);
@@ -46,6 +49,7 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
           setPlugins([plugin]);
         } else {
           let suitable = await findSuitablePlugins(nwbUrl, path, objectType, {
+            specifications,
             launchableFromTable: false,
           });
           if (inMultiView) {

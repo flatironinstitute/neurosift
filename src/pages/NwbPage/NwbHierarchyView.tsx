@@ -9,6 +9,7 @@ import "@css/NwbHierarchyView.css";
 import { NeurodataObject, useNeurodataObjects } from "./useNeurodataObjects";
 import { findSuitablePlugins } from "./plugins/registry";
 import { NwbObjectViewPlugin } from "./plugins/pluginInterface";
+import { useNwbFileSpecifications } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 type Props = {
   nwbUrl: string;
@@ -77,6 +78,8 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
     }
   }, [neurodataObjects, visiblyExpanded]);
 
+  const specifications = useNwbFileSpecifications();
+
   useEffect(() => {
     const loadLaunchablePlugins = async () => {
       const newLaunchablePluginsWithSecondaryPaths: {
@@ -93,6 +96,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
           objectType,
           {
             launchableFromTable: true,
+            specifications,
             defaultUnitsPath,
           },
         );

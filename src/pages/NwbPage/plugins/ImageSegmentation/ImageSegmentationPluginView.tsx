@@ -1,5 +1,7 @@
 import { FunctionComponent } from "react";
 import ImageSegmentationItemView from "./ImageSegmentationItemView/ImageSegmentationItemView";
+import PlaneSegmentationView from "./ImageSegmentationItemView/PlaneSegmentationView";
+import { useHdf5Group } from "@hdf5Interface";
 
 type Props = {
   nwbUrl: string;
@@ -25,6 +27,30 @@ const ImageSegmentationPluginView: FunctionComponent<Props> = ({
       height={height}
       nwbUrl={nwbUrl}
       path={path}
+    />
+  );
+};
+
+export const PlaneSegmentationPluginView: FunctionComponent<Props> = ({
+  nwbUrl,
+  path,
+  width = 600,
+  height = 400,
+}) => {
+  const parentPath = path.split("/").slice(0, -1).join("/");
+  const pathName = path.split("/").slice(-1)[0];
+  const imageSegmentationGroup = useHdf5Group(nwbUrl, parentPath);
+  if (!imageSegmentationGroup) return <div>Loading group: {parentPath}</div>;
+
+  if (!width || !height) return <div>Width and height are required.</div>;
+
+  return (
+    <PlaneSegmentationView
+      width={width}
+      height={height}
+      imageSegmentationGroup={imageSegmentationGroup}
+      nwbUrl={nwbUrl}
+      selectedSegmentationName={pathName}
     />
   );
 };

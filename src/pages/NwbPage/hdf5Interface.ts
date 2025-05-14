@@ -282,8 +282,13 @@ export const getHdf5DatasetData = async (
     }
     const maxNumElements = 1e7;
     if (totalSize > maxNumElements) {
+      // Format sizes in MB for human readability
+      const formatSize = (size: number) => {
+        const sizeInMB = (size / 1e6).toFixed(1);
+        return `${sizeInMB} MB`;
+      };
       throw new Error(
-        `Cannot load dataset data for ${path} because it is too large. ${totalSize} > ${maxNumElements}`,
+        `The dataset "${path}" is too large to load (${formatSize(totalSize)}). Maximum allowed size is ${formatSize(maxNumElements)}.`,
       );
     }
     return await f.getDatasetData(path, o);
