@@ -364,7 +364,7 @@ const Test1: FunctionComponent<{
   }, [canvasElement, client, N0, N1, N2, scale, planeTransform]);
 
   return (
-    <div style={{ position: "absolute", width, height, fontSize: 12 }}>
+    <div style={{ position: "relative", width, height, fontSize: 12 }}>
       <div
         style={{
           position: "absolute",
