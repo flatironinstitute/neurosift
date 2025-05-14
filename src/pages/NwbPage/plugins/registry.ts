@@ -8,7 +8,10 @@ import { psthPlugin } from "./PSTH";
 import { rasterPlugin } from "./Raster";
 import imagePlugin from "./Image";
 import { spatialSeriesPlugin } from "./SpatialSeries";
-import { imageSegmentationPlugin } from "./ImageSegmentation";
+import {
+  imageSegmentationPlugin,
+  planeSegmentationPlugin,
+} from "./ImageSegmentation";
 import { timeIntervalsPlugin } from "./TimeIntervals";
 import { trialAlignedSeriesPlugin } from "./TrialAlignedSeries";
 import { pythonScriptPlugin } from "./PythonScript";
@@ -30,6 +33,7 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   psthPlugin,
   imagePlugin,
   imageSegmentationPlugin,
+  planeSegmentationPlugin,
   timeIntervalsPlugin,
   trialAlignedSeriesPlugin,
 
