@@ -88,6 +88,14 @@ const lindiDatasetDataLoader = async (o: {
     });
     let a = createDataView(dd, dtype);
     if (slice.length === 2) {
+      if (shape.length === 1) {
+        if (slice[1][0] !== 0 || slice[1][1] !== 1) {
+          throw Error(
+            `For now, you can't slice the second dimension for single chunk contiguous data`,
+          );
+        }
+        return a;
+      }
       const ss = shape.slice(2).reduce((a, b) => a * b, 1);
       const newRet = allocateArrayWithDtype(
         (slice[0][1] - slice[0][0]) * (slice[1][1] - slice[1][0]) * ss,

@@ -413,7 +413,8 @@ export const getRedirectUrl = async (url: string, headers: any) => {
     // Check for authentication errors (typically 401 or 403)
     if (response.status === 401 || response.status === 403) {
       console.warn(`Authentication error for ${url}: ${response.status}`);
-      authenticationErrors[url] = true;
+      // disable this for now until we can get it right
+      // authenticationErrors[url] = true;
       console.log("Authentication errors map:", authenticationErrors);
     } else if (response.ok) {
       // Clear any previous auth errors if the request succeeded
