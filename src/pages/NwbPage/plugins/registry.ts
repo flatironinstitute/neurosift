@@ -19,6 +19,7 @@ import spikeDensityPlugin from "./SpikeDensity";
 import { intervalSeriesPlugin } from "./IntervalSeries";
 import { eventsPlugin } from "./Events";
 import { imageSeriesMp4Plugin } from "./ImageSeriesMp4";
+import { NwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 // List of plugins in order they will appear in the UI when a single object is being viewed
 export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
@@ -50,7 +51,11 @@ export const findSuitablePlugins = async (
   nwbUrl: string,
   path: string,
   objectType: "group" | "dataset",
-  o: { launchableFromTable?: boolean; defaultUnitsPath?: string },
+  o: {
+    specifications?: NwbFileSpecifications;
+    launchableFromTable?: boolean;
+    defaultUnitsPath?: string;
+  },
 ): Promise<NwbObjectViewPlugin[]> => {
   const ret: NwbObjectViewPlugin[] = [];
   for (let i = 0; i < nwbObjectViewPlugins.length; i++) {
@@ -66,6 +71,7 @@ export const findSuitablePlugins = async (
         nwbUrl,
         objectType,
         path,
+        specifications: o.specifications,
         secondaryPaths: plugin.requiredDefaultUnits
           ? [o.defaultUnitsPath!]
           : [],
