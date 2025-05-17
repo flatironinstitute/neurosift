@@ -344,6 +344,20 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
           dandisetId={dandisetVersionInfo.dandiset.identifier}
           onNoteAnnotationsUpdate={handleNoteAnnotationsUpdate}
         />
+
+        {/* Chat (Experimental) */}
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="subtitle2" color="text.secondary">
+            <a
+              href={`https://dandi-ai-notebooks.github.io/dandiset-explorer/chat?dandisetId=${dandisetVersionInfo.dandiset.identifier}&dandisetVersion=${dandisetVersionInfo.version}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "#0066cc", textDecoration: "none" }}
+            >
+              Chat (Experimental)
+            </a>
+          </Typography>
+        </Box>
       </div>
     </ScrollY>
   );

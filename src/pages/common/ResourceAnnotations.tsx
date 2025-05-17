@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
 import { Box, Typography, Button, Link } from "@mui/material";
 import { Add as AddIcon } from "@mui/icons-material";
