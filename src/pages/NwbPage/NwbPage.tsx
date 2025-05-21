@@ -1,6 +1,6 @@
 import { Box, Tab, Tabs } from "@mui/material";
-import { FunctionComponent, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { FunctionComponent, useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import useRegisterNwbAIComponent from "./useRegisterNwbAIComponent";
 import ResponsiveLayout from "@components/ResponsiveLayout";
 import ScrollY from "@components/ScrollY";
@@ -36,8 +36,51 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({
       ? decodeURIComponent(searchParams.get("url") || "").replace(/ /g, "+")
       : "");
   const dandisetId = dandisetIdProp || searchParams.get("dandisetId");
-  const dandisetVersion = searchParams.get("dandisetVersion") || "";
+  const dandisetVersion = searchParams.get("dandisetVersion") || "draft";
+  const path = searchParams.get("path");
   const doNotTryLindi = searchParams.get("lindi") === "0";
+  const [isLoadingAssetUrl, setIsLoadingAssetUrl] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let canceled = false;
+
+    const fetchAssetUrl = async () => {
+      // If we already have a URL, or don't have necessary params, skip
+      if (nwbUrl || !path || !dandisetId) return;
+
+      setIsLoadingAssetUrl(true);
+      try {
+        const encodedPath = encodeURIComponent(path);
+        const response = await fetch(
+          `https://api.dandiarchive.org/api/dandisets/${dandisetId}/versions/${dandisetVersion}/assets/?glob=${encodedPath}&metadata=false&zarr=false`,
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch asset details");
+        }
+
+        const data = await response.json();
+        if (!canceled && data.results?.[0]?.asset_id) {
+          const assetId = data.results[0].asset_id;
+          const constructedUrl = `https://api.dandiarchive.org/api/assets/${assetId}/download/`;
+
+          navigate(`?url=${constructedUrl}&${searchParams}`);
+        }
+      } catch (error) {
+        console.error("Error fetching asset URL:", error);
+      } finally {
+        if (!canceled) {
+          setIsLoadingAssetUrl(false);
+        }
+      }
+    };
+
+    fetchAssetUrl();
+    return () => {
+      canceled = true;
+    };
+  }, [dandisetId, dandisetVersion, path, nwbUrl, searchParams, navigate]);
 
   const initialTabId = searchParams.get("tab");
 
@@ -54,6 +97,23 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({
       addRecentDandiset(dandisetId);
     }
   }, [dandisetId]);
+
+  if (isLoadingAssetUrl) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100%"
+      >
+        <div>Loading NWB file URL...</div>
+      </Box>
+    );
+  }
+
+  if (!nwbUrl) {
+    return "No NWB file URL provided.";
+  }
 
   return (
     <ResponsiveLayout
