@@ -1,0 +1,2 @@
+include neurosift/local-file-access-js/package.json
+include neurosift/local-file-access-js/src/index.js

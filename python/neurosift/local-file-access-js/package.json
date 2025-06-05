@@ -1,0 +1,15 @@
+{
+  "name": "local-file-access-js",
+  "version": "0.0.1",
+  "description": "service for allowing neurosift to access local files",
+  "main": "src/index.js",
+  "author": "Jeremy Magland",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "start2": "node src/index.js --jupyter-url $JUPYTER_URL --allow-origin $ALLOW_ORIGIN --port $PORT"
+  }
+}
