@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neurosift"
+version = "0.2.14"
+description = "Simple utility to view local NWB files using Neurosift"
+authors = [
+    { name = "Jeremy Magland", email = "jmagland@flatironinstitute.org" },
+]
+license = { text = "Apache-2.0" }
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+keywords = ["neuroscience", "nwb", "visualization", "hdf5", "zarr"]
+dependencies = ["click>=7.0"]
+
+[project.optional-dependencies]
+video = ["opencv-python>=4.0", "numcodecs>=0.10", "numpy"]
+
+[project.urls]
+Homepage = "https://github.com/flatironinstitute/neurosift"
+Repository = "https://github.com/flatironinstitute/neurosift"
+"Bug Tracker" = "https://github.com/flatironinstitute/neurosift/issues"
+Documentation = "https://github.com/flatironinstitute/neurosift/tree/main/python"
+
+[project.scripts]
+neurosift = "neurosift.cli:neurosift"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["neurosift*"]
+
+[tool.setuptools.package-data]
+neurosift = [
+    "local-file-access-js/package.json",
+    "local-file-access-js/README.md",
+    "local-file-access-js/src/*.js",
+]

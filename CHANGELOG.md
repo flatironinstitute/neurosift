@@ -1,5 +1,9 @@
 # Changes
 
+## June 5, 2025
+- Modernized Python package structure with pyproject.toml configuration. Removed legacy setup.py, setup.cfg, and setup.cfg.j2 files
+- Added option for using local neurosift server with the CLI
+
 ## May 20, 2025
 - Added support for resolving NWB file URLs from dandiset path in NwbPage
 
