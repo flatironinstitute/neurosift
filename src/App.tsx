@@ -183,10 +183,10 @@ const AppContent = () => {
     // send to neurosift-chat
     sendUrlUpdate(
       window.location.protocol +
-        "//" +
-        window.location.host +
-        location.pathname +
-        location.search,
+      "//" +
+      window.location.host +
+      location.pathname +
+      location.search,
     );
   }, [location]);
 

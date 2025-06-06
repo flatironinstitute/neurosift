@@ -1,8 +1,12 @@
 # Changes
 
+## June 6, 2025
+- Added SequentialRecordingsTable plugin for NWB files to visualize SequentialRecordingsTable neurodata type
+
 ## June 5, 2025
 - Modernized Python package structure with pyproject.toml configuration. Removed legacy setup.py, setup.cfg, and setup.cfg.j2 files
 - Added option for using local neurosift server with the CLI
+- Fixed CORS policy in local file access server to allow any localhost port for development
 
 ## May 20, 2025
 - Added support for resolving NWB file URLs from dandiset path in NwbPage

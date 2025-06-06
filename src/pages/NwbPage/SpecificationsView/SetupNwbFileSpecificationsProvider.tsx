@@ -104,11 +104,11 @@ export type SpecificationsGroup = {
 
 export type SpecificationsNamespaceSchema =
   | {
-      namespace: string;
-    }
+    namespace: string;
+  }
   | {
-      source: string;
-    };
+    source: string;
+  };
 
 const getHighestVersion = (
   versions: SpecificationsSubgroupVersion[],
