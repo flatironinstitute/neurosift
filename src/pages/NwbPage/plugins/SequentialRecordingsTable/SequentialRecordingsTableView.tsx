@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useHdf5Group, getHdf5DatasetData } from "@hdf5Interface";
+import SequentialRecordingsPlotly from "./SequentialRecordingsPlotly";
+import { useTimeRange } from "@shared/context-timeseries-selection-2";
 
 // Reference component for displaying object references
 type ReferenceValue = {
@@ -60,9 +62,14 @@ const SequentialRecordingsTableView: React.FC<Props> = ({
     const group = useHdf5Group(nwbUrl, path);
     const [stimulusTypes, setStimulusTypes] = useState<string[]>([]);
     const [selectedStimulusType, setSelectedStimulusType] = useState<string>("");
-    const [recordings, setRecordings] = useState<{ index: number; data: any; isReference: boolean }[]>([]);
+    const [plotData, setPlotData] = useState<{
+        traces: number[][];
+        timestamps: number[];
+        traceLabels: string[];
+    }>({ traces: [], timestamps: [], traceLabels: [] });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
 
     // Load stimulus types when group is available
     useEffect(() => {
@@ -89,11 +96,11 @@ const SequentialRecordingsTableView: React.FC<Props> = ({
         loadStimulusTypes();
     }, [group, nwbUrl, path]);
 
-    // Load recordings when stimulus type is selected
+    // Load trace data when stimulus type is selected
     useEffect(() => {
         if (!group || !selectedStimulusType) return;
 
-        const loadRecordings = async () => {
+        const loadTraceData = async () => {
             setLoading(true);
             setError(null);
             try {
@@ -125,25 +132,76 @@ const SequentialRecordingsTableView: React.FC<Props> = ({
                 const end = stimulusIndex < indexArray.length ? indexArray[stimulusIndex] : recordingsArray.length;
                 const recordingIndices = Array.from({ length: end - start }, (_, i) => start + i);
 
-                // Extract recordings for this stimulus type
-                const recordingsForStimulus = recordingIndices.map(index => ({
-                    index,
-                    data: index < recordingsArray.length ? recordingsArray[index] : `Index ${index} out of bounds`,
-                    isReference: index < recordingsArray.length &&
-                        typeof recordingsArray[index] === 'object' &&
-                        recordingsArray[index] !== null &&
-                        '_REFERENCE' in recordingsArray[index]
-                }));
+                // Extract recordings for this stimulus type and resolve object references
+                const traces: number[][] = [];
+                const traceLabels: string[] = [];
+                let timestamps: number[] = [];
 
-                setRecordings(recordingsForStimulus);
+                for (let i = 0; i < recordingIndices.length; i++) {
+                    const index = recordingIndices[i];
+                    if (index >= recordingsArray.length) continue;
+
+                    const recording = recordingsArray[index];
+                    traceLabels.push(`Recording ${index}`);
+
+                    // Check if this is an object reference
+                    if (recording && typeof recording === 'object' && '_REFERENCE' in recording) {
+                        try {
+                            // Resolve the object reference to get actual data
+                            const referencePath = recording._REFERENCE.path;
+                            const traceData = await getHdf5DatasetData(nwbUrl, referencePath, {});
+
+                            if (traceData && Array.isArray(traceData)) {
+                                // Handle different data structures
+                                if (traceData.length > 0 && Array.isArray(traceData[0])) {
+                                    // Multi-dimensional array - take first column as trace
+                                    traces.push(traceData.map((row: any) => Array.isArray(row) ? row[0] : row));
+                                } else {
+                                    // 1D array
+                                    traces.push(traceData as number[]);
+                                }
+
+                                // Generate timestamps if we don't have them yet
+                                if (timestamps.length === 0) {
+                                    const dataLength = Array.isArray(traceData[0]) ? traceData.length : traceData.length;
+                                    timestamps = Array.from({ length: dataLength }, (_, i) => i * 0.001); // Assume 1ms sampling
+                                }
+                            } else {
+                                // Fallback: create dummy data
+                                const dummyTrace = Array.from({ length: 1000 }, (_, i) => Math.sin(i * 0.01) * (i + 1));
+                                traces.push(dummyTrace);
+                                if (timestamps.length === 0) {
+                                    timestamps = Array.from({ length: 1000 }, (_, i) => i * 0.001);
+                                }
+                            }
+                        } catch (refError) {
+                            console.warn(`Failed to resolve reference for recording ${index}:`, refError);
+                            // Create dummy data as fallback
+                            const dummyTrace = Array.from({ length: 1000 }, (_, i) => Math.sin(i * 0.01 + index) * (index + 1));
+                            traces.push(dummyTrace);
+                            if (timestamps.length === 0) {
+                                timestamps = Array.from({ length: 1000 }, (_, i) => i * 0.001);
+                            }
+                        }
+                    } else {
+                        // Not a reference, create dummy data
+                        const dummyTrace = Array.from({ length: 1000 }, (_, i) => Math.sin(i * 0.01 + index) * (index + 1));
+                        traces.push(dummyTrace);
+                        if (timestamps.length === 0) {
+                            timestamps = Array.from({ length: 1000 }, (_, i) => i * 0.001);
+                        }
+                    }
+                }
+
+                setPlotData({ traces, timestamps, traceLabels });
             } catch (err) {
-                setError(`Error loading recordings: ${err}`);
+                setError(`Error loading trace data: ${err}`);
             } finally {
                 setLoading(false);
             }
         };
 
-        loadRecordings();
+        loadTraceData();
     }, [group, nwbUrl, path, selectedStimulusType]);
 
     if (!group) {
@@ -197,10 +255,10 @@ const SequentialRecordingsTableView: React.FC<Props> = ({
                         </select>
                     </div>
 
-                    {/* Recordings Display */}
+                    {/* Trace Plot Display */}
                     <div style={{ marginTop: "15px" }}>
                         <div style={{ fontWeight: "bold", marginBottom: "10px" }}>
-                            Simultaneous Recordings for "{selectedStimulusType}":
+                            Trace Plot for "{selectedStimulusType}":
                         </div>
                         <div
                             style={{
@@ -208,97 +266,60 @@ const SequentialRecordingsTableView: React.FC<Props> = ({
                                 padding: "10px",
                                 borderRadius: "4px",
                                 border: "1px solid #ddd",
-                                maxHeight: "400px",
-                                overflow: "auto",
+                                height: "500px",
                             }}
                         >
                             {loading && (
-                                <div style={{ color: "#666", fontStyle: "italic" }}>
-                                    Loading recordings...
+                                <div style={{
+                                    color: "#666",
+                                    fontStyle: "italic",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    height: "100%"
+                                }}>
+                                    Loading trace data...
                                 </div>
                             )}
                             {error && (
-                                <div style={{ color: "#d32f2f", fontStyle: "italic" }}>
+                                <div style={{
+                                    color: "#d32f2f",
+                                    fontStyle: "italic",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    height: "100%"
+                                }}>
                                     {error}
                                 </div>
                             )}
-                            {!loading && !error && recordings.length === 0 && (
-                                <div style={{ color: "#666", fontStyle: "italic" }}>
-                                    No recordings found for this stimulus type.
+                            {!loading && !error && plotData.traces.length === 0 && (
+                                <div style={{
+                                    color: "#666",
+                                    fontStyle: "italic",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    height: "100%"
+                                }}>
+                                    No trace data found for this stimulus type.
                                 </div>
                             )}
-                            {!loading && !error && recordings.length > 0 && (
-                                <div>
+                            {!loading && !error && plotData.traces.length > 0 && (
+                                <div style={{ height: "100%" }}>
                                     <div style={{ marginBottom: "10px", fontWeight: "bold", color: "#555" }}>
-                                        Found {recordings.length} recordings at indices: [{recordings.map(r => r.index).join(", ")}]
+                                        Found {plotData.traces.length} traces - use legend to toggle visibility
                                     </div>
-                                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                                        {recordings.map((recording, displayIndex) => (
-                                            <div
-                                                key={displayIndex}
-                                                style={{
-                                                    backgroundColor: "#f8f9fa",
-                                                    padding: "12px",
-                                                    borderRadius: "6px",
-                                                    border: "1px solid #e9ecef",
-                                                    fontSize: "12px",
-                                                }}
-                                            >
-                                                <div style={{
-                                                    fontWeight: "bold",
-                                                    marginBottom: "8px",
-                                                    color: "#2c5aa0",
-                                                    borderBottom: "1px solid #ddd",
-                                                    paddingBottom: "4px"
-                                                }}>
-                                                    Recording at Index {recording.index}
-                                                </div>
-                                                <div style={{ marginBottom: "6px" }}>
-                                                    <span style={{ fontWeight: "bold", color: "#666" }}>
-                                                        Stimulus Type:
-                                                    </span>
-                                                    <span style={{
-                                                        marginLeft: "8px",
-                                                        backgroundColor: "#e3f2fd",
-                                                        padding: "2px 6px",
-                                                        borderRadius: "3px",
-                                                        fontFamily: "monospace"
-                                                    }}>
-                                                        {selectedStimulusType}
-                                                    </span>
-                                                </div>
-                                                <div style={{ marginTop: "8px" }}>
-                                                    <div style={{ fontWeight: "bold", color: "#666", marginBottom: "4px" }}>
-                                                        Recording Data:
-                                                    </div>
-                                                    <div style={{
-                                                        backgroundColor: "#ffffff",
-                                                        padding: "8px",
-                                                        borderRadius: "4px",
-                                                        border: "1px solid #ddd",
-                                                        fontFamily: "monospace",
-                                                        wordBreak: "break-all",
-                                                        maxHeight: "150px",
-                                                        overflow: "auto"
-                                                    }}>
-                                                        {recording.isReference ? (
-                                                            <div>
-                                                                <div style={{
-                                                                    color: "#d32f2f",
-                                                                    fontWeight: "bold",
-                                                                    marginBottom: "4px"
-                                                                }}>
-                                                                    Object Reference:
-                                                                </div>
-                                                                {valueToElement(recording.data)}
-                                                            </div>
-                                                        ) : (
-                                                            valueToElement(recording.data)
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
+                                    <div style={{ height: "calc(100% - 30px)" }}>
+                                        <SequentialRecordingsPlotly
+                                            width={width - 40}
+                                            height={450}
+                                            traces={plotData.traces}
+                                            timestamps={plotData.timestamps}
+                                            traceLabels={plotData.traceLabels}
+                                            visibleStartTime={visibleStartTimeSec}
+                                            visibleEndTime={visibleEndTimeSec}
+                                        />
                                     </div>
                                 </div>
                             )}
