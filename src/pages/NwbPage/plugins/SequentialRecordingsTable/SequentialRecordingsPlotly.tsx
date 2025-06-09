@@ -56,10 +56,9 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
         const traces: Data[] = [];
 
         filteredPairs.forEach((pair) => {
-            if (!visiblePairs.has(pair.pairId)) return;
-
             const color = colors[pair.pairId % colors.length];
             const label = `${pair.stimulusType} #${pair.pairId}`;
+            const isVisible = visiblePairs.has(pair.pairId);
 
             // Normalize timestamps to start at zero
             const stimulusStartTime = pair.stimulusData.timestamps[0] || 0;
@@ -78,6 +77,7 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
                 name: `${label} (stim)`,
                 legendgroup: `pair-${pair.pairId}`,
                 showlegend: true,
+                visible: isVisible,
                 xaxis: "x",
                 yaxis: "y",
                 hovertemplate:
@@ -97,6 +97,7 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
                 name: `${label} (resp)`,
                 legendgroup: `pair-${pair.pairId}`,
                 showlegend: false,
+                visible: isVisible,
                 xaxis: "x2",
                 yaxis: "y2",
                 hovertemplate:
