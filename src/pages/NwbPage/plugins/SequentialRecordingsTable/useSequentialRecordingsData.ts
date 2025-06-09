@@ -1,12 +1,14 @@
 import { getHdf5DatasetData, getHdf5Group } from "@hdf5Interface";
 import { useEffect, useState } from "react";
 import { ChunkedTimeseriesClient } from "../simple-timeseries/TimeseriesClient";
+import { DownsampledChunkedTimeseriesClient } from "../simple-timeseries/DownsampledTimeseriesClient";
 import { SequentialRecordingsData, SequentialRecordingsPair, TimeRange, TimeseriesDataWithUnits } from "./types";
 
 export const useSequentialRecordingsData = (
     nwbUrl: string,
     path: string,
-    timeRange?: TimeRange
+    timeRange?: TimeRange,
+    downsampleOptions?: { downsampleMethod: string; downsampleFactor: number }
 ): SequentialRecordingsData => {
     const [data, setData] = useState<SequentialRecordingsData>({
         pairs: [],
@@ -152,7 +154,7 @@ export const useSequentialRecordingsData = (
                                     // Try to decode the Uint8Array object reference
                                     if (stimTimeseriesRef instanceof Uint8Array) {
                                         // Construct the stimulus path based on the recording ID
-                                        // Recording ID 3 maps to stimulus-04-ch-0 (ID + 1)
+                                        // E.g.: Recording ID 3 maps to stimulus-04-ch-0 (ID + 1)
                                         stimulusPath = `/stimulus/presentation/stimulus-${String(recId + 1).padStart(2, '0')}-ch-0`;
                                     } else {
                                         stimulusPath = String(stimTimeseriesRef);
@@ -168,7 +170,7 @@ export const useSequentialRecordingsData = (
                                     // Try to decode the Uint8Array object reference
                                     if (respTimeseriesRef instanceof Uint8Array) {
                                         // Construct the response path based on the recording ID
-                                        // Recording ID 3 maps to current_clamp-response-04-ch-0 (ID + 1)
+                                        // E.g.: Recording ID 3 maps to current_clamp-response-04-ch-0 (ID + 1)
                                         responsePath = `/acquisition/current_clamp-response-${String(recId + 1).padStart(2, '0')}-ch-0`;
                                     } else {
                                         responsePath = String(respTimeseriesRef);
@@ -180,8 +182,8 @@ export const useSequentialRecordingsData = (
 
                                 // Load timeseries data for stimulus and response
                                 const [stimulusData, responseData] = await Promise.all([
-                                    loadTimeseriesData(nwbUrl, stimulusPath, timeRange),
-                                    loadTimeseriesData(nwbUrl, responsePath, timeRange),
+                                    loadTimeseriesData(nwbUrl, stimulusPath, timeRange, downsampleOptions),
+                                    loadTimeseriesData(nwbUrl, responsePath, timeRange, downsampleOptions),
                                 ]);
 
                                 if (stimulusData && responseData) {
@@ -227,7 +229,7 @@ export const useSequentialRecordingsData = (
         return () => {
             cancelled = true;
         };
-    }, [nwbUrl, path, timeRange]);
+    }, [nwbUrl, path, timeRange, downsampleOptions?.downsampleMethod, downsampleOptions?.downsampleFactor]);
 
     return data;
 };
@@ -236,7 +238,8 @@ export const useSequentialRecordingsData = (
 const loadTimeseriesData = async (
     nwbUrl: string,
     timeseriesPath: string,
-    timeRange?: TimeRange
+    timeRange?: TimeRange,
+    downsampleOptions?: { downsampleMethod: string; downsampleFactor: number }
 ): Promise<TimeseriesDataWithUnits | null> => {
     try {
         // Get the group for this timeseries
@@ -251,10 +254,16 @@ const loadTimeseriesData = async (
         const timestampsDataset = group.datasets.find(ds => ds.name === "timestamps");
         const timeUnit = timestampsDataset?.attrs?.unit || "seconds";
 
-        // Create a timeseries client
-        const client = await ChunkedTimeseriesClient.create(nwbUrl, group, {
-            chunkSizeSec: 1,
-        });
+        // Create a timeseries client with optional downsampling
+        const downsampleFactor = downsampleOptions?.downsampleFactor ?? 5;
+        const client = downsampleFactor > 1
+            ? await DownsampledChunkedTimeseriesClient.create(nwbUrl, group, {
+                downsampleFactor,
+                chunkSizeSec: 1,
+            })
+            : await ChunkedTimeseriesClient.create(nwbUrl, group, {
+                chunkSizeSec: 1,
+            });
 
         // Determine time range to load
         const startTime = timeRange?.start ?? client.startTime;

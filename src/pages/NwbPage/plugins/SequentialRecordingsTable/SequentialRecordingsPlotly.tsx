@@ -27,14 +27,38 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
     height = 650,
     timeRange,
 }) => {
+    const [selectedStimulusType, setSelectedStimulusType] = useState<string>("");
+    const [visiblePairs, setVisiblePairs] = useState<Set<number>>(new Set());
+
+    // UI state for controls (pending changes)
+    const [downsampleMethod, setDownsampleMethod] = useState<string>("decimate");
+    const [downsampleFactor, setDownsampleFactor] = useState<number>(5);
+
+    // Applied state for actual data loading
+    const [appliedDownsampleMethod, setAppliedDownsampleMethod] = useState<string>("decimate");
+    const [appliedDownsampleFactor, setAppliedDownsampleFactor] = useState<number>(5);
+
+    const appliedDownsampleOptions = useMemo(() => ({
+        downsampleMethod: appliedDownsampleMethod,
+        downsampleFactor: appliedDownsampleFactor
+    }), [appliedDownsampleMethod, appliedDownsampleFactor]);
+
     const { pairs, stimulusTypes, isLoading, error } = useSequentialRecordingsData(
         nwbUrl,
         path,
-        timeRange
+        timeRange,
+        appliedDownsampleOptions
     );
 
-    const [selectedStimulusType, setSelectedStimulusType] = useState<string>("");
-    const [visiblePairs, setVisiblePairs] = useState<Set<number>>(new Set());
+    // Check if settings have changed
+    const hasUnappliedChanges = downsampleMethod !== appliedDownsampleMethod ||
+        downsampleFactor !== appliedDownsampleFactor;
+
+    // Handle downsample button click
+    const handleDownsample = () => {
+        setAppliedDownsampleMethod(downsampleMethod);
+        setAppliedDownsampleFactor(downsampleFactor);
+    };
 
     // Initialize visible pairs and stimulus type when data loads
     React.useEffect(() => {
@@ -351,10 +375,79 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
                     </select>
                 </label>
 
-                <span style={{ color: "#666", fontSize: "14px" }}>
-                    Showing {filteredPairs.filter(p => visiblePairs.has(p.pairId)).length} of {filteredPairs.length} pairs
-                </span>
+                <label style={{ fontWeight: "bold" }}>
+                    Downsample Method:
+                    <select
+                        value={downsampleMethod}
+                        onChange={(e) => setDownsampleMethod(e.target.value)}
+                        style={{
+                            marginLeft: "5px",
+                            padding: "4px 8px",
+                            borderRadius: "4px",
+                            border: "1px solid #ccc",
+                        }}
+                    >
+                        <option value="decimate">Decimate</option>
+                    </select>
+                </label>
+
+                <label style={{ fontWeight: "bold" }}>
+                    Downsample Factor:
+                    <input
+                        type="number"
+                        value={downsampleFactor}
+                        onChange={(e) => {
+                            const value = parseInt(e.target.value);
+                            if (!isNaN(value) && value >= 1 && value <= 100) {
+                                setDownsampleFactor(value);
+                            }
+                        }}
+                        min="1"
+                        max="100"
+                        step="1"
+                        style={{
+                            marginLeft: "5px",
+                            padding: "4px 8px",
+                            borderRadius: "4px",
+                            border: "1px solid #ccc",
+                            width: "60px",
+                        }}
+                    />
+                </label>
+
+                <button
+                    onClick={handleDownsample}
+                    disabled={!hasUnappliedChanges}
+                    style={{
+                        padding: "6px 12px",
+                        borderRadius: "4px",
+                        border: "1px solid #007bff",
+                        backgroundColor: hasUnappliedChanges ? "#007bff" : "#6c757d",
+                        color: "white",
+                        cursor: hasUnappliedChanges ? "pointer" : "not-allowed",
+                        fontWeight: "bold",
+                        fontSize: "14px",
+                    }}
+                >
+                    Downsample
+                </button>
             </div>
+
+            {/* Downsampling warning message */}
+            {appliedDownsampleFactor > 1 && (
+                <div style={{
+                    marginBottom: "10px",
+                    padding: "8px 12px",
+                    backgroundColor: "#fff3cd",
+                    border: "1px solid #ffeaa7",
+                    borderRadius: "4px",
+                    color: "#856404",
+                    fontSize: "14px",
+                    fontStyle: "italic",
+                }}>
+                    ⚠️ The traces below were downsampled for performance, the raw traces may be different.
+                </div>
+            )}
 
             {/* Plot */}
             <Plot
