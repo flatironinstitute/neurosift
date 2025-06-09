@@ -24,7 +24,7 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
     nwbUrl,
     path,
     width = 1100,
-    height = 650,
+    height = 700,
     timeRange,
 }) => {
     const [selectedStimulusType, setSelectedStimulusType] = useState<string>("");
@@ -149,7 +149,7 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
         },
         width: width - 20,
         height: height - 20,
-        margin: { l: 80, r: 80, t: 80, b: 100 },
+        margin: { l: 80, r: 80, t: 80, b: 150 },
 
         // Configure subplots with proper grid
         grid: {
@@ -349,106 +349,111 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
             {/* Controls */}
             <div style={{
                 display: "flex",
+                flexDirection: "column",
                 gap: "10px",
                 marginBottom: "10px",
-                alignItems: "center",
                 padding: "10px",
                 backgroundColor: "#f8f9fa",
                 borderRadius: "4px",
                 border: "1px solid #dee2e6"
             }}>
-                <label style={{ fontWeight: "bold" }}>
-                    Stimulus Type:
-                    <select
-                        value={selectedStimulusType}
-                        onChange={(e) => setSelectedStimulusType(e.target.value)}
-                        style={{
-                            marginLeft: "5px",
-                            padding: "4px 8px",
-                            borderRadius: "4px",
-                            border: "1px solid #ccc",
-                        }}
-                    >
-                        {stimulusTypes.map(type => (
-                            <option key={type} value={type}>{type}</option>
-                        ))}
-                    </select>
-                </label>
-
-                <label style={{ fontWeight: "bold" }}>
-                    Downsample Method:
-                    <select
-                        value={downsampleMethod}
-                        onChange={(e) => setDownsampleMethod(e.target.value)}
-                        style={{
-                            marginLeft: "5px",
-                            padding: "4px 8px",
-                            borderRadius: "4px",
-                            border: "1px solid #ccc",
-                        }}
-                    >
-                        <option value="lttb">LTTB (Best Visual)</option>
-                        <option value="decimate">Decimate (Simple)</option>
-                    </select>
-                </label>
-
-                <label style={{ fontWeight: "bold" }}>
-                    Downsample Factor:
-                    <input
-                        type="number"
-                        value={downsampleFactor}
-                        onChange={(e) => {
-                            const value = parseInt(e.target.value);
-                            if (!isNaN(value) && value >= 1 && value <= 100) {
-                                setDownsampleFactor(value);
-                            }
-                        }}
-                        min="1"
-                        max="100"
-                        step="1"
-                        style={{
-                            marginLeft: "5px",
-                            padding: "4px 8px",
-                            borderRadius: "4px",
-                            border: "1px solid #ccc",
-                            width: "60px",
-                        }}
-                    />
-                </label>
-
-                <button
-                    onClick={handleDownsample}
-                    disabled={!hasUnappliedChanges}
-                    style={{
-                        padding: "6px 12px",
-                        borderRadius: "4px",
-                        border: "1px solid #007bff",
-                        backgroundColor: hasUnappliedChanges ? "#007bff" : "#6c757d",
-                        color: "white",
-                        cursor: hasUnappliedChanges ? "pointer" : "not-allowed",
-                        fontWeight: "bold",
-                        fontSize: "14px",
-                    }}
-                >
-                    Downsample
-                </button>
-            </div>
-
-            {/* Downsampling warning message */}
-            {appliedDownsampleFactor > 1 && (
                 <div style={{
-                    marginBottom: "10px",
-                    padding: "8px 12px",
-                    backgroundColor: "#fff3cd",
-                    border: "1px solid #ffeaa7",
-                    borderRadius: "4px",
-                    color: "#856404",
-                    fontSize: "14px",
-                    fontStyle: "italic",
+                    display: "flex",
+                    gap: "10px",
+                    alignItems: "center",
                 }}>
-                    ⚠️ The traces below were downsampled for performance, the raw traces may be different.
+                    <label style={{ fontWeight: "bold" }}>
+                        Stimulus Type:
+                        <select
+                            value={selectedStimulusType}
+                            onChange={(e) => setSelectedStimulusType(e.target.value)}
+                            style={{
+                                marginLeft: "5px",
+                                padding: "4px 8px",
+                                borderRadius: "4px",
+                                border: "1px solid #ccc",
+                            }}
+                        >
+                            {stimulusTypes.map(type => (
+                                <option key={type} value={type}>{type}</option>
+                            ))}
+                        </select>
+                    </label>
+
+                    <label style={{ fontWeight: "bold" }}>
+                        Downsample Method:
+                        <select
+                            value={downsampleMethod}
+                            onChange={(e) => setDownsampleMethod(e.target.value)}
+                            style={{
+                                marginLeft: "5px",
+                                padding: "4px 8px",
+                                borderRadius: "4px",
+                                border: "1px solid #ccc",
+                            }}
+                        >
+                            <option value="lttb">LTTB (Best Visual)</option>
+                            <option value="decimate">Decimate (Simple)</option>
+                        </select>
+                    </label>
+
+                    <label style={{ fontWeight: "bold" }}>
+                        Downsample Factor:
+                        <input
+                            type="number"
+                            value={downsampleFactor}
+                            onChange={(e) => {
+                                const value = parseInt(e.target.value);
+                                if (!isNaN(value) && value >= 1 && value <= 100) {
+                                    setDownsampleFactor(value);
+                                }
+                            }}
+                            min="1"
+                            max="100"
+                            step="1"
+                            style={{
+                                marginLeft: "5px",
+                                padding: "4px 8px",
+                                borderRadius: "4px",
+                                border: "1px solid #ccc",
+                                width: "60px",
+                            }}
+                        />
+                    </label>
+
+                    <button
+                        onClick={handleDownsample}
+                        disabled={!hasUnappliedChanges}
+                        style={{
+                            padding: "6px 12px",
+                            borderRadius: "4px",
+                            border: "1px solid #007bff",
+                            backgroundColor: hasUnappliedChanges ? "#007bff" : "#6c757d",
+                            color: "white",
+                            cursor: hasUnappliedChanges ? "pointer" : "not-allowed",
+                            fontWeight: "bold",
+                            fontSize: "14px",
+                        }}
+                    >
+                        Downsample
+                    </button>
                 </div>
-            )}
+
+                {/* Downsampling warning message inside controls */}
+                {appliedDownsampleFactor > 1 && (
+                    <div style={{
+                        padding: "8px 12px",
+                        backgroundColor: "#fff3cd",
+                        border: "1px solid #ffeaa7",
+                        borderRadius: "4px",
+                        color: "#856404",
+                        fontSize: "14px",
+                        fontStyle: "italic",
+                    }}>
+                        ⚠️ The traces below were downsampled for performance, the raw traces may be different.
+                    </div>
+                )}
+            </div>
 
             {/* Plot */}
             <Plot
