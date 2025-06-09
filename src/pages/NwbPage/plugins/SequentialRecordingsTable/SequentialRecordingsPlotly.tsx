@@ -74,10 +74,10 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
                 type: "scatter",
                 mode: "lines",
                 line: { color, width: 2 },
-                name: `${label} (stim)`,
+                name: `${label}`,
                 legendgroup: `pair-${pair.pairId}`,
                 showlegend: true,
-                visible: isVisible,
+                visible: isVisible ? true : "legendonly",
                 xaxis: "x",
                 yaxis: "y",
                 hovertemplate:
@@ -94,10 +94,10 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
                 type: "scatter",
                 mode: "lines",
                 line: { color, width: 2 },
-                name: `${label} (resp)`,
+                name: `${label}`,
                 legendgroup: `pair-${pair.pairId}`,
                 showlegend: false,
-                visible: isVisible,
+                visible: isVisible ? true : "legendonly",
                 xaxis: "x2",
                 yaxis: "y2",
                 hovertemplate:
@@ -225,26 +225,12 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
 
     // Handle legend click to toggle pair visibility
     const handleLegendClick = (event: any) => {
-        // For legend clicks, the event structure is different
-        // We need to access the trace data directly from the event
-        if (event && event.data && (event.data as any).legendgroup) {
-            const legendgroup = (event.data as any).legendgroup;
-            const pairId = parseInt(legendgroup.split("-")[1]);
-
-            setVisiblePairs(prev => {
-                const newSet = new Set(prev);
-                if (newSet.has(pairId)) {
-                    newSet.delete(pairId);
-                } else {
-                    newSet.add(pairId);
-                }
-                return newSet;
-            });
-        } else if (event && event.curveNumber !== undefined) {
-            // Alternative: use curveNumber to find the trace in plotData
+        if (event && event.curveNumber !== undefined) {
+            // Get the trace that was clicked
             const trace = plotData[event.curveNumber];
             if (trace && (trace as any).legendgroup) {
-                const pairId = parseInt((trace as any).legendgroup.split("-")[1]);
+                const legendgroup = (trace as any).legendgroup;
+                const pairId = parseInt(legendgroup.split("-")[1]);
 
                 setVisiblePairs(prev => {
                     const newSet = new Set(prev);
@@ -255,10 +241,14 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
                     }
                     return newSet;
                 });
+
+                // Return false to prevent Plotly's default legend behavior
+                return false;
             }
         }
 
-        return false; // Prevent default legend behavior
+        // Allow default behavior for other cases
+        return true;
     };
 
     if (isLoading) {
