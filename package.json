@@ -21,6 +21,7 @@
     "@types/plotly.js": "^2.35.2",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@vercel/analytics": "^1.4.1",
+    "downsample": "^1.4.0",
     "mathjs": "^14.2.1",
     "nifti-reader-js": "^0.7.0",
     "numcodecs": "^0.3.1",

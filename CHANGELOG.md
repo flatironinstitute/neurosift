@@ -1,5 +1,8 @@
 # Changes
 
+## June 9, 2025
+- Added DownsampledTimeseriesClient with downsampling methods LTTB (Largest Triangle Three Buckets) and Decimate for improved performance with large datasets
+
 ## June 6, 2025
 - Added SequentialRecordingsTable plugin for NWB files to visualize SequentialRecordingsTable neurodata type
 

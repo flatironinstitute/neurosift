@@ -255,10 +255,12 @@ const loadTimeseriesData = async (
         const timeUnit = timestampsDataset?.attrs?.unit || "seconds";
 
         // Create a timeseries client with optional downsampling
-        const downsampleFactor = downsampleOptions?.downsampleFactor ?? 5;
+        const downsampleFactor = downsampleOptions?.downsampleFactor ?? 10;
+        const downsampleMethod = downsampleOptions?.downsampleMethod ?? 'lttb';
         const client = downsampleFactor > 1
             ? await DownsampledChunkedTimeseriesClient.create(nwbUrl, group, {
                 downsampleFactor,
+                downsampleMethod: downsampleMethod as 'decimate' | 'lttb',
                 chunkSizeSec: 1,
             })
             : await ChunkedTimeseriesClient.create(nwbUrl, group, {

@@ -31,12 +31,12 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
     const [visiblePairs, setVisiblePairs] = useState<Set<number>>(new Set());
 
     // UI state for controls (pending changes)
-    const [downsampleMethod, setDownsampleMethod] = useState<string>("decimate");
-    const [downsampleFactor, setDownsampleFactor] = useState<number>(5);
+    const [downsampleMethod, setDownsampleMethod] = useState<string>("lttb");
+    const [downsampleFactor, setDownsampleFactor] = useState<number>(10);
 
     // Applied state for actual data loading
-    const [appliedDownsampleMethod, setAppliedDownsampleMethod] = useState<string>("decimate");
-    const [appliedDownsampleFactor, setAppliedDownsampleFactor] = useState<number>(5);
+    const [appliedDownsampleMethod, setAppliedDownsampleMethod] = useState<string>("lttb");
+    const [appliedDownsampleFactor, setAppliedDownsampleFactor] = useState<number>(10);
 
     const appliedDownsampleOptions = useMemo(() => ({
         downsampleMethod: appliedDownsampleMethod,
@@ -387,7 +387,8 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
                             border: "1px solid #ccc",
                         }}
                     >
-                        <option value="decimate">Decimate</option>
+                        <option value="lttb">LTTB (Best Visual)</option>
+                        <option value="decimate">Decimate (Simple)</option>
                     </select>
                 </label>
 
