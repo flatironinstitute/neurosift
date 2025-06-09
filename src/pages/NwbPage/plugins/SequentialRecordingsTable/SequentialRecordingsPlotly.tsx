@@ -111,7 +111,7 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
         return traces;
     }, [filteredPairs, visiblePairs]);
 
-    // Layout configuration for dual subplots
+    // Layout configuration for dual subplots using proper subplot approach
     const layout: Partial<Layout> = useMemo(() => ({
         title: {
             text: `Sequential Recordings - ${selectedStimulusType}`,
@@ -120,15 +120,23 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
         },
         width: width - 20,
         height: height - 20,
-        margin: { l: 80, r: 150, t: 80, b: 100 },
+        margin: { l: 80, r: 80, t: 80, b: 100 },
 
-        // Left subplot (Stimulus)
+        // Configure subplots with proper grid
+        grid: {
+            rows: 1,
+            columns: 2,
+            pattern: "independent",
+            xgap: 0.1,
+        },
+
+        // Left subplot (Stimulus) - subplot 1
         xaxis: {
             title: {
                 text: "Time [seconds]",
                 font: { size: 14, color: "#333" }
             },
-            domain: [0, 0.48],
+            domain: [0, 0.45],
             showgrid: true,
             gridcolor: "#e0e0e0",
         },
@@ -137,18 +145,17 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
                 text: "Stimulus [unit]",
                 font: { size: 14, color: "#333" }
             },
-            domain: [0, 1],
             showgrid: true,
             gridcolor: "#e0e0e0",
         },
 
-        // Right subplot (Response)
+        // Right subplot (Response) - subplot 2
         xaxis2: {
             title: {
                 text: "Time [seconds]",
                 font: { size: 14, color: "#333" }
             },
-            domain: [0.52, 1],
+            domain: [0.55, 1],
             showgrid: true,
             gridcolor: "#e0e0e0",
         },
@@ -157,11 +164,36 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
                 text: "Response [unit]",
                 font: { size: 14, color: "#333" }
             },
-            domain: [0, 1],
-            side: "right",
+            side: "left",
             showgrid: true,
             gridcolor: "#e0e0e0",
         },
+
+        // Annotations for subplot titles
+        annotations: [
+            {
+                text: "Stimulus",
+                x: 0.225,
+                y: 1.02,
+                xref: "paper",
+                yref: "paper",
+                xanchor: "center",
+                yanchor: "bottom",
+                showarrow: false,
+                font: { size: 16, color: "#333" }
+            },
+            {
+                text: "Response",
+                x: 0.775,
+                y: 1.02,
+                xref: "paper",
+                yref: "paper",
+                xanchor: "center",
+                yanchor: "bottom",
+                showarrow: false,
+                font: { size: 16, color: "#333" }
+            }
+        ],
 
         legend: {
             title: { text: "Pairs" },

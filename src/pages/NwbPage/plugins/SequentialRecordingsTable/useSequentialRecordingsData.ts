@@ -82,12 +82,6 @@ export const useSequentialRecordingsData = (
 
                 if (cancelled) return;
 
-                // Debug: Log the structure of the references
-                console.log("Stimulus refs structure:", stimulusRefs);
-                console.log("Response refs structure:", responseRefs);
-                console.log("First response ref:", (responseRefs as any)[0]);
-
-
                 // Step 5: Process the data structure
                 const pairs: SequentialRecordingsPair[] = [];
                 const stimulusTypesSet = new Set<string>();
@@ -110,11 +104,6 @@ export const useSequentialRecordingsData = (
                     ? recordingsIndex
                     : Array.from(recordingsIndex as any);
 
-                // Debug: Log the arrays
-                console.log("Stimulus types:", stimulusTypesArray);
-                console.log("Simultaneous recordings:", simultaneousRecordingsArray);
-                console.log("Recordings:", recordingsArray);
-
                 // Helper function to get ragged array slice
                 const getRaggedSlice = (array: any[], index: any[], row: number) => {
                     const start = row === 0 ? 0 : index[row - 1];
@@ -127,8 +116,6 @@ export const useSequentialRecordingsData = (
                     const stimulusType = String(stimulusTypesArray[seqRow]);
                     stimulusTypesSet.add(stimulusType);
 
-                    console.log(`Processing stimulus type: ${stimulusType} (row ${seqRow})`);
-
                     // Get simultaneous recordings for this sequential recording
                     const simRecordings = getRaggedSlice(
                         simultaneousRecordingsArray,
@@ -136,31 +123,21 @@ export const useSequentialRecordingsData = (
                         seqRow
                     );
 
-                    console.log(`Simultaneous recordings for ${stimulusType}:`, simRecordings);
-
                     // For each simultaneous recording
                     for (const simRow of simRecordings) {
                         // Get individual recordings for this simultaneous recording
                         const recordings = getRaggedSlice(recordingsArray, recordingsIndexArray, simRow);
-
-                        console.log(`Individual recordings for simRow ${simRow}:`, recordings);
 
                         // For each individual recording
                         for (const recId of recordings) {
                             if (cancelled) return;
 
                             try {
-                                console.log(`Processing recording ID: ${recId}`);
-
                                 // Get stimulus and response references
                                 const stimRef = (stimulusRefs as any)[recId];
                                 const respRef = (responseRefs as any)[recId];
 
-                                console.log(`Stim ref for ${recId}:`, stimRef);
-                                console.log(`Resp ref for ${recId}:`, respRef);
-
                                 if (!stimRef || !respRef) {
-                                    console.log(`Missing refs for recording ${recId}`);
                                     continue;
                                 }
 
@@ -171,16 +148,9 @@ export const useSequentialRecordingsData = (
 
                                 if (Array.isArray(stimRef) && stimRef.length >= 3) {
                                     const stimTimeseriesRef = stimRef[2];
-                                    console.log(`Stim timeseries ref for ${recId}:`, stimTimeseriesRef);
 
                                     // Try to decode the Uint8Array object reference
                                     if (stimTimeseriesRef instanceof Uint8Array) {
-                                        // Try different decoding approaches
-                                        const asString = new TextDecoder().decode(stimTimeseriesRef);
-                                        const asHex = Array.from(stimTimeseriesRef).map(b => b.toString(16).padStart(2, '0')).join('');
-                                        console.log(`Stim ref as string: "${asString}"`);
-                                        console.log(`Stim ref as hex: ${asHex}`);
-
                                         // Construct the stimulus path based on the recording ID
                                         // Recording ID 3 maps to stimulus-04-ch-0 (ID + 1)
                                         stimulusPath = `/stimulus/presentation/stimulus-${String(recId + 1).padStart(2, '0')}-ch-0`;
@@ -194,16 +164,9 @@ export const useSequentialRecordingsData = (
 
                                 if (Array.isArray(respRef) && respRef.length >= 3) {
                                     const respTimeseriesRef = respRef[2];
-                                    console.log(`Resp timeseries ref for ${recId}:`, respTimeseriesRef);
 
                                     // Try to decode the Uint8Array object reference
                                     if (respTimeseriesRef instanceof Uint8Array) {
-                                        // Try different decoding approaches
-                                        const asString = new TextDecoder().decode(respTimeseriesRef);
-                                        const asHex = Array.from(respTimeseriesRef).map(b => b.toString(16).padStart(2, '0')).join('');
-                                        console.log(`Resp ref as string: "${asString}"`);
-                                        console.log(`Resp ref as hex: ${asHex}`);
-
                                         // Construct the response path based on the recording ID
                                         // Recording ID 3 maps to current_clamp-response-04-ch-0 (ID + 1)
                                         responsePath = `/acquisition/current_clamp-response-${String(recId + 1).padStart(2, '0')}-ch-0`;
@@ -215,8 +178,6 @@ export const useSequentialRecordingsData = (
                                     continue;
                                 }
 
-                                console.log(`Paths for ${recId}: stim=${stimulusPath}, resp=${responsePath}`);
-
                                 // Load timeseries data for stimulus and response
                                 const [stimulusData, responseData] = await Promise.all([
                                     loadTimeseriesData(nwbUrl, stimulusPath, timeRange),
@@ -224,7 +185,6 @@ export const useSequentialRecordingsData = (
                                 ]);
 
                                 if (stimulusData && responseData) {
-                                    console.log(`Successfully loaded pair ${pairId} for ${stimulusType}`);
                                     pairs.push({
                                         pairId,
                                         stimulusType,
@@ -234,8 +194,6 @@ export const useSequentialRecordingsData = (
                                         responseData,
                                     });
                                     pairId++;
-                                } else {
-                                    console.log(`Failed to load timeseries data for ${recId}`);
                                 }
                             } catch (error) {
                                 console.warn(`Failed to load pair ${pairId}:`, error);
