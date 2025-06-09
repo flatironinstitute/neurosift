@@ -1,7 +1,7 @@
 import { getHdf5DatasetData, getHdf5Group } from "@hdf5Interface";
 import { useEffect, useState } from "react";
 import { ChunkedTimeseriesClient } from "../simple-timeseries/TimeseriesClient";
-import { SequentialRecordingsData, SequentialRecordingsPair, TimeRange } from "./types";
+import { SequentialRecordingsData, SequentialRecordingsPair, TimeRange, TimeseriesDataWithUnits } from "./types";
 
 export const useSequentialRecordingsData = (
     nwbUrl: string,
@@ -237,11 +237,19 @@ const loadTimeseriesData = async (
     nwbUrl: string,
     timeseriesPath: string,
     timeRange?: TimeRange
-): Promise<{ timestamps: number[]; data: number[] } | null> => {
+): Promise<TimeseriesDataWithUnits | null> => {
     try {
         // Get the group for this timeseries
         const group = await getHdf5Group(nwbUrl, timeseriesPath);
         if (!group) return null;
+
+        // Extract unit information from the data dataset attributes
+        const dataDataset = group.datasets.find(ds => ds.name === "data");
+        const unit = dataDataset?.attrs?.unit || "unknown";
+
+        // Extract time unit from timestamps dataset if available
+        const timestampsDataset = group.datasets.find(ds => ds.name === "timestamps");
+        const timeUnit = timestampsDataset?.attrs?.unit || "seconds";
 
         // Create a timeseries client
         const client = await ChunkedTimeseriesClient.create(nwbUrl, group, {
@@ -260,6 +268,8 @@ const loadTimeseriesData = async (
         return {
             timestamps: result.timestamps,
             data: result.data[0] || [], // First channel
+            unit: String(unit),
+            timeUnit: String(timeUnit),
         };
     } catch (error) {
         console.warn(`Failed to load timeseries data from ${timeseriesPath}:`, error);

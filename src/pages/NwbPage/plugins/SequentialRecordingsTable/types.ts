@@ -1,10 +1,17 @@
+export interface TimeseriesDataWithUnits {
+    timestamps: number[];
+    data: number[];
+    unit: string;
+    timeUnit?: string;
+}
+
 export interface SequentialRecordingsPair {
     pairId: number;
     stimulusType: string;
     stimulusPath: string;
     responsePath: string;
-    stimulusData: { timestamps: number[]; data: number[] };
-    responseData: { timestamps: number[]; data: number[] };
+    stimulusData: TimeseriesDataWithUnits;
+    responseData: TimeseriesDataWithUnits;
 }
 
 export interface SequentialRecordingsData {

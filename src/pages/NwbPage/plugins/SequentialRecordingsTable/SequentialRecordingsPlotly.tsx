@@ -111,6 +111,11 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
         return traces;
     }, [filteredPairs, visiblePairs]);
 
+    // Extract units from the first available pair for axis labeling
+    const stimulusUnit = filteredPairs.length > 0 ? filteredPairs[0].stimulusData.unit : "unit";
+    const responseUnit = filteredPairs.length > 0 ? filteredPairs[0].responseData.unit : "unit";
+    const timeUnit = filteredPairs.length > 0 ? (filteredPairs[0].stimulusData.timeUnit || "seconds") : "seconds";
+
     // Layout configuration for dual subplots using proper subplot approach
     const layout: Partial<Layout> = useMemo(() => ({
         title: {
@@ -133,7 +138,7 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
         // Left subplot (Stimulus) - subplot 1
         xaxis: {
             title: {
-                text: "Time [seconds]",
+                text: `Time [${timeUnit}]`,
                 font: { size: 14, color: "#333" }
             },
             domain: [0, 0.45],
@@ -142,7 +147,7 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
         },
         yaxis: {
             title: {
-                text: "Stimulus [unit]",
+                text: `Stimulus [${stimulusUnit}]`,
                 font: { size: 14, color: "#333" }
             },
             showgrid: true,
@@ -152,7 +157,7 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
         // Right subplot (Response) - subplot 2
         xaxis2: {
             title: {
-                text: "Time [seconds]",
+                text: `Time [${timeUnit}]`,
                 font: { size: 14, color: "#333" }
             },
             domain: [0.55, 1],
@@ -161,7 +166,7 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
         },
         yaxis2: {
             title: {
-                text: "Response [unit]",
+                text: `Response [${responseUnit}]`,
                 font: { size: 14, color: "#333" }
             },
             side: "left",
