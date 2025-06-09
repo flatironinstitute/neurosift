@@ -120,17 +120,23 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
         },
         width: width - 20,
         height: height - 20,
-        margin: { l: 60, r: 150, t: 80, b: 60 },
+        margin: { l: 80, r: 150, t: 80, b: 100 },
 
         // Left subplot (Stimulus)
         xaxis: {
-            title: "Time (s)",
+            title: {
+                text: "Time [seconds]",
+                font: { size: 14, color: "#333" }
+            },
             domain: [0, 0.48],
             showgrid: true,
             gridcolor: "#e0e0e0",
         },
         yaxis: {
-            title: "Stimulus (command)",
+            title: {
+                text: "Stimulus [unit]",
+                font: { size: 14, color: "#333" }
+            },
             domain: [0, 1],
             showgrid: true,
             gridcolor: "#e0e0e0",
@@ -138,14 +144,21 @@ const SequentialRecordingsPlotly: React.FC<Props> = ({
 
         // Right subplot (Response)
         xaxis2: {
-            title: "Time (s)",
+            title: {
+                text: "Time [seconds]",
+                font: { size: 14, color: "#333" }
+            },
             domain: [0.52, 1],
             showgrid: true,
             gridcolor: "#e0e0e0",
         },
         yaxis2: {
-            title: "Response (V)",
+            title: {
+                text: "Response [unit]",
+                font: { size: 14, color: "#333" }
+            },
             domain: [0, 1],
+            side: "right",
             showgrid: true,
             gridcolor: "#e0e0e0",
         },
