@@ -3,7 +3,6 @@ import React, { useMemo, useState } from "react";
 import Plot from "react-plotly.js";
 import { Data, Layout } from "plotly.js";
 import { useSequentialRecordingsData } from "./useSequentialRecordingsData";
-import { SequentialRecordingsPair } from "./types";
 
 const colors = [
   "#1f77b4",

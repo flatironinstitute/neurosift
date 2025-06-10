@@ -8,7 +8,7 @@ type Props = {
   path: string;
   width?: number;
   height?: number;
-  objectType?: "group" | "dataset";
+  objectType: "group" | "dataset";
   onOpenObjectInNewTab?: (path: string) => void;
 };
 
