@@ -56,6 +56,13 @@ The output is the same format as dandi_search.
           type: "number",
           description: "Maximum number of results",
           default: 10
+        },
+        dandisets: {
+          type: "array",
+          items: {
+            type: "string"
+          },
+          description: "Optional list of dandiset IDs to restrict search results to"
         }
       }
     }
