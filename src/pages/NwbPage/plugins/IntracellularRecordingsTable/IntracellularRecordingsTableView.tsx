@@ -6,10 +6,8 @@ type Props = {
   path: string;
   objectType: "group" | "dataset";
   onOpenObjectInNewTab?: (path: string) => void;
-  secondaryPaths?: string[];
   width?: number;
   height?: number;
-  condensed?: boolean;
 };
 
 const IntracellularRecordingsTableView: React.FC<Props> = ({
