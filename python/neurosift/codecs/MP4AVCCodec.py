@@ -12,12 +12,10 @@ class MP4AVCCodec(Codec):
     --------
     See examples/example_mp4avc_codec.py in the neurosift repo.
     """
+
     codec_id = "mp4avc"
 
-    def __init__(
-        self,
-        fps: float
-    ):
+    def __init__(self, fps: float):
         """
         Parameters
         ----------
@@ -50,13 +48,19 @@ class MP4AVCCodec(Codec):
             is_color = True
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            tmp_output_fname = f'{tmpdir}/output.mp4'
-            fourcc = cv2.VideoWriter_fourcc(*'avc1')  # type: ignore
-            writer = cv2.VideoWriter(tmp_output_fname, fourcc, self.fps, (array.shape[2], array.shape[1]), isColor=is_color)
+            tmp_output_fname = f"{tmpdir}/output.mp4"
+            fourcc = cv2.VideoWriter_fourcc(*"avc1")  # type: ignore
+            writer = cv2.VideoWriter(
+                tmp_output_fname,
+                fourcc,
+                self.fps,
+                (array.shape[2], array.shape[1]),
+                isColor=is_color,
+            )
             for i in range(array.shape[0]):
                 writer.write(array[i])
             writer.release()
-            with open(tmp_output_fname, 'rb') as f:
+            with open(tmp_output_fname, "rb") as f:
                 return f.read()
 
     def decode(self, buf: bytes, out=None):  # type: ignore
@@ -73,9 +77,10 @@ class MP4AVCCodec(Codec):
             (frames, height, width, 3) or (frames, height, width).
         """
         import cv2
+
         with tempfile.TemporaryDirectory() as tmpdir:
-            tmp_input_fname = f'{tmpdir}/input.mp4'
-            with open(tmp_input_fname, 'wb') as f:
+            tmp_input_fname = f"{tmpdir}/input.mp4"
+            with open(tmp_input_fname, "wb") as f:
                 f.write(buf)
             cap = cv2.VideoCapture(tmp_input_fname)
             frames = []
@@ -91,9 +96,7 @@ class MP4AVCCodec(Codec):
             return ret
 
     def __repr__(self):
-        return (
-            f'{self.__class__.__name__}(fps={self.fps})'
-        )
+        return f"{self.__class__.__name__}(fps={self.fps})"
 
     @staticmethod
     def register_codec():
