@@ -19,6 +19,8 @@ import spikeDensityPlugin from "./SpikeDensity";
 import { intervalSeriesPlugin } from "./IntervalSeries";
 import { eventsPlugin } from "./Events";
 import { imageSeriesMp4Plugin } from "./ImageSeriesMp4";
+import { intracellularRecordingsTablePlugin } from "./IntracellularRecordingsTable";
+import { sequentialRecordingsTablePlugin } from "./SequentialRecordingsTable";
 import { NwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 // List of plugins in order they will appear in the UI when a single object is being viewed
@@ -28,6 +30,8 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
 
   behavioralEventsPlugin,
   dynamicTablePlugin,
+  intracellularRecordingsTablePlugin,
+  sequentialRecordingsTablePlugin,
   twoPhotonSeriesPlugin,
   spatialSeriesPlugin,
   simpleTimeseriesPlugin,
