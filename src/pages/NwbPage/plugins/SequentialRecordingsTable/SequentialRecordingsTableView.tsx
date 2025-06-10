@@ -31,9 +31,9 @@ const SequentialRecordingsTableView: React.FC<Props> = ({
   const timeRange =
     visibleStartTimeSec !== undefined && visibleEndTimeSec !== undefined
       ? {
-        start: visibleStartTimeSec,
-        duration: visibleEndTimeSec - visibleStartTimeSec,
-      }
+          start: visibleStartTimeSec,
+          duration: visibleEndTimeSec - visibleStartTimeSec,
+        }
       : undefined;
 
   return (
