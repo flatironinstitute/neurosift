@@ -6,10 +6,12 @@ import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 type Props = {
   nwbUrl: string;
   path: string;
+  objectType: "group" | "dataset";
+  onOpenObjectInNewTab?: (path: string) => void;
+  secondaryPaths?: string[];
   width?: number;
   height?: number;
-  objectType?: "group" | "dataset";
-  onOpenObjectInNewTab?: (path: string) => void;
+  condensed?: boolean;
 };
 
 const SequentialRecordingsTableView: React.FC<Props> = ({
@@ -29,9 +31,9 @@ const SequentialRecordingsTableView: React.FC<Props> = ({
   const timeRange =
     visibleStartTimeSec !== undefined && visibleEndTimeSec !== undefined
       ? {
-          start: visibleStartTimeSec,
-          duration: visibleEndTimeSec - visibleStartTimeSec,
-        }
+        start: visibleStartTimeSec,
+        duration: visibleEndTimeSec - visibleStartTimeSec,
+      }
       : undefined;
 
   return (

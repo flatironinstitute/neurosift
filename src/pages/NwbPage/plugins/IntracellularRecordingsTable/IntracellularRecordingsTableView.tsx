@@ -4,10 +4,12 @@ import { useHdf5Group } from "@hdf5Interface";
 type Props = {
   nwbUrl: string;
   path: string;
+  objectType: "group" | "dataset";
+  onOpenObjectInNewTab?: (path: string) => void;
+  secondaryPaths?: string[];
   width?: number;
   height?: number;
-  objectType?: "group" | "dataset";
-  onOpenObjectInNewTab?: (path: string) => void;
+  condensed?: boolean;
 };
 
 const IntracellularRecordingsTableView: React.FC<Props> = ({
