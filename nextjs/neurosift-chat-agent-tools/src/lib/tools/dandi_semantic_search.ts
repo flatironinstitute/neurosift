@@ -83,10 +83,12 @@ const doEmbedding = async (text: string, model: string) => {
 
 const findSimilarDandisetIds = (
   embeddings: { [dandisetId: string]: number[] },
-  embedding: number[]
+  embedding: number[],
+  restrictToDandisets?: string[]
 ) => {
   const similarities: { dandisetId: string; similarity: number }[] = [];
   for (const dandisetId in embeddings) {
+    if (restrictToDandisets && !restrictToDandisets.includes(dandisetId)) continue;
     const embedding2 = embeddings[dandisetId];
     if (!embedding2) continue;
     const similarity = cosineSimilarity(embedding, embedding2);
@@ -118,7 +120,8 @@ interface DandiSearchResult {
 
 export async function dandiSemanticSearch(
   query: string,
-  limit: number = 10
+  limit: number = 10,
+  dandisets?: string[]
 ): Promise<DandiSearchResult[]> {
   const embeddings = await loadEmbeddings();
   if (!embeddings) {
@@ -131,7 +134,8 @@ export async function dandiSemanticSearch(
   }
   let similarDandisetIds = findSimilarDandisetIds(
     embeddings,
-    queryEmbedding.embedding
+    queryEmbedding.embedding,
+    dandisets
   );
   similarDandisetIds = similarDandisetIds.slice(0, limit);
 
