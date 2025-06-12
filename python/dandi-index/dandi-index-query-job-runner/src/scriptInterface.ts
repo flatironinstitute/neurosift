@@ -14,13 +14,45 @@ export interface ScriptInterface {
   getDandiset: (o: {dandisetId: string}) => Promise<DandisetInfo | undefined>;
 }
 
+// const _findDandisets = async (o: {search?: string}): Promise<DandisetInfo[]> => {
+//   const params: FetchDandisetsParams = {};
+//   if (o.search) {
+//     params.search = o.search;
+//   }
+//   const vvv = '11';
+//   const r = await getCachedResult<DandisetInfo[]>(
+//     'findDandisets',
+//     vvv,
+//     [params.search || ''],
+//     60 // Cache for 60 minutes
+//   )
+//   if (r) return r;
+//   const result = await fetchDandisetsFromApi(params.search || '');
+//   await setCachedResult('findDandisets', vvv, [params.search || ''], result);
+//   return result;
+// }
+
+// const _findNwbFiles = async (o: {dandisetId: string, version: string}): Promise<NwbFileInfo[]> => {
+//   const vvv = '11';
+//   const r = await getCachedResult<NwbFileInfo[]>(
+//     'findNwbFiles',
+//     vvv,
+//     [o.dandisetId, o.version],
+//     o.version !== 'draft' ? 60 * 24 * 100 : 60 // Cache for 100 days if not draft, otherwise 60 minutes
+//   );
+//   if (r) return r;
+//   const result = await fetchNwbFilesFromApi(o.dandisetId, o.version);
+//   await setCachedResult('findNwbFiles', vvv, [o.dandisetId, o.version], result);
+//   return result;
+// }o: {search?: string}
+
 class DandiInterface {
   constructor(public o: {onStatusUpdate: (status: string) => void}) {
     this.o.onStatusUpdate('Dandi Interface initialized');
   }
   async getDandiset(o: {dandisetId: string}): Promise<DandiInterfaceDandiset | undefined> {
     this.o.onStatusUpdate(`Getting dandiset: ${o.dandisetId}`);
-    const fname = '../data/dandi.json';
+    const fname = `${baseDir}/dandi.json`;
     if (!fs.existsSync(fname)) {
       throw new Error(`Dandiset data file not found: ${fname}`);
     }
@@ -49,7 +81,7 @@ class DandiInterface {
   }
   async getDandisets(): Promise<DandiInterfaceDandiset[]> {
     this.o.onStatusUpdate('Getting dandisets...');
-    const fname = '../data/dandi.json';
+    const fname = `${baseDir}/dandi.json`;
     if (!fs.existsSync(fname)) {
       throw new Error(`Dandiset data file not found: ${fname}`);
     }
@@ -74,11 +106,11 @@ class DandiInterface {
       ds.star_count
     ));
   }
-  async findDandisets(o: {search?: string, /*semanticSearch?: string, */restrictToDandisets?: string[]}): Promise<DandiInterfaceDandiset[]> {
+  async findDandisets(o: {search?: string, semanticSearch?: string, restrictToDandisets?: string[]}): Promise<DandiInterfaceDandiset[]> {
     if (o.search) {
-      // if (o.semanticSearch) {
-      //   throw new Error('Cannot use both search and semanticSearch at the same time');
-      // }
+      if (o.semanticSearch) {
+        throw new Error('Cannot use both search and semanticSearch at the same time');
+      }
       if (o.restrictToDandisets) {
         throw new Error('Cannot use restrictToDandisets with search');
       }
@@ -98,21 +130,20 @@ class DandiInterface {
         ds.star_count
       ));
     }
-    // else if (o.semanticSearch) {
-    //   this.o.onStatusUpdate(`Performing semantic search for: ${o.semanticSearch}`);
-    //   const dandisetIds = await doDandisetSemanticSearch(o.semanticSearch, o.restrictToDandisets);
-    //   const result: DandiInterfaceDandiset[] = [];
-    //   for (const dandisetId of dandisetIds) {
-    //     const dandiset = await this.getDandiset({dandisetId});
-    //     if (dandiset) {
-    //       result.push(dandiset);
-    //     }
-    //   }
-    //   return result;
-    // }
+    else if (o.semanticSearch) {
+      this.o.onStatusUpdate(`Performing semantic search for: ${o.semanticSearch}`);
+      const dandisetIds = await doDandisetSemanticSearch(o.semanticSearch, o.restrictToDandisets);
+      const result: DandiInterfaceDandiset[] = [];
+      for (const dandisetId of dandisetIds) {
+        const dandiset = await this.getDandiset({dandisetId});
+        if (dandiset) {
+          result.push(dandiset);
+        }
+      }
+      return result;
+    }
     else {
-      // throw new Error('Either search or semanticSearch must be provided');
-      throw new Error('No search criteria provided');
+      throw new Error('Either search or semanticSearch must be provided');
     }
   }
 }
@@ -184,6 +215,8 @@ type DandisetMetadata = {
   manifestLocation: string[];
 }
 
+const baseDir = "../data";
+
 class DandiInterfaceDandiset {
   constructor(
     public dandiInterface: DandiInterface,
@@ -199,8 +232,8 @@ class DandiInterfaceDandiset {
     public star_count: number
   ) {
   }
-  async getNwbFiles(): Promise<DandiInterfaceNwbFile[]> {
-    const dandisetFname = `../data/dandisets/${this.dandiset_id}/dandiset.json`;
+  get nwbFiles(): DandiInterfaceNwbFile[] {
+    const dandisetFname = `${baseDir}/dandisets/${this.dandiset_id}/dandiset.json`;
     if (!fs.existsSync(dandisetFname)) {
       throw new Error(`Dandiset file not found: ${dandisetFname}`);
     }
@@ -238,8 +271,8 @@ class DandiInterfaceDandiset {
       nwb.asset_id
     ));
   }
-  async getDandisetMetadata(): Promise<DandisetMetadata> {
-    const dandisetFname = `../data/dandisets/${this.dandiset_id}/dandiset.json`;
+  dandisetMetadata(): DandisetMetadata {
+    const dandisetFname = `${baseDir}/dandisets/${this.dandiset_id}/dandiset.json`;
     if (!fs.existsSync(dandisetFname)) {
       throw new Error(`Dandiset metadata file not found: ${dandisetFname}`);
     }
@@ -274,6 +307,25 @@ class DandiInterfaceDandiset {
 }
 
 class DandiInterfaceNwbFile {
+  private assetData: {
+    dandiset_id: string;
+    asset_id: string;
+    session_description: string;
+    subject: {
+      age: string;
+      sex: string;
+      genotype: string;
+      species: string;
+      subject_id: string;
+      strain?: string;
+      specimen_name?: string;
+    };
+    neurodata_objects: {
+      path: string;
+      type: string;
+      description: string;
+    }[];
+  } | undefined;
   constructor(
     public dandiInterface: DandiInterface,
     public dandiset_id: string,
@@ -283,31 +335,35 @@ class DandiInterfaceNwbFile {
     public asset_id: string
   ) {
   }
-  getNeurodataObjects = async (): Promise<DandiInterfaceNeurodataObject[]> => {
-    const fname = `../data/dandisets/${this.dandiset_id}/assets.v7/${this.asset_id}.json`;
+
+  _loadAssetData = () => {
+    if (this.assetData) return;
+    const fname = `${baseDir}/dandisets/${this.dandiset_id}/assets.v7/${this.asset_id}.json`;
     if (!fs.existsSync(fname)) {
-      // maybe it wasn't created yet
-      return [];
+      return
     }
     const fileContent = fs.readFileSync(fname, 'utf8');
-    let assetData: {
-      dandiset_id: string;
-      asset_id: string;
-      neurodata_objects: {
-        path: string;
-        type: string;
-        description: string;
-      }[];
-    }
     try {
-      assetData = JSON.parse(fileContent);
-    } catch (error) {
+      this.assetData = JSON.parse(fileContent);
+    }
+    catch (error) {
       throw new Error(`Failed to parse JSON from ${fname}: ${error}`);
     }
-    if (assetData.dandiset_id !== this.dandiset_id || assetData.asset_id !== this.asset_id) {
-      throw new Error(`Asset ID or dandiset ID mismatch: expected ${this.dandiset_id}/${this.asset_id}, got ${assetData.dandiset_id}/${assetData.asset_id}`);
+    if (!this.assetData) {
+      throw new Error(`Asset data is empty for ${fname}`);
     }
-    return assetData.neurodata_objects.map(no => new DandiInterfaceNeurodataObject({
+    if (this.assetData.dandiset_id !== this.dandiset_id || this.assetData.asset_id !== this.asset_id) {
+      throw new Error(`Asset ID or dandiset ID mismatch: expected ${this.dandiset_id}/${this.asset_id}, got ${this.assetData.dandiset_id}/${this.assetData.asset_id}`);
+    }
+  }
+
+  get neurodataObjects(): DandiInterfaceNeurodataObject[] {
+    this._loadAssetData();
+    if (!this.assetData) {
+      // may not be created yet
+      return []
+    }
+    return this.assetData.neurodata_objects.map(no => new DandiInterfaceNeurodataObject({
       dandisetId: this.dandiset_id,
       version: this.version,
       assetId: this.asset_id,
@@ -315,6 +371,22 @@ class DandiInterfaceNwbFile {
       neurodataType: no.type,
       description: no.description
     }));
+  }
+  get session_description(): string {
+    this._loadAssetData();
+    if (!this.assetData) {
+      // may not be created yet
+      return '';
+    }
+    return this.assetData.session_description || '';
+  }
+  get subject() {
+    this._loadAssetData();
+    if (!this.assetData) {
+      // may not be created yet
+      return {};
+    }
+    return this.assetData.subject || {};
   }
 }
 
@@ -374,7 +446,7 @@ export function createScriptInterface(onStatusUpdate: (status: string) => void):
     getDandisets: async () => {
       return await dandiInterface.getDandisets();
     },
-    findDandisets: async (o: {search?: string, /*semanticSearch?: string*/}) => {
+    findDandisets: async (o: {search?: string, semanticSearch?: string}) => {
       return await dandiInterface.findDandisets(o);
     },
     getDandiset: async (o: {dandisetId: string}) => {
@@ -396,33 +468,33 @@ export interface DandisetInfo {
   star_count: number;
 }
 
-// const doDandisetSemanticSearch = async (query: string, restrictToDandisets?: string[]): Promise<string[]> => {
-//   const url = 'https://neurosift-chat-agent-tools.vercel.app/api/dandi_semantic_search';
-//   const params: {[key: string]: any} = {
-//     query,
-//     limit: 20
-//   }
-//   if (restrictToDandisets && restrictToDandisets.length > 0) {
-//     params['dandisets'] = restrictToDandisets;
-//   }
-//   // POST
-//   const response = await fetch(url, {
-//     method: 'POST',
-//     headers: {
-//       'Content-Type': 'application/json'
-//     },
-//     body: JSON.stringify(params)
-//   });
-//   if (!response.ok) {
-//     throw new Error(`Failed to perform semantic search: ${response.statusText}`);
-//   }
-//   const data: any = await response.json();
-//   if (!data) {
-//     throw new Error('Semantic search returned no data');
-//   }
-//   if (typeof data !== 'object' || !Array.isArray(data.results)) {
-//     throw new Error('Semantic search returned invalid data format');
-//   }
-//   return data.results.map((item: {id: string}) => item.id);
-// };
+const doDandisetSemanticSearch = async (query: string, restrictToDandisets?: string[]): Promise<string[]> => {
+  const url = 'https://neurosift-chat-agent-tools.vercel.app/api/dandi_semantic_search';
+  const params: {[key: string]: any} = {
+    query,
+    limit: 20
+  }
+  if (restrictToDandisets && restrictToDandisets.length > 0) {
+    params['dandisets'] = restrictToDandisets;
+  }
+  // POST
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(params)
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to perform semantic search: ${response.statusText}`);
+  }
+  const data: any = await response.json();
+  if (!data) {
+    throw new Error('Semantic search returned no data');
+  }
+  if (typeof data !== 'object' || !Array.isArray(data.results)) {
+    throw new Error('Semantic search returned invalid data format');
+  }
+  return data.results.map((item: {id: string}) => item.id);
+};
 

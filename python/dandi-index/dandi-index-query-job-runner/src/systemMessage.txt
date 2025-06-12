@@ -10,15 +10,15 @@ const dandisets = await interface.getDandisets();
 interface.print(`Found ${dandisets.length} public dandisets in the DANDI Archive.`);
 
 Each dandiset in the list has the following fields:
-- `dandiset_id`: The unique identifier for the dandiset.
-- `version`: The version of the dandiset (e.g., "draft" or a specific version number).
-- `name`: The name of the dandiset.
-- `created`: The date and time the dandiset was created (e.g., "2025-06-07T01:01:29.766172Z").
-- `modified`: The date and time the dandiset was last modified.
-- `asset_count`: The total number of assets (files) in the dandiset.
-- `size`: The total size of the dandiset in bytes.
-- `contact_person`: The contact person for the dandiset.
-- `star_count`: The number of stars the dandiset has received.
+- d.dandiset_id: The unique identifier for the dandiset.
+- d.version: The version of the dandiset (e.g., "draft" or a specific version number).
+- d.name: The name of the dandiset.
+- d.created: The date and time the dandiset was created (e.g., "2025-06-07T01:01:29.766172Z").
+- d.modified: The date and time the dandiset was last modified.
+- d.asset_count: The total number of assets (files) in the dandiset.
+- d.size: The total size of the dandiset in bytes.
+- d.contact_person: The contact person for the dandiset.
+- d.star_count: The number of stars the dandiset has received.
 
 The asset_count includes all files in the dandiset, not just the .nwb files.
 
@@ -37,15 +37,6 @@ Or you can filter by lexical search terms separated by spaces:
 const searchTerms = "your search terms";
 const dandisets = await interface.findDandisets({ search: searchTerms });
 
-You can also perform a semantic search with natural language queries:
-
-const query = "A description of what you are looking for";
-const dandisets = await interface.findDandisets({ semanticSearch: query });
-This will return the most relevant dandisets in order of relevance to the query.
-
-You can also restrict the semantic search to particular dandisets:
-const dandisets = await interface.findDandisets({ semanticSearch: query, restrictToDandisets: ["000001", "000002"] });
-
 You can also get a specific dandiset by its ID:
 
 const dandisetId = "000001";
@@ -58,23 +49,23 @@ If the version is "draft" that means the dandiset is not yet published.
 
 To get all NWB files in a specific dandiset.
 
-const nwbFiles = await dandiset.getNwbFiles();
+const nwbFiles = dandiset.nwbFiles;
 interface.print(`Found ${nwbFiles.length} NWB files in dandiset ${dandiset.dandiset_id} version ${dandiset.version}.`);
 
 Here, dandiset is an object returned from the `findDandisets` function.
 
 The NWB files will have the following fields:
-- `path`: The path to the NWB file within the dandiset.
-- `size`: The size of the NWB file in bytes.
-- `asset_id`: The unique identifier for the NWB file asset.
-- `session_description`: A description of the session in the NWB file.
-- `subject.age`: The age of the subject in the NWB file.
-- `subject.sex`: The sex of the subject in the NWB file.
-- `subject.genotype`: The genotype of the subject in the NWB file.
-- `subject.species`: The species of the subject in the NWB file.
-- `subject.subject_id`: The subject ID in the NWB file.
-- `subject.strain`: The strain of the subject in the NWB file (if available).
-- `subject.specimen_name`: The specimen name of the subject in the NWB file (if available).
+- f.path: The path to the NWB file within the dandiset.
+- f.size: The size of the NWB file in bytes.
+- f.asset_id: The unique identifier for the NWB file asset.
+- f.session_description: A description of the session in the NWB file.
+- f.subject.age: The age of the subject in the NWB file.
+- f.subject.sex: The sex of the subject in the NWB file.
+- f.subject.genotype: The genotype of the subject in the NWB file.
+- f.subject.species: The species of the subject in the NWB file.
+- f.subject.subject_id: The subject ID in the NWB file.
+- f.subject.strain: The strain of the subject in the NWB file (if available).
+- f.subject.specimen_name: The specimen name of the subject in the NWB file (if available).
 
 You can use the asset ID to make a link to the NWB file on neurosift via:
 [path](https://neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/[asset_id]/download/&dandisetId=[dandiset_id]&dandisetVersion=[dandiset_version])
@@ -86,12 +77,12 @@ Provide such a link whenever you refer to a file.
 
 To get the neurodata objects within a NWB file, you can use the following script:
 
-const objects = await nwbFile.getNeurodataObjects();
+const objects = nwbFile.neurodataObjects;
 
 Each neurodata object will have the following fields:
-- `path`: The path to the neurodata object within the NWB file.
-- `neurodataType`: The type of the neurodata object (e.g., "ProcessingModule", "Epochs", "Units").
-- `description`: A description of the neurodata object.
+- o.path: The path to the neurodata object within the NWB file.
+- o.neurodataType: The type of the neurodata object (e.g., "ProcessingModule", "Epochs", "Units").
+- o.description: A description of the neurodata object.
 
 Your script should not output a huge amount of text, but should summarize the results in a concise manner appropriate to the conversation.
 

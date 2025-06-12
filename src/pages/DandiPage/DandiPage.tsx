@@ -26,6 +26,7 @@ import { useNeurodataTypesIndex } from "./hooks/useNeurodataTypesIndex";
 import { useDandisetNotebooks } from "./hooks/useDandisetNotebooks";
 import { doNeurodataTypesSearch } from "./services/doNeurodataTypesSearch";
 import { ExperimentalSearchPanel } from "./experimentalSearch/ExperimentalSearchPanel";
+import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 
 type DandiPageProps = {
   width: number;
@@ -90,6 +91,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
       setIsSearching(true);
       setSearchResults([]); // Clear results before new search
 
+      let searchResultDandisetIds: string[] | undefined = undefined;
       try {
         if (useNeurodataTypesSearch && index) {
           if (selectedTypes.length === 0) {
@@ -104,12 +106,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
           setSearchResults(results);
           setTotalResults(total);
         } else if (searchMode === "semantic") {
-          const { results, total } = await doDandiSemanticSearch(
-            searchQuery,
-            limit,
-          );
-          setSearchResults(results);
-          setTotalResults(total);
+          searchResultDandisetIds = await doDandiSemanticSearch(searchQuery);
         } else if (searchMode === "basic") {
           const { headers, apiKeyProvided } = getDandiApiHeaders(staging);
           const embargoedStr = apiKeyProvided ? "true" : "false";
@@ -125,6 +122,39 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
             const dandisetResponse = json as DandisetsResponse;
             setSearchResults(dandisetResponse.results);
           }
+        }
+        if (searchResultDandisetIds) {
+          // Limit to a few results and fetch full dandiset info for each
+          // Return total count along with the paginated results
+
+          const dandisets0 = await Promise.all(
+            searchResultDandisetIds.slice(0, limit).map(async (dandisetId) => {
+              const url = `https://api.dandiarchive.org/api/dandisets/${dandisetId}`;
+              const authorizationHeader = getAuthorizationHeaderForUrl(url);
+              const headers = authorizationHeader
+                ? { Authorization: authorizationHeader }
+                : undefined;
+
+              try {
+                const response = await fetch(url, { headers });
+                if (response.status === 200) {
+                  const json = await response.json();
+                  return json as DandisetSearchResultItem;
+                }
+              } catch (error) {
+                console.error("Error fetching dandiset details:", error);
+              }
+              return null;
+            }),
+          );
+
+          // Filter out any failed requests and return with total
+          const dandisetsFilt = dandisets0.filter(
+            (d): d is DandisetSearchResultItem => d !== null,
+          ) as DandisetSearchResultItem[];
+          setSearchResults(dandisetsFilt);
+          const total = searchResultDandisetIds.length;
+          setTotalResults(total);
         }
       } catch (error) {
         console.error("Error fetching results:", error);
@@ -198,6 +228,41 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
     }
   }, [searchState, performSearch]);
 
+  const setSearchResultDandisetIds = useCallback(
+    async (searchResultDandisetIds: string[]) => {
+      setSearchResults([]);
+      setTotalResults(0);
+      const dandisets = await Promise.all(
+        searchResultDandisetIds.map(async (dandisetId) => {
+          const url = `https://api.dandiarchive.org/api/dandisets/${dandisetId}`;
+          const authorizationHeader = getAuthorizationHeaderForUrl(url);
+          const headers = authorizationHeader
+            ? { Authorization: authorizationHeader }
+            : undefined;
+
+          try {
+            const response = await fetch(url, { headers });
+            if (response.status === 200) {
+              const json = await response.json();
+              return json as DandisetSearchResultItem;
+            }
+          } catch (error) {
+            console.error("Error fetching dandiset details:", error);
+          }
+          return null;
+        }),
+      );
+
+      // Filter out any failed requests and set results
+      const dandisetsFilt = dandisets.filter(
+        (d): d is DandisetSearchResultItem => d !== null,
+      ) as DandisetSearchResultItem[];
+      setSearchResults(dandisetsFilt);
+      setTotalResults(dandisetsFilt.length);
+    },
+    [],
+  );
+
   return (
     <ScrollY width={width} height={height}>
       <Container maxWidth="xl" sx={{ mt: 2 }}>
@@ -261,7 +326,9 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
         )}
         {useExperimentalSearch && (
           <Box sx={{ mb: 2 }}>
-            <ExperimentalSearchPanel />
+            <ExperimentalSearchPanel
+              setDandisetIds={setSearchResultDandisetIds}
+            />
           </Box>
         )}
         {!useNeurodataTypesSearch && !useExperimentalSearch && (

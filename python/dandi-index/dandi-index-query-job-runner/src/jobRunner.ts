@@ -16,6 +16,8 @@ type PubNubMessageObject = {
   status: 'accepted' | 'rejected' | 'completed' | 'error';
   error?: string;
   output?: string;
+  part?: number;
+  totalParts?: number;
 } | {
   type: 'probe-response';
   status: 'alive';
@@ -130,16 +132,24 @@ export class JobRunner {
 
     try {
       console.info(`Starting execution of job ${jobMessage.jobId}`);
-      let result = await this.executeJob(jobMessage);
+      const result = await this.executeJob(jobMessage);
       console.info(`Job ${jobMessage.jobId} completed successfully`);
-      if (result.length > 10000) {
-        result = `${result.slice(0, 10000)}... [output truncated]`;
+      if (result.length > 1000_000) {
+        throw new Error(`Job ${jobMessage.jobId} output is too large (${result.length} characters)`);
       }
-      await this.sendResponse({
-        jobId: jobMessage.jobId,
-        status: 'completed',
-        output: result
-      });
+      const parts = Math.max(1, Math.ceil(result.length / 10000));
+      for (let i = 0; i < parts; i++) {
+        const start = i * 10000;
+        const end = Math.min((i + 1) * 10000, result.length);
+        const partResult = result.slice(start, end);
+        await this.sendResponse({
+          jobId: jobMessage.jobId,
+          status: 'completed',
+          output: partResult,
+          part: i + 1,
+          totalParts: parts
+        });
+      }
     } catch (error) {
       console.info(`Job ${jobMessage.jobId} failed:`, error);
       await this.sendResponse({

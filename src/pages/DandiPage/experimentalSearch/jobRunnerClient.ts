@@ -10,6 +10,8 @@ interface JobResponse {
   status: "accepted" | "rejected" | "completed" | "error";
   error?: string;
   output?: string;
+  part?: number;
+  totalParts?: number;
 }
 
 export class JobRunnerClient {
@@ -24,6 +26,7 @@ export class JobRunnerClient {
       onAccepted?: () => void;
     }
   >();
+  private partialResponses = new Map<string, Map<number, string>>();
   private systemMessage: string | undefined = undefined;
   private onStatusChangeCallbacks: Array<() => void> = [];
 
@@ -72,9 +75,7 @@ export class JobRunnerClient {
       });
   }
 
-  private isValidProbeResponse(
-    response: unknown,
-  ): response is {
+  private isValidProbeResponse(response: unknown): response is {
     type: "probe-response";
     status: "alive";
     systemMessage: string;
@@ -139,12 +140,37 @@ export class JobRunnerClient {
         if (pendingJob.onAccepted) pendingJob.onAccepted();
         break;
       case "completed":
-        this.pendingJobs.delete(response.jobId);
-        pendingJob.resolve(response.output || "no output");
+        if (response.part === undefined || response.totalParts === undefined) {
+          // Handle single-part response
+          this.pendingJobs.delete(response.jobId);
+          pendingJob.resolve(response.output || "no output");
+        } else {
+          // Handle multi-part response
+          let partsMap = this.partialResponses.get(response.jobId);
+          if (!partsMap) {
+            partsMap = new Map<number, string>();
+            this.partialResponses.set(response.jobId, partsMap);
+          }
+          partsMap.set(response.part, response.output || "");
+
+          // Check if we have all parts
+          if (partsMap.size === response.totalParts) {
+            // Combine all parts in order
+            const combinedOutput = Array.from(
+              { length: response.totalParts },
+              (_, i) => partsMap?.get(i + 1) || "",
+            ).join("");
+
+            this.pendingJobs.delete(response.jobId);
+            this.partialResponses.delete(response.jobId);
+            pendingJob.resolve(combinedOutput || "no output");
+          }
+        }
         break;
       case "rejected":
       case "error":
         this.pendingJobs.delete(response.jobId);
+        this.partialResponses.delete(response.jobId);
         pendingJob.reject(new Error(response.error || "Job failed"));
         break;
     }

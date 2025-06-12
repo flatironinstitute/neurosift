@@ -1,6 +1,7 @@
 # Changes
 
 ## June 12, 2025
+- Added dandiset counts next to contact person names in experimental search panel
 - Added dandi-index and implemented advanced search
 - Added .env.local template for configuring PubNub keys in local development
 
