@@ -88,14 +88,14 @@ export const ExperimentalSearchPanel: FunctionComponent<
           name,
           count: searchData.contactPersons.reduce(
             (acc, person) => acc + (person.species.includes(name) ? 1 : 0),
-            0
+            0,
           ),
         }));
     }
 
     // When a contact person is selected, show only their species
     const person = searchData.contactPersons.find(
-      (p) => p.name === filter.contactPerson
+      (p) => p.name === filter.contactPerson,
     );
     if (!person) return [];
 
@@ -110,7 +110,7 @@ export const ExperimentalSearchPanel: FunctionComponent<
     // Clear species if not available for current contact person
     if (filter.species !== "<not specified>" && availableSpecies.length > 0) {
       const isSpeciesAvailable = availableSpecies.some(
-        (s) => s.name === filter.species
+        (s) => s.name === filter.species,
       );
       if (!isSpeciesAvailable) {
         setFilter((f) => ({ ...f, species: "<not specified>" }));
@@ -118,15 +118,23 @@ export const ExperimentalSearchPanel: FunctionComponent<
     }
 
     // Clear contact person if not available for current species
-    if (filter.contactPerson !== "<not specified>" && availableContactPersons.length > 0) {
+    if (
+      filter.contactPerson !== "<not specified>" &&
+      availableContactPersons.length > 0
+    ) {
       const isPersonAvailable = availableContactPersons.some(
-        (p) => p.name === filter.contactPerson
+        (p) => p.name === filter.contactPerson,
       );
       if (!isPersonAvailable) {
         setFilter((f) => ({ ...f, contactPerson: "<not specified>" }));
       }
     }
-  }, [filter.species, filter.contactPerson, availableSpecies, availableContactPersons]);
+  }, [
+    filter.species,
+    filter.contactPerson,
+    availableSpecies,
+    availableContactPersons,
+  ]);
 
   useEffect(() => {
     if (setDandisetIds) {
@@ -251,7 +259,9 @@ const result = {
 interface.print("<>" + JSON.stringify(result, null, 2) + "</>");
 `;
 
-  const [searchData, setSearchData] = useState<SearchData | undefined>(undefined);
+  const [searchData, setSearchData] = useState<SearchData | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     if (!jobRunnerClient) return;
@@ -280,29 +290,41 @@ interface.print("<>" + JSON.stringify(result, null, 2) + "</>");
   return { searchData };
 };
 
-const useFilteredDandisets = (searchData: SearchData | undefined, filter: Filter) => {
+const useFilteredDandisets = (
+  searchData: SearchData | undefined,
+  filter: Filter,
+) => {
   return useMemo(() => {
     if (!searchData) return [];
 
     // If no filters are set, return empty array
-    if (filter.contactPerson === "<not specified>" && filter.species === "<not specified>") {
+    if (
+      filter.contactPerson === "<not specified>" &&
+      filter.species === "<not specified>"
+    ) {
       return [];
     }
 
     return searchData.dandisetInfo
-      .filter(info => {
+      .filter((info) => {
         // Filter by contact person
-        if (filter.contactPerson !== "<not specified>" && info.contactPerson !== filter.contactPerson) {
+        if (
+          filter.contactPerson !== "<not specified>" &&
+          info.contactPerson !== filter.contactPerson
+        ) {
           return false;
         }
 
         // Filter by species
-        if (filter.species !== "<not specified>" && !info.species.includes(filter.species)) {
+        if (
+          filter.species !== "<not specified>" &&
+          !info.species.includes(filter.species)
+        ) {
           return false;
         }
 
         return true;
       })
-      .map(info => info.id);
+      .map((info) => info.id);
   }, [searchData, filter.contactPerson, filter.species]);
 };
