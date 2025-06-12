@@ -233,24 +233,26 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
       setSearchResults([]);
       setTotalResults(0);
       const dandisets = await Promise.all(
-        searchResultDandisetIds.slice(0, searchState.currentLimit).map(async (dandisetId) => {
-          const url = `https://api.dandiarchive.org/api/dandisets/${dandisetId}`;
-          const authorizationHeader = getAuthorizationHeaderForUrl(url);
-          const headers = authorizationHeader
-            ? { Authorization: authorizationHeader }
-            : undefined;
+        searchResultDandisetIds
+          .slice(0, searchState.currentLimit)
+          .map(async (dandisetId) => {
+            const url = `https://api.dandiarchive.org/api/dandisets/${dandisetId}`;
+            const authorizationHeader = getAuthorizationHeaderForUrl(url);
+            const headers = authorizationHeader
+              ? { Authorization: authorizationHeader }
+              : undefined;
 
-          try {
-            const response = await fetch(url, { headers });
-            if (response.status === 200) {
-              const json = await response.json();
-              return json as DandisetSearchResultItem;
+            try {
+              const response = await fetch(url, { headers });
+              if (response.status === 200) {
+                const json = await response.json();
+                return json as DandisetSearchResultItem;
+              }
+            } catch (error) {
+              console.error("Error fetching dandiset details:", error);
             }
-          } catch (error) {
-            console.error("Error fetching dandiset details:", error);
-          }
-          return null;
-        }),
+            return null;
+          }),
       );
 
       // Filter out any failed requests and set results
@@ -260,7 +262,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
       setSearchResults(dandisetsFilt);
       setTotalResults(searchResultDandisetIds.length);
     },
-    [searchState.currentLimit]
+    [searchState.currentLimit],
   );
 
   return (
