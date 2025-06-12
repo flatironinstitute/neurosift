@@ -51,7 +51,12 @@ export const ExperimentalSearchPanel: FunctionComponent<
     return <div>No job runner is configured.</div>;
   }
   if (!jobRunnerClientIsAlive) {
-    return <div>Waiting for job runner to initialize...</div>;
+    return (
+      <div>
+        Waiting for job runner to initialize. This is an experimental feature
+        and the job runner may be offline. Please check back later.
+      </div>
+    );
   }
   console.info({ dandisetIds });
   return (
