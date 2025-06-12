@@ -1,4 +1,5 @@
 import { FunctionComponent, useEffect, useState, useMemo } from "react";
+import { Chip, Stack } from "@mui/material";
 import { JobRunnerClient } from "./jobRunnerClient";
 
 type ExperimentalSearchPanelProps = {
@@ -9,6 +10,7 @@ type DandisetInfo = {
   id: string;
   contactPerson: string;
   species: string[];
+  neurodataTypes: string[];
 };
 
 type ContactPersonWithSpecies = {
@@ -25,6 +27,7 @@ type SearchData = {
 type Filter = {
   contactPerson: string | "<not specified>";
   species: string | "<not specified>";
+  neurodataTypes: string[];
 };
 
 export const ExperimentalSearchPanel: FunctionComponent<
@@ -55,55 +58,138 @@ export const ExperimentalSearchPanel: FunctionComponent<
   const [filter, setFilter] = useState<Filter>({
     contactPerson: "<not specified>",
     species: "<not specified>",
+    neurodataTypes: [],
   });
   const { searchData } = useSearchData(jobRunnerClient);
   const dandisetIds = useFilteredDandisets(searchData, filter);
 
   const availableContactPersons = useMemo(() => {
     if (!searchData) return [];
-    if (filter.species === "<not specified>") {
-      return searchData.contactPersons;
-    }
 
-    // When a species is selected, show only contact persons who have that species
-    return searchData.contactPersons
-      .filter((person) => person.species.includes(filter.species))
-      .map((person) => ({
-        ...person,
-        count: 1, // Since we know they have this species
+    // Filter dandisets based on current criteria
+    const filteredDandisets = searchData.dandisetInfo.filter((info) => {
+      if (
+        filter.species !== "<not specified>" &&
+        !info.species.includes(filter.species)
+      ) {
+        return false;
+      }
+      if (
+        filter.neurodataTypes.length > 0 &&
+        !filter.neurodataTypes.every((type) =>
+          info.neurodataTypes.includes(type),
+        )
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    // Get unique contact persons from filtered dandisets
+    const contactPersonCounts = new Map<string, number>();
+    filteredDandisets.forEach((info) => {
+      contactPersonCounts.set(
+        info.contactPerson,
+        (contactPersonCounts.get(info.contactPerson) || 0) + 1,
+      );
+    });
+
+    // Map to required format
+    return Array.from(contactPersonCounts.entries())
+      .map(([name, count]) => ({
+        name,
+        species:
+          searchData.contactPersons.find((p) => p.name === name)?.species || [],
+        count,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [searchData, filter.species, filter.neurodataTypes]);
+
+  const availableNeurodataTypes = useMemo(() => {
+    if (!searchData) return [];
+
+    // Filter dandisets based on current criteria except the neurodataTypes we're currently selecting
+    const filteredDandisets = searchData.dandisetInfo.filter((info) => {
+      if (
+        filter.contactPerson !== "<not specified>" &&
+        info.contactPerson !== filter.contactPerson
+      ) {
+        return false;
+      }
+      if (
+        filter.species !== "<not specified>" &&
+        !info.species.includes(filter.species)
+      ) {
+        return false;
+      }
+      // Only consider existing neurodata type selections
+      if (filter.neurodataTypes.length > 0) {
+        // A dandiset must have all currently selected types to be considered
+        const hasAllSelectedTypes = filter.neurodataTypes.every(
+          (selectedType) => info.neurodataTypes.includes(selectedType),
+        );
+        if (!hasAllSelectedTypes) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    // Get all unique neurodata types from filtered dandisets
+    const allTypes = new Set<string>();
+    filteredDandisets.forEach((dandiset) => {
+      dandiset.neurodataTypes.forEach((type) => allTypes.add(type));
+    });
+
+    return Array.from(allTypes)
+      .sort()
+      .map((name) => ({
+        name,
+        count: filteredDandisets.reduce(
+          (acc, dandiset) =>
+            acc + (dandiset.neurodataTypes.includes(name) ? 1 : 0),
+          0,
+        ),
       }));
-  }, [searchData, filter.species]);
+  }, [searchData, filter.contactPerson, filter.species, filter.neurodataTypes]);
 
   const availableSpecies = useMemo(() => {
     if (!searchData) return [];
-    if (filter.contactPerson === "<not specified>") {
-      // When no contact person is selected, show all unique species
-      const allSpecies = new Set<string>();
-      searchData.contactPersons.forEach((person) => {
-        person.species.forEach((species) => allSpecies.add(species));
+
+    // Filter dandisets based on current criteria
+    const filteredDandisets = searchData.dandisetInfo.filter((info) => {
+      if (
+        filter.contactPerson !== "<not specified>" &&
+        info.contactPerson !== filter.contactPerson
+      ) {
+        return false;
+      }
+      if (
+        filter.neurodataTypes.length > 0 &&
+        !filter.neurodataTypes.every((type) =>
+          info.neurodataTypes.includes(type),
+        )
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    // Get unique species from filtered dandisets
+    const speciesCounts = new Map<string, number>();
+    filteredDandisets.forEach((info) => {
+      info.species.forEach((species) => {
+        speciesCounts.set(species, (speciesCounts.get(species) || 0) + 1);
       });
-      return Array.from(allSpecies)
-        .sort()
-        .map((name) => ({
-          name,
-          count: searchData.contactPersons.reduce(
-            (acc, person) => acc + (person.species.includes(name) ? 1 : 0),
-            0,
-          ),
-        }));
-    }
+    });
 
-    // When a contact person is selected, show only their species
-    const person = searchData.contactPersons.find(
-      (p) => p.name === filter.contactPerson,
-    );
-    if (!person) return [];
-
-    return person.species.sort().map((name) => ({
-      name,
-      count: 1,
-    }));
-  }, [searchData, filter.contactPerson]);
+    return Array.from(speciesCounts.entries())
+      .map(([name, count]) => ({
+        name,
+        count,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [searchData, filter.contactPerson, filter.neurodataTypes]);
 
   // Clear selections if they become unavailable
   useEffect(() => {
@@ -129,11 +215,32 @@ export const ExperimentalSearchPanel: FunctionComponent<
         setFilter((f) => ({ ...f, contactPerson: "<not specified>" }));
       }
     }
+
+    // Clear neurodata types that are no longer available
+    if (
+      filter.neurodataTypes.length > 0 &&
+      availableNeurodataTypes.length > 0
+    ) {
+      const availableTypes = new Set(
+        availableNeurodataTypes.map((t) => t.name),
+      );
+      const unavailableTypes = filter.neurodataTypes.filter(
+        (t) => !availableTypes.has(t),
+      );
+      if (unavailableTypes.length > 0) {
+        setFilter((f) => ({
+          ...f,
+          neurodataTypes: f.neurodataTypes.filter((t) => availableTypes.has(t)),
+        }));
+      }
+    }
   }, [
     filter.species,
     filter.contactPerson,
+    filter.neurodataTypes,
     availableSpecies,
     availableContactPersons,
+    availableNeurodataTypes,
   ]);
 
   useEffect(() => {
@@ -203,6 +310,52 @@ export const ExperimentalSearchPanel: FunctionComponent<
           </select>
         </div>
       )}
+      {searchData && (
+        <div style={{ marginTop: 20 }}>
+          <div style={{ marginBottom: 10 }}>Neurodata Types:</div>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ flexWrap: "wrap", gap: 1, mb: 2 }}
+          >
+            {filter.neurodataTypes.map((type) => (
+              <Chip
+                key={type}
+                label={type}
+                onDelete={() =>
+                  setFilter((f) => ({
+                    ...f,
+                    neurodataTypes: f.neurodataTypes.filter((t) => t !== type),
+                  }))
+                }
+              />
+            ))}
+          </Stack>
+          <select
+            value=""
+            onChange={(e) => {
+              if (e.target.value) {
+                setFilter((f) => ({
+                  ...f,
+                  neurodataTypes: [...f.neurodataTypes, e.target.value],
+                }));
+                e.target.value = ""; // Reset select after adding
+              }
+            }}
+            style={{ width: 400, height: 30 }}
+          >
+            <option value="">Add neurodata type...</option>
+            {availableNeurodataTypes
+              .filter((type) => !filter.neurodataTypes.includes(type.name))
+              .map((type) => (
+                <option key={type.name} value={type.name}>
+                  {type.name} ({type.count} dandiset
+                  {type.count !== 1 ? "s" : ""})
+                </option>
+              ))}
+          </select>
+        </div>
+      )}
     </div>
   );
 };
@@ -216,10 +369,18 @@ const dandisetInfo = [];
 for (const dandiset of dandisets) {
   const person = dandiset.contact_person;
   const speciesInDandiset = new Set();
+  const neurodataTypesInDandiset = new Set();
 
   for (const nwbFile of dandiset.nwbFiles) {
     if (nwbFile.subject && nwbFile.subject.species) {
       speciesInDandiset.add(nwbFile.subject.species);
+    }
+    if (nwbFile.neurodataObjects) {
+      for (const obj of nwbFile.neurodataObjects) {
+          if (obj.neurodataType) {
+            neurodataTypesInDandiset.add(obj.neurodataType);
+        }
+      }
     }
   }
 
@@ -240,7 +401,8 @@ for (const dandiset of dandisets) {
   dandisetInfo.push({
     id: dandiset.dandiset_id,
     contactPerson: person,
-    species: Array.from(speciesInDandiset)
+    species: Array.from(speciesInDandiset),
+    neurodataTypes: Array.from(neurodataTypesInDandiset)
   });
 }
 
@@ -300,7 +462,8 @@ const useFilteredDandisets = (
     // If no filters are set, return empty array
     if (
       filter.contactPerson === "<not specified>" &&
-      filter.species === "<not specified>"
+      filter.species === "<not specified>" &&
+      filter.neurodataTypes.length === 0
     ) {
       return [];
     }
@@ -323,8 +486,18 @@ const useFilteredDandisets = (
           return false;
         }
 
+        // Filter by neurodata types - must have all selected types
+        if (
+          filter.neurodataTypes.length > 0 &&
+          !filter.neurodataTypes.every((type) =>
+            info.neurodataTypes.includes(type),
+          )
+        ) {
+          return false;
+        }
+
         return true;
       })
       .map((info) => info.id);
-  }, [searchData, filter.contactPerson, filter.species]);
+  }, [searchData, filter.contactPerson, filter.species, filter.neurodataTypes]);
 };
