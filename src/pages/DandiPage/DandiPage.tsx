@@ -233,7 +233,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
       setSearchResults([]);
       setTotalResults(0);
       const dandisets = await Promise.all(
-        searchResultDandisetIds.map(async (dandisetId) => {
+        searchResultDandisetIds.slice(0, searchState.currentLimit).map(async (dandisetId) => {
           const url = `https://api.dandiarchive.org/api/dandisets/${dandisetId}`;
           const authorizationHeader = getAuthorizationHeaderForUrl(url);
           const headers = authorizationHeader
@@ -258,9 +258,9 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
         (d): d is DandisetSearchResultItem => d !== null,
       ) as DandisetSearchResultItem[];
       setSearchResults(dandisetsFilt);
-      setTotalResults(dandisetsFilt.length);
+      setTotalResults(searchResultDandisetIds.length);
     },
-    [],
+    [searchState.currentLimit]
   );
 
   return (
