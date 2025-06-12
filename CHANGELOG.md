@@ -1,6 +1,7 @@
 # Changes
 
 ## June 12, 2025
+- Optimized experimental search panel to eliminate repeated script executions by implementing client-side filtering
 - Added dandiset counts next to contact person names in experimental search panel
 - Added dandi-index and implemented advanced search
 - Added .env.local template for configuring PubNub keys in local development
@@ -11,7 +12,6 @@
 
 ## May 20, 2025
 - Added support for resolving NWB file URLs from dandiset path in NwbPage
-
 
 ## May 12, 2025
 - Improved error message formatting for large datasets to display sizes in human-readable form (Issue #187)

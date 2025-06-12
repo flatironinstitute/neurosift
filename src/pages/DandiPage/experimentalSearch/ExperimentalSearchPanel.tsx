@@ -1,8 +1,25 @@
-import { FunctionComponent, useEffect, useState } from "react";
+import { FunctionComponent, useEffect, useState, useMemo } from "react";
 import { JobRunnerClient } from "./jobRunnerClient";
 
 type ExperimentalSearchPanelProps = {
   setDandisetIds?: (ids: string[]) => void;
+};
+
+type DandisetInfo = {
+  id: string;
+  contactPerson: string;
+  species: string[];
+};
+
+type ContactPersonWithSpecies = {
+  name: string;
+  species: string[];
+  count: number;
+};
+
+type SearchData = {
+  contactPersons: ContactPersonWithSpecies[];
+  dandisetInfo: DandisetInfo[];
 };
 
 type Filter = {
@@ -39,9 +56,78 @@ export const ExperimentalSearchPanel: FunctionComponent<
     contactPerson: "<not specified>",
     species: "<not specified>",
   });
-  const { allContactPersons } = useAllContactPersons(jobRunnerClient);
-  const { allSpecies } = useAllSpecies(jobRunnerClient);
-  const { dandisetIds } = useSearch(jobRunnerClient, filter);
+  const { searchData } = useSearchData(jobRunnerClient);
+  const dandisetIds = useFilteredDandisets(searchData, filter);
+
+  const availableContactPersons = useMemo(() => {
+    if (!searchData) return [];
+    if (filter.species === "<not specified>") {
+      return searchData.contactPersons;
+    }
+
+    // When a species is selected, show only contact persons who have that species
+    return searchData.contactPersons
+      .filter((person) => person.species.includes(filter.species))
+      .map((person) => ({
+        ...person,
+        count: 1, // Since we know they have this species
+      }));
+  }, [searchData, filter.species]);
+
+  const availableSpecies = useMemo(() => {
+    if (!searchData) return [];
+    if (filter.contactPerson === "<not specified>") {
+      // When no contact person is selected, show all unique species
+      const allSpecies = new Set<string>();
+      searchData.contactPersons.forEach((person) => {
+        person.species.forEach((species) => allSpecies.add(species));
+      });
+      return Array.from(allSpecies)
+        .sort()
+        .map((name) => ({
+          name,
+          count: searchData.contactPersons.reduce(
+            (acc, person) => acc + (person.species.includes(name) ? 1 : 0),
+            0
+          ),
+        }));
+    }
+
+    // When a contact person is selected, show only their species
+    const person = searchData.contactPersons.find(
+      (p) => p.name === filter.contactPerson
+    );
+    if (!person) return [];
+
+    return person.species.sort().map((name) => ({
+      name,
+      count: 1,
+    }));
+  }, [searchData, filter.contactPerson]);
+
+  // Clear selections if they become unavailable
+  useEffect(() => {
+    // Clear species if not available for current contact person
+    if (filter.species !== "<not specified>" && availableSpecies.length > 0) {
+      const isSpeciesAvailable = availableSpecies.some(
+        (s) => s.name === filter.species
+      );
+      if (!isSpeciesAvailable) {
+        setFilter((f) => ({ ...f, species: "<not specified>" }));
+      }
+    }
+
+    // Clear contact person if not available for current species
+    if (filter.contactPerson !== "<not specified>" && availableContactPersons.length > 0) {
+      const isPersonAvailable = availableContactPersons.some(
+        (p) => p.name === filter.contactPerson
+      );
+      if (!isPersonAvailable) {
+        setFilter((f) => ({ ...f, contactPerson: "<not specified>" }));
+      }
+    }
+  }, [filter.species, filter.contactPerson, availableSpecies, availableContactPersons]);
+
   useEffect(() => {
     if (setDandisetIds) {
       setDandisetIds(dandisetIds);
@@ -58,13 +144,12 @@ export const ExperimentalSearchPanel: FunctionComponent<
       </div>
     );
   }
-  console.info({ dandisetIds });
   return (
     <div>
       <div style={{ marginBottom: 10 }}>
         <strong>Experimental Search Under Construction</strong>
       </div>
-      {allContactPersons && (
+      {searchData && (
         <div>
           <div style={{ marginBottom: 10 }}>Contact person:</div>
           <select
@@ -78,7 +163,7 @@ export const ExperimentalSearchPanel: FunctionComponent<
             style={{ width: 400, height: 30 }}
           >
             <option value="<not specified>">All contact persons</option>
-            {allContactPersons.map((person) => (
+            {availableContactPersons.map((person) => (
               <option key={person.name} value={person.name}>
                 {person.name} ({person.count} dandiset
                 {person.count !== 1 ? "s" : ""})
@@ -87,7 +172,7 @@ export const ExperimentalSearchPanel: FunctionComponent<
           </select>
         </div>
       )}
-      {allSpecies && (
+      {searchData && (
         <div style={{ marginTop: 20 }}>
           <div style={{ marginBottom: 10 }}>Species:</div>
           <select
@@ -101,7 +186,7 @@ export const ExperimentalSearchPanel: FunctionComponent<
             style={{ width: 400, height: 30 }}
           >
             <option value="<not specified>">All species</option>
-            {allSpecies.map((species) => (
+            {availableSpecies.map((species) => (
               <option key={species.name} value={species.name}>
                 {species.name} ({species.count} dandiset
                 {species.count !== 1 ? "s" : ""})
@@ -114,92 +199,68 @@ export const ExperimentalSearchPanel: FunctionComponent<
   );
 };
 
-type ContactPersonWithCount = {
-  name: string;
-  count: number;
-};
-
-const useAllContactPersons = (jobRunnerClient: JobRunnerClient | undefined) => {
+const useSearchData = (jobRunnerClient: JobRunnerClient | undefined) => {
   const script = `
 const dandisets = await interface.getDandisets();
-const contactPersonCounts = {};
+const contactPersonToSpecies = {};
+const dandisetInfo = [];
+
 for (const dandiset of dandisets) {
   const person = dandiset.contact_person;
-  contactPersonCounts[person] = (contactPersonCounts[person] || 0) + 1;
-}
-// Convert to array of objects and sort by name
-const result = Object.entries(contactPersonCounts)
-  .map(([name, count]) => ({ name, count }))
-  .sort((a, b) => a.name.localeCompare(b.name));
-interface.print("<>" + JSON.stringify(result, null, 2) + "</>");
-`;
-  const [allContactPersons, setAllContactPersons] = useState<
-    ContactPersonWithCount[] | undefined
-  >(undefined);
-  useEffect(() => {
-    if (!jobRunnerClient) return;
-    const runScript = async () => {
-      try {
-        const response = await jobRunnerClient.executeScript(script);
-        const i1 = response.indexOf("<>");
-        const i2 = response.lastIndexOf("</>");
-        if (i1 === -1 || i2 === -1 || i2 <= i1) {
-          console.error("Invalid response format:", response);
-          return;
-        }
-        const jsonString = response.substring(i1 + 2, i2);
-        const contactPersons = JSON.parse(jsonString);
-        if (!Array.isArray(contactPersons)) {
-          console.error("Parsed response is not an array:", contactPersons);
-          return;
-        }
-        setAllContactPersons(contactPersons);
-      } catch (error) {
-        console.error("Error executing script:", error);
-      }
-    };
-    runScript();
-  }, [jobRunnerClient, script]);
-  return { allContactPersons };
-};
-
-const useAllSpecies = (jobRunnerClient: JobRunnerClient | undefined) => {
-  type SpeciesWithCount = {
-    name: string;
-    count: number;
-  };
-
-  const script = `
-const dandisets = await interface.getDandisets();
-const speciesCounts = {};
-
-// Track species per dandiset to avoid double-counting
-for (const dandiset of dandisets) {
   const speciesInDandiset = new Set();
+
   for (const nwbFile of dandiset.nwbFiles) {
     if (nwbFile.subject && nwbFile.subject.species) {
       speciesInDandiset.add(nwbFile.subject.species);
     }
   }
-  for (const species of speciesInDandiset) {
-    speciesCounts[species] = (speciesCounts[species] || 0) + 1;
+
+  if (!contactPersonToSpecies[person]) {
+    contactPersonToSpecies[person] = {
+      name: person,
+      species: new Set(),
+      count: 0
+    };
   }
+
+  for (const species of speciesInDandiset) {
+    contactPersonToSpecies[person].species.add(species);
+  }
+  contactPersonToSpecies[person].count++;
+
+  // Add dandiset info
+  dandisetInfo.push({
+    id: dandiset.dandiset_id,
+    contactPerson: person,
+    species: Array.from(speciesInDandiset)
+  });
 }
 
-const result = Object.entries(speciesCounts)
-  .map(([name, count]) => ({ name, count }))
-  .sort((a, b) => a.name.localeCompare(b.name));
+// Convert to desired format
+const result = {
+  contactPersons: Object.values(contactPersonToSpecies)
+    .map(({name, species, count}) => ({
+      name,
+      species: Array.from(species),
+      count
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name)),
+  dandisetInfo: dandisetInfo
+};
+
 interface.print("<>" + JSON.stringify(result, null, 2) + "</>");
 `;
-  const [allSpecies, setAllSpecies] = useState<SpeciesWithCount[] | undefined>(
-    undefined,
-  );
+
+  const [searchData, setSearchData] = useState<SearchData | undefined>(undefined);
 
   useEffect(() => {
     if (!jobRunnerClient) return;
     const runScript = async () => {
       try {
+        console.info("Submitting script to job runner:");
+        console.info(script);
         const response = await jobRunnerClient.executeScript(script);
+        console.info({ response });
         const i1 = response.indexOf("<>");
         const i2 = response.lastIndexOf("</>");
         if (i1 === -1 || i2 === -1 || i2 <= i1) {
@@ -207,78 +268,41 @@ interface.print("<>" + JSON.stringify(result, null, 2) + "</>");
           return;
         }
         const jsonString = response.substring(i1 + 2, i2);
-        const species = JSON.parse(jsonString);
-        if (!Array.isArray(species)) {
-          console.error("Parsed response is not an array:", species);
-          return;
-        }
-        setAllSpecies(species);
+        const data = JSON.parse(jsonString);
+        setSearchData(data);
       } catch (error) {
         console.error("Error executing script:", error);
       }
     };
     runScript();
   }, [jobRunnerClient, script]);
-  return { allSpecies };
+
+  return { searchData };
 };
 
-const useSearch = (
-  jobRunnerClient: JobRunnerClient | undefined,
-  filter: Filter,
-) => {
-  const [dandisetIds, setDandisetIds] = useState<string[]>([]);
-  useEffect(() => {
-    if (
-      (filter.contactPerson === "<not specified>" &&
-        filter.species === "<not specified>") ||
-      !jobRunnerClient
-    ) {
-      setDandisetIds([]);
-      return;
-    }
-    const script = `
-const dandisets = await interface.getDandisets();
-const filteredDandisets = dandisets.filter(dandiset => {
-  if ("${filter.contactPerson}" !== "<not specified>" && dandiset.contact_person !== "${filter.contactPerson}") {
-    return false;
-  }
-  if ("${filter.species}" !== "<not specified>") {
-    const speciesInDandiset = new Set();
-    for (const nwbFile of dandiset.nwbFiles) {
-      if (nwbFile.subject && nwbFile.subject.species) {
-        speciesInDandiset.add(nwbFile.subject.species);
-      }
-    }
-    if (!speciesInDandiset.has("${filter.species}")) {
-      return false;
-    }
-  }
-  return true;
-});
+const useFilteredDandisets = (searchData: SearchData | undefined, filter: Filter) => {
+  return useMemo(() => {
+    if (!searchData) return [];
 
-if (filteredDandisets.length > 0) {
-  filteredDandisets.forEach(dandiset => {
-    interface.print(\`DANDISET: \${dandiset.dandiset_id}\`);
-  });
-} else {
-  interface.print("No matching dandisets found.");
-}
-  `;
-    const runScript = async () => {
-      try {
-        const response = await jobRunnerClient.executeScript(script);
-        const lines = response
-          .split("\n")
-          .filter((line) => line.startsWith("DANDISET: "));
-        const ids = lines.map((line) => line.replace("DANDISET: ", "").trim());
-        setDandisetIds(ids);
-      } catch (error) {
-        console.error("Error executing search script:", error);
-      }
-    };
-    runScript();
-  }, [filter.contactPerson, filter.species, jobRunnerClient]);
-  return {
-    dandisetIds,
-  };
+    // If no filters are set, return empty array
+    if (filter.contactPerson === "<not specified>" && filter.species === "<not specified>") {
+      return [];
+    }
+
+    return searchData.dandisetInfo
+      .filter(info => {
+        // Filter by contact person
+        if (filter.contactPerson !== "<not specified>" && info.contactPerson !== filter.contactPerson) {
+          return false;
+        }
+
+        // Filter by species
+        if (filter.species !== "<not specified>" && !info.species.includes(filter.species)) {
+          return false;
+        }
+
+        return true;
+      })
+      .map(info => info.id);
+  }, [searchData, filter.contactPerson, filter.species]);
 };
