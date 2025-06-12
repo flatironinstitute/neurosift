@@ -1,12 +1,15 @@
 import { NeurodataTypesIndex } from "../fetchNeurodataTypesIndex";
-import { DandisetAdvancedSearchResult } from "../dandi-types";
+import { DandisetNeurodataTypesSearchResult } from "../dandi-types";
 import getAuthorizationHeaderForUrl from "../../util/getAuthorizationHeaderForUrl";
 
-export const doAdvancedSearch = async (
+export const doNeurodataTypesSearch = async (
   index: NeurodataTypesIndex,
   selectedTypes: string[],
   limit: number = 10,
-): Promise<{ results: DandisetAdvancedSearchResult[]; total: number }> => {
+): Promise<{
+  results: DandisetNeurodataTypesSearchResult[];
+  total: number;
+}> => {
   try {
     // Find unique dandiset IDs and count matching files
     const dandisetIds = new Set<string>();
@@ -42,7 +45,7 @@ export const doAdvancedSearch = async (
           const response = await fetch(url, { headers });
           if (response.status === 200) {
             const json = await response.json();
-            const result = json as DandisetAdvancedSearchResult;
+            const result = json as DandisetNeurodataTypesSearchResult;
             result.matching_files_count = matchingFileCounts.get(dandisetId);
             return result;
           }
@@ -56,12 +59,12 @@ export const doAdvancedSearch = async (
     // Filter out any failed requests
     return {
       results: dandisets.filter(
-        (d): d is DandisetAdvancedSearchResult => d !== null,
+        (d): d is DandisetNeurodataTypesSearchResult => d !== null,
       ),
       total,
     };
   } catch (error) {
-    console.error("Error performing advanced search:", error);
+    console.error("Error performing neurodata-types search:", error);
     return { results: [], total: 0 };
   }
 };

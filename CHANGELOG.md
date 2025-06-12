@@ -1,5 +1,8 @@
 # Changes
 
+## June 12, 2025
+- Added dandi-index and implemented advanced search
+
 ## June 5, 2025
 - Modernized Python package structure with pyproject.toml configuration. Removed legacy setup.py, setup.cfg, and setup.cfg.j2 files
 - Added option for using local neurosift server with the CLI

@@ -18,13 +18,14 @@ import { AIRegisteredComponent, useAIComponentRegistry } from "../../AIContext";
 import { getDandiApiHeaders } from "../util/getDandiApiHeaders";
 import { getRecentDandisets } from "../util/recentDandisets";
 import DandisetSearchResult from "./DandisetSearchResult";
-import { AdvancedSearchPanel } from "./components/AdvancedSearchPanel";
-import { SearchModeToggle } from "./components/SearchModeToggle";
+import { NeurodataTypesSearchPanel } from "./components/NeurodataTypesSearchPanel";
+import { SearchMode, SearchModeControl } from "./components/SearchModeControl";
 import { DandisetSearchResultItem, DandisetsResponse } from "./dandi-types";
 import doDandiSemanticSearch from "./doDandiSemanticSearch";
 import { useNeurodataTypesIndex } from "./hooks/useNeurodataTypesIndex";
 import { useDandisetNotebooks } from "./hooks/useDandisetNotebooks";
-import { doAdvancedSearch } from "./services/doAdvancedSearch";
+import { doNeurodataTypesSearch } from "./services/doNeurodataTypesSearch";
+import { ExperimentalSearchPanel } from "./components/ExperimentalSearchPanel";
 
 type DandiPageProps = {
   width: number;
@@ -33,8 +34,7 @@ type DandiPageProps = {
 
 type SearchState = {
   searchText: string;
-  useSemanticSearch: boolean;
-  useAdvancedSearch: boolean;
+  searchMode: SearchMode;
   currentLimit: number;
   scheduledSearch: boolean;
 };
@@ -52,8 +52,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [searchState, setSearchState] = useState<SearchState>({
     searchText: "",
-    useSemanticSearch: false,
-    useAdvancedSearch: false,
+    searchMode: "basic",
     currentLimit: 10,
     scheduledSearch: false,
   });
@@ -61,47 +60,57 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
   // Get notebook URLs for all dandisets
   const { notebookUrls } = useDandisetNotebooks();
 
-  const { searchText, useSemanticSearch, useAdvancedSearch } = searchState;
+  const { searchText, searchMode } = searchState;
+  const useNeurodataTypesSearch = searchMode === "neurodata-types";
+  const useSemanticSearch = searchMode === "semantic";
+  const useExperimentalSearch = searchMode === "experimental";
+  const setSearchMode = useCallback((mode: SearchMode) => {
+    setSearchState((prev) => ({
+      ...prev,
+      searchMode: mode,
+      searchText: "",
+      scheduledSearch: true,
+    }));
+  }, []);
 
   const {
     index,
     uniqueTypes,
     loading: loadingTypes,
     error: typesError,
-  } = useNeurodataTypesIndex(useAdvancedSearch);
+  } = useNeurodataTypesIndex(useNeurodataTypesSearch);
 
   const performSearch = useCallback(
     async (searchState: SearchState) => {
       const {
         searchText: searchQuery,
-        useSemanticSearch,
-        useAdvancedSearch,
+        searchMode,
         currentLimit: limit,
       } = searchState;
       setIsSearching(true);
       setSearchResults([]); // Clear results before new search
 
       try {
-        if (useAdvancedSearch && index) {
+        if (useNeurodataTypesSearch && index) {
           if (selectedTypes.length === 0) {
             setTotalResults(0);
             return;
           }
-          const { results, total } = await doAdvancedSearch(
+          const { results, total } = await doNeurodataTypesSearch(
             index,
             selectedTypes,
             limit,
           );
           setSearchResults(results);
           setTotalResults(total);
-        } else if (useSemanticSearch) {
+        } else if (searchMode === "semantic") {
           const { results, total } = await doDandiSemanticSearch(
             searchQuery,
             limit,
           );
           setSearchResults(results);
           setTotalResults(total);
-        } else {
+        } else if (searchMode === "basic") {
           const { headers, apiKeyProvided } = getDandiApiHeaders(staging);
           const embargoedStr = apiKeyProvided ? "true" : "false";
           const stagingStr = staging ? "-staging" : "";
@@ -124,46 +133,46 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
         setLastSearchedText(searchQuery);
       }
     },
-    [index, selectedTypes, staging],
+    [index, selectedTypes, staging, useNeurodataTypesSearch],
   );
 
   useRegisterAIComponent();
 
   useEffect(() => {
     if (searchText) return;
-    if (useSemanticSearch || useAdvancedSearch) {
+    if (searchMode === "basic") {
+      setSearchState((prev) => ({ ...prev, scheduledSearch: true }));
+    } else {
       setSearchResults([]);
       setTotalResults(0);
-    } else {
-      setSearchState((prev) => ({ ...prev, scheduledSearch: true }));
     }
     setRecentDandisets(getRecentDandisets());
-  }, [searchText, useSemanticSearch, useAdvancedSearch]);
+  }, [searchText, searchMode]);
 
   // Reset limit and results when switching search modes
   useEffect(() => {
     setSearchState((prev) => ({ ...prev, currentLimit: 10 }));
     setSearchResults([]);
     setTotalResults(0);
-    // Clear selected types when advanced search is disabled
-    if (!useAdvancedSearch) {
+    // Clear selected types when neurodata-types search is disabled
+    if (searchMode !== "neurodata-types") {
       setSelectedTypes([]);
     }
-  }, [useSemanticSearch, useAdvancedSearch]);
+  }, [searchMode]);
 
-  // Trigger search when types are selected in advanced mode
+  // Trigger search when types are selected in neurodata-types mode
   useEffect(() => {
-    if (useAdvancedSearch && selectedTypes.length > 0) {
+    if (useNeurodataTypesSearch && selectedTypes.length > 0) {
       setSearchState((prev) => ({ ...prev, scheduledSearch: true }));
     }
-  }, [selectedTypes, useAdvancedSearch]);
+  }, [selectedTypes, useNeurodataTypesSearch]);
 
   const handleRecentClick = (dandisetId: string) => {
     navigate(`/dandiset/${dandisetId}`);
   };
 
   const handleSearch = useCallback(() => {
-    if (!useAdvancedSearch || selectedTypes.length > 0) {
+    if (!useNeurodataTypesSearch || selectedTypes.length > 0) {
       setSearchState((prev) => ({
         ...prev,
         currentLimit: 10,
@@ -172,7 +181,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
     } else {
       setSearchState((prev) => ({ ...prev, scheduledSearch: true }));
     }
-  }, [useAdvancedSearch, selectedTypes]);
+  }, [useNeurodataTypesSearch, selectedTypes]);
 
   const handleViewMore = useCallback(() => {
     setSearchState((prev) => ({
@@ -234,20 +243,14 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
           </Box>
         )}
         <Box sx={{ mb: 1 }}>
-          <SearchModeToggle
-            useSemanticSearch={useSemanticSearch}
-            onSemanticSearchChange={(val) =>
-              setSearchState({ ...searchState, useSemanticSearch: val })
-            }
-            useAdvancedSearch={useAdvancedSearch}
-            onAdvancedSearchChange={(val) =>
-              setSearchState({ ...searchState, useAdvancedSearch: val })
-            }
+          <SearchModeControl
+            searchMode={searchMode}
+            setSearchMode={setSearchMode}
           />
         </Box>
-        {useAdvancedSearch && (
+        {useNeurodataTypesSearch && (
           <Box sx={{ mb: 2 }}>
-            <AdvancedSearchPanel
+            <NeurodataTypesSearchPanel
               neurodataTypes={uniqueTypes}
               selectedTypes={selectedTypes}
               onSelectedTypesChange={setSelectedTypes}
@@ -256,7 +259,12 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
             />
           </Box>
         )}
-        {!useAdvancedSearch && (
+        {useExperimentalSearch && (
+          <Box sx={{ mb: 2 }}>
+            <ExperimentalSearchPanel />
+          </Box>
+        )}
+        {!useNeurodataTypesSearch && !useExperimentalSearch && (
           <Box sx={{ display: "flex", gap: 1, mb: 2, position: "relative" }}>
             <Button
               size="small"
@@ -312,7 +320,9 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
               notebookUrls={notebookUrls[result.identifier]}
             />
           ))}
-          {(useSemanticSearch || useAdvancedSearch) &&
+          {(useSemanticSearch ||
+            useNeurodataTypesSearch ||
+            useExperimentalSearch) &&
             searchResults.length > 0 &&
             searchResults.length < totalResults && (
               <Box
@@ -338,7 +348,7 @@ The user is viewing the Dandi page where they can search for Dandisets.
 They can either perform a text search, a semantic search, or search by neurodata types.
 A text search will return exact matches for the provided text.
 A semantic search will return Dandisets with similar content to the provided text.
-An advanced search will return Dandisets that match the selected neurodata types.
+An neuroda-types search will return Dandisets that match the selected neurodata types.
 `;
     const registration: AIRegisteredComponent = {
       id: "DandiPage",

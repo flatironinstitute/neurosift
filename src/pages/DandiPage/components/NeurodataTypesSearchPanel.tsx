@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import { FunctionComponent } from "react";
 
-type AdvancedSearchPanelProps = {
+type NeurodataTypesSearchPanelProps = {
   neurodataTypes: string[];
   selectedTypes: string[];
   onSelectedTypesChange: (types: string[]) => void;
@@ -15,8 +15,8 @@ type AdvancedSearchPanelProps = {
   error?: string;
 };
 
-export const AdvancedSearchPanel: FunctionComponent<
-  AdvancedSearchPanelProps
+export const NeurodataTypesSearchPanel: FunctionComponent<
+  NeurodataTypesSearchPanelProps
 > = ({
   neurodataTypes,
   selectedTypes,

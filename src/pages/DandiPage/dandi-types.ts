@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export type DandisetAdvancedSearchResult = DandisetSearchResultItem & {
+export type DandisetNeurodataTypesSearchResult = DandisetSearchResultItem & {
   matching_files_count?: number;
 };
 
