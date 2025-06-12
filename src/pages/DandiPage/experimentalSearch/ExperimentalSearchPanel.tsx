@@ -2,7 +2,7 @@ import { FunctionComponent, useEffect, useState } from "react";
 import { JobRunnerClient } from "./jobRunnerClient";
 
 type ExperimentalSearchPanelProps = {
-  setDandisetIds: (ids: string[]) => void;
+  setDandisetIds?: (ids: string[]) => void;
 };
 
 type Filter = {
@@ -40,7 +40,9 @@ export const ExperimentalSearchPanel: FunctionComponent<
   const { allContactPersons } = useAllContactPersons(jobRunnerClient);
   const { dandisetIds } = useSearch(jobRunnerClient, filter);
   useEffect(() => {
-    setDandisetIds(dandisetIds);
+    if (setDandisetIds) {
+      setDandisetIds(dandisetIds);
+    }
   }, [dandisetIds, setDandisetIds]);
   if (!jobRunnerClient) {
     return <div>No job runner is configured.</div>;
@@ -51,6 +53,9 @@ export const ExperimentalSearchPanel: FunctionComponent<
   console.info({ dandisetIds });
   return (
     <div>
+      <div style={{ marginBottom: 10 }}>
+        <strong>Experimental Search Under Construction</strong>
+      </div>
       {allContactPersons && (
         <div>
           <div style={{ marginBottom: 10 }}>Contact person:</div>
