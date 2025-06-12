@@ -25,7 +25,7 @@ import doDandiSemanticSearch from "./doDandiSemanticSearch";
 import { useNeurodataTypesIndex } from "./hooks/useNeurodataTypesIndex";
 import { useDandisetNotebooks } from "./hooks/useDandisetNotebooks";
 import { doNeurodataTypesSearch } from "./services/doNeurodataTypesSearch";
-import { ExperimentalSearchPanel } from "./components/ExperimentalSearchPanel";
+import { ExperimentalSearchPanel } from "./experimentalSearch/ExperimentalSearchPanel";
 
 type DandiPageProps = {
   width: number;

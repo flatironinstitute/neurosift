@@ -7,7 +7,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { MenuBook } from "@mui/icons-material";
-import { DandisetAdvancedSearchResult } from "./dandi-types";
+import { DandisetNeurodataTypesSearchResult } from "./dandi-types";
 import { useNavigate } from "react-router-dom";
 
 const formatDate = (dateString: string) => {
@@ -17,7 +17,7 @@ const formatDate = (dateString: string) => {
 import { formatBytes } from "@shared/util/formatBytes";
 
 type Props = {
-  dandiset: DandisetAdvancedSearchResult;
+  dandiset: DandisetNeurodataTypesSearchResult;
   notebookUrls?: string[];
 };
 

@@ -2,6 +2,7 @@
 
 ## June 12, 2025
 - Added dandi-index and implemented advanced search
+- Added .env.local template for configuring PubNub keys in local development
 
 ## June 5, 2025
 - Modernized Python package structure with pyproject.toml configuration. Removed legacy setup.py, setup.cfg, and setup.cfg.j2 files
