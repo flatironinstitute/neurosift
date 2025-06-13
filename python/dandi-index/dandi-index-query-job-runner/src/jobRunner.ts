@@ -36,7 +36,7 @@ export class JobRunner {
     this.pubnub = new PubNub({
       subscribeKey,
       publishKey,
-      userId: `job-runner-${Math.random().toString(36).slice(2, 9)}`
+      userId: `job-runner`
     });
     this.jobChannel = jobChannel;
     this.responseChannel = responseChannel;

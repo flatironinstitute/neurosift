@@ -45,7 +45,7 @@ export class JobRunnerClient {
     this.pubnub = new PubNub({
       subscribeKey,
       publishKey,
-      userId: `web-client-${Math.random().toString(36).slice(2, 9)}`,
+      userId: `web-client`,
     });
 
     // Create subscription to response channel
