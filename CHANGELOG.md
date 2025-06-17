@@ -1,5 +1,8 @@
 # Changes
 
+## June 17, 2025
+- Added GitHub link to application toolbar that opens the issues page for easy bug reporting
+
 ## June 12, 2025
 - Optimized experimental search panel to eliminate repeated script executions by implementing client-side filtering
 - Added dandiset counts next to contact person names in experimental search panel
