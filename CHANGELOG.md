@@ -1,5 +1,9 @@
 # Changes
 
+## June 19, 2025
+- Added toggle legend button for plotly timeseries plots (Issue #328)
+- Fixed margin difference between plotly and native NS plots by removing width reduction and right margin (Issue #330)
+
 ## June 17, 2025
 - Added GitHub link to application toolbar that opens the issues page for easy bug reporting
 

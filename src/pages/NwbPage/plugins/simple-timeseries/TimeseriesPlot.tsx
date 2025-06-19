@@ -1,4 +1,4 @@
-import { FunctionComponent, useMemo } from "react";
+import { FunctionComponent, useMemo, useState } from "react";
 import Plot from "react-plotly.js";
 
 import { TimeseriesPlotProps as Props } from "./types";
@@ -25,6 +25,9 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
   height = 300,
   zoomInRequired = false,
 }) => {
+  // State for legend visibility
+  const [showLegend, setShowLegend] = useState<boolean>(true);
+
   // Memoize the transposed channel data
   const channelData = useMemo(() => {
     if (!data) return [];
@@ -78,14 +81,14 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
 
   const layout = useMemo(
     () => ({
-      width: (width || 700) - 20,
+      width: (width || 700),
       height: height || 300,
-      margin: {
-        l: 50,
-        r: 20,
-        t: 20,
-        b: 50,
-      },
+    margin: {
+      l: 50,
+      r: 20,
+      t: 20,
+      b: 50,
+    },
       xaxis: {
         title: {
           text: "Time (s)",
@@ -111,9 +114,9 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
         showticklabels: true,
         showgrid: true,
       },
-      showlegend: true,
+      showlegend: showLegend,
     }),
-    [channelSeparation, height, visibleEndTime, visibleStartTime, width],
+    [channelSeparation, height, visibleEndTime, visibleStartTime, width, showLegend],
   );
 
   const config = useMemo(
@@ -152,7 +155,26 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
     return <div>Loading...</div>;
   }
 
-  return <Plot data={plotData} layout={layout} config={config} />;
+  return (
+    <div>
+      <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'flex-end' }}>
+        <button 
+          onClick={() => setShowLegend(!showLegend)}
+          style={{
+            padding: '5px 10px',
+            backgroundColor: '#f8f9fa',
+            border: '1px solid #dee2e6',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '12px'
+          }}
+        >
+          {showLegend ? 'Hide Legend' : 'Show Legend'}
+        </button>
+      </div>
+      <Plot data={plotData} layout={layout} config={config} />
+    </div>
+  );
 };
 
 export default TimeseriesPlot;
