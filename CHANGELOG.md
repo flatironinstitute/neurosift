@@ -1,5 +1,8 @@
 # Changes
 
+## June 19, 2025
+- Added toggle legend button for plotly timeseries plots (Issue #328)
+
 ## June 12, 2025
 - Optimized experimental search panel to eliminate repeated script executions by implementing client-side filtering
 - Added dandiset counts next to contact person names in experimental search panel
