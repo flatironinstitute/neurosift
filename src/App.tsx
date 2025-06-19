@@ -2,6 +2,7 @@ import StatusBar from "@components/StatusBar";
 import "@css/App.css";
 import { useWindowDimensions } from "@fi-sci/misc";
 import SettingsIcon from "@mui/icons-material/Settings";
+import GitHubIcon from "@mui/icons-material/GitHub";
 import {
   AppBar,
   Button,
@@ -237,6 +238,20 @@ const AppContent = () => {
               >
                 Neurosift (v2)
               </Typography>
+              <Tooltip title="Report issues on GitHub">
+                <IconButton
+                  color="inherit"
+                  onClick={() => {
+                    window.open(
+                      "https://github.com/flatironinstitute/neurosift/issues",
+                      "_blank",
+                    );
+                  }}
+                  sx={{ ml: 2 }}
+                >
+                  <GitHubIcon />
+                </IconButton>
+              </Tooltip>
               <Tooltip title="Settings">
                 <IconButton
                   color="inherit"
