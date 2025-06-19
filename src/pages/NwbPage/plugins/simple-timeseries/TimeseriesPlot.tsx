@@ -81,14 +81,14 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
 
   const layout = useMemo(
     () => ({
-      width: (width || 700),
+      width: width || 700,
       height: height || 300,
-    margin: {
-      l: 50,
-      r: 20,
-      t: 20,
-      b: 50,
-    },
+      margin: {
+        l: 50,
+        r: 20,
+        t: 20,
+        b: 50,
+      },
       xaxis: {
         title: {
           text: "Time (s)",
@@ -116,7 +116,14 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
       },
       showlegend: showLegend,
     }),
-    [channelSeparation, height, visibleEndTime, visibleStartTime, width, showLegend],
+    [
+      channelSeparation,
+      height,
+      visibleEndTime,
+      visibleStartTime,
+      width,
+      showLegend,
+    ],
   );
 
   const config = useMemo(
@@ -157,19 +164,25 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
 
   return (
     <div>
-      <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'flex-end' }}>
-        <button 
+      <div
+        style={{
+          marginBottom: "10px",
+          display: "flex",
+          justifyContent: "flex-end",
+        }}
+      >
+        <button
           onClick={() => setShowLegend(!showLegend)}
           style={{
-            padding: '5px 10px',
-            backgroundColor: '#f8f9fa',
-            border: '1px solid #dee2e6',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '12px'
+            padding: "5px 10px",
+            backgroundColor: "#f8f9fa",
+            border: "1px solid #dee2e6",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontSize: "12px",
           }}
         >
-          {showLegend ? 'Hide Legend' : 'Show Legend'}
+          {showLegend ? "Hide Legend" : "Show Legend"}
         </button>
       </div>
       <Plot data={plotData} layout={layout} config={config} />
