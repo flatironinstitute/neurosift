@@ -78,14 +78,14 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
 
   const layout = useMemo(
     () => ({
-      width: (width || 700) - 20,
+      width: (width || 700),
       height: height || 300,
-      margin: {
-        l: 50,
-        r: 20,
-        t: 20,
-        b: 50,
-      },
+    margin: {
+      l: 50,
+      r: 20,
+      t: 20,
+      b: 50,
+    },
       xaxis: {
         title: {
           text: "Time (s)",
