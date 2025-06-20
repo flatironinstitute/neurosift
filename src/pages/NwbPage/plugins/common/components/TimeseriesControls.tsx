@@ -162,25 +162,27 @@ export const TimeRangeControls: FunctionComponent<TimeRangeControlsProps> = ({
     <div
       style={{
         display: "flex",
-        gap: "8px",
+        gap: "6px",
         alignItems: "center",
         background: "#f8f9fa",
-        padding: "8px 12px",
-        borderRadius: "6px",
+        padding: "3px 8px",
+        borderRadius: "5px",
         border: "1px solid #e9ecef",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+        boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+        margin: "0",
       }}
     >
       <div
         style={{
-          fontSize: "0.9rem",
+          fontSize: "0.85rem",
           color: "#495057",
           fontFamily:
             "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
           display: "flex",
           alignItems: "center",
-          gap: "4px",
+          gap: "3px",
           minWidth: "130px",
+          whiteSpace: "nowrap",
         }}
       >
         <span style={{ fontWeight: 500 }}>{label}</span>
@@ -194,11 +196,11 @@ export const TimeRangeControls: FunctionComponent<TimeRangeControlsProps> = ({
             onKeyDown={handleDurationKeyDown}
             style={{
               width: "60px",
-              padding: "2px 4px",
+              padding: "1px 3px",
               border: "1px solid #ced4da",
               borderRadius: "4px",
-              fontSize: "0.9rem",
-              marginLeft: "8px",
+              fontSize: "0.85rem",
+              marginLeft: "6px",
             }}
           />
         ) : (
@@ -228,10 +230,10 @@ export const TimeRangeControls: FunctionComponent<TimeRangeControlsProps> = ({
             onKeyDown={handleStartTimeKeyDown}
             style={{
               width: "60px",
-              padding: "2px 4px",
+              padding: "1px 3px",
               border: "1px solid #ced4da",
               borderRadius: "4px",
-              fontSize: "0.9rem",
+              fontSize: "0.85rem",
             }}
           />
         ) : (
@@ -313,25 +315,27 @@ export const ItemRangeControls: FunctionComponent<ItemRangeControlsProps> = ({
     <div
       style={{
         display: "flex",
-        gap: "8px",
+        gap: "6px",
         alignItems: "center",
         background: "#f8f9fa",
-        padding: "8px 12px",
-        borderRadius: "6px",
+        padding: "3px 8px",
+        borderRadius: "5px",
         border: "1px solid #e9ecef",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+        boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+        margin: "0",
       }}
     >
       <div
         style={{
-          fontSize: "0.9rem",
+          fontSize: "0.85rem",
           color: "#495057",
           fontFamily:
             "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
           display: "flex",
           alignItems: "center",
-          gap: "8px",
+          gap: "6px",
           minWidth: "70px",
+          whiteSpace: "nowrap",
         }}
       >
         {itemLabel && <span style={{ fontWeight: 500 }}>{itemLabel}</span>}
@@ -382,14 +386,16 @@ export const CondensedLayout: FunctionComponent<{
 }> = ({ children }) => (
   <div
     style={{
-      padding: "6px",
+      padding: "2px",
       background: "#f5f5f5",
       borderRadius: "5px",
       fontFamily: "sans-serif",
-      fontSize: "0.9rem",
+      fontSize: "0.85rem",
       display: "flex",
-      gap: "16px",
+      gap: "6px",
+      rowGap: "1px",
       alignItems: "center",
+      flexWrap: "wrap",
     }}
   >
     {children}
@@ -407,18 +413,19 @@ export const FullLayout: FunctionComponent<{
   return (
     <div
       style={{
-        padding: "10px",
+        padding: "2px",
         background: "#f5f5f5",
         borderRadius: "5px",
         fontFamily: "sans-serif",
-        fontSize: "0.9rem",
+        fontSize: "0.85rem",
       }}
     >
-      <div style={{ marginBottom: "12px" }}>{recordingInfo}</div>
+      <div style={{ marginBottom: "2px" }}>{recordingInfo}</div>
       <div
         style={{
           display: "flex",
-          gap: "12px",
+          gap: "6px",
+          rowGap: "1px",
           alignItems: "flex-start",
           flexWrap: "wrap",
           overflowX: "auto",
@@ -445,25 +452,27 @@ export const SeparationControls: FunctionComponent<SeparationControlsProps> = ({
     <div
       style={{
         display: "flex",
-        gap: "8px",
+        gap: "6px",
         alignItems: "center",
         background: "#f8f9fa",
-        padding: "8px 12px",
-        borderRadius: "6px",
+        padding: "3px 8px",
+        borderRadius: "5px",
         border: "1px solid #e9ecef",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+        boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+        margin: "0",
       }}
     >
       <div
         style={{
-          fontSize: "0.9rem",
+          fontSize: "0.85rem",
           color: "#495057",
           fontFamily:
             "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
           display: "flex",
           alignItems: "center",
-          gap: "4px",
+          gap: "3px",
           minWidth: "70px",
+          whiteSpace: "nowrap",
         }}
       >
         <span style={{ fontWeight: 500 }}>Separation</span>

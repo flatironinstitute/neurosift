@@ -106,12 +106,20 @@ export const Controls: FunctionComponent<ControlsProps> = ({
         <div
           style={{
             display: "flex",
-            gap: "12px",
+            gap: "8px",
             alignItems: "center",
             flexWrap: "wrap",
+            width: "100%",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              whiteSpace: "nowrap",
+              marginRight: "8px",
+            }}
+          >
             Start: {info.timeseriesStartTime.toFixed(2)} s, Duration:{" "}
             {info.timeseriesDuration.toFixed(2)} s,{" "}
             {formatSamplingFrequency(info.samplingFrequency)}

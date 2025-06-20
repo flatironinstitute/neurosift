@@ -1,6 +1,7 @@
 # Changes
 
 ## June 19, 2025
+- Improved space utilization for controls with more compact vertical spacing and better wrapping behavior, including significantly reduced vertical separation between rows of controls
 - Added toggle legend button for plotly timeseries plots (Issue #328)
 - Fixed margin difference between plotly and native NS plots by removing width reduction and right margin (Issue #330)
 
