@@ -169,7 +169,7 @@ export const TimeRangeControls: FunctionComponent<TimeRangeControlsProps> = ({
         borderRadius: "5px",
         border: "1px solid #e9ecef",
         boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-        margin: "1px 0",
+        margin: "0",
       }}
     >
       <div
@@ -322,7 +322,7 @@ export const ItemRangeControls: FunctionComponent<ItemRangeControlsProps> = ({
         borderRadius: "5px",
         border: "1px solid #e9ecef",
         boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-        margin: "1px 0",
+        margin: "0",
       }}
     >
       <div
@@ -386,14 +386,14 @@ export const CondensedLayout: FunctionComponent<{
 }> = ({ children }) => (
   <div
     style={{
-      padding: "3px",
+      padding: "2px",
       background: "#f5f5f5",
       borderRadius: "5px",
       fontFamily: "sans-serif",
       fontSize: "0.85rem",
       display: "flex",
       gap: "6px",
-      rowGap: "3px",
+      rowGap: "1px",
       alignItems: "center",
       flexWrap: "wrap",
     }}
@@ -413,19 +413,19 @@ export const FullLayout: FunctionComponent<{
   return (
     <div
       style={{
-        padding: "4px",
+        padding: "2px",
         background: "#f5f5f5",
         borderRadius: "5px",
         fontFamily: "sans-serif",
         fontSize: "0.85rem",
       }}
     >
-      <div style={{ marginBottom: "4px" }}>{recordingInfo}</div>
+      <div style={{ marginBottom: "2px" }}>{recordingInfo}</div>
       <div
         style={{
           display: "flex",
           gap: "6px",
-          rowGap: "3px",
+          rowGap: "1px",
           alignItems: "flex-start",
           flexWrap: "wrap",
           overflowX: "auto",
@@ -459,7 +459,7 @@ export const SeparationControls: FunctionComponent<SeparationControlsProps> = ({
         borderRadius: "5px",
         border: "1px solid #e9ecef",
         boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-        margin: "1px 0",
+        margin: "0",
       }}
     >
       <div
