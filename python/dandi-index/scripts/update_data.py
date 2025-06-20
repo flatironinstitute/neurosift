@@ -3,167 +3,77 @@
 import os
 import json
 import time
-import requests
-import lindi
-import h5py
+import argparse
+import openai
+
+from _load_dandi_data import (
+    _load_dandi_data,
+    _load_nwb_files_in_dandiset,
+    _fetch_dandiset_metadata,
+)
+from _load_asset_info import _load_asset_info
 
 
-def _load_dandi_data():
-    url = "https://api.dandiarchive.org/api/dandisets/?page=1&page_size=5000&ordering=-modified&draft=true&empty=false&embargoed=false"
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise Exception(
-            f"Failed to fetch DANDI data: {response.status_code} {response.reason}"
-        )
-
-    data = response.json()
-    dandisets = []
-    for ds in data["results"]:
-        pv = ds.get("most_recent_published_version")
-        dv = ds.get("draft_version")
-        vv = pv or dv
-
-        if not vv:
-            raise Exception(f"No version information for dandiset {ds['identifier']}")
-
-        dandisets.append(
-            {
-                "dandiset_id": ds["identifier"],
-                "version": vv["version"],
-                "name": vv["name"],
-                "created": vv["created"],
-                "modified": vv["modified"],
-                "asset_count": vv["asset_count"],
-                "size": vv["size"],
-                "contact_person": ds.get("contact_person"),
-                "embargo_status": ds.get("embargo_status"),
-                "star_count": ds.get("star_count", 0),
-            }
-        )
-    return {"dandisets": dandisets, "timestamp": time.time()}
-
-
-def _load_nwb_files_in_dandiset(dandiset_id, version):
-    url = f"https://api.dandiarchive.org/api/dandisets/{dandiset_id}/versions/{version}/assets/?page_size=100&glob=*.nwb"
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise Exception(
-            f"Failed to fetch NWB files for dandiset {dandiset_id}: {response.status_code} {response.reason}"
-        )
-    data = response.json()
-    nwb_files = []
-    for asset in data["results"]:
-        nwb_files.append(
-            {
-                "path": asset["path"],
-                "size": asset["size"],
-                "asset_id": asset["asset_id"],
-            }
-        )
-    return nwb_files
-
-
-def _serialize_value(value):
-    if isinstance(value, bytes):
-        return value.decode("utf-8", errors="ignore")
-    elif isinstance(value, (list, tuple)):
-        return [_serialize_value(v) for v in value]
-    elif isinstance(value, dict):
-        return _serialize_attributes(value)
-    elif isinstance(value, (int, float, str)):
-        return value
-    else:
-        return str(value)  # Fallback for unsupported types
-
-
-def _serialize_attributes(attrs):
-    serialized = {}
-    for key, value in attrs.items():
-        serialized[key] = _serialize_value(value)
-    return serialized
-
-
-def _load_neurodata_objects_from_group(group: h5py.Group, visited):
-    visited[group.name] = True
-    neurodata_objects = []
-    for name, obj in group.items():
-        if isinstance(obj, h5py.Group):
-            if obj.attrs.get("neurodata_type", None):
-                neurodata_objects.append(
-                    {
-                        "path": obj.name,
-                        "type": obj.attrs["neurodata_type"],
-                        "description": obj.attrs.get("description", ""),
-                    }
-                )
-            if not visited.get(obj.name, False):
-                neurodata_objects.extend(
-                    _load_neurodata_objects_from_group(obj, visited)
-                )
-    return neurodata_objects
-
-
-def _load_neurodata_objects(file: h5py.File):
-    visited = {}
-    return _load_neurodata_objects_from_group(file, visited)
-
-
-def _load_asset_info(*, dandiset_id: str, asset_id: str):
-    url = f"https://api.dandiarchive.org/api/assets/{asset_id}/download/"
-    lindi_url = f"https://lindi.neurosift.org/dandi/dandisets/{dandiset_id}/assets/{asset_id}/nwb.lindi.json"
-    try:
-        f = lindi.LindiH5pyFile.from_lindi_file(lindi_url)
-    except:
-        print(f"Failed to load Lindi file from {lindi_url}, falling back to HDF5")
-        f = lindi.LindiH5pyFile.from_hdf5_file(url)
-    neurodata_objects = _load_neurodata_objects(f)
-    return {
-        "dandiset_id": dandiset_id,
-        "asset_id": asset_id,
-        "neurodata_objects": neurodata_objects,
-        "session_description": _str(f["session_description"][()]),  # type: ignore
-        "subject": {
-            "age": _str(f["general/subject"]["age"][()]) if "general/subject/age" in f else None,  # type: ignore
-            "genotype": _str(f["general/subject"]["genotype"][()]) if "general/subject/genotype" in f else None,  # type: ignore
-            "sex": _str(f["general/subject"]["sex"][()]) if "general/subject/sex" in f else None,  # type: ignore
-            "species": _str(f["general/subject"]["species"][()]) if "general/subject/species" in f else None,  # type: ignore
-            "subject_id": _str(f["general/subject"]["subject_id"][()]) if "general/subject/subject_id" in f else None,  # type: ignore
-            "strain": _str(f["general/subject"]["strain"][()]) if "general/subject/strain" in f else None,  # type: ignore
-            "specimen_name": _str(f["general/subject"]["specimen_name"][()]) if "f/general/subject/specimen_name" in f else None,  # type: ignore
-        },
-    }
-
-
-def _str(value):
-    if isinstance(value, bytes):
-        return value.decode("utf-8", errors="ignore")
-    elif isinstance(value, (list, tuple)):
-        return [_str(v) for v in value]
-    elif isinstance(value, dict):
-        return _serialize_attributes(value)
-    elif isinstance(value, (int, float, str)):
-        return str(value)
-    else:
-        return str(value)
-
-
-def _fetch_dandiset_metadata(*, dandiset_id: str, version: str):
-    url = (
-        f"https://api.dandiarchive.org/api/dandisets/{dandiset_id}/versions/{version}/"
+def _create_embedding_for_summary(summary: str, *, model: str):
+    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+    if not OPENAI_API_KEY:
+        raise Exception("OPENAI_API_KEY environment variable not set.")
+    client = openai.Client(
+        api_key=OPENAI_API_KEY,
     )
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise Exception(
-            f"Failed to fetch metadata for dandiset {dandiset_id}: {response.status_code} {response.reason}"
-        )
-    data = response.json()
-    assert (
-        data["id"] == f"DANDI:{dandiset_id}/{version}"
-    ), f"Unexpected ID format: {data['id']}"
-    return data
+    response = client.embeddings.create(input=summary, model=model)
+    return response.data[0].embedding
 
 
-def update_data():
+def _generate_embeddings_if_needed(*, dandiset_data, embeddings_fname: str):
+    model = "text-embedding-3-large"
+    current_title = dandiset_data["name"]
+    current_description = dandiset_data["metadata"].get("description", "")
+
+    # Initialize with empty embeddings
+    embeddings = []
+    if os.path.exists(embeddings_fname):
+        with open(embeddings_fname, "r") as f:
+            embeddings = json.load(f)
+
+    need_update = False
+
+    # Check and update title embedding if needed
+    title_entry = embeddings[0] if len(embeddings) > 0 else None
+    if (
+        not title_entry
+        or title_entry["text"] != current_title
+        or title_entry["model"] != model
+    ):
+        print(f"Generating title embedding for {dandiset_data['dandiset_id']}")
+        title_embedding = _create_embedding_for_summary(current_title, model=model)
+        embeddings = [
+            {"text": current_title, "embedding": title_embedding, "model": model}
+        ] + (embeddings[1:] if len(embeddings) > 1 else [])
+        need_update = True
+
+    # Check and update description embedding if needed
+    desc_entry = embeddings[1] if len(embeddings) > 1 else None
+    if (
+        not desc_entry
+        or desc_entry["text"] != current_description
+        or desc_entry["model"] != model
+    ):
+        print(f"Generating description embedding for {dandiset_data['dandiset_id']}")
+        desc_embedding = _create_embedding_for_summary(current_description, model=model)
+        embeddings = [
+            embeddings[0],
+            {"text": current_description, "embedding": desc_embedding, "model": model},
+        ]
+        need_update = True
+
+    # Save if any updates were made
+    if need_update:
+        with open(embeddings_fname, "w") as f:
+            json.dump(embeddings, f, indent=2)
+
+
+def update_data(*, update_assets: bool, generate_embeddings: bool):
     data_dir = "data"
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
@@ -231,35 +141,57 @@ def update_data():
             print(f"Skipping {dandiset_id} update")
             with open(dandiset_fname, "r") as f:
                 dandiset_data = json.load(f)
-        for vvv0 in ["v1", "v2", "v3", "v4", "v5", "v6"]:
-            # remove old asset info files
-            asset_dir0 = f"{dandiset_data_dir}/assets.{vvv0}"
-            if os.path.exists(asset_dir0):
-                print(f"Removing old asset info files in {asset_dir0}")
-                for fname in os.listdir(asset_dir0):
-                    if fname.endswith(".json"):
-                        os.remove(os.path.join(asset_dir0, fname))
-                os.rmdir(asset_dir0)
-        vvv = "v7"
-        for nwb_file in dandiset_data["nwb_files"][:20]:
-            asset_id = nwb_file["asset_id"]
-            asset_fname = f"{dandiset_data_dir}/assets.{vvv}/{asset_id}.json"
-            asset_path = nwb_file["path"]
-            if not os.path.exists(asset_fname):
-                print(f"{dandiset_id}: Loading asset info for {asset_path}")
-                if not os.path.exists(f"{dandiset_data_dir}/assets.{vvv}"):
-                    os.makedirs(f"{dandiset_data_dir}/assets.{vvv}")
-                asset_info = _load_asset_info(
-                    dandiset_id=dandiset_id, asset_id=asset_id
-                )
-                with open(asset_fname, "w") as f:
-                    json.dump(asset_info, f, indent=2)
-            else:
-                print(f"{dandiset_id}: Asset info for {asset_path} already exists")
-            if time.time() - start_time > 15:
-                print(f"Time limit reached for dandiset {dandiset_id}, moving to next")
-                break
+
+        if generate_embeddings:
+            embeddings_fname = f"{dandiset_data_dir}/embeddings.json"
+            _generate_embeddings_if_needed(
+                dandiset_data=dandiset_data, embeddings_fname=embeddings_fname
+            )
+
+        if update_assets:
+            for vvv0 in ["v1", "v2", "v3", "v4", "v5", "v6"]:
+                # remove old asset info files
+                asset_dir0 = f"{dandiset_data_dir}/assets.{vvv0}"
+                if os.path.exists(asset_dir0):
+                    print(f"Removing old asset info files in {asset_dir0}")
+                    for fname in os.listdir(asset_dir0):
+                        if fname.endswith(".json"):
+                            os.remove(os.path.join(asset_dir0, fname))
+                    os.rmdir(asset_dir0)
+            vvv = "v7"
+            for nwb_file in dandiset_data["nwb_files"][:50]:
+                asset_id = nwb_file["asset_id"]
+                asset_fname = f"{dandiset_data_dir}/assets.{vvv}/{asset_id}.json"
+                asset_path = nwb_file["path"]
+                if not os.path.exists(asset_fname):
+                    print(f"{dandiset_id}: Loading asset info for {asset_path}")
+                    if not os.path.exists(f"{dandiset_data_dir}/assets.{vvv}"):
+                        os.makedirs(f"{dandiset_data_dir}/assets.{vvv}")
+                    asset_info = _load_asset_info(
+                        dandiset_id=dandiset_id, asset_id=asset_id
+                    )
+                    with open(asset_fname, "w") as f:
+                        json.dump(asset_info, f, indent=2)
+                else:
+                    print(f"{dandiset_id}: Asset info for {asset_path} already exists")
+                if time.time() - start_time > 15:
+                    print(
+                        f"Time limit reached for dandiset {dandiset_id}, moving to next"
+                    )
+                    break
+        else:
+            print(f"Skipping asset updates for dandiset {dandiset_id}")
 
 
 if __name__ == "__main__":
-    update_data()
+    parser = argparse.ArgumentParser(description="Update DANDI data index")
+    parser.add_argument(
+        "--assets", action="store_true", help="Update asset information for NWB files"
+    )
+    parser.add_argument(
+        "--embeddings",
+        action="store_true",
+        help="Generate semantic embeddings for dandiset titles and descriptions",
+    )
+    args = parser.parse_args()
+    update_data(update_assets=args.assets, generate_embeddings=args.embeddings)

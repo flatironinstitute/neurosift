@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import fs from 'fs';
 import { fetchDandisetsFromApi } from './dandi';
+import OpenAI from "openai";
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 // interface FetchDandisetsParams {
 //   search?: string;
@@ -12,6 +16,7 @@ export interface ScriptInterface {
   getDandisets: () => Promise<DandisetInfo[]>;
   findDandisets: (o: {search: string}) => Promise<DandisetInfo[]>;
   getDandiset: (o: {dandisetId: string}) => Promise<DandisetInfo | undefined>;
+  semanticSortDandisets: (dandisets: DandisetInfo[], query: string) => Promise<DandisetInfo[]>;
 }
 
 // const _findDandisets = async (o: {search?: string}): Promise<DandisetInfo[]> => {
@@ -146,6 +151,91 @@ class DandiInterface {
       throw new Error('Either search or semanticSearch must be provided');
     }
   }
+  async semanticSortDandisets(dandisets: DandisetInfo[], query: string): Promise<DandisetInfo[]> {
+    if (!query) {
+      throw new Error('Query must be provided for semantic sorting');
+    }
+    const embedding = await computeSemanticEmbedding(query);
+    if (!embedding) {
+      throw new Error('Failed to compute semantic embedding for query');
+    }
+    const cosineSimilarities: number[] = [];
+    for (const ds of dandisets) {
+      const dandisetId = ds.dandiset_id;
+      const embeddings2 = getEmbeddingsForDandiset(dandisetId);
+      if (embeddings2) {
+        // Compute cosine similarity
+        let maxCosineSimilarity = 0;
+        for (const embedding2 of embeddings2) {
+          if (embedding2.length !== embedding.length) {
+            console.warn(`Embedding length mismatch for dandiset ${dandisetId}: expected ${embedding.length}, got ${embedding2.length}`);
+            continue;
+          }
+          const cs = computeCosineSimilarity(embedding, embedding2);
+          if (cs > maxCosineSimilarity) {
+            maxCosineSimilarity = cs;
+          }
+        }
+        cosineSimilarities.push(maxCosineSimilarity);
+      }
+      else {
+        cosineSimilarities.push(-99);
+      }
+    }
+    // Sort dandisets by cosine similarity in descending order
+    const sortedDandisets = dandisets.map((ds, index) => ({
+      ...ds,
+      cosineSimilarity: cosineSimilarities[index]
+    })).sort((a, b) => b.cosineSimilarity - a.cosineSimilarity);
+    return sortedDandisets.map(ds => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const {cosineSimilarity, ...rest} = ds; // Remove cosineSimilarity from the result
+      return rest;
+    }
+    );
+  }
+}
+
+const computeCosineSimilarity = (vec1: number[], vec2: number[]): number => {
+  if (vec1.length !== vec2.length) {
+    throw new Error('Vectors must be of the same length for cosine similarity');
+  }
+  const dotProduct = vec1.reduce((sum, value, index) => sum + value * vec2[index], 0);
+  const magnitude1 = Math.sqrt(vec1.reduce((sum, value) => sum + value * value, 0));
+  const magnitude2 = Math.sqrt(vec2.reduce((sum, value) => sum + value * value, 0));
+  if (magnitude1 === 0 || magnitude2 === 0) {
+    return 0; // Avoid division by zero
+  }
+  return dotProduct / (magnitude1 * magnitude2);
+}
+
+const computeSemanticEmbedding = async (query: string): Promise<number[] | undefined> => {
+  const model = "text-embedding-3-large"
+  const response = await openai.embeddings.create({
+    input: query,
+    model: model,
+    encoding_format: "float"
+  });
+  if (response.data && response.data.length > 0 && response.data[0].embedding) {
+    if (!Array.isArray(response.data[0].embedding) || response.data[0].embedding.length === 0) {
+      throw new Error('Embedding is empty or not an array');
+    }
+    return response.data[0].embedding;
+  } else {
+    throw new Error('No embedding data returned from OpenAI API');
+  }
+}
+
+const getEmbeddingsForDandiset = (dandisetId: string): number[][] | undefined => {
+  const fname = `${baseDir}/dandisets/${dandisetId}/embeddings.json`;
+  if (!fs.existsSync(fname)) {
+    return undefined;
+  }
+  const fileContent = fs.readFileSync(fname, 'utf8');
+  const content = JSON.parse(fileContent);
+  return content.map((a: {text: string, embedding: number[], model: string}) => (
+    a.embedding
+  ));
 }
 
 type DandisetMetadata = {
@@ -235,7 +325,8 @@ class DandiInterfaceDandiset {
   get nwbFiles(): DandiInterfaceNwbFile[] {
     const dandisetFname = `${baseDir}/dandisets/${this.dandiset_id}/dandiset.json`;
     if (!fs.existsSync(dandisetFname)) {
-      throw new Error(`Dandiset file not found: ${dandisetFname}`);
+      console.warn(`Dandiset metadata file not found: ${dandisetFname}`);
+      return [];
     }
     const fileContent = fs.readFileSync(dandisetFname, 'utf8');
     let dandisetData: {
@@ -451,6 +542,9 @@ export function createScriptInterface(onStatusUpdate: (status: string) => void):
     },
     getDandiset: async (o: {dandisetId: string}) => {
       return await dandiInterface.getDandiset(o);
+    },
+    semanticSortDandisets: async (dandisets: DandisetInfo[], query: string) => {
+      return await dandiInterface.semanticSortDandisets(dandisets, query);
     }
   };
 }
