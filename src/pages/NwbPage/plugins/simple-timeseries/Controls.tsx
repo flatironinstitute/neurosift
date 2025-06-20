@@ -103,21 +103,23 @@ export const Controls: FunctionComponent<ControlsProps> = ({
   return (
     <FullLayout>
       <LabeledRow label="">
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            alignItems: "center",
+            flexWrap: "wrap",
+            width: "100%",
+          }}
+        >
           <div
             style={{
               display: "flex",
-              gap: "8px",
               alignItems: "center",
-              flexWrap: "wrap",
-              width: "100%",
+              whiteSpace: "nowrap",
+              marginRight: "8px",
             }}
           >
-          <div style={{ 
-            display: "flex", 
-            alignItems: "center",
-            whiteSpace: "nowrap",
-            marginRight: "8px",
-          }}>
             Start: {info.timeseriesStartTime.toFixed(2)} s, Duration:{" "}
             {info.timeseriesDuration.toFixed(2)} s,{" "}
             {formatSamplingFrequency(info.samplingFrequency)}
