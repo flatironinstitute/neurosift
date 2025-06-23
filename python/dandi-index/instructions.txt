@@ -1,0 +1,38 @@
+Create a digital ocean droplet with ubuntu
+
+Create a non-root user and set up conda
+
+Set environment variables in ~/.bashrc: OPENAI_API_KEY
+
+Install nodejs
+
+Create a new conda environment with python and scipy
+
+Activate that environment
+
+pip install openai dandi remfile pynwb lindi
+
+clone neurosift
+
+cd python/dandi-index
+
+Do the initial data update:
+./scripts/update_data.py
+
+Update the embeddings:
+./scripts/update_data.py --embeddings
+
+Update the assets (this is the time-consuming part):
+./scripts/update_data.py --assets
+
+Start a tmux session and start the job runner
+
+cd dandi-index-query-job-runner
+
+Create a .env in this directory with:
+PUBNUB_PUBLISH_KEY="..."
+PUBNUB_SUBSCRIBE_KEY="..."
+
+npm install
+npm build
+npm run start

@@ -1,5 +1,8 @@
 # Changes
 
+## June 23, 2025
+- Updated semantic search to use new dandi-index system
+
 ## June 19, 2025
 - Improved space utilization for controls with more compact vertical spacing and better wrapping behavior, including significantly reduced vertical separation between rows of controls
 - Added toggle legend button for plotly timeseries plots (Issue #328)
