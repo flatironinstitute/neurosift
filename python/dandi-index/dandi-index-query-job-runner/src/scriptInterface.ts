@@ -17,6 +17,9 @@ export interface ScriptInterface {
   findDandisets: (o: {search: string}) => Promise<DandisetInfo[]>;
   getDandiset: (o: {dandisetId: string}) => Promise<DandisetInfo | undefined>;
   semanticSortDandisets: (dandisets: DandisetInfo[], query: string) => Promise<DandisetInfo[]>;
+  getOpenNeuroDatasets: () => Promise<OpenNeuroDatasetInfo[]>;
+  getOpenNeuroDataset: (o: {datasetId: string}) => Promise<OpenNeuroDatasetInfo | undefined>;
+  semanticSortOpenNeuroDatasets: (datasets: OpenNeuroDatasetInfo[], query: string) => Promise<OpenNeuroDatasetInfo[]>;
 }
 
 // const _findDandisets = async (o: {search?: string}): Promise<DandisetInfo[]> => {
@@ -57,7 +60,7 @@ class DandiInterface {
   }
   async getDandiset(o: {dandisetId: string}): Promise<DandiInterfaceDandiset | undefined> {
     this.o.onStatusUpdate(`Getting dandiset: ${o.dandisetId}`);
-    const fname = `${baseDir}/dandi.json`;
+    const fname = `${dandiBaseDir}/dandi.json`;
     if (!fs.existsSync(fname)) {
       throw new Error(`Dandiset data file not found: ${fname}`);
     }
@@ -86,7 +89,7 @@ class DandiInterface {
   }
   async getDandisets(): Promise<DandiInterfaceDandiset[]> {
     this.o.onStatusUpdate('Getting dandisets...');
-    const fname = `${baseDir}/dandi.json`;
+    const fname = `${dandiBaseDir}/dandi.json`;
     if (!fs.existsSync(fname)) {
       throw new Error(`Dandiset data file not found: ${fname}`);
     }
@@ -227,7 +230,7 @@ const computeSemanticEmbedding = async (query: string): Promise<number[] | undef
 }
 
 const getEmbeddingsForDandiset = (dandisetId: string): number[][] | undefined => {
-  const fname = `${baseDir}/dandisets/${dandisetId}/embeddings.json`;
+  const fname = `${dandiBaseDir}/dandisets/${dandisetId}/embeddings.json`;
   if (!fs.existsSync(fname)) {
     return undefined;
   }
@@ -305,7 +308,7 @@ type DandisetMetadata = {
   manifestLocation: string[];
 }
 
-const baseDir = "../data";
+const dandiBaseDir = "../data";
 
 class DandiInterfaceDandiset {
   constructor(
@@ -323,7 +326,7 @@ class DandiInterfaceDandiset {
   ) {
   }
   get nwbFiles(): DandiInterfaceNwbFile[] {
-    const dandisetFname = `${baseDir}/dandisets/${this.dandiset_id}/dandiset.json`;
+    const dandisetFname = `${dandiBaseDir}/dandisets/${this.dandiset_id}/dandiset.json`;
     if (!fs.existsSync(dandisetFname)) {
       console.warn(`Dandiset metadata file not found: ${dandisetFname}`);
       return [];
@@ -363,7 +366,7 @@ class DandiInterfaceDandiset {
     ));
   }
   dandisetMetadata(): DandisetMetadata {
-    const dandisetFname = `${baseDir}/dandisets/${this.dandiset_id}/dandiset.json`;
+    const dandisetFname = `${dandiBaseDir}/dandisets/${this.dandiset_id}/dandiset.json`;
     if (!fs.existsSync(dandisetFname)) {
       throw new Error(`Dandiset metadata file not found: ${dandisetFname}`);
     }
@@ -429,7 +432,7 @@ class DandiInterfaceNwbFile {
 
   _loadAssetData = () => {
     if (this.assetData) return;
-    const fname = `${baseDir}/dandisets/${this.dandiset_id}/assets.v7/${this.asset_id}.json`;
+    const fname = `${dandiBaseDir}/dandisets/${this.dandiset_id}/assets.v7/${this.asset_id}.json`;
     if (!fs.existsSync(fname)) {
       return
     }
@@ -516,6 +519,7 @@ class DandiInterfaceNeurodataObject {
 export function createScriptInterface(onStatusUpdate: (status: string) => void): ScriptInterface {
   let outputBuffer = "";
   const dandiInterface = new DandiInterface({onStatusUpdate});
+  const openNeuroInterface = new OpenNeuroInterface({onStatusUpdate});
 
   return {
     print: (text: string | any) => {
@@ -545,6 +549,15 @@ export function createScriptInterface(onStatusUpdate: (status: string) => void):
     },
     semanticSortDandisets: async (dandisets: DandisetInfo[], query: string) => {
       return await dandiInterface.semanticSortDandisets(dandisets, query);
+    },
+    getOpenNeuroDatasets: async () => {
+      return await openNeuroInterface.getDatasets();
+    },
+    getOpenNeuroDataset: async (o: {datasetId: string}) => {
+      return await openNeuroInterface.getDataset(o);
+    },
+    semanticSortOpenNeuroDatasets: async (datasets: OpenNeuroDatasetInfo[], query: string) => {
+      return await openNeuroInterface.semanticSortDatasets(datasets, query);
     }
   };
 }
@@ -592,3 +605,138 @@ const doDandisetSemanticSearch = async (query: string, restrictToDandisets?: str
   return data.results.map((item: {id: string}) => item.id);
 };
 
+///// OpenNeuro Interface
+
+const openNeuroBaseDir = "../../openneuro-index/data";
+
+export interface OpenNeuroDatasetInfo {
+  dataset_id: string;
+  name: string;
+  dataset_created: string;
+  snapshot_created: string;
+  snapshot_tag: string;
+  snapshot_readme: string;
+  snapshot_total_files: number;
+  snapshot_size: number;
+}
+
+class OpenNeuroInterface {
+  constructor(public o: {onStatusUpdate: (status: string) => void}) {
+    this.o.onStatusUpdate('OpenNeuro Interface initialized');
+  }
+  async getDataset(o: {datasetId: string}): Promise<OpenNeuroDatasetInfo | undefined> {
+    this.o.onStatusUpdate(`Getting OpenNeuro dataset: ${o.datasetId}`);
+    const fname = `${openNeuroBaseDir}/datasets/${o.datasetId}/dataset.json`;
+    if (!fs.existsSync(fname)) {
+      return undefined;
+    }
+    const fileContent = fs.readFileSync(fname, 'utf8');
+    let data: OpenNeuroDatasetInfo;
+    try {
+      data = JSON.parse(fileContent);
+    } catch (error) {
+      throw new Error(`Failed to parse JSON from ${fname}: ${error}`);
+    }
+    if (data.dataset_id !== o.datasetId) {
+      console.warn(`Dataset ID mismatch: expected ${o.datasetId}, got ${data.dataset_id}`);
+      return undefined;
+    }
+    return data;
+  }
+  async getDatasets(): Promise<OpenNeuroInterfaceDataset[]> {
+    this.o.onStatusUpdate('Getting OpenNeuro datasets...');
+    const fname = `${openNeuroBaseDir}/openneuro.json`;
+    if (!fs.existsSync(fname)) {
+      throw new Error(`OpenNeuro data file not found: ${fname}`);
+    }
+    const fileContent = fs.readFileSync(fname, 'utf8');
+    let data: {datasets: OpenNeuroDatasetInfo[]};
+    try {
+      data = JSON.parse(fileContent);
+    }
+    catch (error) {
+      throw new Error(`Failed to parse JSON from ${fname}: ${error}`);
+    }
+    return data.datasets.map(ds => new OpenNeuroInterfaceDataset(
+      this,
+      ds.dataset_id,
+      ds.name,
+      ds.dataset_created,
+      ds.snapshot_created,
+      ds.snapshot_tag,
+      ds.snapshot_readme,
+      ds.snapshot_total_files,
+      ds.snapshot_size
+    ));
+  }
+  async semanticSortDatasets(datasets: OpenNeuroDatasetInfo[], query: string): Promise<OpenNeuroDatasetInfo[]> {
+    if (!query) {
+      throw new Error('Query must be provided for semantic sorting');
+    }
+    const embedding = await computeSemanticEmbedding(query);
+    if (!embedding) {
+      throw new Error('Failed to compute semantic embedding for query');
+    }
+    const cosineSimilarities: number[] = [];
+    for (const ds of datasets) {
+      const datasetId = ds.dataset_id;
+      const embeddings2 = getEmbeddingsForOpenNeuroDataset(datasetId);
+      if (embeddings2) {
+        // Compute cosine similarity
+        let maxCosineSimilarity = 0;
+        for (const embedding2 of embeddings2) {
+          if (embedding2.length !== embedding.length) {
+            console.warn(`Embedding length mismatch for dataset ${datasetId}: expected ${embedding.length}, got ${embedding2.length}`);
+            continue;
+          }
+          const cs = computeCosineSimilarity(embedding, embedding2);
+          if (cs > maxCosineSimilarity) {
+            maxCosineSimilarity = cs;
+          }
+        }
+        cosineSimilarities.push(maxCosineSimilarity);
+      }
+      else {
+        cosineSimilarities.push(-99);
+      }
+    }
+    // Sort datasets by cosine similarity in descending order
+    const sortedDatasets = datasets.map((ds, index) => ({
+      ...ds,
+      cosineSimilarity: cosineSimilarities[index]
+    })).sort((a, b) => b.cosineSimilarity - a.cosineSimilarity);
+    return sortedDatasets.map(ds => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const {cosineSimilarity, ...rest} = ds; // Remove cosineSimilarity from the result
+      return rest;
+    }
+    );
+  }
+}
+
+const getEmbeddingsForOpenNeuroDataset = (datasetId: string): number[][] | undefined => {
+  const fname = `${openNeuroBaseDir}/datasets/${datasetId}/embeddings.json`;
+  if (!fs.existsSync(fname)) {
+    return undefined;
+  }
+  const fileContent = fs.readFileSync(fname, 'utf8');
+  const content = JSON.parse(fileContent);
+  return content.map((a: {text: string, embedding: number[], model: string}) => (
+    a.embedding
+  ));
+}
+
+class OpenNeuroInterfaceDataset {
+  constructor(
+    public openNeuroInterface: OpenNeuroInterface,
+    public dataset_id: string,
+    public name: string,
+    public dataset_created: string,
+    public snapshot_created: string,
+    public snapshot_tag: string,
+    public snapshot_readme: string,
+    public snapshot_total_files: number,
+    public snapshot_size: number
+  ) {
+  }
+}
