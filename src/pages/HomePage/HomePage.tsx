@@ -141,7 +141,7 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
           }}
         >
           <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
-            Try Neurosift Chat (experimental)
+            Neurosift Chat (experimental)
           </Typography>
           <Typography variant="body1">
             <a href="https://chat.neurosift.app">
