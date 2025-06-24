@@ -790,10 +790,6 @@ class OpenNeuroInterface {
         cosineSimilarity: cosineSimilarities[index],
       }))
       .sort((a, b) => b.cosineSimilarity - a.cosineSimilarity);
-    console.log("DEBUG");
-    for (const ds of sortedDatasets.slice(0, 20)) {
-      console.log(`${ds.dataset_id}: ${ds.cosineSimilarity}`);
-    }
     return sortedDatasets.map((ds) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { cosineSimilarity, ...rest } = ds; // Remove cosineSimilarity from the result
