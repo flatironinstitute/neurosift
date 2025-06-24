@@ -113,7 +113,7 @@ def _load_openneuro_data():
                             else 0
                         ),
                         "snapshot_authors": (
-                            node["lastestSnapshot"]["description"]["Authors"]
+                            node["latestSnapshot"]["description"]["Authors"]
                             if node["latestSnapshot"]
                             and node["latestSnapshot"]["description"]
                             and "Authors" in node["latestSnapshot"]["description"]
