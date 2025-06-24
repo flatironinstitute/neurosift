@@ -1,11 +1,10 @@
 import StatusBar from "@components/StatusBar";
 import "@css/App.css";
 import { useWindowDimensions } from "@fi-sci/misc";
-import SettingsIcon from "@mui/icons-material/Settings";
 import GitHubIcon from "@mui/icons-material/GitHub";
+import SettingsIcon from "@mui/icons-material/Settings";
 import {
   AppBar,
-  Button,
   IconButton,
   Toolbar,
   Tooltip,
@@ -261,7 +260,7 @@ const AppContent = () => {
                   <SettingsIcon />
                 </IconButton>
               </Tooltip>
-              <Button
+              {/* <Button
                 color="inherit"
                 onClick={() => {
                   window.open(
@@ -279,7 +278,7 @@ const AppContent = () => {
                 }}
               >
                 Neurosift was updated
-              </Button>
+              </Button> */}
               <Tooltip title="View this in Neurosift v1">
                 <IconButton
                   color="inherit"

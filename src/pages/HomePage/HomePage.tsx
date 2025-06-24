@@ -141,13 +141,17 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
           }}
         >
           <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
-            What's New in v2
+            Try Neurosift Chat (experimental)
           </Typography>
           <Typography variant="body1">
-            Neurosift v2 brings a streamlined experience with a new
-            architecture. The update focuses on core functionality and stability
-            through a modular plugin system. We've omitted some experimental
-            features from v1 to focus on reliability.
+            <a href="https://chat.neurosift.app">
+              Explore DANDI and OpenNeuro datasets through AI-powered
+              conversational search.
+            </a>{" "}
+            Find relevant data across 400+ DANDI datasets and 1,400+ OpenNeuro
+            datasets using natural language queries. Search by topic and filter
+            by experimental parameters. Don't forget to provide feedback by
+            clicking thumbs up or thumbs down buttons.
           </Typography>
         </Paper>
 
