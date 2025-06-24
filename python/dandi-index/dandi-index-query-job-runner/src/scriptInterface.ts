@@ -13,21 +13,21 @@ const openai = new OpenAI({
 export interface ScriptInterface {
   print: (text: string) => void;
   _getOutput: () => string;
-  getDandisets: () => Promise<DandisetInfo[]>;
-  findDandisets: (o: { search: string }) => Promise<DandisetInfo[]>;
-  getDandiset: (o: { dandisetId: string }) => Promise<DandisetInfo | undefined>;
+  getDandisets: () => Promise<DandiInterfaceDandiset[]>;
+  findDandisets: (o: { search: string }) => Promise<DandiInterfaceDandiset[]>;
+  getDandiset: (o: { dandisetId: string }) => Promise<DandiInterfaceDandiset | undefined>;
   semanticSortDandisets: (
-    dandisets: DandisetInfo[],
+    dandisets: DandiInterfaceDandiset[],
     query: string
-  ) => Promise<DandisetInfo[]>;
-  getOpenNeuroDatasets: () => Promise<OpenNeuroDatasetInfo[]>;
+  ) => Promise<DandiInterfaceDandiset[]>;
+  getOpenNeuroDatasets: () => Promise<OpenNeuroInterfaceDataset[]>;
   getOpenNeuroDataset: (o: {
     datasetId: string;
-  }) => Promise<OpenNeuroDatasetInfo | undefined>;
+  }) => Promise<OpenNeuroInterfaceDataset | undefined>;
   semanticSortOpenNeuroDatasets: (
-    datasets: OpenNeuroDatasetInfo[],
+    datasets: OpenNeuroInterfaceDataset[],
     query: string
-  ) => Promise<OpenNeuroDatasetInfo[]>;
+  ) => Promise<OpenNeuroInterfaceDataset[]>;
 }
 
 // const _findDandisets = async (o: {search?: string}): Promise<DandisetInfo[]> => {
@@ -180,9 +180,9 @@ class DandiInterface {
     }
   }
   async semanticSortDandisets(
-    dandisets: DandisetInfo[],
+    dandisets: DandiInterfaceDandiset[],
     query: string
-  ): Promise<DandisetInfo[]> {
+  ): Promise<DandiInterfaceDandiset[]> {
     if (!query) {
       throw new Error("Query must be provided for semantic sorting");
     }
@@ -220,15 +220,11 @@ class DandiInterface {
     // Sort dandisets by cosine similarity in descending order
     const sortedDandisets = dandisets
       .map((ds, index) => ({
-        ...ds,
+        dataset: ds,
         cosineSimilarity: cosineSimilarities[index],
       }))
       .sort((a, b) => b.cosineSimilarity - a.cosineSimilarity);
-    return sortedDandisets.map((ds) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { cosineSimilarity, ...rest } = ds; // Remove cosineSimilarity from the result
-      return rest;
-    });
+    return sortedDandisets.map((ds) => ds.dataset);
   }
 }
 
@@ -608,7 +604,7 @@ export function createScriptInterface(
     getDandiset: async (o: { dandisetId: string }) => {
       return await dandiInterface.getDandiset(o);
     },
-    semanticSortDandisets: async (dandisets: DandisetInfo[], query: string) => {
+    semanticSortDandisets: async (dandisets: DandiInterfaceDandiset[], query: string) => {
       return await dandiInterface.semanticSortDandisets(dandisets, query);
     },
     getOpenNeuroDatasets: async () => {
@@ -618,7 +614,7 @@ export function createScriptInterface(
       return await openNeuroInterface.getDataset(o);
     },
     semanticSortOpenNeuroDatasets: async (
-      datasets: OpenNeuroDatasetInfo[],
+      datasets: OpenNeuroInterfaceDataset[],
       query: string
     ) => {
       return await openNeuroInterface.semanticSortDatasets(datasets, query);
@@ -688,6 +684,12 @@ export interface OpenNeuroDatasetInfo {
   snapshot_readme: string;
   snapshot_total_files: number;
   snapshot_size: number;
+  snapshot_modalities: string[];
+  snapshot_primary_modality: string;
+  snapshot_secondary_modalities: string[];
+  snapshot_tasks: string[];
+  snapshot_subjects: string[];
+  snapshot_authors: string[];
 }
 
 class OpenNeuroInterface {
@@ -696,7 +698,7 @@ class OpenNeuroInterface {
   }
   async getDataset(o: {
     datasetId: string;
-  }): Promise<OpenNeuroDatasetInfo | undefined> {
+  }): Promise<OpenNeuroInterfaceDataset | undefined> {
     this.o.onStatusUpdate(`Getting OpenNeuro dataset: ${o.datasetId}`);
     const fname = `${openNeuroBaseDir}/datasets/${o.datasetId}/dataset.json`;
     if (!fs.existsSync(fname)) {
@@ -715,7 +717,23 @@ class OpenNeuroInterface {
       );
       return undefined;
     }
-    return data;
+    return new OpenNeuroInterfaceDataset(
+      this,
+      data.dataset_id,
+      data.name,
+      data.dataset_created,
+      data.snapshot_created,
+      data.snapshot_tag,
+      data.snapshot_readme,
+      data.snapshot_total_files,
+      data.snapshot_size,
+      data.snapshot_modalities,
+      data.snapshot_primary_modality,
+      data.snapshot_secondary_modalities,
+      data.snapshot_tasks,
+      data.snapshot_subjects,
+      data.snapshot_authors
+    );
   }
   async getDatasets(): Promise<OpenNeuroInterfaceDataset[]> {
     this.o.onStatusUpdate("Getting OpenNeuro datasets...");
@@ -741,14 +759,20 @@ class OpenNeuroInterface {
           ds.snapshot_tag,
           ds.snapshot_readme,
           ds.snapshot_total_files,
-          ds.snapshot_size
+          ds.snapshot_size,
+          ds.snapshot_modalities,
+          ds.snapshot_primary_modality,
+          ds.snapshot_secondary_modalities,
+          ds.snapshot_tasks,
+          ds.snapshot_subjects,
+          ds.snapshot_authors
         )
     );
   }
   async semanticSortDatasets(
-    datasets: OpenNeuroDatasetInfo[],
+    datasets: OpenNeuroInterfaceDataset[],
     query: string
-  ): Promise<OpenNeuroDatasetInfo[]> {
+  ): Promise<OpenNeuroInterfaceDataset[]> {
     if (!query) {
       throw new Error("Query must be provided for semantic sorting");
     }
@@ -786,15 +810,11 @@ class OpenNeuroInterface {
     // Sort datasets by cosine similarity in descending order
     const sortedDatasets = datasets
       .map((ds, index) => ({
-        ...ds,
+        dataset: ds,
         cosineSimilarity: cosineSimilarities[index],
       }))
       .sort((a, b) => b.cosineSimilarity - a.cosineSimilarity);
-    return sortedDatasets.map((ds) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { cosineSimilarity, ...rest } = ds; // Remove cosineSimilarity from the result
-      return rest;
-    });
+    return sortedDatasets.map((ds) => ds.dataset);
   }
 }
 
@@ -818,10 +838,31 @@ class OpenNeuroInterfaceDataset {
     public dataset_id: string,
     public name: string,
     public dataset_created: string,
-    public snapshot_created: string,
-    public snapshot_tag: string,
-    public snapshot_readme: string,
-    public snapshot_total_files: number,
-    public snapshot_size: number
+    private snapshot_created: string,
+    private snapshot_tag: string,
+    private snapshot_readme: string,
+    private snapshot_total_files: number,
+    private snapshot_size: number,
+    private snapshot_modalities: string[],
+    private snapshot_primary_modality: string,
+    private snapshot_secondary_modalities: string[],
+    private snapshot_tasks: string[],
+    private snapshot_subjects: string[],
+    private snapshot_authors: string[]
   ) {}
+  public get snapshot() {
+    return {
+      created: this.snapshot_created,
+      tag: this.snapshot_tag,
+      readme: this.snapshot_readme,
+      total_files: this.snapshot_total_files,
+      size: this.snapshot_size,
+      modalities: this.snapshot_modalities,
+      primary_modality: this.snapshot_primary_modality,
+      secondary_modalities: this.snapshot_secondary_modalities,
+      tasks: this.snapshot_tasks,
+      subjects: this.snapshot_subjects,
+      authors: this.snapshot_authors,
+    };
+  }
 }

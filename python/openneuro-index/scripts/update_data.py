@@ -41,49 +41,65 @@ def _generate_embeddings_if_needed(*, dataset_data, embeddings_fname: str):
         # important not to compute embedding for very short titles
         # find existing embedding
         ee = next(
-            (e for e in embeddings if e["text"] == current_title and e["model"] == model),
+            (
+                e
+                for e in embeddings
+                if e["text"] == current_title and e["model"] == model
+            ),
             None,
         )
         if ee is not None:
             title_embedding = ee["embedding"]
         else:
             try:
-                print(f'Generating embedding for title: {current_title}')
-                title_embedding = _create_embedding_for_summary(current_title, model=model)
+                print(f"Generating embedding for title: {current_title}")
+                title_embedding = _create_embedding_for_summary(
+                    current_title, model=model
+                )
                 need_update = True
             except:
                 print(f"Error generating embedding for title: {current_title}")
 
-    if current_description is not None and len(current_description) < 15000 and len(current_description) > 50:
+    if (
+        current_description is not None
+        and len(current_description) < 15000
+        and len(current_description) > 50
+    ):
         # Important not to compute embedding for very short or very long descriptions
         # find existing embedding
         ee = next(
-            (e for e in embeddings if e["text"] == current_description and e["model"] == model),
+            (
+                e
+                for e in embeddings
+                if e["text"] == current_description and e["model"] == model
+            ),
             None,
         )
         if ee is not None:
             desc_embedding = ee["embedding"]
         else:
             try:
-                print(f'Generating embedding for description: {len(current_description)}')
-                desc_embedding = _create_embedding_for_summary(current_description, model=model)
+                print(
+                    f"Generating embedding for description: {len(current_description)}"
+                )
+                desc_embedding = _create_embedding_for_summary(
+                    current_description, model=model
+                )
                 need_update = True
             except:
-                print(f"Error generating embedding for description: {len(current_description)}")
+                print(
+                    f"Error generating embedding for description: {len(current_description)}"
+                )
 
     new_embeddings = []
     if title_embedding is not None:
-        new_embeddings.append({
-            "text": current_title,
-            "model": model,
-            "embedding": title_embedding
-        })
+        new_embeddings.append(
+            {"text": current_title, "model": model, "embedding": title_embedding}
+        )
     if desc_embedding is not None:
-        new_embeddings.append({
-            "text": current_description,
-            "model": model,
-            "embedding": desc_embedding
-        })
+        new_embeddings.append(
+            {"text": current_description, "model": model, "embedding": desc_embedding}
+        )
     if need_update:
         with open(embeddings_fname, "w") as f:
             json.dump(new_embeddings, f, indent=2)
@@ -125,7 +141,11 @@ def update_data(*, generate_embeddings: bool):
         else:
             dataset_data = None
         snapshot_tag = dataset["snapshot_tag"]
-        if dataset_data is None or snapshot_tag != dataset_data.get("snapshot_tag"):
+        if (
+            dataset_data is None
+            or snapshot_tag != dataset_data.get("snapshot_tag")
+            or ("snapshot_modalities" not in dataset_data)
+        ):
             print(f"Processing dataset {dataset_id} ({ii+1}/{len(datasets)})")
             dataset_data = {
                 "dataset_id": dataset_id,
@@ -136,6 +156,14 @@ def update_data(*, generate_embeddings: bool):
                 "snapshot_readme": dataset["snapshot_readme"],
                 "snapshot_total_files": dataset["snapshot_total_files"],
                 "snapshot_size": dataset["snapshot_size"],
+                "snapshot_modalities": dataset["snapshot_modalities"],
+                "snapshot_primary_modality": dataset["snapshot_primary_modality"],
+                "snapshot_secondary_modalities": dataset[
+                    "snapshot_secondary_modalities"
+                ],
+                "snapshot_tasks": dataset["snapshot_tasks"],
+                "snapshot_subjects": dataset["snapshot_subjects"],
+                "snapshot_authors": dataset["snapshot_authors"],
             }
             with open(dataset_fname, "w") as f:
                 json.dump(dataset_data, f, indent=2)

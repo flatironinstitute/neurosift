@@ -30,6 +30,11 @@ def _load_openneuro_data():
                             summary {
                                 totalFiles
                                 size
+                                modalities
+                                primaryModality
+                                secondaryModalities
+                                tasks
+                                subjects
                             }
                             readme
                             created
@@ -73,6 +78,43 @@ def _load_openneuro_data():
                             if node["latestSnapshot"]
                             and node["latestSnapshot"]["summary"]
                             else 0
+                        ),
+                        "snapshot_modalities": (
+                            node["latestSnapshot"]["summary"]["modalities"]
+                            if node["latestSnapshot"]
+                            and node["latestSnapshot"]["summary"]
+                            else []
+                        ),
+                        "snapshot_primary_modality": (
+                            node["latestSnapshot"]["summary"]["primaryModality"]
+                            if node["latestSnapshot"]
+                            and node["latestSnapshot"]["summary"]
+                            else None
+                        ),
+                        "snapshot_secondary_modalities": (
+                            node["latestSnapshot"]["summary"]["secondaryModalities"]
+                            if node["latestSnapshot"]
+                            and node["latestSnapshot"]["summary"]
+                            else []
+                        ),
+                        "snapshot_tasks": (
+                            node["latestSnapshot"]["summary"]["tasks"]
+                            if node["latestSnapshot"]
+                            and node["latestSnapshot"]["summary"]
+                            else []
+                        ),
+                        "snapshot_subjects": (
+                            node["latestSnapshot"]["summary"]["subjects"]
+                            if node["latestSnapshot"]
+                            and node["latestSnapshot"]["summary"]
+                            else 0
+                        ),
+                        "snapshot_authors": (
+                            node["lastestSnapshot"]["description"]["Authors"]
+                            if node["latestSnapshot"]
+                            and node["latestSnapshot"]["description"]
+                            and "Authors" in node["latestSnapshot"]["description"]
+                            else []
                         ),
                     }
                 )
