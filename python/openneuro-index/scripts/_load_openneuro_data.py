@@ -5,7 +5,7 @@ API_URL = "https://openneuro.org/crn/graphql"
 
 def _load_openneuro_data():
     PAGE_SIZE = 25
-    MAX_DATASETS = 100
+    MAX_DATASETS = None
 
     datasets = []
     cursor = None
