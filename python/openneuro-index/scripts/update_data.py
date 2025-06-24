@@ -86,7 +86,7 @@ def _generate_embeddings_if_needed(*, dataset_data, embeddings_fname: str):
         })
     if need_update:
         with open(embeddings_fname, "w") as f:
-            json.dump(embeddings, f, indent=2)
+            json.dump(new_embeddings, f, indent=2)
 
 
 def update_data(*, generate_embeddings: bool):
