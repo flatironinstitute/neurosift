@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import fs from 'fs';
-import { fetchDandisetsFromApi } from './dandi';
+import fs from "fs";
+import { fetchDandisetsFromApi } from "./dandi";
 import OpenAI from "openai";
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 // interface FetchDandisetsParams {
@@ -14,12 +14,20 @@ export interface ScriptInterface {
   print: (text: string) => void;
   _getOutput: () => string;
   getDandisets: () => Promise<DandisetInfo[]>;
-  findDandisets: (o: {search: string}) => Promise<DandisetInfo[]>;
-  getDandiset: (o: {dandisetId: string}) => Promise<DandisetInfo | undefined>;
-  semanticSortDandisets: (dandisets: DandisetInfo[], query: string) => Promise<DandisetInfo[]>;
+  findDandisets: (o: { search: string }) => Promise<DandisetInfo[]>;
+  getDandiset: (o: { dandisetId: string }) => Promise<DandisetInfo | undefined>;
+  semanticSortDandisets: (
+    dandisets: DandisetInfo[],
+    query: string
+  ) => Promise<DandisetInfo[]>;
   getOpenNeuroDatasets: () => Promise<OpenNeuroDatasetInfo[]>;
-  getOpenNeuroDataset: (o: {datasetId: string}) => Promise<OpenNeuroDatasetInfo | undefined>;
-  semanticSortOpenNeuroDatasets: (datasets: OpenNeuroDatasetInfo[], query: string) => Promise<OpenNeuroDatasetInfo[]>;
+  getOpenNeuroDataset: (o: {
+    datasetId: string;
+  }) => Promise<OpenNeuroDatasetInfo | undefined>;
+  semanticSortOpenNeuroDatasets: (
+    datasets: OpenNeuroDatasetInfo[],
+    query: string
+  ) => Promise<OpenNeuroDatasetInfo[]>;
 }
 
 // const _findDandisets = async (o: {search?: string}): Promise<DandisetInfo[]> => {
@@ -55,23 +63,25 @@ export interface ScriptInterface {
 // }o: {search?: string}
 
 class DandiInterface {
-  constructor(public o: {onStatusUpdate: (status: string) => void}) {
-    this.o.onStatusUpdate('Dandi Interface initialized');
+  constructor(public o: { onStatusUpdate: (status: string) => void }) {
+    this.o.onStatusUpdate("Dandi Interface initialized");
   }
-  async getDandiset(o: {dandisetId: string}): Promise<DandiInterfaceDandiset | undefined> {
+  async getDandiset(o: {
+    dandisetId: string;
+  }): Promise<DandiInterfaceDandiset | undefined> {
     this.o.onStatusUpdate(`Getting dandiset: ${o.dandisetId}`);
     const fname = `${dandiBaseDir}/dandi.json`;
     if (!fs.existsSync(fname)) {
       throw new Error(`Dandiset data file not found: ${fname}`);
     }
-    const fileContent = fs.readFileSync(fname, 'utf8');
-    let data: {dandisets: DandisetInfo[]};
+    const fileContent = fs.readFileSync(fname, "utf8");
+    let data: { dandisets: DandisetInfo[] };
     try {
       data = JSON.parse(fileContent);
     } catch (error) {
       throw new Error(`Failed to parse JSON from ${fname}: ${error}`);
     }
-    const ds = data.dandisets.find(d => d.dandiset_id === o.dandisetId);
+    const ds = data.dandisets.find((d) => d.dandiset_id === o.dandisetId);
     if (!ds) return undefined;
     return new DandiInterfaceDandiset(
       this,
@@ -88,80 +98,101 @@ class DandiInterface {
     );
   }
   async getDandisets(): Promise<DandiInterfaceDandiset[]> {
-    this.o.onStatusUpdate('Getting dandisets...');
+    this.o.onStatusUpdate("Getting dandisets...");
     const fname = `${dandiBaseDir}/dandi.json`;
     if (!fs.existsSync(fname)) {
       throw new Error(`Dandiset data file not found: ${fname}`);
     }
-    const fileContent = fs.readFileSync(fname, 'utf8');
-    let data: {dandisets: DandisetInfo[]};
+    const fileContent = fs.readFileSync(fname, "utf8");
+    let data: { dandisets: DandisetInfo[] };
     try {
       data = JSON.parse(fileContent);
     } catch (error) {
       throw new Error(`Failed to parse JSON from ${fname}: ${error}`);
     }
-    return data.dandisets.map(ds => new DandiInterfaceDandiset(
-      this,
-      ds.dandiset_id,
-      ds.version,
-      ds.name,
-      ds.created,
-      ds.modified,
-      ds.asset_count,
-      ds.size,
-      ds.contact_person,
-      ds.embargo_status,
-      ds.star_count
-    ));
+    return data.dandisets.map(
+      (ds) =>
+        new DandiInterfaceDandiset(
+          this,
+          ds.dandiset_id,
+          ds.version,
+          ds.name,
+          ds.created,
+          ds.modified,
+          ds.asset_count,
+          ds.size,
+          ds.contact_person,
+          ds.embargo_status,
+          ds.star_count
+        )
+    );
   }
-  async findDandisets(o: {search?: string, semanticSearch?: string, restrictToDandisets?: string[]}): Promise<DandiInterfaceDandiset[]> {
+  async findDandisets(o: {
+    search?: string;
+    semanticSearch?: string;
+    restrictToDandisets?: string[];
+  }): Promise<DandiInterfaceDandiset[]> {
     if (o.search) {
       if (o.semanticSearch) {
-        throw new Error('Cannot use both search and semanticSearch at the same time');
+        throw new Error(
+          "Cannot use both search and semanticSearch at the same time"
+        );
       }
       if (o.restrictToDandisets) {
-        throw new Error('Cannot use restrictToDandisets with search');
+        throw new Error("Cannot use restrictToDandisets with search");
       }
       this.o.onStatusUpdate(`Searching dandisets for: ${o.search}`);
       const result = await fetchDandisetsFromApi(o.search);
-      return result.map(ds => new DandiInterfaceDandiset(
-        this,
-        ds.dandiset_id,
-        ds.version,
-        ds.name,
-        ds.created,
-        ds.modified,
-        ds.asset_count,
-        ds.size,
-        ds.contact_person,
-        ds.embargo_status,
-        ds.star_count
-      ));
-    }
-    else if (o.semanticSearch) {
-      this.o.onStatusUpdate(`Performing semantic search for: ${o.semanticSearch}`);
-      const dandisetIds = await doDandisetSemanticSearch(o.semanticSearch, o.restrictToDandisets);
+      return result.map(
+        (ds) =>
+          new DandiInterfaceDandiset(
+            this,
+            ds.dandiset_id,
+            ds.version,
+            ds.name,
+            ds.created,
+            ds.modified,
+            ds.asset_count,
+            ds.size,
+            ds.contact_person,
+            ds.embargo_status,
+            ds.star_count
+          )
+      );
+    } else if (o.semanticSearch) {
+      this.o.onStatusUpdate(
+        `Performing semantic search for: ${o.semanticSearch}`
+      );
+      const dandisetIds = await doDandisetSemanticSearch(
+        o.semanticSearch,
+        o.restrictToDandisets
+      );
       const result: DandiInterfaceDandiset[] = [];
       for (const dandisetId of dandisetIds) {
-        const dandiset = await this.getDandiset({dandisetId});
+        const dandiset = await this.getDandiset({ dandisetId });
         if (dandiset) {
           result.push(dandiset);
         }
       }
       return result;
-    }
-    else {
-      throw new Error('Either search or semanticSearch must be provided');
+    } else {
+      throw new Error("Either search or semanticSearch must be provided");
     }
   }
-  async semanticSortDandisets(dandisets: DandisetInfo[], query: string): Promise<DandisetInfo[]> {
+  async semanticSortDandisets(
+    dandisets: DandisetInfo[],
+    query: string
+  ): Promise<DandisetInfo[]> {
     if (!query) {
-      throw new Error('Query must be provided for semantic sorting');
+      throw new Error("Query must be provided for semantic sorting");
     }
     const embedding = await computeSemanticEmbedding(query);
     if (!embedding) {
-      throw new Error('Failed to compute semantic embedding for query');
+      throw new Error("Failed to compute semantic embedding for query");
     }
+    this.o.onStatusUpdate(
+      `Computing semantic similarities for ${dandisets.length} dandisets...`
+    );
     const cosineSimilarities: number[] = [];
     for (const ds of dandisets) {
       const dandisetId = ds.dandiset_id;
@@ -171,7 +202,9 @@ class DandiInterface {
         let maxCosineSimilarity = 0;
         for (const embedding2 of embeddings2) {
           if (embedding2.length !== embedding.length) {
-            console.warn(`Embedding length mismatch for dandiset ${dandisetId}: expected ${embedding.length}, got ${embedding2.length}`);
+            console.warn(
+              `Embedding length mismatch for dandiset ${dandisetId}: expected ${embedding.length}, got ${embedding2.length}`
+            );
             continue;
           }
           const cs = computeCosineSimilarity(embedding, embedding2);
@@ -180,66 +213,80 @@ class DandiInterface {
           }
         }
         cosineSimilarities.push(maxCosineSimilarity);
-      }
-      else {
+      } else {
         cosineSimilarities.push(-99);
       }
     }
     // Sort dandisets by cosine similarity in descending order
-    const sortedDandisets = dandisets.map((ds, index) => ({
-      ...ds,
-      cosineSimilarity: cosineSimilarities[index]
-    })).sort((a, b) => b.cosineSimilarity - a.cosineSimilarity);
-    return sortedDandisets.map(ds => {
+    const sortedDandisets = dandisets
+      .map((ds, index) => ({
+        ...ds,
+        cosineSimilarity: cosineSimilarities[index],
+      }))
+      .sort((a, b) => b.cosineSimilarity - a.cosineSimilarity);
+    return sortedDandisets.map((ds) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const {cosineSimilarity, ...rest} = ds; // Remove cosineSimilarity from the result
+      const { cosineSimilarity, ...rest } = ds; // Remove cosineSimilarity from the result
       return rest;
-    }
-    );
+    });
   }
 }
 
 const computeCosineSimilarity = (vec1: number[], vec2: number[]): number => {
   if (vec1.length !== vec2.length) {
-    throw new Error('Vectors must be of the same length for cosine similarity');
+    throw new Error("Vectors must be of the same length for cosine similarity");
   }
-  const dotProduct = vec1.reduce((sum, value, index) => sum + value * vec2[index], 0);
-  const magnitude1 = Math.sqrt(vec1.reduce((sum, value) => sum + value * value, 0));
-  const magnitude2 = Math.sqrt(vec2.reduce((sum, value) => sum + value * value, 0));
+  const dotProduct = vec1.reduce(
+    (sum, value, index) => sum + value * vec2[index],
+    0
+  );
+  const magnitude1 = Math.sqrt(
+    vec1.reduce((sum, value) => sum + value * value, 0)
+  );
+  const magnitude2 = Math.sqrt(
+    vec2.reduce((sum, value) => sum + value * value, 0)
+  );
   if (magnitude1 === 0 || magnitude2 === 0) {
     return 0; // Avoid division by zero
   }
   return dotProduct / (magnitude1 * magnitude2);
-}
+};
 
-const computeSemanticEmbedding = async (query: string): Promise<number[] | undefined> => {
-  const model = "text-embedding-3-large"
+const computeSemanticEmbedding = async (
+  query: string
+): Promise<number[] | undefined> => {
+  const model = "text-embedding-3-large";
   const response = await openai.embeddings.create({
     input: query,
     model: model,
-    encoding_format: "float"
+    encoding_format: "float",
   });
   if (response.data && response.data.length > 0 && response.data[0].embedding) {
-    if (!Array.isArray(response.data[0].embedding) || response.data[0].embedding.length === 0) {
-      throw new Error('Embedding is empty or not an array');
+    if (
+      !Array.isArray(response.data[0].embedding) ||
+      response.data[0].embedding.length === 0
+    ) {
+      throw new Error("Embedding is empty or not an array");
     }
     return response.data[0].embedding;
   } else {
-    throw new Error('No embedding data returned from OpenAI API');
+    throw new Error("No embedding data returned from OpenAI API");
   }
-}
+};
 
-const getEmbeddingsForDandiset = (dandisetId: string): number[][] | undefined => {
+const getEmbeddingsForDandiset = (
+  dandisetId: string
+): number[][] | undefined => {
   const fname = `${dandiBaseDir}/dandisets/${dandisetId}/embeddings.json`;
   if (!fs.existsSync(fname)) {
     return undefined;
   }
-  const fileContent = fs.readFileSync(fname, 'utf8');
+  const fileContent = fs.readFileSync(fname, "utf8");
   const content = JSON.parse(fileContent);
-  return content.map((a: {text: string, embedding: number[], model: string}) => (
-    a.embedding
-  ));
-}
+  return content.map(
+    (a: { text: string; embedding: number[]; model: string }) => a.embedding
+  );
+};
 
 type DandisetMetadata = {
   id: string;
@@ -306,7 +353,7 @@ type DandisetMetadata = {
     identifier: string;
   }[];
   manifestLocation: string[];
-}
+};
 
 const dandiBaseDir = "../data";
 
@@ -323,15 +370,14 @@ class DandiInterfaceDandiset {
     public contact_person: string,
     public embargo_status: string,
     public star_count: number
-  ) {
-  }
+  ) {}
   get nwbFiles(): DandiInterfaceNwbFile[] {
     const dandisetFname = `${dandiBaseDir}/dandisets/${this.dandiset_id}/dandiset.json`;
     if (!fs.existsSync(dandisetFname)) {
       console.warn(`Dandiset metadata file not found: ${dandisetFname}`);
       return [];
     }
-    const fileContent = fs.readFileSync(dandisetFname, 'utf8');
+    const fileContent = fs.readFileSync(dandisetFname, "utf8");
     let dandisetData: {
       dandiset_id: string;
       version: string;
@@ -343,34 +389,41 @@ class DandiInterfaceDandiset {
       contact_person: string;
       embargo_status: string;
       star_count: number;
-      nwb_files: {path: string, size: number, asset_id: string}[];
-      metadata: DandisetMetadata
+      nwb_files: { path: string; size: number; asset_id: string }[];
+      metadata: DandisetMetadata;
     };
     try {
       dandisetData = JSON.parse(fileContent);
-    }
-    catch (error) {
+    } catch (error) {
       throw new Error(`Failed to parse JSON from ${dandisetFname}: ${error}`);
     }
-    if (dandisetData.dandiset_id !== this.dandiset_id || dandisetData.version !== this.version) {
-      console.warn(`Dandiset ID or version mismatch: expected ${this.dandiset_id}/${this.version}, got ${dandisetData.dandiset_id}/${dandisetData.version}`);
+    if (
+      dandisetData.dandiset_id !== this.dandiset_id ||
+      dandisetData.version !== this.version
+    ) {
+      console.warn(
+        `Dandiset ID or version mismatch: expected ${this.dandiset_id}/${this.version}, got ${dandisetData.dandiset_id}/${dandisetData.version}`
+      );
       return [];
     }
-    return dandisetData.nwb_files.map(nwb => new DandiInterfaceNwbFile(
-      this.dandiInterface,
-      this.dandiset_id,
-      this.version,
-      nwb.path,
-      nwb.size,
-      nwb.asset_id
-    ));
+    return dandisetData.nwb_files.map(
+      (nwb) =>
+        new DandiInterfaceNwbFile(
+          this.dandiInterface,
+          this.dandiset_id,
+          this.version,
+          nwb.path,
+          nwb.size,
+          nwb.asset_id
+        )
+    );
   }
   dandisetMetadata(): DandisetMetadata {
     const dandisetFname = `${dandiBaseDir}/dandisets/${this.dandiset_id}/dandiset.json`;
     if (!fs.existsSync(dandisetFname)) {
       throw new Error(`Dandiset metadata file not found: ${dandisetFname}`);
     }
-    const fileContent = fs.readFileSync(dandisetFname, 'utf8');
+    const fileContent = fs.readFileSync(dandisetFname, "utf8");
     let dandisetData: {
       dandiset_id: string;
       version: string;
@@ -382,7 +435,7 @@ class DandiInterfaceDandiset {
       contact_person: string;
       embargo_status: string;
       star_count: number;
-      metadata: DandisetMetadata
+      metadata: DandisetMetadata;
     };
     try {
       dandisetData = JSON.parse(fileContent);
@@ -401,25 +454,27 @@ class DandiInterfaceDandiset {
 }
 
 class DandiInterfaceNwbFile {
-  private assetData: {
-    dandiset_id: string;
-    asset_id: string;
-    session_description: string;
-    subject: {
-      age: string;
-      sex: string;
-      genotype: string;
-      species: string;
-      subject_id: string;
-      strain?: string;
-      specimen_name?: string;
-    };
-    neurodata_objects: {
-      path: string;
-      type: string;
-      description: string;
-    }[];
-  } | undefined;
+  private assetData:
+    | {
+        dandiset_id: string;
+        asset_id: string;
+        session_description: string;
+        subject: {
+          age: string;
+          sex: string;
+          genotype: string;
+          species: string;
+          subject_id: string;
+          strain?: string;
+          specimen_name?: string;
+        };
+        neurodata_objects: {
+          path: string;
+          type: string;
+          description: string;
+        }[];
+      }
+    | undefined;
   constructor(
     public dandiInterface: DandiInterface,
     public dandiset_id: string,
@@ -427,52 +482,58 @@ class DandiInterfaceNwbFile {
     public path: string,
     public size: number,
     public asset_id: string
-  ) {
-  }
+  ) {}
 
   _loadAssetData = () => {
     if (this.assetData) return;
     const fname = `${dandiBaseDir}/dandisets/${this.dandiset_id}/assets.v7/${this.asset_id}.json`;
     if (!fs.existsSync(fname)) {
-      return
+      return;
     }
-    const fileContent = fs.readFileSync(fname, 'utf8');
+    const fileContent = fs.readFileSync(fname, "utf8");
     try {
       this.assetData = JSON.parse(fileContent);
-    }
-    catch (error) {
+    } catch (error) {
       throw new Error(`Failed to parse JSON from ${fname}: ${error}`);
     }
     if (!this.assetData) {
       throw new Error(`Asset data is empty for ${fname}`);
     }
-    if (this.assetData.dandiset_id !== this.dandiset_id || this.assetData.asset_id !== this.asset_id) {
-      throw new Error(`Asset ID or dandiset ID mismatch: expected ${this.dandiset_id}/${this.asset_id}, got ${this.assetData.dandiset_id}/${this.assetData.asset_id}`);
+    if (
+      this.assetData.dandiset_id !== this.dandiset_id ||
+      this.assetData.asset_id !== this.asset_id
+    ) {
+      throw new Error(
+        `Asset ID or dandiset ID mismatch: expected ${this.dandiset_id}/${this.asset_id}, got ${this.assetData.dandiset_id}/${this.assetData.asset_id}`
+      );
     }
-  }
+  };
 
   get neurodataObjects(): DandiInterfaceNeurodataObject[] {
     this._loadAssetData();
     if (!this.assetData) {
       // may not be created yet
-      return []
+      return [];
     }
-    return this.assetData.neurodata_objects.map(no => new DandiInterfaceNeurodataObject({
-      dandisetId: this.dandiset_id,
-      version: this.version,
-      assetId: this.asset_id,
-      path: no.path,
-      neurodataType: no.type,
-      description: no.description
-    }));
+    return this.assetData.neurodata_objects.map(
+      (no) =>
+        new DandiInterfaceNeurodataObject({
+          dandisetId: this.dandiset_id,
+          version: this.version,
+          assetId: this.asset_id,
+          path: no.path,
+          neurodataType: no.type,
+          description: no.description,
+        })
+    );
   }
   get session_description(): string {
     this._loadAssetData();
     if (!this.assetData) {
       // may not be created yet
-      return '';
+      return "";
     }
-    return this.assetData.session_description || '';
+    return this.assetData.session_description || "";
   }
   get subject() {
     this._loadAssetData();
@@ -487,15 +548,14 @@ class DandiInterfaceNwbFile {
 class DandiInterfaceNeurodataObject {
   constructor(
     private o: {
-      dandisetId: string,
-      version: string,
-      assetId: string,
-      neurodataType: string,
-      path: string,
-      description: string
+      dandisetId: string;
+      version: string;
+      assetId: string;
+      neurodataType: string;
+      path: string;
+      description: string;
     }
-  ) {
-  }
+  ) {}
   get dandisetId() {
     return this.o.dandisetId;
   }
@@ -516,18 +576,19 @@ class DandiInterfaceNeurodataObject {
   }
 }
 
-export function createScriptInterface(onStatusUpdate: (status: string) => void): ScriptInterface {
+export function createScriptInterface(
+  onStatusUpdate: (status: string) => void
+): ScriptInterface {
   let outputBuffer = "";
-  const dandiInterface = new DandiInterface({onStatusUpdate});
-  const openNeuroInterface = new OpenNeuroInterface({onStatusUpdate});
+  const dandiInterface = new DandiInterface({ onStatusUpdate });
+  const openNeuroInterface = new OpenNeuroInterface({ onStatusUpdate });
 
   return {
     print: (text: string | any) => {
       let v = "";
-      if (typeof text === 'string') {
+      if (typeof text === "string") {
         v = text;
-      }
-      else {
+      } else {
         try {
           v = JSON.stringify(text, null, 2);
         } catch (e) {
@@ -541,10 +602,10 @@ export function createScriptInterface(onStatusUpdate: (status: string) => void):
     getDandisets: async () => {
       return await dandiInterface.getDandisets();
     },
-    findDandisets: async (o: {search?: string, semanticSearch?: string}) => {
+    findDandisets: async (o: { search?: string; semanticSearch?: string }) => {
       return await dandiInterface.findDandisets(o);
     },
-    getDandiset: async (o: {dandisetId: string}) => {
+    getDandiset: async (o: { dandisetId: string }) => {
       return await dandiInterface.getDandiset(o);
     },
     semanticSortDandisets: async (dandisets: DandisetInfo[], query: string) => {
@@ -553,12 +614,15 @@ export function createScriptInterface(onStatusUpdate: (status: string) => void):
     getOpenNeuroDatasets: async () => {
       return await openNeuroInterface.getDatasets();
     },
-    getOpenNeuroDataset: async (o: {datasetId: string}) => {
+    getOpenNeuroDataset: async (o: { datasetId: string }) => {
       return await openNeuroInterface.getDataset(o);
     },
-    semanticSortOpenNeuroDatasets: async (datasets: OpenNeuroDatasetInfo[], query: string) => {
+    semanticSortOpenNeuroDatasets: async (
+      datasets: OpenNeuroDatasetInfo[],
+      query: string
+    ) => {
       return await openNeuroInterface.semanticSortDatasets(datasets, query);
-    }
+    },
   };
 }
 
@@ -575,34 +639,40 @@ export interface DandisetInfo {
   star_count: number;
 }
 
-const doDandisetSemanticSearch = async (query: string, restrictToDandisets?: string[]): Promise<string[]> => {
-  const url = 'https://neurosift-chat-agent-tools.vercel.app/api/dandi_semantic_search';
-  const params: {[key: string]: any} = {
+const doDandisetSemanticSearch = async (
+  query: string,
+  restrictToDandisets?: string[]
+): Promise<string[]> => {
+  const url =
+    "https://neurosift-chat-agent-tools.vercel.app/api/dandi_semantic_search";
+  const params: { [key: string]: any } = {
     query,
-    limit: 20
-  }
+    limit: 20,
+  };
   if (restrictToDandisets && restrictToDandisets.length > 0) {
-    params['dandisets'] = restrictToDandisets;
+    params["dandisets"] = restrictToDandisets;
   }
   // POST
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify(params)
+    body: JSON.stringify(params),
   });
   if (!response.ok) {
-    throw new Error(`Failed to perform semantic search: ${response.statusText}`);
+    throw new Error(
+      `Failed to perform semantic search: ${response.statusText}`
+    );
   }
   const data: any = await response.json();
   if (!data) {
-    throw new Error('Semantic search returned no data');
+    throw new Error("Semantic search returned no data");
   }
-  if (typeof data !== 'object' || !Array.isArray(data.results)) {
-    throw new Error('Semantic search returned invalid data format');
+  if (typeof data !== "object" || !Array.isArray(data.results)) {
+    throw new Error("Semantic search returned invalid data format");
   }
-  return data.results.map((item: {id: string}) => item.id);
+  return data.results.map((item: { id: string }) => item.id);
 };
 
 ///// OpenNeuro Interface
@@ -621,16 +691,18 @@ export interface OpenNeuroDatasetInfo {
 }
 
 class OpenNeuroInterface {
-  constructor(public o: {onStatusUpdate: (status: string) => void}) {
-    this.o.onStatusUpdate('OpenNeuro Interface initialized');
+  constructor(public o: { onStatusUpdate: (status: string) => void }) {
+    this.o.onStatusUpdate("OpenNeuro Interface initialized");
   }
-  async getDataset(o: {datasetId: string}): Promise<OpenNeuroDatasetInfo | undefined> {
+  async getDataset(o: {
+    datasetId: string;
+  }): Promise<OpenNeuroDatasetInfo | undefined> {
     this.o.onStatusUpdate(`Getting OpenNeuro dataset: ${o.datasetId}`);
     const fname = `${openNeuroBaseDir}/datasets/${o.datasetId}/dataset.json`;
     if (!fs.existsSync(fname)) {
       return undefined;
     }
-    const fileContent = fs.readFileSync(fname, 'utf8');
+    const fileContent = fs.readFileSync(fname, "utf8");
     let data: OpenNeuroDatasetInfo;
     try {
       data = JSON.parse(fileContent);
@@ -638,45 +710,55 @@ class OpenNeuroInterface {
       throw new Error(`Failed to parse JSON from ${fname}: ${error}`);
     }
     if (data.dataset_id !== o.datasetId) {
-      console.warn(`Dataset ID mismatch: expected ${o.datasetId}, got ${data.dataset_id}`);
+      console.warn(
+        `Dataset ID mismatch: expected ${o.datasetId}, got ${data.dataset_id}`
+      );
       return undefined;
     }
     return data;
   }
   async getDatasets(): Promise<OpenNeuroInterfaceDataset[]> {
-    this.o.onStatusUpdate('Getting OpenNeuro datasets...');
+    this.o.onStatusUpdate("Getting OpenNeuro datasets...");
     const fname = `${openNeuroBaseDir}/openneuro.json`;
     if (!fs.existsSync(fname)) {
       throw new Error(`OpenNeuro data file not found: ${fname}`);
     }
-    const fileContent = fs.readFileSync(fname, 'utf8');
-    let data: {datasets: OpenNeuroDatasetInfo[]};
+    const fileContent = fs.readFileSync(fname, "utf8");
+    let data: { datasets: OpenNeuroDatasetInfo[] };
     try {
       data = JSON.parse(fileContent);
-    }
-    catch (error) {
+    } catch (error) {
       throw new Error(`Failed to parse JSON from ${fname}: ${error}`);
     }
-    return data.datasets.map(ds => new OpenNeuroInterfaceDataset(
-      this,
-      ds.dataset_id,
-      ds.name,
-      ds.dataset_created,
-      ds.snapshot_created,
-      ds.snapshot_tag,
-      ds.snapshot_readme,
-      ds.snapshot_total_files,
-      ds.snapshot_size
-    ));
+    return data.datasets.map(
+      (ds) =>
+        new OpenNeuroInterfaceDataset(
+          this,
+          ds.dataset_id,
+          ds.name,
+          ds.dataset_created,
+          ds.snapshot_created,
+          ds.snapshot_tag,
+          ds.snapshot_readme,
+          ds.snapshot_total_files,
+          ds.snapshot_size
+        )
+    );
   }
-  async semanticSortDatasets(datasets: OpenNeuroDatasetInfo[], query: string): Promise<OpenNeuroDatasetInfo[]> {
+  async semanticSortDatasets(
+    datasets: OpenNeuroDatasetInfo[],
+    query: string
+  ): Promise<OpenNeuroDatasetInfo[]> {
     if (!query) {
-      throw new Error('Query must be provided for semantic sorting');
+      throw new Error("Query must be provided for semantic sorting");
     }
     const embedding = await computeSemanticEmbedding(query);
     if (!embedding) {
-      throw new Error('Failed to compute semantic embedding for query');
+      throw new Error("Failed to compute semantic embedding for query");
     }
+    this.o.onStatusUpdate(
+      `Computing semantic similarities for ${datasets.length} datasets...`
+    );
     const cosineSimilarities: number[] = [];
     for (const ds of datasets) {
       const datasetId = ds.dataset_id;
@@ -686,7 +768,9 @@ class OpenNeuroInterface {
         let maxCosineSimilarity = 0;
         for (const embedding2 of embeddings2) {
           if (embedding2.length !== embedding.length) {
-            console.warn(`Embedding length mismatch for dataset ${datasetId}: expected ${embedding.length}, got ${embedding2.length}`);
+            console.warn(
+              `Embedding length mismatch for dataset ${datasetId}: expected ${embedding.length}, got ${embedding2.length}`
+            );
             continue;
           }
           const cs = computeCosineSimilarity(embedding, embedding2);
@@ -695,36 +779,42 @@ class OpenNeuroInterface {
           }
         }
         cosineSimilarities.push(maxCosineSimilarity);
-      }
-      else {
+      } else {
         cosineSimilarities.push(-99);
       }
     }
     // Sort datasets by cosine similarity in descending order
-    const sortedDatasets = datasets.map((ds, index) => ({
-      ...ds,
-      cosineSimilarity: cosineSimilarities[index]
-    })).sort((a, b) => b.cosineSimilarity - a.cosineSimilarity);
-    return sortedDatasets.map(ds => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const {cosineSimilarity, ...rest} = ds; // Remove cosineSimilarity from the result
-      return rest;
+    const sortedDatasets = datasets
+      .map((ds, index) => ({
+        ...ds,
+        cosineSimilarity: cosineSimilarities[index],
+      }))
+      .sort((a, b) => b.cosineSimilarity - a.cosineSimilarity);
+    console.log("DEBUG");
+    for (const ds of sortedDatasets.slice(0, 20)) {
+      console.log(`${ds.dataset_id}: ${ds.cosineSimilarity}`);
     }
-    );
+    return sortedDatasets.map((ds) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { cosineSimilarity, ...rest } = ds; // Remove cosineSimilarity from the result
+      return rest;
+    });
   }
 }
 
-const getEmbeddingsForOpenNeuroDataset = (datasetId: string): number[][] | undefined => {
+const getEmbeddingsForOpenNeuroDataset = (
+  datasetId: string
+): number[][] | undefined => {
   const fname = `${openNeuroBaseDir}/datasets/${datasetId}/embeddings.json`;
   if (!fs.existsSync(fname)) {
     return undefined;
   }
-  const fileContent = fs.readFileSync(fname, 'utf8');
+  const fileContent = fs.readFileSync(fname, "utf8");
   const content = JSON.parse(fileContent);
-  return content.map((a: {text: string, embedding: number[], model: string}) => (
-    a.embedding
-  ));
-}
+  return content.map(
+    (a: { text: string; embedding: number[]; model: string }) => a.embedding
+  );
+};
 
 class OpenNeuroInterfaceDataset {
   constructor(
@@ -737,6 +827,5 @@ class OpenNeuroInterfaceDataset {
     public snapshot_readme: string,
     public snapshot_total_files: number,
     public snapshot_size: number
-  ) {
-  }
+  ) {}
 }
