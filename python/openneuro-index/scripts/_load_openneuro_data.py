@@ -36,6 +36,9 @@ def _load_openneuro_data():
                                 tasks
                                 subjects
                             }
+                            description {
+                                Authors
+                            }
                             readme
                             created
                         }
