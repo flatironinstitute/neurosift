@@ -109,7 +109,7 @@ def update_data(*, update_assets: bool, generate_embeddings: bool):
                 if os.path.exists(asset_fname):
                     with open(asset_fname, "r") as f:
                         asset_info = json.load(f)
-                    if asset_info.get("version", None) == vvv2:
+                    if asset_info.get("dandi_index_asset_version", None) == vvv2:
                         need_to_create = False
                 if need_to_create:
                     print(f"{dandiset_id}: Updating asset info for {asset_path}")
