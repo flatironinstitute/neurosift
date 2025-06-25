@@ -4,7 +4,7 @@ import os
 import json
 import time
 import argparse
-import openai
+from _embedding import _generate_embeddings_if_needed
 
 from _load_dandi_data import (
     _load_dandi_data,
@@ -12,66 +12,6 @@ from _load_dandi_data import (
     _fetch_dandiset_metadata,
 )
 from _load_asset_info import _load_asset_info
-
-
-def _create_embedding_for_summary(summary: str, *, model: str):
-    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-    if not OPENAI_API_KEY:
-        raise Exception("OPENAI_API_KEY environment variable not set.")
-    client = openai.Client(
-        api_key=OPENAI_API_KEY,
-    )
-    response = client.embeddings.create(input=summary, model=model)
-    return response.data[0].embedding
-
-
-def _generate_embeddings_if_needed(*, dandiset_data, embeddings_fname: str):
-    model = "text-embedding-3-large"
-    current_title = dandiset_data["name"]
-    current_description = dandiset_data["metadata"].get("description", "")
-
-    # Initialize with empty embeddings
-    embeddings = []
-    if os.path.exists(embeddings_fname):
-        with open(embeddings_fname, "r") as f:
-            embeddings = json.load(f)
-
-    need_update = False
-
-    # Check and update title embedding if needed
-    title_entry = embeddings[0] if len(embeddings) > 0 else None
-    if (
-        not title_entry
-        or title_entry["text"] != current_title
-        or title_entry["model"] != model
-    ):
-        print(f"Generating title embedding for {dandiset_data['dandiset_id']}")
-        title_embedding = _create_embedding_for_summary(current_title, model=model)
-        embeddings = [
-            {"text": current_title, "embedding": title_embedding, "model": model}
-        ] + (embeddings[1:] if len(embeddings) > 1 else [])
-        need_update = True
-
-    # Check and update description embedding if needed
-    desc_entry = embeddings[1] if len(embeddings) > 1 else None
-    if (
-        not desc_entry
-        or desc_entry["text"] != current_description
-        or desc_entry["model"] != model
-    ):
-        print(f"Generating description embedding for {dandiset_data['dandiset_id']}")
-        desc_embedding = _create_embedding_for_summary(current_description, model=model)
-        embeddings = [
-            embeddings[0],
-            {"text": current_description, "embedding": desc_embedding, "model": model},
-        ]
-        need_update = True
-
-    # Save if any updates were made
-    if need_update:
-        with open(embeddings_fname, "w") as f:
-            json.dump(embeddings, f, indent=2)
-
 
 def update_data(*, update_assets: bool, generate_embeddings: bool):
     data_dir = "data"
@@ -159,21 +99,29 @@ def update_data(*, update_assets: bool, generate_embeddings: bool):
                             os.remove(os.path.join(asset_dir0, fname))
                     os.rmdir(asset_dir0)
             vvv = "v7"
+            vvv2 = 'v7.1'
             for nwb_file in dandiset_data["nwb_files"][:50]:
                 asset_id = nwb_file["asset_id"]
                 asset_fname = f"{dandiset_data_dir}/assets.{vvv}/{asset_id}.json"
                 asset_path = nwb_file["path"]
-                if not os.path.exists(asset_fname):
-                    print(f"{dandiset_id}: Loading asset info for {asset_path}")
+                need_to_create = True
+                if os.path.exists(asset_fname):
+                    with open(asset_fname, "r") as f:
+                        asset_info = json.load(f)
+                    if asset_info.get("version", None) == vvv2:
+                        need_to_create = False
+                if need_to_create:
+                    print(f"{dandiset_id}: Updating asset info for {asset_path}")
                     if not os.path.exists(f"{dandiset_data_dir}/assets.{vvv}"):
                         os.makedirs(f"{dandiset_data_dir}/assets.{vvv}")
                     asset_info = _load_asset_info(
-                        dandiset_id=dandiset_id, asset_id=asset_id
+                        dandiset_id=dandiset_id, asset_id=asset_id, dandi_index_asset_version=vvv2
                     )
+                    assert asset_info['dandi_index_asset_version'] == vvv2
                     with open(asset_fname, "w") as f:
                         json.dump(asset_info, f, indent=2)
                 else:
-                    print(f"{dandiset_id}: Asset info for {asset_path} already exists")
+                    print(f"{dandiset_id}: Asset info for {asset_path} already up to date")
                 if time.time() - start_time > 15:
                     print(
                         f"Time limit reached for dandiset {dandiset_id}, moving to next"
