@@ -54,6 +54,11 @@ def _handle_timeseries(obj: h5py.Group):
         t2 = timestamps[-1] if len(timestamps) > 0 else None
         if t1 is None or t2 is None:
             return {}
+        # if t1 or t2 are NaN, then return
+        if isinstance(t1, float) and (t1 != t1):
+            return {}
+        if isinstance(t2, float) and (t2 != t2):
+            return {}
         start_time = t1
         duration = t2 - t1
         shape = [int(a) for a in data.shape]
@@ -126,7 +131,7 @@ def _str(value):
 def _load_asset_info(
     *, dandiset_id: str, asset_id: str, dandi_index_asset_version: str
 ):
-    assert dandi_index_asset_version == "v7.1"
+    assert dandi_index_asset_version == "v7.2"
     url = f"https://api.dandiarchive.org/api/assets/{asset_id}/download/"
     lindi_url = f"https://lindi.neurosift.org/dandi/dandisets/{dandiset_id}/assets/{asset_id}/nwb.lindi.json"
     try:
