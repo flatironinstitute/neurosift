@@ -493,7 +493,7 @@ class DandiInterfaceNwbFile {
     }
     const fileContent = fs.readFileSync(fname, "utf8");
     try {
-      this.assetData = JSON.parse(fileContent);
+      this.assetData = jsonParseHandleSpecial(fileContent);
     } catch (error) {
       throw new Error(`Failed to parse JSON from ${fname}: ${error}`);
     }
@@ -896,3 +896,8 @@ class OpenNeuroInterfaceDataset {
     };
   }
 }
+
+const jsonParseHandleSpecial = (text: string): any => {
+  const text2 = text.split("NaN").join("null").split("Infinity").join("null").split("-Infinity").join("null");
+  return JSON.parse(text2);
+};
