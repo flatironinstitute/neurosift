@@ -13,6 +13,7 @@ from _load_dandi_data import (
 )
 from _load_asset_info import _load_asset_info
 
+
 def update_data(*, update_assets: bool, generate_embeddings: bool):
     data_dir = "data"
     if not os.path.exists(data_dir):
@@ -99,7 +100,7 @@ def update_data(*, update_assets: bool, generate_embeddings: bool):
                             os.remove(os.path.join(asset_dir0, fname))
                     os.rmdir(asset_dir0)
             vvv = "v7"
-            vvv2 = 'v7.1'
+            vvv2 = "v7.1"
             for nwb_file in dandiset_data["nwb_files"][:50]:
                 asset_id = nwb_file["asset_id"]
                 asset_fname = f"{dandiset_data_dir}/assets.{vvv}/{asset_id}.json"
@@ -115,13 +116,17 @@ def update_data(*, update_assets: bool, generate_embeddings: bool):
                     if not os.path.exists(f"{dandiset_data_dir}/assets.{vvv}"):
                         os.makedirs(f"{dandiset_data_dir}/assets.{vvv}")
                     asset_info = _load_asset_info(
-                        dandiset_id=dandiset_id, asset_id=asset_id, dandi_index_asset_version=vvv2
+                        dandiset_id=dandiset_id,
+                        asset_id=asset_id,
+                        dandi_index_asset_version=vvv2,
                     )
-                    assert asset_info['dandi_index_asset_version'] == vvv2
+                    assert asset_info["dandi_index_asset_version"] == vvv2
                     with open(asset_fname, "w") as f:
                         json.dump(asset_info, f, indent=2)
                 else:
-                    print(f"{dandiset_id}: Asset info for {asset_path} already up to date")
+                    print(
+                        f"{dandiset_id}: Asset info for {asset_path} already up to date"
+                    )
                 if time.time() - start_time > 15:
                     print(
                         f"Time limit reached for dandiset {dandiset_id}, moving to next"

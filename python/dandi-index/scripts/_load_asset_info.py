@@ -17,33 +17,37 @@ def _load_neurodata_objects_from_group(group: h5py.Group, visited, dandiset_id: 
                     new_fields = _handle_timeseries(obj)
                     x = {**x, **new_fields}
                 except Exception as e:
-                    msg = f'Error handling timeseries for {obj.name}: {e}'
+                    msg = f"Error handling timeseries for {obj.name}: {e}"
                     _write_message_to_log(msg, dandiset_id=dandiset_id)
                     print(msg)
                 try:
                     new_fields = _handle_table(obj)
                     x = {**x, **new_fields}
                 except Exception as e:
-                    msg = f'Error handling table for {obj.name}: {e}'
+                    msg = f"Error handling table for {obj.name}: {e}"
                     _write_message_to_log(msg, dandiset_id=dandiset_id)
                     print(msg)
                 neurodata_objects.append(x)
             if not visited.get(obj.name, False):
                 neurodata_objects.extend(
-                    _load_neurodata_objects_from_group(obj, visited, dandiset_id=dandiset_id)
+                    _load_neurodata_objects_from_group(
+                        obj, visited, dandiset_id=dandiset_id
+                    )
                 )
     return neurodata_objects
+
 
 def _write_message_to_log(message: str, *, dandiset_id: str):
     with open(f"dandi-index-warnings.txt", "a") as f:
         f.write(f"[DANDISET {dandiset_id}] {message}\n")
 
+
 def _handle_timeseries(obj: h5py.Group):
-    if 'data' in obj and 'timestamps' in obj:
-        timestamps = obj['timestamps']
+    if "data" in obj and "timestamps" in obj:
+        timestamps = obj["timestamps"]
         if not isinstance(timestamps, h5py.Dataset):
             return {}
-        data = obj['data']
+        data = obj["data"]
         if not isinstance(data, h5py.Dataset):
             return {}
         t1 = timestamps[0] if len(timestamps) > 0 else None
@@ -60,14 +64,14 @@ def _handle_timeseries(obj: h5py.Group):
             "shape": shape,
             "sampling_rate": sampling_rate,
         }
-    elif 'data' in obj and 'starting_time' in obj:
-        data = obj['data']
+    elif "data" in obj and "starting_time" in obj:
+        data = obj["data"]
         if not isinstance(data, h5py.Dataset):
             return {}
-        starting_time = obj['starting_time']
+        starting_time = obj["starting_time"]
         if not isinstance(starting_time, h5py.Dataset):
             return {}
-        sampling_rate = obj.attrs.get('sampling_rate', None)
+        sampling_rate = obj.attrs.get("sampling_rate", None)
         if sampling_rate is None:
             return {}
         shape = [int(a) for a in data.shape]
@@ -82,6 +86,7 @@ def _handle_timeseries(obj: h5py.Group):
     else:
         return {}
 
+
 def _get_sampling_rate_from_timestamps(timestamps):
     if len(timestamps) < 2:
         return None
@@ -91,12 +96,11 @@ def _get_sampling_rate_from_timestamps(timestamps):
         return 1.0 / median_diff
     return None
 
+
 def _handle_table(obj: h5py.Group):
     colnames = obj.attrs.get("colnames", None)
     if colnames is not None:
-        return {
-            'colnames': [_str(c) for c in colnames]
-        }
+        return {"colnames": [_str(c) for c in colnames]}
     else:
         return {}
 
@@ -119,7 +123,9 @@ def _str(value):
         return str(value)
 
 
-def _load_asset_info(*, dandiset_id: str, asset_id: str, dandi_index_asset_version: str):
+def _load_asset_info(
+    *, dandiset_id: str, asset_id: str, dandi_index_asset_version: str
+):
     assert dandi_index_asset_version == "v7.1"
     url = f"https://api.dandiarchive.org/api/assets/{asset_id}/download/"
     lindi_url = f"https://lindi.neurosift.org/dandi/dandisets/{dandiset_id}/assets/{asset_id}/nwb.lindi.json"

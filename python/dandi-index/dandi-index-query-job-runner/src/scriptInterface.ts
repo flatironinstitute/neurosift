@@ -468,6 +468,11 @@ class DandiInterfaceNwbFile {
           path: string;
           type: string;
           description: string;
+          colnames?: string[]; // for table
+          start_time?: number; // for time series
+          duration?: number; // for time series
+          sampling_rate?: number; // for time series
+          shape?: number[]; // for time series
         }[];
       }
     | undefined;
@@ -520,6 +525,11 @@ class DandiInterfaceNwbFile {
           path: no.path,
           neurodataType: no.type,
           description: no.description,
+          colnames: no.colnames,
+          start_time: no.start_time,
+          duration: no.duration,
+          sampling_rate: no.sampling_rate,
+          shape: no.shape
         })
     );
   }
@@ -550,6 +560,11 @@ class DandiInterfaceNeurodataObject {
       neurodataType: string;
       path: string;
       description: string;
+      colnames: string[] | undefined;
+      start_time: number | undefined;
+      duration: number | undefined;
+      sampling_rate: number | undefined;
+      shape: number[] | undefined;
     }
   ) {}
   get dandisetId() {
@@ -569,6 +584,21 @@ class DandiInterfaceNeurodataObject {
   }
   get description() {
     return this.o.description;
+  }
+  get colnames() {
+    return this.o.colnames;
+  }
+  get start_time() {
+    return this.o.start_time;
+  }
+  get duration() {
+    return this.o.duration;
+  }
+  get sampling_rate() {
+    return this.o.sampling_rate;
+  }
+  get shape() {
+    return this.o.shape;
   }
 }
 
