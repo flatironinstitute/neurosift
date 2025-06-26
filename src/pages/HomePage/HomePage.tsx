@@ -147,11 +147,7 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
             <a href="https://chat.neurosift.app">
               Explore DANDI and OpenNeuro datasets through AI-powered
               conversational search.
-            </a>{" "}
-            Find relevant data across 400+ DANDI datasets and 1,400+ OpenNeuro
-            datasets using natural language queries. Search by topic and filter
-            by experimental parameters. Don't forget to provide feedback by
-            clicking thumbs up or thumbs down buttons.
+            </a>
           </Typography>
         </Paper>
 
