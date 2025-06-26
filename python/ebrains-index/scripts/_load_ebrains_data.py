@@ -21,14 +21,19 @@ def _load_ebrains_data():
         print(
             f'{num} :: Loading dataset {a.uuid} ({a["https://openminds.ebrains.eu/vocab/fullName"]})'
         )
-        instance_id = str(a.uuid)
+
+        # this is probably not the way to do it but...
+        has_version = a["https://openminds.ebrains.eu/vocab/hasVersion"]
+        if isinstance(has_version, dict):
+            has_version = [has_version]
+        dataset_id = has_version[-1]['@id'].split('/')[-1]
         full_name = a["https://openminds.ebrains.eu/vocab/fullName"]
         description = a["https://openminds.ebrains.eu/vocab/description"]
         first_released_at = a["https://core.kg.ebrains.eu/vocab/meta/firstReleasedAt"]
         last_released_at = a["https://core.kg.ebrains.eu/vocab/meta/lastReleasedAt"]
         datasets.append(
             {
-                "dataset_id": instance_id,
+                "dataset_id": dataset_id,
                 "name": full_name,
                 "description": description,
                 "first_released_at": first_released_at,
