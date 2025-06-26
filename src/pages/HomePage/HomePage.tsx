@@ -145,8 +145,8 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
           </Typography>
           <Typography variant="body1">
             <a href="https://chat.neurosift.app">
-              Explore DANDI and OpenNeuro through AI-powered
-              conversational search.
+              Explore DANDI and OpenNeuro through AI-powered conversational
+              search.
             </a>
           </Typography>
         </Paper>

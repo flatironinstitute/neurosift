@@ -20,6 +20,7 @@ export interface ScriptInterface {
     dandisets: DandiInterfaceDandiset[],
     query: string
   ) => Promise<DandiInterfaceDandiset[]>;
+
   getOpenNeuroDatasets: () => Promise<OpenNeuroInterfaceDataset[]>;
   getOpenNeuroDataset: (o: {
     datasetId: string;
@@ -28,6 +29,15 @@ export interface ScriptInterface {
     datasets: OpenNeuroInterfaceDataset[],
     query: string
   ) => Promise<OpenNeuroInterfaceDataset[]>;
+
+  getEbrainsDatasets: () => Promise<EbrainsInterfaceDataset[]>;
+  getEbrainsDataset: (o: {
+    datasetId: string;
+  }) => Promise<EbrainsInterfaceDataset | undefined>;
+  semanticSortEbrainsDatasets: (
+    datasets: EbrainsInterfaceDataset[],
+    query: string
+  ) => Promise<EbrainsInterfaceDataset[]>;
 }
 
 // const _findDandisets = async (o: {search?: string}): Promise<DandisetInfo[]> => {
@@ -608,6 +618,7 @@ export function createScriptInterface(
   let outputBuffer = "";
   const dandiInterface = new DandiInterface({ onStatusUpdate });
   const openNeuroInterface = new OpenNeuroInterface({ onStatusUpdate });
+  const ebrainsInterface = new EbrainsInterface({ onStatusUpdate });
 
   return {
     print: (text: string | any) => {
@@ -637,6 +648,7 @@ export function createScriptInterface(
     semanticSortDandisets: async (dandisets: DandiInterfaceDandiset[], query: string) => {
       return await dandiInterface.semanticSortDandisets(dandisets, query);
     },
+
     getOpenNeuroDatasets: async () => {
       return await openNeuroInterface.getDatasets();
     },
@@ -649,6 +661,19 @@ export function createScriptInterface(
     ) => {
       return await openNeuroInterface.semanticSortDatasets(datasets, query);
     },
+
+    getEbrainsDatasets: async () => {
+      return await ebrainsInterface.getDatasets();
+    },
+    getEbrainsDataset: async (o: { datasetId: string }) => {
+      return await ebrainsInterface.getDataset(o);
+    },
+    semanticSortEbrainsDatasets: async (
+      datasets: EbrainsInterfaceDataset[],
+      query: string
+    ) => {
+      return await ebrainsInterface.semanticSortDatasets(datasets, query);
+    }
   };
 }
 
@@ -895,6 +920,152 @@ class OpenNeuroInterfaceDataset {
       authors: this.snapshot_authors,
     };
   }
+}
+
+// Ebrains Interface
+
+const ebrainsBaseDir = "../../ebrains-index/data";
+
+export interface EbrainsDatasetInfo {
+  dataset_id: string;
+  name: string;
+  description: string;
+  first_released_at: string;
+  last_released_at: string;
+}
+
+class EbrainsInterface {
+  constructor(public o: { onStatusUpdate: (status: string) => void }) {
+    this.o.onStatusUpdate("Ebrains Interface initialized");
+  }
+  async getDataset(o: {
+    datasetId: string;
+  }): Promise<EbrainsInterfaceDataset | undefined> {
+    this.o.onStatusUpdate(`Getting Ebrains dataset: ${o.datasetId}`);
+    const fname = `${ebrainsBaseDir}/datasets/${o.datasetId}/dataset.json`;
+    if (!fs.existsSync(fname)) {
+      return undefined;
+    }
+    const fileContent = fs.readFileSync(fname, "utf8");
+    let data: EbrainsDatasetInfo;
+    try {
+      data = JSON.parse(fileContent);
+    } catch (error) {
+      throw new Error(`Failed to parse JSON from ${fname}: ${error}`);
+    }
+    if (data.dataset_id !== o.datasetId) {
+      console.warn(
+        `Dataset ID mismatch: expected ${o.datasetId}, got ${data.dataset_id}`
+      );
+      return undefined;
+    }
+    return new EbrainsInterfaceDataset(
+      this,
+      data.dataset_id,
+      data.name,
+      data.description,
+      data.first_released_at,
+      data.last_released_at
+    );
+  }
+  async getDatasets(): Promise<EbrainsInterfaceDataset[]> {
+    this.o.onStatusUpdate("Getting Ebrains datasets...");
+    const fname = `${ebrainsBaseDir}/ebrains.json`;
+    if (!fs.existsSync(fname)) {
+      throw new Error(`Ebrains data file not found: ${fname}`);
+    }
+    const fileContent = fs.readFileSync(fname, "utf8");
+    let data: { datasets: EbrainsDatasetInfo[] };
+    try {
+      data = JSON.parse(fileContent);
+    } catch (error) {
+      throw new Error(`Failed to parse JSON from ${fname}: ${error}`);
+    }
+    return data.datasets.map(
+      (ds) =>
+        new EbrainsInterfaceDataset(
+          this,
+          ds.dataset_id,
+          ds.name,
+          ds.description,
+          ds.first_released_at,
+          ds.last_released_at
+        )
+    );
+  }
+  async semanticSortDatasets(
+    datasets: EbrainsInterfaceDataset[],
+    query: string
+  ): Promise<EbrainsInterfaceDataset[]> {
+    if (!query) {
+      throw new Error("Query must be provided for semantic sorting");
+    }
+    const embedding = await computeSemanticEmbedding(query);
+    if (!embedding) {
+      throw new Error("Failed to compute semantic embedding for query");
+    }
+    this.o.onStatusUpdate(
+      `Computing semantic similarities for ${datasets.length} datasets...`
+    );
+    const cosineSimilarities: number[] = [];
+    for (const ds of datasets) {
+      const datasetId = ds.dataset_id;
+      const embeddings2 = getEmbeddingsForEbrainsDataset(datasetId);
+      if (embeddings2) {
+        // Compute cosine similarity
+        let maxCosineSimilarity = 0;
+        for (const embedding2 of embeddings2) {
+          if (embedding2.length !== embedding.length) {
+            console.warn(
+              `Embedding length mismatch for dataset ${datasetId}: expected ${embedding.length}, got ${embedding2.length}`
+            );
+            continue;
+          }
+          const cs = computeCosineSimilarity(embedding, embedding2);
+          if (cs > maxCosineSimilarity) {
+            maxCosineSimilarity = cs;
+          }
+        }
+        cosineSimilarities.push(maxCosineSimilarity);
+      }
+      else {
+        cosineSimilarities.push(-99);
+      }
+    }
+    // Sort datasets by cosine similarity in descending order
+    const sortedDatasets = datasets
+      .map((ds, index) => ({
+        dataset: ds,
+        cosineSimilarity: cosineSimilarities[index],
+      }))
+      .sort((a, b) => b.cosineSimilarity - a.cosineSimilarity);
+    return sortedDatasets.map((ds) => ds.dataset);
+  }
+}
+
+const getEmbeddingsForEbrainsDataset = (
+  datasetId: string
+): number[][] | undefined => {
+  const fname = `${ebrainsBaseDir}/datasets/${datasetId}/embeddings.json`;
+  if (!fs.existsSync(fname)) {
+    return undefined;
+  }
+  const fileContent = fs.readFileSync(fname, "utf8");
+  const content = JSON.parse(fileContent);
+  return content.map(
+    (a: { text: string; embedding: number[]; model: string }) => a.embedding
+  );
+};
+
+class EbrainsInterfaceDataset {
+  constructor(
+    public ebrainsInterface: EbrainsInterface,
+    public dataset_id: string,
+    public name: string,
+    public description: string,
+    public first_released_at: string,
+    public last_released_at: string
+  ) {}
 }
 
 const jsonParseHandleSpecial = (text: string): any => {
