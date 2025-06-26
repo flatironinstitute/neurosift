@@ -101,7 +101,7 @@ def update_data(*, update_assets: bool, generate_embeddings: bool):
                     os.rmdir(asset_dir0)
             vvv = "v7"
             vvv2 = "v7.2"
-            for nwb_file in dandiset_data["nwb_files"][:50]:
+            for nwb_file in dandiset_data["nwb_files"][:200]:
                 asset_id = nwb_file["asset_id"]
                 asset_fname = f"{dandiset_data_dir}/assets.{vvv}/{asset_id}.json"
                 asset_path = nwb_file["path"]
