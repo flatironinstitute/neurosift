@@ -26,7 +26,7 @@ def _load_ebrains_data():
         has_version = a["https://openminds.ebrains.eu/vocab/hasVersion"]
         if isinstance(has_version, dict):
             has_version = [has_version]
-        dataset_id = has_version[-1]['@id'].split('/')[-1]
+        dataset_id = has_version[-1]["@id"].split("/")[-1]
         full_name = a["https://openminds.ebrains.eu/vocab/fullName"]
         description = a["https://openminds.ebrains.eu/vocab/description"]
         first_released_at = a["https://core.kg.ebrains.eu/vocab/meta/firstReleasedAt"]

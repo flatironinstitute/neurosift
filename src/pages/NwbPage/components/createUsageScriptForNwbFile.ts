@@ -266,6 +266,7 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
         "ElectricalSeries",
         "RoiResponseSeries",
         "SpatialSeries",
+        "PoseEstimationSeries",
       ].includes(obj.neurodataType)
     ) {
       const dataDataset = obj.group.datasets.find((x) => x.name === "data");

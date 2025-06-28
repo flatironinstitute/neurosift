@@ -40,7 +40,7 @@ export const SimpleTimeseriesView: FunctionComponent<
       return dimensions.slice(0, timeseriesClient.numChannels);
     }
     return undefined;
-  }, [group, timeseriesClient]);
+  }, [group, timeseriesClient, path]);
 
   const [channelSeparation, setChannelSeparation] = useState<number>(0);
 

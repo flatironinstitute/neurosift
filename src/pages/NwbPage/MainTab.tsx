@@ -6,7 +6,6 @@ import NwbUsageScript from "./components/NwbUsageScript";
 import { getHdf5Group } from "./hdf5Interface";
 import Hdf5View from "./Hdf5View";
 import NwbHierarchyView from "./NwbHierarchyView";
-import { SetupNwbFileSpecificationsProvider } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
 import SpecificationsView from "./SpecificationsView/SpecificationsView";
 import TimeseriesAlignmentView from "./TimeseriesAlignmentView";
 import viewsReducer from "./viewsReducer";
@@ -192,11 +191,7 @@ const MainTab = ({
                         isExpanded={expandedViews.has(view.type)}
                       />
                     )}
-                    {view.type === "specifications" && (
-                      <SetupNwbFileSpecificationsProvider nwbUrl={nwbUrl}>
-                        <SpecificationsView />
-                      </SetupNwbFileSpecificationsProvider>
-                    )}
+                    {view.type === "specifications" && <SpecificationsView />}
                     {view.type === "usageScript" && (
                       <NwbUsageScript
                         nwbUrl={nwbUrl}

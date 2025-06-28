@@ -1,5 +1,9 @@
 # Changes
 
+## June 28, 2025
+
+- Fix specifications providor and https://github.com/flatironinstitute/neurosift/issues/293#issuecomment-3013717369
+
 ## June 23, 2025
 - Updated semantic search to use new dandi-index system
 

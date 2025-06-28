@@ -2,6 +2,7 @@ import React from "react";
 import ScrollY from "@components/ScrollY";
 import MainTab from "../MainTab";
 import { TabContentProps } from "../Types";
+import { SetupNwbFileSpecificationsProvider } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 const TabContent: React.FC<TabContentProps> = ({
   nwbUrl,
@@ -12,11 +13,13 @@ const TabContent: React.FC<TabContentProps> = ({
 }) => {
   return (
     <ScrollY width={width} height={height}>
-      <MainTab
-        nwbUrl={nwbUrl}
-        onOpenObjectInNewTab={onOpenObjectInNewTab}
-        onOpenObjectsInNewTab={onOpenObjectsInNewTab}
-      />
+      <SetupNwbFileSpecificationsProvider nwbUrl={nwbUrl}>
+        <MainTab
+          nwbUrl={nwbUrl}
+          onOpenObjectInNewTab={onOpenObjectInNewTab}
+          onOpenObjectsInNewTab={onOpenObjectsInNewTab}
+        />
+      </SetupNwbFileSpecificationsProvider>
     </ScrollY>
   );
 };
