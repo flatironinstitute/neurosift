@@ -70,8 +70,7 @@ const userSchema = new mongoose.Schema<IUserDocument>({
   },
   apiKey: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },
   createdAt: {
     type: Date,

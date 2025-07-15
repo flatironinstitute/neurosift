@@ -131,7 +131,7 @@ def _str(value):
 def _load_asset_info(
     *, dandiset_id: str, asset_id: str, dandi_index_asset_version: str
 ):
-    assert dandi_index_asset_version == "v7.2"
+    assert dandi_index_asset_version == "v7.3"
     url = f"https://api.dandiarchive.org/api/assets/{asset_id}/download/"
     lindi_url = f"https://lindi.neurosift.org/dandi/dandisets/{dandiset_id}/assets/{asset_id}/nwb.lindi.json"
     try:
@@ -154,6 +154,7 @@ def _load_asset_info(
             "subject_id": _str(f["general/subject"]["subject_id"][()]) if "general/subject/subject_id" in f else None,  # type: ignore
             "strain": _str(f["general/subject"]["strain"][()]) if "general/subject/strain" in f else None,  # type: ignore
             "specimen_name": _str(f["general/subject"]["specimen_name"][()]) if "f/general/subject/specimen_name" in f else None,  # type: ignore
+            "description": _str(f["general/subject"]["description"][()]) if "general/subject/description" in f else None,  # type: ignore
         },
     }
 
