@@ -137,9 +137,6 @@ class NeurotileEcephysClient {
         2,
         channelSlice[1] - channelSlice[0],
       );
-      for (let i = 0; i < 10; i++) {
-        console.log(`--- [0, 0, ${i}]`, result.get(0, 0, i));
-      }
     }
 
     // Implement cache size limit using LRU strategy
