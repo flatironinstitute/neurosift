@@ -57,16 +57,12 @@ export const renderHeatmap = async ({
   let spikesMaxValue = 0;
 
   if (isSpikesMode) {
-    // For spikes mode, data is single values (spike counts)
     for (let t = 0; t < numCoveredSamples; t++) {
       for (let c = 0; c < numChannels; c++) {
-        const value = data[t * numChannels + c];
-        minValue = Math.min(minValue, value);
-        maxValue = Math.max(maxValue, value);
+        const spikeCount = data[t * numChannels + c];
+        spikesMaxValue = Math.max(spikesMaxValue, spikeCount);
       }
     }
-    // For spikes, always start from 0
-    minValue = 0;
   } else if (isOverlayMode) {
     // For overlay mode, calculate min/max for both datasets
 
@@ -156,7 +152,7 @@ export const renderHeatmap = async ({
           const rectWidth = Math.max(1, plotWidth / numCoveredSamples);
           const rectHeight = Math.max(1, plotHeight / numChannels);
 
-          context.fillStyle = getSpikeColor(spikeCount);
+          context.fillStyle = getSpikeColor(spikeCount, spikesMaxValue);
           context.fillRect(
             rectX - rectWidth / 2,
             rectY - rectHeight / 2,
@@ -261,7 +257,7 @@ export const renderHeatmap = async ({
             const rectWidth = Math.max(1, plotWidth / numCoveredSamples);
             const rectHeight = Math.max(1, plotHeight / numChannels);
 
-            context.fillStyle = getSpikeColor(spikeCount);
+            context.fillStyle = getSpikeColor(spikeCount, spikesMaxValue);
             context.fillRect(
               rectX - rectWidth / 2,
               rectY - rectHeight / 2,
@@ -281,13 +277,45 @@ export const renderHeatmap = async ({
 };
 
 // Helper function to get spike color
-const getSpikeColor = (spikeCount: number): string => {
-  if (spikeCount === 0) return "rgb(0, 0, 0)";
-  if (spikeCount === 1) {
-    return "rgb(0, 0, 100)";
-  } else if (spikeCount === 2) {
-    return `rgb(0, 0, 180)`;
+const getSpikeColor = (spikeCount: number, spikesMax: number): string => {
+  if (spikesMax <= 1) {
+    return "rgb(0, 255, 0)";
+  } else if (spikesMax === 2) {
+    if (spikeCount === 0) {
+      return "rgb(0, 0, 0)";
+    }
+    if (spikeCount === 1) {
+      return "rgb(0, 180, 0)";
+    } else {
+      return "rgb(0, 255, 0)";
+    }
+  } else if (spikesMax === 3) {
+    if (spikeCount === 0) {
+      return "rgb(0, 0, 0)";
+    }
+    if (spikeCount === 1) {
+      return "rgb(0, 120, 0)";
+    } else if (spikeCount === 2) {
+      return "rgb(0, 180, 0)";
+    } else {
+      return "rgb(0, 255, 0)";
+    }
+  } else if (spikesMax === 4) {
+    if (spikeCount === 0) {
+      return "rgb(0, 0, 0)";
+    }
+    if (spikeCount === 1) {
+      return "rgb(0, 100, 0)";
+    } else if (spikeCount === 2) {
+      return "rgb(0, 150, 0)";
+    } else if (spikeCount === 3) {
+      return "rgb(0, 200, 0)";
+    } else {
+      return "rgb(0, 255, 0)";
+    }
   } else {
-    return `rgb(0, 0, 255)`;
+    const v = spikeCount / spikesMax;
+    const v2 = Math.floor(v * 255);
+    return `rgb(0, ${v2}, 0)`;
   }
 };

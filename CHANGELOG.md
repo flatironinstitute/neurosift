@@ -1,5 +1,16 @@
 # Changes
 
+## July 31, 2025
+- Added interactive toolbar and status bar to TimeScrollView3 component with time display and interaction mode controls
+- Implemented dual interaction modes: pan mode (drag to pan, wheel to zoom) and select-zoom mode (drag to select region and zoom in)
+- Added toolbar with navigation buttons for manual panning and zooming as alternatives to mouse interactions
+- Added zoom to fit button that resets view to show the full time range of all data
+- Added extensible custom toolbar actions system allowing parent components to add their own buttons to the toolbar
+- Moved NeurotileView mode toggle buttons (Raw/Spikes/Overlay) from floating overlay to integrated toolbar
+- Added real-time status display showing current time in hours:minutes:seconds:milliseconds format
+- Created visual selection overlay for region selection in select-zoom mode
+- Refactored TimeScrollView3 component by extracting mouse handling logic into a dedicated useTimeScrollMouse hook to improve maintainability and reusability
+
 ## July 29, 2025
 
 - Added spikes mode to neurotile visualization with toggle between raw and spikes data display

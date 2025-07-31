@@ -1,6 +1,5 @@
-import TimeScrollView3, {
-  useTimeScrollView3,
-} from "@shared/component-time-scroll-view-2/TimeScrollView3";
+import TimeScrollView3 from "@shared/component-time-scroll-view-2/TimeScrollView3";
+import { CustomToolbarAction } from "@shared/component-time-scroll-view-2/TimeScrollToolbar";
 import {
   useTimeRange,
   useTimeseriesSelection,
@@ -17,6 +16,7 @@ import NeurotileEcephysClient, {
   Array3D,
 } from "./NeurotileEcephysClient";
 import { renderHeatmap } from "./renderHeatmap";
+import { useTimeScrollView3 } from "@shared/component-time-scroll-view-2/useTimeScrollView3";
 
 type NeurotileViewProps = {
   client: NeurotileEcephysClient;
@@ -48,14 +48,13 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
     setCurrentTime(0);
   }, [totalDuration, setVisibleTimeRange, setCurrentTime]);
 
-  const hideToolbar = true;
   const leftMargin = 100;
 
   const { canvasWidth, canvasHeight, margins } = useTimeScrollView3({
     width,
     height,
-    hideToolbar,
     leftMargin,
+    bottomToolbarHeight: 40,
   });
 
   const {
@@ -360,47 +359,36 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
     };
   }, []);
 
+  // Create custom toolbar actions for mode switching
+  const customToolbarActions: CustomToolbarAction[] = [
+    {
+      id: "mode-raw",
+      label: "Raw",
+      icon: "📊",
+      onClick: () => setMode("raw"),
+      isActive: mode === "raw",
+      tooltip: "Show raw electrophysiology data",
+    },
+    {
+      id: "mode-spikes",
+      label: "Spikes",
+      icon: "⚡",
+      onClick: () => setMode("spikes"),
+      isActive: mode === "spikes",
+      tooltip: "Show spike count data",
+    },
+    {
+      id: "mode-overlay",
+      label: "Overlay",
+      icon: "🔀",
+      onClick: () => setMode("overlay"),
+      isActive: mode === "overlay",
+      tooltip: "Show overlay of raw and spike data",
+    },
+  ];
+
   return (
     <div style={{ width, height, position: "relative" }}>
-      {/* Mode toggle button */}
-      <div
-        style={{
-          position: "absolute",
-          top: 10,
-          right: 10,
-          zIndex: 1000,
-          backgroundColor: "rgba(255, 255, 255, 0.9)",
-          border: "1px solid #ccc",
-          borderRadius: "4px",
-          padding: "4px",
-        }}
-      >
-        <button
-          onClick={() => {
-            if (mode === "raw") setMode("spikes");
-            else if (mode === "spikes") setMode("overlay");
-            else setMode("raw");
-          }}
-          style={{
-            padding: "6px 12px",
-            border: "none",
-            borderRadius: "3px",
-            backgroundColor:
-              mode === "raw"
-                ? "#007bff"
-                : mode === "spikes"
-                  ? "#28a745"
-                  : "#dc3545",
-            color: "white",
-            cursor: "pointer",
-            fontSize: "12px",
-            fontWeight: "bold",
-          }}
-        >
-          {mode === "raw" ? "Raw" : mode === "spikes" ? "Spikes" : "Overlay"}
-        </button>
-      </div>
-
       <TimeScrollView3
         width={width}
         height={height}
@@ -409,7 +397,6 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
           const ctx = canvas.getContext("2d");
           setContext(ctx);
         }}
-        hideToolbar={hideToolbar}
         leftMargin={leftMargin}
         yAxisInfo={{
           showTicks: true,
@@ -417,6 +404,7 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
           yMax: endChannel - 1,
           yLabel: "Channel",
         }}
+        customToolbarActions={customToolbarActions}
       />
     </div>
   );
