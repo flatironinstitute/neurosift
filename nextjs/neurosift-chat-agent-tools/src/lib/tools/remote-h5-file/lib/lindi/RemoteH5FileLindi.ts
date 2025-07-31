@@ -20,6 +20,7 @@ import ReferenceFileSystemClient, {
   isReferenceFileSystemObject,
 } from "./ReferenceFileSystemClient";
 import lindiDatasetDataLoader from "./lindiDatasetDataLoader";
+import zarrDecodeChunkArray from "./zarrDecodeChunkArray";
 
 type ZMetaDataZAttrs = { [key: string]: any };
 
@@ -38,12 +39,137 @@ export type ZMetaDataZArray = {
   zarr_format?: 2;
 };
 
+export class ZarrFileSystemClient {
+  #fileContentCache: {
+    [key: string]: { content: any | undefined; found: boolean };
+  } = {};
+  #inProgressReads: { [key: string]: boolean } = {};
+  constructor(private url: string) {}
+  async readJson(path: string): Promise<{ [key: string]: any } | undefined> {
+    const buf = await this.readBinary(path, { decodeArray: false });
+    if (!buf) return undefined;
+    const text = new TextDecoder().decode(buf);
+    try {
+      return JSON.parse(text, (_key, value) => {
+        if (value === "___NaN___") return NaN;
+        return value;
+      });
+    } catch (e) {
+      console.warn(text);
+      throw Error("Failed to parse JSON for " + path + ": " + e);
+    }
+  }
+  async readBinary(
+    path: string,
+    o: {
+      decodeArray?: boolean;
+      startByte?: number;
+      endByte?: number;
+      disableCache?: boolean;
+    },
+  ): Promise<any | undefined> {
+    if (o.startByte !== undefined) {
+      if (o.decodeArray)
+        throw Error("Cannot decode array and read a slice at the same time");
+      if (o.endByte === undefined)
+        throw Error("If you specify startByte, you must also specify endByte");
+    } else if (o.endByte !== undefined) {
+      throw Error("If you specify endByte, you must also specify startByte");
+    }
+    if (
+      o.endByte !== undefined &&
+      o.startByte !== undefined &&
+      o.endByte < o.startByte
+    ) {
+      throw Error(
+        `endByte must be greater than or equal to startByte: ${o.startByte} ${o.endByte} for ${path}`,
+      );
+    }
+    if (
+      o.endByte !== undefined &&
+      o.startByte !== undefined &&
+      o.endByte === o.startByte
+    ) {
+      return new ArrayBuffer(0);
+    }
+    const kk =
+      path +
+      "|" +
+      (o.decodeArray ? "decode" : "") +
+      "|" +
+      o.startByte +
+      "|" +
+      o.endByte;
+    while (this.#inProgressReads[kk]) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    this.#inProgressReads[kk] = true;
+    try {
+      if (path.startsWith("/")) path = path.slice(1);
+      if (this.#fileContentCache[kk]) {
+        if (this.#fileContentCache[kk].found) {
+          return this.#fileContentCache[kk].content;
+        }
+        return undefined;
+      }
+      const url = this.url + "/" + path;
+      let buf: ArrayBuffer | undefined;
+      if (o.startByte !== undefined && o.endByte !== undefined) {
+        buf = await fetchByteRange(
+          url,
+          o.startByte,
+          o.endByte - o.startByte,
+        );
+      } else {
+        const r = await fetch(url);
+        if (!r.ok) {
+          if (r.status === 404) {
+            this.#fileContentCache[kk] = { content: undefined, found: false };
+            return undefined; // file not found
+          }
+          throw Error(`Failed to fetch ${url}: ${r.statusText}`);
+        }
+        buf = await r.arrayBuffer();
+      }
+      if (o.decodeArray) {
+        const parentPath = path.split("/").slice(0, -1).join("/");
+        const zarray = (await this.readJson(parentPath + "/.zarray")) as
+          | ZMetaDataZArray
+          | undefined;
+        if (!zarray) throw Error("Failed to read .zarray for " + path);
+        try {
+          buf = await zarrDecodeChunkArray(
+            buf,
+            zarray.dtype,
+            zarray.compressor,
+            zarray.filters,
+            zarray.chunks,
+          );
+        } catch (e) {
+          throw Error(`Failed to decode chunk array for ${path}: ${e}`);
+        }
+      }
+      if (buf) {
+        this.#fileContentCache[kk] = { content: buf, found: true };
+      } else {
+        this.#fileContentCache[kk] = { content: undefined, found: false };
+      }
+      return buf;
+    } catch (e) {
+      this.#fileContentCache[kk] = { content: undefined, found: false }; // important to do this so we don't keep trying to read the same file
+      throw e;
+    } finally {
+      this.#inProgressReads[kk] = false;
+    }
+  }
+}
+
 class RemoteH5FileLindi {
   #cacheDisabled = false; // just for benchmarking
   #sourceUrls: string[] | undefined = undefined;
   constructor(
     public url: string,
-    private lindiFileSystemClient: ReferenceFileSystemClient,
+    private lindiFileSystemClient: ReferenceFileSystemClient | ZarrFileSystemClient,
     private pathsByParentPath: { [key: string]: string[] },
   ) {}
   static async create(url: string) {
@@ -75,6 +201,16 @@ class RemoteH5FileLindi {
       new ReferenceFileSystemClient(obj, remoteTar),
       pathsByParentPath,
     );
+  }
+  static async createFromZarr(
+    url: string,
+  ) {
+    const zarrFileSystemClient = new ZarrFileSystemClient(url);
+    return new RemoteH5FileLindi(
+      url,
+      zarrFileSystemClient,
+      {},
+    )
   }
   get dataIsRemote() {
     return !this.url.startsWith("http://localhost");

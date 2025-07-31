@@ -388,6 +388,18 @@ export const useTimeRange = () => {
       setVisibleTimeRange,
     ],
   );
+  const panTimeseriesSelectionVisibleStartTimeSec = useCallback(
+    (vst: number) => {
+      if (visibleStartTimeSec === undefined || visibleEndTimeSec === undefined)
+        return;
+      const currentVisibleDuration = visibleEndTimeSec - visibleStartTimeSec;
+      const newVisibleStartTimeSec = vst;
+      const newVisibleEndTimeSec =
+        newVisibleStartTimeSec + currentVisibleDuration;
+      setVisibleTimeRange(newVisibleStartTimeSec, newVisibleEndTimeSec);
+    },
+    [visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange],
+  );
   const setCurrentTimeFraction = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (fraction: number, _opts: { event: React.MouseEvent }) => {
@@ -407,6 +419,7 @@ export const useTimeRange = () => {
     zoomTimeseriesSelection,
     panTimeseriesSelection,
     panTimeseriesSelectionDeltaT,
+    panTimeseriesSelectionVisibleStartTimeSec,
     setCurrentTimeFraction,
   };
 };

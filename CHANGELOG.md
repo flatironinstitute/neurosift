@@ -1,5 +1,22 @@
 # Changes
 
+## July 29, 2025
+
+- Added spikes mode to neurotile visualization with toggle between raw and spikes data display
+- Implemented spike count visualization using hot colormap (black to red to yellow to white)
+- Added mode toggle button in neurotile view to switch between raw electrophysiology data and spike counts
+- Fixed spikes mode rendering to use individual rectangles instead of bitmap to prevent missing sparse spike data due to resampling
+- Optimized neurotile data loading to load tiles in parallel asynchronously for improved performance
+
+## July 28, 2025
+
+- Added experimental neurotile visualization with multiscale heatmap display for electrophysiology data
+- Implemented time-scrollable, zoomable interface using TimeScrollView2 for neurotile data
+- Added automatic downsampling level selection based on zoom level to maintain optimal data resolution
+- Added loading states with visual feedback while preserving axis visibility during data loading
+- Implemented in-memory caching for neurotile data loading to improve performance and reduce redundant file I/O operations
+- Changed neurotile min/max scaling to use data shown in viewport rather than all loaded data for better contrast
+
 ## June 28, 2025
 
 - Fix specifications provider and https://github.com/flatironinstitute/neurosift/issues/293#issuecomment-3013717369

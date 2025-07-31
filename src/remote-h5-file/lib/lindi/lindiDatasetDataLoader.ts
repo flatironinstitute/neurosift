@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import ReferenceFileSystemClient from "./ReferenceFileSystemClient";
-import { ZMetaDataZArray } from "./RemoteH5FileLindi";
+import { ZarrFileSystemClient, ZMetaDataZArray } from "./RemoteH5FileLindi";
 
 const lindiDatasetDataLoader = async (o: {
-  client: ReferenceFileSystemClient;
+  client: ReferenceFileSystemClient | ZarrFileSystemClient;
   path: string;
   zarray: ZMetaDataZArray;
   slice: [number, number][];
@@ -30,6 +30,7 @@ const lindiDatasetDataLoader = async (o: {
     const sN2 = slice1[1][1] - slice1[1][0];
     const sN3 = o.slice[2][1] - o.slice[2][0];
     const sNother = shape.slice(3).reduce((a, b) => a * b, 1);
+    const N3 = shape[2];
     const xx = await lindiDatasetDataLoader({
       client,
       path,
@@ -44,7 +45,7 @@ const lindiDatasetDataLoader = async (o: {
       for (let i2 = 0; i2 < sN2; i2++) {
         for (let i3 = o.slice[2][0]; i3 < o.slice[2][1]; i3++) {
           for (let i4 = 0; i4 < sNother; i4++) {
-            xxRet[iRet] = xx[i4 + sNother * (i3 + sN3 * (i2 + sN2 * i1))];
+            xxRet[iRet] = xx[i4 + sNother * (i3 + N3 * (i2 + sN2 * i1))];
             iRet++;
           }
         }

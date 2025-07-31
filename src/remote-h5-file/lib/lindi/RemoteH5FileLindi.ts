@@ -5,10 +5,14 @@ import {
   RemoteH5Group,
   RemoteH5Subdataset,
   RemoteH5Subgroup,
-  getRemoteH5File,
+  // getRemoteH5File,
   globalRemoteH5FileStats,
 } from "../RemoteH5File";
-import { Canceler } from "../helpers";
+// import { Canceler } from "../helpers";
+
+type Canceler = {
+  onCancel: (() => void)[];
+};
 
 import ReferenceFileSystemClient, {
   ReferenceFileSystemObject,
@@ -16,6 +20,7 @@ import ReferenceFileSystemClient, {
   isReferenceFileSystemObject,
 } from "./ReferenceFileSystemClient";
 import lindiDatasetDataLoader from "./lindiDatasetDataLoader";
+import zarrDecodeChunkArray from "./zarrDecodeChunkArray";
 
 type ZMetaDataZAttrs = { [key: string]: any };
 
@@ -34,18 +39,152 @@ export type ZMetaDataZArray = {
   zarr_format?: 2;
 };
 
+export class ZarrFileSystemClient {
+  #fileContentCache: {
+    [key: string]: { content: any | undefined; found: boolean };
+  } = {};
+  #inProgressReads: { [key: string]: boolean } = {};
+  constructor(
+    private url: string,
+    private zmetadata: any,
+  ) {}
+  async readJson(path: string): Promise<{ [key: string]: any } | undefined> {
+    if (path in this.zmetadata.metadata) {
+      return this.zmetadata.metadata[path];
+    }
+    const lastPartOfPath = path.split("/").slice(-1)[0];
+    if (lastPartOfPath.startsWith(".")) {
+      // if it's not in the metadata, we assume it's not there
+      return undefined;
+    }
+    const buf = await this.readBinary(path, { decodeArray: false });
+    if (!buf) return undefined;
+    const text = new TextDecoder().decode(buf);
+    try {
+      return JSON.parse(text, (_key, value) => {
+        if (value === "___NaN___") return NaN;
+        return value;
+      });
+    } catch (e) {
+      console.warn(text);
+      throw Error("Failed to parse JSON for " + path + ": " + e);
+    }
+  }
+  async readBinary(
+    path: string,
+    o: {
+      decodeArray?: boolean;
+      startByte?: number;
+      endByte?: number;
+      disableCache?: boolean;
+    },
+  ): Promise<any | undefined> {
+    if (o.startByte !== undefined) {
+      if (o.decodeArray)
+        throw Error("Cannot decode array and read a slice at the same time");
+      if (o.endByte === undefined)
+        throw Error("If you specify startByte, you must also specify endByte");
+    } else if (o.endByte !== undefined) {
+      throw Error("If you specify endByte, you must also specify startByte");
+    }
+    if (
+      o.endByte !== undefined &&
+      o.startByte !== undefined &&
+      o.endByte < o.startByte
+    ) {
+      throw Error(
+        `endByte must be greater than or equal to startByte: ${o.startByte} ${o.endByte} for ${path}`,
+      );
+    }
+    if (
+      o.endByte !== undefined &&
+      o.startByte !== undefined &&
+      o.endByte === o.startByte
+    ) {
+      return new ArrayBuffer(0);
+    }
+    const kk =
+      path +
+      "|" +
+      (o.decodeArray ? "decode" : "") +
+      "|" +
+      o.startByte +
+      "|" +
+      o.endByte;
+    while (this.#inProgressReads[kk]) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    this.#inProgressReads[kk] = true;
+    try {
+      if (path.startsWith("/")) path = path.slice(1);
+      if (this.#fileContentCache[kk]) {
+        if (this.#fileContentCache[kk].found) {
+          return this.#fileContentCache[kk].content;
+        }
+        return undefined;
+      }
+      const url = this.url + "/" + path;
+      let buf: ArrayBuffer | undefined;
+      if (o.startByte !== undefined && o.endByte !== undefined) {
+        buf = await fetchByteRange(url, o.startByte, o.endByte - o.startByte);
+      } else {
+        const r = await fetch(url);
+        if (!r.ok) {
+          if (r.status === 404) {
+            this.#fileContentCache[kk] = { content: undefined, found: false };
+            return undefined; // file not found
+          }
+          throw Error(`Failed to fetch ${url}: ${r.statusText}`);
+        }
+        buf = await r.arrayBuffer();
+      }
+      if (o.decodeArray) {
+        const parentPath = path.split("/").slice(0, -1).join("/");
+        const zarray = (await this.readJson(parentPath + "/.zarray")) as
+          | ZMetaDataZArray
+          | undefined;
+        if (!zarray) throw Error("Failed to read .zarray for " + path);
+        try {
+          buf = await zarrDecodeChunkArray(
+            buf,
+            zarray.dtype,
+            zarray.compressor,
+            zarray.filters,
+            zarray.chunks,
+          );
+        } catch (e) {
+          throw Error(`Failed to decode chunk array for ${path}: ${e}`);
+        }
+      }
+      if (buf) {
+        this.#fileContentCache[kk] = { content: buf, found: true };
+      } else {
+        this.#fileContentCache[kk] = { content: undefined, found: false };
+      }
+      return buf;
+    } catch (e) {
+      this.#fileContentCache[kk] = { content: undefined, found: false }; // important to do this so we don't keep trying to read the same file
+      throw e;
+    } finally {
+      this.#inProgressReads[kk] = false;
+    }
+  }
+}
+
 class RemoteH5FileLindi {
   #cacheDisabled = false; // just for benchmarking
   #sourceUrls: string[] | undefined = undefined;
   constructor(
     public url: string,
-    private lindiFileSystemClient: ReferenceFileSystemClient,
+    private lindiFileSystemClient:
+      | ReferenceFileSystemClient
+      | ZarrFileSystemClient,
     private pathsByParentPath: { [key: string]: string[] },
   ) {}
   static async create(url: string) {
     const { rfs: obj, remoteTar } = await fetchRfsFromRemoteLindi(url);
-    console.info(`reference file system for ${url}`, obj);
-    console.info(`Meta only`, metaOnly(obj));
+    // console.info(`reference file system for ${url}`, obj);
+    // console.info(`Meta only`, metaOnly(obj));
     const pathsByParentPath: { [key: string]: string[] } = {};
     for (const path in obj.refs) {
       if (path === ".zattrs" || path === ".zgroup") continue;
@@ -71,6 +210,16 @@ class RemoteH5FileLindi {
       new ReferenceFileSystemClient(obj, remoteTar),
       pathsByParentPath,
     );
+  }
+  static async createFromZarr(url: string) {
+    const zmetadataUrl = `${url}/.zmetadata`;
+    const zmetadataResponse = await fetch(zmetadataUrl);
+    if (!zmetadataResponse.ok) {
+      throw new Error(`Failed to fetch Zarr metadata from ${zmetadataUrl}`);
+    }
+    const zmetadata = await zmetadataResponse.json();
+    const zarrFileSystemClient = new ZarrFileSystemClient(url, zmetadata);
+    return new RemoteH5FileLindi(url, zarrFileSystemClient, {});
   }
   get dataIsRemote() {
     return !this.url.startsWith("http://localhost");
@@ -218,21 +367,23 @@ class RemoteH5FileLindi {
       pathWithoutBeginningSlash + "/.external_hdf5",
     );
     if (externalHdf5) {
-      const a = await getRemoteH5File(externalHdf5.url);
-      return a.getDatasetData(externalHdf5.name, o);
+      throw Error("External hdf5 not supported on server side");
+      // const a = await getRemoteH5File(externalHdf5.url);
+      // return a.getDatasetData(externalHdf5.name, o);
     }
 
     const zattrs = (await this.lindiFileSystemClient.readJson(
       pathWithoutBeginningSlash + "/.zattrs",
     )) as ZMetaDataZAttrs;
     if (zattrs && zattrs["_EXTERNAL_ARRAY_LINK"]) {
-      const externalArrayLink = zattrs["_EXTERNAL_ARRAY_LINK"];
-      let url0 = externalArrayLink.url;
-      if (this.#cacheDisabled) {
-        url0 += `?cacheBust=${Date.now()}`;
-      }
-      const a = await getRemoteH5File(url0);
-      return a.getDatasetData(externalArrayLink.name, o);
+      throw Error("External array link not supported on server side");
+      // const externalArrayLink = zattrs["_EXTERNAL_ARRAY_LINK"];
+      // let url0 = externalArrayLink.url;
+      // if (this.#cacheDisabled) {
+      //   url0 += `?cacheBust=${Date.now()}`;
+      // }
+      // const a = await getRemoteH5File(url0);
+      // return a.getDatasetData(externalArrayLink.name, o);
     }
 
     const ret = await lindiDatasetDataLoader({
@@ -405,21 +556,21 @@ export const getRemoteH5FileLindi = async (url: string) => {
   }
 };
 
-const metaOnly = (obj: ReferenceFileSystemObject) => {
-  const ret = {
-    refs: {} as any,
-    version: obj.version,
-  };
-  for (const k in obj.refs) {
-    if (
-      k.endsWith(".zattrs") ||
-      k.endsWith(".zgroup") ||
-      k.endsWith(".zarray")
-    ) {
-      ret.refs[k] = obj.refs[k];
-    }
-  }
-  return ret;
-};
+// const metaOnly = (obj: ReferenceFileSystemObject) => {
+//   const ret = {
+//     refs: {} as any,
+//     version: obj.version,
+//   };
+//   for (const k in obj.refs) {
+//     if (
+//       k.endsWith(".zattrs") ||
+//       k.endsWith(".zgroup") ||
+//       k.endsWith(".zarray")
+//     ) {
+//       ret.refs[k] = obj.refs[k];
+//     }
+//   }
+//   return ret;
+// };
 
 export default RemoteH5FileLindi;
