@@ -32,10 +32,10 @@ export const renderHeatmap = async ({
   width,
   height,
   margins,
-  cancelHandle,
+  // cancelHandle,
 }: RenderHeatmapProps) => {
-  const showRenderTime = true;
-  let timer = Date.now();
+  const showRenderTime = false;
+  const timer = Date.now();
 
   const { data, downsamplingLevel } = neurotileData;
 
@@ -138,12 +138,12 @@ export const renderHeatmap = async ({
 
     // Draw rectangles for non-zero spike bins
     for (let t = 0; t < numCoveredSamples; t++) {
-      const elapsed = Date.now() - timer;
-      if (elapsed > 30) {
-        await new Promise((resolve) => setTimeout(resolve, 0)); // Yield to browser
-        if (cancelHandle.canceled) return;
-        timer = Date.now(); // Reset timer for next interval
-      }
+      // const elapsed = Date.now() - timer;
+      // if (elapsed > 300) {
+      //   await new Promise((resolve) => setTimeout(resolve, 0)); // Yield to browser
+      //   if (cancelHandle.canceled) return;
+      //   timer = Date.now(); // Reset timer for next interval
+      // }
 
       for (let c = 0; c < numChannels; c++) {
         const spikeCount = data[t * numChannels + c];
@@ -173,12 +173,12 @@ export const renderHeatmap = async ({
 
     // Fill the image data
     for (let t = 0; t < numCoveredSamples; t++) {
-      const elapsed = Date.now() - timer;
-      if (elapsed > 30) {
-        await new Promise((resolve) => setTimeout(resolve, 0)); // Yield to browser
-        if (cancelHandle.canceled) return;
-        timer = Date.now(); // Reset timer for next interval
-      }
+      // const elapsed = Date.now() - timer;
+      // if (elapsed > 30) {
+      //   await new Promise((resolve) => setTimeout(resolve, 0)); // Yield to browser
+      //   if (cancelHandle.canceled) return;
+      //   timer = Date.now(); // Reset timer for next interval
+      // }
       for (let c = 0; c < numChannels; c++) {
         // For raw mode, use min/max pairs
         const valueMin = data[t * numChannels * 2 + c * 2];
@@ -243,12 +243,12 @@ export const renderHeatmap = async ({
 
       // Draw spike rectangles on top of the bitmap
       for (let t = 0; t < numCoveredSamples; t++) {
-        const elapsed = Date.now() - timer;
-        if (elapsed > 30) {
-          await new Promise((resolve) => setTimeout(resolve, 0)); // Yield to browser
-          if (cancelHandle.canceled) return;
-          timer = Date.now(); // Reset timer for next interval
-        }
+        // const elapsed = Date.now() - timer;
+        // if (elapsed > 30) {
+        //   await new Promise((resolve) => setTimeout(resolve, 0)); // Yield to browser
+        //   if (cancelHandle.canceled) return;
+        //   timer = Date.now(); // Reset timer for next interval
+        // }
 
         for (let c = 0; c < numChannels; c++) {
           const spikeCount = neurotileData.spikesData[t * numChannels + c];
@@ -284,10 +284,10 @@ export const renderHeatmap = async ({
 const getSpikeColor = (spikeCount: number): string => {
   if (spikeCount === 0) return "rgb(0, 0, 0)";
   if (spikeCount === 1) {
-    return "rgb(100, 0, 0)"; // Red for spikes
+    return "rgb(0, 0, 100)";
   } else if (spikeCount === 2) {
-    return `rgb(200, 0, 0)`;
+    return `rgb(0, 0, 180)`;
   } else {
-    return `rgb(255, 0, 0)`; // Brighter red for higher spike counts
+    return `rgb(0, 0, 255)`;
   }
 };
