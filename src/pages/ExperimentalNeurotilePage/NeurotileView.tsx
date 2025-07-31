@@ -388,9 +388,9 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
   ];
 
   return (
-    <div style={{ width, height, position: "relative" }}>
+    <div style={{ width, height, position: "relative", overflow: "hidden" }}>
       <TimeScrollView3
-        width={width}
+        width={width - 10}
         height={height}
         onCanvasElement={(canvas) => {
           if (!canvas) return;
