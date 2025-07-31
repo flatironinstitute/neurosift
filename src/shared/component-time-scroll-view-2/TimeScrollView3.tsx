@@ -270,7 +270,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
       if (e.deltaY === 0) return;
       if (requireClickToZoom !== false && !isViewClicked) return;
       const zoomsCount = -e.deltaY / 100;
-      zoomTimeseriesSelection(zoomsCount > 0 ? "in" : "out", 1.1, hoverTime);
+      zoomTimeseriesSelection(zoomsCount > 0 ? "in" : "out", 1.2, hoverTime);
     },
     [
       shiftZoom,

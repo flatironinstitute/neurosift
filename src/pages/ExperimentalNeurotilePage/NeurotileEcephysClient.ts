@@ -12,12 +12,19 @@ class NeurotileEcephysClient {
     private file: RemoteH5FileLindi,
     private root: RemoteH5Group,
     private numLevels: number,
+    private statusData: {
+      last_start_sample: number;
+    },
   ) {}
-  static async create(file: RemoteH5FileLindi, electricalSeriesPath: string) {
-    const root = await file.getGroup(electricalSeriesPath + "/ecephys_mosaic");
+  static async create(
+    file: RemoteH5FileLindi,
+    electricalSeriesPath: string,
+    statusFileUrl: string,
+  ) {
+    const root = await file.getGroup(electricalSeriesPath + "/ecephys_tiles");
     if (!root)
       throw new Error(
-        `Group not found in the file: ${electricalSeriesPath}/ecephys_mosaic`,
+        `Group not found in the file: ${electricalSeriesPath}/ecephys_tiles`,
       );
     let numLevels = 1;
     while (true) {
@@ -26,7 +33,17 @@ class NeurotileEcephysClient {
       if (!g) break; // No more levels
       numLevels++;
     }
-    return new NeurotileEcephysClient(file, root, numLevels);
+
+    // Load status data
+    const resp = await fetch(statusFileUrl);
+    if (!resp.ok) {
+      throw new Error(`Failed to fetch status data from ${statusFileUrl}`);
+    }
+    const statusData = (await resp.json()) as {
+      last_start_sample: number;
+    };
+
+    return new NeurotileEcephysClient(file, root, numLevels, statusData);
   }
   get numChannels(): number {
     return this.root.attrs["num_channels"];
@@ -38,7 +55,7 @@ class NeurotileEcephysClient {
     return this.root.attrs["num_samples"];
   }
   get numCoveredSamples(): number {
-    return this.root.attrs["last_start_sample"];
+    return this.statusData.last_start_sample;
   }
   get numDownsamplingLevels(): number {
     return this.numLevels;

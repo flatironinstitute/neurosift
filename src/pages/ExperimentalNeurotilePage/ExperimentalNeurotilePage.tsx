@@ -44,11 +44,15 @@ const useTest = () => {
   const [client, setClient] = useState<NeurotileEcephysClient | null>(null);
   useEffect(() => {
     const load = async () => {
-      const url = "http://localhost:3001/000957_example.ns.zarr";
+      // const url = "http://localhost:3001/000957_example.ns.zarr";
+      const url =
+        "https://tiles.neurosift.org/dandisets/000957/d4bd92fc-4119-4393-b807-f007a86778a1/tiles.zarr";
       const x = await RemoteH5FileLindi.createFromZarr(url);
+      const statusDataUrl = url + ".status.json";
       const c = await NeurotileEcephysClient.create(
         x,
         "/acquisition/ElectricalSeriesAP",
+        statusDataUrl,
       );
       setClient(c);
     };

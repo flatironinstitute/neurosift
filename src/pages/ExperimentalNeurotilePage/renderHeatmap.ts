@@ -37,7 +37,7 @@ export const renderHeatmap = async ({
   const showRenderTime = true;
   let timer = Date.now();
 
-  const { data } = neurotileData;
+  const { data, downsamplingLevel } = neurotileData;
 
   const plotWidth = width - margins.left - margins.right;
   const plotHeight = height - margins.top - margins.bottom;
@@ -69,13 +69,25 @@ export const renderHeatmap = async ({
     minValue = 0;
   } else if (isOverlayMode) {
     // For overlay mode, calculate min/max for both datasets
-    // Raw data min/max
-    for (let t = 0; t < numCoveredSamples; t++) {
-      for (let c = 0; c < numChannels; c++) {
-        const valueMin = data[t * numChannels * 2 + c * 2];
-        const valueMax = data[t * numChannels * 2 + c * 2 + 1];
-        minValue = Math.min(minValue, valueMin);
-        maxValue = Math.max(maxValue, valueMax);
+
+    if (downsamplingLevel > 0) {
+      // min/max pairs
+      for (let t = 0; t < numCoveredSamples; t++) {
+        for (let c = 0; c < numChannels; c++) {
+          const valueMin = data[t * numChannels * 2 + c * 2];
+          const valueMax = data[t * numChannels * 2 + c * 2 + 1];
+          minValue = Math.min(minValue, valueMin);
+          maxValue = Math.max(maxValue, valueMax);
+        }
+      }
+    } else {
+      // Single values for raw mode
+      for (let t = 0; t < numCoveredSamples; t++) {
+        for (let c = 0; c < numChannels; c++) {
+          const value = data[t * numChannels + c];
+          minValue = Math.min(minValue, value);
+          maxValue = Math.max(maxValue, value);
+        }
       }
     }
 
@@ -89,13 +101,24 @@ export const renderHeatmap = async ({
       }
     }
   } else {
-    // For raw mode, data has min/max pairs
-    for (let t = 0; t < numCoveredSamples; t++) {
-      for (let c = 0; c < numChannels; c++) {
-        const valueMin = data[t * numChannels * 2 + c * 2];
-        const valueMax = data[t * numChannels * 2 + c * 2 + 1];
-        minValue = Math.min(minValue, valueMin);
-        maxValue = Math.max(maxValue, valueMax);
+    if (downsamplingLevel > 0) {
+      // min/max pairs
+      for (let t = 0; t < numCoveredSamples; t++) {
+        for (let c = 0; c < numChannels; c++) {
+          const valueMin = data[t * numChannels * 2 + c * 2];
+          const valueMax = data[t * numChannels * 2 + c * 2 + 1];
+          minValue = Math.min(minValue, valueMin);
+          maxValue = Math.max(maxValue, valueMax);
+        }
+      }
+    } else {
+      // Single values for raw mode
+      for (let t = 0; t < numCoveredSamples; t++) {
+        for (let c = 0; c < numChannels; c++) {
+          const value = data[t * numChannels + c];
+          minValue = Math.min(minValue, value);
+          maxValue = Math.max(maxValue, value);
+        }
       }
     }
   }
@@ -104,39 +127,14 @@ export const renderHeatmap = async ({
   if (minValue === maxValue) {
     maxValue = minValue + 1;
   }
-  if (spikesMinValue === spikesMaxValue && spikesMaxValue > 0) {
+  if (spikesMinValue === spikesMaxValue) {
     spikesMaxValue = spikesMinValue + 1;
   }
 
   if (isSpikesMode) {
     // For spikes mode, draw rectangles for non-zero bins to avoid resampling issues
-    context.fillStyle = "black";
+    context.fillStyle = "gray";
     context.fillRect(margins.left, margins.top, plotWidth, plotHeight);
-
-    // Helper function to get spike color
-    const getSpikeColor = (spikeCount: number): string => {
-      if (spikeCount === 0) return "rgb(0, 0, 0)";
-
-      const normalizedValue = (spikeCount - minValue) / (maxValue - minValue);
-      const intensity = normalizedValue;
-
-      if (intensity < 0.33) {
-        // Black to red
-        const t = intensity / 0.33;
-        const red = Math.floor(255 * t);
-        return `rgb(${red}, 0, 0)`;
-      } else if (intensity < 0.66) {
-        // Red to yellow
-        const t = (intensity - 0.33) / 0.33;
-        const green = Math.floor(255 * t);
-        return `rgb(255, ${green}, 0)`;
-      } else {
-        // Yellow to white
-        const t = (intensity - 0.66) / 0.34;
-        const blue = Math.floor(255 * t);
-        return `rgb(255, 255, ${blue})`;
-      }
-    };
 
     // Draw rectangles for non-zero spike bins
     for (let t = 0; t < numCoveredSamples; t++) {
@@ -155,11 +153,16 @@ export const renderHeatmap = async ({
           const rectX = margins.left + (t * plotWidth) / numCoveredSamples;
           const rectY =
             margins.top + ((numChannels - 1 - c) * plotHeight) / numChannels;
-          const rectWidth = plotWidth / numCoveredSamples;
-          const rectHeight = plotHeight / numChannels;
+          const rectWidth = Math.max(1, plotWidth / numCoveredSamples);
+          const rectHeight = Math.max(1, plotHeight / numChannels);
 
           context.fillStyle = getSpikeColor(spikeCount);
-          context.fillRect(rectX, rectY, rectWidth, rectHeight);
+          context.fillRect(
+            rectX - rectWidth / 2,
+            rectY - rectHeight / 2,
+            rectWidth,
+            rectHeight,
+          );
         }
       }
     }
@@ -188,6 +191,8 @@ export const renderHeatmap = async ({
         // Convert to color
         const intensity1 = Math.floor(normalizedMinValue * 255);
         const intensity2 = Math.floor(normalizedMaxValue * 255);
+        // intensity1 = (intensity1 * 3) % 255;
+        // intensity2 = (intensity2 * 3) % 255;
 
         const color1 = [0, 85, 170]; // cool blue
         const color2 = [255, 170, 85]; // warm yellow
@@ -235,13 +240,6 @@ export const renderHeatmap = async ({
     // If overlay mode, draw spikes on top
     if (isOverlayMode && neurotileData.spikesData && spikesMaxValue > 0) {
       // Helper function to get contrasting spike color
-      const getContrastingSpikeColor = (spikeCount: number): string => {
-        let normalizedValue =
-          (spikeCount - spikesMinValue) / (spikesMaxValue - spikesMinValue);
-        const a = 1 - normalizedValue;
-        normalizedValue = 1 - a * a;
-        return `rgba(${Math.floor(255 * normalizedValue)}, 0, 0, 255)`;
-      };
 
       // Draw spike rectangles on top of the bitmap
       for (let t = 0; t < numCoveredSamples; t++) {
@@ -260,11 +258,16 @@ export const renderHeatmap = async ({
             const rectX = margins.left + (t * plotWidth) / numCoveredSamples;
             const rectY =
               margins.top + ((numChannels - 1 - c) * plotHeight) / numChannels;
-            const rectWidth = plotWidth / numCoveredSamples;
-            const rectHeight = plotHeight / numChannels;
+            const rectWidth = Math.max(1, plotWidth / numCoveredSamples);
+            const rectHeight = Math.max(1, plotHeight / numChannels);
 
-            context.fillStyle = getContrastingSpikeColor(spikeCount);
-            context.fillRect(rectX, rectY, rectWidth, rectHeight);
+            context.fillStyle = getSpikeColor(spikeCount);
+            context.fillRect(
+              rectX - rectWidth / 2,
+              rectY - rectHeight / 2,
+              rectWidth,
+              rectHeight,
+            );
           }
         }
       }
@@ -274,5 +277,17 @@ export const renderHeatmap = async ({
   if (showRenderTime) {
     const elapsed = Date.now() - timer;
     console.info(`Elapsed time for rendering heatmap: ${elapsed} ms`);
+  }
+};
+
+// Helper function to get spike color
+const getSpikeColor = (spikeCount: number): string => {
+  if (spikeCount === 0) return "rgb(0, 0, 0)";
+  if (spikeCount === 1) {
+    return "rgb(100, 0, 0)"; // Red for spikes
+  } else if (spikeCount === 2) {
+    return `rgb(200, 0, 0)`;
+  } else {
+    return `rgb(255, 0, 0)`; // Brighter red for higher spike counts
   }
 };
