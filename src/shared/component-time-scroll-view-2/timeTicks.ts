@@ -4,7 +4,7 @@ export type TimeTick = {
   value: number;
   label: string;
   major: boolean;
-  pixelXposition: number;
+  xPixelPosition: number;
 };
 
 type TickUnit = {
@@ -119,7 +119,7 @@ export const useTimeTicks = (
           value: v,
           label: u.scale_appropriate_label(tickNumber),
           major,
-          pixelXposition: timeToPixel(v),
+          xPixelPosition: timeToPixel(v),
         });
       }
     }

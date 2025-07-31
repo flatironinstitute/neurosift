@@ -64,16 +64,16 @@ const paintTimeTicks = (
     const topPixel = !o.hideGridlines ? plotTopPixelHeight : xAxisPixelHeight;
     drawLine(
       context,
-      tick.pixelXposition,
+      tick.xPixelPosition,
       gridlineBottomEdge,
-      tick.pixelXposition,
+      tick.xPixelPosition,
       topPixel,
     );
     if (!hideTimeAxis) {
       context.fillStyle = tick.major ? "black" : "gray";
       context.fillText(
         tick.label,
-        tick.pixelXposition,
+        tick.xPixelPosition,
         gridlineBottomEdge + labelOffsetFromGridline,
       );
     }

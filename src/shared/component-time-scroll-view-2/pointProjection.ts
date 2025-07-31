@@ -165,12 +165,12 @@ const applyPixelMargins = (
   totalPixelHeight: number,
   pixelMargins?: PartialMargins,
 ) => {
-  const pixelXMin = pixelMargins?.left ?? 0;
-  const pixelYMin = pixelMargins?.top ?? 0;
-  const pixelXMax = totalPixelWidth - (pixelMargins?.right ?? 0);
-  const pixelYMax = totalPixelHeight - (pixelMargins?.bottom ?? 0);
+  const xPixelMin = pixelMargins?.left ?? 0;
+  const yPixelMin = pixelMargins?.top ?? 0;
+  const xPixelMax = totalPixelWidth - (pixelMargins?.right ?? 0);
+  const yPixelMax = totalPixelHeight - (pixelMargins?.bottom ?? 0);
 
-  return { xMin: pixelXMin, xMax: pixelXMax, yMin: pixelYMin, yMax: pixelYMax };
+  return { xMin: xPixelMin, xMax: xPixelMax, yMin: yPixelMin, yMax: yPixelMax };
 };
 
 const handleAspectRatio = (pixelDims: Dims, dataDims: Dims): Dims => {

@@ -200,23 +200,23 @@ export const renderHeatmap = async ({
         ];
 
         // Map to pixel coordinates
-        const pixelX = Math.floor((t * plotWidth) / numCoveredSamples);
-        const pixelY = Math.floor(
+        const xPixel = Math.floor((t * plotWidth) / numCoveredSamples);
+        const yPixel = Math.floor(
           ((numChannels - 1 - c) * plotHeight) / numChannels,
         ); // Flip Y axis
 
         // Fill the pixel area
-        const pixelEndX = Math.min(
+        const xPixelEnd = Math.min(
           plotWidth,
           Math.floor(((t + 1) * plotWidth) / numCoveredSamples),
         );
-        const pixelEndY = Math.min(
+        const yPixelEnd = Math.min(
           plotHeight,
           Math.floor(((numChannels - c) * plotHeight) / numChannels),
         );
 
-        for (let px = pixelX; px < pixelEndX; px++) {
-          for (let py = pixelY; py < pixelEndY; py++) {
+        for (let px = xPixel; px < xPixelEnd; px++) {
+          for (let py = yPixel; py < yPixelEnd; py++) {
             if (px >= 0 && px < plotWidth && py >= 0 && py < plotHeight) {
               const index = (py * plotWidth + px) * 4;
               pixels[index] = color[0]; // R
