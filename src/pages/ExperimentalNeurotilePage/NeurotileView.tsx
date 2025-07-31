@@ -35,7 +35,7 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
   const { setCurrentTime } = useTimeseriesSelection();
 
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
-  const [mode, setMode] = useState<ViewMode>("overlay");
+  const [mode, setMode] = useState<ViewMode>("raw");
 
   // Calculate total duration from client
   const totalDuration = client.numCoveredSamples / client.samplingFrequency;
