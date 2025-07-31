@@ -187,8 +187,6 @@ export const renderHeatmap = async ({
         // Convert to color
         const intensity1 = Math.floor(normalizedMinValue * 255);
         const intensity2 = Math.floor(normalizedMaxValue * 255);
-        // intensity1 = (intensity1 * 3) % 255;
-        // intensity2 = (intensity2 * 3) % 255;
 
         const color1 = [0, 85, 170]; // cool blue
         const color2 = [255, 170, 85]; // warm yellow
