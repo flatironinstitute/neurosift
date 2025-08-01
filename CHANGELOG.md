@@ -1,5 +1,11 @@
 # Changes
 
+## August 1, 2025
+- Added channel selection functionality to neurotile visualization with click-to-select interaction
+- Implemented semitransparent yellow highlight overlay for selected channels in neurotile view
+- Added mouse click handling in TimeScrollView3 to support channel selection based on Y-coordinate
+- Enhanced neurotile rendering to display selected channel indicator with both fill and border highlighting
+
 ## July 31, 2025
 - Added interactive toolbar and status bar to TimeScrollView3 component with time display and interaction mode controls
 - Implemented dual interaction modes: pan mode (drag to pan, wheel to zoom) and select-zoom mode (drag to select region and zoom in)

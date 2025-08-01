@@ -14,13 +14,13 @@ export const useTimeScrollView3 = ({
   height,
   hideToolbar,
   leftMargin,
-  bottomToolbarHeight,
+  hasCustomActions,
 }: {
   width: number;
   height: number;
   hideToolbar?: boolean;
   leftMargin?: number;
-  bottomToolbarHeight?: number;
+  hasCustomActions?: boolean;
 }) => {
   const margins = useMemo(
     () => ({
@@ -30,8 +30,10 @@ export const useTimeScrollView3 = ({
     [leftMargin],
   );
   const toolbarWidth = hideToolbar ? 0 : DefaultToolbarWidth;
+  // Calculate bottom toolbar height: 40px for main toolbar + 40px for custom actions (if present)
+  const bottomToolbarHeight = hasCustomActions ? 80 : 40;
   const canvasWidth = width - toolbarWidth;
-  const canvasHeight = height - (bottomToolbarHeight || 0);
+  const canvasHeight = height - bottomToolbarHeight;
   return {
     margins,
     canvasWidth,

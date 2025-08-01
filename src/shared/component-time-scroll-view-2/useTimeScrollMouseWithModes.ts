@@ -20,6 +20,7 @@ type UseTimeScrollMouseWithModesParams = {
   onMouseUp?: (e: React.MouseEvent) => void;
   onMouseMove?: (e: React.MouseEvent) => void;
   onMouseOut?: (e: React.MouseEvent) => void;
+  onCanvasClick?: (x: number, y: number) => void;
   interactionMode: InteractionMode;
 };
 
@@ -34,6 +35,7 @@ const useTimeScrollMouseWithModes = (
     onMouseUp,
     onMouseMove,
     onMouseOut,
+    onCanvasClick,
     interactionMode,
   } = params;
 
@@ -101,9 +103,14 @@ const useTimeScrollMouseWithModes = (
             const endTime = pixelToTime(endX);
             setVisibleTimeRange(startTime, endTime);
           } else if (!mouseData.current.moved) {
-            // Single click - set current time
+            // Single click - set current time and call canvas click callback
             const t0 = pixelToTime(x);
             setCurrentTime(t0);
+
+            if (onCanvasClick) {
+              const y = e.clientY - e.currentTarget.getBoundingClientRect().y;
+              onCanvasClick(x, y);
+            }
           }
 
           setSelectionRect(null);
@@ -117,6 +124,11 @@ const useTimeScrollMouseWithModes = (
           if (!mouseData.current.moved) {
             const t0 = pixelToTime(x);
             setCurrentTime(t0);
+
+            if (onCanvasClick) {
+              const y = e.clientY - e.currentTarget.getBoundingClientRect().y;
+              onCanvasClick(x, y);
+            }
           }
         }
       } else {

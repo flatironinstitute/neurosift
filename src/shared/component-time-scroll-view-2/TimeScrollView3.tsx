@@ -22,6 +22,7 @@ import TimeScrollToolbar, {
   InteractionMode,
   CustomToolbarAction,
 } from "./TimeScrollToolbar";
+import CustomActionsToolbar from "./CustomActionsToolbar";
 
 type Props = {
   width: number;
@@ -43,6 +44,7 @@ type Props = {
   };
   leftMargin?: number;
   customToolbarActions?: CustomToolbarAction[];
+  onCanvasClick?: (x: number, y: number) => void;
 };
 
 const TimeScrollView3: FunctionComponent<Props> = ({
@@ -60,6 +62,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
   requireClickToZoom,
   leftMargin,
   customToolbarActions,
+  onCanvasClick,
 }) => {
   const {
     visibleStartTimeSec,
@@ -79,7 +82,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     width,
     height,
     leftMargin,
-    bottomToolbarHeight: 40,
+    hasCustomActions: customToolbarActions && customToolbarActions.length > 0,
   });
 
   const timeToPixel = useMemo(() => {
@@ -208,6 +211,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     onMouseUp,
     onMouseMove,
     onMouseOut,
+    onCanvasClick,
     interactionMode,
   });
 
@@ -316,7 +320,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     isViewClicked,
   ]);
 
-  const toolbar = useMemo(() => {
+  const timeScrollToolbar = useMemo(() => {
     return (
       <TimeScrollToolbar
         width={width}
@@ -325,7 +329,6 @@ const TimeScrollView3: FunctionComponent<Props> = ({
         onInteractionModeChange={setInteractionMode}
         currentTime={currentTime}
         onZoomToFit={handleZoomToFit}
-        customActions={customToolbarActions}
       />
     );
   }, [
@@ -334,8 +337,17 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     setInteractionMode,
     currentTime,
     handleZoomToFit,
-    customToolbarActions,
   ]);
+
+  const customActionsToolbar = useMemo(() => {
+    return (
+      <CustomActionsToolbar
+        width={width}
+        height={40}
+        customActions={customToolbarActions}
+      />
+    );
+  }, [width, customToolbarActions]);
 
   return (
     <div
@@ -345,7 +357,8 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     >
       {content}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}>
-        {toolbar}
+        {timeScrollToolbar}
+        {customActionsToolbar}
       </div>
     </div>
   );

@@ -7,7 +7,7 @@ export type CustomToolbarAction = {
   id: string;
   label: string;
   icon?: string;
-  onClick: () => void;
+  onClick?: () => void;
   isActive?: boolean;
   tooltip?: string;
 };
@@ -19,7 +19,6 @@ type Props = {
   onInteractionModeChange: (mode: InteractionMode) => void;
   currentTime?: number;
   onZoomToFit?: () => void;
-  customActions?: CustomToolbarAction[];
 };
 
 const formatTime = (timeSec: number): string => {
@@ -39,7 +38,6 @@ const TimeScrollToolbar: FunctionComponent<Props> = ({
   onInteractionModeChange,
   currentTime,
   onZoomToFit,
-  customActions,
 }) => {
   const { zoomTimeseriesSelection, panTimeseriesSelection } = useTimeRange();
 
@@ -262,57 +260,8 @@ const TimeScrollToolbar: FunctionComponent<Props> = ({
         </button>
       </div>
 
-      {/* Right side - Custom actions and status display */}
+      {/* Right side - Time display */}
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        {/* Custom actions */}
-        {customActions && customActions.length > 0 && (
-          <>
-            {customActions.map((action) => (
-              <button
-                key={action.id}
-                onClick={action.onClick}
-                style={{
-                  padding: "4px 8px",
-                  border: "1px solid #ced4da",
-                  borderRadius: "4px",
-                  backgroundColor: action.isActive ? "#007bff" : "#ffffff",
-                  color: action.isActive ? "#ffffff" : "#495057",
-                  cursor: "pointer",
-                  fontSize: "12px",
-                  fontWeight: "500",
-                  transition: "all 0.15s ease",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-                title={action.tooltip || action.label}
-                onMouseEnter={(e) => {
-                  if (!action.isActive) {
-                    e.currentTarget.style.backgroundColor = "#e9ecef";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!action.isActive) {
-                    e.currentTarget.style.backgroundColor = "#ffffff";
-                  }
-                }}
-              >
-                {action.icon && <span>{action.icon}</span>}
-                {action.label}
-              </button>
-            ))}
-            <div
-              style={{
-                width: "1px",
-                height: "20px",
-                backgroundColor: "#dee2e6",
-                margin: "0 8px",
-              }}
-            />
-          </>
-        )}
-
-        {/* Time display */}
         <span style={{ color: "#6c757d", fontWeight: "500" }}>Time:</span>
         <span
           style={{

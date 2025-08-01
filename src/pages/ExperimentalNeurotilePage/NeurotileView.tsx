@@ -36,6 +36,7 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
 
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
   const [mode, setMode] = useState<ViewMode>("raw");
+  const [selectedChannel, setSelectedChannel] = useState<number | null>(null);
 
   // Calculate total duration from client
   const totalDuration = client.numCoveredSamples / client.samplingFrequency;
@@ -54,8 +55,31 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
     width,
     height,
     leftMargin,
-    bottomToolbarHeight: 40,
+    hasCustomActions: true, // NeurotileView always has custom actions
   });
+
+  // Function to convert pixel Y coordinate to channel number
+  const pixelToChannel = useCallback(
+    (pixelY: number) => {
+      const plotHeight = canvasHeight - margins.top - margins.bottom;
+      const relativeY = pixelY - margins.top;
+      const normalizedY = 1 - relativeY / plotHeight; // Flip Y axis
+      const channel = startChannel + normalizedY * (endChannel - startChannel);
+      return Math.round(
+        Math.max(startChannel, Math.min(endChannel - 1, channel)),
+      );
+    },
+    [canvasHeight, margins, startChannel, endChannel],
+  );
+
+  // Handle canvas clicks to set selected channel
+  const handleCanvasClick = useCallback(
+    (x: number, y: number) => {
+      const channel = pixelToChannel(y);
+      setSelectedChannel(channel);
+    },
+    [pixelToChannel],
+  );
 
   const {
     initializeTimeseriesSelection,
@@ -112,6 +136,7 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
       bottom: number;
     };
     mode: ViewMode;
+    selectedChannel: number | null;
   } | null>(null);
   useEffect(() => {
     renderLoopData.current = {
@@ -126,6 +151,7 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
       context,
       margins,
       mode,
+      selectedChannel,
     };
   }, [
     visibleStartTimeSec,
@@ -139,6 +165,7 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
     context,
     margins,
     mode,
+    selectedChannel,
   ]);
 
   useEffect(() => {
@@ -184,6 +211,7 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
         bottom: number;
       };
       mode: ViewMode;
+      selectedChannel: number | null;
     }) => {
       const {
         visibleStartTimeSec,
@@ -197,6 +225,7 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
         context,
         margins,
         mode,
+        selectedChannel,
       } = renderLoopData;
       if (
         visibleStartTimeSec === undefined ||
@@ -352,6 +381,36 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
         margins,
         cancelHandle: { canceled: false },
       });
+
+      // Draw selected channel line if there is one
+      if (selectedChannel !== null && selectedChannel !== undefined) {
+        const channelIndex = selectedChannel - startChannel;
+        if (channelIndex >= 0 && channelIndex < numChannels) {
+          const plotWidth = canvasWidth - margins.left - margins.right;
+          const plotHeight = canvasHeight - margins.top - margins.bottom;
+          const channelY =
+            margins.top +
+            ((numChannels - 1 - channelIndex) * plotHeight) / numChannels;
+          const channelHeight = plotHeight / numChannels;
+
+          // Draw a very subtle semitransparent highlight across the selected channel
+          context.fillStyle = "rgba(255, 255, 0, 0.1)";
+          context.fillRect(
+            margins.left,
+            channelY - channelHeight / 2,
+            plotWidth,
+            channelHeight,
+          );
+
+          // Draw a subtle border line
+          context.strokeStyle = "rgba(255, 255, 0, 0.3)";
+          context.lineWidth = 1;
+          context.beginPath();
+          context.moveTo(margins.left, channelY);
+          context.lineTo(margins.left + plotWidth, channelY);
+          context.stroke();
+        }
+      }
     };
     renderLoop();
     return () => {
@@ -359,8 +418,17 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
     };
   }, []);
 
-  // Create custom toolbar actions for mode switching
+  // Create custom toolbar actions for mode switching and channel display
   const customToolbarActions: CustomToolbarAction[] = [
+    {
+      id: "selected-channel",
+      label:
+        selectedChannel !== null
+          ? `Channel: ${selectedChannel}`
+          : "No channel selected",
+      isActive: false,
+      tooltip: "Currently selected channel",
+    },
     {
       id: "mode-raw",
       label: "Raw",
@@ -405,6 +473,7 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
           yLabel: "Channel",
         }}
         customToolbarActions={customToolbarActions}
+        onCanvasClick={handleCanvasClick}
       />
     </div>
   );

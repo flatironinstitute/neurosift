@@ -34,7 +34,19 @@ const paintCursor = (
     currentTimePixels !== undefined &&
     currentTimeIntervalPixels === undefined
   ) {
-    context.strokeStyle = "red";
+    // Draw highlight region
+    context.fillStyle = "rgba(255, 255, 0, 0.1)";
+    const highlightWidth = 4; // Width of highlight region
+    context.fillRect(
+      currentTimePixels - highlightWidth / 2,
+      margins.top,
+      highlightWidth,
+      context.canvas.height - margins.bottom - margins.top,
+    );
+
+    // Draw border line
+    context.strokeStyle = "rgba(200, 200, 0, 0.4)";
+    context.lineWidth = 1;
     context.beginPath();
     context.moveTo(currentTimePixels, margins.top);
     context.lineTo(currentTimePixels, context.canvas.height - margins.bottom);
