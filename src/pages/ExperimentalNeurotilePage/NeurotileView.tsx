@@ -74,7 +74,7 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
 
   // Handle canvas clicks to set selected channel
   const handleCanvasClick = useCallback(
-    (x: number, y: number) => {
+    (_x: number, y: number) => {
       const channel = pixelToChannel(y);
       setSelectedChannel(channel);
     },
