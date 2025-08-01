@@ -112,7 +112,7 @@ class NeurotileEcephysClient {
     }
     const sampleSlice = [
       tileIndex * this.tileSize,
-      (tileIndex + 1) * this.tileSize,
+      Math.min((tileIndex + 1) * this.tileSize, dataset.shape[0]),
     ] as [number, number];
     const channelSlice = [
       channelGroupIndex * this.channelGroupSize,

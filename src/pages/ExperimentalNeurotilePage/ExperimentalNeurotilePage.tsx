@@ -4,8 +4,6 @@ import React, { useEffect, useState } from "react";
 import NeurotileEcephysClient from "./NeurotileEcephysClient";
 import NeurotileView from "./NeurotileView";
 
-// Multi-dimensional array wrapper classes for handling 1D data in Python (row-major) convention
-
 type ExperimentalNeurotilePageProps = {
   width: number;
   height: number;
