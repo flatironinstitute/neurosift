@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
+import SpikeSortingDialog, { SpikeSortingParams } from "./SpikeSortingDialog";
 import NeurotileEcephysClient, {
   Array2D,
   Array3D,
@@ -37,6 +38,13 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
   const [mode, setMode] = useState<ViewMode>("raw");
   const [selectedChannel, setSelectedChannel] = useState<number | null>(null);
+  const [spikeSortDialogOpen, setSpikeSortDialogOpen] = useState(false);
+
+  const handleSpikeSortSubmit = (params: SpikeSortingParams) => {
+    console.log("Launching spike sorting with params:", params);
+    // TODO: Implement actual spike sorting logic here
+    setSpikeSortDialogOpen(false);
+  };
 
   // Calculate total duration from client
   const totalDuration = client.numCoveredSamples / client.samplingFrequency;
@@ -421,6 +429,14 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
   // Create custom toolbar actions for mode switching and channel display
   const customToolbarActions: CustomToolbarAction[] = [
     {
+      id: "spike-sort",
+      label: "Spike Sort",
+      icon: "🔍",
+      onClick: () => setSpikeSortDialogOpen(true),
+      isActive: false,
+      tooltip: "Launch spike sorting on this dataset",
+    },
+    {
       id: "selected-channel",
       label:
         selectedChannel !== null
@@ -457,6 +473,13 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
 
   return (
     <div style={{ width, height, position: "relative", overflow: "hidden" }}>
+      <SpikeSortingDialog
+        open={spikeSortDialogOpen}
+        onClose={() => setSpikeSortDialogOpen(false)}
+        onSubmit={handleSpikeSortSubmit}
+        defaultStartTime={visibleStartTimeSec || 0}
+        defaultEndTime={visibleEndTimeSec || totalDuration}
+      />
       <TimeScrollView3
         width={width - 10}
         height={height}
