@@ -92,7 +92,7 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
     dandisetVersionInfo,
     nwbFilesOwnlyControlVisible: true,
   });
-  
+
   if (loading || !dandisetResponse || !dandisetVersionInfo) {
     return <div>Loading...</div>;
   }
