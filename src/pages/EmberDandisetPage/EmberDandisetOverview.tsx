@@ -113,7 +113,7 @@ const EmberDandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
           {dandisetVersionInfo.metadata.name}
         </Typography>
 
-        {/* View on DANDI */}
+        {/* View on EMBER */}
         <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
           <a
             href={`https://dandi.emberarchive.org/dandiset/${dandisetVersionInfo.dandiset.identifier}/${dandisetVersionInfo.version}`}
@@ -121,7 +121,7 @@ const EmberDandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
             rel="noopener noreferrer"
             style={{ color: "#0066cc", textDecoration: "none" }}
           >
-            View on DANDI →
+            View on EMBER →
           </a>
         </Box>
 

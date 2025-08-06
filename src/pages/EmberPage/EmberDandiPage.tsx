@@ -16,7 +16,7 @@ import { FunctionComponent, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AIRegisteredComponent, useAIComponentRegistry } from "../../AIContext";
 import { getDandiApiHeaders } from "../util/getDandiApiHeaders";
-import { getRecentDandisets } from "../util/recentDandisets";
+import { getRecentEmberDandisets } from "../util/recentEmberDandisets";
 import EmberDandisetSearchResult from "./EmberDandisetSearchResult.tsx";
 import { NeurodataTypesSearchPanel } from "./components/NeurodataTypesSearchPanel";
 import { SearchMode, SearchModeControl } from "./components/SearchModeControl";
@@ -45,7 +45,7 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
   height,
 }) => {
   const navigate = useNavigate();
-  const [recentDandisets, setRecentDandisets] = useState<string[]>([]);
+  const [recentEmberDandisets, setRecentEmberDandisets] = useState<string[]>([]);
   const staging = false;
   const [searchResults, setSearchResults] = useState<
     DandisetSearchResultItem[]
@@ -180,7 +180,7 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
       setSearchResults([]);
       setTotalResults(0);
     }
-    setRecentDandisets(getRecentDandisets());
+    setRecentEmberDandisets(getRecentEmberDandisets());
   }, [searchText, searchMode]);
 
   // Reset limit and results when switching search modes
@@ -283,7 +283,7 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
             Visit EMBER Archive website <LaunchIcon sx={{ fontSize: 16 }} />
           </Link>
         </Box>
-        {recentDandisets.length > 0 && (
+        {recentEmberDandisets.length > 0 && (
           <Box sx={{ mb: 0.5 }}>
             <Stack direction="row" spacing={1} alignItems="center">
               <HistoryIcon fontSize="small" color="action" />
@@ -295,7 +295,7 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
                 spacing={1}
                 sx={{ flexWrap: "wrap", gap: 1 }}
               >
-                {recentDandisets.map((id: string) => (
+                {recentEmberDandisets.map((id: string) => (
                   <Chip
                     key={id}
                     label={id}

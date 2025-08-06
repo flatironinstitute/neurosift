@@ -14,7 +14,7 @@ import {
   DandisetSearchResultItem,
   DandisetVersionInfo,
 } from "../DandiPage/dandi-types";
-import { addRecentDandiset } from "../util/recentDandisets";
+import { addRecentEmberDandiset } from "../util/recentEmberDandisets";
 import EmberDandisetOverview from "./EmberDandisetOverview.tsx";
 import { useEmberDandisetVersionInfo } from "./useEmberDandisetVersionInfo.ts";
 import useQueryEmberAssets from "./useQueryEmberAssets.ts";
@@ -77,7 +77,7 @@ const EmberDandisetPage: FunctionComponent<DandisetPageProps> = ({
 
   useEffect(() => {
     if (effectiveDandisetId) {
-      addRecentDandiset(effectiveDandisetId);
+      addRecentEmberDandiset(effectiveDandisetId);
     }
   }, [effectiveDandisetId, staging]);
 
