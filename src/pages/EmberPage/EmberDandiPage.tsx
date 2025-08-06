@@ -17,7 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { AIRegisteredComponent, useAIComponentRegistry } from "../../AIContext";
 import { getDandiApiHeaders } from "../util/getDandiApiHeaders";
 import { getRecentDandisets } from "../util/recentDandisets";
-import DandisetSearchResult from "./DandisetSearchResult";
+import EmberDandisetSearchResult from "./EmberDandisetSearchResult.tsx";
 import { NeurodataTypesSearchPanel } from "./components/NeurodataTypesSearchPanel";
 import { SearchMode, SearchModeControl } from "./components/SearchModeControl";
 import { DandisetSearchResultItem, DandisetsResponse } from "./dandi-types";
@@ -113,12 +113,12 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
         } else if (searchMode === "basic") {
           const { headers, apiKeyProvided } = getDandiApiHeaders(staging);
           const embargoedStr = apiKeyProvided ? "true" : "false";
-          const stagingStr = staging ? "-staging" : "";
+          // const stagingStr = staging ? "-staging" : "";
           const emptyStr = !searchQuery ? "false" : "true";
 
-          // TODO
+          // TODO - should we support sandbox at all? Doesn't seem to be working as well there
           const response = await fetch(
-            `https://api${stagingStr}.dandiarchive.org/api/dandisets/?page=1&page_size=50&ordering=-modified&search=${searchQuery}&draft=true&empty=${emptyStr}&embargoed=${embargoedStr}`,
+            `https://api-dandi.emberarchive.org/api/dandisets/?page=1&page_size=50&ordering=-modified&search=${searchQuery}&draft=true&empty=${emptyStr}&embargoed=${embargoedStr}`,
             { headers },
           );
           if (response.status === 200) {
@@ -133,8 +133,7 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
 
           const dandisets0 = await Promise.all(
             searchResultDandisetIds.slice(0, limit).map(async (dandisetId) => {
-              // TODO
-              const url = `https://api.dandiarchive.org/api/dandisets/${dandisetId}`;
+              const url = `https://api-dandi.emberarchive.org/api/dandisets/${dandisetId}`;
               const authorizationHeader = getAuthorizationHeaderForUrl(url);
               const headers = authorizationHeader
                 ? { Authorization: authorizationHeader }
@@ -147,7 +146,7 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
                   return json as DandisetSearchResultItem;
                 }
               } catch (error) {
-                console.error("Error fetching dandiset details:", error);
+                console.error("Error fetching EMBER Dandiset details:", error);
               }
               return null;
             }),
@@ -241,8 +240,7 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
         searchResultDandisetIds
           .slice(0, searchState.currentLimit)
           .map(async (dandisetId) => {
-            // TODO
-            const url = `https://api.dandiarchive.org/api/dandisets/${dandisetId}`;
+            const url = `https://api-dandi.emberarchive.org/api/dandisets/${dandisetId}`;
             const authorizationHeader = getAuthorizationHeaderForUrl(url);
             const headers = authorizationHeader
               ? { Authorization: authorizationHeader }
@@ -389,7 +387,7 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
         )}
         <Box>
           {searchResults.map((result: DandisetSearchResultItem) => (
-            <DandisetSearchResult
+            <EmberDandisetSearchResult
               dandiset={result}
               key={result.identifier}
               notebookUrls={notebookUrls[result.identifier]}

@@ -17,8 +17,8 @@ import {
 import { addRecentDandiset } from "../util/recentDandisets";
 import DandisetOverview from "./DandisetOverview";
 import { useDandisetVersionInfo } from "./useDandisetVersionInfo";
-import useQueryAssets from "./useQueryAssets";
-import useQueryDandiset from "./useQueryDandiset";
+import useQueryEmberAssets from "./useQueryEmberAssets.ts";
+import useQueryEmberDandiset from "./useQueryEmberDandiset.ts";
 import useRegisterAIComponent from "./useRegisterAIComponent";
 
 type DandisetPageProps = {
@@ -37,7 +37,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
   const effectiveDandisetId = propDandisetId || urlDandisetId;
   const staging = false;
   const dandisetResponse: DandisetSearchResultItem | undefined | null =
-    useQueryDandiset(effectiveDandisetId, staging);
+    useQueryEmberDandiset(effectiveDandisetId, staging);
 
   // todo: get dandisetVersion from the route
   const dandisetVersion = "";
@@ -58,7 +58,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
   const handleLoadMore = useCallback(() => {
     setMaxNumPages((prev) => prev * 2);
   }, []);
-  const { assetsResponses, incomplete, totalCount } = useQueryAssets(
+  const { assetsResponses, incomplete, totalCount } = useQueryEmberAssets(
     effectiveDandisetId,
     maxNumPages, // numPages parameter (using existing state variable)
     dandisetResponse || null,

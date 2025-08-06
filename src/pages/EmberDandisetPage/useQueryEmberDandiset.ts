@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { DandisetSearchResultItem } from "../DandiPage/dandi-types";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 
-export const useQueryDandiset = (
+export const useQueryEmberDandiset = (
   dandisetId: string | undefined,
   useStaging: boolean | undefined,
 ) => {
@@ -14,8 +14,9 @@ export const useQueryDandiset = (
     setDandisetResponse(undefined);
     if (!dandisetId) return;
     (async () => {
-      const stagingStr = useStaging ? "-staging" : "";
-      const url = `https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}`;
+      // TODO: use standbox at all?
+      // const stagingStr = useStaging ? "-staging" : "";
+      const url = `https://api-dandi.emberarchive.org/api/dandisets/${dandisetId}`;
       const authorizationHeader = getAuthorizationHeaderForUrl(url);
       const headers = authorizationHeader
         ? { Authorization: authorizationHeader }
@@ -32,16 +33,16 @@ export const useQueryDandiset = (
           return;
         } else if (response.status === 403) {
           console.error(
-            `Error fetching dandiset due to permissions. If this dandiset is embargoed, ` +
-              "make sure to set your DANDI API KEY on the settings page.",
+            `Error fetching EMBER Dandiset due to permissions. If this EMBER Dandiset is embargoed, ` +
+              "make sure to set your EMBER API KEY on the settings page.",
             response,
           );
         } else {
-          console.error("Error fetching dandiset", response);
+          console.error("Error fetching EMBER Dandiset", response);
         }
         setDandisetResponse(null);
       } catch (e) {
-        console.error("Error fetching dandiset", e);
+        console.error("Error fetching EMBER Dandiset", e);
         setDandisetResponse(null);
       }
     })();
@@ -52,4 +53,4 @@ export const useQueryDandiset = (
   return dandisetResponse;
 };
 
-export default useQueryDandiset;
+export default useQueryEmberDandiset;

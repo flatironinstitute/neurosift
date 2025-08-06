@@ -38,7 +38,7 @@ const getCacheKey = (key: CacheKey): string => {
   return `${key.dandisetId}:${key.version}:${key.isStaging}:${key.nwbFilesOnly}`;
 };
 
-export const useQueryAssets = (
+export const useQueryEmberAssets = (
   dandisetId: string | undefined,
   numPages: number,
   dandisetResponse: DandisetSearchResultItem | null,
@@ -66,10 +66,11 @@ export const useQueryAssets = (
       });
 
       let rr: AssetsResponse[] = [];
-      const stagingStr = useStaging ? "-staging" : "";
+      // TODO: allow to use sandbox at all?
+      // const stagingStr = useStaging ? "-staging" : "";
       const globFilter = nwbFilesOnly ? "&glob=*.nwb" : "";
       let uu: string | null =
-        `https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}/versions/${dandisetVersionInfo.version}/assets/?page_size=1000${globFilter}`;
+        `https://api-dandi.emberarchive.org/api/dandisets/${dandisetId}/versions/${dandisetVersionInfo.version}/assets/?page_size=1000${globFilter}`;
       const authorizationHeader = uu ? getAuthorizationHeaderForUrl(uu) : "";
       const headers = authorizationHeader
         ? { Authorization: authorizationHeader }
@@ -141,4 +142,4 @@ export const useQueryAssets = (
   return { incomplete, assetsResponses, totalCount };
 };
 
-export default useQueryAssets;
+export default useQueryEmberAssets;

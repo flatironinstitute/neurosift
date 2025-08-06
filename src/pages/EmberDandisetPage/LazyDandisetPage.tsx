@@ -5,7 +5,7 @@ import DatasetWorkspace from "../common/DatasetWorkspace/DatasetWorkspace";
 import { DatasetFile } from "../common/DatasetWorkspace/plugins/pluginInterface";
 import DandisetOverview from "./DandisetOverview";
 import { useDandisetVersionInfo } from "./useDandisetVersionInfo";
-import useQueryDandiset from "./useQueryDandiset";
+import useQueryEmberDandiset from "./useQueryEmberDandiset.ts";
 import useLazyDandisetPaths from "./hooks/useLazyDandisetPaths";
 import useRegisterAIComponent from "./useRegisterAIComponent";
 
@@ -26,7 +26,7 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
   const staging = false;
 
   // Query the dandiset info
-  const dandisetResponse = useQueryDandiset(effectiveDandisetId, staging);
+  const dandisetResponse = useQueryEmberDandiset(effectiveDandisetId, staging);
   const dandisetVersion = "";
   const dandisetVersionInfo = useDandisetVersionInfo(
     effectiveDandisetId,

@@ -21,7 +21,7 @@ type Props = {
   notebookUrls?: string[];
 };
 
-const DandisetSearchResult = ({ dandiset, notebookUrls }: Props) => {
+const EmberDandisetSearchResult = ({ dandiset, notebookUrls }: Props) => {
   const navigate = useNavigate();
   // const version =
   //   dandiset.most_recent_published_version || dandiset.draft_version;
@@ -42,7 +42,7 @@ const DandisetSearchResult = ({ dandiset, notebookUrls }: Props) => {
           transition: "all 0.2s ease-in-out",
         },
       }}
-      onClick={() => navigate(`/dandiset/${dandiset.identifier}`)}
+      onClick={() => navigate(`/ember-dandiset/${dandiset.identifier}`)}
     >
       <Typography variant="h6" gutterBottom>
         {version?.name || "Untitled Dataset"}
@@ -106,4 +106,4 @@ const DandisetSearchResult = ({ dandiset, notebookUrls }: Props) => {
   );
 };
 
-export default DandisetSearchResult;
+export default EmberDandisetSearchResult;
