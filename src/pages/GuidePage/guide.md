@@ -15,6 +15,13 @@ Neurosift is a browser-based tool designed for the visualization of NWB (Neuroda
 3. Select a Dandiset to view its details and files
 4. Click on any NWB file to visualize its contents
 
+### Exploring EMBER Archive
+
+1. Click on EMBER in the Neurosift home page
+2. Browse available datasets or use the search functionality
+3. Select a EMBER Dandiset to view its details and files
+4. Click on any NWB file to visualize its contents
+
 ### Using OpenNeuro
 
 Note: OpenNeuro integration is still at an early stage and does not have much functionality yet.
