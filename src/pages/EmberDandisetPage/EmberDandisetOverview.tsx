@@ -94,17 +94,17 @@ const EmberDandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
   return (
     <ScrollY width={width} height={height}>
       <div style={{ padding: "15px" }}>
-        {/* Back to DANDI */}
+        {/* Back to EMBER */}
         <div style={{ marginBottom: "15px" }}>
           <span
-            onClick={() => navigate("/dandi")}
+            onClick={() => navigate("/ember")}
             style={{
               cursor: "pointer",
               color: "#0066cc",
               fontSize: "14px",
             }}
           >
-            ← Back to DANDI
+            ← Back to EMBER
           </span>
         </div>
 

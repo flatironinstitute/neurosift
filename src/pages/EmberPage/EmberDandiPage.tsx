@@ -202,7 +202,7 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
   }, [selectedTypes, useNeurodataTypesSearch]);
 
   const handleRecentClick = (dandisetId: string) => {
-    navigate(`/dandiset/${dandisetId}`);
+    navigate(`/ember-dandiset/${dandisetId}`);
   };
 
   const handleSearch = useCallback(() => {
