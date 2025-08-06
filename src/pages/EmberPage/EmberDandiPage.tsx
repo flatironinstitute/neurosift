@@ -40,7 +40,10 @@ type SearchState = {
   scheduledSearch: boolean;
 };
 
-const EmberDandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
+const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
+  width,
+  height,
+}) => {
   const navigate = useNavigate();
   const [recentDandisets, setRecentDandisets] = useState<string[]>([]);
   const staging = false;
