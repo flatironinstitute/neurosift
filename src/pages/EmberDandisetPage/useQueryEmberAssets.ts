@@ -4,7 +4,7 @@ import {
   AssetsResponse,
   DandisetSearchResultItem,
   DandisetVersionInfo,
-} from "../DandiPage/dandi-types";
+} from "../EmberPage/dandi-types";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 
 // Global cache for storing loaded pages

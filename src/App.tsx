@@ -355,7 +355,7 @@ const AppContent = () => {
             element={<EmberDandiPage width={width} height={mainHeight} />}
           />
           <Route
-            path="/ember-dandiset/:emberDandisetId"
+            path="/ember-dandiset/:dandisetId"
             element={
               <EmberDandisetPageContainer width={width} height={mainHeight} />
             }

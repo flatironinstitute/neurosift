@@ -5,7 +5,7 @@ import {
 } from "../DandiPage/dandi-types";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 
-export const useDandisetVersionInfo = (
+export const useEmberDandisetVersionInfo = (
   dandisetId: string | undefined,
   dandisetVersion: string,
   useStaging: boolean | undefined,
@@ -27,7 +27,7 @@ export const useDandisetVersionInfo = (
       const dvi = await fetchDandisetVersionInfo(
         dandisetId || "",
         dsVersion,
-        useStaging,
+        //useStaging,
       );
       if (canceled) return;
       if (dvi) setDandisetVersionInfo(dvi);
@@ -42,10 +42,11 @@ export const useDandisetVersionInfo = (
 export const fetchDandisetVersionInfo = async (
   dandisetId: string,
   dandisetVersion: string,
-  useStaging: boolean | undefined,
+  //useStaging: boolean | undefined,
 ) => {
-  const stagingStr = useStaging ? "-staging" : "";
-  const url = `https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}/versions/${
+  // TODO: use sandbox at all?
+  //const stagingStr = useStaging ? "-staging" : "";
+  const url = `https://api-dandi.emberarchive.org/api/dandisets/${dandisetId}/versions/${
     dandisetVersion || "draft"
   }/info/`;
   const authorizationHeader = getAuthorizationHeaderForUrl(url);

@@ -53,7 +53,7 @@ export const useLazyDandisetPaths = (
 
   // Get authorization header
   const stagingStr = staging ? "-staging" : "";
-  const baseUrl = `https://api${stagingStr}.dandiarchive.org/api/dandisets`;
+  const baseUrl = `https://api-dandi.emberarchive.org/api/dandisets`;
   const authorizationHeader = getAuthorizationHeaderForUrl(baseUrl);
   const headers = authorizationHeader
     ? { Authorization: authorizationHeader }
@@ -79,7 +79,7 @@ export const useLazyDandisetPaths = (
       urls: isDirectory
         ? []
         : [
-            `https://api${stagingStr}.dandiarchive.org/api/assets/${item.asset?.asset_id}/download/`,
+            `https://api-dandi.emberarchive.org/api/assets/${item.asset?.asset_id}/download/`,
           ],
     };
   };

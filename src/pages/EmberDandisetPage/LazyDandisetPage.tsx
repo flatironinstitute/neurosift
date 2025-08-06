@@ -3,8 +3,8 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import ResponsiveLayout from "@components/ResponsiveLayout";
 import DatasetWorkspace from "../common/DatasetWorkspace/DatasetWorkspace";
 import { DatasetFile } from "../common/DatasetWorkspace/plugins/pluginInterface";
-import DandisetOverview from "./DandisetOverview";
-import { useDandisetVersionInfo } from "./useDandisetVersionInfo";
+import EmberDandisetOverview from "./EmberDandisetOverview.tsx";
+import { useEmberDandisetVersionInfo } from "./useEmberDandisetVersionInfo.ts";
 import useQueryEmberDandiset from "./useQueryEmberDandiset.ts";
 import useLazyDandisetPaths from "./hooks/useLazyDandisetPaths";
 import useRegisterAIComponent from "./useRegisterAIComponent";
@@ -28,7 +28,7 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
   // Query the dandiset info
   const dandisetResponse = useQueryEmberDandiset(effectiveDandisetId, staging);
   const dandisetVersion = "";
-  const dandisetVersionInfo = useDandisetVersionInfo(
+  const dandisetVersionInfo = useEmberDandisetVersionInfo(
     effectiveDandisetId,
     dandisetVersion || "",
     staging,
@@ -92,7 +92,7 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
     dandisetVersionInfo,
     nwbFilesOwnlyControlVisible: true,
   });
-
+  
   if (loading || !dandisetResponse || !dandisetVersionInfo) {
     return <div>Loading...</div>;
   }
@@ -106,7 +106,7 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
       initialSplitterPosition={initialSplitterPosition}
       mobileBreakpoint={768}
     >
-      <DandisetOverview
+      <EmberDandisetOverview
         width={0}
         height={0}
         dandisetVersionInfo={dandisetVersionInfo}

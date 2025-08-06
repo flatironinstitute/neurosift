@@ -15,8 +15,8 @@ import {
   DandisetVersionInfo,
 } from "../DandiPage/dandi-types";
 import { addRecentDandiset } from "../util/recentDandisets";
-import DandisetOverview from "./DandisetOverview";
-import { useDandisetVersionInfo } from "./useDandisetVersionInfo";
+import EmberDandisetOverview from "./EmberDandisetOverview.tsx";
+import { useEmberDandisetVersionInfo } from "./useEmberDandisetVersionInfo.ts";
 import useQueryEmberAssets from "./useQueryEmberAssets.ts";
 import useQueryEmberDandiset from "./useQueryEmberDandiset.ts";
 import useRegisterAIComponent from "./useRegisterAIComponent";
@@ -27,7 +27,7 @@ type DandisetPageProps = {
   dandisetId?: string; // Optional prop to override the URL parameter
 };
 
-const DandisetPage: FunctionComponent<DandisetPageProps> = ({
+const EmberDandisetPage: FunctionComponent<DandisetPageProps> = ({
   width,
   height,
   dandisetId: propDandisetId,
@@ -43,7 +43,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
   const dandisetVersion = "";
 
   const dandisetVersionInfo: DandisetVersionInfo | null =
-    useDandisetVersionInfo(
+    useEmberDandisetVersionInfo(
       effectiveDandisetId,
       dandisetVersion || "",
       staging,
@@ -98,7 +98,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
           size: asset.size,
           directory: false,
           urls: [
-            `https://api.dandiarchive.org/api/assets/${asset.asset_id}/download/`,
+            `https://api-dandi.emberarchive.org/api/assets/${asset.asset_id}/download/`,
           ],
         });
       } else {
@@ -139,7 +139,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
           size: asset.size,
           directory: false,
           urls: [
-            `https://api.dandiarchive.org/api/assets/${asset.asset_id}/download/`,
+            `https://api-dandi.emberarchive.org/api/assets/${asset.asset_id}/download/`,
           ],
         };
       },
@@ -167,7 +167,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
                 size: asset.size,
                 directory: false,
                 urls: [
-                  `https://api.dandiarchive.org/api/assets/${asset.asset_id}/download/`,
+                  `https://api-dandi.emberarchive.org/api/assets/${asset.asset_id}/download/`,
                 ],
               });
             } else {
@@ -287,7 +287,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
       initialSplitterPosition={initialSplitterPosition}
       mobileBreakpoint={768}
     >
-      <DandisetOverview
+      <EmberDandisetOverview
         width={0}
         height={0}
         dandisetVersionInfo={dandisetVersionInfo}
@@ -306,4 +306,4 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
   );
 };
 
-export default DandisetPage;
+export default EmberDandisetPage;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { DandisetSearchResultItem } from "../DandiPage/dandi-types";
+import { DandisetSearchResultItem } from "../EmberPage/dandi-types";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 
 export const useQueryEmberDandiset = (

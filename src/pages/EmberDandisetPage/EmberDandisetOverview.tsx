@@ -59,7 +59,7 @@ const findChatInfos = (annotations: any[]): ChatInfo[] => {
     .filter((chatInfo) => chatInfo !== undefined) as ChatInfo[];
 };
 
-const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
+const EmberDandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
   width,
   height,
   dandisetVersionInfo,
@@ -116,7 +116,7 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
         {/* View on DANDI */}
         <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
           <a
-            href={`https://dandiarchive.org/dandiset/${dandisetVersionInfo.dandiset.identifier}/${dandisetVersionInfo.version}`}
+            href={`https://dandi.emberarchive.org/dandiset/${dandisetVersionInfo.dandiset.identifier}/${dandisetVersionInfo.version}`}
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: "#0066cc", textDecoration: "none" }}
@@ -450,4 +450,4 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
   );
 };
 
-export default DandisetOverview;
+export default EmberDandisetOverview;

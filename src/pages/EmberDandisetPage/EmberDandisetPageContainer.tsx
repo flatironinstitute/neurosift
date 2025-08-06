@@ -1,6 +1,6 @@
 import { FC } from "react";
 import LazyDandisetPage from "./LazyDandisetPage";
-import DandisetPage from "./index";
+import EmberDandisetPage from "./index";
 
 type DandisetPageContainerProps = {
   width: number;
@@ -17,7 +17,7 @@ const EmberDandisetPageContainer: FC<DandisetPageContainerProps> = (props) => {
   }
 
   // Otherwise use the original version
-  return <DandisetPage {...props} />;
+  return <EmberDandisetPage {...props} />;
 };
 
 export default EmberDandisetPageContainer;
