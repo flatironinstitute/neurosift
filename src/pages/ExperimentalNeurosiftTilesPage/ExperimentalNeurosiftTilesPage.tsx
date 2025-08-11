@@ -69,7 +69,7 @@ const ExamplesPage: React.FC<{ width: number; height: number }> = ({
       try {
         setLoading(true);
         const response = await fetch(
-          "https://raw.githubusercontent.com/magland/neurosift-tiles/refs/heads/main/ecephys_catalog.json"
+          "https://raw.githubusercontent.com/magland/neurosift-tiles/refs/heads/main/ecephys_catalog.json",
         );
         if (!response.ok) {
           throw new Error(`Failed to fetch catalog: ${response.statusText}`);
@@ -96,11 +96,18 @@ const ExamplesPage: React.FC<{ width: number; height: number }> = ({
 
   const handleNeurosiftClick = (dataset: Dataset) => {
     const neurosiftUrl = `https://neurosift.app/nwb?url=${dataset.nwb_url}&dandisetId=${dataset.dandiset_id}`;
-    window.open(neurosiftUrl, '_blank');
+    window.open(neurosiftUrl, "_blank");
   };
 
   const getButtonColor = (index: number) => {
-    const colors = ["#007bff", "#28a745", "#dc3545", "#ffc107", "#17a2b8", "#6f42c1"];
+    const colors = [
+      "#007bff",
+      "#28a745",
+      "#dc3545",
+      "#ffc107",
+      "#17a2b8",
+      "#6f42c1",
+    ];
     return colors[index % colors.length];
   };
 
@@ -174,9 +181,9 @@ const ExamplesPage: React.FC<{ width: number; height: number }> = ({
         }}
       >
         {datasets.map((dataset, index) => (
-          <div 
-            key={`${dataset.dandiset_id}-${dataset.asset_id}`} 
-            style={{ 
+          <div
+            key={`${dataset.dandiset_id}-${dataset.asset_id}`}
+            style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
@@ -189,7 +196,9 @@ const ExamplesPage: React.FC<{ width: number; height: number }> = ({
           >
             <div style={{ flex: 1 }}>
               <strong>DANDI {dataset.dandiset_id}</strong>
-              <span style={{ marginLeft: "15px", color: "#666", fontSize: "14px" }}>
+              <span
+                style={{ marginLeft: "15px", color: "#666", fontSize: "14px" }}
+              >
                 {dataset.electrical_series_path}
               </span>
             </div>
