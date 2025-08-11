@@ -4,6 +4,20 @@ import React, { useEffect, useState } from "react";
 import NTEcephysClient from "./NTEcephysClient";
 import NTView from "./NTView";
 
+type Dataset = {
+  dandiset_id: string;
+  asset_id: string;
+  nwb_url: string;
+  electrical_series_path: string;
+};
+
+type EcephysCatalog = {
+  datasets: Dataset[];
+  metadata: {
+    version: string;
+  };
+};
+
 type ExperimentalNTPageProps = {
   width: number;
   height: number;
@@ -46,19 +60,97 @@ const ExamplesPage: React.FC<{ width: number; height: number }> = ({
   width,
   height,
 }) => {
-  const example1Url =
-    "zarr_url=https://tiles.neurosift.org/dandisets/000957/d4bd92fc-4119-4393-b807-f007a86778a1/tiles.zarr&path=/acquisition/ElectricalSeriesAP";
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const example2Url =
-    "zarr_url=https://tiles.neurosift.org/dandisets/000409/c04f6b30-82bf-40e1-9210-34f0bcd8be24/tiles.zarr&path=/acquisition/ElectricalSeriesAp";
+  useEffect(() => {
+    const fetchCatalog = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          "https://raw.githubusercontent.com/magland/neurosift-tiles/refs/heads/main/ecephys_catalog.json"
+        );
+        if (!response.ok) {
+          throw new Error(`Failed to fetch catalog: ${response.statusText}`);
+        }
+        const catalog: EcephysCatalog = await response.json();
+        setDatasets(catalog.datasets);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching catalog:", err);
+        setError(err instanceof Error ? err.message : "Unknown error");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleExample1Click = () => {
-    window.location.href = `?${example1Url}`;
+    fetchCatalog();
+  }, []);
+
+  const handleExampleClick = (dataset: Dataset) => {
+    const zarrUrl = `https://tiles.neurosift.org/dandisets/${dataset.dandiset_id}/${dataset.asset_id}/tiles.zarr`;
+    const url = `zarr_url=${zarrUrl}&path=${dataset.electrical_series_path}`;
+    window.location.href = `?${url}`;
   };
 
-  const handleExample2Click = () => {
-    window.location.href = `?${example2Url}`;
+  const handleNeurosiftClick = (dataset: Dataset) => {
+    const neurosiftUrl = `https://neurosift.app/nwb?url=${dataset.nwb_url}&dandisetId=${dataset.dandiset_id}`;
+    window.open(neurosiftUrl, '_blank');
   };
+
+  const getButtonColor = (index: number) => {
+    const colors = ["#007bff", "#28a745", "#dc3545", "#ffc107", "#17a2b8", "#6f42c1"];
+    return colors[index % colors.length];
+  };
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          width,
+          height,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div>Loading examples...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div
+        style={{
+          width,
+          height,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "column",
+        }}
+      >
+        <div style={{ color: "red", marginBottom: "10px" }}>
+          Error loading examples: {error}
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -69,57 +161,70 @@ const ExamplesPage: React.FC<{ width: number; height: number }> = ({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
+        overflowY: "auto",
       }}
     >
       <h2>Experimental Neurosift Tiles Examples</h2>
       <p>Choose an example to explore:</p>
       <div
         style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "20px",
           marginTop: "20px",
+          maxWidth: "800px",
+          width: "100%",
         }}
       >
-        <div style={{ textAlign: "center" }}>
-          <h3>Example 1: DANDI 000957</h3>
-          <p>ElectricalSeriesAP from dandiset 000957</p>
-          <button
-            onClick={handleExample1Click}
-            style={{
-              display: "inline-block",
-              padding: "10px 20px",
-              backgroundColor: "#007bff",
-              color: "white",
-              textDecoration: "none",
+        {datasets.map((dataset, index) => (
+          <div 
+            key={`${dataset.dandiset_id}-${dataset.asset_id}`} 
+            style={{ 
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "10px 15px",
+              marginBottom: "8px",
+              border: "1px solid #ddd",
               borderRadius: "5px",
-              border: "none",
-              cursor: "pointer",
+              backgroundColor: "#f9f9f9",
             }}
           >
-            Load Example 1
-          </button>
-        </div>
-        <div style={{ textAlign: "center" }}>
-          <h3>Example 2: DANDI 000409</h3>
-          <p>ElectricalSeriesAp from dandiset 000409</p>
-          <button
-            onClick={handleExample2Click}
-            style={{
-              display: "inline-block",
-              padding: "10px 20px",
-              backgroundColor: "#28a745",
-              color: "white",
-              textDecoration: "none",
-              borderRadius: "5px",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            Load Example 2
-          </button>
-        </div>
+            <div style={{ flex: 1 }}>
+              <strong>DANDI {dataset.dandiset_id}</strong>
+              <span style={{ marginLeft: "15px", color: "#666", fontSize: "14px" }}>
+                {dataset.electrical_series_path}
+              </span>
+            </div>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                onClick={() => handleNeurosiftClick(dataset)}
+                style={{
+                  padding: "6px 12px",
+                  backgroundColor: "#6c757d",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
+                View NWB
+              </button>
+              <button
+                onClick={() => handleExampleClick(dataset)}
+                style={{
+                  padding: "6px 12px",
+                  backgroundColor: getButtonColor(index),
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
+                Load Tiles
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
