@@ -37,7 +37,7 @@ export const renderHeatmap = async ({
   const showRenderTime = false;
   const timer = Date.now();
 
-  const { data, downsamplingLevel} = ntData;
+  const { data, downsamplingLevel } = ntData;
 
   const plotWidth = width - margins.left - margins.right;
   const plotHeight = height - margins.top - margins.bottom;

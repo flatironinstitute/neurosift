@@ -12,10 +12,7 @@ import {
   useState,
 } from "react";
 import SpikeSortingDialog, { SpikeSortingParams } from "./SpikeSortingDialog";
-import NTEcephysClient, {
-  Array2D,
-  Array3D,
-} from "./NTEcephysClient";
+import NTEcephysClient, { Array2D, Array3D } from "./NTEcephysClient";
 import { renderHeatmap } from "./renderHeatmap";
 import { useTimeScrollView3 } from "@shared/component-time-scroll-view-2/useTimeScrollView3";
 
@@ -27,11 +24,7 @@ type NTViewProps = {
 
 type ViewMode = "raw" | "spikes" | "overlay";
 
-const NTView: FunctionComponent<NTViewProps> = ({
-  client,
-  width,
-  height,
-}) => {
+const NTView: FunctionComponent<NTViewProps> = ({ client, width, height }) => {
   const { setVisibleTimeRange } = useTimeRange();
   const { setCurrentTime } = useTimeseriesSelection();
 

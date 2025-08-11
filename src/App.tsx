@@ -13,6 +13,7 @@ import {
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useEffect } from "react";
 import {
+  Navigate,
   Route,
   BrowserRouter as Router,
   Routes,
@@ -366,9 +367,16 @@ const AppContent = () => {
             element={<AnnotationsPage width={width} height={mainHeight} />}
           />
           <Route
+            path="/experimental-neurotile"
+            element={<Navigate to="/experimental-neurosift-tiles" replace />}
+          />
+          <Route
             path="/experimental-neurosift-tiles"
             element={
-              <ExperimentalNeurosiftTilesPage width={width} height={mainHeight} />
+              <ExperimentalNeurosiftTilesPage
+                width={width}
+                height={mainHeight}
+              />
             }
           />
         </Routes>
