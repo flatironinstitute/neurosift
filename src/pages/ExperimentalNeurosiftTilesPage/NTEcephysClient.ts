@@ -4,7 +4,7 @@ import {
   RemoteH5Group,
 } from "@remote-h5-file";
 
-class NeurotileEcephysClient {
+class NTEcephysClient {
   private tileCache = new Map<string, Array2D | Array3D>();
   private readonly maxCacheSize = 1000; // Maximum number of tiles to cache
 
@@ -43,7 +43,7 @@ class NeurotileEcephysClient {
       last_start_sample: number;
     };
 
-    return new NeurotileEcephysClient(file, root, numLevels, statusData);
+    return new NTEcephysClient(file, root, numLevels, statusData);
   }
   get numChannels(): number {
     return this.root.attrs["num_channels"];
@@ -412,4 +412,4 @@ function zeros3D(dim1: number, dim2: number, dim3: number): Array3D {
   return new Array3D(data, dim1, dim2, dim3);
 }
 
-export default NeurotileEcephysClient;
+export default NTEcephysClient;

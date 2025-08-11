@@ -12,22 +12,22 @@ import {
   useState,
 } from "react";
 import SpikeSortingDialog, { SpikeSortingParams } from "./SpikeSortingDialog";
-import NeurotileEcephysClient, {
+import NTEcephysClient, {
   Array2D,
   Array3D,
-} from "./NeurotileEcephysClient";
+} from "./NTEcephysClient";
 import { renderHeatmap } from "./renderHeatmap";
 import { useTimeScrollView3 } from "@shared/component-time-scroll-view-2/useTimeScrollView3";
 
-type NeurotileViewProps = {
-  client: NeurotileEcephysClient;
+type NTViewProps = {
+  client: NTEcephysClient;
   width: number;
   height: number;
 };
 
 type ViewMode = "raw" | "spikes" | "overlay";
 
-const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
+const NTView: FunctionComponent<NTViewProps> = ({
   client,
   width,
   height,
@@ -63,7 +63,7 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
     width,
     height,
     leftMargin,
-    hasCustomActions: true, // NeurotileView always has custom actions
+    hasCustomActions: true, // NTView always has custom actions
   });
 
   // Function to convert pixel Y coordinate to channel number
@@ -135,7 +135,7 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
     calculateDownsamplingLevel: (startTime: number, endTime: number) => number;
     canvasHeight: number;
     canvasWidth: number;
-    client: NeurotileEcephysClient;
+    client: NTEcephysClient;
     context: CanvasRenderingContext2D | null;
     margins: {
       left: number;
@@ -210,7 +210,7 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
       ) => number;
       canvasHeight: number;
       canvasWidth: number;
-      client: NeurotileEcephysClient;
+      client: NTEcephysClient;
       context: CanvasRenderingContext2D | null;
       margins: {
         left: number;
@@ -380,10 +380,10 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
         downsamplingLevel,
         mode,
       };
-      // setNeurotileData(ntData);
+      // setNTData(ntData);
       await renderHeatmap({
         context,
-        neurotileData: ntData,
+        ntData: ntData,
         width: canvasWidth,
         height: canvasHeight,
         margins,
@@ -502,4 +502,4 @@ const NeurotileView: FunctionComponent<NeurotileViewProps> = ({
   );
 };
 
-export default NeurotileView;
+export default NTView;

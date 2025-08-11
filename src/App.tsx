@@ -26,7 +26,7 @@ import AnnotationsPage from "./pages/AnnotationsPage/AnnotationsPage";
 import DandiPage from "./pages/DandiPage/DandiPage";
 import DandisetPageContainer from "./pages/DandisetPage/DandisetPageContainer";
 import EdfPage from "./pages/EdfPage/EdfPage";
-import ExperimentalNeurotilePage from "./pages/ExperimentalNeurotilePage/ExperimentalNeurotilePage";
+import ExperimentalNeurosiftTilesPage from "./pages/ExperimentalNeurosiftTilesPage/ExperimentalNeurosiftTilesPage";
 import GuidePage from "./pages/GuidePage/GuidePage";
 import HomePage from "./pages/HomePage/HomePage";
 import NwbPage from "./pages/NwbPage/NwbPage";
@@ -366,9 +366,9 @@ const AppContent = () => {
             element={<AnnotationsPage width={width} height={mainHeight} />}
           />
           <Route
-            path="/experimental-neurotile"
+            path="/experimental-neurosift-tiles"
             element={
-              <ExperimentalNeurotilePage width={width} height={mainHeight} />
+              <ExperimentalNeurosiftTilesPage width={width} height={mainHeight} />
             }
           />
         </Routes>

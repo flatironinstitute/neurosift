@@ -1,4 +1,4 @@
-export type NeurotileData = {
+export type NTData = {
   // data: number[][][]; // 3D array: [time][channel][min, max]
   numChannels: number;
   numSamples: number;
@@ -14,7 +14,7 @@ export type NeurotileData = {
 
 export interface RenderHeatmapProps {
   context: CanvasRenderingContext2D;
-  neurotileData: NeurotileData;
+  ntData: NTData;
   width: number;
   height: number;
   margins: {
@@ -28,7 +28,7 @@ export interface RenderHeatmapProps {
 
 export const renderHeatmap = async ({
   context,
-  neurotileData,
+  ntData,
   width,
   height,
   margins,
@@ -37,18 +37,18 @@ export const renderHeatmap = async ({
   const showRenderTime = false;
   const timer = Date.now();
 
-  const { data, downsamplingLevel } = neurotileData;
+  const { data, downsamplingLevel} = ntData;
 
   const plotWidth = width - margins.left - margins.right;
   const plotHeight = height - margins.top - margins.bottom;
 
-  const numCoveredSamples = neurotileData.numSamples;
-  const numChannels = neurotileData.numChannels;
+  const numCoveredSamples = ntData.numSamples;
+  const numChannels = ntData.numChannels;
 
   if (numCoveredSamples === 0 || numChannels === 0) return;
 
-  const isSpikesMode = neurotileData.mode === "spikes";
-  const isOverlayMode = neurotileData.mode === "overlay";
+  const isSpikesMode = ntData.mode === "spikes";
+  const isOverlayMode = ntData.mode === "overlay";
 
   // Calculate min/max from the data that will actually be shown
   let minValue = Infinity;
@@ -88,10 +88,10 @@ export const renderHeatmap = async ({
     }
 
     // Spikes data min/max
-    if (neurotileData.spikesData) {
+    if (ntData.spikesData) {
       for (let t = 0; t < numCoveredSamples; t++) {
         for (let c = 0; c < numChannels; c++) {
-          const spikeCount = neurotileData.spikesData[t * numChannels + c];
+          const spikeCount = ntData.spikesData[t * numChannels + c];
           spikesMaxValue = Math.max(spikesMaxValue, spikeCount);
         }
       }
@@ -232,7 +232,7 @@ export const renderHeatmap = async ({
     context.putImageData(imageData, margins.left, margins.top);
 
     // If overlay mode, draw spikes on top
-    if (isOverlayMode && neurotileData.spikesData && spikesMaxValue > 0) {
+    if (isOverlayMode && ntData.spikesData && spikesMaxValue > 0) {
       // Helper function to get contrasting spike color
 
       // Draw spike rectangles on top of the bitmap
@@ -245,7 +245,7 @@ export const renderHeatmap = async ({
         // }
 
         for (let c = 0; c < numChannels; c++) {
-          const spikeCount = neurotileData.spikesData[t * numChannels + c];
+          const spikeCount = ntData.spikesData[t * numChannels + c];
 
           if (spikeCount > 0) {
             // Calculate rectangle position and size
