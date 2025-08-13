@@ -45,8 +45,7 @@ jobs:
       run: |
         python -c "
         import numpy as np
-        from pynwb import NWBFile, NWBHDF5IO
-        from pynwb.testing import TestCase
+        from pynwb import NWBFile, NWBHDF5IO, TimeSeries
         from datetime import datetime
         from dateutil.tz import tzlocal
         import tempfile
@@ -65,16 +64,19 @@ jobs:
         )
 
         # Add some simple data
-        timestamps = np.arange(0, 100, 0.1)
-        data = np.random.randn(len(timestamps), 3)
+        data = np.random.randn(1000, 3)
         
-        timeseries = nwbfile.add_acquisition(
+        # Create a TimeSeries object
+        timeseries = TimeSeries(
             name='test_timeseries',
             description='Test time series data',
             data=data,
             rate=10.0,
             unit='volts'
         )
+        
+        # Add the TimeSeries to acquisition
+        nwbfile.add_acquisition(timeseries)
 
         # Save the file
         with NWBHDF5IO('test_file.nwb', 'w') as io:
