@@ -1,6 +1,7 @@
 # Changes
 
 ## August 13, 2025
+- Added job cancellation functionality to JobStatusHandler component with red "Cancel Job" button for running jobs
 - Added continuous integration workflow to test neurosift Python package installation, NWB file creation with pynwb, and CLI functionality
 
 ## August 11, 2025

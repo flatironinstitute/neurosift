@@ -34,6 +34,8 @@ const TextLetterCountView: FunctionComponent<DatasetPluginProps> = ({
     isRefreshing,
     submitJob,
     fetchJobStatus,
+    cancelJob,
+    deleteJob,
   } = useNeurosiftJob<JobInput, JobResult>("text-letter-count", input);
 
   const [result, setResult] = useState<Result | null>(null);
@@ -53,6 +55,8 @@ const TextLetterCountView: FunctionComponent<DatasetPluginProps> = ({
         isRefreshing={isRefreshing}
         onSubmit={submitJob}
         onRefresh={fetchJobStatus}
+        onCancel={cancelJob}
+        onDelete={deleteJob}
         jobLabel="Analyze Letter Frequencies"
         imageName="neurosift-job-runner"
       />

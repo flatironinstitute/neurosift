@@ -1,9 +1,5 @@
-import { RemoteH5FileLindi } from "@remote-h5-file";
-import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection-2";
-import React, { useEffect, useMemo, useState } from "react";
-import NTEcephysClient from "./NTEcephysClient";
-import NTEcephysView from "./NTEcephysView";
-import { useLocation } from "react-router-dom";
+import React, { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 type Dataset = {
   dandiset_id: string;
@@ -17,50 +13,6 @@ type EcephysCatalog = {
   metadata: {
     version: string;
   };
-};
-
-type ExperimentalNTPageProps = {
-  width: number;
-  height: number;
-};
-
-const ExperimentalNTPage: React.FC<ExperimentalNTPageProps> = ({
-  width,
-  height,
-}) => {
-  const { zarrUrl, ecephysPath, client, showExamples } = useTest();
-
-  if (showExamples) {
-    return <ExamplesPage width={width} height={height} />;
-  }
-
-  if (!client) {
-    return (
-      <div
-        style={{
-          width,
-          height,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <div>Loading neurosift-tiles client...</div>
-      </div>
-    );
-  }
-
-  return (
-    <ProvideTimeseriesSelection>
-      <NTEcephysView
-        zarrUrl={zarrUrl}
-        ecephysPath={ecephysPath}
-        client={client}
-        width={width}
-        height={height}
-      />
-    </ProvideTimeseriesSelection>
-  );
 };
 
 const ExamplesPage: React.FC<{ width: number; height: number }> = ({
@@ -95,11 +47,16 @@ const ExamplesPage: React.FC<{ width: number; height: number }> = ({
     fetchCatalog();
   }, []);
 
-  const handleExampleClick = (dataset: Dataset) => {
-    const zarrUrl = `https://tiles.neurosift.org/dandisets/${dataset.dandiset_id}/${dataset.asset_id}/tiles.zarr`;
-    const url = `zarr_url=${zarrUrl}&path=${dataset.electrical_series_path}`;
-    window.location.href = `?${url}`;
-  };
+  const navigate = useNavigate();
+
+  const handleExampleClick = useCallback(
+    (dataset: Dataset) => {
+      const zarrUrl = `https://tiles.neurosift.org/dandisets/${dataset.dandiset_id}/${dataset.asset_id}/tiles.zarr`;
+      const url = `zarr_url=${zarrUrl}&path=${dataset.electrical_series_path}`;
+      navigate(`/experimental-neurosift-tiles?${url}`);
+    },
+    [navigate],
+  );
 
   const handleNeurosiftClick = (dataset: Dataset) => {
     const neurosiftUrl = `https://neurosift.app/nwb?url=${dataset.nwb_url}&dandisetId=${dataset.dandiset_id}`;
@@ -246,42 +203,4 @@ const ExamplesPage: React.FC<{ width: number; height: number }> = ({
   );
 };
 
-const useTest = () => {
-  const [client, setClient] = useState<NTEcephysClient | null>(null);
-  const [showExamples, setShowExamples] = useState<boolean>(false);
-
-  const location = useLocation();
-  const { zarrUrl, ecephysPath } = useMemo(() => {
-    const params = new URLSearchParams(location.search);
-    return {
-      zarrUrl: params.get("zarr_url") || "",
-      ecephysPath: params.get("path") || "",
-    };
-  }, [location.search]);
-
-  useEffect(() => {
-    // If both parameters are provided, load the data
-    if (zarrUrl && ecephysPath) {
-      const loadData = async () => {
-        try {
-          const x = await RemoteH5FileLindi.createFromZarr(zarrUrl);
-          const statusDataUrl = zarrUrl + ".status.json";
-          const c = await NTEcephysClient.create(x, ecephysPath, statusDataUrl);
-          setClient(c);
-        } catch (error) {
-          console.error("Error loading data:", error);
-          // If there's an error, show examples page
-          setShowExamples(true);
-        }
-      };
-      loadData();
-    } else {
-      // If parameters are missing, show examples page
-      setShowExamples(true);
-    }
-  }, [zarrUrl, ecephysPath]);
-
-  return { client, zarrUrl, ecephysPath, showExamples };
-};
-
-export default ExperimentalNTPage;
+export default ExamplesPage;

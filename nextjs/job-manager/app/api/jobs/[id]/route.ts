@@ -142,3 +142,40 @@ export async function PATCH(
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
+
+/**
+ * Delete a specific job
+ *
+ * @param request NextRequest - The incoming request
+ * @param params.id string - The unique identifier of the job
+ * @returns
+ *   - Success: 204 No Content
+ *   - Error: 404 if job not found, 500 for server errors
+ *
+ * No API key required - job ID is used as authentication
+ */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await connectDB();
+    const job = await Job.findById(params.id);
+
+    if (!job) {
+      return new NextResponse('Job not found', { status: 404 });
+    }
+
+    // Only allow deletion of completed or failed jobs
+    if (job.status !== 'completed' && job.status !== 'failed') {
+      return new NextResponse('Only completed or failed jobs can be deleted', { status: 400 });
+    }
+
+    await Job.findByIdAndDelete(params.id);
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error('Error deleting job:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
+  }
+}

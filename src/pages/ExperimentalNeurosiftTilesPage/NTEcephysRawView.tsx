@@ -14,16 +14,32 @@ import {
 } from "react";
 import NTEcephysClient, { Array2D, Array3D } from "./NTEcephysClient";
 import { renderHeatmap } from "./renderHeatmap";
+import { useNeurosiftJobById } from "@jobManager/useNeurosiftJob";
+import { getUnitColor } from "@shared/context-unit-selection/unitColors";
+import { idToNum } from "@shared/context-unit-selection";
 
-type NTViewProps = {
+type NTEcephysRawViewProps = {
   client: NTEcephysClient;
   width: number;
   height: number;
+  spikeSortingJobId?: string;
 };
 
 type ViewMode = "raw" | "spikes" | "overlay";
 
-const NTView: FunctionComponent<NTViewProps> = ({ client, width, height }) => {
+type SpikeSortingOutput = {
+  units: {
+    id: string;
+    spike_train: number[];
+  }[];
+};
+
+const NTEcephysRawView: FunctionComponent<NTEcephysRawViewProps> = ({
+  client,
+  width,
+  height,
+  spikeSortingJobId,
+}) => {
   const { setVisibleTimeRange } = useTimeRange();
   const { setCurrentTime } = useTimeseriesSelection();
 
@@ -35,6 +51,14 @@ const NTView: FunctionComponent<NTViewProps> = ({ client, width, height }) => {
   const totalDuration = client.numCoveredSamples / client.samplingFrequency;
   const startChannel = 0;
   const endChannel = client.numChannels;
+
+  const { job: spikeSortingJob } = useNeurosiftJobById(spikeSortingJobId);
+  const spikeSortingOutputUrl: string | undefined = spikeSortingJob?.output
+    ? JSON.parse(spikeSortingJob.output).output_url
+    : undefined;
+  const { data: spikeSortingOutput } = useJsonFromUrl<SpikeSortingOutput>(
+    spikeSortingOutputUrl,
+  );
 
   useEffect(() => {
     // Set initial visible range to full duration
@@ -130,6 +154,7 @@ const NTView: FunctionComponent<NTViewProps> = ({ client, width, height }) => {
     };
     mode: ViewMode;
     selectedChannel: number | null;
+    spikeSortingOutput?: SpikeSortingOutput;
   } | null>(null);
   useEffect(() => {
     renderLoopData.current = {
@@ -145,6 +170,7 @@ const NTView: FunctionComponent<NTViewProps> = ({ client, width, height }) => {
       margins,
       mode,
       selectedChannel,
+      spikeSortingOutput,
     };
   }, [
     visibleStartTimeSec,
@@ -159,6 +185,7 @@ const NTView: FunctionComponent<NTViewProps> = ({ client, width, height }) => {
     margins,
     mode,
     selectedChannel,
+    spikeSortingOutput,
   ]);
 
   useEffect(() => {
@@ -205,6 +232,7 @@ const NTView: FunctionComponent<NTViewProps> = ({ client, width, height }) => {
       };
       mode: ViewMode;
       selectedChannel: number | null;
+      spikeSortingOutput?: SpikeSortingOutput;
     }) => {
       const {
         visibleStartTimeSec,
@@ -404,6 +432,31 @@ const NTView: FunctionComponent<NTViewProps> = ({ client, width, height }) => {
           context.stroke();
         }
       }
+
+      if (spikeSortingOutput) {
+        for (const unit of spikeSortingOutput.units) {
+          const spikeTrain = unit.spike_train;
+          if (spikeTrain.length === 0) continue;
+          for (const sample of spikeTrain) {
+            const t = sample / client.samplingFrequency;
+            if (visibleStartTimeSec <= t && t <= visibleEndTimeSec) {
+              const frac =
+                (t - visibleStartTimeSec) /
+                (visibleEndTimeSec - visibleStartTimeSec);
+              const x =
+                margins.left +
+                frac * (canvasWidth - margins.left - margins.right);
+              // vertical line at x
+              context.strokeStyle = getUnitColor(idToNum(unit.id));
+              context.lineWidth = 1;
+              context.beginPath();
+              context.moveTo(x, margins.top);
+              context.lineTo(x, canvasHeight - margins.bottom);
+              context.stroke();
+            }
+          }
+        }
+      }
     };
     renderLoop();
     return () => {
@@ -472,4 +525,36 @@ const NTView: FunctionComponent<NTViewProps> = ({ client, width, height }) => {
   );
 };
 
-export default NTView;
+const useJsonFromUrl = <T,>(url: string | undefined) => {
+  const [data, setData] = useState<T | undefined>(undefined);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (!url) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    fetch(url)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to fetch JSON: ${response.statusText}`);
+        }
+        return response.json();
+      })
+      .then((jsonData) => {
+        setData(jsonData);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Unknown error");
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [url]);
+
+  return { data, error, isLoading };
+};
+
+export default NTEcephysRawView;

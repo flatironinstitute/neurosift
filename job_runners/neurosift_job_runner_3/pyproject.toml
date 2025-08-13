@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "neurosift_job_runner_2"
+name = "neurosift_job_runner_3"
 version = "0.1.0"
 description = "Command line tool for running Neurosift jobs"
 authors = [
@@ -16,12 +16,13 @@ dependencies = [
     "pydantic",
     "numpy",
     "scipy",
-    "lindi",
+    "spikeinterface",
+    "mountainsort5",
     "click",
 ]
 
 [project.scripts]
-neurosift-job-runner-2 = "neurosift_job_runner_2.cli:main"
+neurosift-job-runner-3 = "neurosift_job_runner_3.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/neurosift_job_runner_2"]
+packages = ["src/neurosift_job_runner_3"]

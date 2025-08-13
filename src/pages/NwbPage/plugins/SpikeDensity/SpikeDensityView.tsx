@@ -89,6 +89,8 @@ const SpikeDensityView: FunctionComponent<Props> = ({
       isRefreshing,
       submitJob,
       fetchJobStatus,
+      cancelJob,
+      deleteJob,
     }: typeof multiscaleJob,
   ) => (
     <JobStatusHandler
@@ -97,6 +99,8 @@ const SpikeDensityView: FunctionComponent<Props> = ({
       isRefreshing={isRefreshing}
       onSubmit={submitJob}
       onRefresh={fetchJobStatus}
+      onCancel={cancelJob}
+      onDelete={deleteJob}
       jobLabel={label}
       imageName="neurosift-job-runner"
     />

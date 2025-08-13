@@ -64,6 +64,8 @@ const ImageSeriesMp4View: FunctionComponent<Props> = ({
         isRefreshing={job.isRefreshing}
         onSubmit={job.submitJob}
         onRefresh={job.fetchJobStatus}
+        onCancel={job.cancelJob}
+        onDelete={job.deleteJob}
         jobLabel="Generate MP4"
         imageName="neurosift-job-runner-2"
       />

@@ -1,29 +1,34 @@
-import { FunctionComponent } from "react";
+import { JobStatusHandler } from "@jobManager/components/JobStatusHandler";
+import { useNeurosiftJob } from "@jobManager/useNeurosiftJob";
 import {
+  Box,
+  Button,
   Dialog,
   DialogContent,
   DialogTitle,
   TextField,
-  Select,
-  MenuItem,
-  Button,
-  Box,
-  FormControl,
-  InputLabel,
 } from "@mui/material";
+import { FunctionComponent, useMemo, useState } from "react";
 
-export type SpikeSortingParams = {
+export type Mountainsort5Params = {
+  zarrUrl: string;
+  ecephysPath: string;
   startTime: number;
   endTime: number;
   channelString: string;
-  algorithm: string;
   detectThreshold: number;
 };
+
+interface SpikeSortingResult {
+  output_url?: string;
+  // Add other result properties as needed
+}
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  onSubmit: (params: SpikeSortingParams) => void;
+  zarrUrl: string;
+  ecephysPath: string;
   defaultStartTime: number;
   defaultEndTime: number;
 };
@@ -31,41 +36,38 @@ type Props = {
 const SpikeSortingDialog: FunctionComponent<Props> = ({
   open,
   onClose,
-  onSubmit,
+  zarrUrl,
+  ecephysPath,
   defaultStartTime,
   defaultEndTime,
 }) => {
-  // Initial values for the form
-  const initialParams: SpikeSortingParams = {
-    startTime: defaultStartTime,
-    endTime: defaultEndTime,
-    channelString: "*",
-    algorithm: "mountainsort5",
-    detectThreshold: 5,
-  };
+  const [startTime, setStartTime] = useState<number>(defaultStartTime);
+  const [endTime, setEndTime] = useState<number>(defaultEndTime);
+  const [channelString, setChannelString] = useState<string>("*");
+  const [detectThreshold, setDetectThreshold] = useState<number>(5);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
+  const jobInput = useMemo<Mountainsort5Params>(
+    () => ({
+      zarrUrl,
+      ecephysPath,
+      startTime,
+      endTime,
+      channelString,
+      detectThreshold,
+    }),
+    [zarrUrl, ecephysPath, startTime, endTime, channelString, detectThreshold],
+  );
 
-    const params: SpikeSortingParams = {
-      startTime: parseFloat(formData.get("startTime") as string),
-      endTime: parseFloat(formData.get("endTime") as string),
-      channelString: formData.get("channelString") as string,
-      algorithm: formData.get("algorithm") as string,
-      detectThreshold: parseFloat(formData.get("detectThreshold") as string),
-    };
-
-    onSubmit(params);
-  };
+  const job = useNeurosiftJob<Mountainsort5Params, SpikeSortingResult>(
+    "mountainsort5",
+    jobInput,
+  );
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Launch Spike Sorting</DialogTitle>
       <DialogContent>
         <Box
-          component="form"
-          onSubmit={handleSubmit}
           sx={{
             display: "flex",
             flexDirection: "column",
@@ -74,47 +76,45 @@ const SpikeSortingDialog: FunctionComponent<Props> = ({
           }}
         >
           <TextField
-            name="startTime"
             label="Start Time (seconds)"
             type="number"
-            defaultValue={initialParams.startTime}
-            required
+            value={startTime}
+            onChange={(e) => setStartTime(Number(e.target.value))}
             inputProps={{ step: "any" }}
           />
           <TextField
-            name="endTime"
             label="End Time (seconds)"
             type="number"
-            defaultValue={initialParams.endTime}
-            required
+            value={endTime}
+            onChange={(e) => setEndTime(Number(e.target.value))}
             inputProps={{ step: "any" }}
           />
           <TextField
-            name="channelString"
             label="Channels (e.g. 1-10,15,20-25)"
-            defaultValue={initialParams.channelString}
-            required
+            value={channelString}
+            onChange={(e) => setChannelString(e.target.value)}
             helperText="Use ranges like '1-10' or individual channels like '1,5,10'"
           />
-          <FormControl>
-            <InputLabel>Algorithm</InputLabel>
-            <Select
-              name="algorithm"
-              defaultValue={initialParams.algorithm}
-              label="Algorithm"
-              required
-            >
-              <MenuItem value="mountainsort5">MountainSort 5</MenuItem>
-            </Select>
-          </FormControl>
           <TextField
-            name="detectThreshold"
             label="Detection Threshold"
             type="number"
-            defaultValue={initialParams.detectThreshold}
-            required
+            value={detectThreshold}
+            onChange={(e) => setDetectThreshold(Number(e.target.value))}
             inputProps={{ step: "any" }}
           />
+
+          <JobStatusHandler
+            job={job.job}
+            error={job.error}
+            isRefreshing={job.isRefreshing}
+            onSubmit={job.submitJob}
+            onRefresh={job.fetchJobStatus}
+            onCancel={job.cancelJob}
+            onDelete={job.deleteJob}
+            jobLabel="Mountainsort5 Spike Sorting"
+            imageName="neurosift-job-runner-3"
+          />
+
           <Box
             sx={{
               display: "flex",
@@ -123,10 +123,7 @@ const SpikeSortingDialog: FunctionComponent<Props> = ({
               mt: 2,
             }}
           >
-            <Button onClick={onClose}>Cancel</Button>
-            <Button type="submit" variant="contained">
-              Start Spike Sorting
-            </Button>
+            <Button onClick={onClose}>Close</Button>
           </Box>
         </Box>
       </DialogContent>

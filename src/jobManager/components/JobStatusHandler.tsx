@@ -7,6 +7,8 @@ type Props = {
   isRefreshing: boolean;
   onSubmit: () => void;
   onRefresh: () => void;
+  onCancel: () => void;
+  onDelete: () => void;
   jobLabel: string;
   imageName: string; // neurosift-job-runner or neurosift-job-runner-2
 };
@@ -17,6 +19,8 @@ export const JobStatusHandler: FunctionComponent<Props> = ({
   isRefreshing,
   onSubmit,
   onRefresh,
+  onCancel,
+  onDelete,
   jobLabel,
   imageName,
 }) => {
@@ -96,8 +100,7 @@ export const JobStatusHandler: FunctionComponent<Props> = ({
                 }}
               >
                 apptainer exec docker://ghcr.io/flatironinstitute/{imageName}
-                :main-v2
-                {imageName} run-job {jobId}
+                :main-v2 run-job {jobId}
               </code>
 
               <p>Or for local development:</p>
@@ -109,8 +112,8 @@ export const JobStatusHandler: FunctionComponent<Props> = ({
                   overflowX: "auto",
                 }}
               >
-                pip install -e {imageNameWithUnderscores} && {imageName}
-                run-job {jobId}
+                pip install -e {imageNameWithUnderscores} && {imageName} run-job{" "}
+                {jobId}
               </code>
             </div>
           </div>
@@ -134,7 +137,7 @@ export const JobStatusHandler: FunctionComponent<Props> = ({
             </div>
           </div>
         )}
-        <div>
+        <div style={{ display: "flex", gap: "10px" }}>
           <button
             onClick={onRefresh}
             disabled={isRefreshing}
@@ -145,6 +148,21 @@ export const JobStatusHandler: FunctionComponent<Props> = ({
           >
             {isRefreshing ? "Refreshing..." : "Refresh Status"}
           </button>
+          {(job?.status === "pending" || job?.status === "running") && (
+            <button
+              onClick={onCancel}
+              style={{
+                backgroundColor: "#f44336",
+                color: "white",
+                border: "none",
+                padding: "8px 16px",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Cancel Job
+            </button>
+          )}
         </div>
       </div>
     );
@@ -171,8 +189,21 @@ export const JobStatusHandler: FunctionComponent<Props> = ({
         >
           `${jobLabel} failed: ${error}`
         </div>
-        <div>
+        <div style={{ display: "flex", gap: "10px" }}>
           <button onClick={onSubmit}>Resubmit Job</button>
+          <button
+            onClick={onDelete}
+            style={{
+              backgroundColor: "#f44336",
+              color: "white",
+              border: "none",
+              padding: "8px 16px",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            Delete Job
+          </button>
         </div>
       </div>
     );
@@ -198,6 +229,21 @@ export const JobStatusHandler: FunctionComponent<Props> = ({
           }}
         >
           {jobLabel} completed successfully
+        </div>
+        <div>
+          <button
+            onClick={onDelete}
+            style={{
+              backgroundColor: "#f44336",
+              color: "white",
+              border: "none",
+              padding: "8px 16px",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            Delete Job
+          </button>
         </div>
       </div>
     );
