@@ -27,6 +27,7 @@ dependencies = ["click>=7.0"]
 
 [project.optional-dependencies]
 video = ["opencv-python>=4.0", "numcodecs>=0.10", "numpy"]
+test = ["pynwb>=2.0.0", "h5py>=3.0.0"]
 
 [project.urls]
 Homepage = "https://github.com/flatironinstitute/neurosift"

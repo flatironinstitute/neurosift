@@ -1,0 +1,158 @@
+name: Test Neurosift Package
+
+on:
+  pull_request:
+    branches: [ main-v2 ]
+    paths:
+      - 'python/**'
+      - '.github/workflows/test-neurosift-package.yml'
+  push:
+    branches: [ main-v2 ]
+    paths:
+      - 'python/**'
+      - '.github/workflows/test-neurosift-package.yml'
+
+jobs:
+  test-neurosift-package:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    # Set up Node.js (required for neurosift)
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    # Install the neurosift package from the local directory
+    - name: Install neurosift package with test dependencies
+      run: |
+        cd python
+        pip install -e ".[test]"
+
+    # Create a test NWB file using pynwb
+    - name: Create test NWB file
+      run: |
+        python -c "
+        import numpy as np
+        from pynwb import NWBFile, NWBHDF5IO
+        from pynwb.testing import TestCase
+        from datetime import datetime
+        from dateutil.tz import tzlocal
+        import tempfile
+        import os
+
+        # Create a simple NWB file for testing
+        start_time = datetime(2023, 1, 1, 12, 0, 0, tzinfo=tzlocal())
+        
+        nwbfile = NWBFile(
+            session_description='Test session for neurosift CI',
+            identifier='test-session-001',
+            session_start_time=start_time,
+            experimenter=['Test User'],
+            lab='Test Lab',
+            institution='Test Institution'
+        )
+
+        # Add some simple data
+        timestamps = np.arange(0, 100, 0.1)
+        data = np.random.randn(len(timestamps), 3)
+        
+        timeseries = nwbfile.add_acquisition(
+            name='test_timeseries',
+            description='Test time series data',
+            data=data,
+            rate=10.0,
+            unit='volts'
+        )
+
+        # Save the file
+        with NWBHDF5IO('test_file.nwb', 'w') as io:
+            io.write(nwbfile)
+        
+        print('Created test NWB file: test_file.nwb')
+        "
+
+    # Verify the NWB file was created and is readable
+    - name: Verify NWB file
+      run: |
+        python -c "
+        from pynwb import NWBHDF5IO
+        import os
+        
+        if not os.path.exists('test_file.nwb'):
+            raise FileNotFoundError('test_file.nwb was not created')
+        
+        # Try to read the file
+        with NWBHDF5IO('test_file.nwb', 'r') as io:
+            nwbfile = io.read()
+            print(f'Successfully read NWB file: {nwbfile.identifier}')
+            print(f'Session description: {nwbfile.session_description}')
+        "
+
+    # Test neurosift CLI command (without opening browser)
+    - name: Create test script
+      run: |
+        cat > test_neurosift.py << 'EOF'
+        import sys
+        import os
+        from click.testing import CliRunner
+        from neurosift.cli import view_nwb
+        import webbrowser
+
+        # Mock webbrowser.open to prevent actual browser opening
+        def mock_open(url, new=0, autoraise=True):
+            print(f"Would open browser with URL: {url}")
+            return True
+
+        webbrowser.open = mock_open
+
+        # Test the CLI command using Click's testing runner
+        runner = CliRunner()
+        result = runner.invoke(view_nwb, ["test_file.nwb", "--neurosift-url", "https://neurosift.app"])
+        
+        print(f"CLI exit code: {result.exit_code}")
+        if result.output:
+            print(f"CLI output: {result.output}")
+        if result.exception:
+            print(f"CLI exception: {result.exception}")
+            
+        if result.exit_code != 0:
+            sys.exit(1)
+            
+        print("✓ neurosift CLI test completed successfully")
+        EOF
+
+    - name: Test neurosift CLI help
+      run: |
+        neurosift --help
+
+    - name: Run neurosift CLI test
+      run: |
+        python test_neurosift.py
+
+    # Test that neurosift can be imported
+    - name: Test neurosift import
+      run: |
+        python -c "
+        import neurosift
+        from neurosift.cli import neurosift as cli_main
+        from neurosift.cli import view_nwb
+        print('✓ neurosift package imported successfully')
+        print(f'neurosift package location: {neurosift.__file__}')
+        "
+
+    # Clean up test files
+    - name: Clean up
+      run: |
+        rm -f test_file.nwb test_neurosift.py
