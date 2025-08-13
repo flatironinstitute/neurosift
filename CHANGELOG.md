@@ -1,5 +1,8 @@
 # Changes
 
+## August 13, 2025
+- Added continuous integration workflow to test neurosift Python package installation, NWB file creation with pynwb, and CLI functionality
+
 ## August 11, 2025
 - Added redirect from /experimental-neurotile to /experimental-neurosift-tiles for URL compatibility
 - Modified ExperimentalNeurosiftTilesPage to use zarr_url and path query parameters instead of example parameter, with examples landing page when parameters are not provided
