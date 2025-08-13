@@ -13,6 +13,7 @@ import {
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useEffect } from "react";
 import {
+  Navigate,
   Route,
   BrowserRouter as Router,
   Routes,
@@ -28,7 +29,7 @@ import DandisetPageContainer from "./pages/DandisetPage/DandisetPageContainer";
 import EmberDandiPage from "./pages/EmberPage/EmberDandiPage";
 import EmberDandisetPageContainer from "./pages/EmberDandisetPage/EmberDandisetPageContainer";
 import EdfPage from "./pages/EdfPage/EdfPage";
-import ExperimentalNeurotilePage from "./pages/ExperimentalNeurotilePage/ExperimentalNeurotilePage";
+import ExperimentalNeurosiftTilesPage from "./pages/ExperimentalNeurosiftTilesPage/ExperimentalNeurosiftTilesPage";
 import GuidePage from "./pages/GuidePage/GuidePage";
 import HomePage from "./pages/HomePage/HomePage";
 import NwbPage from "./pages/NwbPage/NwbPage";
@@ -390,8 +391,15 @@ const AppContent = () => {
           />
           <Route
             path="/experimental-neurotile"
+            element={<Navigate to="/experimental-neurosift-tiles" replace />}
+          />
+          <Route
+            path="/experimental-neurosift-tiles"
             element={
-              <ExperimentalNeurotilePage width={width} height={mainHeight} />
+              <ExperimentalNeurosiftTilesPage
+                width={width}
+                height={mainHeight}
+              />
             }
           />
         </Routes>

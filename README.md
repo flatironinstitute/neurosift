@@ -6,6 +6,21 @@ This branch contains the new (v2) version of neurosift. The previous (v1) versio
 
 The live application is hosted at [https://neurosift.app](https://neurosift.app).
 
+## Run locally
+
+If you want to run neurosift on a local file, you can install it via pip and run it locally.
+
+1. **Install neurosift:**
+   ```bash
+   pip install neurosift
+   ```
+   
+2. **Run neurosift locally:**
+   ```bash
+   neurosift view-nwb path-to-local-nwbfile.nwb
+   ```
+   
+
 ## For developers
 
 Follow these steps to install and run the app locally in development mode:
