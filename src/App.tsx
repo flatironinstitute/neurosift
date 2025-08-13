@@ -25,6 +25,8 @@ import { sendUrlUpdate } from "./ai-integration/messaging/windowMessaging";
 import AnnotationsPage from "./pages/AnnotationsPage/AnnotationsPage";
 import DandiPage from "./pages/DandiPage/DandiPage";
 import DandisetPageContainer from "./pages/DandisetPage/DandisetPageContainer";
+import EmberDandiPage from "./pages/EmberPage/EmberDandiPage";
+import EmberDandisetPageContainer from "./pages/EmberDandisetPage/EmberDandisetPageContainer";
 import EdfPage from "./pages/EdfPage/EdfPage";
 import ExperimentalNeurotilePage from "./pages/ExperimentalNeurotilePage/ExperimentalNeurotilePage";
 import GuidePage from "./pages/GuidePage/GuidePage";
@@ -81,6 +83,17 @@ const LegacyUrlHandler = () => {
         newPath = `/dandiset/${dandisetId}`;
         if (dandisetVersion) {
           newSearch = `?dandisetVersion=${dandisetVersion}`;
+        }
+      }
+    } else if (p === "/ember") {
+      newPath = "/ember";
+    } else if (p === "/ember-dandiset") {
+      const emberDandisetId = searchParams.get("emberDandisetId");
+      const emberDandisetVersion = searchParams.get("emberDandisetVersion");
+      if (emberDandisetId) {
+        newPath = `/ember-dandiset/${emberDandisetId}`;
+        if (emberDandisetVersion) {
+          newSearch = `?ember-dandisetVersion=${emberDandisetVersion}`;
         }
       }
     } else if (p === "/edf") {
@@ -335,6 +348,16 @@ const AppContent = () => {
             path="/dandiset/:dandisetId"
             element={
               <DandisetPageContainer width={width} height={mainHeight} />
+            }
+          />
+          <Route
+            path="/ember"
+            element={<EmberDandiPage width={width} height={mainHeight} />}
+          />
+          <Route
+            path="/ember-dandiset/:dandisetId"
+            element={
+              <EmberDandisetPageContainer width={width} height={mainHeight} />
             }
           />
           <Route

@@ -36,8 +36,9 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
         <Box
           sx={{
             display: "grid",
-            gap: 2,
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+            rowGap: 6,
+            columnGap: 2,
+            gridTemplateColumns: "repeat(2, minmax(250px, 1fr))",
           }}
         >
           <Paper
@@ -68,6 +69,38 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
                 fullWidth
               >
                 Browse DANDI
+              </Button>
+            </Box>
+          </Paper>
+
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+            }}
+          >
+            <Box sx={{ flex: 1, mb: 1 }}>
+              <Typography variant="h6" gutterBottom>
+                EMBER Archive
+              </Typography>
+              <Typography variant="body2">
+                Browse and explore datasets from the{" "}
+                <Link href="https://emberarchive.org/">
+                  EMBER multi-modal data archive
+                </Link>
+                .
+              </Typography>
+            </Box>
+            <Box>
+              <Button
+                variant="contained"
+                onClick={() => navigate("/ember")}
+                fullWidth
+              >
+                Browse EMBER
               </Button>
             </Box>
           </Paper>
