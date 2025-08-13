@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "./devel/generate_build_info.sh && vite",
+    "windows-dev": ".\\devel\\generate_build_info.sh && vite",
     "build": "./devel/generate_build_info.sh && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",

@@ -14,9 +14,9 @@ import {
 } from "@mui/material";
 import { FunctionComponent, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AIRegisteredComponent, useAIComponentRegistry } from "../../AIContext";
-import { getDandiApiHeaders } from "../util/getDandiApiHeaders";
-import { getRecentDandisets } from "../util/recentDandisets";
+import { AIRegisteredComponent, useAIComponentRegistry } from "../../../AIContext";
+import { getDandiApiHeaders } from "../../util/getDandiApiHeaders";
+import { getRecentDandisets } from "../../util/recentDandisets";
 import DandisetSearchResult from "./DandisetSearchResult";
 import { NeurodataTypesSearchPanel } from "./components/NeurodataTypesSearchPanel";
 import { SearchMode, SearchModeControl } from "./components/SearchModeControl";
@@ -26,11 +26,17 @@ import { useNeurodataTypesIndex } from "./hooks/useNeurodataTypesIndex";
 import { useDandisetNotebooks } from "./hooks/useDandisetNotebooks";
 import { doNeurodataTypesSearch } from "./services/doNeurodataTypesSearch";
 import { ExperimentalSearchPanel } from "./experimentalSearch/ExperimentalSearchPanel";
-import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
+import getAuthorizationHeaderForUrl from "../../util/getAuthorizationHeaderForUrl";
 
-type DandiPageProps = {
+type BaseDandiPageProps = {
   width: number;
   height: number;
+  title: string;
+  websiteUrl: string;
+  websiteName: string;
+  apiBaseUrl: string;
+  dandisetRoute: string;
+  componentId: string;
 };
 
 type SearchState = {
@@ -40,7 +46,16 @@ type SearchState = {
   scheduledSearch: boolean;
 };
 
-const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
+const BaseDandiPage: FunctionComponent<BaseDandiPageProps> = ({
+  width,
+  height,
+  title,
+  websiteUrl,
+  websiteName,
+  apiBaseUrl,
+  dandisetRoute,
+  componentId
+}) => {
   const navigate = useNavigate();
   const [recentDandisets, setRecentDandisets] = useState<string[]>([]);
   const staging = false;
@@ -110,11 +125,10 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
         } else if (searchMode === "basic") {
           const { headers, apiKeyProvided } = getDandiApiHeaders(staging);
           const embargoedStr = apiKeyProvided ? "true" : "false";
-          const stagingStr = staging ? "-staging" : "";
           const emptyStr = !searchQuery ? "false" : "true";
 
           const response = await fetch(
-            `https://api${stagingStr}.dandiarchive.org/api/dandisets/?page=1&page_size=50&ordering=-modified&search=${searchQuery}&draft=true&empty=${emptyStr}&embargoed=${embargoedStr}`,
+            `${apiBaseUrl}/api/dandisets/?page=1&page_size=50&ordering=-modified&search=${searchQuery}&draft=true&empty=${emptyStr}&embargoed=${embargoedStr}`,
             { headers },
           );
           if (response.status === 200) {
@@ -129,7 +143,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
 
           const dandisets0 = await Promise.all(
             searchResultDandisetIds.slice(0, limit).map(async (dandisetId) => {
-              const url = `https://api.dandiarchive.org/api/dandisets/${dandisetId}`;
+              const url = `${apiBaseUrl}/api/dandisets/${dandisetId}`;
               const authorizationHeader = getAuthorizationHeaderForUrl(url);
               const headers = authorizationHeader
                 ? { Authorization: authorizationHeader }
@@ -163,10 +177,10 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
         setLastSearchedText(searchQuery);
       }
     },
-    [index, selectedTypes, staging, useNeurodataTypesSearch],
+    [index, selectedTypes, staging, useNeurodataTypesSearch, apiBaseUrl],
   );
 
-  useRegisterAIComponent();
+  useRegisterAIComponent(componentId);
 
   useEffect(() => {
     if (searchText) return;
@@ -198,7 +212,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
   }, [selectedTypes, useNeurodataTypesSearch]);
 
   const handleRecentClick = (dandisetId: string) => {
-    navigate(`/dandiset/${dandisetId}`);
+    navigate(`${dandisetRoute}/${dandisetId}`);
   };
 
   const handleSearch = useCallback(() => {
@@ -236,7 +250,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
         searchResultDandisetIds
           .slice(0, searchState.currentLimit)
           .map(async (dandisetId) => {
-            const url = `https://api.dandiarchive.org/api/dandisets/${dandisetId}`;
+            const url = `${apiBaseUrl}/api/dandisets/${dandisetId}`;
             const authorizationHeader = getAuthorizationHeaderForUrl(url);
             const headers = authorizationHeader
               ? { Authorization: authorizationHeader }
@@ -262,21 +276,21 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
       setSearchResults(dandisetsFilt);
       setTotalResults(searchResultDandisetIds.length);
     },
-    [searchState.currentLimit],
+    [searchState.currentLimit, apiBaseUrl],
   );
 
   return (
     <ScrollY width={width} height={height}>
       <Container maxWidth="xl" sx={{ mt: 2 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          DANDI Archive Browser
+          {title}
         </Typography>
         <Box sx={{ mb: 2 }}>
           <Link
-            href="https://dandiarchive.org/"
+            href={websiteUrl}
             sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
           >
-            Visit DANDI Archive website <LaunchIcon sx={{ fontSize: 16 }} />
+            Visit {websiteName} website <LaunchIcon sx={{ fontSize: 16 }} />
           </Link>
         </Box>
         {recentDandisets.length > 0 && (
@@ -408,7 +422,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
   );
 };
 
-const useRegisterAIComponent = () => {
+const useRegisterAIComponent = (componentId: string) => {
   const { registerComponentForAI, unregisterComponentForAI } =
     useAIComponentRegistry();
   useEffect(() => {
@@ -420,13 +434,13 @@ A semantic search will return Dandisets with similar content to the provided tex
 An neuroda-types search will return Dandisets that match the selected neurodata types.
 `;
     const registration: AIRegisteredComponent = {
-      id: "DandiPage",
+      id: componentId,
       context,
       callbacks: [],
     };
     registerComponentForAI(registration);
-    return () => unregisterComponentForAI("DandiPage");
-  }, [registerComponentForAI, unregisterComponentForAI]);
+    return () => unregisterComponentForAI(componentId);
+  }, [registerComponentForAI, unregisterComponentForAI, componentId]);
 };
 
-export default DandiPage;
+export default BaseDandiPage;

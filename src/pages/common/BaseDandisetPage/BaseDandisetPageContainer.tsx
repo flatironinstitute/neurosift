@@ -8,7 +8,7 @@ type DandisetPageContainerProps = {
   dandisetId?: string;
 };
 
-const DandisetPageContainer: FC<DandisetPageContainerProps> = (props) => {
+const BaseDandisetPageContainer: FC<DandisetPageContainerProps> = (props) => {
   const useLazy = true; // the new version is to use lazy, but we'll keep the old method around as a fallback
 
   // Use the lazy version if specified in URL params
@@ -20,4 +20,4 @@ const DandisetPageContainer: FC<DandisetPageContainerProps> = (props) => {
   return <DandisetPage {...props} />;
 };
 
-export default DandisetPageContainer;
+export default BaseDandisetPageContainer;
