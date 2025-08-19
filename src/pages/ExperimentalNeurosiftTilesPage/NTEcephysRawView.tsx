@@ -462,7 +462,7 @@ const NTEcephysRawView: FunctionComponent<NTEcephysRawViewProps> = ({
     return () => {
       canceled = true;
     };
-  }, []);
+  }, [spikeSortingOutput]);
 
   // Create custom toolbar actions for mode switching and channel display
   const customToolbarActions: CustomToolbarAction[] = [
