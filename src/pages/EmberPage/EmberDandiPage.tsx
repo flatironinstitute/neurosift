@@ -95,7 +95,7 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
       setIsSearching(true);
       setSearchResults([]); // Clear results before new search
 
-      const searchResultDandisetIds: string[] | undefined = undefined;
+      const searchResultDandisetIds: string[] = [];
       try {
         if (searchMode === "basic") {
           const { headers, apiKeyProvided } = getEmberApiHeaders();
@@ -114,34 +114,41 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
             setSearchResults(dandisetResponse.results);
           }
         }
-        if (searchResultDandisetIds) {
+        if (searchResultDandisetIds && searchResultDandisetIds.length > 0) {
           // Limit to a few results and fetch full dandiset info for each
           // Return total count along with the paginated results
 
           const dandisets0 = await Promise.all(
-            searchResultDandisetIds.slice(0, limit).map(async (dandisetId) => {
-              const url = `https://api-dandi.emberarchive.org/api/dandisets/${dandisetId}`;
-              const authorizationHeader = getAuthorizationHeaderForUrl(url);
-              const headers = authorizationHeader
-                ? { Authorization: authorizationHeader }
-                : undefined;
+            searchResultDandisetIds
+              .slice(0, limit)
+              .map(async (dandisetId: string) => {
+                const url = `https://api-dandi.emberarchive.org/api/dandisets/${dandisetId}`;
+                const authorizationHeader = getAuthorizationHeaderForUrl(url);
+                const headers = authorizationHeader
+                  ? { Authorization: authorizationHeader }
+                  : undefined;
 
-              try {
-                const response = await fetch(url, { headers });
-                if (response.status === 200) {
-                  const json = await response.json();
-                  return json as DandisetSearchResultItem;
+                try {
+                  const response = await fetch(url, { headers });
+                  if (response.status === 200) {
+                    const json = await response.json();
+                    return json as DandisetSearchResultItem;
+                  }
+                } catch (error) {
+                  console.error(
+                    "Error fetching EMBER Dandiset details:",
+                    error,
+                  );
                 }
-              } catch (error) {
-                console.error("Error fetching EMBER Dandiset details:", error);
-              }
-              return null;
-            }),
+                return null;
+              }),
           );
 
           // Filter out any failed requests and return with total
           const dandisetsFilt = dandisets0.filter(
-            (d): d is DandisetSearchResultItem => d !== null,
+            (
+              d: DandisetSearchResultItem | null,
+            ): d is DandisetSearchResultItem => d !== null,
           ) as DandisetSearchResultItem[];
           setSearchResults(dandisetsFilt);
           const total = searchResultDandisetIds.length;
