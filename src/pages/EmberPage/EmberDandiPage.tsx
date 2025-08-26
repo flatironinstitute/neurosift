@@ -15,7 +15,7 @@ import {
 import { FunctionComponent, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AIRegisteredComponent, useAIComponentRegistry } from "../../AIContext";
-import { getDandiApiHeaders } from "../util/getDandiApiHeaders";
+import { getEmberApiHeaders } from "../util/getDandiApiHeaders";
 import { getRecentEmberDandisets } from "../util/recentEmberDandisets";
 import EmberDandisetSearchResult from "./EmberDandisetSearchResult.tsx";
 import { NeurodataTypesSearchPanel } from "./components/NeurodataTypesSearchPanel";
@@ -98,7 +98,7 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
       const searchResultDandisetIds: string[] | undefined = undefined;
       try {
         if (searchMode === "basic") {
-          const { headers, apiKeyProvided } = getDandiApiHeaders(staging);
+          const { headers, apiKeyProvided } = getEmberApiHeaders();
           const embargoedStr = apiKeyProvided ? "true" : "false";
           // const stagingStr = staging ? "-staging" : "";
           const emptyStr = !searchQuery ? "false" : "true";

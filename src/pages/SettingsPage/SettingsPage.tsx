@@ -14,6 +14,7 @@ const SettingsPage: FunctionComponent<SettingsPageProps> = ({
   const [neurosiftApiKey, setNeurosiftApiKey] = useState("");
   const [dandiApiKey, setDandiApiKey] = useState("");
   const [dandiStagingApiKey, setDandiStagingApiKey] = useState("");
+  const [emberApiKey, setEmberApiKey] = useState("");
   const [adminApiKey, setAdminApiKey] = useState("");
   const [showSaveNotification, setShowSaveNotification] = useState(false);
 
@@ -23,10 +24,12 @@ const SettingsPage: FunctionComponent<SettingsPageProps> = ({
     const savedDandiApiKey = localStorage.getItem("dandiApiKey") || "";
     const savedDandiStagingApiKey =
       localStorage.getItem("dandiStagingApiKey") || "";
+    const savedEmberApiKey = localStorage.getItem("emberApiKey") || "";
     const savedAdminApiKey = localStorage.getItem("adminApiKey") || "";
     setNeurosiftApiKey(savedNeurosiftApiKey);
     setDandiApiKey(savedDandiApiKey);
     setDandiStagingApiKey(savedDandiStagingApiKey);
+    setEmberApiKey(savedEmberApiKey);
     setAdminApiKey(savedAdminApiKey);
   }, []);
 
@@ -54,6 +57,15 @@ const SettingsPage: FunctionComponent<SettingsPageProps> = ({
     const newKey = event.target.value;
     setDandiStagingApiKey(newKey);
     localStorage.setItem("dandiStagingApiKey", newKey);
+    setShowSaveNotification(true);
+  };
+
+  const handleEmberApiKeyChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const newKey = event.target.value;
+    setEmberApiKey(newKey);
+    localStorage.setItem("emberApiKey", newKey);
     setShowSaveNotification(true);
   };
 
@@ -115,6 +127,19 @@ const SettingsPage: FunctionComponent<SettingsPageProps> = ({
             margin="normal"
             type="password"
             helperText="Enter your DANDI Staging API key for accessing protected resources on api-staging.dandiarchive.org"
+          />
+          <Typography variant="h6" gutterBottom>
+            EMBER API Keys
+          </Typography>
+          <TextField
+            fullWidth
+            label="EMBER API Key"
+            variant="outlined"
+            value={emberApiKey}
+            onChange={handleEmberApiKeyChange}
+            margin="normal"
+            type="password"
+            helperText="Enter your DANDI API key for accessing protected resources on api.dandiarchive.org"
           />
           {showSaveNotification && (
             <Alert severity="info" sx={{ mt: 2 }}>
