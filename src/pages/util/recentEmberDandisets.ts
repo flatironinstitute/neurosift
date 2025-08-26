@@ -17,7 +17,10 @@ export const addRecentEmberDandiset = (dandisetId: string) => {
     // Remove the dandiset if it's already in the list
     const filtered = recent.filter((id) => id !== dandisetId);
     // Add the dandiset to the front of the list
-    const updated = [dandisetId, ...filtered].slice(0, MAX_RECENT_EMBER_DANDISETS);
+    const updated = [dandisetId, ...filtered].slice(
+      0,
+      MAX_RECENT_EMBER_DANDISETS,
+    );
     localStorage.setItem(RECENT_EMBER_DANDISETS_KEY, JSON.stringify(updated));
     return updated;
   } catch (error) {

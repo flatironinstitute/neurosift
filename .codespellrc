@@ -3,4 +3,4 @@
 skip = .git*,*.svg,package-lock.json,*.css,.codespellrc,static
 check-hidden = true
 ignore-regex = \btempory\.net\b
-ignore-words-list = numer,breal
+ignore-words-list = numer,breal,anser,lIK

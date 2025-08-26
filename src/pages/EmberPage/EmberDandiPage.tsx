@@ -45,7 +45,9 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
   height,
 }) => {
   const navigate = useNavigate();
-  const [recentEmberDandisets, setRecentEmberDandisets] = useState<string[]>([]);
+  const [recentEmberDandisets, setRecentEmberDandisets] = useState<string[]>(
+    [],
+  );
   const staging = false;
   const [searchResults, setSearchResults] = useState<
     DandisetSearchResultItem[]
