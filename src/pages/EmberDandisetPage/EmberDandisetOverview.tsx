@@ -59,7 +59,7 @@ const findChatInfos = (annotations: any[]): ChatInfo[] => {
     .filter((chatInfo) => chatInfo !== undefined) as ChatInfo[];
 };
 
-const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
+const EmberDandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
   width,
   height,
   dandisetVersionInfo,
@@ -94,17 +94,17 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
   return (
     <ScrollY width={width} height={height}>
       <div style={{ padding: "15px" }}>
-        {/* Back to DANDI */}
+        {/* Back to EMBER */}
         <div style={{ marginBottom: "15px" }}>
           <span
-            onClick={() => navigate("/dandi")}
+            onClick={() => navigate("/ember")}
             style={{
               cursor: "pointer",
               color: "#0066cc",
               fontSize: "14px",
             }}
           >
-            ← Back to DANDI
+            ← Back to EMBER
           </span>
         </div>
 
@@ -113,15 +113,15 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
           {dandisetVersionInfo.metadata.name}
         </Typography>
 
-        {/* View on DANDI */}
+        {/* View on EMBER */}
         <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
           <a
-            href={`https://dandiarchive.org/dandiset/${dandisetVersionInfo.dandiset.identifier}/${dandisetVersionInfo.version}`}
+            href={`https://dandi.emberarchive.org/dandiset/${dandisetVersionInfo.dandiset.identifier}/${dandisetVersionInfo.version}`}
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: "#0066cc", textDecoration: "none" }}
           >
-            View on DANDI →
+            View on EMBER →
           </a>
         </Box>
 
@@ -454,4 +454,4 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
   );
 };
 
-export default DandisetOverview;
+export default EmberDandisetOverview;

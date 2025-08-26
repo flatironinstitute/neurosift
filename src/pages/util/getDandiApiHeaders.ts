@@ -10,3 +10,15 @@ export const getDandiApiHeaders = (
   }
   return { headers, apiKeyProvided: !!dandiApiKey };
 };
+
+export const getEmberApiHeaders = (): {
+  headers: { [key: string]: string };
+  apiKeyProvided: boolean;
+} => {
+  const headers: { [key: string]: string } = {};
+  const emberApiKey = localStorage.getItem("emberApiKey") || "";
+  if (emberApiKey) {
+    headers["Authorization"] = `token ${emberApiKey}`;
+  }
+  return { headers, apiKeyProvided: !!emberApiKey };
+};
