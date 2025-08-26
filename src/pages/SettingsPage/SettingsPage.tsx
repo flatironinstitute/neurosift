@@ -128,6 +128,8 @@ const SettingsPage: FunctionComponent<SettingsPageProps> = ({
             type="password"
             helperText="Enter your DANDI Staging API key for accessing protected resources on api-staging.dandiarchive.org"
           />
+        </Paper>
+        <Paper sx={{ p: 3, mt: 3, maxWidth: 600 }}>
           <Typography variant="h6" gutterBottom>
             EMBER API Keys
           </Typography>
