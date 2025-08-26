@@ -21,10 +21,8 @@ import EmberDandisetSearchResult from "./EmberDandisetSearchResult.tsx";
 import { NeurodataTypesSearchPanel } from "./components/NeurodataTypesSearchPanel";
 import { SearchMode, SearchModeControl } from "./components/SearchModeControl";
 import { DandisetSearchResultItem, DandisetsResponse } from "./dandi-types";
-import doDandiSemanticSearch from "./doDandiSemanticSearch";
 import { useNeurodataTypesIndex } from "./hooks/useNeurodataTypesIndex";
 import { useDandisetNotebooks } from "./hooks/useDandisetNotebooks";
-import { doNeurodataTypesSearch } from "./services/doNeurodataTypesSearch";
 import { ExperimentalSearchPanel } from "./experimentalSearch/ExperimentalSearchPanel";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 
@@ -67,9 +65,10 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
   const { notebookUrls } = useDandisetNotebooks();
 
   const { searchText, searchMode } = searchState;
-  const useNeurodataTypesSearch = searchMode === "neurodata-types";
-  const useSemanticSearch = searchMode === "semantic";
-  const useExperimentalSearch = searchMode === "experimental";
+  // TODO: eventually re-enable these
+  const useNeurodataTypesSearch = false;
+  const useSemanticSearch = false;
+  const useExperimentalSearch = false;
   const setSearchMode = useCallback((mode: SearchMode) => {
     setSearchState((prev) => ({
       ...prev,
@@ -96,23 +95,9 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
       setIsSearching(true);
       setSearchResults([]); // Clear results before new search
 
-      let searchResultDandisetIds: string[] | undefined = undefined;
+      const searchResultDandisetIds: string[] | undefined = undefined;
       try {
-        if (useNeurodataTypesSearch && index) {
-          if (selectedTypes.length === 0) {
-            setTotalResults(0);
-            return;
-          }
-          const { results, total } = await doNeurodataTypesSearch(
-            index,
-            selectedTypes,
-            limit,
-          );
-          setSearchResults(results);
-          setTotalResults(total);
-        } else if (searchMode === "semantic") {
-          searchResultDandisetIds = await doDandiSemanticSearch(searchQuery);
-        } else if (searchMode === "basic") {
+        if (searchMode === "basic") {
           const { headers, apiKeyProvided } = getDandiApiHeaders(staging);
           const embargoedStr = apiKeyProvided ? "true" : "false";
           // const stagingStr = staging ? "-staging" : "";
