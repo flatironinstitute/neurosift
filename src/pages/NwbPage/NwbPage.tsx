@@ -42,6 +42,12 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({
   const [isLoadingAssetUrl, setIsLoadingAssetUrl] = useState(false);
   const navigate = useNavigate();
 
+  const isEmber = nwbUrlProp?.startsWith("https://api-dandi.emberarchive.org/");
+
+  const dandiApiBaseUrl = !isEmber
+    ? "https://api.dandiarchive.org"
+    : "https://api-dandi.emberarchive.org";
+
   useEffect(() => {
     let canceled = false;
 
@@ -53,7 +59,7 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({
       try {
         const encodedPath = encodeURIComponent(path);
         const response = await fetch(
-          `https://api.dandiarchive.org/api/dandisets/${dandisetId}/versions/${dandisetVersion}/assets/?glob=${encodedPath}&metadata=false&zarr=false`,
+          `${dandiApiBaseUrl}/api/dandisets/${dandisetId}/versions/${dandisetVersion}/assets/?glob=${encodedPath}&metadata=false&zarr=false`,
         );
 
         if (!response.ok) {
@@ -63,7 +69,7 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({
         const data = await response.json();
         if (!canceled && data.results?.[0]?.asset_id) {
           const assetId = data.results[0].asset_id;
-          const constructedUrl = `https://api.dandiarchive.org/api/assets/${assetId}/download/`;
+          const constructedUrl = `${dandiApiBaseUrl}/api/assets/${assetId}/download/`;
 
           navigate(`?url=${constructedUrl}&${searchParams}`);
         }

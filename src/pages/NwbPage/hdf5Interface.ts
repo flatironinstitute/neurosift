@@ -366,7 +366,10 @@ export const isDandiAssetUrl = (url: string) => {
   if (url.startsWith("https://api-staging.dandiarchive.org/")) {
     return true;
   }
-  if (url.startsWith("https://api.dandiarchive.org/")) {
+  if (
+    url.startsWith("https://api.dandiarchive.org/") ||
+    url.startsWith("https://api-dandi.emberarchive.org/")
+  ) {
     return true;
   }
   return false;
