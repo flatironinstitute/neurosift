@@ -37,7 +37,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
   const effectiveDandisetId = propDandisetId || urlDandisetId;
   const staging = false;
   const dandisetResponse: DandisetSearchResultItem | undefined | null =
-    useQueryDandiset(effectiveDandisetId, staging);
+    useQueryDandiset(effectiveDandisetId, staging, false);
 
   // todo: get dandisetVersion from the route
   const dandisetVersion = "";
@@ -48,6 +48,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
       dandisetVersion || "",
       staging,
       dandisetResponse || null,
+      false,
     );
 
   // todo: set dandisetVersion to route if not there yet

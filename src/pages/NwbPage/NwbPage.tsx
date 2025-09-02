@@ -42,7 +42,8 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({
   const [isLoadingAssetUrl, setIsLoadingAssetUrl] = useState(false);
   const navigate = useNavigate();
 
-  const isEmber = nwbUrlProp?.startsWith("https://api-dandi.emberarchive.org/");
+  const isEmber =
+    nwbUrl?.startsWith("https://api-dandi.emberarchive.org/") || false;
 
   const dandiApiBaseUrl = !isEmber
     ? "https://api.dandiarchive.org"
@@ -86,7 +87,15 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({
     return () => {
       canceled = true;
     };
-  }, [dandisetId, dandisetVersion, path, nwbUrl, searchParams, navigate]);
+  }, [
+    dandisetId,
+    dandisetVersion,
+    path,
+    nwbUrl,
+    searchParams,
+    navigate,
+    dandiApiBaseUrl,
+  ]);
 
   const initialTabId = searchParams.get("tab");
 
@@ -134,6 +143,7 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({
         height={0}
         dandisetId={dandisetId || undefined}
         dandisetVersion={dandisetVersion}
+        useEmber={isEmber}
       />
       <MainWorkspace
         nwbUrl={nwbUrl}
@@ -151,6 +161,7 @@ type LeftAreaProps = {
   height: number;
   dandisetId?: string;
   dandisetVersion: string;
+  useEmber: boolean;
 };
 
 const LeftArea: FunctionComponent<LeftAreaProps> = ({
@@ -159,13 +170,15 @@ const LeftArea: FunctionComponent<LeftAreaProps> = ({
   height,
   dandisetId,
   dandisetVersion,
+  useEmber,
 }) => {
-  const dandisetResponse = useQueryDandiset(dandisetId, false);
+  const dandisetResponse = useQueryDandiset(dandisetId, false, useEmber);
   const dandisetVersionInfo = useDandisetVersionInfo(
     dandisetId,
     dandisetVersion,
     false,
     dandisetResponse || null,
+    useEmber,
   );
   const { nwbFileOverview } = useNwbFileOverview(nwbUrl);
   const tabBarHeight = TAB_BAR_HEIGHT;

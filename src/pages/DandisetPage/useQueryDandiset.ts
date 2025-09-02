@@ -5,6 +5,7 @@ import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 export const useQueryDandiset = (
   dandisetId: string | undefined,
   useStaging: boolean | undefined,
+  useEmber: boolean | undefined,
 ) => {
   const [dandisetResponse, setDandisetResponse] = useState<
     DandisetSearchResultItem | undefined | null
@@ -15,7 +16,9 @@ export const useQueryDandiset = (
     if (!dandisetId) return;
     (async () => {
       const stagingStr = useStaging ? "-staging" : "";
-      const url = `https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}`;
+      const url = !useEmber
+        ? `https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}`
+        : `https://api${stagingStr}-dandi.emberarchive.org/api/dandisets/${dandisetId}`;
       const authorizationHeader = getAuthorizationHeaderForUrl(url);
       const headers = authorizationHeader
         ? { Authorization: authorizationHeader }

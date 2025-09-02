@@ -10,6 +10,7 @@ export const useDandisetVersionInfo = (
   dandisetVersion: string,
   useStaging: boolean | undefined,
   dandisetResponse: DandisetSearchResultItem | null,
+  useEmber: boolean,
 ) => {
   const [dandisetVersionInfo, setDandisetVersionInfo] =
     useState<DandisetVersionInfo | null>(null);
@@ -28,6 +29,7 @@ export const useDandisetVersionInfo = (
         dandisetId || "",
         dsVersion,
         useStaging,
+        useEmber,
       );
       if (canceled) return;
       if (dvi) setDandisetVersionInfo(dvi);
@@ -35,7 +37,7 @@ export const useDandisetVersionInfo = (
     return () => {
       canceled = true;
     };
-  }, [dandisetId, dandisetResponse, dandisetVersion, useStaging]);
+  }, [dandisetId, dandisetResponse, dandisetVersion, useStaging, useEmber]);
   return dandisetVersionInfo;
 };
 
@@ -43,9 +45,13 @@ export const fetchDandisetVersionInfo = async (
   dandisetId: string,
   dandisetVersion: string,
   useStaging: boolean | undefined,
+  useEmber: boolean,
 ) => {
   const stagingStr = useStaging ? "-staging" : "";
-  const url = `https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}/versions/${
+  const dandiApiBaseUrl = !useEmber
+    ? `https://api${stagingStr}.dandiarchive.org`
+    : `https://api${stagingStr}-dandi.emberarchive.org`;
+  const url = `${dandiApiBaseUrl}/api/dandisets/${dandisetId}/versions/${
     dandisetVersion || "draft"
   }/info/`;
   const authorizationHeader = getAuthorizationHeaderForUrl(url);

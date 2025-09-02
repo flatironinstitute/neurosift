@@ -26,13 +26,18 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
   const staging = false;
 
   // Query the dandiset info
-  const dandisetResponse = useQueryDandiset(effectiveDandisetId, staging);
+  const dandisetResponse = useQueryDandiset(
+    effectiveDandisetId,
+    staging,
+    false,
+  );
   const dandisetVersion = "";
   const dandisetVersionInfo = useDandisetVersionInfo(
     effectiveDandisetId,
     dandisetVersion || "",
     staging,
     dandisetResponse || null,
+    false,
   );
 
   // State for NWB files filter
