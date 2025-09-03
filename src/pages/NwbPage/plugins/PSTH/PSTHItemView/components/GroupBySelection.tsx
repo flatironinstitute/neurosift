@@ -48,7 +48,9 @@ const GroupBySelectionComponent: FunctionComponent<GroupBySelectionProps> = ({
         if (!ds) continue;
         if (ds.shape.length !== 1) continue;
         const slice =
-          ds.shape[0] < 1000 ? undefined : ([[0, 1000]] as [number, number][]); // just check the first 1000 values
+          ds.shape[0] < 10000
+            ? undefined
+            : ([[0, 10000]] as [number, number][]); // just check the first values
         const dd = await getHdf5DatasetData(nwbUrl, path + "/" + option, {
           slice,
         });
