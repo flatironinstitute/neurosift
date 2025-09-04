@@ -1,5 +1,9 @@
 # Changes
 
+## September 4, 2025
+
+- Added script in index.html to automatically redirect from `/dandiset/` to `/ember-dandiset/` when referrer parameter contains 'ember' and always remove referrer parameter from URL
+
 ## August 19, 2025
 
 - implemented neurosift-search service (nextjs)
