@@ -17,65 +17,12 @@
         if (l.search[1] === '/' ) {
           var decoded = l.search.slice(1).split('&').map(function(s) {
             return s.replace(/~and~/g, '&')
-          }).join('?');
-          
-          // Append referrer information if available
-          var referrer = document.referrer;
-          if (referrer) {
-            var separator = decoded.indexOf('?') !== -1 ? '&' : '?';
-            decoded += separator + 'referrer=' + encodeURIComponent(referrer);
-          }
-          
+          }).join('?');  
           window.history.replaceState(null, null,
               l.pathname.slice(0, -1) + decoded + l.hash
           );
         }
       }(window.location))
-    </script>
-    <script>
-      // Check for referrer query parameter and handle ember-specific routing
-      // This script looks for a 'referrer' query parameter in the URL
-      // If the referrer contains 'ember' and the current URL has '/dandiset/',
-      // it redirects to the ember-specific version by replacing '/dandiset/' with '/ember-dandiset/'
-      // The referrer parameter is always removed from the URL after processing
-      (function() {
-        // Get current URL and parse query parameters
-        var urlParams = new URLSearchParams(window.location.search);
-        var referrerParam = urlParams.get('referrer');
-        var shouldRedirect = false;
-        var newPath = window.location.pathname;
-        
-        // Check if referrer parameter exists and contains 'ember'
-        if (referrerParam && referrerParam.toLowerCase().includes('ember')) {
-          // Check if current URL contains '/dandiset/'
-          if (window.location.pathname.includes('/dandiset/')) {
-            // Replace '/dandiset/' with '/ember-dandiset/' in the URL
-            newPath = window.location.pathname.replace('/dandiset/', '/ember-dandiset/');
-            shouldRedirect = true;
-          }
-        }
-        
-        // Always remove the referrer parameter if it exists
-        if (referrerParam) {
-          urlParams.delete('referrer');
-          var newSearch = urlParams.toString();
-          var searchString = newSearch ? '?' + newSearch : '';
-          
-          // Construct the new URL
-          var newUrl = window.location.protocol + '//' + window.location.host + newPath + searchString + window.location.hash;
-          
-          // Use replaceState if no redirect is needed, otherwise redirect
-          if (shouldRedirect) {
-            window.location.href = newUrl;
-          } else {
-            window.history.replaceState(null, null, newUrl);
-          }
-        } else if (shouldRedirect) {
-          // If no referrer param but still need to redirect for ember
-          var newUrl = window.location.protocol + '//' + window.location.host + newPath + window.location.search + window.location.hash;
-          window.location.href = newUrl;
-        }
-      })();
     </script>
     <link rel="icon" type="image/png" href="/neurosift-logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
