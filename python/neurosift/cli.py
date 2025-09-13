@@ -9,6 +9,7 @@ from .TemporaryDirectory import TemporaryDirectory
 import shutil
 import sys
 
+
 @click.group()
 def neurosift():
     pass
@@ -25,12 +26,12 @@ def view_nwb(file: str, neurosift_url: str):
     abs_fname = os.path.abspath(file)
     base_fname = os.path.basename(abs_fname)
     with TemporaryDirectory(prefix="view_nwb") as tmpdir:
-        if sys.platform == 'win32':
-            # symlinks require admin priviledge on Windows - do a copy instead
-            shutil.copy2(abs_fname, f'{tmpdir}/{base_fname}')
+        if sys.platform == "win32":
+            # symlinks require admin privilege on Windows - do a copy instead
+            shutil.copy2(abs_fname, f"{tmpdir}/{base_fname}")
         else:
             # create a symbolic link to the file (or zarr folder)
-            os.symlink(abs_fname, f'{tmpdir}/{base_fname}')
+            os.symlink(abs_fname, f"{tmpdir}/{base_fname}")
 
         # this directory
         this_directory = os.path.dirname(os.path.realpath(__file__))
