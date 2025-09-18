@@ -26,7 +26,7 @@ export type TickSet = {
 const minGridSpacingPx = 23;
 const maxGridSpacingPx = 60;
 
-const TRUNCATE_UNCHANGED_HIGHER_ORDER_DIGITS = true;
+const TRUNCATE_UNCHANGED_HIGHER_ORDER_DIGITS = false;
 
 const range = (min: number, max: number, step: number, base: number) => {
   const v = Math.ceil((max - base) / step);
