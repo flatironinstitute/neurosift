@@ -2,6 +2,7 @@
 
 ## October 1, 2025
 
+- Simplified DANDI semantic search implementation to use direct API call instead of job runner
 - Fixed semantic search to display user-friendly error messages when API quota limits are exceeded, instead of silently showing empty results
 
 ## September 4, 2025

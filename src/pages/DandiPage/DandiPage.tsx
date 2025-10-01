@@ -163,13 +163,16 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
         // Set user-friendly error message
         if (error instanceof Error) {
           // Check for common error patterns
-          if (error.message.includes("429") || error.message.includes("quota")) {
+          if (
+            error.message.includes("429") ||
+            error.message.includes("quota")
+          ) {
             setSearchError(
-              "Semantic search is currently unavailable due to API quota limits. Please try again later or use basic search instead."
+              "Semantic search is currently unavailable due to API quota limits. Please try again later or use basic search instead.",
             );
           } else if (error.message.includes("offline")) {
             setSearchError(
-              "The search service is currently offline. Please try again later."
+              "The search service is currently offline. Please try again later.",
             );
           } else {
             setSearchError(`Search failed: ${error.message}`);
