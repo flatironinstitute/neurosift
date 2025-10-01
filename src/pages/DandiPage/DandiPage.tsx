@@ -51,6 +51,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [lastSearchedText, setLastSearchedText] = useState("");
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [searchState, setSearchState] = useState<SearchState>({
     searchText: "",
     searchMode: "basic",
@@ -90,6 +91,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
       } = searchState;
       setIsSearching(true);
       setSearchResults([]); // Clear results before new search
+      setSearchError(null); // Clear any previous errors
 
       let searchResultDandisetIds: string[] | undefined = undefined;
       try {
@@ -158,6 +160,23 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
         }
       } catch (error) {
         console.error("Error fetching results:", error);
+        // Set user-friendly error message
+        if (error instanceof Error) {
+          // Check for common error patterns
+          if (error.message.includes("429") || error.message.includes("quota")) {
+            setSearchError(
+              "Semantic search is currently unavailable due to API quota limits. Please try again later or use basic search instead."
+            );
+          } else if (error.message.includes("offline")) {
+            setSearchError(
+              "The search service is currently offline. Please try again later."
+            );
+          } else {
+            setSearchError(`Search failed: ${error.message}`);
+          }
+        } else {
+          setSearchError("An unexpected error occurred during search.");
+        }
       } finally {
         setIsSearching(false);
         setLastSearchedText(searchQuery);
@@ -379,6 +398,21 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
                 }
               }}
             />
+          </Box>
+        )}
+        {searchError && (
+          <Box
+            sx={{
+              mb: 2,
+              p: 2,
+              backgroundColor: "rgba(211, 47, 47, 0.1)",
+              borderRadius: 1,
+              border: "1px solid rgba(211, 47, 47, 0.3)",
+            }}
+          >
+            <Typography color="error" variant="body2">
+              {searchError}
+            </Typography>
           </Box>
         )}
         <Box>

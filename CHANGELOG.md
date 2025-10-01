@@ -1,5 +1,9 @@
 # Changes
 
+## October 1, 2025
+
+- Fixed semantic search to display user-friendly error messages when API quota limits are exceeded, instead of silently showing empty results
+
 ## September 4, 2025
 
 - Added script in index.html to automatically redirect from `/dandiset/` to `/ember-dandiset/` when referrer parameter contains 'ember' and always remove referrer parameter from URL

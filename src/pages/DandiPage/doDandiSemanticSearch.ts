@@ -21,16 +21,18 @@ interface.print("</>");
   const i1 = response.indexOf("<>");
   const i2 = response.indexOf("</>");
   if (i1 === -1 || i2 === -1 || i2 <= i1) {
-    console.warn("Could not find output markers in response");
-    return [];
+    const errorMsg = "Could not find output markers in response";
+    console.warn(errorMsg);
+    throw new Error(errorMsg);
   }
   const json = response.slice(i1 + 2, i2).trim();
   let dandisetIds: string[] = [];
   try {
     dandisetIds = JSON.parse(json);
   } catch (e) {
-    console.warn("Could not parse JSON from response", e);
-    return [];
+    const errorMsg = "Could not parse JSON from response";
+    console.warn(errorMsg, e);
+    throw new Error(errorMsg);
   }
 
   return dandisetIds;
