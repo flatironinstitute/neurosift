@@ -25,7 +25,6 @@ import doDandiSemanticSearch from "./doDandiSemanticSearch";
 import { useNeurodataTypesIndex } from "./hooks/useNeurodataTypesIndex";
 import { useDandisetNotebooks } from "./hooks/useDandisetNotebooks";
 import { doNeurodataTypesSearch } from "./services/doNeurodataTypesSearch";
-import { ExperimentalSearchPanel } from "./experimentalSearch/ExperimentalSearchPanel";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 
 type DandiPageProps = {
@@ -250,42 +249,42 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
     }
   }, [searchState, performSearch]);
 
-  const setSearchResultDandisetIds = useCallback(
-    async (searchResultDandisetIds: string[]) => {
-      setSearchResults([]);
-      setTotalResults(0);
-      const dandisets = await Promise.all(
-        searchResultDandisetIds
-          .slice(0, searchState.currentLimit)
-          .map(async (dandisetId) => {
-            const url = `https://api.dandiarchive.org/api/dandisets/${dandisetId}`;
-            const authorizationHeader = getAuthorizationHeaderForUrl(url);
-            const headers = authorizationHeader
-              ? { Authorization: authorizationHeader }
-              : undefined;
+  // const setSearchResultDandisetIds = useCallback(
+  //   async (searchResultDandisetIds: string[]) => {
+  //     setSearchResults([]);
+  //     setTotalResults(0);
+  //     const dandisets = await Promise.all(
+  //       searchResultDandisetIds
+  //         .slice(0, searchState.currentLimit)
+  //         .map(async (dandisetId) => {
+  //           const url = `https://api.dandiarchive.org/api/dandisets/${dandisetId}`;
+  //           const authorizationHeader = getAuthorizationHeaderForUrl(url);
+  //           const headers = authorizationHeader
+  //             ? { Authorization: authorizationHeader }
+  //             : undefined;
 
-            try {
-              const response = await fetch(url, { headers });
-              if (response.status === 200) {
-                const json = await response.json();
-                return json as DandisetSearchResultItem;
-              }
-            } catch (error) {
-              console.error("Error fetching dandiset details:", error);
-            }
-            return null;
-          }),
-      );
+  //           try {
+  //             const response = await fetch(url, { headers });
+  //             if (response.status === 200) {
+  //               const json = await response.json();
+  //               return json as DandisetSearchResultItem;
+  //             }
+  //           } catch (error) {
+  //             console.error("Error fetching dandiset details:", error);
+  //           }
+  //           return null;
+  //         }),
+  //     );
 
-      // Filter out any failed requests and set results
-      const dandisetsFilt = dandisets.filter(
-        (d): d is DandisetSearchResultItem => d !== null,
-      ) as DandisetSearchResultItem[];
-      setSearchResults(dandisetsFilt);
-      setTotalResults(searchResultDandisetIds.length);
-    },
-    [searchState.currentLimit],
-  );
+  //     // Filter out any failed requests and set results
+  //     const dandisetsFilt = dandisets.filter(
+  //       (d): d is DandisetSearchResultItem => d !== null,
+  //     ) as DandisetSearchResultItem[];
+  //     setSearchResults(dandisetsFilt);
+  //     setTotalResults(searchResultDandisetIds.length);
+  //   },
+  //   [searchState.currentLimit],
+  // );
 
   return (
     <ScrollY width={width} height={height}>
@@ -348,13 +347,13 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
             />
           </Box>
         )}
-        {useExperimentalSearch && (
+        {/* {useExperimentalSearch && (
           <Box sx={{ mb: 2 }}>
             <ExperimentalSearchPanel
               setDandisetIds={setSearchResultDandisetIds}
             />
           </Box>
-        )}
+        )} */}
         {!useNeurodataTypesSearch && !useExperimentalSearch && (
           <Box sx={{ display: "flex", gap: 1, mb: 2, position: "relative" }}>
             <Button

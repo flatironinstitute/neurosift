@@ -44,11 +44,11 @@ export const SearchModeControl: FunctionComponent<SearchModeControlProps> = ({
           control={<Radio size="small" />}
           label="Neurodata Types Search"
         />
-        <FormControlLabel
+        {/* <FormControlLabel
           value="experimental"
           control={<Radio size="small" />}
           label="Experimental Search"
-        />
+        /> */}
       </RadioGroup>
     </FormControl>
   );
