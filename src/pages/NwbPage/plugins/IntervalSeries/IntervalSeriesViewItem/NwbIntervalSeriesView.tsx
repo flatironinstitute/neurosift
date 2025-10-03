@@ -62,6 +62,7 @@ const NwbIntervalSeriesView: FunctionComponent<Props> = ({
     <div style={{ position: "relative", width, height }}>
       <NwbTimeIntervalsWidget
         labels={undefined}
+        allDistinctLabels={[]}
         startTimes={startTimes}
         stopTimes={stopTimes}
         width={width}
