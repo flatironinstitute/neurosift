@@ -433,7 +433,7 @@ const EmberDandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
         />
 
         {/* Chat (Experimental) */}
-        <Box sx={{ mt: 2 }}>
+        {/* <Box sx={{ mt: 2 }}>
           <Typography variant="subtitle2" color="text.secondary">
             <a
               href={`https://dandi-ai-notebooks.github.io/dandiset-explorer/chat?dandisetId=${dandisetVersionInfo.dandiset.identifier}&dandisetVersion=${dandisetVersionInfo.version}`}
@@ -444,7 +444,7 @@ const EmberDandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
               Chat (Experimental)
             </a>
           </Typography>
-        </Box>
+        </Box> */}
       </div>
     </ScrollY>
   );

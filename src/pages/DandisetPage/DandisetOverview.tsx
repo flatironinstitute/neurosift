@@ -436,7 +436,8 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
         <Box sx={{ mt: 2 }}>
           <Typography variant="subtitle2" color="text.secondary">
             <a
-              href={`https://dandi-ai-notebooks.github.io/dandiset-explorer/chat?dandisetId=${dandisetVersionInfo.dandiset.identifier}&dandisetVersion=${dandisetVersionInfo.version}`}
+              // href={`https://dandi-ai-notebooks.github.io/dandiset-explorer/chat?dandisetId=${dandisetVersionInfo.dandiset.identifier}&dandisetVersion=${dandisetVersionInfo.version}`}
+              href={`https://dandiset-explorer.vercel.app/chat?dandisetId=${dandisetVersionInfo.dandiset.identifier}&dandisetVersion=${dandisetVersionInfo.version}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: "#0066cc", textDecoration: "none" }}
