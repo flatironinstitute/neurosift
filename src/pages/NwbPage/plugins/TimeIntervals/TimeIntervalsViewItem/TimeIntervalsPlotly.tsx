@@ -8,6 +8,7 @@ type Props = {
   width: number;
   height: number;
   labels: string[] | undefined;
+  allDistinctLabels: string[];
   startTimes: number[];
   stopTimes: number[];
   additionalData?: Record<string, any[]>; // For additional columns to show in hover
@@ -17,6 +18,7 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
   width,
   height,
   labels,
+  allDistinctLabels,
   startTimes,
   stopTimes,
   additionalData,
@@ -92,12 +94,6 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
     visibleEndTimeSec,
   ]);
 
-  // Get distinct labels and assign them to rows
-  const distinctLabels = useMemo(() => {
-    if (!filteredLabels) return [];
-    return Array.from(new Set(filteredLabels)).sort();
-  }, [filteredLabels]);
-
   // Create shapes for the intervals
   const shapes = useMemo(() => {
     const result: Partial<Shape>[] = [];
@@ -108,7 +104,7 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
     for (let i = 0; i < filteredStartTimes.length; i++) {
       if (!filteredLabels[i]) continue;
 
-      const rowIndex = distinctLabels.indexOf(filteredLabels[i]);
+      const rowIndex = allDistinctLabels.indexOf(filteredLabels[i]);
       if (rowIndex === -1) continue;
 
       // Calculate vertical position based on label
@@ -132,7 +128,12 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
     }
 
     return result;
-  }, [filteredLabels, filteredStartTimes, filteredStopTimes, distinctLabels]);
+  }, [
+    filteredLabels,
+    filteredStartTimes,
+    filteredStopTimes,
+    allDistinctLabels,
+  ]);
 
   // Layout configuration
   const layout: Partial<Layout> = useMemo(
@@ -169,10 +170,10 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
       yaxis: {
         showgrid: false,
         tickmode: "array",
-        tickvals: distinctLabels.map((_, i) => i),
-        ticktext: distinctLabels,
+        tickvals: allDistinctLabels.map((_, i) => i),
+        ticktext: allDistinctLabels,
         // Position all rectangles just above the x-axis
-        range: [0, distinctLabels.length],
+        range: [0, allDistinctLabels.length],
         zeroline: false, // Remove the zero line
         showticklabels: false, // Hide y-axis tick labels
         showline: false, // Hide the y-axis line
@@ -192,7 +193,7 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
     [
       width,
       height,
-      distinctLabels,
+      allDistinctLabels,
       shapes,
       visibleStartTimeSec,
       visibleEndTimeSec,
@@ -205,7 +206,7 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
       return [] as Data[];
 
     // Create a data trace for each distinct label
-    return distinctLabels.map((label, labelIndex) => {
+    return allDistinctLabels.map((label, labelIndex) => {
       // Find all intervals with this label
       const indices = filteredLabels
         .map((l, i) => (l === label ? i : -1))
@@ -216,39 +217,54 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
       const yValues: number[] = [];
       const hoverTexts: string[] = [];
 
-      // For each interval with this label, add its start and end points
-      indices.forEach((i) => {
-        const startTime = filteredStartTimes[i];
-        const stopTime = filteredStopTimes[i];
-        const midTime = (startTime + stopTime) / 2;
+      if (indices.length > 0) {
+        // For each interval with this label, add its start and end points
+        indices.forEach((i) => {
+          const startTime = filteredStartTimes[i];
+          const stopTime = filteredStopTimes[i];
+          const midTime = (startTime + stopTime) / 2;
 
-        // Add midpoint of the interval to show hover info
-        xValues.push(midTime);
-        yValues.push(labelIndex + 0.5); // Center of the row
+          // Add midpoint of the interval to show hover info
+          xValues.push(midTime);
+          yValues.push(labelIndex + 0.5); // Center of the row
 
-        // Create hover text with interval details
-        let hoverText =
-          `<b>${label}</b><br>` +
-          `Start: ${startTime.toFixed(3)}s<br>` +
-          `End: ${stopTime.toFixed(3)}s<br>` +
-          `Duration: ${(stopTime - startTime).toFixed(3)}s`;
+          // Create hover text with interval details
+          let hoverText =
+            `<b>${label}</b><br>` +
+            `Start: ${startTime.toFixed(3)}s<br>` +
+            `End: ${stopTime.toFixed(3)}s<br>` +
+            `Duration: ${(stopTime - startTime).toFixed(3)}s`;
 
-        // Add any additional data to hover text, excluding the label field itself
-        if (filteredAdditionalData) {
-          Object.entries(filteredAdditionalData).forEach(([key, values]) => {
-            // Skip the field that contains the label itself and any "labels" field
-            if (
-              values[i] !== undefined &&
-              key !== "labels" &&
-              values[i] !== label
-            ) {
-              hoverText += `<br>${key}: ${values[i]}`;
-            }
-          });
+          // Add any additional data to hover text, excluding the label field itself
+          if (filteredAdditionalData) {
+            Object.entries(filteredAdditionalData).forEach(([key, values]) => {
+              // Skip the field that contains the label itself and any "labels" field
+              if (
+                values[i] !== undefined &&
+                key !== "labels" &&
+                values[i] !== label
+              ) {
+                hoverText += `<br>${key}: ${values[i]}`;
+              }
+            });
+          }
+
+          hoverTexts.push(hoverText);
+        });
+      } else {
+        // If no visible intervals for this label, add a single invisible point
+        // so the label still appears in the legend
+        if (
+          visibleStartTimeSec !== undefined &&
+          visibleEndTimeSec !== undefined
+        ) {
+          xValues.push(visibleStartTimeSec);
+          yValues.push(labelIndex + 0.5);
+          hoverTexts.push(
+            `<b>${label}</b><br>No visible intervals in current range`,
+          );
         }
-
-        hoverTexts.push(hoverText);
-      });
+      }
 
       return {
         x: xValues,
@@ -285,8 +301,10 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
     filteredLabels,
     filteredStartTimes,
     filteredStopTimes,
-    distinctLabels,
+    allDistinctLabels,
     filteredAdditionalData,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
   ]);
 
   return (

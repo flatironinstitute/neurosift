@@ -9,6 +9,7 @@ type Props = {
   width: number;
   height: number;
   labels: string[] | undefined;
+  allDistinctLabels: string[];
   startTimes: number[];
   stopTimes: number[];
 };
@@ -31,6 +32,7 @@ const NwbTimeIntervalsWidget: FunctionComponent<Props> = ({
   width,
   height,
   labels,
+  allDistinctLabels,
   startTimes,
   stopTimes,
 }) => {
@@ -79,29 +81,20 @@ const NwbTimeIntervalsWidget: FunctionComponent<Props> = ({
     ],
   );
 
-  const distinctLabels = useMemo(() => {
-    if (!labels) return [];
-    const ret: string[] = [];
-    for (let i = 0; i < labels.length; i++) {
-      if (!ret.includes(labels[i])) ret.push(labels[i]);
-    }
-    return ret.sort();
-  }, [labels]);
-
   const colorForLabel = useMemo(
     () => (label: string) => {
-      const index = distinctLabels.indexOf(label);
+      const index = allDistinctLabels.indexOf(label);
       return lightColors[index % lightColors.length];
     },
-    [distinctLabels],
+    [allDistinctLabels],
   );
 
   const fracPositionForLabel = useMemo(
     () => (label: string) => {
-      const index = distinctLabels.indexOf(label);
-      return (index + 0.5) / distinctLabels.length;
+      const index = allDistinctLabels.indexOf(label);
+      return (index + 0.5) / allDistinctLabels.length;
     },
-    [distinctLabels],
+    [allDistinctLabels],
   );
 
   useEffect(() => {

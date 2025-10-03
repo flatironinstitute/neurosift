@@ -3,6 +3,7 @@
 ## October 3, 2025
 
 - Support OptogeneticPulsesTable as a TimeIntervals type in addition to TimeIntervals. See https://github.com/flatironinstitute/neurosift/issues/355
+- Fixed TimeIntervals visualization to use all distinct labels from the full dataset, ensuring consistent colors and positioning across different time ranges
 
 ## October 1, 2025
 

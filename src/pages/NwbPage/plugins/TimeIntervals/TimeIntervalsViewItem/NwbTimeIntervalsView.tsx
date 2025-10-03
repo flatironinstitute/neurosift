@@ -56,12 +56,8 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
     translateVisibleTimeRangeFrac,
   } = useTimeseriesSelection();
 
-  const { labelData, availableColumns, autoSelectedColumn } = useLabelData(
-    nwbUrl,
-    path,
-    startTimeData?.length,
-    selectedColumn,
-  );
+  const { labelData, allDistinctLabels, availableColumns, autoSelectedColumn } =
+    useLabelData(nwbUrl, path, startTimeData?.length, selectedColumn);
 
   // Load additional data columns for hover information in Plotly view
   const additionalData = useMemo(() => {
@@ -202,6 +198,7 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
         {viewMode === "canvas" ? (
           <NwbTimeIntervalsWidget
             labels={labelData}
+            allDistinctLabels={allDistinctLabels}
             startTimes={startTimeData}
             stopTimes={stopTimeData}
             width={width}
@@ -210,6 +207,7 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
         ) : (
           <TimeIntervalsPlotly
             labels={labelData}
+            allDistinctLabels={allDistinctLabels}
             startTimes={startTimeData}
             stopTimes={stopTimeData}
             width={width}
@@ -293,6 +291,7 @@ const useLabelData = (
     undefined,
   );
   const [labelData, setLabelData] = useState<string[] | undefined>(undefined);
+  const [allDistinctLabels, setAllDistinctLabels] = useState<string[]>([]);
   const [availableColumns, setAvailableColumns] = useState<ColumnInfo[]>([]);
   const [autoSelectedColumn, setAutoSelectedColumn] = useState<
     string | undefined
@@ -349,6 +348,8 @@ const useLabelData = (
         if (selectedColumn) {
           setLabelFieldName(selectedColumn.name);
           setLabelData(selectedColumn.values);
+          // Compute all distinct labels from the full dataset
+          setAllDistinctLabels(getDistinctValues(selectedColumn.values));
         }
       } else if (numRows) {
         // If no valid categorical columns found but we know the number of rows,
@@ -356,6 +357,7 @@ const useLabelData = (
         setLabelFieldName("default");
         // Create an array filled with "Interval" strings
         setLabelData(Array(numRows).fill("Interval"));
+        setAllDistinctLabels(["Interval"]);
       }
     };
     load();
@@ -363,7 +365,13 @@ const useLabelData = (
       canceled = true;
     };
   }, [group, nwbUrl, path, numRows, userSelectedColumn]);
-  return { labelFieldName, labelData, availableColumns, autoSelectedColumn };
+  return {
+    labelFieldName,
+    labelData,
+    allDistinctLabels,
+    availableColumns,
+    autoSelectedColumn,
+  };
 };
 
 const getDistinctValues = (values: string[]) => {
