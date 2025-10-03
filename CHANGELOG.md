@@ -1,5 +1,9 @@
 # Changes
 
+## October 3, 2025
+
+- Support OptogeneticPulsesTable as a TimeIntervals type in addition to TimeIntervals. See https://github.com/flatironinstitute/neurosift/issues/355
+
 ## October 1, 2025
 
 - Simplified DANDI semantic search implementation to use direct API call instead of job runner

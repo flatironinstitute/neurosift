@@ -9,7 +9,11 @@ export const timeIntervalsPlugin: NwbObjectViewPlugin = {
     if (!group) return false;
 
     // Check if this is a TimeIntervals neurodata type
-    const isTimeIntervals = group.attrs?.neurodata_type === "TimeIntervals";
+    const nt = group.attrs?.neurodata_type;
+    const isTimeIntervals = [
+      "TimeIntervals",
+      "OptogeneticPulsesTable",
+    ].includes(nt);
     if (!isTimeIntervals) return false;
 
     // Check for required datasets

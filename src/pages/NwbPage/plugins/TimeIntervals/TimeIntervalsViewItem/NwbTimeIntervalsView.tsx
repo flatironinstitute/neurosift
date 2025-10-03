@@ -118,7 +118,7 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
   };
 
   const bottomBarHeight = 50;
-  const controlsHeight = 60; // Height for the time controls
+  const controlsHeight = 70; // Height for the time controls
 
   return (
     <div style={{ position: "relative", width, height }}>

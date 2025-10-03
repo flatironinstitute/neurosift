@@ -92,25 +92,13 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error executing script:', error);
-    
-    // Determine appropriate status code based on error type
-    let status = 500;
-    let errorMessage = 'Internal server error';
-    
-    if (error instanceof Error) {
-      errorMessage = error.message;
-      
-      // Check for timeout errors
-      if (error.message.includes('job runner is probably offline') || 
-          error.message.includes('Failed to submit script')) {
-        status = 408; // Request Timeout
-      }
-    }
+    const errorString = error instanceof Error ? error.message : String(error);
+
+    // we will return with 200, but set success: false in the body
 
     return NextResponse.json(
-      { success: false, error: errorMessage },
-      { 
-        status,
+      { success: false, error: errorString },
+      {
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'POST, OPTIONS',
