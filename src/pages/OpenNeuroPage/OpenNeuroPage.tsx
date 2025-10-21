@@ -359,8 +359,8 @@ ${searchResults
   - Dataset ${dataset.id}:
     Name: ${dataset.latestSnapshot.description.Name}
     Authors: ${dataset.latestSnapshot.description.Authors.join(", ")}
-    Files: ${dataset.latestSnapshot.summary.totalFiles}
-    Modalities: ${dataset.latestSnapshot.summary.modalities.join(", ")}
+    Files: ${dataset.latestSnapshot.summary?.totalFiles}
+    Modalities: ${dataset.latestSnapshot.summary?.modalities.join(", ")}
 `,
   )
   .join("")}
