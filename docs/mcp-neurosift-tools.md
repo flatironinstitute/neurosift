@@ -23,6 +23,8 @@ The Neurosift Tools MCP server provides access to DANDI archive functionality an
    npm run build
    ```
 
+### Install in Cline
+
 3. Create or open the Cline MCP settings file:
    ```
    ~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json
@@ -42,8 +44,14 @@ The Neurosift Tools MCP server provides access to DANDI archive functionality an
      }
    }
    ```
-
    Note: Replace `PATH/neurosift-mcps` with the actual path where you cloned the neurosift-mcps repository.
+
+### Install in Claude Code
+
+3. To register the MCP in Claude Code, run the following command on the command line:
+```bash
+claude mcp add --transport stdio neurosift-tools -- node PATH/neurosift-tools/build/index.j
+```
 
 ## Available Tools
 
