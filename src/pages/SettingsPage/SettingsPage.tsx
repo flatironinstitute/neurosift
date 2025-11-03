@@ -126,7 +126,7 @@ const SettingsPage: FunctionComponent<SettingsPageProps> = ({
             onChange={handleDandiStagingApiKeyChange}
             margin="normal"
             type="password"
-            helperText="Enter your DANDI Staging API key for accessing protected resources on api-staging.dandiarchive.org"
+            helperText="Enter your DANDI Sandbox API key for accessing protected resources on api.sandbox.dandiarchive.org"
           />
         </Paper>
         <Paper sx={{ p: 3, mt: 3, maxWidth: 600 }}>

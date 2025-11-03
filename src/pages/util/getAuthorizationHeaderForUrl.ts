@@ -1,7 +1,7 @@
 const getAuthorizationHeaderForUrl = (url?: string) => {
   if (!url) return "";
   let key = "";
-  if (url.startsWith("https://api-staging.dandiarchive.org/")) {
+  if (url.startsWith("https://api.sandbox.dandiarchive.org/")) {
     key = localStorage.getItem("dandiStagingApiKey") || "";
   } else if (url.startsWith("https://api.dandiarchive.org/")) {
     key = localStorage.getItem("dandiApiKey") || "";

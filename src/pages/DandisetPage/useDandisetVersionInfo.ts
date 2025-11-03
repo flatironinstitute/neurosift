@@ -47,7 +47,7 @@ export const fetchDandisetVersionInfo = async (
   useStaging: boolean | undefined,
   useEmber: boolean,
 ) => {
-  const stagingStr = useStaging ? "-staging" : "";
+  const stagingStr = useStaging ? ".sandbox" : "";
   const dandiApiBaseUrl = !useEmber
     ? `https://api${stagingStr}.dandiarchive.org`
     : `https://api${stagingStr}-dandi.emberarchive.org`;

@@ -11,8 +11,8 @@ const AuthErrorNotification: React.FC<AuthErrorNotificationProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const isDandiStaging = dandiUrl?.includes("api-staging.dandiarchive.org");
-  const serverType = isDandiStaging ? "DANDI Staging" : "DANDI";
+  const isDandiStaging = dandiUrl?.includes("api.sandbox.dandiarchive.org");
+  const serverType = isDandiStaging ? "DANDI Sandbox" : "DANDI";
 
   return (
     <Box sx={{ m: 2 }}>

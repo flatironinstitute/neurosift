@@ -15,10 +15,10 @@ export const tryGetLindiUrl = async (url: string, dandisetId: string) => {
   let staging: boolean;
   let dId = dandisetId;
 
-  if (url.startsWith("https://api-staging.dandiarchive.org/api/assets/")) {
+  if (url.startsWith("https://api.sandbox.dandiarchive.org/api/assets/")) {
     staging = true;
     assetId = parts[5];
-  } else if (url.startsWith("https://api-staging.dandiarchive.org/api/dandisets/")) {
+  } else if (url.startsWith("https://api.sandbox.dandiarchive.org/api/dandisets/")) {
     staging = true;
     dId = parts[5];
     const indexOfAssetsPart = parts.indexOf("assets");
