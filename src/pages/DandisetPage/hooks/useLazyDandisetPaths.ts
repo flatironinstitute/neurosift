@@ -52,7 +52,7 @@ export const useLazyDandisetPaths = (
   const [error, setError] = useState<string | null>(null);
 
   // Get authorization header
-  const stagingStr = staging ? "-staging" : "";
+  const stagingStr = staging ? ".sandbox" : "";
   const baseUrl = `https://api${stagingStr}.dandiarchive.org/api/dandisets`;
   const authorizationHeader = getAuthorizationHeaderForUrl(baseUrl);
   const headers = authorizationHeader

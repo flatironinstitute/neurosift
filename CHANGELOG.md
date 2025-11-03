@@ -1,5 +1,9 @@
 # Changes
 
+## November 3, 2025
+
+- Updated DANDI API endpoint from api-staging.dandiarchive.org to api.sandbox.dandiarchive.org
+
 ## October 3, 2025
 
 - Support OptogeneticPulsesTable as a TimeIntervals type in addition to TimeIntervals. See https://github.com/flatironinstitute/neurosift/issues/355

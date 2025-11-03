@@ -363,7 +363,7 @@ const getResolvedUrl = async (url: string): Promise<{ url: string }> => {
 };
 
 export const isDandiAssetUrl = (url: string) => {
-  if (url.startsWith("https://api-staging.dandiarchive.org/")) {
+  if (url.startsWith("https://api.sandbox.dandiarchive.org/")) {
     return true;
   }
   if (
@@ -463,11 +463,11 @@ export const tryGetLindiUrl = async (url: string, dandisetId: string) => {
   }
   let assetId: string;
   let staging: boolean;
-  if (url.startsWith("https://api-staging.dandiarchive.org/api/assets/")) {
+  if (url.startsWith("https://api.sandbox.dandiarchive.org/api/assets/")) {
     staging = true;
     assetId = url.split("/")[5];
   } else if (
-    url.startsWith("https://api-staging.dandiarchive.org/api/dandisets/")
+    url.startsWith("https://api.sandbox.dandiarchive.org/api/dandisets/")
   ) {
     staging = true;
     dandisetId = url.split("/")[5];

@@ -111,7 +111,7 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
         } else if (searchMode === "basic") {
           const { headers, apiKeyProvided } = getDandiApiHeaders(staging);
           const embargoedStr = apiKeyProvided ? "true" : "false";
-          const stagingStr = staging ? "-staging" : "";
+          const stagingStr = staging ? ".sandbox" : "";
           const emptyStr = !searchQuery ? "false" : "true";
 
           const response = await fetch(

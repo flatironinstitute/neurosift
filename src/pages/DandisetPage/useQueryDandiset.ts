@@ -15,7 +15,7 @@ export const useQueryDandiset = (
     setDandisetResponse(undefined);
     if (!dandisetId) return;
     (async () => {
-      const stagingStr = useStaging ? "-staging" : "";
+      const stagingStr = useStaging ? ".sandbox" : "";
       const url = !useEmber
         ? `https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}`
         : `https://api${stagingStr}-dandi.emberarchive.org/api/dandisets/${dandisetId}`;
