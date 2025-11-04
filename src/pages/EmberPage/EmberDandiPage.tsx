@@ -15,16 +15,15 @@ import {
 import { FunctionComponent, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AIRegisteredComponent, useAIComponentRegistry } from "../../AIContext";
+import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 import { getEmberApiHeaders } from "../util/getDandiApiHeaders";
 import { getRecentEmberDandisets } from "../util/recentEmberDandisets";
 import EmberDandisetSearchResult from "./EmberDandisetSearchResult.tsx";
 import { NeurodataTypesSearchPanel } from "./components/NeurodataTypesSearchPanel";
 import { SearchMode, SearchModeControl } from "./components/SearchModeControl";
 import { DandisetSearchResultItem, DandisetsResponse } from "./dandi-types";
-import { useNeurodataTypesIndex } from "./hooks/useNeurodataTypesIndex";
 import { useDandisetNotebooks } from "./hooks/useDandisetNotebooks";
-import { ExperimentalSearchPanel } from "./experimentalSearch/ExperimentalSearchPanel";
-import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
+import { useNeurodataTypesIndex } from "./hooks/useNeurodataTypesIndex";
 
 type DandiPageProps = {
   width: number;
@@ -46,7 +45,7 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
   const [recentEmberDandisets, setRecentEmberDandisets] = useState<string[]>(
     [],
   );
-  const staging = false;
+  // const staging = false;
   const [searchResults, setSearchResults] = useState<
     DandisetSearchResultItem[]
   >([]);
@@ -79,90 +78,82 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
   }, []);
 
   const {
-    index,
     uniqueTypes,
     loading: loadingTypes,
     error: typesError,
   } = useNeurodataTypesIndex(useNeurodataTypesSearch);
 
-  const performSearch = useCallback(
-    async (searchState: SearchState) => {
-      const {
-        searchText: searchQuery,
-        searchMode,
-        currentLimit: limit,
-      } = searchState;
-      setIsSearching(true);
-      setSearchResults([]); // Clear results before new search
+  const performSearch = useCallback(async (searchState: SearchState) => {
+    const {
+      searchText: searchQuery,
+      searchMode,
+      currentLimit: limit,
+    } = searchState;
+    setIsSearching(true);
+    setSearchResults([]); // Clear results before new search
 
-      const searchResultDandisetIds: string[] = [];
-      try {
-        if (searchMode === "basic") {
-          const { headers, apiKeyProvided } = getEmberApiHeaders();
-          const embargoedStr = apiKeyProvided ? "true" : "false";
-          // const stagingStr = staging ? "-staging" : "";
-          const emptyStr = !searchQuery ? "false" : "true";
+    const searchResultDandisetIds: string[] = [];
+    try {
+      if (searchMode === "basic") {
+        const { headers, apiKeyProvided } = getEmberApiHeaders();
+        const embargoedStr = apiKeyProvided ? "true" : "false";
+        // const stagingStr = staging ? "-staging" : "";
+        const emptyStr = !searchQuery ? "false" : "true";
 
-          // TODO - should we support sandbox at all? Doesn't seem to be working as well there
-          const response = await fetch(
-            `https://api-dandi.emberarchive.org/api/dandisets/?page=1&page_size=50&ordering=-modified&search=${searchQuery}&draft=true&empty=${emptyStr}&embargoed=${embargoedStr}`,
-            { headers },
-          );
-          if (response.status === 200) {
-            const json = await response.json();
-            const dandisetResponse = json as DandisetsResponse;
-            setSearchResults(dandisetResponse.results);
-          }
+        // TODO - should we support sandbox at all? Doesn't seem to be working as well there
+        const response = await fetch(
+          `https://api-dandi.emberarchive.org/api/dandisets/?page=1&page_size=50&ordering=-modified&search=${searchQuery}&draft=true&empty=${emptyStr}&embargoed=${embargoedStr}`,
+          { headers },
+        );
+        if (response.status === 200) {
+          const json = await response.json();
+          const dandisetResponse = json as DandisetsResponse;
+          setSearchResults(dandisetResponse.results);
         }
-        if (searchResultDandisetIds && searchResultDandisetIds.length > 0) {
-          // Limit to a few results and fetch full dandiset info for each
-          // Return total count along with the paginated results
-
-          const dandisets0 = await Promise.all(
-            searchResultDandisetIds
-              .slice(0, limit)
-              .map(async (dandisetId: string) => {
-                const url = `https://api-dandi.emberarchive.org/api/dandisets/${dandisetId}`;
-                const authorizationHeader = getAuthorizationHeaderForUrl(url);
-                const headers = authorizationHeader
-                  ? { Authorization: authorizationHeader }
-                  : undefined;
-
-                try {
-                  const response = await fetch(url, { headers });
-                  if (response.status === 200) {
-                    const json = await response.json();
-                    return json as DandisetSearchResultItem;
-                  }
-                } catch (error) {
-                  console.error(
-                    "Error fetching EMBER Dandiset details:",
-                    error,
-                  );
-                }
-                return null;
-              }),
-          );
-
-          // Filter out any failed requests and return with total
-          const dandisetsFilt = dandisets0.filter(
-            (
-              d: DandisetSearchResultItem | null,
-            ): d is DandisetSearchResultItem => d !== null,
-          ) as DandisetSearchResultItem[];
-          setSearchResults(dandisetsFilt);
-          const total = searchResultDandisetIds.length;
-          setTotalResults(total);
-        }
-      } catch (error) {
-        console.error("Error fetching results:", error);
-      } finally {
-        setIsSearching(false);
-        setLastSearchedText(searchQuery);
       }
-    },
-    [index, selectedTypes, staging, useNeurodataTypesSearch],
-  );
+      if (searchResultDandisetIds && searchResultDandisetIds.length > 0) {
+        // Limit to a few results and fetch full dandiset info for each
+        // Return total count along with the paginated results
+
+        const dandisets0 = await Promise.all(
+          searchResultDandisetIds
+            .slice(0, limit)
+            .map(async (dandisetId: string) => {
+              const url = `https://api-dandi.emberarchive.org/api/dandisets/${dandisetId}`;
+              const authorizationHeader = getAuthorizationHeaderForUrl(url);
+              const headers = authorizationHeader
+                ? { Authorization: authorizationHeader }
+                : undefined;
+
+              try {
+                const response = await fetch(url, { headers });
+                if (response.status === 200) {
+                  const json = await response.json();
+                  return json as DandisetSearchResultItem;
+                }
+              } catch (error) {
+                console.error("Error fetching EMBER Dandiset details:", error);
+              }
+              return null;
+            }),
+        );
+
+        // Filter out any failed requests and return with total
+        const dandisetsFilt = dandisets0.filter(
+          (d: DandisetSearchResultItem | null): d is DandisetSearchResultItem =>
+            d !== null,
+        ) as DandisetSearchResultItem[];
+        setSearchResults(dandisetsFilt);
+        const total = searchResultDandisetIds.length;
+        setTotalResults(total);
+      }
+    } catch (error) {
+      console.error("Error fetching results:", error);
+    } finally {
+      setIsSearching(false);
+      setLastSearchedText(searchQuery);
+    }
+  }, []);
 
   useRegisterAIComponent();
 
@@ -226,42 +217,42 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
     }
   }, [searchState, performSearch]);
 
-  const setSearchResultDandisetIds = useCallback(
-    async (searchResultDandisetIds: string[]) => {
-      setSearchResults([]);
-      setTotalResults(0);
-      const dandisets = await Promise.all(
-        searchResultDandisetIds
-          .slice(0, searchState.currentLimit)
-          .map(async (dandisetId) => {
-            const url = `https://api-dandi.emberarchive.org/api/dandisets/${dandisetId}`;
-            const authorizationHeader = getAuthorizationHeaderForUrl(url);
-            const headers = authorizationHeader
-              ? { Authorization: authorizationHeader }
-              : undefined;
+  // const setSearchResultDandisetIds = useCallback(
+  //   async (searchResultDandisetIds: string[]) => {
+  //     setSearchResults([]);
+  //     setTotalResults(0);
+  //     const dandisets = await Promise.all(
+  //       searchResultDandisetIds
+  //         .slice(0, searchState.currentLimit)
+  //         .map(async (dandisetId) => {
+  //           const url = `https://api-dandi.emberarchive.org/api/dandisets/${dandisetId}`;
+  //           const authorizationHeader = getAuthorizationHeaderForUrl(url);
+  //           const headers = authorizationHeader
+  //             ? { Authorization: authorizationHeader }
+  //             : undefined;
 
-            try {
-              const response = await fetch(url, { headers });
-              if (response.status === 200) {
-                const json = await response.json();
-                return json as DandisetSearchResultItem;
-              }
-            } catch (error) {
-              console.error("Error fetching dandiset details:", error);
-            }
-            return null;
-          }),
-      );
+  //           try {
+  //             const response = await fetch(url, { headers });
+  //             if (response.status === 200) {
+  //               const json = await response.json();
+  //               return json as DandisetSearchResultItem;
+  //             }
+  //           } catch (error) {
+  //             console.error("Error fetching dandiset details:", error);
+  //           }
+  //           return null;
+  //         }),
+  //     );
 
-      // Filter out any failed requests and set results
-      const dandisetsFilt = dandisets.filter(
-        (d): d is DandisetSearchResultItem => d !== null,
-      ) as DandisetSearchResultItem[];
-      setSearchResults(dandisetsFilt);
-      setTotalResults(searchResultDandisetIds.length);
-    },
-    [searchState.currentLimit],
-  );
+  //     // Filter out any failed requests and set results
+  //     const dandisetsFilt = dandisets.filter(
+  //       (d): d is DandisetSearchResultItem => d !== null,
+  //     ) as DandisetSearchResultItem[];
+  //     setSearchResults(dandisetsFilt);
+  //     setTotalResults(searchResultDandisetIds.length);
+  //   },
+  //   [searchState.currentLimit],
+  // );
 
   return (
     <ScrollY width={width} height={height}>
@@ -324,13 +315,13 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
             />
           </Box>
         )}
-        {useExperimentalSearch && (
+        {/* {useExperimentalSearch && (
           <Box sx={{ mb: 2 }}>
             <ExperimentalSearchPanel
               setDandisetIds={setSearchResultDandisetIds}
             />
           </Box>
-        )}
+        )} */}
         {!useNeurodataTypesSearch && !useExperimentalSearch && (
           <Box sx={{ display: "flex", gap: 1, mb: 2, position: "relative" }}>
             <Button

@@ -1,5 +1,9 @@
 # Changes
 
+## November 4, 2025
+
+- Migrate to Cloudflare
+
 ## November 3, 2025
 
 - Updated DANDI API endpoint from api-staging.dandiarchive.org to api.sandbox.dandiarchive.org
