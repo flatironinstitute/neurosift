@@ -1,0 +1,22 @@
+{
+  "name": "neurosift-logs",
+  "version": "1.0.0",
+  "description": "Simple logging worker for Neurosift",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "logging"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "wrangler": "^3.94.0"
+  }
+}

@@ -12,7 +12,6 @@ import NwbOverview from "./NwbOverview";
 import "@css/NwbPage.css";
 import { TAB_BAR_HEIGHT, tabsStyle, tabStyle } from "./tabStyles";
 import { useNwbFileOverview } from "./useNwbFileOverview";
-import { track } from "@vercel/analytics/react";
 import { setCurrentDandisetId, setTryUsingLindi } from "@hdf5Interface";
 
 type NwbPageProps = {
@@ -231,28 +230,8 @@ const useNwbPageAnalytics = (
   dandisetVersion: string,
 ) => {
   useEffect(() => {
-    let canceled = false;
-
-    setTimeout(() => {
-      if (canceled) return;
-      // important to only call this once per session
-      const kk = `nwb-page-viewed-${nwbUrl}-${dandisetId}-${dandisetVersion}`;
-      if (analyticsAlreadyCalled[kk]) return;
-
-      // important to wait until the analytics is ready
-      track("nwb-page-viewed", {
-        url: nwbUrl || "",
-        dandisetId: dandisetId || "",
-        dandisetVersion: dandisetVersion || "",
-      });
-      analyticsAlreadyCalled[kk] = true;
-    }, 500);
-    return () => {
-      canceled = true;
-    };
+    // Avoid logging multiple times for the same NWB file
   }, [nwbUrl, dandisetId, dandisetVersion]);
 };
-
-const analyticsAlreadyCalled: { [key: string]: boolean } = {};
 
 export default NwbPage;

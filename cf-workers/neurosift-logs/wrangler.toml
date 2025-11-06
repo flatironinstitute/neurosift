@@ -1,0 +1,14 @@
+name = "neurosift-logs"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Binding for the worker
+[env.production]
+name = "neurosift-logs"
+
+[observability]
+[observability.logs]
+enabled=true
+head_sampling_rate = 1.0
+invocation_logs = true
+persist = true

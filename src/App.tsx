@@ -35,6 +35,7 @@ import NwbPage from "./pages/NwbPage/NwbPage";
 import OpenNeuroDatasetPage from "./pages/OpenNeuroDatasetPage/OpenNeuroDatasetPage";
 import OpenNeuroPage from "./pages/OpenNeuroPage/OpenNeuroPage";
 import SettingsPage from "./pages/SettingsPage/SettingsPage";
+import { logPageLoad } from "./util/sendLog";
 
 const theme = createTheme({
   palette: {
@@ -193,6 +194,19 @@ const AppContent = () => {
   // useRegisterAIComponent({ navigate });
 
   const location = useLocation();
+
+  // Log initial page load
+  useEffect(() => {
+    const fullUrl =
+      window.location.protocol +
+      "//" +
+      window.location.host +
+      location.pathname +
+      location.search;
+    logPageLoad(fullUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
+
   useEffect(() => {
     // send to neurosift-chat
     sendUrlUpdate(

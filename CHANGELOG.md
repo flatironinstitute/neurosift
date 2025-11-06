@@ -1,5 +1,10 @@
 # Changes
 
+## November 5, 2025
+
+- Added neurosift-logs Cloudflare Worker for receiving and logging HTTP requests with CORS support
+- Added client-side page load logging with rate limiting (logs sent to Cloudflare Worker)
+
 ## November 4, 2025
 
 - Migrate to Cloudflare
