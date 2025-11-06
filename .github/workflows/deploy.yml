@@ -1,4 +1,4 @@
-name: Deploy to Vercel
+name: Deploy to Cloudflare
 on:
   push:
     branches:
@@ -14,15 +14,17 @@ jobs:
       - name: Update submodules
         run: git submodule update --init --recursive
 
-      - name: Update submodules
-        run: git submodule update --init --recursive
+      - name: Install dependencies
+        run: npm install
 
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
+      - name: Build project
+        run: npm run build
 
-      - name: Deploy to Vercel
+      - name: Install Wrangler
+        run: npm install --global wrangler
+
+      - name: Deploy to Cloudflare Pages
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: vercel deploy --prod --token=$VERCEL_TOKEN
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: wrangler pages deploy dist --project-name neurosift

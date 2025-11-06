@@ -1,5 +1,10 @@
 # Changes
 
+## November 6, 2025
+
+- Updated GitHub workflow to deploy to Cloudflare Pages instead of Vercel
+- Remove "Notebook" panel in NWB main tab
+
 ## November 5, 2025
 
 - Added neurosift-logs Cloudflare Worker for receiving and logging HTTP requests with CORS support

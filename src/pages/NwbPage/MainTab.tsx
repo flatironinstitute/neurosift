@@ -83,12 +83,12 @@ const MainTab = ({
           closeable: false as const,
           defaultExpanded: false,
         },
-        {
-          type: "notebook" as const,
-          label: "Notebook",
-          closeable: false as const,
-          defaultExpanded: false,
-        },
+        // {
+        //   type: "notebook" as const,
+        //   label: "Notebook",
+        //   closeable: false as const,
+        //   defaultExpanded: false,
+        // },
       ];
 
       // Initialize each view
