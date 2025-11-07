@@ -1,3 +1,5 @@
+<img width="192" height="192" alt="image" src="https://github.com/user-attachments/assets/cd96ca05-9340-42a5-83f4-69a3df50e41c" />
+
 # neurosift (v2)
 
 Neurosift is a browser-based tool designed for the visualization of neuroscience data with a focus on NWB (Neurodata Without Borders) files, and enables interactive exploration of the [DANDI Archive](https://dandiarchive.org/), [EMBER Archive](https://emberarchive.org/), and [OpenNeuro](https://openneuro.org/) online repositories.
