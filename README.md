@@ -1,4 +1,8 @@
-<img width="192" height="192" alt="image" src="https://github.com/user-attachments/assets/cd96ca05-9340-42a5-83f4-69a3df50e41c" />
+<p align="center">
+  <picture>
+    <img width="192" height="192" alt="image" src="https://github.com/user-attachments/assets/cd96ca05-9340-42a5-83f4-69a3df50e41c" />
+  </picture>
+</p>
 
 # neurosift (v2)
 
