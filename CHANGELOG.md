@@ -1,5 +1,10 @@
 # Changes
 
+## November 12, 2025
+
+- Added TimeIntervals support to Timeseries Alignment widget with single bar visualization
+- Added NaN-aware time calculations for TimeIntervals (filters invalid values, uses max start time when stop times are NaN)
+
 ## November 6, 2025
 
 - Updated GitHub workflow to deploy to Cloudflare Pages instead of Vercel
