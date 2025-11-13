@@ -7,6 +7,7 @@
 - Implemented Figpack Raster Plot visualization using Runpack worker API for distributed job processing
 - Added useRunpackJob hook for managing Runpack API interactions with job submission, status checking, and result retrieval
 - FigpackRasterPlotView now supports generating and displaying figpack raster plots in an iframe with job status tracking
+- Added Figpack video preview plugin
 
 ## November 6, 2025
 

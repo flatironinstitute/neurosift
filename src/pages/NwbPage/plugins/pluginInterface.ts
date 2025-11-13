@@ -25,5 +25,6 @@ export interface NwbObjectViewPlugin {
   launchableFromTable?: boolean;
   requiresWindowDimensions?: boolean;
   showInMultiView?: boolean;
+  hideFromObjectView?: boolean;
   requiredDefaultUnits?: boolean;
 }

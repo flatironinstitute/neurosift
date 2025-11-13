@@ -1,6 +1,7 @@
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import FigpackRasterPlotView from "./FigpackRasterPlotView";
+import FigpackVideoPreviewView from "./FigpackVideoPreviewView";
 
 export const figpackRasterPlotPlugin: NwbObjectViewPlugin = {
   name: "FigpackRasterPlot",
@@ -24,6 +25,32 @@ export const figpackRasterPlotPlugin: NwbObjectViewPlugin = {
   launchableFromTable: true,
   requiresWindowDimensions: false,
   showInMultiView: false,
+  hideFromObjectView: true,
+};
+
+export const figpackVideoPreviewPlugin: NwbObjectViewPlugin = {
+  name: "FigpackVideoPreview",
+  label: "Video Preview",
+  canHandle: async ({
+    nwbUrl,
+    path,
+    secondaryPaths,
+  }: {
+    nwbUrl: string;
+    path: string;
+    secondaryPaths?: string[];
+  }) => {
+    if (secondaryPaths && secondaryPaths.length > 0) return false;
+    const group = await getHdf5Group(nwbUrl, path);
+    if (!group) return false;
+    if (group.attrs["neurodata_type"] === "ImageSeries") return true;
+    return false;
+  },
+  component: FigpackVideoPreviewView,
+  launchableFromTable: true,
+  requiresWindowDimensions: false,
+  showInMultiView: false,
+  hideFromObjectView: true,
 };
 
 export default figpackRasterPlotPlugin;

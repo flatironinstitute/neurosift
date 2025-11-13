@@ -120,6 +120,7 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
                   display: tabsState.activeTabId === tab.id ? "block" : "none",
                 }}
               >
+                xyz
                 <MultiTabView
                   nwbUrl={nwbUrl}
                   width={width}

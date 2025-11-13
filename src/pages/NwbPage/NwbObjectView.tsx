@@ -52,6 +52,13 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
             specifications,
             launchableFromTable: false,
           });
+          {
+            // only include plugins that do not have hideFromObjectView set to true
+            const suitable2 = suitable.filter(
+              (plugin) => !plugin.hideFromObjectView,
+            );
+            suitable = suitable2;
+          }
           if (inMultiView) {
             // If we are in a multi-view, then we only use plugins that have showInMultiView set to true
             // but if there are no such plugins, then we use the default plugin

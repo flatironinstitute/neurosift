@@ -20,7 +20,7 @@ import { intervalSeriesPlugin } from "./IntervalSeries";
 import { eventsPlugin } from "./Events";
 import { imageSeriesMp4Plugin } from "./ImageSeriesMp4";
 import { NwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
-import figpackRasterPlotPlugin from "./Figpack";
+import figpackRasterPlotPlugin, { figpackVideoPreviewPlugin } from "./Figpack";
 
 // List of plugins in order they will appear in the UI when a single object is being viewed
 export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
@@ -45,6 +45,7 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   // spikeDensityPlugin,
 
   figpackRasterPlotPlugin,
+  figpackVideoPreviewPlugin,
 
   defaultPlugin,
   pythonScriptPlugin,
