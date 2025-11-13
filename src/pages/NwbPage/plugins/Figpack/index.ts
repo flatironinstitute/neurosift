@@ -43,7 +43,12 @@ export const figpackVideoPreviewPlugin: NwbObjectViewPlugin = {
     if (secondaryPaths && secondaryPaths.length > 0) return false;
     const group = await getHdf5Group(nwbUrl, path);
     if (!group) return false;
-    if (group.attrs["neurodata_type"] !== "ImageSeries") return false;
+    const supportedTypes = [
+      "ImageSeries",
+      "TwoPhotonSeries",
+      "OnePhotonSeries",
+    ];
+    if (!supportedTypes.includes(group.attrs["neurodata_type"])) return false;
 
     // Check if data is external (shape contains zeros)
     const dataDataset = group.datasets.find((ds) => ds.name === "data");

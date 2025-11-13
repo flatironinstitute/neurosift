@@ -2,6 +2,7 @@
 
 ## November 13, 2025
 
+- Added clickable links in Figpack job status displays that open runpack-admin pages in new browser tabs
 - Implemented VideoViewer component for /video route with DANDI API authentication and S3 signed URL resolution
 
 ## November 12, 2025
