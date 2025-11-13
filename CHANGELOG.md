@@ -4,6 +4,9 @@
 
 - Added TimeIntervals support to Timeseries Alignment widget with single bar visualization
 - Added NaN-aware time calculations for TimeIntervals (filters invalid values, uses max start time when stop times are NaN)
+- Implemented Figpack Raster Plot visualization using Devaria worker API for distributed job processing
+- Added useDevariaJob hook for managing Devaria API interactions with job submission, status checking, and result retrieval
+- FigpackRasterPlotView now supports generating and displaying figpack raster plots in an iframe with job status tracking
 
 ## November 6, 2025
 
