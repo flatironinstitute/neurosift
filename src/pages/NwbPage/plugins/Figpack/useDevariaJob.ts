@@ -60,7 +60,6 @@ export const useDevariaJob = <InputType, ResultType>(
 
         if (response.ok) {
           const data = await response.json();
-          console.log("--- data:", data);
           if (data.exists) {
             setJob({
               job_id: data.job_id,
