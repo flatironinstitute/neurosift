@@ -1,5 +1,9 @@
 # Changes
 
+## November 13, 2025
+
+- Implemented VideoViewer component for /video route with DANDI API authentication and S3 signed URL resolution
+
 ## November 12, 2025
 
 - Added TimeIntervals support to Timeseries Alignment widget with single bar visualization
