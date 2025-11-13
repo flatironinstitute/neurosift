@@ -1,5 +1,5 @@
 import { FunctionComponent, useMemo } from "react";
-import { useDevariaJob } from "./useDevariaJob";
+import { useRunpackJob } from "./useRunpackJob";
 import "../common/loadingState.css";
 
 type Props = {
@@ -34,7 +34,7 @@ const FigpackRasterPlotView: FunctionComponent<Props> = ({
   );
 
   const { job, result, error, isLoading, submitJob, refreshStatus } =
-    useDevariaJob<FigpackRasterPlotInput, FigpackRasterPlotOutput>(
+    useRunpackJob<FigpackRasterPlotInput, FigpackRasterPlotOutput>(
       "figpack_nwb_raster_plot",
       jobInput,
     );

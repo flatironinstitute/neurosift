@@ -160,17 +160,17 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
             );
             if (canceled) return;
             if (!startTimes || !stopTimes) return;
-            
+
             const startTimesArray = Array.from(startTimes as any) as number[];
             const stopTimesArray = Array.from(stopTimes as any) as number[];
             const startTime = nanMin(startTimesArray);
             let endTime = nanMax(stopTimesArray);
-            
+
             // If stop times are all NaNs, use the max start time
             if (isNaN(endTime)) {
               endTime = nanMax(startTimesArray);
             }
-            
+
             // Only add if we have valid time values
             if (!isNaN(startTime) && !isNaN(endTime)) {
               timeseriesAlignmentDispatch({

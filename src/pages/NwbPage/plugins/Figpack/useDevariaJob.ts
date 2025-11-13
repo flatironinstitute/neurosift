@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 
-const DEVARIA_API_BASE_URL = "https://devaria-worker.neurosift.app";
-const DEVARIA_API_KEY = "submit8524";
+const RUNPACK_API_BASE_URL = "https://runpack-worker.neurosift.app";
+const RUNPACK_API_KEY = "submit8524";
 
-interface DevariaJob {
+interface RunpackJob {
   job_id: string;
   status:
     | "pending"
@@ -20,11 +20,11 @@ interface DevariaJob {
   error?: string;
 }
 
-export const useDevariaJob = <InputType, ResultType>(
+export const useRunpackJob = <InputType, ResultType>(
   jobType: string,
   inputParams: InputType,
 ) => {
-  const [job, setJob] = useState<DevariaJob | null>(null);
+  const [job, setJob] = useState<RunpackJob | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -46,10 +46,10 @@ export const useDevariaJob = <InputType, ResultType>(
   useEffect(() => {
     const checkExistingJob = async () => {
       try {
-        const response = await fetch(`${DEVARIA_API_BASE_URL}/api/jobs/check`, {
+        const response = await fetch(`${RUNPACK_API_BASE_URL}/api/jobs/check`, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${DEVARIA_API_KEY}`,
+            Authorization: `Bearer ${RUNPACK_API_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -80,10 +80,10 @@ export const useDevariaJob = <InputType, ResultType>(
   const submitJob = useCallback(async () => {
     setError(null);
     try {
-      const response = await fetch(`${DEVARIA_API_BASE_URL}/api/jobs/submit`, {
+      const response = await fetch(`${RUNPACK_API_BASE_URL}/api/jobs/submit`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${DEVARIA_API_KEY}`,
+          Authorization: `Bearer ${RUNPACK_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -116,10 +116,10 @@ export const useDevariaJob = <InputType, ResultType>(
     setIsLoading(true);
     try {
       const response = await fetch(
-        `${DEVARIA_API_BASE_URL}/api/jobs/${job.job_id}`,
+        `${RUNPACK_API_BASE_URL}/api/jobs/${job.job_id}`,
         {
           headers: {
-            Authorization: `Bearer ${DEVARIA_API_KEY}`,
+            Authorization: `Bearer ${RUNPACK_API_KEY}`,
           },
         },
       );
