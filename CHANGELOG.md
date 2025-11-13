@@ -1,5 +1,11 @@
 # Changes
 
+## November 12, 2025
+
+- Implemented Figpack Raster Plot visualization using Devaria worker API for distributed job processing
+- Added useDevariaJob hook for managing Devaria API interactions with job submission, status checking, and result retrieval
+- FigpackRasterPlotView now supports generating and displaying figpack raster plots in an iframe with job status tracking
+
 ## November 6, 2025
 
 - Updated GitHub workflow to deploy to Cloudflare Pages instead of Vercel
