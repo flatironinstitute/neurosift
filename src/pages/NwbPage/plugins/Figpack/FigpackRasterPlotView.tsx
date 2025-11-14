@@ -35,13 +35,25 @@ const FigpackRasterPlotView: FunctionComponent<Props> = ({
     [nwbUrl, path],
   );
 
+  const isRemoteFile = nwbUrl.startsWith("https://");
+
   const { job, result, error, isLoading, submitJob, refreshStatus } =
     useRunpackJob<FigpackRasterPlotInput, FigpackRasterPlotOutput>(
       "figpack_nwb_raster_plot",
       jobInput,
+      { enabled: isRemoteFile },
     );
 
   const showFigure = job?.status === "completed" && result?.figpack_url;
+
+  if (!isRemoteFile) {
+    return (
+      <div style={{ color: "blue" }}>
+        Figpack Raster Plot generation can only be used with publicly accessible
+        NWB files served over HTTPS.
+      </div>
+    );
+  }
 
   return (
     <div style={{ width: "100%", height: "100%" }}>

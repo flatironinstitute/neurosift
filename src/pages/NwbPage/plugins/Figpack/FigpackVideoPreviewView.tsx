@@ -35,13 +35,27 @@ const FigpackVideoPreviewView: FunctionComponent<Props> = ({
     [nwbUrl, path],
   );
 
+  const isRemoteFile = nwbUrl.startsWith("https://");
+
   const { job, result, error, isLoading, submitJob, refreshStatus } =
     useRunpackJob<FigpackViewPreviewInput, FigpackVideoPreviewOutput>(
       "figpack_nwb_video_preview",
       jobInput,
+      {
+        enabled: isRemoteFile,
+      },
     );
 
   const showFigure = job?.status === "completed" && result?.figpack_url;
+
+  if (!isRemoteFile) {
+    return (
+      <div style={{ color: "blue" }}>
+        Figpack Video Preview generation can only be used with publicly
+        accessible NWB files served over HTTPS.
+      </div>
+    );
+  }
 
   return (
     <div style={{ width: "100%", height: "100%" }}>

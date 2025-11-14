@@ -23,6 +23,7 @@ interface RunpackJob {
 export const useRunpackJob = <InputType, ResultType>(
   jobType: string,
   inputParams: InputType,
+  o: { enabled: boolean },
 ) => {
   const [job, setJob] = useState<RunpackJob | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +45,7 @@ export const useRunpackJob = <InputType, ResultType>(
 
   // Check for existing job on component mount
   useEffect(() => {
+    if (!o.enabled) return;
     const checkExistingJob = async () => {
       try {
         const response = await fetch(`${RUNPACK_API_BASE_URL}/api/jobs/check`, {
@@ -75,9 +77,10 @@ export const useRunpackJob = <InputType, ResultType>(
     };
 
     checkExistingJob();
-  }, [jobType, inputParamsString]);
+  }, [jobType, inputParamsString, o.enabled]);
 
   const submitJob = useCallback(async () => {
+    if (!o.enabled) return;
     setError(null);
     try {
       const response = await fetch(`${RUNPACK_API_BASE_URL}/api/jobs/submit`, {
@@ -108,9 +111,10 @@ export const useRunpackJob = <InputType, ResultType>(
         `Failed to submit job: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
-  }, [jobType, inputParamsString]);
+  }, [jobType, inputParamsString, o.enabled]);
 
   const refreshStatus = useCallback(async () => {
+    if (!o.enabled) return;
     if (!job?.job_id) return;
 
     setIsLoading(true);
@@ -142,7 +146,7 @@ export const useRunpackJob = <InputType, ResultType>(
     } finally {
       setIsLoading(false);
     }
-  }, [job?.job_id]);
+  }, [job?.job_id, o.enabled]);
 
   return {
     job,
