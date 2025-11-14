@@ -2,6 +2,7 @@ import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import FigpackRasterPlotView from "./FigpackRasterPlotView";
 import FigpackVideoPreviewView from "./FigpackVideoPreviewView";
+import FigpackPoseEstimationView from "./FigpackPoseEstimationView";
 
 export const figpackRasterPlotPlugin: NwbObjectViewPlugin = {
   name: "FigpackRasterPlot",
@@ -66,4 +67,27 @@ export const figpackVideoPreviewPlugin: NwbObjectViewPlugin = {
   hideFromObjectView: true,
 };
 
-export default figpackRasterPlotPlugin;
+export const FigpackPoseEstimationPlugin: NwbObjectViewPlugin = {
+  name: "FigpackPoseEstimation",
+  label: "Pose Estimation",
+  canHandle: async ({
+    nwbUrl,
+    path,
+    secondaryPaths,
+  }: {
+    nwbUrl: string;
+    path: string;
+    secondaryPaths?: string[];
+  }) => {
+    if (secondaryPaths && secondaryPaths.length > 0) return false;
+    const group = await getHdf5Group(nwbUrl, path);
+    if (!group) return false;
+    if (group.attrs["neurodata_type"] === "PoseEstimation") return true;
+    return false;
+  },
+  component: FigpackPoseEstimationView,
+  launchableFromTable: true,
+  requiresWindowDimensions: false,
+  showInMultiView: false,
+  hideFromObjectView: true,
+};

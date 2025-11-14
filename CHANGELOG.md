@@ -1,5 +1,9 @@
 # Changes
 
+## November 14, 2025
+
+- Support Figpack Pose Estimation generation and visualization
+
 ## November 13, 2025
 
 - Added clickable links in Figpack job status displays that open runpack-admin pages in new browser tabs
