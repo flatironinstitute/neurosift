@@ -31,6 +31,8 @@ const FigpackPoseEstimationView: FunctionComponent<Props> = ({
     () => ({
       nwb_url: nwbUrl,
       path,
+      neurosift_url: window.location.href,
+      dandiset_id: dandisetIdFromUrl(window.location.href),
     }),
     [nwbUrl, path],
   );
@@ -76,6 +78,11 @@ const FigpackPoseEstimationView: FunctionComponent<Props> = ({
       )}
     </div>
   );
+};
+
+export const dandisetIdFromUrl = (url: string): string => {
+  const urlObj = new URL(url);
+  return urlObj.searchParams.get("dandisetId") || "";
 };
 
 export default FigpackPoseEstimationView;

@@ -3,6 +3,7 @@ import { useRunpackJob } from "./useRunpackJob";
 import FigpackJobStatusDisplay from "./FigpackJobStatusDisplay";
 import FigpackIframeDisplay from "./FigpackIframeDisplay";
 import "../common/loadingState.css";
+import { dandisetIdFromUrl } from "./FigpackPoseEstimationView";
 
 type Props = {
   width?: number;
@@ -31,6 +32,8 @@ const FigpackRasterPlotView: FunctionComponent<Props> = ({
     () => ({
       nwb_url: nwbUrl,
       units_path: path,
+      neurosift_url: window.location.href,
+      dandiset_id: dandisetIdFromUrl(window.location.href),
     }),
     [nwbUrl, path],
   );
