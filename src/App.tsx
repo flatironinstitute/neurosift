@@ -37,6 +37,7 @@ import OpenNeuroPage from "./pages/OpenNeuroPage/OpenNeuroPage";
 import SettingsPage from "./pages/SettingsPage/SettingsPage";
 import VideoPage from "./pages/VideoPage/VideoPage";
 import { logPageLoad } from "./util/sendLog";
+import SlpPage from "./pages/SlpPage/SlpPage";
 
 const theme = createTheme({
   palette: {
@@ -406,6 +407,10 @@ const AppContent = () => {
           <Route
             path="/video"
             element={<VideoPage width={width} height={mainHeight} />}
+          />
+          <Route
+            path="/slp"
+            element={<SlpPage width={width} height={mainHeight} />}
           />
           <Route
             path="/experimental-neurotile"

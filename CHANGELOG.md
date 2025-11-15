@@ -1,5 +1,9 @@
 # Changes
 
+## November 15, 2025
+
+- Began implementation of /slp route for displaying SLEAP files
+
 ## November 14, 2025
 
 - Support Figpack Pose Estimation generation and visualization
