@@ -1,5 +1,9 @@
 # Changes
 
+## November 24, 2025
+
+- Added combined time controller for SpatialSeries view with editable duration/start time fields, zoom/pan buttons, and graphical time bar on a single horizontal line
+
 ## November 6, 2025
 
 - Updated GitHub workflow to deploy to Cloudflare Pages instead of Vercel

@@ -4,13 +4,13 @@ import {
   useTimeRange,
   useTimeseriesSelection,
 } from "@shared/context-timeseries-selection-2";
-import TimeseriesSelectionBar, {
-  timeSelectionBarHeight,
-} from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
+import TimeseriesSelectionBarWithControls from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBarWithControls";
 import { useTimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
 import { FunctionComponent, useEffect, useState } from "react";
 import PlotlyComponent from "./PlotlyComponent";
 import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient";
+
+const timeSelectionBarHeight = 24;
 
 type Props = {
   width: number;
@@ -270,9 +270,9 @@ const SpatialSeriesXYView: FunctionComponent<Props> = ({
       <div
         style={{ position: "absolute", width, height: timeSelectionBarHeight }}
       >
-        <TimeseriesSelectionBar
+        <TimeseriesSelectionBarWithControls
           width={width}
-          height={timeSelectionBarHeight - 5}
+          height={timeSelectionBarHeight}
         />
       </div>
       <div
