@@ -1,0 +1,102 @@
+.slp-tree-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.slp-tree-table th {
+    background-color: #34495e;
+    color: #fff;
+    font-weight: 600;
+    text-align: left;
+    padding: 4px 8px;
+    border-bottom: 2px solid #dde4ed;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.slp-tree-table td {
+    padding: 3px 8px;
+    border-bottom: 1px solid #dde4ed;
+    vertical-align: top;
+    line-height: 1.4;
+}
+
+.slp-tree-table tbody tr:hover {
+    background-color: rgba(43, 87, 151, 0.05);
+}
+
+/* Attributes column */
+.slp-tree-table td:nth-child(2) {
+    color: #2c3e50;
+    font-size: 0.8rem;
+}
+
+/* Expansion controls (▼ and ►) */
+.slp-tree-expand-control {
+    color: #34495e;
+    font-size: 0.8rem;
+    width: 16px;
+    display: inline-block;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.slp-tree-expand-control:hover {
+    color: #2c3e50;
+}
+
+.slp-tree-node-content {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.slp-tree-node-name {
+    font-weight: 500;
+}
+
+.slp-tree-node-name.group {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.slp-tree-node-name.dataset {
+    color: #34495e;
+}
+
+.slp-tree-dataset-icon {
+    font-size: 10px;
+    color: #666;
+    font-family: monospace;
+}
+
+.slp-tree-group-icon {
+    font-size: 12px;
+    color: #34495e;
+}
+
+.slp-tree-attributes {
+    font-size: 0.75rem;
+    color: #555;
+    font-family: monospace;
+}
+
+.slp-tree-attributes-item {
+    display: inline;
+    margin-right: 8px;
+}
+
+.slp-tree-attributes-key {
+    color: #2980b9;
+    font-weight: 500;
+}
+
+.slp-tree-attributes-value {
+    color: #555;
+}

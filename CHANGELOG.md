@@ -4,6 +4,28 @@
 
 - Added combined time controller for SpatialSeries view with editable duration/start time fields, zoom/pan buttons, and graphical time bar on a single horizontal line
 
+## November 15, 2025
+
+- Began implementation of /slp route for displaying SLEAP files
+
+## November 14, 2025
+
+- Support Figpack Pose Estimation generation and visualization
+
+## November 13, 2025
+
+- Added clickable links in Figpack job status displays that open runpack-admin pages in new browser tabs
+- Implemented VideoViewer component for /video route with DANDI API authentication and S3 signed URL resolution
+
+## November 12, 2025
+
+- Added TimeIntervals support to Timeseries Alignment widget with single bar visualization
+- Added NaN-aware time calculations for TimeIntervals (filters invalid values, uses max start time when stop times are NaN)
+- Implemented Figpack Raster Plot visualization using Runpack worker API for distributed job processing
+- Added useRunpackJob hook for managing Runpack API interactions with job submission, status checking, and result retrieval
+- FigpackRasterPlotView now supports generating and displaying figpack raster plots in an iframe with job status tracking
+- Added Figpack video preview plugin
+
 ## November 6, 2025
 
 - Updated GitHub workflow to deploy to Cloudflare Pages instead of Vercel

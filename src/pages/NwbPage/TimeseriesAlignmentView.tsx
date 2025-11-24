@@ -20,6 +20,7 @@ type Props = {
 type TAItem = {
   path: string;
   neurodataType: string;
+  itemType: "timeseries" | "timeintervals";
   startTime: number;
   endTime: number;
 };
@@ -107,6 +108,7 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
               item: {
                 path: gr.path,
                 neurodataType: nt,
+                itemType: "timeseries",
                 startTime,
                 endTime,
               },
@@ -126,6 +128,7 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
               item: {
                 path: gr.path,
                 neurodataType: nt,
+                itemType: "timeseries",
                 startTime,
                 endTime,
               },
@@ -133,6 +136,57 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
           }
         } catch (err) {
           console.warn("Problem processing group", gr.path);
+          console.warn(err);
+        }
+      } else if (nt === "TimeIntervals") {
+        // Handle TimeIntervals
+        try {
+          const startTimeDataset = gr.datasets.find(
+            (ds) => ds.name === "start_time",
+          );
+          const stopTimeDataset = gr.datasets.find(
+            (ds) => ds.name === "stop_time",
+          );
+          if (startTimeDataset && stopTimeDataset) {
+            const startTimes = await getHdf5DatasetData(
+              nwbUrl,
+              startTimeDataset.path,
+              {},
+            );
+            const stopTimes = await getHdf5DatasetData(
+              nwbUrl,
+              stopTimeDataset.path,
+              {},
+            );
+            if (canceled) return;
+            if (!startTimes || !stopTimes) return;
+
+            const startTimesArray = Array.from(startTimes as any) as number[];
+            const stopTimesArray = Array.from(stopTimes as any) as number[];
+            const startTime = nanMin(startTimesArray);
+            let endTime = nanMax(stopTimesArray);
+
+            // If stop times are all NaNs, use the max start time
+            if (isNaN(endTime)) {
+              endTime = nanMax(startTimesArray);
+            }
+
+            // Only add if we have valid time values
+            if (!isNaN(startTime) && !isNaN(endTime)) {
+              timeseriesAlignmentDispatch({
+                type: "addItem",
+                item: {
+                  path: gr.path,
+                  neurodataType: nt,
+                  itemType: "timeintervals",
+                  startTime,
+                  endTime,
+                },
+              });
+            }
+          }
+        } catch (err) {
+          console.warn("Problem processing TimeIntervals group", gr.path);
           console.warn(err);
         }
       } else {
@@ -217,6 +271,8 @@ const getColorForNeurodataType = (nt: string) => {
       return "lime";
     case "OptogeneticSeries":
       return "pink";
+    case "TimeIntervals":
+      return "teal";
     default:
       return "gray";
   }
@@ -285,6 +341,20 @@ const checkIsTimeseriesObject = async (gr: any) => {
   if (gr.datasets.find((ds: any) => ds.name === "timestamps")) return true;
   if (gr.datasets.find((ds: any) => ds.name === "starting_time")) return true;
   return false;
+};
+
+// NaN-aware min function
+const nanMin = (arr: number[]): number => {
+  const validValues = arr.filter((v) => !isNaN(v) && isFinite(v));
+  if (validValues.length === 0) return NaN;
+  return Math.min(...validValues);
+};
+
+// NaN-aware max function
+const nanMax = (arr: number[]): number => {
+  const validValues = arr.filter((v) => !isNaN(v) && isFinite(v));
+  if (validValues.length === 0) return NaN;
+  return Math.max(...validValues);
 };
 
 export default TimeseriesAlignmentView;
