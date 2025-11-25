@@ -1,5 +1,9 @@
 # Changes
 
+## November 24, 2025
+
+- Added combined time controller for SpatialSeries view with editable duration/start time fields, zoom/pan buttons, and graphical time bar on a single horizontal line
+
 ## November 15, 2025
 
 - Began implementation of /slp route for displaying SLEAP files
