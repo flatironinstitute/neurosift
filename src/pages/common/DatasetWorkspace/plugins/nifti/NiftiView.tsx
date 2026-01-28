@@ -67,7 +67,7 @@ const NiftiView: FunctionComponent<DatasetPluginProps> = ({
             <br />
             <br />
             {isLargeFile || isVeryLargeFile
-              ? "Loading large files may impact performance."
+              ? "Warning: Loading large files may impact performance or fail to load."
               : "Click to proceed with loading the file."}
           </>
         </Alert>
