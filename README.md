@@ -45,7 +45,7 @@ Follow these steps to install and run the app locally in development mode:
    npm install
    ```
 
-   Note: The niivue_dist submodule is required for NIFTI file visualization. If you skip initializing submodules, you may encounter errors when trying to view NIFTI files.
+   Note: The niivue_dist submodule is required for NIfTI file visualization. If you skip initializing submodules, you may encounter errors when trying to view NIfTI files.
 
 3. **Start the development server:**
    ```bash

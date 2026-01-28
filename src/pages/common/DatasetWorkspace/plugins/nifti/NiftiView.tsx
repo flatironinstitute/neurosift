@@ -63,7 +63,7 @@ const NiftiView: FunctionComponent<DatasetPluginProps> = ({
           }
         >
           <>
-            This NIFTI file is {fileSizeMB.toFixed(1)} MB in size.
+            This NIfTI file is {fileSizeMB.toFixed(1)} MB in size.
             <br />
             <br />
             {isLargeFile || isVeryLargeFile
