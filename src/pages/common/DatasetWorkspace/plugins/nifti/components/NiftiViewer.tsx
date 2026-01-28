@@ -124,7 +124,7 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
       } catch (err: any) {
         console.error(err);
         setError(
-          `Failed to load NIFTI file: ${err.message || "An unknown error occurred"}`,
+          `Failed to load NIfTI file: ${err.message || "An unknown error occurred"}`,
         );
         setLoading(false);
       }
@@ -158,7 +158,7 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
       <Box sx={{ mb: 2 }}>
         {loading ? (
           <div>
-            <Typography>Loading NIFTI file...</Typography>
+            <Typography>Loading NIfTI file...</Typography>
             <LinearProgress />
           </div>
         ) : (

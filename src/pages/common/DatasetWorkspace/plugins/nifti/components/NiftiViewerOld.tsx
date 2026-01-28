@@ -86,13 +86,13 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
         }
 
         if (!nifti.isNIFTI(data)) {
-          throw new Error("Not a valid NIFTI file");
+          throw new Error("Not a valid NIfTI file");
         }
 
-        // Parse NIFTI header and image
+        // Parse NIfTI header and image
         const header = nifti.readHeader(data);
         if (!header) {
-          throw new Error("Failed to read NIFTI header");
+          throw new Error("Failed to read NIfTI header");
         }
 
         const image = nifti.readImage(header, data);
@@ -216,7 +216,7 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
   if (loading) {
     return (
       <Box sx={{ p: 2 }}>
-        <Typography>Loading NIFTI file...</Typography>
+        <Typography>Loading NIfTI file...</Typography>
         <LinearProgress variant="determinate" value={downloadProgress} />
       </Box>
     );
