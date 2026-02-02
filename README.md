@@ -14,6 +14,10 @@ This branch contains the new (v2) version of neurosift. The previous (v1) versio
 
 The live application is hosted at [https://neurosift.app](https://neurosift.app).
 
+The video below demonstrates how to view the contents of a NWB file that is hosted on [DANDI Archive](https://dandiarchive.org/) in Neurosift.  Please note that this video has no sound.
+
+https://github.com/user-attachments/assets/2d4c1530-f3ac-4090-850d-ff7a5c7528d3
+
 ## Run locally
 
 If you want to run neurosift on a local file, you can install it via pip and run it locally.
