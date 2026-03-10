@@ -30,11 +30,13 @@ const NwbUsageScript: FunctionComponent<Props> = ({ nwbUrl, onNwbUsage }) => {
 import pynwb
 import lindi
 
+local_cache = lindi.LocalCache()
+
 # Load ${nwbUrl}
 ${
   lindiUrl
-    ? `f = lindi.LindiH5pyFile.from_lindi_file("${lindiUrl}")`
-    : `f = lindi.LindiH5pyFile.from_hdf5_file("${nwbUrl}")`
+    ? `f = lindi.LindiH5pyFile.from_lindi_file("${lindiUrl}", local_cache=local_cache)`
+    : `f = lindi.LindiH5pyFile.from_hdf5_file("${nwbUrl}", local_cache=local_cache)`
 }
 nwb = pynwb.NWBHDF5IO(file=f, mode='r').read()
 
