@@ -95,8 +95,10 @@ import lindi
 
 url = '${nwbUrl}'
 
+local_cache = lindi.LocalCache()
+
 # Load the remote file
-${urlType === "lindi" ? "f = lindi.LindiH5pyFile.from_lindi_file(url)" : "f = lindi.LindiH5pyFile.from_hdf5_file(url)"}
+${urlType === "lindi" ? "f = lindi.LindiH5pyFile.from_lindi_file(url, local_cache=local_cache)" : "f = lindi.LindiH5pyFile.from_hdf5_file(url, local_cache=local_cache)"}
 
 # load the neurodata object (${group.attrs.neurodata_type})
 X = f['${path}']
