@@ -278,6 +278,9 @@ class RemoteH5FileLindi {
               shape,
               dtype,
               attrs: childZattrs || {},
+              chunks: childZarray.chunks,
+              compressor: formatCompressor(childZarray.compressor),
+              filters: formatFilters(childZarray.filters),
             });
           } else {
             console.warn("Unexpected .zarray item", childPath, childZarray);
@@ -312,6 +315,9 @@ class RemoteH5FileLindi {
         shape: zarray.shape || [],
         dtype: zarray.dtype || "",
         attrs: zattrs || {},
+        chunks: zarray.chunks,
+        compressor: formatCompressor(zarray.compressor),
+        filters: formatFilters(zarray.filters),
       };
     } else {
       dataset = undefined;
@@ -572,5 +578,21 @@ export const getRemoteH5FileLindi = async (url: string) => {
 //   }
 //   return ret;
 // };
+
+const formatCompressor = (compressor: any): string | undefined => {
+  if (!compressor) return undefined;
+  if (typeof compressor === "string") return compressor;
+  if (compressor.id) return compressor.id;
+  return JSON.stringify(compressor);
+};
+
+const formatFilters = (filters: any[] | undefined): string[] | undefined => {
+  if (!filters || filters.length === 0) return undefined;
+  return filters.map((f) => {
+    if (typeof f === "string") return f;
+    if (f.id) return f.id;
+    return JSON.stringify(f);
+  });
+};
 
 export default RemoteH5FileLindi;
