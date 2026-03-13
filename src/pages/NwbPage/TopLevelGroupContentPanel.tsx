@@ -14,6 +14,7 @@ import {
   getHdf5Group,
   Hdf5Dataset,
   Hdf5Group,
+  Hdf5Subdataset,
 } from "./hdf5Interface";
 import { valueToElement } from "./valueToElement";
 import "@css/TopLevelGroupContent.css";
@@ -146,6 +147,7 @@ type TableItem =
       expanded: boolean;
       indent: number;
       data?: any;
+      subdataset: Hdf5Subdataset;
     }
   | {
       key: string;
@@ -287,6 +289,7 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({
           indent,
           key: `dataset:${ds.path}`,
           data,
+          subdataset: ds,
         });
         if (expanded) processExpandedDataset(ds.path, indent + 1);
       }
@@ -352,6 +355,13 @@ type TableRowProps = {
 };
 
 const expanderStyle = { cursor: "pointer" };
+
+const datasetInfoLabelStyle: React.CSSProperties = {
+  color: "#888",
+  paddingRight: "8px",
+  verticalAlign: "top",
+  whiteSpace: "nowrap",
+};
 
 const TableRow: FunctionComponent<TableRowProps> = ({
   tableItem,
@@ -437,6 +447,9 @@ const TableRow: FunctionComponent<TableRowProps> = ({
               </span>
               &nbsp;
               <span>{tableItem.name}</span>
+              <span style={{ color: "#888" }}>
+                {` ${tableItem.subdataset.dtype} ${valueToElement(tableItem.subdataset.shape)}`}
+              </span>
               {tableItem.data && (
                 <span>
                   &nbsp;{abbreviateString(valueToElement(tableItem.data), 300)}
@@ -459,24 +472,53 @@ const TableRow: FunctionComponent<TableRowProps> = ({
       );
     case "dataset-info":
       return (
-        <tr className="dataset-info" style={{ cursor: "pointer" }}>
+        <tr className="dataset-info">
           <td style={indentStyle}>
-            <div>
-              <span>&nbsp;</span>&nbsp;
-              <span>{`${tableItem.dataset.dtype} ${valueToElement(tableItem.dataset.shape)}`}</span>
-              {tableItem.data ? (
-                <span>&nbsp;{valueToElement(tableItem.data)}</span>
-              ) : (
-                <span>
-                  &nbsp;&nbsp;
-                  <SmallIconButton
-                    onClick={() => {
-                      viewDatasetInDebugConsole(tableItem.path);
-                    }}
-                    title={`View this dataset in debug console`}
-                    icon={<FaRegCircle />}
-                  />
-                </span>
+            <div style={{ paddingLeft: "18px" }}>
+              <table style={{ borderCollapse: "collapse", fontSize: "inherit", width: "auto" }}>
+                <tbody>
+                  <tr>
+                    <td style={datasetInfoLabelStyle}>dtype</td>
+                    <td>{tableItem.dataset.dtype}</td>
+                  </tr>
+                  <tr>
+                    <td style={datasetInfoLabelStyle}>shape</td>
+                    <td>{valueToElement(tableItem.dataset.shape)}</td>
+                  </tr>
+                  {tableItem.dataset.chunks && (
+                    <tr>
+                      <td style={datasetInfoLabelStyle}>chunks</td>
+                      <td>{valueToElement(tableItem.dataset.chunks)}</td>
+                    </tr>
+                  )}
+                  {tableItem.dataset.compressor && (
+                    <tr>
+                      <td style={datasetInfoLabelStyle}>compressor</td>
+                      <td>{tableItem.dataset.compressor}</td>
+                    </tr>
+                  )}
+                  {tableItem.dataset.filters && tableItem.dataset.filters.length > 0 && (
+                    <tr>
+                      <td style={datasetInfoLabelStyle}>filters</td>
+                      <td>{tableItem.dataset.filters.join(", ")}</td>
+                    </tr>
+                  )}
+                  {tableItem.data && (
+                    <tr>
+                      <td style={datasetInfoLabelStyle}>data</td>
+                      <td>{valueToElement(tableItem.data)}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              {!tableItem.data && (
+                <SmallIconButton
+                  onClick={() => {
+                    viewDatasetInDebugConsole(tableItem.path);
+                  }}
+                  title={`View this dataset in debug console`}
+                  icon={<FaRegCircle />}
+                />
               )}
             </div>
           </td>

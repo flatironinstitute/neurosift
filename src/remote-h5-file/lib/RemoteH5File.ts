@@ -28,6 +28,9 @@ export type RemoteH5Subdataset = {
   shape: number[];
   dtype: string;
   attrs: { [key: string]: any };
+  chunks?: number[];
+  compressor?: string;
+  filters?: string[];
 };
 
 export type RemoteH5Dataset = {
@@ -36,6 +39,9 @@ export type RemoteH5Dataset = {
   shape: number[];
   dtype: string;
   attrs: { [key: string]: any };
+  chunks?: number[];
+  compressor?: string;
+  filters?: string[];
 };
 
 export type DatasetDataType =
