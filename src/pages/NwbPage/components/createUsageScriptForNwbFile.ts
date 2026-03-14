@@ -362,7 +362,7 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
         s += `${obj.variableName}.indexed_images # Images\n`;
         s += `for k in ${obj.variableName}.indexed_images.images.keys():\n`;
         s += `    image = ${obj.variableName}.indexed_images.images[k]\n`;
-        s += `    print(f'Image {k}: {image.data.shape})')\n`;
+        s += `    print(f'Image {k}: {image.data.shape}')\n`;
       }
     }
 
