@@ -1,6 +1,7 @@
 import { behavioralEventsPlugin } from "./BehavioralEvents";
 import { defaultPlugin } from "./default";
 import { dynamicTablePlugin } from "./dynamic-table";
+import { electrodePositionsPlugin } from "./ElectrodePositions";
 import { twoPhotonSeriesPlugin } from "./TwoPhotonSeries";
 import { NwbObjectViewPlugin } from "./pluginInterface";
 import { simpleTimeseriesPlugin } from "./simple-timeseries";
@@ -32,6 +33,7 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   intervalSeriesPlugin,
 
   behavioralEventsPlugin,
+  electrodePositionsPlugin,
   dynamicTablePlugin,
   twoPhotonSeriesPlugin,
   spatialSeriesPlugin,
