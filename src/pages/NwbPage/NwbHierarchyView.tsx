@@ -496,8 +496,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
                 fontSize: "14px",
               }}
             >
-              <span style={{ fontSize: "16px" }}>⧉</span>
-              {selectedItems.size}
+              View {selectedItems.size} selected
             </button>
           )}
         </div>
