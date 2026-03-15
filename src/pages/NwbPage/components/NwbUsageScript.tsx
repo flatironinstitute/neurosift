@@ -13,7 +13,7 @@ import createUsageScriptForNwbFile from "./createUsageScriptForNwbFile";
 
 type Props = {
   nwbUrl: string;
-  onNwbUsage: (usage: string) => void;
+  onNwbUsage?: (usage: string) => void;
 };
 
 const NwbUsageScript: FunctionComponent<Props> = ({ nwbUrl, onNwbUsage }) => {
@@ -108,7 +108,7 @@ nwb = pynwb.NWBHDF5IO(file=f, mode='r').read()
   }
 
   const fullContent = `\`\`\`python\n${headerContent}${scriptContent}\n\`\`\``;
-  onNwbUsage(fullContent);
+  onNwbUsage?.(fullContent);
 
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -126,7 +126,7 @@ nwb = pynwb.NWBHDF5IO(file=f, mode='r').read()
       >
         Copy Script
       </button>
-      <div style={{ maxHeight: 300, overflow: "auto" }}>
+      <div style={{ overflow: "auto" }}>
         <Markdown
           components={{
             code(props) {

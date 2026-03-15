@@ -1,5 +1,5 @@
 import { getHdf5Group } from "../hdf5Interface";
-import { ObjectType } from "../Types";
+import { ObjectType } from "../TabTypes";
 
 export const determineObjectType = async (
   nwbUrl: string,

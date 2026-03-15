@@ -3,7 +3,7 @@ import { determineObjectType } from "../ObjectTypeUtils";
 import { NwbObjectViewPlugin } from "../plugins/pluginInterface";
 import { findPluginByName } from "../plugins/registry";
 import tabsReducer from "../tabsReducer";
-import { TabsState } from "../Types";
+import { TabsState } from "../TabTypes";
 
 interface UseTabManagerProps {
   nwbUrl: string;
@@ -12,13 +12,13 @@ interface UseTabManagerProps {
 
 interface UseTabManagerResult {
   tabsState: TabsState;
-  handleOpenObjectsInNewTab: (paths: string[]) => Promise<void>;
-  handleOpenObjectInNewTab: (
+  handleOpenObject: (
     path: string,
     plugin?: NwbObjectViewPlugin,
     secondaryPaths?: string[],
   ) => Promise<void>;
-  handleCloseTab: (id: string, event: React.MouseEvent) => void;
+  handleOpenObjects: (paths: string[]) => Promise<void>;
+  handleClearSubView: () => void;
   handleSwitchTab: (id: string) => void;
 }
 
@@ -27,8 +27,8 @@ export const useTabManager = ({
   initialTabId,
 }: UseTabManagerProps): UseTabManagerResult => {
   const [tabsState, dispatch] = useReducer(tabsReducer, {
-    tabs: [],
-    activeTabId: "main",
+    activeTabId: "neurodata",
+    neurodataSubView: null,
   });
 
   useEffect(() => {
@@ -53,8 +53,7 @@ export const useTabManager = ({
           const objectType = await determineObjectType(nwbUrl, path);
           if (canceled) return;
           dispatch({
-            type: "OPEN_TAB",
-            id: initialTabId,
+            type: "SET_SINGLE_SUBVIEW",
             path,
             objectType,
             plugin,
@@ -66,13 +65,12 @@ export const useTabManager = ({
             paths.map((path: string) => determineObjectType(nwbUrl, path)),
           );
           if (canceled) return;
-          dispatch({ type: "OPEN_MULTI_TAB", paths, objectTypes });
+          dispatch({ type: "SET_MULTI_SUBVIEW", paths, objectTypes });
         } else {
           const objectType = await determineObjectType(nwbUrl, initialTabId);
           if (canceled) return;
           dispatch({
-            type: "OPEN_TAB",
-            id: initialTabId,
+            type: "SET_SINGLE_SUBVIEW",
             path: initialTabId,
             objectType,
           });
@@ -85,36 +83,14 @@ export const useTabManager = ({
     };
   }, [initialTabId, nwbUrl]);
 
-  const handleOpenObjectsInNewTab = async (paths: string[]) => {
-    if (paths.length === 1) {
-      const objectType = await determineObjectType(nwbUrl, paths[0]);
-      dispatch({ type: "OPEN_TAB", id: paths[0], path: paths[0], objectType });
-    } else {
-      const objectTypes = await Promise.all(
-        paths.map((path) => determineObjectType(nwbUrl, path)),
-      );
-      dispatch({ type: "OPEN_MULTI_TAB", paths, objectTypes });
-    }
-  };
-
-  const handleOpenObjectInNewTab = async (
+  const handleOpenObject = async (
     path: string,
     plugin?: NwbObjectViewPlugin,
     secondaryPaths?: string[],
   ) => {
-    let id: string;
-    if (secondaryPaths) {
-      id = [path, ...secondaryPaths].join("^");
-    } else {
-      id = path;
-    }
-    if (plugin) {
-      id = `view:${plugin.name}|${id}`;
-    }
     const objectType = await determineObjectType(nwbUrl, path);
     dispatch({
-      type: "OPEN_TAB",
-      id,
+      type: "SET_SINGLE_SUBVIEW",
       path,
       objectType,
       plugin,
@@ -122,9 +98,24 @@ export const useTabManager = ({
     });
   };
 
-  const handleCloseTab = (id: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    dispatch({ type: "CLOSE_TAB", id });
+  const handleOpenObjects = async (paths: string[]) => {
+    if (paths.length === 1) {
+      const objectType = await determineObjectType(nwbUrl, paths[0]);
+      dispatch({
+        type: "SET_SINGLE_SUBVIEW",
+        path: paths[0],
+        objectType,
+      });
+    } else {
+      const objectTypes = await Promise.all(
+        paths.map((path) => determineObjectType(nwbUrl, path)),
+      );
+      dispatch({ type: "SET_MULTI_SUBVIEW", paths, objectTypes });
+    }
+  };
+
+  const handleClearSubView = () => {
+    dispatch({ type: "CLEAR_SUBVIEW" });
   };
 
   const handleSwitchTab = (id: string) => {
@@ -133,9 +124,9 @@ export const useTabManager = ({
 
   return {
     tabsState,
-    handleOpenObjectsInNewTab,
-    handleOpenObjectInNewTab,
-    handleCloseTab,
+    handleOpenObject,
+    handleOpenObjects,
+    handleClearSubView,
     handleSwitchTab,
   };
 };

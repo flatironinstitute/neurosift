@@ -5,11 +5,19 @@ import { SxProps } from "@mui/material";
 
 export const TAB_BAR_HEIGHT = 48;
 
+export const ACTIVE_TAB_COLOR = "#1976d2";
+
+export interface FixedTab {
+  id: string;
+  label: string;
+}
+
 export interface TabBarProps<T extends BaseTab> {
   tabs: T[];
   activeTabId: string;
   onSwitchTab: (id: string) => void;
   onCloseTab: (id: string, event: React.MouseEvent) => void;
+  fixedTabs?: FixedTab[];
   showMainTab?: boolean;
   mainTabLabel?: string;
   width: number;
@@ -33,6 +41,43 @@ const tabsStyle: SxProps = {
   },
 };
 
+const fixedTabsStyle: SxProps = {
+  minHeight: 36,
+  "& .MuiTabs-indicator": {
+    display: "none",
+  },
+  "& .MuiTab-root": {
+    minHeight: 32,
+    padding: "4px 16px",
+    margin: "0 3px",
+    borderRadius: "6px",
+    border: "1px solid #d0d0d0",
+    backgroundColor: "#f5f5f5",
+    color: "#555",
+    fontWeight: 500,
+    fontSize: 13,
+    textTransform: "none",
+    transition: "all 0.15s ease",
+    "&:hover": {
+      backgroundColor: "#e8e8e8",
+      borderColor: "#bbb",
+    },
+    "&.Mui-selected": {
+      backgroundColor: ACTIVE_TAB_COLOR,
+      borderColor: ACTIVE_TAB_COLOR,
+      color: "#fff",
+      fontWeight: 600,
+    },
+  },
+  "& .MuiTabScrollButton-root": {
+    height: 32,
+    width: 28,
+    "&.Mui-disabled": {
+      opacity: 0.3,
+    },
+  },
+};
+
 const tabStyle: SxProps = {
   textTransform: "none",
 };
@@ -42,6 +87,7 @@ export const TabBar = <T extends BaseTab>({
   activeTabId,
   onSwitchTab,
   onCloseTab,
+  fixedTabs,
   showMainTab = true,
   mainTabLabel = "MAIN",
   width,
@@ -56,18 +102,27 @@ export const TabBar = <T extends BaseTab>({
         top: 12,
       }}
     >
-      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 1 }}>
+      <Box sx={{ borderBottom: fixedTabs ? 0 : 1, borderColor: "divider", mb: 1 }}>
         <Tabs
-          sx={tabsStyle}
+          sx={fixedTabs ? fixedTabsStyle : tabsStyle}
           variant="scrollable"
           scrollButtons="auto"
           allowScrollButtonsMobile
           value={activeTabId}
           onChange={(_, value) => onSwitchTab(value)}
         >
-          {showMainTab && (
-            <Tab key="main" label={mainTabLabel} value="main" sx={tabStyle} />
-          )}
+          {fixedTabs
+            ? fixedTabs.map((ft) => (
+                <Tab key={ft.id} label={ft.label} value={ft.id} />
+              ))
+            : showMainTab && (
+                <Tab
+                  key="main"
+                  label={mainTabLabel}
+                  value="main"
+                  sx={tabStyle}
+                />
+              )}
           {tabs.map((tab) => (
             <Tab
               key={tab.id}

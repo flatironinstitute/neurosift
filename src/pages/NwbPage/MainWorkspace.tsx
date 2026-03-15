@@ -1,13 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { TabBar } from "@components/tabs/TabBar";
+import { FixedTab, TabBar } from "@components/tabs/TabBar";
 import { TAB_BAR_HEIGHT } from "./tabStyles";
 import { useTabManager } from "./TabManager";
-import TabContent from "./components/TabContent";
 import SingleTabView from "./components/SingleTabView";
 import MultiTabView from "./components/MultiTabView";
+import BreadcrumbBar, { BREADCRUMB_HEIGHT } from "./components/BreadcrumbBar";
 import AuthErrorNotification from "./components/AuthErrorNotification";
-import { DynamicTab } from "./Types/index";
-import { hasAuthError, isDandiAssetUrl } from "./hdf5Interface";
+import { getHdf5Group, hasAuthError, isDandiAssetUrl } from "./hdf5Interface";
+import { SetupNwbFileSpecificationsProvider } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
+import ScrollY from "@components/ScrollY";
+import NwbHierarchyView from "./NwbHierarchyView";
+import Hdf5View from "./Hdf5View";
+import TimeseriesAlignmentView from "./TimeseriesAlignmentView";
+import SpecificationsView from "./SpecificationsView/SpecificationsView";
+import NwbUsageScript from "./components/NwbUsageScript";
+
+const FIXED_TABS: FixedTab[] = [
+  { id: "neurodata", label: "Neurodata" },
+  { id: "timeseries-alignment", label: "Timeseries Alignment" },
+  { id: "python-usage", label: "Python Usage" },
+  { id: "specifications", label: "Specifications" },
+  { id: "hdf5", label: "HDF5" },
+];
 
 interface MainWorkspaceProps {
   nwbUrl: string;
@@ -24,16 +38,36 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
 }) => {
   const {
     tabsState,
-    handleOpenObjectsInNewTab,
-    handleOpenObjectInNewTab,
-    handleCloseTab,
+    handleOpenObject,
+    handleOpenObjects,
+    handleClearSubView,
     handleSwitchTab,
   } = useTabManager({ nwbUrl, initialTabId });
 
   const [showAuthError, setShowAuthError] = useState(false);
+  const [defaultUnitsPath, setDefaultUnitsPath] = useState<
+    string | undefined
+  >();
 
   const tabBarHeight = TAB_BAR_HEIGHT;
-  const contentHeight = height - tabBarHeight;
+  const contentWidth = width - 20;
+
+  const { neurodataSubView } = tabsState;
+  const showBreadcrumb =
+    tabsState.activeTabId === "neurodata" && neurodataSubView !== null;
+  const contentHeight =
+    height - tabBarHeight - (showBreadcrumb ? BREADCRUMB_HEIGHT : 0);
+
+  // Check if /units exists
+  useEffect(() => {
+    const checkUnits = async () => {
+      const group = await getHdf5Group(nwbUrl, "/units");
+      if (group && group.attrs.neurodata_type === "Units") {
+        setDefaultUnitsPath("/units");
+      }
+    };
+    checkUnits();
+  }, [nwbUrl]);
 
   // Check for authentication errors
   useEffect(() => {
@@ -42,14 +76,8 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
         const hasError = hasAuthError(nwbUrl);
         setShowAuthError(hasError);
       };
-
-      // Check immediately
       checkAuthError();
-
-      // Also set up interval to periodically check for auth errors as they might
-      // be detected during data loading after component mount
       const intervalId = setInterval(checkAuthError, 1000);
-
       return () => {
         clearInterval(intervalId);
       };
@@ -82,82 +110,147 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
       )}
 
       <TabBar
-        tabs={tabsState.tabs}
+        tabs={[]}
         activeTabId={tabsState.activeTabId}
         onSwitchTab={handleSwitchTab}
-        onCloseTab={handleCloseTab}
+        onCloseTab={() => {}}
+        fixedTabs={FIXED_TABS}
+        showMainTab={false}
         width={width}
       />
+
+      {/* Breadcrumb bar when viewing an object */}
+      {showBreadcrumb && neurodataSubView && (
+        <div
+          style={{
+            position: "absolute",
+            left: 10,
+            width: contentWidth,
+            top: tabBarHeight,
+          }}
+        >
+          <BreadcrumbBar
+            subView={neurodataSubView}
+            onNavigateBack={handleClearSubView}
+            nwbUrl={nwbUrl}
+          />
+        </div>
+      )}
+
       <div
         style={{
           position: "absolute",
           left: 10,
-          width: width - 20,
+          width: contentWidth,
           height: contentHeight,
-          top: tabBarHeight,
+          top: tabBarHeight + (showBreadcrumb ? BREADCRUMB_HEIGHT : 0),
           overflow: "hidden",
         }}
       >
-        <div
-          style={{
-            display: tabsState.activeTabId === "main" ? "block" : "none",
-          }}
-        >
-          <TabContent
-            nwbUrl={nwbUrl}
-            width={width - 20}
-            height={contentHeight}
-            onOpenObjectInNewTab={handleOpenObjectInNewTab}
-            onOpenObjectsInNewTab={handleOpenObjectsInNewTab}
-          />
-        </div>
-        {tabsState.tabs.map((tab: DynamicTab) => {
-          if (tab.type === "multi") {
-            return (
-              <div
-                key={tab.id}
-                style={{
-                  display: tabsState.activeTabId === tab.id ? "block" : "none",
-                }}
-              >
-                xyz
-                <MultiTabView
+        <SetupNwbFileSpecificationsProvider nwbUrl={nwbUrl}>
+          {/* Neurodata tab */}
+          <div
+            style={{
+              display:
+                tabsState.activeTabId === "neurodata" ? "block" : "none",
+            }}
+          >
+            {neurodataSubView === null ? (
+              <ScrollY width={contentWidth} height={contentHeight}>
+                <NwbHierarchyView
                   nwbUrl={nwbUrl}
-                  width={width}
-                  height={contentHeight}
-                  tabId={tab.id}
-                  paths={tab.paths}
-                  objectTypes={tab.objectTypes}
-                  plugins={tab.plugins}
-                  secondaryPathsList={tab.secondaryPathsList}
-                  onOpenObjectInNewTab={handleOpenObjectInNewTab}
+                  onOpenObjectInNewTab={handleOpenObject}
+                  onOpenObjectsInNewTab={handleOpenObjects}
+                  isExpanded={tabsState.activeTabId === "neurodata"}
+                  defaultUnitsPath={defaultUnitsPath}
+                  onSetDefaultUnitsPath={setDefaultUnitsPath}
                 />
-              </div>
-            );
-          } else if (tab.type === "single") {
-            return (
-              <div
-                key={tab.id}
-                style={{
-                  display: tabsState.activeTabId === tab.id ? "block" : "none",
+              </ScrollY>
+            ) : neurodataSubView.type === "single" ? (
+              <SingleTabView
+                nwbUrl={nwbUrl}
+                width={contentWidth}
+                height={contentHeight}
+                path={neurodataSubView.path}
+                objectType={neurodataSubView.objectType}
+                plugin={neurodataSubView.plugin}
+                secondaryPaths={neurodataSubView.secondaryPaths}
+                onOpenObjectInNewTab={handleOpenObject}
+              />
+            ) : (
+              <MultiTabView
+                nwbUrl={nwbUrl}
+                width={contentWidth}
+                height={contentHeight}
+                paths={neurodataSubView.paths}
+                objectTypes={neurodataSubView.objectTypes}
+                plugins={neurodataSubView.plugins}
+                secondaryPathsList={neurodataSubView.secondaryPathsList}
+                onOpenObjectInNewTab={handleOpenObject}
+              />
+            )}
+          </div>
+
+          {/* HDF5 tab */}
+          <div
+            style={{
+              display: tabsState.activeTabId === "hdf5" ? "block" : "none",
+            }}
+          >
+            <ScrollY width={contentWidth} height={contentHeight}>
+              <Hdf5View
+                nwbUrl={nwbUrl}
+                width={contentWidth}
+                isExpanded={tabsState.activeTabId === "hdf5"}
+              />
+            </ScrollY>
+          </div>
+
+          {/* Timeseries Alignment tab */}
+          <div
+            style={{
+              display:
+                tabsState.activeTabId === "timeseries-alignment"
+                  ? "block"
+                  : "none",
+            }}
+          >
+            <ScrollY width={contentWidth} height={contentHeight}>
+              <TimeseriesAlignmentView
+                nwbUrl={nwbUrl}
+                width={contentWidth}
+                isExpanded={tabsState.activeTabId === "timeseries-alignment"}
+                onOpenTimeseriesItem={(path) => {
+                  handleOpenObject(path);
                 }}
-              >
-                <SingleTabView
-                  nwbUrl={nwbUrl}
-                  width={width}
-                  height={contentHeight}
-                  tabId={tab.id}
-                  path={tab.path}
-                  objectType={tab.objectType}
-                  plugin={tab.plugin}
-                  secondaryPaths={tab.secondaryPaths}
-                  onOpenObjectInNewTab={handleOpenObjectInNewTab}
-                />
-              </div>
-            );
-          }
-          return null; // For main tab type
-        })}
+              />
+            </ScrollY>
+          </div>
+
+          {/* Specifications tab */}
+          <div
+            style={{
+              display:
+                tabsState.activeTabId === "specifications" ? "block" : "none",
+            }}
+          >
+            <ScrollY width={contentWidth} height={contentHeight}>
+              <SpecificationsView />
+            </ScrollY>
+          </div>
+
+          {/* Python Usage tab */}
+          <div
+            style={{
+              display:
+                tabsState.activeTabId === "python-usage" ? "block" : "none",
+            }}
+          >
+            <ScrollY width={contentWidth} height={contentHeight}>
+              <NwbUsageScript nwbUrl={nwbUrl} />
+            </ScrollY>
+          </div>
+        </SetupNwbFileSpecificationsProvider>
       </div>
     </div>
   );

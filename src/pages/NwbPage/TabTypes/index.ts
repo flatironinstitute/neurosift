@@ -2,16 +2,7 @@ import { NwbObjectViewPlugin } from "../plugins/pluginInterface";
 
 export type ObjectType = "group" | "dataset";
 
-export interface BaseTab {
-  id: string;
-  label: string;
-}
-
-export interface MainTab extends BaseTab {
-  type: "main";
-}
-
-export interface SingleTab extends BaseTab {
+export interface SingleSubView {
   type: "single";
   path: string;
   objectType: ObjectType;
@@ -19,7 +10,7 @@ export interface SingleTab extends BaseTab {
   secondaryPaths?: string[];
 }
 
-export interface MultiTab extends BaseTab {
+export interface MultiSubView {
   type: "multi";
   paths: string[];
   objectTypes: ObjectType[];
@@ -27,39 +18,25 @@ export interface MultiTab extends BaseTab {
   secondaryPathsList: (string[] | undefined)[];
 }
 
-export type DynamicTab = MainTab | SingleTab | MultiTab;
+export type NeurodataSubView = SingleSubView | MultiSubView;
 
 export interface TabsState {
-  tabs: DynamicTab[];
   activeTabId: string;
+  neurodataSubView: NeurodataSubView | null;
 }
 
-export interface TabContentProps {
-  nwbUrl: string;
-  width: number;
-  height: number;
-  onOpenObjectInNewTab: (
-    path: string,
-    plugin?: NwbObjectViewPlugin,
-    secondaryPaths?: string[],
-  ) => void;
-  onOpenObjectsInNewTab: (paths: string[]) => void;
-}
-
-// Action types for the tabs reducer
 export type TabsAction =
   | {
-      type: "OPEN_TAB";
-      id: string;
+      type: "SET_SINGLE_SUBVIEW";
       path: string;
       objectType: ObjectType;
       plugin?: NwbObjectViewPlugin;
       secondaryPaths?: string[];
     }
   | {
-      type: "OPEN_MULTI_TAB";
+      type: "SET_MULTI_SUBVIEW";
       paths: string[];
       objectTypes: ObjectType[];
     }
-  | { type: "CLOSE_TAB"; id: string }
+  | { type: "CLEAR_SUBVIEW" }
   | { type: "SWITCH_TO_TAB"; id: string };
