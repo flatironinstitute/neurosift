@@ -139,7 +139,7 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
         onSwitchTab={handleDynamicTabSwitch}
         onCloseTab={handleDynamicTabClose}
         fixedTabs={FIXED_TABS}
-        fixedTabActiveId={showFixedContent ? activeFixedTab : undefined}
+        fixedTabActiveId={activeFixedTab}
         onFixedTabSwitch={handleFixedTabSwitch}
         width={width}
       />
