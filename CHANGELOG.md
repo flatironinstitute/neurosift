@@ -1,5 +1,18 @@
 # Changes
 
+## March 13, 2026
+
+- Show dataset chunking and compression in HDF5 view
+
+## March 9, 2026
+
+- Add LINDI LocalCache to generated Python scripts
+
+## January 27, 2026
+
+- Update NIfTI warning statement for files larger than 100 MB
+- Standardize `NIFTI` naming to `NIfTI`
+
 ## November 24, 2025
 
 - Added combined time controller for SpatialSeries view with editable duration/start time fields, zoom/pan buttons, and graphical time bar on a single horizontal line
