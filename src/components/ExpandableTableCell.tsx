@@ -3,18 +3,56 @@ import { FunctionComponent, useState } from "react";
 interface ExpandableTableCellProps {
   content: string;
   maxLength?: number;
+  preformatted?: boolean;
 }
 
 const ExpandableTableCell: FunctionComponent<ExpandableTableCellProps> = ({
   content,
   maxLength = 60,
+  preformatted = false,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (!content) return <span></span>;
 
-  if (content.length <= maxLength || isExpanded) {
-    return <span>{content}</span>;
+  if (content.length <= maxLength) {
+    return preformatted ? (
+      <pre style={{ margin: 0, fontFamily: "monospace", fontSize: "0.9em" }}>
+        {content}
+      </pre>
+    ) : (
+      <span>{content}</span>
+    );
+  }
+
+  if (isExpanded) {
+    return (
+      <div>
+        {preformatted ? (
+          <pre
+            style={{ margin: 0, fontFamily: "monospace", fontSize: "0.9em" }}
+          >
+            {content}
+          </pre>
+        ) : (
+          <span>{content}</span>
+        )}
+        <button
+          onClick={() => setIsExpanded(false)}
+          style={{
+            marginTop: "4px",
+            background: "white",
+            border: "1px solid #ccc",
+            borderRadius: "3px",
+            padding: "2px 5px",
+            fontSize: "0.8em",
+            cursor: "pointer",
+          }}
+        >
+          Collapse
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -23,30 +61,11 @@ const ExpandableTableCell: FunctionComponent<ExpandableTableCellProps> = ({
         onClick={() => setIsExpanded(!isExpanded)}
         style={{
           cursor: "pointer",
-          color: !isExpanded ? "#0d47a1" : undefined,
+          color: "#0d47a1",
         }}
       >
-        {isExpanded ? content : `${content.slice(0, maxLength - 3)}...`}
+        {`${content.slice(0, maxLength - 3)}...`}
       </span>
-      {isExpanded && (
-        <button
-          onClick={() => setIsExpanded(false)}
-          style={{
-            position: "absolute",
-            right: 0,
-            top: "100%",
-            background: "white",
-            border: "1px solid #ccc",
-            borderRadius: "3px",
-            padding: "2px 5px",
-            fontSize: "0.8em",
-            cursor: "pointer",
-            zIndex: 1000,
-          }}
-        >
-          Collapse
-        </button>
-      )}
     </div>
   );
 };
