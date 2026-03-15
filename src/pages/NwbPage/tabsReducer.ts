@@ -130,7 +130,7 @@ const tabsReducer = (state: TabsState, action: TabsAction): TabsState => {
           state.activeTabId === action.id
             ? newTabs.length > 0
               ? newTabs[newTabs.length - 1].id
-              : "main"
+              : "neurodata"
             : state.activeTabId,
       };
     }

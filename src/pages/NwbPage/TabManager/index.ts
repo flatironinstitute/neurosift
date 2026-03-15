@@ -28,7 +28,7 @@ export const useTabManager = ({
 }: UseTabManagerProps): UseTabManagerResult => {
   const [tabsState, dispatch] = useReducer(tabsReducer, {
     tabs: [],
-    activeTabId: "main",
+    activeTabId: "neurodata",
   });
 
   useEffect(() => {
