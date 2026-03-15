@@ -108,7 +108,12 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
   };
 
   const handleDynamicTabSwitch = (id: string) => {
-    handleSwitchTab(id);
+    if (id === "main") {
+      // Switch back to showing the active fixed section
+      handleSwitchTab(activeFixedTab);
+    } else {
+      handleSwitchTab(id);
+    }
   };
 
   const handleDynamicTabClose = (id: string, event: React.MouseEvent) => {
@@ -135,7 +140,7 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
 
       <TabBar
         tabs={tabsState.tabs}
-        activeTabId={tabsState.activeTabId}
+        activeTabId={isDynamicTabActive ? tabsState.activeTabId : "main"}
         onSwitchTab={handleDynamicTabSwitch}
         onCloseTab={handleDynamicTabClose}
         fixedTabs={FIXED_TABS}

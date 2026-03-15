@@ -152,6 +152,12 @@ export const TabBar = <T extends BaseTab>({
               value={activeTabId}
               onChange={(_, value) => onSwitchTab(value)}
             >
+              <Tab
+                key="main"
+                value="main"
+                sx={tabStyle}
+                label="Main"
+              />
               {tabs.map((tab) => (
                 <Tab
                   key={tab.id}
