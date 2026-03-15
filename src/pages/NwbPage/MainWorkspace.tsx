@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { FixedTab, TabBar } from "@components/tabs/TabBar";
-import { TAB_BAR_HEIGHT } from "./tabStyles";
+import {
+  FixedTab,
+  TabBar,
+  FIXED_TAB_BAR_HEIGHT,
+  DYNAMIC_TAB_BAR_HEIGHT,
+} from "@components/tabs/TabBar";
 import { useTabManager } from "./TabManager";
 import SingleTabView from "./components/SingleTabView";
 import MultiTabView from "./components/MultiTabView";
@@ -22,8 +26,6 @@ const FIXED_TABS: FixedTab[] = [
   { id: "specifications", label: "Specifications" },
   { id: "hdf5", label: "HDF5" },
 ];
-
-const FIXED_TAB_IDS = new Set(FIXED_TABS.map((t) => t.id));
 
 interface MainWorkspaceProps {
   nwbUrl: string;
@@ -50,10 +52,20 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
   const [defaultUnitsPath, setDefaultUnitsPath] = useState<
     string | undefined
   >();
+  const [activeFixedTab, setActiveFixedTab] = useState("neurodata");
 
-  const tabBarHeight = TAB_BAR_HEIGHT;
+  const hasDynamicTabs = tabsState.tabs.length > 0;
+  const tabBarHeight =
+    FIXED_TAB_BAR_HEIGHT + (hasDynamicTabs ? DYNAMIC_TAB_BAR_HEIGHT : 0);
   const contentHeight = height - tabBarHeight;
   const contentWidth = width - 20;
+
+  // Determine what content to show:
+  // If activeTabId matches a dynamic tab, show that; otherwise show the active fixed section
+  const isDynamicTabActive = tabsState.tabs.some(
+    (t: DynamicTab) => t.id === tabsState.activeTabId,
+  );
+  const showFixedContent = !isDynamicTabActive;
 
   // Check if /units exists
   useEffect(() => {
@@ -89,6 +101,21 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
     }
   }, [nwbUrl, showAuthError]);
 
+  const handleFixedTabSwitch = (id: string) => {
+    setActiveFixedTab(id);
+    // Switch the reducer to a non-dynamic-tab id so the dynamic tab row deselects
+    handleSwitchTab(id);
+  };
+
+  const handleDynamicTabSwitch = (id: string) => {
+    handleSwitchTab(id);
+  };
+
+  const handleDynamicTabClose = (id: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    handleCloseTab(id, event);
+  };
+
   return (
     <div style={{ position: "absolute", width, height, overflow: "hidden" }}>
       {/* Error notification as overlay */}
@@ -109,10 +136,11 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
       <TabBar
         tabs={tabsState.tabs}
         activeTabId={tabsState.activeTabId}
-        onSwitchTab={handleSwitchTab}
-        onCloseTab={handleCloseTab}
+        onSwitchTab={handleDynamicTabSwitch}
+        onCloseTab={handleDynamicTabClose}
         fixedTabs={FIXED_TABS}
-        showMainTab={false}
+        fixedTabActiveId={showFixedContent ? activeFixedTab : undefined}
+        onFixedTabSwitch={handleFixedTabSwitch}
         width={width}
       />
       <div
@@ -126,11 +154,13 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
         }}
       >
         <SetupNwbFileSpecificationsProvider nwbUrl={nwbUrl}>
-          {/* Fixed section tabs */}
+          {/* Fixed section content */}
           <div
             style={{
               display:
-                tabsState.activeTabId === "neurodata" ? "block" : "none",
+                showFixedContent && activeFixedTab === "neurodata"
+                  ? "block"
+                  : "none",
             }}
           >
             <ScrollY width={contentWidth} height={contentHeight}>
@@ -138,7 +168,9 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
                 nwbUrl={nwbUrl}
                 onOpenObjectInNewTab={handleOpenObjectInNewTab}
                 onOpenObjectsInNewTab={handleOpenObjectsInNewTab}
-                isExpanded={tabsState.activeTabId === "neurodata"}
+                isExpanded={
+                  showFixedContent && activeFixedTab === "neurodata"
+                }
                 defaultUnitsPath={defaultUnitsPath}
                 onSetDefaultUnitsPath={setDefaultUnitsPath}
               />
@@ -146,21 +178,24 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
           </div>
           <div
             style={{
-              display: tabsState.activeTabId === "hdf5" ? "block" : "none",
+              display:
+                showFixedContent && activeFixedTab === "hdf5"
+                  ? "block"
+                  : "none",
             }}
           >
             <ScrollY width={contentWidth} height={contentHeight}>
               <Hdf5View
                 nwbUrl={nwbUrl}
                 width={contentWidth}
-                isExpanded={tabsState.activeTabId === "hdf5"}
+                isExpanded={showFixedContent && activeFixedTab === "hdf5"}
               />
             </ScrollY>
           </div>
           <div
             style={{
               display:
-                tabsState.activeTabId === "timeseries-alignment"
+                showFixedContent && activeFixedTab === "timeseries-alignment"
                   ? "block"
                   : "none",
             }}
@@ -169,7 +204,10 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
               <TimeseriesAlignmentView
                 nwbUrl={nwbUrl}
                 width={contentWidth}
-                isExpanded={tabsState.activeTabId === "timeseries-alignment"}
+                isExpanded={
+                  showFixedContent &&
+                  activeFixedTab === "timeseries-alignment"
+                }
                 onOpenTimeseriesItem={(path) => {
                   handleOpenObjectInNewTab(path);
                 }}
@@ -179,7 +217,9 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
           <div
             style={{
               display:
-                tabsState.activeTabId === "specifications" ? "block" : "none",
+                showFixedContent && activeFixedTab === "specifications"
+                  ? "block"
+                  : "none",
             }}
           >
             <ScrollY width={contentWidth} height={contentHeight}>
@@ -189,7 +229,9 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
           <div
             style={{
               display:
-                tabsState.activeTabId === "python-usage" ? "block" : "none",
+                showFixedContent && activeFixedTab === "python-usage"
+                  ? "block"
+                  : "none",
             }}
           >
             <ScrollY width={contentWidth} height={contentHeight}>
@@ -199,7 +241,6 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
 
           {/* Dynamic object tabs */}
           {tabsState.tabs.map((tab: DynamicTab) => {
-            if (FIXED_TAB_IDS.has(tab.id)) return null;
             if (tab.type === "multi") {
               return (
                 <div

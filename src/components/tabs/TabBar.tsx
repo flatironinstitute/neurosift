@@ -3,7 +3,9 @@ import CloseIcon from "@mui/icons-material/Close";
 import { BaseTab } from "./tabsReducer";
 import { SxProps } from "@mui/material";
 
-export const TAB_BAR_HEIGHT = 48;
+export const FIXED_TAB_BAR_HEIGHT = 44;
+export const DYNAMIC_TAB_BAR_HEIGHT = 36;
+export const TAB_BAR_HEIGHT = FIXED_TAB_BAR_HEIGHT; // default for non-fixed usage
 
 export interface FixedTab {
   id: string;
@@ -16,6 +18,8 @@ export interface TabBarProps<T extends BaseTab> {
   onSwitchTab: (id: string) => void;
   onCloseTab: (id: string, event: React.MouseEvent) => void;
   fixedTabs?: FixedTab[];
+  fixedTabActiveId?: string;
+  onFixedTabSwitch?: (id: string) => void;
   showMainTab?: boolean;
   mainTabLabel?: string;
   width: number;
@@ -67,12 +71,29 @@ const fixedTabsStyle: SxProps = {
       fontWeight: 600,
     },
   },
-  "& .MuiTab-iconWrapper": {
-    marginLeft: "8px",
-  },
   "& .MuiTabScrollButton-root": {
     height: 32,
     width: 28,
+    "&.Mui-disabled": {
+      opacity: 0.3,
+    },
+  },
+};
+
+const dynamicTabsStyle: SxProps = {
+  minHeight: 28,
+  "& .MuiTab-root": {
+    minHeight: 28,
+    padding: "4px 10px",
+    fontSize: 12,
+    textTransform: "none",
+  },
+  "& .MuiTab-iconWrapper": {
+    marginLeft: "6px",
+  },
+  "& .MuiTabScrollButton-root": {
+    height: 28,
+    width: 24,
     "&.Mui-disabled": {
       opacity: 0.3,
     },
@@ -89,10 +110,74 @@ export const TabBar = <T extends BaseTab>({
   onSwitchTab,
   onCloseTab,
   fixedTabs,
+  fixedTabActiveId,
+  onFixedTabSwitch,
   showMainTab = true,
   mainTabLabel = "MAIN",
   width,
 }: TabBarProps<T>) => {
+  if (fixedTabs) {
+    const hasDynamicTabs = tabs.length > 0;
+    return (
+      <div
+        style={{
+          position: "absolute",
+          width,
+          left: 10,
+          top: 12,
+        }}
+      >
+        {/* Fixed section tabs row */}
+        <Tabs
+          sx={fixedTabsStyle}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          value={fixedTabActiveId ?? false}
+          onChange={(_, value) => onFixedTabSwitch?.(value)}
+        >
+          {fixedTabs.map((ft) => (
+            <Tab key={ft.id} label={ft.label} value={ft.id} />
+          ))}
+        </Tabs>
+
+        {/* Dynamic object tabs row */}
+        {hasDynamicTabs && (
+          <Box sx={{ borderBottom: 1, borderColor: "divider", mt: 0.5 }}>
+            <Tabs
+              sx={dynamicTabsStyle}
+              variant="scrollable"
+              scrollButtons="auto"
+              allowScrollButtonsMobile
+              value={activeTabId}
+              onChange={(_, value) => onSwitchTab(value)}
+            >
+              {tabs.map((tab) => (
+                <Tab
+                  key={tab.id}
+                  value={tab.id}
+                  sx={tabStyle}
+                  label={tab.label}
+                  icon={<CloseIcon sx={{ fontSize: 12 }} />}
+                  iconPosition="end"
+                  onClick={(e: React.MouseEvent) => {
+                    const rect = (
+                      e.currentTarget as HTMLElement
+                    ).getBoundingClientRect();
+                    if (e.clientX > rect.right - 26) {
+                      onCloseTab(tab.id, e);
+                    }
+                  }}
+                />
+              ))}
+            </Tabs>
+          </Box>
+        )}
+      </div>
+    );
+  }
+
+  // Legacy single-row mode (used by DatasetWorkspace)
   return (
     <div
       style={{
@@ -103,27 +188,18 @@ export const TabBar = <T extends BaseTab>({
         top: 12,
       }}
     >
-      <Box sx={{ borderBottom: fixedTabs ? 0 : 1, borderColor: "divider", mb: 1 }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 1 }}>
         <Tabs
-          sx={fixedTabs ? fixedTabsStyle : tabsStyle}
+          sx={tabsStyle}
           variant="scrollable"
           scrollButtons="auto"
           allowScrollButtonsMobile
           value={activeTabId}
           onChange={(_, value) => onSwitchTab(value)}
         >
-          {fixedTabs
-            ? fixedTabs.map((ft) => (
-                <Tab key={ft.id} label={ft.label} value={ft.id} />
-              ))
-            : showMainTab && (
-                <Tab
-                  key="main"
-                  label={mainTabLabel}
-                  value="main"
-                  sx={tabStyle}
-                />
-              )}
+          {showMainTab && (
+            <Tab key="main" label={mainTabLabel} value="main" sx={tabStyle} />
+          )}
           {tabs.map((tab) => (
             <Tab
               key={tab.id}
