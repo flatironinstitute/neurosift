@@ -1,56 +1,114 @@
 .hdf5-view-container {
     position: relative;
-    margin-top: 10px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 4px 0;
 }
 
-.top-level-group {
-    margin-left: 10px;
+.hdf5-tree-node {
     user-select: none;
 }
 
-.group-title-panel {
+.hdf5-tree-row {
+    display: flex;
+    align-items: center;
+    padding: 2px 8px;
     cursor: pointer;
-    padding: 10px 0;
-    margin-top: 10px;
-    background: #34495e;
-    color: #fff;
-    border: solid 1px #dde4ed;
     border-radius: 4px;
-    padding-left: 10px;
-    transition: background-color 0.2s ease;
+    margin: 0 4px;
+    min-height: 26px;
 }
 
-.group-title-panel:hover {
-    background: #2b5797;
+.hdf5-tree-row:hover {
+    background-color: #f0f4f8;
 }
 
-.group-title-panel.expanded {
-    background: #2b5797;
+.hdf5-tree-row .tree-icon {
+    flex-shrink: 0;
+    width: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 2px;
 }
 
-.group-title-panel .expander {
-    display: inline-block;
-    width: 20px;
-    text-align: center;
+.hdf5-tree-row .tree-expander {
+    flex-shrink: 0;
+    width: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    color: #888;
+    margin-right: 2px;
 }
 
-.group-title-panel .group-name {
-    margin-left: 5px;
+.hdf5-tree-row .tree-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.group-title-panel .group-count {
-    color: rgba(255, 255, 255, 0.8);
-    margin-left: 10px;
-}
-
-.loading-text {
+.hdf5-tree-row.group-row .tree-label {
+    font-weight: 600;
     color: #2c3e50;
-    padding: 20px;
-    text-align: center;
 }
 
-.divider {
-    border: none;
-    border-top: 1px solid #dde4ed;
-    margin: 20px 0;
+.hdf5-tree-row.dataset-row .tree-label {
+    color: #34495e;
+}
+
+.hdf5-tree-row.attribute-row .tree-label {
+    color: #7f8c8d;
+    font-size: 12px;
+}
+
+.hdf5-tree-row .tree-meta {
+    color: #999;
+    font-size: 12px;
+    margin-left: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hdf5-tree-row .tree-data-preview {
+    color: #666;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 11px;
+    margin-left: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hdf5-dataset-detail {
+    margin: 2px 0 4px 0;
+    padding: 6px 12px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border-left: 3px solid #dee2e6;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 12px;
+    color: #495057;
+}
+
+.hdf5-dataset-detail table {
+    border-collapse: collapse;
+}
+
+.hdf5-dataset-detail td {
+    padding: 1px 0;
+}
+
+.hdf5-dataset-detail .detail-label {
+    color: #868e96;
+    padding-right: 12px;
+    white-space: nowrap;
+    vertical-align: top;
+}
+
+.hdf5-dataset-detail .detail-value {
+    color: #495057;
 }
