@@ -9,6 +9,10 @@ import {
 } from "react";
 import { FaEye } from "react-icons/fa";
 import { getHdf5DatasetData, getHdf5Group } from "./hdf5Interface";
+import {
+  useNwbFileSpecifications,
+  NwbFileSpecifications,
+} from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 type Props = {
   nwbUrl: string;
@@ -20,7 +24,7 @@ type Props = {
 type TAItem = {
   path: string;
   neurodataType: string;
-  itemType: "timeseries" | "timeintervals";
+  itemType: "timeseries" | "timeintervals" | "events";
   startTime: number;
   endTime: number;
 };
@@ -29,10 +33,9 @@ type TimeseriesAlignmentState = {
   timeseries: TAItem[];
 };
 
-type TimeseriesAlignmentAction = {
-  type: "addItem";
-  item: TAItem;
-};
+type TimeseriesAlignmentAction =
+  | { type: "addItem"; item: TAItem }
+  | { type: "reset" };
 
 const timeseriesAlignmentReducer = (
   state: TimeseriesAlignmentState,
@@ -44,9 +47,63 @@ const timeseriesAlignmentReducer = (
         ...state,
         timeseries: [...state.timeseries, action.item],
       };
+    case "reset":
+      return { timeseries: [] };
     default:
       return state;
   }
+};
+
+// Top-level NWB groups (children of /) that can contain timeseries data.
+// Other root children like /general, /specifications, /file_create_date are skipped.
+const timeseriesRootPaths = new Set([
+  "acquisition",
+  "processing",
+  "analysis",
+  "stimulus",
+  "intervals",
+  "units",
+]);
+
+// Build sets of relevant data types and container types from NWB specs.
+// relevantTypes: types that descend from TimeSeries, TimeIntervals, or Events
+// containerTypes: types that might contain relevant types (NWBDataInterface
+//   subtypes, ProcessingModule) but are not themselves data types
+const buildTypeSets = (
+  specs: NwbFileSpecifications,
+): { relevantTypes: Set<string>; containerTypes: Set<string> } => {
+  const parentOf: Record<string, string> = {};
+  for (const g of specs.allGroups) {
+    if (g.neurodata_type_inc) {
+      parentOf[g.neurodata_type_def] = g.neurodata_type_inc;
+    }
+  }
+  const descendsFrom = (type: string, ancestor: string): boolean => {
+    let current: string | undefined = type;
+    while (current) {
+      if (current === ancestor) return true;
+      current = parentOf[current];
+    }
+    return false;
+  };
+  const relevantTypes = new Set<string>();
+  const containerTypes = new Set<string>();
+  for (const g of specs.allGroups) {
+    const def = g.neurodata_type_def;
+    if (
+      descendsFrom(def, "TimeSeries") ||
+      descendsFrom(def, "TimeIntervals") ||
+      descendsFrom(def, "Events")
+    ) {
+      relevantTypes.add(def);
+    } else if (
+      descendsFrom(def, "NWBDataInterface") ||
+      descendsFrom(def, "ProcessingModule")
+    ) {
+      containerTypes.add(def);
+    }
+  }
+  return { relevantTypes, containerTypes };
 };
 
 const TimeseriesAlignmentView: FunctionComponent<Props> = ({
@@ -55,6 +112,11 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
   isExpanded,
   onOpenTimeseriesItem,
 }) => {
+  const specifications = useNwbFileSpecifications();
+  const typeSets = useMemo(
+    () => (specifications ? buildTypeSets(specifications) : undefined),
+    [specifications],
+  );
   const [timeseriesAlignment, timeseriesAlignmentDispatch] = useReducer(
     timeseriesAlignmentReducer,
     { timeseries: [] },
@@ -63,56 +125,66 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
 
   useEffect(() => {
     if (!isExpanded) return;
+    if (!typeSets) return;
+    timeseriesAlignmentDispatch({ type: "reset" });
     setLoadingMessage("Loading...");
     let canceled = false;
     const handleGroup = async (path: string) => {
-      setLoadingMessage(`Loading ${path}...`);
-      const gr = await getHdf5Group(nwbUrl, path);
+      let gr;
+      try {
+        gr = await getHdf5Group(nwbUrl, path);
+      } catch (err) {
+        console.warn("Problem loading group", path, err);
+        return;
+      }
       if (canceled) return;
       if (!gr) return;
-      const nt = gr.attrs["neurodata_type"];
-      const isTimeseriesObject = await checkIsTimeseriesObject(gr);
-      if (isTimeseriesObject) {
-        try {
+      try {
+        const nt = gr.attrs?.["neurodata_type"];
+        const isTimeseries =
+          nt &&
+          !gr.subgroups?.length &&
+          gr.datasets?.find((ds: any) => ds.name === "data") &&
+          (gr.datasets.find((ds: any) => ds.name === "timestamps") ||
+            gr.datasets.find((ds: any) => ds.name === "starting_time"));
+        if (isTimeseries) {
           const timestampsSubdataset = gr.datasets.find(
-            (ds) => ds.name === "timestamps",
+            (ds: any) => ds.name === "timestamps",
           );
           const startingTimeSubdataset = gr.datasets.find(
-            (ds) => ds.name === "starting_time",
+            (ds: any) => ds.name === "starting_time",
           );
-          const dataSubdataset = gr.datasets.find((ds) => ds.name === "data");
+          const dataSubdataset = gr.datasets.find(
+            (ds: any) => ds.name === "data",
+          );
           if (timestampsSubdataset) {
-            const v1 = await getHdf5DatasetData(
-              nwbUrl,
-              timestampsSubdataset.path,
-              {
-                slice: [[0, 1]],
-              },
-            );
-            if (canceled) return;
-            if (!v1) return;
-            const N = timestampsSubdataset.shape[0];
-            const v2 = await getHdf5DatasetData(
-              nwbUrl,
-              timestampsSubdataset.path,
-              {
-                slice: [[N - 1, N]],
-              },
-            );
-            if (canceled) return;
-            if (!v2) return;
-            const startTime = v1[0];
-            const endTime = v2[0];
-            timeseriesAlignmentDispatch({
-              type: "addItem",
-              item: {
-                path: gr.path,
-                neurodataType: nt,
-                itemType: "timeseries",
-                startTime,
-                endTime,
-              },
-            });
+            const N = timestampsSubdataset.shape?.[0];
+            if (N && N > 0) {
+              const v1 = await getHdf5DatasetData(
+                nwbUrl,
+                timestampsSubdataset.path,
+                { slice: [[0, 1]] },
+              );
+              if (canceled) return;
+              if (!v1) return;
+              const v2 = await getHdf5DatasetData(
+                nwbUrl,
+                timestampsSubdataset.path,
+                { slice: [[N - 1, N]] },
+              );
+              if (canceled) return;
+              if (!v2) return;
+              timeseriesAlignmentDispatch({
+                type: "addItem",
+                item: {
+                  path: gr.path,
+                  neurodataType: nt,
+                  itemType: "timeseries",
+                  startTime: v1[0],
+                  endTime: v2[0],
+                },
+              });
+            }
           } else if (startingTimeSubdataset && dataSubdataset) {
             const v = await getHdf5DatasetData(
               nwbUrl,
@@ -121,88 +193,141 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
             );
             if (canceled) return;
             const startTime = v as any as number;
-            const rate = startingTimeSubdataset.attrs["rate"];
-            const endTime = startTime + (dataSubdataset.shape[0] - 1) / rate;
-            timeseriesAlignmentDispatch({
-              type: "addItem",
-              item: {
-                path: gr.path,
-                neurodataType: nt,
-                itemType: "timeseries",
-                startTime,
-                endTime,
-              },
-            });
-          }
-        } catch (err) {
-          console.warn("Problem processing group", gr.path);
-          console.warn(err);
-        }
-      } else if (nt === "TimeIntervals") {
-        // Handle TimeIntervals
-        try {
-          const startTimeDataset = gr.datasets.find(
-            (ds) => ds.name === "start_time",
-          );
-          const stopTimeDataset = gr.datasets.find(
-            (ds) => ds.name === "stop_time",
-          );
-          if (startTimeDataset && stopTimeDataset) {
-            const startTimes = await getHdf5DatasetData(
-              nwbUrl,
-              startTimeDataset.path,
-              {},
-            );
-            const stopTimes = await getHdf5DatasetData(
-              nwbUrl,
-              stopTimeDataset.path,
-              {},
-            );
-            if (canceled) return;
-            if (!startTimes || !stopTimes) return;
-
-            const startTimesArray = Array.from(startTimes as any) as number[];
-            const stopTimesArray = Array.from(stopTimes as any) as number[];
-            const startTime = nanMin(startTimesArray);
-            let endTime = nanMax(stopTimesArray);
-
-            // If stop times are all NaNs, use the max start time
-            if (isNaN(endTime)) {
-              endTime = nanMax(startTimesArray);
-            }
-
-            // Only add if we have valid time values
-            if (!isNaN(startTime) && !isNaN(endTime)) {
+            const rate = startingTimeSubdataset.attrs?.["rate"];
+            if (rate && rate > 0) {
+              const endTime =
+                startTime + (dataSubdataset.shape[0] - 1) / rate;
               timeseriesAlignmentDispatch({
                 type: "addItem",
                 item: {
                   path: gr.path,
                   neurodataType: nt,
-                  itemType: "timeintervals",
+                  itemType: "timeseries",
                   startTime,
                   endTime,
                 },
               });
             }
           }
-        } catch (err) {
-          console.warn("Problem processing TimeIntervals group", gr.path);
-          console.warn(err);
+        } else if (nt === "TimeIntervals") {
+          const startTimeDataset = gr.datasets?.find(
+            (ds: any) => ds.name === "start_time",
+          );
+          const stopTimeDataset = gr.datasets?.find(
+            (ds: any) => ds.name === "stop_time",
+          );
+          if (startTimeDataset && stopTimeDataset) {
+            const N = startTimeDataset.shape?.[0];
+            if (N && N > 0) {
+              const firstStart = await getHdf5DatasetData(
+                nwbUrl,
+                startTimeDataset.path,
+                { slice: [[0, 1]] },
+              );
+              if (canceled) return;
+              const lastStop = await getHdf5DatasetData(
+                nwbUrl,
+                stopTimeDataset.path,
+                { slice: [[N - 1, N]] },
+              );
+              if (canceled) return;
+              if (firstStart && lastStop) {
+                const startTime = firstStart[0] as number;
+                let endTime = lastStop[0] as number;
+                if (isNaN(endTime)) {
+                  // Fallback: use last start_time if stop_time is NaN
+                  const lastStart = await getHdf5DatasetData(
+                    nwbUrl,
+                    startTimeDataset.path,
+                    { slice: [[N - 1, N]] },
+                  );
+                  if (canceled) return;
+                  if (lastStart) endTime = lastStart[0] as number;
+                }
+                if (!isNaN(startTime) && !isNaN(endTime)) {
+                  timeseriesAlignmentDispatch({
+                    type: "addItem",
+                    item: {
+                      path: gr.path,
+                      neurodataType: nt,
+                      itemType: "timeintervals",
+                      startTime,
+                      endTime,
+                    },
+                  });
+                }
+              }
+            }
+          }
+        } else if (
+          nt &&
+          !gr.subgroups?.length &&
+          !gr.datasets?.find((ds: any) => ds.name === "data") &&
+          gr.datasets?.find((ds: any) => ds.name === "timestamps")
+        ) {
+          // Handle event-like objects (e.g., Events, LabeledEvents, TTLs)
+          // that have timestamps but no data dataset
+          const timestampsDs = gr.datasets.find(
+            (ds: any) => ds.name === "timestamps",
+          );
+          if (!timestampsDs) return;
+          const N = timestampsDs.shape?.[0];
+          if (N && N > 0) {
+            const v1 = await getHdf5DatasetData(nwbUrl, timestampsDs.path, {
+              slice: [[0, 1]],
+            });
+            if (canceled) return;
+            if (!v1) return;
+            const v2 = await getHdf5DatasetData(nwbUrl, timestampsDs.path, {
+              slice: [[N - 1, N]],
+            });
+            if (canceled) return;
+            if (!v2) return;
+            timeseriesAlignmentDispatch({
+              type: "addItem",
+              item: {
+                path: gr.path,
+                neurodataType: nt,
+                itemType: "events",
+                startTime: v1[0],
+                endTime: v2[0],
+              },
+            });
+          }
         }
-      } else {
-        for (const sg of gr.subgroups) {
-          await handleGroup(sg.path);
-          if (canceled) return;
-        }
+        // Recurse into subgroups in parallel, only visiting groups
+        // that are relevant data types or containers that hold them
+        const { relevantTypes, containerTypes } = typeSets;
+        const childGroups = (gr.subgroups || []).filter((sg) => {
+          const sgNt = sg.attrs?.["neurodata_type"];
+          if (!sgNt) {
+            // Untyped group — only recurse into top-level paths that
+            // can contain timeseries data
+            if (path === "/") {
+              return timeseriesRootPaths.has(sg.name);
+            }
+            return true;
+          }
+          return relevantTypes.has(sgNt) || containerTypes.has(sgNt);
+        });
+        await Promise.all(childGroups.map((sg) => handleGroup(sg.path)));
+        if (canceled) return;
+      } catch (err) {
+        console.warn("Problem processing group", path, err);
       }
     };
-    handleGroup("/").then(() => {
-      setLoadingMessage("");
-    });
+    handleGroup("/")
+      .then(() => {
+        setLoadingMessage("");
+      })
+      .catch((err) => {
+        console.warn("Error loading timeseries alignment", err);
+        setLoadingMessage("");
+      });
     return () => {
       canceled = true;
     };
-  }, [nwbUrl, isExpanded]);
+  }, [nwbUrl, isExpanded, typeSets]);
 
   const { startTime, endTime } = useMemo(() => {
     let startTime: number | undefined = undefined;
@@ -273,6 +398,12 @@ const getColorForNeurodataType = (nt: string) => {
       return "pink";
     case "TimeIntervals":
       return "teal";
+    case "Events":
+      return "darkred";
+    case "LabeledEvents":
+      return "darkred";
+    case "TTLs":
+      return "darkred";
     default:
       return "gray";
   }
@@ -334,27 +465,5 @@ const TAItemView: FunctionComponent<TAItemViewProps> = ({
   );
 };
 
-const checkIsTimeseriesObject = async (gr: any) => {
-  const nt = gr.attrs["neurodata_type"];
-  if (!nt) return false;
-  if (!gr.datasets.find((ds: any) => ds.name === "data")) return false;
-  if (gr.datasets.find((ds: any) => ds.name === "timestamps")) return true;
-  if (gr.datasets.find((ds: any) => ds.name === "starting_time")) return true;
-  return false;
-};
-
-// NaN-aware min function
-const nanMin = (arr: number[]): number => {
-  const validValues = arr.filter((v) => !isNaN(v) && isFinite(v));
-  if (validValues.length === 0) return NaN;
-  return Math.min(...validValues);
-};
-
-// NaN-aware max function
-const nanMax = (arr: number[]): number => {
-  const validValues = arr.filter((v) => !isNaN(v) && isFinite(v));
-  if (validValues.length === 0) return NaN;
-  return Math.max(...validValues);
-};
 
 export default TimeseriesAlignmentView;
