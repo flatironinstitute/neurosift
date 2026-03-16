@@ -96,9 +96,10 @@ const zarrDecodeChunkArray = async (
       const ret2 = [];
       for (let i = 0; i < nn; i++) {
         const ret1 = new Uint32Array(ret, i * fixedLength * 4, fixedLength);
-        const ret3 = new Array(fixedLength);
+        const ret3 = [];
         for (let j = 0; j < fixedLength; j++) {
-          ret3[j] = String.fromCodePoint(ret1[j]);
+          if (ret1[j] === 0) break; // null terminates the string, matching NumPy behavior
+          ret3.push(String.fromCodePoint(ret1[j]));
         }
         ret2.push(ret3.join(""));
       }
@@ -109,7 +110,15 @@ const zarrDecodeChunkArray = async (
       const ret2 = [];
       for (let i = 0; i < nn; i++) {
         const ret1 = new Uint8Array(ret, i * fixedLength, fixedLength);
-        ret2.push(new TextDecoder().decode(ret1));
+        // Find first null byte to trim, matching NumPy behavior
+        let len = fixedLength;
+        for (let j = 0; j < fixedLength; j++) {
+          if (ret1[j] === 0) {
+            len = j;
+            break;
+          }
+        }
+        ret2.push(new TextDecoder().decode(ret1.subarray(0, len)));
       }
       ret = ret2;
     } else {
