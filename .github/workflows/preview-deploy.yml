@@ -35,7 +35,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           npx wrangler pages deploy dist --project-name neurosift --branch "${{ github.head_ref }}" 2>&1 | tee /tmp/deploy-output.txt
-          PREVIEW_URL=$(grep -oP 'https://[^\s]+\.neurosift\.pages\.dev' /tmp/deploy-output.txt || true)
+          PREVIEW_URL=$(grep 'Deployment alias URL' /tmp/deploy-output.txt | grep -oP 'https://[^\s]+' || true)
           echo "preview_url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
 
       - name: Comment preview URL on PR
