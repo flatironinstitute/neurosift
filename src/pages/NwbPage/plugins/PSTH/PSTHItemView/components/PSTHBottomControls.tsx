@@ -33,7 +33,6 @@ const PSTHBottomControls: FunctionComponent<Props> = ({
   setGroupByVariableCategories,
   nwbUrl,
   path,
-  groupByVariableCategories,
   sortUnitsByVariable,
   setSortUnitsByVariable,
   unitsPath,
