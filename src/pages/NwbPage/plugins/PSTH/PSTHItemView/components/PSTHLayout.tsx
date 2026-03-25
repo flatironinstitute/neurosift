@@ -1,9 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { FunctionComponent } from "react";
+import { CSSProperties, FunctionComponent } from "react";
 import UnitSelectionComponent from "./UnitSelection";
 import RoiSelectionComponent from "./RoiSelection";
 import AlignToSelectionComponent from "./AlignToSelection";
 import PrefsComponent from "./Preferences";
+import WindowRangeComponent from "./WindowRange";
+import GroupBySelectionComponent from "./GroupBySelection";
+import GroupByCategoriesComponent from "./GroupByCategories";
+import SortUnitsBySelectionComponent from "./SortUnitsBy";
+import { useCategoriesForVariable } from "../hooks/useGroupByCategories";
 import { DirectSpikeTrainsClient } from "../DirectSpikeTrainsClient";
 import { RoiClient } from "../ROIClient";
 import {
@@ -13,7 +18,15 @@ import {
 } from "../types";
 import PSTHUnitWidget from "../PSTHUnitWidget";
 import IfHasBeenVisible from "../IfHasBeenVisible";
-import PSTHBottomControls from "./PSTHBottomControls";
+
+const accordionSummaryStyle: CSSProperties = {
+  cursor: "pointer",
+  padding: "4px 8px",
+  fontWeight: "bold",
+  backgroundColor: "#34495e",
+  color: "#fff",
+  userSelect: "none",
+};
 
 type Props = {
   width: number;
@@ -77,11 +90,8 @@ const PSTHLayout: FunctionComponent<Props> = ({
   unitIdsOrRoiIndicesToPlot,
 }) => {
   const unitsTableWidth = 250;
-  const unitsTableHeight = (height * 2) / 5;
-  const prefsHeight = 150;
-  const alignToSelectionComponentHeight =
-    height - unitsTableHeight - prefsHeight;
-  const bottomAreaHeight = Math.min(70, height / 3);
+
+  const categoriesForGroupBy = useCategoriesForVariable(nwbUrl, path, groupByVariable);
 
   const unitWidgetHeight = Math.min(
     height,
@@ -115,42 +125,82 @@ const PSTHLayout: FunctionComponent<Props> = ({
         style={{
           position: "absolute",
           width: unitsTableWidth,
-          height: unitsTableHeight - 20,
+          height,
           overflowY: "auto",
+          overflowX: "hidden",
+          fontSize: "0.75em",
         }}
       >
-        {unitsTable}
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          width: unitsTableWidth,
-          top: unitsTableHeight,
-          height: alignToSelectionComponentHeight,
-          overflowY: "auto",
-        }}
-      >
-        <AlignToSelectionComponent
-          alignToVariables={alignToVariables}
-          setAlignToVariables={setAlignToVariables}
-          nwbUrl={nwbUrl}
-          path={path}
-        />
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          width: unitsTableWidth,
-          height: prefsHeight,
-          top: unitsTableHeight + alignToSelectionComponentHeight,
-          overflowY: "hidden",
-        }}
-      >
-        <PrefsComponent
-          prefs={prefs}
-          prefsDispatch={prefsDispatch}
-          mode={mode}
-        />
+        <details open>
+          <summary style={accordionSummaryStyle}>
+            {mode === "psth" ? "Units" : "ROIs"}
+          </summary>
+          <div style={{ maxHeight: 380, overflowY: "auto" }}>
+            {unitsTable}
+          </div>
+        </details>
+        <div style={{ height: 6 }} />
+        <details open>
+          <summary style={accordionSummaryStyle}>Align to</summary>
+          <AlignToSelectionComponent
+            alignToVariables={alignToVariables}
+            setAlignToVariables={setAlignToVariables}
+            nwbUrl={nwbUrl}
+            path={path}
+          />
+        </details>
+        <div style={{ height: 6 }} />
+        <details open>
+          <summary style={accordionSummaryStyle}>Controls</summary>
+          <div style={{ padding: "4px 8px" }}>
+            <WindowRangeComponent
+              windowRangeStr={windowRangeStr}
+              setWindowRangeStr={setWindowRangeStr}
+            />
+            <br />
+            <GroupBySelectionComponent
+              groupByVariable={groupByVariable}
+              setGroupByVariable={(v) => {
+                setGroupByVariable(v);
+                setGroupByVariableCategories(undefined);
+              }}
+              nwbUrl={nwbUrl}
+              path={path}
+            />
+            {categoriesForGroupBy && (
+              <>
+                <div style={{ height: 6 }} />
+                <details open>
+                  <summary style={accordionSummaryStyle}>
+                    Categories
+                  </summary>
+                  <GroupByCategoriesComponent
+                    groupByVariableCategories={groupByVariableCategories}
+                    setGroupByVariableCategories={setGroupByVariableCategories}
+                    options={categoriesForGroupBy}
+                  />
+                </details>
+              </>
+            )}
+            {mode === "psth" && (
+              <>
+                <br />
+                <SortUnitsBySelectionComponent
+                  sortUnitsByVariable={sortUnitsByVariable}
+                  setSortUnitsByVariable={setSortUnitsByVariable}
+                  nwbUrl={nwbUrl}
+                  unitsPath={unitsPath}
+                />
+              </>
+            )}
+            <hr style={{ margin: "6px 0", borderColor: "#dde4ed" }} />
+            <PrefsComponent
+              prefs={prefs}
+              prefsDispatch={prefsDispatch}
+              mode={mode}
+            />
+          </div>
+        </details>
       </div>
       <div
         className="psth-item-view-right"
@@ -158,7 +208,7 @@ const PSTHLayout: FunctionComponent<Props> = ({
           position: "absolute",
           left: unitsTableWidth,
           width: width - unitsTableWidth,
-          height: height - bottomAreaHeight,
+          height,
           overflowY: "auto",
           overflowX: "hidden",
         }}
@@ -204,29 +254,6 @@ const PSTHLayout: FunctionComponent<Props> = ({
             Select one or more {mode === "psth" ? "units" : "ROIs"} to plot
           </div>
         )}
-      </div>
-      <div
-        style={{ position: "absolute", top: height - bottomAreaHeight, width }}
-      >
-        <div className="psth-bottom-area">
-          <PSTHBottomControls
-            width={width}
-            height={bottomAreaHeight}
-            leftOffset={unitsTableWidth}
-            windowRangeStr={windowRangeStr}
-            setWindowRangeStr={setWindowRangeStr}
-            groupByVariable={groupByVariable}
-            setGroupByVariable={setGroupByVariable}
-            setGroupByVariableCategories={setGroupByVariableCategories}
-            nwbUrl={nwbUrl}
-            path={path}
-            groupByVariableCategories={groupByVariableCategories}
-            sortUnitsByVariable={sortUnitsByVariable}
-            setSortUnitsByVariable={setSortUnitsByVariable}
-            unitsPath={unitsPath}
-            mode={mode}
-          />
-        </div>
       </div>
     </div>
   );

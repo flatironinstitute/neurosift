@@ -21,10 +21,13 @@ const UnitSelectionComponent: FunctionComponent<UnitsSelectionProps> = ({
 }) => {
   if (!unitIds) return <div>Loading unit IDs...</div>;
   return (
-    <table className="nwb-table">
+    <table className="nwb-table" style={{ tableLayout: "fixed" }}>
+      <colgroup>
+        <col style={{ width: 20 }} />
+      </colgroup>
       <thead>
         <tr>
-          <th style={{ width: 10 }}>
+          <th style={{ padding: "4px 2px" }}>
             <input
               type="checkbox"
               checked={
@@ -48,7 +51,7 @@ const UnitSelectionComponent: FunctionComponent<UnitsSelectionProps> = ({
       <tbody>
         {unitIds.map((unitId) => (
           <tr key={unitId}>
-            <td>
+            <td style={{ padding: "4px 2px" }}>
               <input
                 type="checkbox"
                 checked={selectedUnitIds.includes(unitId)}

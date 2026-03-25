@@ -15,10 +15,13 @@ const RoiSelectionComponent: FunctionComponent<RoiSelectionProps> = ({
   const roiIndices = roiClient ? roiClient.getRoiIndices() : [];
 
   return (
-    <table className="nwb-table">
+    <table className="nwb-table" style={{ tableLayout: "fixed" }}>
+      <colgroup>
+        <col style={{ width: 20 }} />
+      </colgroup>
       <thead>
         <tr>
-          <th>
+          <th style={{ padding: "4px 2px" }}>
             <input
               type="checkbox"
               checked={
@@ -41,7 +44,7 @@ const RoiSelectionComponent: FunctionComponent<RoiSelectionProps> = ({
       <tbody>
         {roiIndices.map((roiIndex) => (
           <tr key={roiIndex}>
-            <td>
+            <td style={{ padding: "4px 2px" }}>
               <input
                 type="checkbox"
                 checked={selectedRoiIndices.includes(roiIndex)}
