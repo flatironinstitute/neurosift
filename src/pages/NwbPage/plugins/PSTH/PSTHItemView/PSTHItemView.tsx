@@ -214,11 +214,17 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
     }
   }, [mode, prefsDispatch]);
 
+  // Track whether we've already restored non-unit state from the initial state string
+  const [initialStateRestored, setInitialStateRestored] = useState(false);
+  const [pendingSelectAll, setPendingSelectAll] = useState(false);
+
   useEffect(() => {
-    if (!initialStateString) return;
+    if (!initialStateString || initialStateRestored) return;
     const a = decodeStateFromStateString(initialStateString);
     if (!a) return;
-    if (a.selectedUnitIds) {
+    if (a.selectedUnitIds === "__all__") {
+      setPendingSelectAll(true);
+    } else if (a.selectedUnitIds && Array.isArray(a.selectedUnitIds)) {
       const sortedSelectedUnitIds = [...a.selectedUnitIds].sort();
       setSelectedUnitIds(sortedSelectedUnitIds);
     }
@@ -266,12 +272,33 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
         value: a.prefs.numBins,
       });
     }
-  }, [initialStateString, setSelectedUnitIds, prefsDispatch]);
+    setInitialStateRestored(true);
+  }, [initialStateString, initialStateRestored, setSelectedUnitIds, prefsDispatch]);
+
+  // Handle "select all" once unit IDs are loaded
+  useEffect(() => {
+    if (pendingSelectAll && unitIds) {
+      setSelectedUnitIds([...unitIds]);
+      setPendingSelectAll(false);
+    }
+  }, [pendingSelectAll, unitIds, setSelectedUnitIds]);
 
   useEffect(() => {
     if (!setStateString) return;
+    // Encode unit selection compactly:
+    // - "__all__" if all units are selected
+    // - the list if <=10 are selected
+    // - undefined otherwise (too many to store in URL)
+    let encodedUnitIds: (number | string)[] | "__all__" | undefined;
+    if (unitIds && selectedUnitIds.length === unitIds.length && unitIds.length > 0) {
+      encodedUnitIds = "__all__";
+    } else if (selectedUnitIds.length <= 10) {
+      encodedUnitIds = selectedUnitIds;
+    } else {
+      encodedUnitIds = undefined;
+    }
     const state0 = {
-      selectedUnitIds,
+      selectedUnitIds: encodedUnitIds,
       selectedRoiIndices,
       alignToVariables,
       groupByVariable,
@@ -293,6 +320,7 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
     sortUnitsByVariable,
     windowRangeStr,
     prefs,
+    unitIds,
   ]);
 
   const rawTrialIndices = useTrialsFilterIndices(trialsFilter, nwbUrl, path);
