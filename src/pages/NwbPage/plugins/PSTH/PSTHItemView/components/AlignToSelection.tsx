@@ -20,17 +20,14 @@ const AlignToSelectionComponent: FunctionComponent<AlignToSelectionProps> = ({
     .filter((name) => name.endsWith("_time") || name.endsWith("_times"));
 
   return (
-    <table className="nwb-table">
-      <thead>
-        <tr>
-          <th></th>
-          <th>Align to</th>
-        </tr>
-      </thead>
+    <table className="nwb-table" style={{ tableLayout: "fixed" }}>
+      <colgroup>
+        <col style={{ width: 20 }} />
+      </colgroup>
       <tbody>
         {options.map((option) => (
           <tr key={option}>
-            <td>
+            <td style={{ padding: "4px 2px" }}>
               <input
                 type="checkbox"
                 checked={alignToVariables.includes(option)}

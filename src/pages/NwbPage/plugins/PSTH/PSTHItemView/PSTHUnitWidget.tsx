@@ -117,8 +117,10 @@ const PSTHUnitWidget: FunctionComponent<Props> = ({
           position: "absolute",
           width,
           height: topBarHeight,
-          fontSize: 24,
-          marginLeft: 30,
+          fontSize: 16,
+          fontWeight: "bold",
+          marginLeft: 5,
+          marginTop: 2,
         }}
       >
         Unit {unitId}
