@@ -129,13 +129,22 @@ const SpecificationsView: FunctionComponent<SpecificationsViewProps> = () => {
               </td>
               <td>{ds.neurodata_type_inc}</td>
               <td>
-                <ExpandableTableCell content={JSON.stringify(ds.dtype)} />
+                <ExpandableTableCell
+                  content={JSON.stringify(ds.dtype, null, 2)}
+                  preformatted
+                />
               </td>
               <td>
-                <ExpandableTableCell content={JSON.stringify(ds.dims)} />
+                <ExpandableTableCell
+                  content={JSON.stringify(ds.dims, null, 2)}
+                  preformatted
+                />
               </td>
               <td>
-                <ExpandableTableCell content={JSON.stringify(ds.attributes)} />
+                <ExpandableTableCell
+                  content={JSON.stringify(ds.attributes, null, 2)}
+                  preformatted
+                />
               </td>
             </tr>
           ))}
@@ -167,10 +176,16 @@ const SpecificationsView: FunctionComponent<SpecificationsViewProps> = () => {
                 <ExpandableTableCell content={g.doc} />
               </td>
               <td>
-                <ExpandableTableCell content={JSON.stringify(g.datasets)} />
+                <ExpandableTableCell
+                  content={JSON.stringify(g.datasets, null, 2)}
+                  preformatted
+                />
               </td>
               <td>
-                <ExpandableTableCell content={JSON.stringify(g.groups)} />
+                <ExpandableTableCell
+                  content={JSON.stringify(g.groups, null, 2)}
+                  preformatted
+                />
               </td>
             </tr>
           ))}
