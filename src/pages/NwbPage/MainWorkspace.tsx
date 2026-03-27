@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, lazy, Suspense } from "react";
 import {
   FixedTab,
   TabBar,
@@ -16,15 +16,18 @@ import ScrollY from "@components/ScrollY";
 import NwbHierarchyView from "./NwbHierarchyView";
 import Hdf5View from "./Hdf5View";
 import TimeseriesAlignmentView from "./TimeseriesAlignmentView";
-import SpecificationsView from "./SpecificationsView/SpecificationsView";
 import NwbUsageScript from "./components/NwbUsageScript";
 
+const SpecificationsView = lazy(
+  () => import("./SpecificationsView/SpecificationsView"),
+);
+
 const FIXED_TABS: FixedTab[] = [
-  { id: "neurodata", label: "Neurodata" },
+  { id: "widgets", label: "Widgets" },
   { id: "timeseries-alignment", label: "Timeseries Alignment" },
   { id: "python-usage", label: "Python Usage" },
-  { id: "specifications", label: "Specifications" },
-  { id: "hdf5", label: "HDF5" },
+  { id: "specifications", label: "Specifications", group: "secondary" },
+  { id: "hdf5", label: "HDF5", group: "secondary" },
 ];
 
 interface MainWorkspaceProps {
@@ -52,7 +55,7 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
   const [defaultUnitsPath, setDefaultUnitsPath] = useState<
     string | undefined
   >();
-  const [activeFixedTab, setActiveFixedTab] = useState("neurodata");
+  const [activeFixedTab, setActiveFixedTab] = useState("widgets");
 
   const hasDynamicTabs = tabsState.tabs.length > 0;
   const tabBarHeight =
@@ -163,7 +166,7 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
           <div
             style={{
               display:
-                showFixedContent && activeFixedTab === "neurodata"
+                showFixedContent && activeFixedTab === "widgets"
                   ? "block"
                   : "none",
             }}
@@ -174,7 +177,7 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
                 onOpenObjectInNewTab={handleOpenObjectInNewTab}
                 onOpenObjectsInNewTab={handleOpenObjectsInNewTab}
                 isExpanded={
-                  showFixedContent && activeFixedTab === "neurodata"
+                  showFixedContent && activeFixedTab === "widgets"
                 }
                 defaultUnitsPath={defaultUnitsPath}
                 onSetDefaultUnitsPath={setDefaultUnitsPath}
@@ -219,18 +222,13 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
               />
             </ScrollY>
           </div>
-          <div
-            style={{
-              display:
-                showFixedContent && activeFixedTab === "specifications"
-                  ? "block"
-                  : "none",
-            }}
-          >
+          {showFixedContent && activeFixedTab === "specifications" && (
             <ScrollY width={contentWidth} height={contentHeight}>
-              <SpecificationsView />
+              <Suspense fallback={<div style={{ padding: 20 }}>Loading specifications...</div>}>
+                <SpecificationsView />
+              </Suspense>
             </ScrollY>
-          </div>
+          )}
           <div
             style={{
               display:

@@ -1,7 +1,7 @@
-import { Box, Tab, Tabs } from "@mui/material";
+import { Box, Tab, Tabs, useTheme } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { BaseTab } from "./tabsReducer";
-import { SxProps } from "@mui/material";
+import { SxProps, Theme } from "@mui/material";
 
 export const FIXED_TAB_BAR_HEIGHT = 44;
 export const DYNAMIC_TAB_BAR_HEIGHT = 36;
@@ -10,6 +10,7 @@ export const TAB_BAR_HEIGHT = FIXED_TAB_BAR_HEIGHT; // default for non-fixed usa
 export interface FixedTab {
   id: string;
   label: string;
+  group?: string;
 }
 
 export interface TabBarProps<T extends BaseTab> {
@@ -43,7 +44,7 @@ const tabsStyle: SxProps = {
   },
 };
 
-const fixedTabsStyle: SxProps = {
+const fixedTabsStyle = (theme: Theme): SxProps => ({
   minHeight: 36,
   "& .MuiTabs-indicator": {
     display: "none",
@@ -53,21 +54,21 @@ const fixedTabsStyle: SxProps = {
     padding: "4px 16px",
     margin: "0 3px",
     borderRadius: "6px",
-    border: "1px solid #d0d0d0",
-    backgroundColor: "#f5f5f5",
-    color: "#555",
+    border: `1px solid ${theme.palette.divider}`,
+    backgroundColor: theme.palette.action.hover,
+    color: theme.palette.text.secondary,
     fontWeight: 500,
     fontSize: 13,
     textTransform: "none",
     transition: "all 0.15s ease",
     "&:hover": {
-      backgroundColor: "#e8e8e8",
-      borderColor: "#bbb",
+      backgroundColor: theme.palette.action.selected,
+      borderColor: theme.palette.action.disabled,
     },
     "&.Mui-selected": {
-      backgroundColor: "#1976d2",
-      borderColor: "#1976d2",
-      color: "#fff",
+      backgroundColor: theme.palette.primary.main,
+      borderColor: theme.palette.primary.main,
+      color: theme.palette.primary.contrastText,
       fontWeight: 600,
     },
   },
@@ -78,7 +79,7 @@ const fixedTabsStyle: SxProps = {
       opacity: 0.3,
     },
   },
-};
+});
 
 const dynamicTabsStyle: SxProps = {
   minHeight: 28,
@@ -116,8 +117,25 @@ export const TabBar = <T extends BaseTab>({
   mainTabLabel = "MAIN",
   width,
 }: TabBarProps<T>) => {
+  const theme = useTheme();
+
   if (fixedTabs) {
     const hasDynamicTabs = tabs.length > 0;
+    // Find where the group changes to insert a spacer
+    const fixedTabElements: React.ReactNode[] = [];
+    let lastGroup: string | undefined;
+    fixedTabs.forEach((ft) => {
+      if (lastGroup !== undefined && ft.group !== lastGroup) {
+        fixedTabElements.push(
+          <div key={`spacer-${ft.id}`} style={{ width: 24, flexShrink: 0 }} />,
+        );
+      }
+      fixedTabElements.push(
+        <Tab key={ft.id} label={ft.label} value={ft.id} />,
+      );
+      lastGroup = ft.group;
+    });
+
     return (
       <div
         style={{
@@ -129,16 +147,14 @@ export const TabBar = <T extends BaseTab>({
       >
         {/* Fixed section tabs row */}
         <Tabs
-          sx={fixedTabsStyle}
+          sx={fixedTabsStyle(theme)}
           variant="scrollable"
           scrollButtons="auto"
           allowScrollButtonsMobile
           value={fixedTabActiveId ?? false}
           onChange={(_, value) => onFixedTabSwitch?.(value)}
         >
-          {fixedTabs.map((ft) => (
-            <Tab key={ft.id} label={ft.label} value={ft.id} />
-          ))}
+          {fixedTabElements}
         </Tabs>
 
         {/* Dynamic object tabs row */}
