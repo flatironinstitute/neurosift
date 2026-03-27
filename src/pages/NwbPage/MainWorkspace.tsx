@@ -26,7 +26,7 @@ const FIXED_TABS: FixedTab[] = [
   { id: "widgets", label: "Widgets" },
   { id: "timeseries-alignment", label: "Timeseries Alignment" },
   { id: "python-usage", label: "Python Usage" },
-  { id: "specifications", label: "Specifications", group: "secondary" },
+  { id: "specifications", label: "Schema", group: "secondary" },
   { id: "hdf5", label: "HDF5", group: "secondary" },
 ];
 

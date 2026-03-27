@@ -124,8 +124,8 @@ export const TabBar = <T extends BaseTab>({
     // Find where the group changes to insert a spacer
     const fixedTabElements: React.ReactNode[] = [];
     let lastGroup: string | undefined;
-    fixedTabs.forEach((ft) => {
-      if (lastGroup !== undefined && ft.group !== lastGroup) {
+    fixedTabs.forEach((ft, i) => {
+      if (i > 0 && ft.group !== lastGroup) {
         fixedTabElements.push(
           <div key={`spacer-${ft.id}`} style={{ width: 24, flexShrink: 0 }} />,
         );
