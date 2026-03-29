@@ -25,6 +25,7 @@ import {
   figpackVideoPreviewPlugin,
   figpackRasterPlotPlugin,
 } from "./Figpack";
+import { poseEstimationSkeletonPlugin } from "./PoseEstimationSkeleton";
 
 // List of plugins in order they will appear in the UI when a single object is being viewed
 export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
@@ -47,6 +48,9 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
 
   rasterPlugin,
   // spikeDensityPlugin,
+
+  // PoseEstimation skeleton visualization (insert before Figpack)
+  poseEstimationSkeletonPlugin,
 
   figpackRasterPlotPlugin,
   figpackVideoPreviewPlugin,
