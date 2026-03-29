@@ -1,4 +1,4 @@
-import React, { useEffect, useState, lazy, Suspense } from "react";
+import React, { useCallback, useEffect, useState, lazy, Suspense } from "react";
 import {
   FixedTab,
   TabBar,
@@ -30,6 +30,8 @@ const FIXED_TABS: FixedTab[] = [
   { id: "hdf5", label: "HDF5", group: "secondary" },
 ];
 
+const FIXED_TAB_IDS = new Set(FIXED_TABS.map((t) => t.id));
+
 interface MainWorkspaceProps {
   nwbUrl: string;
   width: number;
@@ -43,19 +45,26 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
   nwbUrl,
   initialTabId,
 }) => {
+  // If initialTabId matches a fixed tab, use it for fixed tab state only
+  const isFixedTabInitial = initialTabId && FIXED_TAB_IDS.has(initialTabId);
   const {
     tabsState,
     handleOpenObjectsInNewTab,
     handleOpenObjectInNewTab,
     handleCloseTab,
     handleSwitchTab,
-  } = useTabManager({ nwbUrl, initialTabId });
+  } = useTabManager({
+    nwbUrl,
+    initialTabId: isFixedTabInitial ? undefined : initialTabId,
+  });
 
   const [showAuthError, setShowAuthError] = useState(false);
   const [defaultUnitsPath, setDefaultUnitsPath] = useState<
     string | undefined
   >();
-  const [activeFixedTab, setActiveFixedTab] = useState("widgets");
+  const [activeFixedTab, setActiveFixedTab] = useState(
+    isFixedTabInitial ? initialTabId : "widgets",
+  );
 
   const hasDynamicTabs = tabsState.tabs.length > 0;
   const tabBarHeight =
@@ -103,6 +112,25 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
       console.log("MainWorkspace - Current auth errors:", hasAuthError(nwbUrl));
     }
   }, [nwbUrl, showAuthError]);
+
+  // Sync the active tab to the ?tab= URL parameter
+  const effectiveActiveTab = isDynamicTabActive
+    ? tabsState.activeTabId
+    : activeFixedTab;
+
+  const updateUrlTab = useCallback((tabId: string) => {
+    const url = new URL(window.location.href);
+    if (tabId === "widgets") {
+      url.searchParams.delete("tab");
+    } else {
+      url.searchParams.set("tab", tabId);
+    }
+    window.history.replaceState({}, "", url.toString());
+  }, []);
+
+  useEffect(() => {
+    updateUrlTab(effectiveActiveTab);
+  }, [effectiveActiveTab, updateUrlTab]);
 
   const handleFixedTabSwitch = (id: string) => {
     setActiveFixedTab(id);
