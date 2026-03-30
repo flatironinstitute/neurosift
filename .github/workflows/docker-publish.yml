@@ -2,7 +2,7 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ main-v2 ]
+    branches: [ main ]
     paths:
       - 'job_runners/neurosift_job_runner/**'
   workflow_dispatch:
