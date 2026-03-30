@@ -2,12 +2,12 @@ name: Test Neurosift Package
 
 on:
   pull_request:
-    branches: [ main-v2 ]
+    branches: [ main ]
     paths:
       - 'python/**'
       - '.github/workflows/test-neurosift-package.yml'
   push:
-    branches: [ main-v2 ]
+    branches: [ main ]
     paths:
       - 'python/**'
       - '.github/workflows/test-neurosift-package.yml'
