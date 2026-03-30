@@ -34,18 +34,6 @@ export interface TabsState {
   activeTabId: string;
 }
 
-export interface TabContentProps {
-  nwbUrl: string;
-  width: number;
-  height: number;
-  onOpenObjectInNewTab: (
-    path: string,
-    plugin?: NwbObjectViewPlugin,
-    secondaryPaths?: string[],
-  ) => void;
-  onOpenObjectsInNewTab: (paths: string[]) => void;
-}
-
 // Action types for the tabs reducer
 export type TabsAction =
   | {
