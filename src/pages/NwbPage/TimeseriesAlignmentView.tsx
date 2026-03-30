@@ -63,6 +63,7 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
 
   useEffect(() => {
     if (!isExpanded) return;
+    if (timeseriesAlignment.timeseries.length > 0) return;
     setLoadingMessage("Loading...");
     let canceled = false;
     const handleGroup = async (path: string) => {
