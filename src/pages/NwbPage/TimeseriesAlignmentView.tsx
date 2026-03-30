@@ -33,9 +33,10 @@ type TimeseriesAlignmentState = {
   timeseries: TAItem[];
 };
 
-type TimeseriesAlignmentAction =
-  | { type: "addItem"; item: TAItem }
-  | { type: "reset" };
+type TimeseriesAlignmentAction = {
+  type: "addItem";
+  item: TAItem;
+};
 
 const timeseriesAlignmentReducer = (
   state: TimeseriesAlignmentState,
@@ -47,8 +48,6 @@ const timeseriesAlignmentReducer = (
         ...state,
         timeseries: [...state.timeseries, action.item],
       };
-    case "reset":
-      return { timeseries: [] };
     default:
       return state;
   }
@@ -126,7 +125,7 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
   useEffect(() => {
     if (!isExpanded) return;
     if (!typeSets) return;
-    timeseriesAlignmentDispatch({ type: "reset" });
+    if (timeseriesAlignment.timeseries.length > 0) return;
     setLoadingMessage("Loading...");
     let canceled = false;
     const handleGroup = async (path: string) => {
