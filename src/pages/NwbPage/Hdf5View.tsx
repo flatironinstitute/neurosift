@@ -1,7 +1,11 @@
 import { FunctionComponent, useState } from "react";
 import "@css/Hdf5View.css";
-import { Hdf5Group, useHdf5Group } from "./hdf5Interface";
+import { useHdf5Group } from "./hdf5Interface";
 import TopLevelGroupContentPanel from "./TopLevelGroupContentPanel";
+import {
+  FaFolder,
+  FaFolderOpen,
+} from "react-icons/fa";
 
 type Props = {
   nwbUrl: string;
@@ -21,7 +25,6 @@ const Hdf5View: FunctionComponent<Props> = ({ nwbUrl, width, isExpanded }) => {
           {rootGroup.subgroups.map((sg) => (
             <TopLevelGroupView key={sg.name} nwbUrl={nwbUrl} name={sg.name} />
           ))}
-          <hr />
           <TopLevelGroupContentPanel
             name={"/"}
             group={rootGroup}
@@ -47,39 +50,33 @@ const TopLevelGroupView: FunctionComponent<TopLevelGroupViewProps> = ({
   const group = useHdf5Group(nwbUrl, "/" + name);
   const expandable =
     group && (group.subgroups.length > 0 || group.datasets.length > 0);
+  const itemCount = group
+    ? group.subgroups.length + group.datasets.length
+    : 0;
+
   return (
-    <div className="top-level-group">
+    <div className="hdf5-tree-node">
       <div
-        className={`group-title-panel ${expanded ? "expanded" : ""}`}
+        className="hdf5-tree-row group-row"
         onClick={() => expandable && setExpanded(!expanded)}
       >
-        <span className="expander">
-          {expandable ? expanded ? "▼" : "►" : <>&nbsp;&nbsp;&nbsp;</>}
+        <span className="tree-expander">
+          {expandable ? (expanded ? "▾" : "▸") : ""}
         </span>
-        <span className="group-name">{name}</span>
-        <GroupTitlePanelText name={name} group={group} nwbUrl={nwbUrl} />
+        <span className={`tree-icon ${expanded ? "icon-folder-open" : "icon-folder"}`}>
+          {expanded ? <FaFolderOpen /> : <FaFolder />}
+        </span>
+        <span className="tree-label">{name}</span>
+        {itemCount > 0 && (
+          <span className="tree-meta">{itemCount} items</span>
+        )}
       </div>
       {expanded && group && (
-        <TopLevelGroupContentPanel name={name} group={group} nwbUrl={nwbUrl} />
+        <div style={{ paddingLeft: 16 }}>
+          <TopLevelGroupContentPanel name={name} group={group} nwbUrl={nwbUrl} />
+        </div>
       )}
     </div>
-  );
-};
-
-type GroupTitlePanelTextProps = {
-  name: string;
-  group: Hdf5Group | undefined;
-  nwbUrl: string;
-};
-
-const GroupTitlePanelText: FunctionComponent<GroupTitlePanelTextProps> = ({
-  group,
-}) => {
-  if (!group) return <span>-</span>;
-  return (
-    <span className="group-count">
-      ({group.subgroups.length + group.datasets.length})
-    </span>
   );
 };
 

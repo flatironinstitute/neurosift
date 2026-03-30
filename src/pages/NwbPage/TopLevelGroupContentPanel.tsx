@@ -7,7 +7,13 @@ import {
   useMemo,
   useReducer,
 } from "react";
-import { FaRegCircle } from "react-icons/fa";
+import {
+  FaRegCircle,
+  FaFolder,
+  FaFolderOpen,
+  FaFile,
+  FaTag,
+} from "react-icons/fa";
 import {
   getHdf5Dataset,
   getHdf5DatasetData,
@@ -35,35 +41,13 @@ type GroupsDatasetsState = {
 };
 
 type GroupsDatasetsAction =
-  | {
-      type: "addGroup";
-      group: Hdf5Group;
-    }
-  | {
-      type: "addDataset";
-      dataset: Hdf5Dataset;
-    }
-  | {
-      type: "expandGroup";
-      path: string;
-    }
-  | {
-      type: "collapseGroup";
-      path: string;
-    }
-  | {
-      type: "expandDataset";
-      path: string;
-    }
-  | {
-      type: "collapseDataset";
-      path: string;
-    }
-  | {
-      type: "setDatasetData";
-      path: string;
-      data: any;
-    };
+  | { type: "addGroup"; group: Hdf5Group }
+  | { type: "addDataset"; dataset: Hdf5Dataset }
+  | { type: "expandGroup"; path: string }
+  | { type: "collapseGroup"; path: string }
+  | { type: "expandDataset"; path: string }
+  | { type: "collapseDataset"; path: string }
+  | { type: "setDatasetData"; path: string; data: any };
 
 const groupsDatasetsReducer = (
   state: GroupsDatasetsState,
@@ -97,9 +81,9 @@ const groupsDatasetsReducer = (
     case "collapseGroup":
       return {
         ...state,
-        expandedGroupPaths: [
-          ...state.expandedGroupPaths.filter((p) => p !== action.path),
-        ],
+        expandedGroupPaths: state.expandedGroupPaths.filter(
+          (p) => p !== action.path,
+        ),
       };
     case "expandDataset":
       return {
@@ -112,9 +96,9 @@ const groupsDatasetsReducer = (
     case "collapseDataset":
       return {
         ...state,
-        expandedDatasetPaths: [
-          ...state.expandedDatasetPaths.filter((p) => p !== action.path),
-        ],
+        expandedDatasetPaths: state.expandedDatasetPaths.filter(
+          (p) => p !== action.path,
+        ),
       };
     case "setDatasetData":
       return {
@@ -186,7 +170,6 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({
   useEffect(() => {
     const process = async () => {
       const checkLoadDataForSubdatasets = async (g: Hdf5Group) => {
-        // handle the case where sub-datasets are not expanded, but we still want to retrieve the data for display
         for (const sds of g.datasets) {
           if (product(sds.shape) <= 10) {
             if (!groupsDatasetsState.expandedDatasetPaths.includes(sds.path)) {
@@ -197,7 +180,7 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({
                   path: sds.path,
                   data,
                 });
-                return; // return after loading one, because then the state will change and this will be called again
+                return;
               }
             }
           }
@@ -210,7 +193,7 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({
           const newGroup = await getHdf5Group(nwbUrl, path);
           if (newGroup) {
             groupsDatasetsDispatch({ type: "addGroup", group: newGroup });
-            return; // return after loading one, because then the state will change and this will be called again
+            return;
           }
         }
         if (g) {
@@ -223,7 +206,7 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({
           const newDataset = await getHdf5Dataset(nwbUrl, path);
           if (newDataset) {
             groupsDatasetsDispatch({ type: "addDataset", dataset: newDataset });
-            return; // return after loading one, because then the state will change and this will be called again
+            return;
           }
         }
       }
@@ -234,7 +217,7 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({
             if (product(d.shape) <= 100) {
               const data = await getHdf5DatasetData(nwbUrl, path, {});
               groupsDatasetsDispatch({ type: "setDatasetData", path, data });
-              return; // return after loading one, because then the state will change and this will be called again
+              return;
             }
           }
         }
@@ -332,48 +315,31 @@ const TopLevelGroupContentPanel: FunctionComponent<Props> = ({
 
   return (
     <div className="group-content-container">
-      <table>
-        <tbody>
-          {tableItems.map((item) => (
-            <TableRow
-              key={item.key}
-              tableItem={item}
-              groupsDatasetsDispatch={groupsDatasetsDispatch}
-              nwbUrl={nwbUrl}
-            />
-          ))}
-        </tbody>
-      </table>
+      {tableItems.map((item) => (
+        <TreeRow
+          key={item.key}
+          tableItem={item}
+          groupsDatasetsDispatch={groupsDatasetsDispatch}
+          nwbUrl={nwbUrl}
+        />
+      ))}
     </div>
   );
 };
 
-type TableRowProps = {
+type TreeRowProps = {
   tableItem: TableItem;
   groupsDatasetsDispatch: React.Dispatch<GroupsDatasetsAction>;
   nwbUrl: string;
 };
 
-const expanderStyle = { cursor: "pointer" };
-
-const datasetInfoLabelStyle: React.CSSProperties = {
-  color: "#888",
-  paddingRight: "8px",
-  verticalAlign: "top",
-  whiteSpace: "nowrap",
-};
-
-const TableRow: FunctionComponent<TableRowProps> = ({
+const TreeRow: FunctionComponent<TreeRowProps> = ({
   tableItem,
   groupsDatasetsDispatch,
   nwbUrl,
 }) => {
   const { type, indent } = tableItem;
-  const indentStyle = useMemo(
-    () => ({ paddingLeft: `${indent * 10}px` }),
-    [indent],
-  );
-  // let neurodataType: string;
+  const paddingLeft = indent * 20;
 
   const viewDatasetInDebugConsole = useCallback(
     async (path: string) => {
@@ -387,186 +353,156 @@ const TableRow: FunctionComponent<TableRowProps> = ({
 
   switch (type) {
     case "group":
-      // neurodataType = tableItem.attrs["neurodata_type"];
       return (
-        <tr className="group-item" style={{ cursor: "pointer" }}>
-          <td style={indentStyle}>
-            <div>
-              <span
-                onClick={() => {
-                  groupsDatasetsDispatch({
-                    type: tableItem.expanded ? "collapseGroup" : "expandGroup",
-                    path: tableItem.path,
-                  });
-                }}
-                style={expanderStyle}
-              >
-                {tableItem.expanded ? "▼" : "►"}
-              </span>
-              &nbsp;
-              <span
-                onClick={() => {
-                  groupsDatasetsDispatch({
-                    type: tableItem.expanded ? "collapseGroup" : "expandGroup",
-                    path: tableItem.path,
-                  });
-                }}
-              >
-                {tableItem.name}
-              </span>
-              {/* {neurodataType && (
-                <span>
-                  {" "}
-                  |{" "}
-                  <NeurodataTypeLink
-                    neurodataType={neurodataType}
-                    tableItem={tableItem}
-                  />
-                </span>
-              )} */}
-            </div>
-          </td>
-        </tr>
+        <div className="hdf5-tree-node">
+          <div
+            className="hdf5-tree-row group-row"
+            style={{ paddingLeft }}
+            onClick={() => {
+              groupsDatasetsDispatch({
+                type: tableItem.expanded ? "collapseGroup" : "expandGroup",
+                path: tableItem.path,
+              });
+            }}
+          >
+            <span className="tree-expander">
+              {tableItem.expanded ? "▾" : "▸"}
+            </span>
+            <span className={`tree-icon ${tableItem.expanded ? "icon-folder-open" : "icon-folder"}`}>
+              {tableItem.expanded ? <FaFolderOpen /> : <FaFolder />}
+            </span>
+            <span className="tree-label">{tableItem.name}</span>
+          </div>
+        </div>
       );
     case "dataset":
       return (
-        <tr className="dataset-item" style={{ cursor: "pointer" }}>
-          <td style={indentStyle}>
-            <div
-              onClick={() => {
-                groupsDatasetsDispatch({
-                  type: tableItem.expanded
-                    ? "collapseDataset"
-                    : "expandDataset",
-                  path: tableItem.path,
-                });
-              }}
-            >
-              <span style={expanderStyle}>
-                {tableItem.expanded ? "▼" : "►"}
-              </span>
-              &nbsp;
-              <span>{tableItem.name}</span>
-              <span style={{ color: "#888" }}>
-                {` ${tableItem.subdataset.dtype} ${valueToElement(tableItem.subdataset.shape)}`}
-              </span>
-              {tableItem.data && (
-                <span>
-                  &nbsp;{abbreviateString(valueToElement(tableItem.data), 300)}
-                </span>
+        <div className="hdf5-tree-node">
+          <div
+            className="hdf5-tree-row dataset-row"
+            style={{ paddingLeft }}
+            onClick={() => {
+              groupsDatasetsDispatch({
+                type: tableItem.expanded
+                  ? "collapseDataset"
+                  : "expandDataset",
+                path: tableItem.path,
+              });
+            }}
+          >
+            <span className="tree-expander">
+              {tableItem.expanded ? "▾" : "▸"}
+            </span>
+            <span className="tree-icon icon-file">
+              <FaFile />
+            </span>
+            <span className="tree-label">{tableItem.name}</span>
+            <span className="tree-meta">
+              {tableItem.subdataset.dtype}{" "}
+              {JSON.stringify(tableItem.subdataset.shape)}
+              {tableItem.subdataset.chunks ? (
+                <>{" "}chunks={JSON.stringify(tableItem.subdataset.chunks)}</>
+              ) : (
+                <>{" "}chunks: False</>
               )}
-            </div>
-          </td>
-        </tr>
+              {tableItem.subdataset.compressor && (
+                <>{" "}{tableItem.subdataset.compressor}</>
+              )}
+            </span>
+            {tableItem.data && (
+              <span className="tree-data-preview">
+                {abbreviateString(valueToElement(tableItem.data), 200)}
+              </span>
+            )}
+          </div>
+        </div>
       );
     case "attribute":
       return (
-        <tr className="attribute-item" style={{ cursor: "pointer" }}>
-          <td style={indentStyle}>
-            <div>
-              <span>&nbsp;</span>&nbsp;
-              <span>{`${tableItem.name}: ${valueToElement(tableItem.value)}`}</span>
-            </div>
-          </td>
-        </tr>
+        <div className="hdf5-tree-node">
+          <div
+            className="hdf5-tree-row attribute-row"
+            style={{ paddingLeft }}
+          >
+            <span className="tree-expander" />
+            <span className="tree-icon icon-attribute">
+              <FaTag />
+            </span>
+            <span className="tree-label">
+              {tableItem.name}
+              <span className="attribute-equals">=</span>
+              <span className="attribute-value">
+                {abbreviateString(valueToElement(tableItem.value), 300)}
+              </span>
+            </span>
+          </div>
+        </div>
       );
     case "dataset-info":
       return (
-        <tr className="dataset-info">
-          <td style={indentStyle}>
-            <div style={{ paddingLeft: "18px" }}>
-              <table style={{ borderCollapse: "collapse", fontSize: "inherit", width: "auto" }}>
-                <tbody>
+        <div style={{ paddingLeft: paddingLeft + 36 }}>
+          <div className="hdf5-dataset-detail">
+            <table>
+              <tbody>
+                <tr>
+                  <td className="detail-label">dtype</td>
+                  <td className="detail-value">{tableItem.dataset.dtype}</td>
+                </tr>
+                <tr>
+                  <td className="detail-label">shape</td>
+                  <td className="detail-value">
+                    {valueToElement(tableItem.dataset.shape)}
+                  </td>
+                </tr>
+                {tableItem.dataset.chunks && (
                   <tr>
-                    <td style={datasetInfoLabelStyle}>dtype</td>
-                    <td>{tableItem.dataset.dtype}</td>
+                    <td className="detail-label">chunks</td>
+                    <td className="detail-value">
+                      {valueToElement(tableItem.dataset.chunks)}
+                    </td>
                   </tr>
+                )}
+                {tableItem.dataset.compressor && (
                   <tr>
-                    <td style={datasetInfoLabelStyle}>shape</td>
-                    <td>{valueToElement(tableItem.dataset.shape)}</td>
+                    <td className="detail-label">compressor</td>
+                    <td className="detail-value">
+                      {tableItem.dataset.compressor}
+                    </td>
                   </tr>
-                  {tableItem.dataset.chunks && (
+                )}
+                {tableItem.dataset.filters &&
+                  tableItem.dataset.filters.length > 0 && (
                     <tr>
-                      <td style={datasetInfoLabelStyle}>chunks</td>
-                      <td>{valueToElement(tableItem.dataset.chunks)}</td>
+                      <td className="detail-label">filters</td>
+                      <td className="detail-value">
+                        {tableItem.dataset.filters.join(", ")}
+                      </td>
                     </tr>
                   )}
-                  {tableItem.dataset.compressor && (
-                    <tr>
-                      <td style={datasetInfoLabelStyle}>compressor</td>
-                      <td>{tableItem.dataset.compressor}</td>
-                    </tr>
-                  )}
-                  {tableItem.dataset.filters && tableItem.dataset.filters.length > 0 && (
-                    <tr>
-                      <td style={datasetInfoLabelStyle}>filters</td>
-                      <td>{tableItem.dataset.filters.join(", ")}</td>
-                    </tr>
-                  )}
-                  {tableItem.data && (
-                    <tr>
-                      <td style={datasetInfoLabelStyle}>data</td>
-                      <td>{valueToElement(tableItem.data)}</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-              {!tableItem.data && (
-                <SmallIconButton
-                  onClick={() => {
-                    viewDatasetInDebugConsole(tableItem.path);
-                  }}
-                  title={`View this dataset in debug console`}
-                  icon={<FaRegCircle />}
-                />
-              )}
-            </div>
-          </td>
-        </tr>
+                {tableItem.data && (
+                  <tr>
+                    <td className="detail-label">data</td>
+                    <td className="detail-value">
+                      {valueToElement(tableItem.data)}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            {!tableItem.data && (
+              <SmallIconButton
+                onClick={() => {
+                  viewDatasetInDebugConsole(tableItem.path);
+                }}
+                title="View this dataset in debug console"
+                icon={<FaRegCircle />}
+              />
+            )}
+          </div>
+        </div>
       );
   }
 };
-
-// type NeurodataTypeLinkProps = {
-//   neurodataType: string;
-//   tableItem: TableItem;
-// };
-
-// const NeurodataTypeLink: FunctionComponent<NeurodataTypeLinkProps> = ({
-//   neurodataType,
-//   tableItem,
-// }) => {
-//   const neurodataItems = useNeurodataItems();
-//   const specifications = useNwbFileSpecifications();
-//   if (tableItem.type !== "group") throw Error("Unexpected table item type");
-//   const viewPlugins = useMemo(
-//     () =>
-//       neurodataType && specifications
-//         ? findViewPluginsForType(
-//             neurodataType,
-//             { nwbFile, neurodataItems },
-//             specifications,
-//           )
-//         : undefined,
-//     [neurodataType, nwbFile, specifications, neurodataItems],
-//   );
-//   const { openTab } = useNwbOpenTabs();
-//   return (
-//     <span>
-//       {neurodataType}
-//       &nbsp;
-//       {viewPlugins && viewPlugins.defaultViewPlugin && (
-//         <SmallIconButton
-//           onClick={() => {
-//             openTab(`neurodata-item:${tableItem.path}|${neurodataType}`);
-//           }}
-//           title={`View ${neurodataType}`}
-//           icon={<FaEye />}
-//         />
-//       )}
-//     </span>
-//   );
-// };
 
 const product = (arr: number[]) => {
   let ret = 1;
@@ -576,9 +512,10 @@ const product = (arr: number[]) => {
   return ret;
 };
 
-const abbreviateString = (str: string, maxLen: number) => {
-  if (str.length <= maxLen) return str;
-  return str.slice(0, maxLen) + "...";
+const abbreviateString = (val: any, maxLen: number) => {
+  if (typeof val !== "string") return val;
+  if (val.length <= maxLen) return val;
+  return val.slice(0, maxLen) + "...";
 };
 
 export default TopLevelGroupContentPanel;
