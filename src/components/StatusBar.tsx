@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import buildInfo from "../build-info.json";
 import {
   getStatusItems,
   registerStatusCallback,
@@ -31,6 +32,7 @@ const StatusBar: React.FC = () => {
         fontSize: 10,
       }}
     >
+      <span style={{ color: "#aaa" }}>v{buildInfo.version}</span>
       {Object.entries(items).map(([name, item]) => (
         <StatusBarItemView key={name} item={item} />
       ))}
