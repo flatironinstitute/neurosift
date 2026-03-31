@@ -130,9 +130,7 @@ export const TabBar = <T extends BaseTab>({
           <div key={`spacer-${ft.id}`} style={{ width: 24, flexShrink: 0 }} />,
         );
       }
-      fixedTabElements.push(
-        <Tab key={ft.id} label={ft.label} value={ft.id} />,
-      );
+      fixedTabElements.push(<Tab key={ft.id} label={ft.label} value={ft.id} />);
       lastGroup = ft.group;
     });
 
@@ -168,12 +166,7 @@ export const TabBar = <T extends BaseTab>({
               value={activeTabId}
               onChange={(_, value) => onSwitchTab(value)}
             >
-              <Tab
-                key="main"
-                value="main"
-                sx={tabStyle}
-                label="Main"
-              />
+              <Tab key="main" value="main" sx={tabStyle} label="Main" />
               {tabs.map((tab) => (
                 <Tab
                   key={tab.id}

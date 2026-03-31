@@ -91,7 +91,11 @@ const PSTHLayout: FunctionComponent<Props> = ({
 }) => {
   const unitsTableWidth = 250;
 
-  const categoriesForGroupBy = useCategoriesForVariable(nwbUrl, path, groupByVariable);
+  const categoriesForGroupBy = useCategoriesForVariable(
+    nwbUrl,
+    path,
+    groupByVariable,
+  );
 
   const unitWidgetHeight = Math.min(
     height,
@@ -135,9 +139,7 @@ const PSTHLayout: FunctionComponent<Props> = ({
           <summary style={accordionSummaryStyle}>
             {mode === "psth" ? "Units" : "ROIs"}
           </summary>
-          <div style={{ maxHeight: 380, overflowY: "auto" }}>
-            {unitsTable}
-          </div>
+          <div style={{ maxHeight: 380, overflowY: "auto" }}>{unitsTable}</div>
         </details>
         <div style={{ height: 6 }} />
         <details open>
@@ -171,9 +173,7 @@ const PSTHLayout: FunctionComponent<Props> = ({
               <>
                 <div style={{ height: 6 }} />
                 <details open>
-                  <summary style={accordionSummaryStyle}>
-                    Categories
-                  </summary>
+                  <summary style={accordionSummaryStyle}>Categories</summary>
                   <GroupByCategoriesComponent
                     groupByVariableCategories={groupByVariableCategories}
                     setGroupByVariableCategories={setGroupByVariableCategories}

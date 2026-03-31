@@ -368,7 +368,9 @@ const TreeRow: FunctionComponent<TreeRowProps> = ({
             <span className="tree-expander">
               {tableItem.expanded ? "▾" : "▸"}
             </span>
-            <span className={`tree-icon ${tableItem.expanded ? "icon-folder-open" : "icon-folder"}`}>
+            <span
+              className={`tree-icon ${tableItem.expanded ? "icon-folder-open" : "icon-folder"}`}
+            >
               {tableItem.expanded ? <FaFolderOpen /> : <FaFolder />}
             </span>
             <span className="tree-label">{tableItem.name}</span>
@@ -383,9 +385,7 @@ const TreeRow: FunctionComponent<TreeRowProps> = ({
             style={{ paddingLeft }}
             onClick={() => {
               groupsDatasetsDispatch({
-                type: tableItem.expanded
-                  ? "collapseDataset"
-                  : "expandDataset",
+                type: tableItem.expanded ? "collapseDataset" : "expandDataset",
                 path: tableItem.path,
               });
             }}
@@ -401,12 +401,12 @@ const TreeRow: FunctionComponent<TreeRowProps> = ({
               {tableItem.subdataset.dtype}{" "}
               {JSON.stringify(tableItem.subdataset.shape)}
               {tableItem.subdataset.chunks ? (
-                <>{" "}chunks={JSON.stringify(tableItem.subdataset.chunks)}</>
+                <> chunks={JSON.stringify(tableItem.subdataset.chunks)}</>
               ) : (
-                <>{" "}chunks: False</>
+                <> chunks: False</>
               )}
               {tableItem.subdataset.compressor && (
-                <>{" "}{tableItem.subdataset.compressor}</>
+                <> {tableItem.subdataset.compressor}</>
               )}
             </span>
             {tableItem.data && (
@@ -420,10 +420,7 @@ const TreeRow: FunctionComponent<TreeRowProps> = ({
     case "attribute":
       return (
         <div className="hdf5-tree-node">
-          <div
-            className="hdf5-tree-row attribute-row"
-            style={{ paddingLeft }}
-          >
+          <div className="hdf5-tree-row attribute-row" style={{ paddingLeft }}>
             <span className="tree-expander" />
             <span className="tree-icon icon-attribute">
               <FaTag />
