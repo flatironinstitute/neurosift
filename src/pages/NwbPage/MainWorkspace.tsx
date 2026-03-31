@@ -204,9 +204,7 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
                 nwbUrl={nwbUrl}
                 onOpenObjectInNewTab={handleOpenObjectInNewTab}
                 onOpenObjectsInNewTab={handleOpenObjectsInNewTab}
-                isExpanded={
-                  showFixedContent && activeFixedTab === "widgets"
-                }
+                isExpanded={showFixedContent && activeFixedTab === "widgets"}
                 defaultUnitsPath={defaultUnitsPath}
                 onSetDefaultUnitsPath={setDefaultUnitsPath}
               />
@@ -241,8 +239,7 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
                 nwbUrl={nwbUrl}
                 width={contentWidth}
                 isExpanded={
-                  showFixedContent &&
-                  activeFixedTab === "timeseries-alignment"
+                  showFixedContent && activeFixedTab === "timeseries-alignment"
                 }
                 onOpenTimeseriesItem={(path) => {
                   handleOpenObjectInNewTab(path);
@@ -252,7 +249,11 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
           </div>
           {showFixedContent && activeFixedTab === "specifications" && (
             <ScrollY width={contentWidth} height={contentHeight}>
-              <Suspense fallback={<div style={{ padding: 20 }}>Loading specifications...</div>}>
+              <Suspense
+                fallback={
+                  <div style={{ padding: 20 }}>Loading specifications...</div>
+                }
+              >
                 <SpecificationsView />
               </Suspense>
             </ScrollY>
