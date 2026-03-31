@@ -195,8 +195,7 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
             const startTime = v as any as number;
             const rate = startingTimeSubdataset.attrs?.["rate"];
             if (rate && rate > 0) {
-              const endTime =
-                startTime + (dataSubdataset.shape[0] - 1) / rate;
+              const endTime = startTime + (dataSubdataset.shape[0] - 1) / rate;
               timeseriesAlignmentDispatch({
                 type: "addItem",
                 item: {
@@ -464,6 +463,5 @@ const TAItemView: FunctionComponent<TAItemViewProps> = ({
     </div>
   );
 };
-
 
 export default TimeseriesAlignmentView;

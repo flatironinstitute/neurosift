@@ -273,7 +273,12 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
       });
     }
     setInitialStateRestored(true);
-  }, [initialStateString, initialStateRestored, setSelectedUnitIds, prefsDispatch]);
+  }, [
+    initialStateString,
+    initialStateRestored,
+    setSelectedUnitIds,
+    prefsDispatch,
+  ]);
 
   // Handle "select all" once unit IDs are loaded
   useEffect(() => {
@@ -290,7 +295,11 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
     // - the list if <=10 are selected
     // - undefined otherwise (too many to store in URL)
     let encodedUnitIds: (number | string)[] | "__all__" | undefined;
-    if (unitIds && selectedUnitIds.length === unitIds.length && unitIds.length > 0) {
+    if (
+      unitIds &&
+      selectedUnitIds.length === unitIds.length &&
+      unitIds.length > 0
+    ) {
       encodedUnitIds = "__all__";
     } else if (selectedUnitIds.length <= 10) {
       encodedUnitIds = selectedUnitIds;

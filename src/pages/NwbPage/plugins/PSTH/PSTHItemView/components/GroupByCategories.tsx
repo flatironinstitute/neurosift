@@ -11,7 +11,9 @@ const GroupByCategoriesComponent: FunctionComponent<Props> = ({
   setGroupByVariableCategories,
   options,
 }) => {
-  const allSelected = !groupByVariableCategories || groupByVariableCategories.length === options.length;
+  const allSelected =
+    !groupByVariableCategories ||
+    groupByVariableCategories.length === options.length;
 
   return (
     <table className="nwb-table" style={{ tableLayout: "fixed" }}>

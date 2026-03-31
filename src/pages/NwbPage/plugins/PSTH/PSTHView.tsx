@@ -79,7 +79,13 @@ const stateFromHashParams = (): string | undefined => {
   const smoothed = p.get("smoothed");
   const numBins = p.get("numBins");
   const plotHeight = p.get("plotHeight");
-  if (showRaster !== null || showHist !== null || smoothed !== null || numBins !== null || plotHeight !== null) {
+  if (
+    showRaster !== null ||
+    showHist !== null ||
+    smoothed !== null ||
+    numBins !== null ||
+    plotHeight !== null
+  ) {
     hasAny = true;
     state.prefs = {
       showRaster: showRaster === null ? true : showRaster !== "0",
@@ -101,20 +107,39 @@ const writeHashParams = (stateString: string) => {
   const p = readHashParams();
 
   // Clear old PSTH params
-  for (const key of ["units", "alignTo", "groupBy", "categories", "windowStart", "windowEnd", "sortBy", "sortDir", "showRaster", "showHist", "smoothed", "numBins", "plotHeight"]) {
+  for (const key of [
+    "units",
+    "alignTo",
+    "groupBy",
+    "categories",
+    "windowStart",
+    "windowEnd",
+    "sortBy",
+    "sortDir",
+    "showRaster",
+    "showHist",
+    "smoothed",
+    "numBins",
+    "plotHeight",
+  ]) {
     p.delete(key);
   }
 
   // Units
   if (state.selectedUnitIds === "__all__") {
     p.set("units", "all");
-  } else if (Array.isArray(state.selectedUnitIds) && state.selectedUnitIds.length > 0) {
+  } else if (
+    Array.isArray(state.selectedUnitIds) &&
+    state.selectedUnitIds.length > 0
+  ) {
     p.set("units", state.selectedUnitIds.join(","));
   }
 
   // Align to (default: start_time)
   if (state.alignToVariables && state.alignToVariables.length > 0) {
-    const isDefault = state.alignToVariables.length === 1 && state.alignToVariables[0] === "start_time";
+    const isDefault =
+      state.alignToVariables.length === 1 &&
+      state.alignToVariables[0] === "start_time";
     if (!isDefault) {
       p.set("alignTo", state.alignToVariables.join(","));
     }
@@ -134,8 +159,10 @@ const writeHashParams = (stateString: string) => {
 
   // Window range (default: -0.5 to 1)
   if (state.windowRangeStr) {
-    if (state.windowRangeStr.start !== "-0.5") p.set("windowStart", state.windowRangeStr.start);
-    if (state.windowRangeStr.end !== "1") p.set("windowEnd", state.windowRangeStr.end);
+    if (state.windowRangeStr.start !== "-0.5")
+      p.set("windowStart", state.windowRangeStr.start);
+    if (state.windowRangeStr.end !== "1")
+      p.set("windowEnd", state.windowRangeStr.end);
   }
 
   // Sort (default direction: asc)
@@ -151,8 +178,10 @@ const writeHashParams = (stateString: string) => {
     if (!state.prefs.showRaster) p.set("showRaster", "0");
     if (!state.prefs.showHist) p.set("showHist", "0");
     if (state.prefs.smoothedHist) p.set("smoothed", "1");
-    if (state.prefs.numBins !== 50) p.set("numBins", String(state.prefs.numBins));
-    if (state.prefs.height !== "medium") p.set("plotHeight", state.prefs.height);
+    if (state.prefs.numBins !== 50)
+      p.set("numBins", String(state.prefs.numBins));
+    if (state.prefs.height !== "medium")
+      p.set("plotHeight", state.prefs.height);
   }
 
   const newHash = "#" + p.toString();
