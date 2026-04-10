@@ -91,40 +91,42 @@ const VideoViewer: FunctionComponent<Props> = ({ videoUrl, height }) => {
           {playbackError}
         </div>
       )}
-      <div
-        style={{
-          width: "100%",
-          aspectRatio: "16 / 9",
-          maxHeight: height - 40,
-          backgroundColor: "#111",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {!metadataLoaded && !playbackError && (
-          <div style={{ color: "#ccc", fontSize: 14 }}>Loading video...</div>
-        )}
-        <video
-          controls
-          src={resolvedUrl}
-        onError={() =>
-          setPlaybackError(
-            "This video could not be played by the browser because its container or codec is not supported. Most likely, the uploaded video uses a non-browser-supported codec or container.",
-          )
-        }
-          onLoadedMetadata={() => setMetadataLoaded(true)}
-          onLoadedData={() => setPlaybackError(null)}
+      {!playbackError && (
+        <div
           style={{
             width: "100%",
-            height: "100%",
-            objectFit: "contain",
-            display: metadataLoaded && !playbackError ? "block" : "none",
+            aspectRatio: "16 / 9",
+            maxHeight: height - 40,
+            backgroundColor: "#111",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          Your browser does not support the video tag.
-        </video>
-      </div>
+          {!metadataLoaded && (
+            <div style={{ color: "#ccc", fontSize: 14 }}>Loading video...</div>
+          )}
+          <video
+            controls
+            src={resolvedUrl}
+            onError={() =>
+              setPlaybackError(
+                "This video could not be played by the browser because its container or codec is not supported. Most likely, the uploaded video uses a non-browser-supported codec or container.",
+              )
+            }
+            onLoadedMetadata={() => setMetadataLoaded(true)}
+            onLoadedData={() => setPlaybackError(null)}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+              display: metadataLoaded ? "block" : "none",
+            }}
+          >
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      )}
     </div>
   );
 };
