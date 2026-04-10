@@ -21,6 +21,7 @@ export const useDandisetVersionInfo = (
     (async () => {
       const { most_recent_published_version, draft_version } =
         dandisetResponse || {};
+      // Prefer the latest published version; fall back to draft if unpublished
       const V = most_recent_published_version || draft_version;
       const dsVersion = dandisetVersion || (V ? V.version : "draft");
       const dvi = await fetchDandisetVersionInfo(
