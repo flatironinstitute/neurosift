@@ -19,7 +19,7 @@ import { pythonScriptPlugin } from "./PythonScript";
 import { intervalSeriesPlugin } from "./IntervalSeries";
 import { eventsPlugin } from "./Events";
 import { imageSeriesMp4Plugin } from "./ImageSeriesMp4";
-import { externalFileVideoPlugin } from "./ExternalFileVideo";
+import { externalFileVideoPlugin } from "./ExternalFileVideo/index";
 import { NwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
 import {
   FigpackPoseEstimationPlugin,
