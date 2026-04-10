@@ -25,7 +25,7 @@ const SpecificationsView = lazy(
 
 const FIXED_TABS: FixedTab[] = [
   { id: "widgets", label: "Widgets" },
-  { id: "video-widget", label: "Video Widget" },
+  { id: "video-widget", label: "Videos" },
   { id: "timeseries-alignment", label: "Timeseries Alignment" },
   { id: "python-usage", label: "Python Usage" },
   { id: "specifications", label: "Schema", group: "secondary" },
