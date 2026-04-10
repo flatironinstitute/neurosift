@@ -108,18 +108,18 @@ const VideoViewer: FunctionComponent<Props> = ({ videoUrl, height }) => {
         <video
           controls
           src={resolvedUrl}
-          onError={() =>
-            setPlaybackError(
-              "This video asset could not be played by the browser. The container or codec may be unsupported.",
-            )
-          }
+        onError={() =>
+          setPlaybackError(
+            "This video could not be played by the browser because its container or codec is not supported. Most likely, the uploaded video uses a non-browser-supported codec or container.",
+          )
+        }
           onLoadedMetadata={() => setMetadataLoaded(true)}
           onLoadedData={() => setPlaybackError(null)}
           style={{
             width: "100%",
             height: "100%",
             objectFit: "contain",
-            display: metadataLoaded || playbackError ? "block" : "none",
+            display: metadataLoaded && !playbackError ? "block" : "none",
           }}
         >
           Your browser does not support the video tag.
