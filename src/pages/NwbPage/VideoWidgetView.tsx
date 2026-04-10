@@ -1,4 +1,6 @@
 import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
+import { IconButton, Tooltip } from "@mui/material";
+import ShareIcon from "@mui/icons-material/Share";
 import { getHdf5Group } from "./hdf5Interface";
 import {
   ExternalVideoCandidate,
@@ -169,13 +171,70 @@ const OrderPanel: FunctionComponent<{
   );
 };
 
+const ShareVideoButton: FunctionComponent<{
+  selectedPaths: string[];
+  candidates: ExternalVideoCandidate[];
+  layoutMode: LayoutMode;
+}> = ({ selectedPaths, candidates, layoutMode }) => {
+  const [showCopied, setShowCopied] = useState(false);
+
+  useEffect(() => {
+    let timer: number;
+    if (showCopied) {
+      timer = window.setTimeout(() => setShowCopied(false), 4500);
+    }
+    return () => {
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [showCopied]);
+
+  const handleShare = () => {
+    const url = new URL(window.location.href);
+    const indices = selectedPaths
+      .map((p) => candidates.findIndex((c) => c.path === p))
+      .filter((i) => i >= 0);
+    url.searchParams.set("videoOrder", indices.join(","));
+    if (layoutMode !== "row") {
+      url.searchParams.set("videoLayout", layoutMode);
+    } else {
+      url.searchParams.delete("videoLayout");
+    }
+    navigator.clipboard.writeText(url.toString()).then(() => {
+      setShowCopied(true);
+    });
+  };
+
+  return (
+    <div style={{ display: "flex", alignItems: "center" }}>
+      <Tooltip title="Copy link with current video arrangement">
+        <IconButton
+          size="small"
+          onClick={handleShare}
+          sx={{
+            padding: "4px",
+            backgroundColor: "#fff",
+            "&:hover": { backgroundColor: "#f0f0f0" },
+          }}
+        >
+          <ShareIcon sx={{ fontSize: 14 }} />
+        </IconButton>
+      </Tooltip>
+      {showCopied && (
+        <span style={{ marginLeft: 8, fontSize: 12, color: "#666" }}>
+          Copied!
+        </span>
+      )}
+    </div>
+  );
+};
+
 const VideoWidgetView: FunctionComponent<Props> = ({
   nwbUrl,
   width,
   height,
   isExpanded,
 }) => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [candidates, setCandidates] = useState<ExternalVideoCandidate[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
@@ -214,31 +273,6 @@ const VideoWidgetView: FunctionComponent<Props> = ({
       setSelectedPaths(paths);
     }
   }, [candidates, searchParams]);
-
-  // Sync state to URL
-  useEffect(() => {
-    if (candidates.length === 0) return;
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        if (selectedPaths.length > 0) {
-          const indices = selectedPaths
-            .map((p) => candidates.findIndex((c) => c.path === p))
-            .filter((i) => i >= 0);
-          next.set("videoOrder", indices.join(","));
-        } else {
-          next.delete("videoOrder");
-        }
-        if (layoutMode !== "row") {
-          next.set("videoLayout", layoutMode);
-        } else {
-          next.delete("videoLayout");
-        }
-        return next;
-      },
-      { replace: true },
-    );
-  }, [selectedPaths, layoutMode, candidates, setSearchParams]);
 
   useEffect(() => {
     if (!isExpanded) return;
@@ -719,8 +753,22 @@ const VideoWidgetView: FunctionComponent<Props> = ({
               padding: 12,
             }}
           >
-            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
-              Video Display
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 8,
+              }}
+            >
+              <div style={{ fontSize: 18, fontWeight: 600 }}>Video Display</div>
+              {selectedVideos.length > 0 && (
+                <ShareVideoButton
+                  selectedPaths={selectedPaths}
+                  candidates={candidates}
+                  layoutMode={layoutMode}
+                />
+              )}
             </div>
             {selectedVideos.length === 0 ? (
               <div style={{ color: "#666" }}>
