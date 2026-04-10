@@ -91,6 +91,84 @@ const calculateGridDimensions = (layoutMode: LayoutMode, count: number) => {
   return { rows, cols };
 };
 
+const toLabel = (index: number) => String.fromCharCode(65 + index);
+
+const OrderPanel: FunctionComponent<{
+  selectedPaths: string[];
+  setSelectedPaths: React.Dispatch<React.SetStateAction<string[]>>;
+  labelMap: Map<string, string>;
+  layoutMode: LayoutMode;
+  count: number;
+}> = ({ selectedPaths, setSelectedPaths, labelMap, layoutMode, count }) => {
+  const [dragFrom, setDragFrom] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
+  const { cols } = calculateGridDimensions(layoutMode, count);
+
+  return (
+    <div
+      style={{
+        display: "inline-grid",
+        gridTemplateColumns: `repeat(${cols}, 36px)`,
+        gap: 4,
+      }}
+    >
+      {selectedPaths.map((path, index) => (
+        <div
+          key={path}
+          draggable
+          onDragStart={() => setDragFrom(index)}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(index);
+          }}
+          onDragLeave={() => {
+            if (dragOver === index) setDragOver(null);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (dragFrom !== null && dragFrom !== index) {
+              setSelectedPaths((prev) => {
+                const next = [...prev];
+                const [item] = next.splice(dragFrom, 1);
+                next.splice(index, 0, item);
+                return next;
+              });
+            }
+            setDragFrom(null);
+            setDragOver(null);
+          }}
+          onDragEnd={() => {
+            setDragFrom(null);
+            setDragOver(null);
+          }}
+          style={{
+            width: 36,
+            height: 28,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 13,
+            fontWeight: 600,
+            border: dragOver === index ? "2px solid #4f6df5" : "1px solid #bbb",
+            borderRadius: 4,
+            background:
+              dragFrom === index
+                ? "#e0e7ff"
+                : dragOver === index
+                  ? "#eef2ff"
+                  : "#fff",
+            cursor: "grab",
+            userSelect: "none",
+            color: "#4f6df5",
+          }}
+        >
+          {labelMap.get(path) || "?"}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const VideoWidgetView: FunctionComponent<Props> = ({
   nwbUrl,
   width,
@@ -102,7 +180,7 @@ const VideoWidgetView: FunctionComponent<Props> = ({
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
-  const [layoutMode, setLayoutMode] = useState<LayoutMode>("grid");
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>("row");
   const [resolvedUrls, setResolvedUrls] = useState<Record<string, string>>({});
   const [urlErrors, setUrlErrors] = useState<Record<string, string>>({});
   const [urlLoading, setUrlLoading] = useState<Record<string, boolean>>({});
@@ -114,10 +192,8 @@ const VideoWidgetView: FunctionComponent<Props> = ({
   );
   const [isPlaying, setIsPlaying] = useState(false);
   const [sharedTime, setSharedTime] = useState<number | undefined>(undefined);
-  const [dragOverPath, setDragOverPath] = useState<string | null>(null);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const syncAnimationRef = useRef<number | null>(null);
-  const dragSourcePath = useRef<string | null>(null);
 
   useEffect(() => {
     if (!isExpanded) return;
@@ -193,9 +269,17 @@ const VideoWidgetView: FunctionComponent<Props> = ({
     };
   }, [nwbUrl, isExpanded]);
 
+  const labelMap = useMemo(() => {
+    const map = new Map<string, string>();
+    candidates.forEach((c, i) => map.set(c.path, toLabel(i)));
+    return map;
+  }, [candidates]);
+
   const selectedVideos = useMemo(() => {
-    const selectedSet = new Set(selectedPaths);
-    return candidates.filter((candidate) => selectedSet.has(candidate.path));
+    const candidateMap = new Map(candidates.map((c) => [c.path, c]));
+    return selectedPaths
+      .map((path) => candidateMap.get(path))
+      .filter((c) => c !== undefined);
   }, [candidates, selectedPaths]);
 
   const sessionWindow = useMemo(() => {
@@ -453,140 +537,170 @@ const VideoWidgetView: FunctionComponent<Props> = ({
       >
         <div
           style={{
-            border: "1px solid #ddd",
-            borderRadius: 8,
-            background: "#fff",
-            padding: 12,
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
           }}
         >
-          <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
-            Video Selection
-          </div>
-          <div style={{ color: "#666", marginBottom: 12 }}>
-            Select compatible external videos to view them with shared controls.
-          </div>
-          {loading && <div>{loadingMessage || "Loading..."}</div>}
-          {!loading && candidates.length === 0 && (
-            <div>No external videos were found in this NWB file.</div>
-          )}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {candidates.map((candidate) => {
-              const isSelected = selectedPaths.includes(candidate.path);
-              const selectedOthers = selectedVideos.filter(
-                (video) => video.path !== candidate.path,
-              );
-              const compatible =
-                isSelected ||
-                selectedOthers.length === 0 ||
-                selectedOthers.every((video) =>
-                  areCompatible(candidate, video),
-                );
-              const reason =
-                compatible || selectedOthers.length === 0
-                  ? undefined
-                  : getCompatibilityReason(candidate, selectedOthers);
-              const isDragOver = dragOverPath === candidate.path;
-              return (
-                <div
-                  key={candidate.path}
-                  draggable={isSelected}
-                  onDragStart={(e) => {
-                    dragSourcePath.current = candidate.path;
-                    e.dataTransfer.effectAllowed = "move";
+          <div
+            style={{
+              border: "1px solid #ddd",
+              borderRadius: 8,
+              background: "#fff",
+              padding: 12,
+            }}
+          >
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
+              Video Selection{" "}
+              <span
+                style={{
+                  position: "relative",
+                  fontSize: 14,
+                  fontWeight: 400,
+                  color: "#999",
+                  cursor: "help",
+                }}
+              >
+                <span
+                  onMouseEnter={(e) => {
+                    const tip = e.currentTarget
+                      .nextElementSibling as HTMLElement;
+                    if (tip) tip.style.display = "block";
                   }}
-                  onDragOver={(e) => {
-                    if (!isSelected || !dragSourcePath.current) return;
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = "move";
-                    setDragOverPath(candidate.path);
-                  }}
-                  onDragLeave={() => {
-                    if (dragOverPath === candidate.path) {
-                      setDragOverPath(null);
-                    }
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setDragOverPath(null);
-                    const from = dragSourcePath.current;
-                    dragSourcePath.current = null;
-                    if (!from || from === candidate.path) return;
-                    setSelectedPaths((prev) => {
-                      const next = prev.filter((p) => p !== from);
-                      const toIndex = next.indexOf(candidate.path);
-                      if (toIndex === -1) return prev;
-                      next.splice(toIndex, 0, from);
-                      return next;
-                    });
-                  }}
-                  onDragEnd={() => {
-                    dragSourcePath.current = null;
-                    setDragOverPath(null);
-                  }}
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 8,
-                    padding: 8,
-                    borderRadius: 6,
-                    background: isDragOver
-                      ? "#e0e7ff"
-                      : compatible
-                        ? "#f7f7f7"
-                        : "#fdf2f2",
-                    color: compatible ? "inherit" : "#8a1c1c",
-                    cursor: isSelected
-                      ? "grab"
-                      : compatible
-                        ? "pointer"
-                        : "not-allowed",
-                    borderTop: isDragOver ? "2px solid #4f6df5" : "2px solid transparent",
-                    transition: "background 0.1s",
+                  onMouseLeave={(e) => {
+                    const tip = e.currentTarget
+                      .nextElementSibling as HTMLElement;
+                    if (tip) tip.style.display = "none";
                   }}
                 >
-                  {isSelected && (
-                    <span
-                      style={{
-                        cursor: "grab",
-                        color: "#999",
-                        fontSize: 14,
-                        lineHeight: "20px",
-                        userSelect: "none",
-                      }}
-                    >
-                      &#x2630;
-                    </span>
-                  )}
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    disabled={!compatible && !isSelected}
-                    onChange={(e) => {
-                      setSelectedPaths((prev) => {
-                        if (e.target.checked) {
-                          return [...prev, candidate.path];
-                        }
-                        return prev.filter((path) => path !== candidate.path);
-                      });
+                  &#x24D8;
+                </span>
+                <span
+                  style={{
+                    display: "none",
+                    position: "absolute",
+                    left: 0,
+                    top: "100%",
+                    marginTop: 4,
+                    width: 260,
+                    padding: "8px 10px",
+                    fontSize: 13,
+                    fontWeight: 400,
+                    lineHeight: 1.4,
+                    color: "#333",
+                    background: "#fff",
+                    border: "1px solid #ccc",
+                    borderRadius: 6,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+                    zIndex: 10,
+                  }}
+                >
+                  Select compatible external videos to view them with shared
+                  controls. Videos are first displayed in selection order, then
+                  can be rearranged in Display Arrangement below.
+                </span>
+              </span>
+            </div>
+            {loading && <div>{loadingMessage || "Loading..."}</div>}
+            {!loading && candidates.length === 0 && (
+              <div>No external videos were found in this NWB file.</div>
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {candidates.map((candidate) => {
+                const isSelected = selectedPaths.includes(candidate.path);
+                const selectedOthers = selectedVideos.filter(
+                  (video) => video.path !== candidate.path,
+                );
+                const compatible =
+                  isSelected ||
+                  selectedOthers.length === 0 ||
+                  selectedOthers.every((video) =>
+                    areCompatible(candidate, video),
+                  );
+                const reason =
+                  compatible || selectedOthers.length === 0
+                    ? undefined
+                    : getCompatibilityReason(candidate, selectedOthers);
+                return (
+                  <label
+                    key={candidate.path}
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 8,
+                      padding: 8,
+                      borderRadius: 6,
+                      background: compatible ? "#f7f7f7" : "#fdf2f2",
+                      color: compatible ? "inherit" : "#8a1c1c",
+                      cursor:
+                        compatible || isSelected ? "pointer" : "not-allowed",
                     }}
-                  />
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{candidate.name}</div>
-                    <div style={{ fontSize: 12, color: "#666" }}>
-                      {candidate.path}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      disabled={!compatible && !isSelected}
+                      onChange={(e) => {
+                        setSelectedPaths((prev) => {
+                          if (e.target.checked) {
+                            return [...prev, candidate.path];
+                          }
+                          return prev.filter((path) => path !== candidate.path);
+                        });
+                      }}
+                    />
+                    <div>
+                      <div style={{ fontWeight: 600 }}>
+                        {isSelected && (
+                          <span style={{ color: "#4f6df5", marginRight: 4 }}>
+                            [{labelMap.get(candidate.path)}]
+                          </span>
+                        )}
+                        {candidate.name}
+                      </div>
+                      <div style={{ fontSize: 12, color: "#666" }}>
+                        {candidate.path}
+                      </div>
+                      <div style={{ fontSize: 12, color: "#666" }}>
+                        {formatTime(candidate.startTime)} -{" "}
+                        {formatTime(candidate.endTime)}
+                      </div>
+                      {reason && (
+                        <div style={{ fontSize: 12, marginTop: 4 }}>
+                          {reason}
+                        </div>
+                      )}
                     </div>
-                    <div style={{ fontSize: 12, color: "#666" }}>
-                      {formatTime(candidate.startTime)} -{" "}
-                      {formatTime(candidate.endTime)}
-                    </div>
-                    {reason && (
-                      <div style={{ fontSize: 12, marginTop: 4 }}>{reason}</div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                  </label>
+                );
+              })}
+            </div>
           </div>
+
+          {selectedVideos.length > 1 && (
+            <div
+              style={{
+                border: "1px solid #ddd",
+                borderRadius: 8,
+                background: "#fff",
+                padding: 12,
+              }}
+            >
+              <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
+                Display Arrangement
+              </div>
+              <div style={{ color: "#666", marginBottom: 12 }}>
+                Drag tiles to reorder videos in the display.
+              </div>
+              <OrderPanel
+                selectedPaths={selectedPaths}
+                setSelectedPaths={setSelectedPaths}
+                labelMap={labelMap}
+                layoutMode={layoutMode}
+                count={selectedVideos.length}
+              />
+            </div>
+          )}
         </div>
 
         <div
@@ -611,6 +725,10 @@ const VideoWidgetView: FunctionComponent<Props> = ({
                     ? `repeat(${gridDimensions.cols}, minmax(0, 1fr))`
                     : undefined,
                 gap: 12,
+                maxWidth:
+                  gridDimensions.cols > 0
+                    ? gridDimensions.cols * 480 + (gridDimensions.cols - 1) * 12
+                    : undefined,
               }}
             >
               {selectedVideos.map((video) => {

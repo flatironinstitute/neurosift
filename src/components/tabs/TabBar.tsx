@@ -127,7 +127,7 @@ export const TabBar = <T extends BaseTab>({
     fixedTabs.forEach((ft, i) => {
       if (i > 0 && ft.group !== lastGroup) {
         fixedTabElements.push(
-          <div key={`spacer-${ft.id}`} style={{ width: 112, flexShrink: 0 }} />,
+          <div key={`spacer-${ft.id}`} style={{ flex: 1 }} />,
         );
       }
       fixedTabElements.push(<Tab key={ft.id} label={ft.label} value={ft.id} />);
