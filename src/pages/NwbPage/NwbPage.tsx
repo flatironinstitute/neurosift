@@ -1,5 +1,11 @@
 import { Box, Tab, Tabs } from "@mui/material";
-import { FunctionComponent, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  FunctionComponent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useRegisterNwbAIComponent from "./useRegisterNwbAIComponent";
 import ResponsiveLayout from "@components/ResponsiveLayout";

@@ -80,7 +80,8 @@ export const NwbOverview = ({
       {dandisetInfo && (
         <div style={{ marginBottom: 15, fontSize: "0.8em" }}>
           <h3 style={{ marginBottom: 8 }}>
-            Dandiset {dandisetInfo.dandiset.identifier} - {dandisetInfo.metadata.name}{" "}
+            Dandiset {dandisetInfo.dandiset.identifier} -{" "}
+            {dandisetInfo.metadata.name}{" "}
             <span
               style={{
                 fontSize: "0.8em",
@@ -96,8 +97,17 @@ export const NwbOverview = ({
               (view)
             </span>
           </h3>
-          {availableVersions && availableVersions.length > 1 && onVersionChange ? (
-            <div style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+          {availableVersions &&
+          availableVersions.length > 1 &&
+          onVersionChange ? (
+            <div
+              style={{
+                marginBottom: 8,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
               <span style={{ color: "rgba(0, 0, 0, 0.6)" }}>Version:</span>
               <FormControl size="small">
                 <Select

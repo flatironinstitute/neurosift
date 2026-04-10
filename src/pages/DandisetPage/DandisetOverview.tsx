@@ -131,26 +131,36 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
         </Typography>
 
         {/* Version selector */}
-        {availableVersions && availableVersions.length > 1 && onVersionChange && (
-          <Box sx={{ mt: 1, mb: 1, display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              Version:
-            </Typography>
-            <FormControl size="small">
-              <Select
-                value={dandisetVersionInfo.version}
-                onChange={(e) => onVersionChange(e.target.value as string)}
-                sx={{ fontSize: "0.85rem" }}
-              >
-                {availableVersions.map((v) => (
-                  <MenuItem key={v.version} value={v.version}>
-                    {v.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-        )}
+        {availableVersions &&
+          availableVersions.length > 1 &&
+          onVersionChange && (
+            <Box
+              sx={{
+                mt: 1,
+                mb: 1,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                Version:
+              </Typography>
+              <FormControl size="small">
+                <Select
+                  value={dandisetVersionInfo.version}
+                  onChange={(e) => onVersionChange(e.target.value as string)}
+                  sx={{ fontSize: "0.85rem" }}
+                >
+                  {availableVersions.map((v) => (
+                    <MenuItem key={v.version} value={v.version}>
+                      {v.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          )}
 
         {/* View on DANDI */}
         <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
@@ -456,14 +466,10 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
             </Typography>
             <Box sx={{ ml: 1, mt: 1 }}>
               {dandisetVersionInfo.metadata.assetsSummary.approach?.map(
-                (a, i) => (
-                  <div key={i}>Approach: {a.name}</div>
-                ),
+                (a, i) => <div key={i}>Approach: {a.name}</div>,
               )}
               {dandisetVersionInfo.metadata.assetsSummary.measurementTechnique?.map(
-                (t, i) => (
-                  <div key={i}>Technique: {t.name}</div>
-                ),
+                (t, i) => <div key={i}>Technique: {t.name}</div>,
               )}
             </Box>
           </Box>
