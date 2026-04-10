@@ -13,11 +13,13 @@ const VideoViewer: FunctionComponent<Props> = ({ videoUrl, width, height }) => {
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
 
   useEffect(() => {
     const resolveVideoUrl = async () => {
       setLoading(true);
       setError(null);
+      setPlaybackError(null);
 
       try {
         // Check if it's a DANDI API URL that needs redirect resolution
@@ -75,9 +77,18 @@ const VideoViewer: FunctionComponent<Props> = ({ videoUrl, width, height }) => {
 
   return (
     <div style={{ padding: "20px" }}>
+      {playbackError && (
+        <div style={{ marginBottom: "12px", color: "red" }}>{playbackError}</div>
+      )}
       <video
         controls
         src={resolvedUrl}
+        onError={() =>
+          setPlaybackError(
+            "This video asset could not be played by the browser. The container or codec may be unsupported.",
+          )
+        }
+        onLoadedData={() => setPlaybackError(null)}
         style={{
           width: Math.min(width - 40, 1200),
           maxHeight: height - 40,
