@@ -461,64 +461,6 @@ const VideoWidgetView: FunctionComponent<Props> = ({
     >
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 12,
-          padding: "10px 12px",
-          border: "1px solid #ddd",
-          borderRadius: 8,
-          background: "#fafafa",
-        }}
-      >
-        <button
-          onClick={handlePlayPause}
-          disabled={selectedVideos.length === 0}
-          style={{ padding: "6px 14px", cursor: "pointer" }}
-        >
-          {isPlaying ? "Pause" : "Play"}
-        </button>
-        <input
-          type="range"
-          min={sessionWindow?.start ?? 0}
-          max={sessionWindow?.end ?? 1}
-          step={0.01}
-          value={sharedTime ?? sessionWindow?.start ?? 0}
-          onChange={(e) => handleSeek(Number(e.target.value))}
-          disabled={!sessionWindow}
-          style={{ flex: 1 }}
-        />
-        <div
-          style={{
-            minWidth: 120,
-            textAlign: "right",
-            fontVariantNumeric: "tabular-nums",
-          }}
-        >
-          {sessionWindow && sharedTime !== undefined
-            ? `${formatTime(sharedTime)} / ${formatTime(sessionWindow.end)}`
-            : "No videos selected"}
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          {(["row", "column", "grid"] as LayoutMode[]).map((mode) => (
-            <label
-              key={mode}
-              style={{ display: "flex", alignItems: "center", gap: 4 }}
-            >
-              <input
-                type="radio"
-                name="video-layout-mode"
-                checked={layoutMode === mode}
-                onChange={() => setLayoutMode(mode)}
-              />
-              {mode[0].toUpperCase() + mode.slice(1)}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div
-        style={{
           display: "grid",
           gridTemplateColumns: "320px 1fr",
           gap: 12,
@@ -667,164 +609,246 @@ const VideoWidgetView: FunctionComponent<Props> = ({
             </div>
           </div>
 
-          {selectedVideos.length > 1 && (
+          <div
+            style={{
+              border: "1px solid #ddd",
+              borderRadius: 8,
+              background: "#fff",
+              padding: 12,
+            }}
+          >
             <div
               style={{
-                border: "1px solid #ddd",
-                borderRadius: 8,
-                background: "#fff",
-                padding: 12,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 8,
               }}
             >
-              <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
+              <div style={{ fontSize: 18, fontWeight: 600 }}>
                 Display Arrangement
               </div>
-              <div style={{ color: "#666", marginBottom: 12 }}>
-                Drag tiles to reorder videos in the display.
+              <div style={{ display: "flex", gap: 8 }}>
+                {(["row", "column", "grid"] as LayoutMode[]).map((mode) => (
+                  <label
+                    key={mode}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      fontSize: 13,
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="video-layout-mode"
+                      checked={layoutMode === mode}
+                      onChange={() => setLayoutMode(mode)}
+                    />
+                    {mode[0].toUpperCase() + mode.slice(1)}
+                  </label>
+                ))}
               </div>
-              <OrderPanel
-                selectedPaths={selectedPaths}
-                setSelectedPaths={setSelectedPaths}
-                labelMap={labelMap}
-                layoutMode={layoutMode}
-                count={selectedVideos.length}
-              />
             </div>
-          )}
+            <div style={{ color: "#666", marginBottom: 12, fontSize: 12 }}>
+              Drag tiles to reorder videos in the display.
+            </div>
+            <OrderPanel
+              selectedPaths={selectedPaths}
+              setSelectedPaths={setSelectedPaths}
+              labelMap={labelMap}
+              layoutMode={layoutMode}
+              count={selectedVideos.length}
+            />
+          </div>
         </div>
 
-        <div
-          style={{
-            minHeight: 300,
-            border: "1px solid #ddd",
-            borderRadius: 8,
-            background: "#fff",
-            padding: 12,
-          }}
-        >
-          {selectedVideos.length === 0 ? (
-            <div style={{ color: "#666" }}>
-              Select one or more external videos to display them here.
+        {/* Right column: Video Display + playback controls */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div
+            style={{
+              flex: 1,
+              border: "1px solid #ddd",
+              borderRadius: 8,
+              background: "#fff",
+              padding: 12,
+            }}
+          >
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
+              Video Display
             </div>
-          ) : (
+            {selectedVideos.length === 0 ? (
+              <div style={{ color: "#666" }}>
+                Select one or more external videos to display them here.
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    gridDimensions.cols > 0
+                      ? `repeat(${gridDimensions.cols}, minmax(0, 1fr))`
+                      : undefined,
+                  gap: 12,
+                  maxWidth:
+                    gridDimensions.cols > 0
+                      ? gridDimensions.cols * 480 +
+                        (gridDimensions.cols - 1) * 12
+                      : undefined,
+                }}
+              >
+                {selectedVideos.map((video) => {
+                  const resolvedUrl = resolvedUrls[video.path];
+                  const playbackError = playbackErrors[video.path];
+                  const tileError = urlErrors[video.path] || playbackError;
+                  return (
+                    <div key={video.path}>
+                      <div style={{ fontWeight: 600, marginBottom: 6 }}>
+                        <span style={{ color: "#4f6df5", marginRight: 4 }}>
+                          [{labelMap.get(video.path)}]
+                        </span>
+                        {video.name}
+                      </div>
+                      {tileError ? (
+                        <UnsupportedVideoPanel message={tileError} />
+                      ) : (
+                        <div
+                          style={{
+                            width: "100%",
+                            aspectRatio: "16 / 9",
+                            backgroundColor: "#111",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {(!resolvedUrl || !metadataLoaded[video.path]) && (
+                            <div style={{ color: "#ccc", fontSize: 14 }}>
+                              {urlLoading[video.path]
+                                ? "Resolving video..."
+                                : "Loading video..."}
+                            </div>
+                          )}
+                          {resolvedUrl && (
+                            <video
+                              ref={(element) => {
+                                videoRefs.current[video.path] = element;
+                              }}
+                              src={resolvedUrl}
+                              muted
+                              playsInline
+                              preload="auto"
+                              onLoadedMetadata={() => {
+                                setMetadataLoaded((prev) => ({
+                                  ...prev,
+                                  [video.path]: true,
+                                }));
+                                const current =
+                                  sharedTime === undefined
+                                    ? video.startTime
+                                    : sharedTime;
+                                const target = clamp(
+                                  current,
+                                  video.startTime,
+                                  video.endTime,
+                                );
+                                const element = videoRefs.current[video.path];
+                                if (element) {
+                                  element.currentTime = Math.max(
+                                    0,
+                                    target - video.startTime,
+                                  );
+                                }
+                              }}
+                              onTimeUpdate={() => {
+                                if (
+                                  !isPlaying ||
+                                  selectedVideos[0]?.path !== video.path
+                                ) {
+                                  return;
+                                }
+                                const leader = selectedVideos[0];
+                                const element = videoRefs.current[leader.path];
+                                if (!element) return;
+                                const nextTime = clamp(
+                                  leader.startTime + element.currentTime,
+                                  sessionWindow?.start ?? leader.startTime,
+                                  sessionWindow?.end ?? leader.endTime,
+                                );
+                                setSharedTime(nextTime);
+                              }}
+                              onEnded={() => {
+                                if (selectedVideos[0]?.path === video.path) {
+                                  setIsPlaying(false);
+                                }
+                              }}
+                              onError={() => {
+                                setPlaybackErrors((prev) => ({
+                                  ...prev,
+                                  [video.path]:
+                                    "This video could not be played by the browser because its container or codec is not supported. Most likely, the uploaded video uses a non-browser-supported codec or container.",
+                                }));
+                              }}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "contain",
+                                display: metadataLoaded[video.path]
+                                  ? "block"
+                                  : "none",
+                              }}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {selectedVideos.length > 0 && (
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns:
-                  gridDimensions.cols > 0
-                    ? `repeat(${gridDimensions.cols}, minmax(0, 1fr))`
-                    : undefined,
+                display: "flex",
+                alignItems: "center",
                 gap: 12,
-                maxWidth:
-                  gridDimensions.cols > 0
-                    ? gridDimensions.cols * 480 + (gridDimensions.cols - 1) * 12
-                    : undefined,
+                padding: "8px 12px",
+                border: "1px solid #ddd",
+                borderRadius: 8,
+                background: "#fafafa",
               }}
             >
-              {selectedVideos.map((video) => {
-                const resolvedUrl = resolvedUrls[video.path];
-                const playbackError = playbackErrors[video.path];
-                const tileError = urlErrors[video.path] || playbackError;
-                return (
-                  <div key={video.path}>
-                    <div style={{ fontWeight: 600, marginBottom: 6 }}>
-                      {video.name}
-                    </div>
-                    {tileError ? (
-                      <UnsupportedVideoPanel message={tileError} />
-                    ) : (
-                      <div
-                        style={{
-                          width: "100%",
-                          aspectRatio: "16 / 9",
-                          backgroundColor: "#111",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        {(!resolvedUrl || !metadataLoaded[video.path]) && (
-                          <div style={{ color: "#ccc", fontSize: 14 }}>
-                            {urlLoading[video.path]
-                              ? "Resolving video..."
-                              : "Loading video..."}
-                          </div>
-                        )}
-                        {resolvedUrl && (
-                          <video
-                            ref={(element) => {
-                              videoRefs.current[video.path] = element;
-                            }}
-                            src={resolvedUrl}
-                            muted
-                            playsInline
-                            preload="auto"
-                            onLoadedMetadata={() => {
-                              setMetadataLoaded((prev) => ({
-                                ...prev,
-                                [video.path]: true,
-                              }));
-                              const current =
-                                sharedTime === undefined
-                                  ? video.startTime
-                                  : sharedTime;
-                              const target = clamp(
-                                current,
-                                video.startTime,
-                                video.endTime,
-                              );
-                              const element = videoRefs.current[video.path];
-                              if (element) {
-                                element.currentTime = Math.max(
-                                  0,
-                                  target - video.startTime,
-                                );
-                              }
-                            }}
-                            onTimeUpdate={() => {
-                              if (
-                                !isPlaying ||
-                                selectedVideos[0]?.path !== video.path
-                              ) {
-                                return;
-                              }
-                              const leader = selectedVideos[0];
-                              const element = videoRefs.current[leader.path];
-                              if (!element) return;
-                              const nextTime = clamp(
-                                leader.startTime + element.currentTime,
-                                sessionWindow?.start ?? leader.startTime,
-                                sessionWindow?.end ?? leader.endTime,
-                              );
-                              setSharedTime(nextTime);
-                            }}
-                            onEnded={() => {
-                              if (selectedVideos[0]?.path === video.path) {
-                                setIsPlaying(false);
-                              }
-                            }}
-                            onError={() => {
-                              setPlaybackErrors((prev) => ({
-                                ...prev,
-                                [video.path]:
-                                  "This video could not be played by the browser because its container or codec is not supported. Most likely, the uploaded video uses a non-browser-supported codec or container.",
-                              }));
-                            }}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "contain",
-                              display: metadataLoaded[video.path]
-                                ? "block"
-                                : "none",
-                            }}
-                          />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              <button
+                onClick={handlePlayPause}
+                disabled={selectedVideos.length === 0}
+                style={{ padding: "4px 12px", cursor: "pointer" }}
+              >
+                {isPlaying ? "Pause" : "Play"}
+              </button>
+              <input
+                type="range"
+                min={sessionWindow?.start ?? 0}
+                max={sessionWindow?.end ?? 1}
+                step={0.01}
+                value={sharedTime ?? sessionWindow?.start ?? 0}
+                onChange={(e) => handleSeek(Number(e.target.value))}
+                disabled={!sessionWindow}
+                style={{ flex: 1 }}
+              />
+              <div
+                style={{
+                  minWidth: 100,
+                  textAlign: "right",
+                  fontVariantNumeric: "tabular-nums",
+                  fontSize: 13,
+                }}
+              >
+                {sessionWindow && sharedTime !== undefined
+                  ? `${formatTime(sharedTime)} / ${formatTime(sessionWindow.end)}`
+                  : ""}
+              </div>
             </div>
           )}
         </div>
