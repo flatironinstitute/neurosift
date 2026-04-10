@@ -797,9 +797,6 @@ const VideoWidgetView: FunctionComponent<Props> = ({
                   return (
                     <div key={video.path}>
                       <div style={{ fontWeight: 600, marginBottom: 6 }}>
-                        <span style={{ color: "#4f6df5", marginRight: 4 }}>
-                          [{labelMap.get(video.path)}]
-                        </span>
                         {video.name}
                       </div>
                       {tileError ? (
