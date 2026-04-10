@@ -466,10 +466,14 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
             </Typography>
             <Box sx={{ ml: 1, mt: 1 }}>
               {dandisetVersionInfo.metadata.assetsSummary.approach?.map(
-                (a, i) => <div key={i}>Approach: {a.name}</div>,
+                (a, i) => (
+                  <div key={i}>Approach: {a.name}</div>
+                ),
               )}
               {dandisetVersionInfo.metadata.assetsSummary.measurementTechnique?.map(
-                (t, i) => <div key={i}>Technique: {t.name}</div>,
+                (t, i) => (
+                  <div key={i}>Technique: {t.name}</div>
+                ),
               )}
             </Box>
           </Box>
