@@ -34,13 +34,13 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
 }) => {
   const navigate = useNavigate();
   const { dandisetId: urlDandisetId } = useParams();
+  const [searchParams] = useSearchParams();
   const effectiveDandisetId = propDandisetId || urlDandisetId;
   const staging = false;
   const dandisetResponse: DandisetSearchResultItem | undefined | null =
     useQueryDandiset(effectiveDandisetId, staging, false);
 
-  // todo: get dandisetVersion from the route
-  const dandisetVersion = "";
+  const dandisetVersion = searchParams.get("dandisetVersion") || "";
 
   const dandisetVersionInfo: DandisetVersionInfo | null =
     useDandisetVersionInfo(
@@ -50,8 +50,6 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
       dandisetResponse || null,
       false,
     );
-
-  // todo: set dandisetVersion to route if not there yet
 
   const [maxNumPages, setMaxNumPages] = useState(1);
   const [nwbFilesOnly, setNwbFilesOnly] = useState(false);
@@ -265,7 +263,6 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
     </div>
   );
 
-  const [searchParams] = useSearchParams();
   const initialTabId = searchParams.get("tab");
 
   // Register AI component
@@ -274,6 +271,28 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
     dandisetVersionInfo,
     nwbFilesOwnlyControlVisible,
   });
+
+  const availableVersions = useMemo(() => {
+    if (!dandisetResponse) return [];
+    const versions: { version: string; label: string }[] = [];
+    if (dandisetResponse.most_recent_published_version) {
+      const v = dandisetResponse.most_recent_published_version.version;
+      versions.push({ version: v, label: v });
+    }
+    if (dandisetResponse.draft_version) {
+      versions.push({ version: "draft", label: "draft (latest)" });
+    }
+    return versions;
+  }, [dandisetResponse]);
+
+  const handleVersionChange = useCallback(
+    (version: string) => {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set("dandisetVersion", version);
+      navigate(`?${newParams.toString()}`, { replace: true });
+    },
+    [navigate, searchParams],
+  );
 
   if (!dandisetResponse || !dandisetVersionInfo) {
     return <div>Loading...</div>;
@@ -292,6 +311,8 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
         width={0}
         height={0}
         dandisetVersionInfo={dandisetVersionInfo}
+        availableVersions={availableVersions}
+        onVersionChange={handleVersionChange}
       />
       <DatasetWorkspace
         width={0}

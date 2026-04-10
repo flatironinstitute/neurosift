@@ -1,5 +1,5 @@
 import { Box, Tab, Tabs } from "@mui/material";
-import { FunctionComponent, useEffect, useState } from "react";
+import { FunctionComponent, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useRegisterNwbAIComponent from "./useRegisterNwbAIComponent";
 import ResponsiveLayout from "@components/ResponsiveLayout";
@@ -171,6 +171,8 @@ const LeftArea: FunctionComponent<LeftAreaProps> = ({
   dandisetVersion,
   useEmber,
 }) => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const dandisetResponse = useQueryDandiset(dandisetId, false, useEmber);
   const dandisetVersionInfo = useDandisetVersionInfo(
     dandisetId,
@@ -182,6 +184,28 @@ const LeftArea: FunctionComponent<LeftAreaProps> = ({
   const { nwbFileOverview } = useNwbFileOverview(nwbUrl);
   const tabBarHeight = TAB_BAR_HEIGHT;
   const contentHeight = height - tabBarHeight;
+
+  const availableVersions = useMemo(() => {
+    if (!dandisetResponse) return [];
+    const versions: { version: string; label: string }[] = [];
+    if (dandisetResponse.most_recent_published_version) {
+      const v = dandisetResponse.most_recent_published_version.version;
+      versions.push({ version: v, label: v });
+    }
+    if (dandisetResponse.draft_version) {
+      versions.push({ version: "draft", label: "draft (latest)" });
+    }
+    return versions;
+  }, [dandisetResponse]);
+
+  const handleVersionChange = useCallback(
+    (version: string) => {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set("dandisetVersion", version);
+      navigate(`?${newParams.toString()}`, { replace: true });
+    },
+    [navigate, searchParams],
+  );
 
   useRegisterNwbAIComponent({
     nwbUrl,
@@ -218,6 +242,8 @@ const LeftArea: FunctionComponent<LeftAreaProps> = ({
           nwbUrl={nwbUrl}
           dandisetInfo={dandisetVersionInfo}
           width={width - 20}
+          availableVersions={availableVersions}
+          onVersionChange={handleVersionChange}
         />
       </ScrollY>
     </div>

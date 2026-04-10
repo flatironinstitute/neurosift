@@ -1,3 +1,4 @@
+import { FormControl, MenuItem, Select } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DandisetVersionInfo } from "../DandiPage/dandi-types";
@@ -9,11 +10,18 @@ import NwbAnnotations from "./components/NwbAnnotations";
 
 type NwbFileOverviewResult = NwbFileOverview | { error: string } | null;
 
+type VersionOption = {
+  version: string;
+  label: string;
+};
+
 type NwbOverviewProps = {
   nwbFileOverview: NwbFileOverviewResult;
   nwbUrl: string | null;
   dandisetInfo: DandisetVersionInfo | null;
   width: number;
+  availableVersions?: VersionOption[];
+  onVersionChange?: (version: string) => void;
 };
 
 const MAX_DESCRIPTION_LENGTH = 150;
@@ -24,6 +32,8 @@ export const NwbOverview = ({
   nwbUrl,
   dandisetInfo,
   width,
+  availableVersions,
+  onVersionChange,
 }: NwbOverviewProps) => {
   const navigate = useNavigate();
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -70,8 +80,7 @@ export const NwbOverview = ({
       {dandisetInfo && (
         <div style={{ marginBottom: 15, fontSize: "0.8em" }}>
           <h3 style={{ marginBottom: 8 }}>
-            Dandiset {dandisetInfo.dandiset.identifier} (v.
-            {dandisetInfo.version}) - {dandisetInfo.metadata.name}{" "}
+            Dandiset {dandisetInfo.dandiset.identifier} - {dandisetInfo.metadata.name}{" "}
             <span
               style={{
                 fontSize: "0.8em",
@@ -87,6 +96,28 @@ export const NwbOverview = ({
               (view)
             </span>
           </h3>
+          {availableVersions && availableVersions.length > 1 && onVersionChange ? (
+            <div style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ color: "rgba(0, 0, 0, 0.6)" }}>Version:</span>
+              <FormControl size="small">
+                <Select
+                  value={dandisetInfo.version}
+                  onChange={(e) => onVersionChange(e.target.value as string)}
+                  sx={{ fontSize: "0.8rem" }}
+                >
+                  {availableVersions.map((v) => (
+                    <MenuItem key={v.version} value={v.version}>
+                      {v.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </div>
+          ) : (
+            <div style={{ marginBottom: 8, fontSize: "0.8em" }}>
+              Version: {dandisetInfo.version}
+            </div>
+          )}
           <table style={tableStyle}>
             <tbody>
               <tr>

@@ -1,7 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import ScrollY from "@components/ScrollY";
 import { ChatBubble, MenuBook } from "@mui/icons-material";
-import { Box, IconButton, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  FormControl,
+  IconButton,
+  MenuItem,
+  Select,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { formatBytes } from "@shared/util/formatBytes";
 import { FunctionComponent, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -14,10 +22,17 @@ interface NotebookInfo {
   url: string;
 }
 
+type VersionOption = {
+  version: string;
+  label: string;
+};
+
 type DandisetOverviewProps = {
   width: number;
   height: number;
   dandisetVersionInfo: DandisetVersionInfo;
+  availableVersions?: VersionOption[];
+  onVersionChange?: (version: string) => void;
 };
 
 const findNotebookInfos = (annotations: any[]): NotebookInfo[] => {
@@ -63,6 +78,8 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
   width,
   height,
   dandisetVersionInfo,
+  availableVersions,
+  onVersionChange,
 }) => {
   const [notebooks, setNotebooks] = useState<NotebookInfo[]>([]);
   const [showNotebooksTable, setShowNotebooksTable] = useState(false);
@@ -112,6 +129,28 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
         <Typography variant="h6" gutterBottom>
           {dandisetVersionInfo.metadata.name}
         </Typography>
+
+        {/* Version selector */}
+        {availableVersions && availableVersions.length > 1 && onVersionChange && (
+          <Box sx={{ mt: 1, mb: 1, display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Version:
+            </Typography>
+            <FormControl size="small">
+              <Select
+                value={dandisetVersionInfo.version}
+                onChange={(e) => onVersionChange(e.target.value as string)}
+                sx={{ fontSize: "0.85rem" }}
+              >
+                {availableVersions.map((v) => (
+                  <MenuItem key={v.version} value={v.version}>
+                    {v.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        )}
 
         {/* View on DANDI */}
         <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>

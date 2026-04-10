@@ -1,4 +1,4 @@
-import { FunctionComponent, useCallback, useState } from "react";
+import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import ResponsiveLayout from "@components/ResponsiveLayout";
 import DatasetWorkspace from "../common/DatasetWorkspace/DatasetWorkspace";
@@ -22,6 +22,7 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
 }) => {
   const navigate = useNavigate();
   const { dandisetId: urlDandisetId } = useParams();
+  const [searchParams] = useSearchParams();
   const effectiveDandisetId = propDandisetId || urlDandisetId;
   const staging = false;
 
@@ -31,7 +32,7 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
     staging,
     false,
   );
-  const dandisetVersion = "";
+  const dandisetVersion = searchParams.get("dandisetVersion") || "";
   const dandisetVersionInfo = useDandisetVersionInfo(
     effectiveDandisetId,
     dandisetVersion || "",
@@ -88,7 +89,6 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
     </div>
   );
 
-  const [searchParams] = useSearchParams();
   const initialTabId = searchParams.get("tab");
 
   // Register AI component
@@ -97,6 +97,28 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
     dandisetVersionInfo,
     nwbFilesOwnlyControlVisible: true,
   });
+
+  const availableVersions = useMemo(() => {
+    if (!dandisetResponse) return [];
+    const versions: { version: string; label: string }[] = [];
+    if (dandisetResponse.most_recent_published_version) {
+      const v = dandisetResponse.most_recent_published_version.version;
+      versions.push({ version: v, label: v });
+    }
+    if (dandisetResponse.draft_version) {
+      versions.push({ version: "draft", label: "draft (latest)" });
+    }
+    return versions;
+  }, [dandisetResponse]);
+
+  const handleVersionChange = useCallback(
+    (version: string) => {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set("dandisetVersion", version);
+      navigate(`?${newParams.toString()}`, { replace: true });
+    },
+    [navigate, searchParams],
+  );
 
   if (loading || !dandisetResponse || !dandisetVersionInfo) {
     return <div>Loading...</div>;
@@ -115,6 +137,8 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
         width={0}
         height={0}
         dandisetVersionInfo={dandisetVersionInfo}
+        availableVersions={availableVersions}
+        onVersionChange={handleVersionChange}
       />
       <DatasetWorkspace
         width={0}
