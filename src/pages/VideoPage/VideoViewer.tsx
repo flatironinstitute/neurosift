@@ -14,12 +14,14 @@ const VideoViewer: FunctionComponent<Props> = ({ videoUrl, height }) => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const [metadataLoaded, setMetadataLoaded] = useState(false);
 
   useEffect(() => {
     const resolveVideoUrl = async () => {
       setLoading(true);
       setError(null);
       setPlaybackError(null);
+      setMetadataLoaded(false);
 
       try {
         // Check if it's a DANDI API URL that needs redirect resolution
@@ -79,7 +81,9 @@ const VideoViewer: FunctionComponent<Props> = ({ videoUrl, height }) => {
     <div
       style={{
         padding: "20px",
-        maxWidth: 1200,
+        width: "100%",
+        maxWidth: playbackError ? 960 : 1600,
+        margin: "0 auto",
       }}
     >
       {playbackError && (
@@ -87,22 +91,40 @@ const VideoViewer: FunctionComponent<Props> = ({ videoUrl, height }) => {
           {playbackError}
         </div>
       )}
-      <video
-        controls
-        src={resolvedUrl}
-        onError={() =>
-          setPlaybackError(
-            "This video asset could not be played by the browser. The container or codec may be unsupported.",
-          )
-        }
-        onLoadedData={() => setPlaybackError(null)}
+      <div
         style={{
           width: "100%",
+          aspectRatio: "16 / 9",
           maxHeight: height - 40,
+          backgroundColor: "#111",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        Your browser does not support the video tag.
-      </video>
+        {!metadataLoaded && !playbackError && (
+          <div style={{ color: "#ccc", fontSize: 14 }}>Loading video...</div>
+        )}
+        <video
+          controls
+          src={resolvedUrl}
+          onError={() =>
+            setPlaybackError(
+              "This video asset could not be played by the browser. The container or codec may be unsupported.",
+            )
+          }
+          onLoadedMetadata={() => setMetadataLoaded(true)}
+          onLoadedData={() => setPlaybackError(null)}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            display: metadataLoaded || playbackError ? "block" : "none",
+          }}
+        >
+          Your browser does not support the video tag.
+        </video>
+      </div>
     </div>
   );
 };
