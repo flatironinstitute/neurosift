@@ -175,12 +175,17 @@ const VideoWidgetView: FunctionComponent<Props> = ({
   height,
   isExpanded,
 }) => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [candidates, setCandidates] = useState<ExternalVideoCandidate[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
-  const [layoutMode, setLayoutMode] = useState<LayoutMode>("row");
+  const initialVideoOrderApplied = useRef(false);
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>(() => {
+    const param = searchParams.get("videoLayout");
+    if (param === "row" || param === "column" || param === "grid") return param;
+    return "row";
+  });
   const [resolvedUrls, setResolvedUrls] = useState<Record<string, string>>({});
   const [urlErrors, setUrlErrors] = useState<Record<string, string>>({});
   const [urlLoading, setUrlLoading] = useState<Record<string, boolean>>({});
@@ -194,6 +199,46 @@ const VideoWidgetView: FunctionComponent<Props> = ({
   const [sharedTime, setSharedTime] = useState<number | undefined>(undefined);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const syncAnimationRef = useRef<number | null>(null);
+
+  // Apply URL params once candidates are loaded
+  useEffect(() => {
+    if (candidates.length === 0 || initialVideoOrderApplied.current) return;
+    initialVideoOrderApplied.current = true;
+    const param = searchParams.get("videoOrder");
+    if (!param) return;
+    const indices = param.split(",").map(Number);
+    const paths = indices
+      .filter((i) => !isNaN(i) && i >= 0 && i < candidates.length)
+      .map((i) => candidates[i].path);
+    if (paths.length > 0) {
+      setSelectedPaths(paths);
+    }
+  }, [candidates, searchParams]);
+
+  // Sync state to URL
+  useEffect(() => {
+    if (candidates.length === 0) return;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (selectedPaths.length > 0) {
+          const indices = selectedPaths
+            .map((p) => candidates.findIndex((c) => c.path === p))
+            .filter((i) => i >= 0);
+          next.set("videoOrder", indices.join(","));
+        } else {
+          next.delete("videoOrder");
+        }
+        if (layoutMode !== "row") {
+          next.set("videoLayout", layoutMode);
+        } else {
+          next.delete("videoLayout");
+        }
+        return next;
+      },
+      { replace: true },
+    );
+  }, [selectedPaths, layoutMode, candidates, setSearchParams]);
 
   useEffect(() => {
     if (!isExpanded) return;
