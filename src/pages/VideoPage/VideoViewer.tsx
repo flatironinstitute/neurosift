@@ -76,7 +76,12 @@ const VideoViewer: FunctionComponent<Props> = ({ videoUrl, width, height }) => {
   }
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div
+      style={{
+        padding: "20px",
+        maxWidth: 1200,
+      }}
+    >
       {playbackError && (
         <div style={{ marginBottom: "12px", color: "red" }}>
           {playbackError}
@@ -92,7 +97,7 @@ const VideoViewer: FunctionComponent<Props> = ({ videoUrl, width, height }) => {
         }
         onLoadedData={() => setPlaybackError(null)}
         style={{
-          width: Math.min(width - 40, 1200),
+          width: "100%",
           maxHeight: height - 40,
         }}
       >
