@@ -100,11 +100,10 @@ const OrderPanel: FunctionComponent<{
   setSelectedPaths: React.Dispatch<React.SetStateAction<string[]>>;
   labelMap: Map<string, string>;
   layoutMode: LayoutMode;
-  count: number;
-}> = ({ selectedPaths, setSelectedPaths, labelMap, layoutMode, count }) => {
+}> = ({ selectedPaths, setSelectedPaths, labelMap, layoutMode }) => {
   const [dragFrom, setDragFrom] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
-  const { cols } = calculateGridDimensions(layoutMode, count);
+  const { cols } = calculateGridDimensions(layoutMode, selectedPaths.length);
 
   return (
     <div
@@ -737,7 +736,6 @@ const VideoWidgetView: FunctionComponent<Props> = ({
               setSelectedPaths={setSelectedPaths}
               labelMap={labelMap}
               layoutMode={layoutMode}
-              count={selectedVideos.length}
             />
           </div>
         </div>
