@@ -78,7 +78,9 @@ const VideoViewer: FunctionComponent<Props> = ({ videoUrl, width, height }) => {
   return (
     <div style={{ padding: "20px" }}>
       {playbackError && (
-        <div style={{ marginBottom: "12px", color: "red" }}>{playbackError}</div>
+        <div style={{ marginBottom: "12px", color: "red" }}>
+          {playbackError}
+        </div>
       )}
       <video
         controls

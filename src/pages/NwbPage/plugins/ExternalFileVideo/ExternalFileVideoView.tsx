@@ -96,7 +96,9 @@ const resolveExternalVideoUrl = async (
 
   const assetId = getAssetIdFromNwbUrl(nwbUrl);
   if (!assetId) {
-    throw new Error("Unable to determine the NWB asset ID from the current URL.");
+    throw new Error(
+      "Unable to determine the NWB asset ID from the current URL.",
+    );
   }
 
   const apiBaseUrl = getDandiApiBaseUrl(nwbUrl);
@@ -114,8 +116,13 @@ const resolveExternalVideoUrl = async (
     throw new Error("DANDI asset metadata did not include a path.");
   }
 
-  const cleanRelativePath = externalFile.replace(/\\/g, "/").replace(/^[./]+/, "");
-  const fullVideoAssetPath = joinPosix(dirnamePosix(assetPath), cleanRelativePath);
+  const cleanRelativePath = externalFile
+    .replace(/\\/g, "/")
+    .replace(/^[./]+/, "");
+  const fullVideoAssetPath = joinPosix(
+    dirnamePosix(assetPath),
+    cleanRelativePath,
+  );
   const searchUrl =
     `${apiBaseUrl}/api/dandisets/${dandisetId}/versions/${dandisetVersion}` +
     `/assets/?path=${encodeURIComponent(fullVideoAssetPath)}`;
