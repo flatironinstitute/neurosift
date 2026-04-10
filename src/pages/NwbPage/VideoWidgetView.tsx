@@ -385,6 +385,16 @@ const VideoWidgetView: FunctionComponent<Props> = ({
           background: "#fafafa",
         }}
       >
+        <div
+          style={{
+            fontSize: 14,
+            fontWeight: 600,
+            color: "#444",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Shared Controls
+        </div>
         <button
           onClick={handlePlayPause}
           disabled={selectedVideos.length === 0}
