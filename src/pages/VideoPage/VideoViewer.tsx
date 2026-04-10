@@ -9,7 +9,7 @@ type Props = {
   dandisetVersion?: string;
 };
 
-const VideoViewer: FunctionComponent<Props> = ({ videoUrl, width, height }) => {
+const VideoViewer: FunctionComponent<Props> = ({ videoUrl, height }) => {
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
