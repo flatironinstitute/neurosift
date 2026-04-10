@@ -114,8 +114,10 @@ const VideoWidgetView: FunctionComponent<Props> = ({
   );
   const [isPlaying, setIsPlaying] = useState(false);
   const [sharedTime, setSharedTime] = useState<number | undefined>(undefined);
+  const [dragOverPath, setDragOverPath] = useState<string | null>(null);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const syncAnimationRef = useRef<number | null>(null);
+  const dragSourcePath = useRef<string | null>(null);
 
   useEffect(() => {
     if (!isExpanded) return;
@@ -483,21 +485,78 @@ const VideoWidgetView: FunctionComponent<Props> = ({
                 compatible || selectedOthers.length === 0
                   ? undefined
                   : getCompatibilityReason(candidate, selectedOthers);
+              const isDragOver = dragOverPath === candidate.path;
               return (
-                <label
+                <div
                   key={candidate.path}
+                  draggable={isSelected}
+                  onDragStart={(e) => {
+                    dragSourcePath.current = candidate.path;
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
+                  onDragOver={(e) => {
+                    if (!isSelected || !dragSourcePath.current) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                    setDragOverPath(candidate.path);
+                  }}
+                  onDragLeave={() => {
+                    if (dragOverPath === candidate.path) {
+                      setDragOverPath(null);
+                    }
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOverPath(null);
+                    const from = dragSourcePath.current;
+                    dragSourcePath.current = null;
+                    if (!from || from === candidate.path) return;
+                    setSelectedPaths((prev) => {
+                      const next = prev.filter((p) => p !== from);
+                      const toIndex = next.indexOf(candidate.path);
+                      if (toIndex === -1) return prev;
+                      next.splice(toIndex, 0, from);
+                      return next;
+                    });
+                  }}
+                  onDragEnd={() => {
+                    dragSourcePath.current = null;
+                    setDragOverPath(null);
+                  }}
                   style={{
                     display: "flex",
                     alignItems: "flex-start",
                     gap: 8,
                     padding: 8,
                     borderRadius: 6,
-                    background: compatible ? "#f7f7f7" : "#fdf2f2",
+                    background: isDragOver
+                      ? "#e0e7ff"
+                      : compatible
+                        ? "#f7f7f7"
+                        : "#fdf2f2",
                     color: compatible ? "inherit" : "#8a1c1c",
-                    cursor:
-                      compatible || isSelected ? "pointer" : "not-allowed",
+                    cursor: isSelected
+                      ? "grab"
+                      : compatible
+                        ? "pointer"
+                        : "not-allowed",
+                    borderTop: isDragOver ? "2px solid #4f6df5" : "2px solid transparent",
+                    transition: "background 0.1s",
                   }}
                 >
+                  {isSelected && (
+                    <span
+                      style={{
+                        cursor: "grab",
+                        color: "#999",
+                        fontSize: 14,
+                        lineHeight: "20px",
+                        userSelect: "none",
+                      }}
+                    >
+                      &#x2630;
+                    </span>
+                  )}
                   <input
                     type="checkbox"
                     checked={isSelected}
@@ -524,7 +583,7 @@ const VideoWidgetView: FunctionComponent<Props> = ({
                       <div style={{ fontSize: 12, marginTop: 4 }}>{reason}</div>
                     )}
                   </div>
-                </label>
+                </div>
               );
             })}
           </div>
