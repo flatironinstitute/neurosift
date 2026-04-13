@@ -223,7 +223,7 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
   const [urlResolutionError,setUrlResolutionError] = useState<string>();
   const [loading, setLoading] = useState(true);
   // Tracks whether the browser failed to play the video (unsupported codec/container)
-  const [codecError, setPlaybackError] = useState(false);
+  const [codecError, setCodecError] = useState(false);
 
   // useEffect runs the async URL resolution after the component renders.
   // It re-runs whenever nwbUrl, path, or searchParams change (the dependency array at the end).
@@ -270,7 +270,16 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
     return <div style={{ padding: "20px" }}>Resolving external video...</div>;
   }
 
-  if (urlResolutionError) {
+  // Determine the error message to display, if any
+  const errorMessage = urlResolutionError
+    ? urlResolutionError
+    : codecError
+      ? "This video could not be played because its container or codec is not " +
+        "supported by the browser. Most likely, the uploaded video uses a format " +
+        "like AVI with a non-browser-friendly codec."
+      : null;
+
+  if (errorMessage) {
     return (
       <div
         style={{
@@ -286,68 +295,44 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
         <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
           Video Unavailable
         </div>
-        {urlResolutionError}
+        {errorMessage}
       </div>
     );
   }
-
   // Success: render the native HTML <video> element with the resolved URL
   return (
     <div
       style={{
         padding: "20px",
         width: "100%",
-        maxWidth: codecError ? 960 : 1600,
+        maxWidth: 1600,
         margin: "0 auto",
       }}
     >
-      {/* Browser can't decode this codec/container */}
-      {codecError && (
-        <div
-          style={{
-            padding: "18px 20px",
-            border: "1px solid #f1b5b5",
-            borderRadius: 8,
-            background: "#fff5f5",
-            color: "#8a1c1c",
-            lineHeight: 1.5,
-          }}
-        >
-          <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
-            Video Not Supported
-          </div>
-          This video could not be played because its container or codec is not
-          supported by the browser. Most likely, the uploaded video uses a format
-          like AVI with a non-browser-friendly codec.
-        </div>
-      )}
-      {/* Video player */}
-      {!codecError && (
-        <div
+      <div
+        style={{
+          width: "100%",
+          aspectRatio: "16 / 9",
+          maxHeight: height - 40,
+          backgroundColor: "#111",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <video
+          controls
+          src={videoUrl}
+          onError={() => setCodecError(true)}
           style={{
             width: "100%",
-            aspectRatio: "16 / 9",
-            maxHeight: height - 40,
-            backgroundColor: "#111",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            height: "100%",
+            objectFit: "contain",
           }}
         >
-          <video
-            controls
-            src={videoUrl}
-            onError={() => setPlaybackError(true)}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-            }}
-          >
-            Your browser does not support the video tag.
-          </video>
-        </div>
-      )}
+          Your browser does not support the video tag.
+        </video>
+      </div>
     </div>
   );
 };
