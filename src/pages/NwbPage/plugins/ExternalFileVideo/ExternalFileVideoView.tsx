@@ -29,9 +29,10 @@ const findDandiAssetIdByPath = async (
   const assetId = data.results?.[0]?.asset_id;
   if (!assetId) {
     throw new Error(
-      `This video cannot be played because the video file was not found in the ` +
-        `dandiset at the expected path "${assetPath}". The file may not have been ` +
-        `uploaded, or it may have been uploaded with a different name.`,
+      `This video cannot be played because the video file was not found in ` +
+        `dandiset ${dandisetId} (version: ${dandisetVersion}) at the expected ` +
+        `path "${assetPath}". The file may not have been uploaded, or it may ` +
+        `have been uploaded with a different name.`,
     );
   }
   return assetId;
