@@ -117,7 +117,9 @@ const resolveExternalVideoUrl = async (
   // 3b: We need the dandisetId (from URL query params) to search within the right dandiset
   if (!dandisetId) {
     throw new Error(
-      "A dandisetId is required to resolve a relative external_file path.",
+      `This video cannot be played because the dandisetId is missing from the URL. ` +
+        `To resolve relative video paths, the page URL must include a dandisetId ` +
+        `parameter (e.g. &dandisetId=000409).`,
     );
   }
 
