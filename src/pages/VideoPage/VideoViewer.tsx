@@ -1,6 +1,5 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
-import UnsupportedVideoPanel from "./UnsupportedVideoPanel";
 
 type Props = {
   videoUrl: string;
@@ -10,19 +9,15 @@ type Props = {
   dandisetVersion?: string;
 };
 
-const VideoViewer: FunctionComponent<Props> = ({ videoUrl, height }) => {
+const VideoViewer: FunctionComponent<Props> = ({ videoUrl, width, height }) => {
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [playbackError, setPlaybackError] = useState<string | null>(null);
-  const [metadataLoaded, setMetadataLoaded] = useState(false);
 
   useEffect(() => {
     const resolveVideoUrl = async () => {
       setLoading(true);
       setError(null);
-      setPlaybackError(null);
-      setMetadataLoaded(false);
 
       try {
         // Check if it's a DANDI API URL that needs redirect resolution
@@ -79,51 +74,17 @@ const VideoViewer: FunctionComponent<Props> = ({ videoUrl, height }) => {
   }
 
   return (
-    <div
-      style={{
-        padding: "20px",
-        width: "100%",
-        maxWidth: playbackError ? 960 : 1600,
-        margin: "0 auto",
-      }}
-    >
-      {playbackError && <UnsupportedVideoPanel message={playbackError} />}
-      {!playbackError && (
-        <div
-          style={{
-            width: "100%",
-            aspectRatio: "16 / 9",
-            maxHeight: height - 40,
-            backgroundColor: "#111",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {!metadataLoaded && (
-            <div style={{ color: "#ccc", fontSize: 14 }}>Loading video...</div>
-          )}
-          <video
-            controls
-            src={resolvedUrl}
-            onError={() =>
-              setPlaybackError(
-                "This video could not be played by the browser because its container or codec is not supported. Most likely, the uploaded video uses a non-browser-supported codec or container.",
-              )
-            }
-            onLoadedMetadata={() => setMetadataLoaded(true)}
-            onLoadedData={() => setPlaybackError(null)}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-              display: metadataLoaded ? "block" : "none",
-            }}
-          >
-            Your browser does not support the video tag.
-          </video>
-        </div>
-      )}
+    <div style={{ padding: "20px" }}>
+      <video
+        controls
+        src={resolvedUrl}
+        style={{
+          width: Math.min(width - 40, 1200),
+          maxHeight: height - 40,
+        }}
+      >
+        Your browser does not support the video tag.
+      </video>
     </div>
   );
 };
