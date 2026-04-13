@@ -30,3 +30,4 @@ dist-ssr
 src/build-info.json
 
 .vite/**
+.codex
