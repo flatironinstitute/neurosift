@@ -35,7 +35,6 @@ import NwbPage from "./pages/NwbPage/NwbPage";
 import OpenNeuroDatasetPage from "./pages/OpenNeuroDatasetPage/OpenNeuroDatasetPage";
 import OpenNeuroPage from "./pages/OpenNeuroPage/OpenNeuroPage";
 import SettingsPage from "./pages/SettingsPage/SettingsPage";
-import VideoPage from "./pages/VideoPage/VideoPage";
 import { logPageLoad } from "./util/sendLog";
 import SlpPage from "./pages/SlpPage/SlpPage";
 
@@ -403,10 +402,6 @@ const AppContent = () => {
           <Route
             path="/annotations"
             element={<AnnotationsPage width={width} height={mainHeight} />}
-          />
-          <Route
-            path="/video"
-            element={<VideoPage width={width} height={mainHeight} />}
           />
           <Route
             path="/slp"

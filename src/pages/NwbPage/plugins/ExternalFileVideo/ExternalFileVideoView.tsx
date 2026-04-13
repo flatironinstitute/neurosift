@@ -32,13 +32,7 @@ const normalizeExternalFileValue = (value: unknown): string | undefined => {
 };
 
 const getDandiApiBaseUrl = (nwbUrl: string) => {
-  if (nwbUrl.startsWith("https://api.sandbox.dandiarchive.org/")) {
-    return "https://api.sandbox.dandiarchive.org";
-  }
-  if (nwbUrl.startsWith("https://api-dandi.emberarchive.org/")) {
-    return "https://api-dandi.emberarchive.org";
-  }
-  return "https://api.dandiarchive.org";
+  return new URL(nwbUrl).origin;
 };
 
 const getAssetIdFromNwbUrl = (nwbUrl: string) => {
@@ -138,7 +132,23 @@ const resolveExternalVideoUrl = async (
     );
   }
 
-  return `${apiBaseUrl}/api/assets/${videoAssetId}/download/`;
+  const downloadUrl = `${apiBaseUrl}/api/assets/${videoAssetId}/download/`;
+  return resolveRedirect(downloadUrl);
+};
+
+const resolveRedirect = async (url: string): Promise<string> => {
+  const authHeader = getAuthorizationHeaderForUrl(url);
+  const headers = authHeader ? { Authorization: authHeader } : undefined;
+  const controller = new AbortController();
+  const response = await fetch(url, {
+    signal: controller.signal,
+    headers,
+  });
+  controller.abort();
+  if (response.url) {
+    return response.url;
+  }
+  return url;
 };
 
 const ExternalFileVideoView: FunctionComponent<Props> = ({
