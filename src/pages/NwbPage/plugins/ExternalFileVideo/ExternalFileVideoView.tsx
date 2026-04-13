@@ -220,7 +220,7 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
   // Component state: each useState returns [currentValue, setterFunction].
   // Calling a setter triggers React to re-render the component with the new value.
   const [videoUrl, setVideoUrl] = useState<string>();
-  const [urlResolutionError,setUrlResolutionError] = useState<string>();
+  const [urlResolutionError, setUrlResolutionError] = useState<string>();
   const [loading, setLoading] = useState(true);
   // Tracks whether the browser failed to play the video (unsupported codec/container)
   const [codecError, setCodecError] = useState(false);
@@ -248,7 +248,9 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
         }
       } catch (err) {
         if (!canceled) {
-          setUrlResolutionError(err instanceof Error ? err.message : String(err));
+          setUrlResolutionError(
+            err instanceof Error ? err.message : String(err),
+          );
         }
       } finally {
         if (!canceled) {
@@ -270,7 +272,12 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
     return <div style={{ padding: "20px" }}>Resolving external video...</div>;
   }
 
-  // Determine the error message to display, if any
+  // Both error types (URL resolution failure and browser codec failure) share
+  // the same "Video Unavailable" panel. urlResolutionError is set during the
+  // useEffect when the async URL resolution fails. codecError is set later,
+  // when the <video> element's onError fires because the browser can't decode
+  // the video. On that re-render, codecError is true, so we return the error
+  // panel instead of the <video> element.
   const errorMessage = urlResolutionError
     ? urlResolutionError
     : codecError
