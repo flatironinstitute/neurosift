@@ -212,7 +212,6 @@ const resolveExternalVideoUrl = async (
 };
 
 const ExternalFileVideoView: FunctionComponent<Props> = ({
-  width = 800,
   height = 600,
   nwbUrl,
   path,
