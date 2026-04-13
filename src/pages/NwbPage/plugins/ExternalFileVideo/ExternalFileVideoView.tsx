@@ -5,7 +5,6 @@ import {
 } from "@hdf5Interface";
 import { FunctionComponent, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import VideoViewer from "../../../VideoPage/VideoViewer";
 import getAuthorizationHeaderForUrl from "../../../util/getAuthorizationHeaderForUrl";
 
 type Props = {
@@ -217,7 +216,40 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
     );
   }
 
-  return <VideoViewer videoUrl={videoUrl} width={width} height={height} />;
+  return (
+    <div
+      style={{
+        padding: "20px",
+        width: "100%",
+        maxWidth: 1600,
+        margin: "0 auto",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          aspectRatio: "16 / 9",
+          maxHeight: height - 40,
+          backgroundColor: "#111",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <video
+          controls
+          src={videoUrl}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+          }}
+        >
+          Your browser does not support the video tag.
+        </video>
+      </div>
+    </div>
+  );
 };
 
 export default ExternalFileVideoView;
