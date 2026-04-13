@@ -1,4 +1,4 @@
-import { getHdf5DatasetData, isDandiAssetUrl } from "@hdf5Interface";
+import { getHdf5DatasetData } from "@hdf5Interface";
 import { FunctionComponent, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import getAuthorizationHeaderForUrl from "../../../util/getAuthorizationHeaderForUrl";
@@ -97,16 +97,20 @@ const resolveExternalVideoUrl = async (
 
   // --- Step 3: Validate that we have everything needed for DANDI resolution ---
   // A relative path like "../video.avi" only makes sense if the NWB file is hosted
-  // on a DANDI archive, because we need the DANDI API to find the video asset.
+  // on a DANDI-compatible archive, because we need the DANDI API to find the video asset.
   // We validate three prerequisites before making any network calls.
 
-  // 3a: The NWB file must be on a known DANDI archive
-  if (!isDandiAssetUrl(nwbUrl)) {
+  // 3a: The NWB URL must follow the DANDI asset URL pattern (/api/assets/<id>/...)
+  // We check the URL structure rather than a hardcoded list of known hosts, so that
+  // any DANDI-compatible archive works without code changes.
+  const isDandiLikeUrl = /\/api\/assets\/[^/]+\//.test(nwbUrl);
+  if (!isDandiLikeUrl) {
     const origin = new URL(nwbUrl).origin;
     throw new Error(
       `This video cannot be played because the NWB file is hosted on ${origin}, ` +
-        `which is not a supported archive. Video playback for relative external_file ` +
-        `paths is currently only available for files hosted on DANDI.`,
+        `which does not appear to be a DANDI-compatible archive. Video playback for ` +
+        `relative external_file paths requires the NWB file to be served from a ` +
+        `DANDI-compatible API.`,
     );
   }
 
@@ -216,10 +220,10 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
   // Component state: each useState returns [currentValue, setterFunction].
   // Calling a setter triggers React to re-render the component with the new value.
   const [videoUrl, setVideoUrl] = useState<string>();
-  const [error, setError] = useState<string>();
+  const [urlResolutionError,setUrlResolutionError] = useState<string>();
   const [loading, setLoading] = useState(true);
   // Tracks whether the browser failed to play the video (unsupported codec/container)
-  const [playbackError, setPlaybackError] = useState(false);
+  const [codecError, setPlaybackError] = useState(false);
 
   // useEffect runs the async URL resolution after the component renders.
   // It re-runs whenever nwbUrl, path, or searchParams change (the dependency array at the end).
@@ -230,7 +234,7 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
     const load = async () => {
       // Reset state before starting (handles re-resolution when dependencies change)
       setLoading(true);
-      setError(undefined);
+      setUrlResolutionError(undefined);
       setVideoUrl(undefined);
       try {
         const resolvedVideoUrl = await resolveExternalVideoUrl(
@@ -244,7 +248,7 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
         }
       } catch (err) {
         if (!canceled) {
-          setError(err instanceof Error ? err.message : String(err));
+          setUrlResolutionError(err instanceof Error ? err.message : String(err));
         }
       } finally {
         if (!canceled) {
@@ -266,7 +270,7 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
     return <div style={{ padding: "20px" }}>Resolving external video...</div>;
   }
 
-  if (error) {
+  if (urlResolutionError) {
     return (
       <div
         style={{
@@ -282,7 +286,7 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
         <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
           Video Unavailable
         </div>
-        {error}
+        {urlResolutionError}
       </div>
     );
   }
@@ -293,12 +297,12 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
       style={{
         padding: "20px",
         width: "100%",
-        maxWidth: playbackError ? 960 : 1600,
+        maxWidth: codecError ? 960 : 1600,
         margin: "0 auto",
       }}
     >
       {/* Browser can't decode this codec/container */}
-      {playbackError && (
+      {codecError && (
         <div
           style={{
             padding: "18px 20px",
@@ -318,7 +322,7 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
         </div>
       )}
       {/* Video player */}
-      {!playbackError && (
+      {!codecError && (
         <div
           style={{
             width: "100%",
