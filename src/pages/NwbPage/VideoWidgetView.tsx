@@ -8,7 +8,7 @@ import {
   getSeriesTimeRange,
   resolveExternalVideoFromFile,
 } from "./externalVideoUtils";
-import UnsupportedVideoPanel from "../VideoPage/UnsupportedVideoPanel";
+
 import { useSearchParams } from "react-router-dom";
 
 type Props = {
@@ -798,7 +798,27 @@ const VideoWidgetView: FunctionComponent<Props> = ({
                         {video.name}
                       </div>
                       {tileError ? (
-                        <UnsupportedVideoPanel message={tileError} />
+                        <div
+                          style={{
+                            padding: "18px 20px",
+                            border: "1px solid #e0c080",
+                            borderRadius: 8,
+                            background: "#fffbf0",
+                            color: "#6b5a2e",
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: 16,
+                              fontWeight: 600,
+                              marginBottom: 6,
+                            }}
+                          >
+                            Video Unavailable
+                          </div>
+                          {tileError}
+                        </div>
                       ) : (
                         <div
                           style={{
