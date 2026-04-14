@@ -19,11 +19,20 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
   const [videoUrl, setVideoUrl] = useState<string>();
   const [urlResolutionError, setUrlResolutionError] = useState<string>();
   const [loading, setLoading] = useState(true);
+  // Tracks whether the browser failed to play the video (unsupported codec/container)
   const [codecError, setCodecError] = useState(false);
 
+  // Resolve the playable video URL from the ImageSeries external_file.
+  // If external_file is an absolute URL it is used directly; if it is a
+  // relative path (e.g. "../video.avi") it is resolved through the DANDI API
+  // by looking up the NWB asset's path and searching for the video asset.
+  // Re-runs whenever nwbUrl, path, or searchParams change (the dependency array at the end).
   useEffect(() => {
+    // Guard flag: if the component unmounts while async work is in progress,
+    // we set this to true so the callbacks don't update state on a dead component.
     let canceled = false;
     const load = async () => {
+      // Reset state before starting (handles re-resolution when dependencies change)
       setLoading(true);
       setUrlResolutionError(undefined);
       setVideoUrl(undefined);
@@ -50,15 +59,25 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
       }
     };
     load();
+    // Cleanup function: React calls this when the component unmounts
+    // or before re-running the effect, preventing stale state updates.
     return () => {
       canceled = true;
     };
   }, [nwbUrl, path, searchParams]);
 
+  // Render: early returns handle loading and error states.
+  // React components return one thing, so each branch is a complete render.
   if (loading) {
     return <div style={{ padding: "20px" }}>Resolving external video...</div>;
   }
 
+  // Both error types (URL resolution failure and browser codec failure) share
+  // the same "Video Unavailable" panel. urlResolutionError is set during the
+  // useEffect when the async URL resolution fails. codecError is set later,
+  // when the <video> element's onError fires because the browser can't decode
+  // the video. On that re-render, codecError is true, so we return the error
+  // panel instead of the <video> element.
   const errorMessage = urlResolutionError
     ? urlResolutionError
     : codecError
@@ -88,6 +107,7 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
     );
   }
 
+  // Success: render the native HTML <video> element with the resolved URL
   return (
     <div
       style={{
