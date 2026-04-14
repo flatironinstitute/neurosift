@@ -93,10 +93,9 @@ const resolveExternalVideoUrl = async (
   if (!isDandiLikeUrl) {
     const origin = new URL(nwbUrl).origin;
     throw new Error(
-      `This video cannot be played because the NWB file is hosted on ${origin}, ` +
-        `which does not appear to be a DANDI-compatible archive. Video playback for ` +
-        `relative external_file paths requires the NWB file to be served from a ` +
-        `DANDI-compatible API.`,
+      `This video cannot be played because the NWB file is hosted on ${origin} ` +
+        `and we do not have a path resolver for this archive. Currently only ` +
+        `DANDI-compatible archives are supported for resolving relative external_file paths.`,
     );
   }
 

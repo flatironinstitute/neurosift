@@ -43,7 +43,6 @@ export async function dandiSearch(
     // for now, let's always use draft versions
     version = item.draft_version;
 
-
     if (!version) {
       throw new Error("Failed to get version for dandiset");
     }

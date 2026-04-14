@@ -23,10 +23,8 @@ type Props = {
 
 const DandisetSearchResult = ({ dandiset, notebookUrls }: Props) => {
   const navigate = useNavigate();
-  // const version =
-  //   dandiset.most_recent_published_version || dandiset.draft_version;
-  // for now, let's always use draft versions
-  const version = dandiset.draft_version;
+  const version =
+    dandiset.most_recent_published_version || dandiset.draft_version;
 
   return (
     <Paper
