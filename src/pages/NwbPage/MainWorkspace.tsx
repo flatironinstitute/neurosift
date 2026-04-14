@@ -17,7 +17,7 @@ import NwbHierarchyView from "./NwbHierarchyView";
 import Hdf5View from "./Hdf5View";
 import TimeseriesAlignmentView from "./TimeseriesAlignmentView";
 import NwbUsageScript from "./components/NwbUsageScript";
-import VideoWidgetView from "./VideoWidgetView";
+import MultiVideoTabView from "./MultiVideoTabView";
 
 const SpecificationsView = lazy(
   () => import("./SpecificationsView/SpecificationsView"),
@@ -237,7 +237,7 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
             }}
           >
             <ScrollY width={contentWidth} height={contentHeight}>
-              <VideoWidgetView
+              <MultiVideoTabView
                 nwbUrl={nwbUrl}
                 width={contentWidth}
                 height={contentHeight}

@@ -14,8 +14,11 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
   nwbUrl,
   path,
 }) => {
+  // Read URL query params (?dandisetId=...&dandisetVersion=...) needed for DANDI API calls
   const [searchParams] = useSearchParams();
 
+  // Component state: each useState returns [currentValue, setterFunction].
+  // Calling a setter triggers React to re-render the component with the new value.
   const [videoUrl, setVideoUrl] = useState<string>();
   const [urlResolutionError, setUrlResolutionError] = useState<string>();
   const [loading, setLoading] = useState(true);
@@ -64,7 +67,7 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
     return () => {
       canceled = true;
     };
-  }, [nwbUrl, path, searchParams]);
+  }, [nwbUrl, path, searchParams]); //if those change, useEffect runs again
 
   // Render: early returns handle loading and error states.
   // React components return one thing, so each branch is a complete render.
@@ -106,7 +109,6 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
       </div>
     );
   }
-
   // Success: render the native HTML <video> element with the resolved URL
   return (
     <div
