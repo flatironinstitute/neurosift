@@ -17,6 +17,7 @@ export type ExternalVideoCandidate = {
 const assetPathCache = new Map<string, Promise<string>>();
 const resolvedVideoUrlCache = new Map<string, Promise<string>>();
 
+/** Unwraps HDF5 format variations (string, array, Uint8Array) into a plain string. */
 export const normalizeExternalFileValue = (
   value: unknown,
 ): string | undefined => {
@@ -93,6 +94,15 @@ const getNwbAssetPath = async (nwbUrl: string) => {
   return promise;
 };
 
+/**
+ * Resolves the playable video URL from an external_file value.
+ *
+ * If the external_file value is an absolute URL, it is returned directly.
+ * If it is a relative path (e.g. "../video.avi"), the function resolves it
+ * through the DANDI API: looks up the NWB asset's path within the dandiset,
+ * combines it with the relative video path, searches for the video asset,
+ * and returns the DANDI download URL.
+ */
 export const resolveExternalVideoFromFile = async (
   nwbUrl: string,
   externalFile: string,
@@ -162,6 +172,7 @@ export const resolveExternalVideoFromFile = async (
   return promise;
 };
 
+/** Convenience wrapper: reads external_file from a series, then resolves its URL. */
 export const resolveExternalVideoUrl = async (
   nwbUrl: string,
   seriesPath: string,
@@ -195,6 +206,7 @@ export const getExternalFileForSeries = async (
   return externalFile;
 };
 
+/** Reads the start and end session time for an ImageSeries from timestamps or starting_time + rate. */
 export const getSeriesTimeRange = async (
   nwbUrl: string,
   path: string,
