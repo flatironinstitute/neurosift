@@ -46,6 +46,8 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
   ] = useState<{
     [key: string]: { plugin: NwbObjectViewPlugin; secondaryPaths: string[] }[];
   }>({});
+  const [objectsWithInteractiveViews, setObjectsWithInteractiveViews] =
+    useState<Set<string> | null>(null);
 
   // if any objects have only a single child, and their parent is visibly expanded, expand the object
   useEffect(() => {
@@ -118,6 +120,30 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
     loadLaunchablePlugins();
   }, [nwbUrl, neurodataObjects, defaultUnitsPath]);
 
+  useEffect(() => {
+    const checkInteractiveViews = async () => {
+      const interactivePaths = new Set<string>();
+      for (const obj of neurodataObjects) {
+        if (!obj.attrs.neurodata_type) continue;
+        const objectType = obj.group ? "group" : "dataset";
+        const plugins = await findSuitablePlugins(
+          nwbUrl,
+          obj.path,
+          objectType,
+          { specifications },
+        );
+        const hasInteractive = plugins.some(
+          (p) => p.name !== "default" && p.name !== "PythonScript",
+        );
+        if (hasInteractive) {
+          interactivePaths.add(obj.path);
+        }
+      }
+      setObjectsWithInteractiveViews(interactivePaths);
+    };
+    checkInteractiveViews();
+  }, [nwbUrl, neurodataObjects, specifications]);
+
   const truncateDescription = useCallback(
     (text: string, path: string) => {
       if (!text) return "";
@@ -142,6 +168,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
                 color: "#007bff",
                 cursor: "pointer",
                 fontSize: "0.9em",
+                whiteSpace: "nowrap",
               }}
             >
               show less
@@ -167,6 +194,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
               color: "#007bff",
               cursor: "pointer",
               fontSize: "0.9em",
+              whiteSpace: "nowrap",
             }}
           >
             read more
@@ -373,7 +401,24 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
         </td>
         <td>
           <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-            <span>{obj.attrs.neurodata_type || "-"}</span>
+            <span
+              className={
+                obj.attrs.neurodata_type && objectsWithInteractiveViews
+                  ? objectsWithInteractiveViews.has(obj.path)
+                    ? "neurodata-type-interactive"
+                    : "neurodata-type-generic"
+                  : undefined
+              }
+              title={
+                obj.attrs.neurodata_type && objectsWithInteractiveViews
+                  ? objectsWithInteractiveViews.has(obj.path)
+                    ? "Has interactive data view"
+                    : "No dedicated view available"
+                  : undefined
+              }
+            >
+              {obj.attrs.neurodata_type || "-"}
+            </span>
             {obj.attrs.neurodata_type === "Units" && (
               <span
                 onClick={(e) => {
