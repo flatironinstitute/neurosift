@@ -26,11 +26,7 @@ const RELEVANT_ROOT_PATHS = [
   "/intervals",
 ];
 
-const SUPPORTED_TYPES = new Set([
-  "ImageSeries",
-  "OnePhotonSeries",
-  "TwoPhotonSeries",
-]);
+const SUPPORTED_TYPES = new Set(["ImageSeries"]);
 
 const START_TOLERANCE_SEC = 0.25;
 const DRIFT_TOLERANCE_SEC = 0.1;
