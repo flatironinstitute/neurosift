@@ -17,6 +17,7 @@ import NwbHierarchyView from "./NwbHierarchyView";
 import Hdf5View from "./Hdf5View";
 import TimeseriesAlignmentView from "./TimeseriesAlignmentView";
 import NwbUsageScript from "./components/NwbUsageScript";
+import IcephysTabView from "./IcephysTabView";
 
 const SpecificationsView = lazy(
   () => import("./SpecificationsView/SpecificationsView"),
@@ -24,6 +25,7 @@ const SpecificationsView = lazy(
 
 const FIXED_TABS: FixedTab[] = [
   { id: "widgets", label: "Widgets" },
+  { id: "icephys", label: "Icephys" },
   { id: "timeseries-alignment", label: "Timeseries Alignment" },
   { id: "python-usage", label: "Python Usage" },
   { id: "specifications", label: "Schema", group: "secondary" },
@@ -225,6 +227,21 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
                 isExpanded={showFixedContent && activeFixedTab === "hdf5"}
               />
             </ScrollY>
+          </div>
+          <div
+            style={{
+              display:
+                showFixedContent && activeFixedTab === "icephys"
+                  ? "block"
+                  : "none",
+            }}
+          >
+            <IcephysTabView
+              nwbUrl={nwbUrl}
+              width={contentWidth}
+              height={contentHeight}
+              isExpanded={showFixedContent && activeFixedTab === "icephys"}
+            />
           </div>
           <div
             style={{
