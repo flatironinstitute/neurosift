@@ -53,12 +53,30 @@ async function loadOneSide(
     );
   }
 
+  // NWB's TimeSeriesReferenceVectorData uses `idx_start = -1` and/or
+  // `count = -1` as a sentinel meaning "no slice info; the whole referenced
+  // series is the sweep." This is common for protocols like Vrest where the
+  // entire recording is the sweep with no stimulus boundaries.
+  let effectiveStart = side.idxStart;
+  let effectiveCount = side.count;
+  if (effectiveStart < 0 || effectiveCount <= 0) {
+    const dataLen = dataDs.shape?.[0] ?? 0;
+    if (dataLen <= 0) {
+      throw new Error(
+        `no slice info (idx_start=${side.idxStart}, count=${side.count}) ` +
+          `and 'data' at ${side.path} is empty`,
+      );
+    }
+    effectiveStart = 0;
+    effectiveCount = dataLen;
+  }
+
   const raw = (await getHdf5DatasetData(nwbUrl, `${side.path}/data`, {
-    slice: [[side.idxStart, side.idxStart + side.count]],
+    slice: [[effectiveStart, effectiveStart + effectiveCount]],
   })) as any;
   if (!raw) throw new Error(`failed to load slice for ${side.path}`);
 
-  const n = side.count;
+  const n = effectiveCount;
   const t = new Float32Array(n);
   const y = new Float32Array(n);
 
@@ -78,7 +96,7 @@ async function loadOneSide(
     const tsRaw = (await getHdf5DatasetData(
       nwbUrl,
       `${side.path}/timestamps`,
-      { slice: [[side.idxStart, side.idxStart + side.count]] },
+      { slice: [[effectiveStart, effectiveStart + effectiveCount]] },
     )) as any;
     if (!tsRaw) {
       throw new Error(`failed to load timestamps slice for ${side.path}`);
