@@ -25,37 +25,69 @@ async function loadOneSide(
   nwbUrl: string,
   side: { path: string; idxStart: number; count: number },
 ): Promise<SweepTrace> {
-  // PatchClampSeries: group contains `data` and `starting_time`. The rate
-  // attribute on `starting_time` gives the sample rate; `data` carries
-  // `conversion` and `offset` for unit normalisation.
+  // PatchClampSeries group must contain `data`, plus either
+  //   - `starting_time` (with a `rate` attribute) for regularly-sampled data, or
+  //   - `timestamps` (a 1D dataset of per-sample times) for irregular sampling.
+  // We try `starting_time` first since it is the common icephys case.
   const dataDs = await getHdf5Dataset(nwbUrl, `${side.path}/data`);
-  const startTimeDs = await getHdf5Dataset(
-    nwbUrl,
-    `${side.path}/starting_time`,
-  );
-  if (!dataDs || !startTimeDs) {
-    throw new Error(`missing data or starting_time at ${side.path}`);
-  }
-  const rate = Number(startTimeDs.attrs?.rate || 0);
-  if (!rate || !isFinite(rate)) {
-    throw new Error(`invalid rate on ${side.path}/starting_time`);
+  if (!dataDs) {
+    throw new Error(
+      `no 'data' dataset at ${side.path} (group missing or has unexpected layout)`,
+    );
   }
   const conversion = Number(dataDs.attrs?.conversion ?? 1);
   const offset = Number(dataDs.attrs?.offset ?? 0);
   const unit = String(dataDs.attrs?.unit ?? "");
+
+  const startTimeDs = await getHdf5Dataset(
+    nwbUrl,
+    `${side.path}/starting_time`,
+  );
+  const timestampsDs = startTimeDs
+    ? null
+    : await getHdf5Dataset(nwbUrl, `${side.path}/timestamps`);
+
+  if (!startTimeDs && !timestampsDs) {
+    throw new Error(
+      `missing both 'starting_time' and 'timestamps' under ${side.path}`,
+    );
+  }
 
   const raw = (await getHdf5DatasetData(nwbUrl, `${side.path}/data`, {
     slice: [[side.idxStart, side.idxStart + side.count]],
   })) as any;
   if (!raw) throw new Error(`failed to load slice for ${side.path}`);
 
-  const dt = 1 / rate;
   const n = side.count;
   const t = new Float32Array(n);
   const y = new Float32Array(n);
-  for (let i = 0; i < n; i++) {
-    t[i] = i * dt; // sweep-local time
-    y[i] = Number(raw[i]) * conversion + offset;
+
+  if (startTimeDs) {
+    const rate = Number(startTimeDs.attrs?.rate || 0);
+    if (!rate || !isFinite(rate)) {
+      throw new Error(`invalid rate on ${side.path}/starting_time`);
+    }
+    const dt = 1 / rate;
+    for (let i = 0; i < n; i++) {
+      t[i] = i * dt; // sweep-local time
+      y[i] = Number(raw[i]) * conversion + offset;
+    }
+  } else {
+    // timestamps-based: load the matching slice of the timestamps array and
+    // rebase to sweep-local time (subtract t[0]).
+    const tsRaw = (await getHdf5DatasetData(
+      nwbUrl,
+      `${side.path}/timestamps`,
+      { slice: [[side.idxStart, side.idxStart + side.count]] },
+    )) as any;
+    if (!tsRaw) {
+      throw new Error(`failed to load timestamps slice for ${side.path}`);
+    }
+    const t0 = Number(tsRaw[0]);
+    for (let i = 0; i < n; i++) {
+      t[i] = Number(tsRaw[i]) - t0;
+      y[i] = Number(raw[i]) * conversion + offset;
+    }
   }
   return { t, y, unit };
 }
