@@ -71,9 +71,15 @@ export function useSweepData(
 
   // Stable dep: serialise the sweep descriptors
   const sweepsKey = JSON.stringify(
-    sweeps.map((s) => [s.irtRow, s.response.path, s.response.idxStart,
-                       s.response.count, s.stimulus.path,
-                       s.stimulus.idxStart, s.stimulus.count]),
+    sweeps.map((s) => [
+      s.irtRow,
+      s.response.path,
+      s.response.idxStart,
+      s.response.count,
+      s.stimulus.path,
+      s.stimulus.idxStart,
+      s.stimulus.count,
+    ]),
   );
 
   useEffect(() => {

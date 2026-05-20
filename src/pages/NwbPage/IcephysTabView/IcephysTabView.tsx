@@ -76,8 +76,9 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   if (!hasIcephys) {
     return (
       <div style={{ padding: 20, color: "#666" }}>
-        This file does not contain intracellular electrophysiology data
-        (no <code>/general/intracellular_ephys/intracellular_recordings</code> group).
+        This file does not contain intracellular electrophysiology data (no{" "}
+        <code>/general/intracellular_ephys/intracellular_recordings</code>{" "}
+        group).
       </div>
     );
   }
@@ -197,7 +198,8 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
           <>
             {sweepData.loading && (
               <div style={{ color: "#888", marginBottom: 8 }}>
-                loading sweeps ({sweepData.loaded.length}/{chain.sweeps.length})...
+                loading sweeps ({sweepData.loaded.length}/{chain.sweeps.length}
+                )...
               </div>
             )}
             <FamilyOverlayPlot

@@ -23,9 +23,16 @@ function pickDisplayUnit(siUnit: string): { label: string; scale: number } {
 // Viridis approximation as 8 evenly-spaced sample points. Plotly accepts a
 // hex color per trace, so we map sweep index onto this discrete palette.
 const VIRIDIS = [
-  "#440154", "#482878", "#3e4989", "#31688e",
-  "#26828e", "#1f9e89", "#35b779", "#6ece58",
-  "#b5de2b", "#fde725",
+  "#440154",
+  "#482878",
+  "#3e4989",
+  "#31688e",
+  "#26828e",
+  "#1f9e89",
+  "#35b779",
+  "#6ece58",
+  "#b5de2b",
+  "#fde725",
 ];
 
 function viridis(t: number): string {
@@ -57,12 +64,14 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
 
     sweeps.forEach((sw, i) => {
       const color = viridis(n > 1 ? i / (n - 1) : 0);
-      const respY = respUnit.scale === 1
-        ? sw.response.y
-        : Array.from(sw.response.y, (v) => v * respUnit.scale);
-      const stimY = stimUnit.scale === 1
-        ? sw.stimulus.y
-        : Array.from(sw.stimulus.y, (v) => v * stimUnit.scale);
+      const respY =
+        respUnit.scale === 1
+          ? sw.response.y
+          : Array.from(sw.response.y, (v) => v * respUnit.scale);
+      const stimY =
+        stimUnit.scale === 1
+          ? sw.stimulus.y
+          : Array.from(sw.stimulus.y, (v) => v * stimUnit.scale);
       data.push({
         x: Array.from(sw.response.t),
         y: Array.from(respY as any),
@@ -94,7 +103,12 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
       height,
       margin: { l: 70, r: 20, t: 20, b: 50 },
       grid: { rows: 2, columns: 1, pattern: "independent" },
-      xaxis: { domain: [0, 1], anchor: "y", showticklabels: false, showgrid: true },
+      xaxis: {
+        domain: [0, 1],
+        anchor: "y",
+        showticklabels: false,
+        showgrid: true,
+      },
       yaxis: {
         domain: [0.28, 1],
         title: { text: `response (${respUnit.label})`, standoff: 8 },

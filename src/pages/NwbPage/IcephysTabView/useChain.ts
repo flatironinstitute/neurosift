@@ -56,10 +56,7 @@ async function readIntArray(nwbUrl: string, path: string): Promise<number[]> {
   return out;
 }
 
-async function readCompoundArray(
-  nwbUrl: string,
-  path: string,
-): Promise<any[]> {
+async function readCompoundArray(nwbUrl: string, path: string): Promise<any[]> {
   const data = await getHdf5DatasetData(nwbUrl, path, {});
   if (!data) throw new Error(`failed to read compound dataset ${path}`);
   return Array.from(data as any) as any[];
@@ -182,10 +179,7 @@ async function expandToIrtRows(
 
 // -------- the hook --------
 
-export function useChain(
-  nwbUrl: string,
-  scope: ScopeSelection,
-): ChainResult {
+export function useChain(nwbUrl: string, scope: ScopeSelection): ChainResult {
   const [result, setResult] = useState<ChainResult>({
     loading: true,
     chainDepth: [],
@@ -296,10 +290,7 @@ export type SelectorOption = {
 export async function readConditions(
   nwbUrl: string,
 ): Promise<SelectorOption[]> {
-  const g = await getHdf5Group(
-    nwbUrl,
-    `${IE_PREFIX}/experimental_conditions`,
-  );
+  const g = await getHdf5Group(nwbUrl, `${IE_PREFIX}/experimental_conditions`);
   if (!g) return [];
 
   const idDs = await getHdf5Dataset(
@@ -342,7 +333,9 @@ export async function readConditions(
   const out: SelectorOption[] = [];
   for (let i = 0; i < n; i++) {
     const label = labels ? labels[i] : `Condition ${i}`;
-    const nChildren = repsIdx ? raggedRange(repsIdx, i)[1] - raggedRange(repsIdx, i)[0] : 0;
+    const nChildren = repsIdx
+      ? raggedRange(repsIdx, i)[1] - raggedRange(repsIdx, i)[0]
+      : 0;
     out.push({ row: i, label, nChildren });
   }
   return out;
@@ -389,7 +382,9 @@ export async function readRepetitions(
   return repRows.map((r) => ({
     row: r,
     label: `Repetition ${r}`,
-    nChildren: seqsIdx ? raggedRange(seqsIdx, r)[1] - raggedRange(seqsIdx, r)[0] : 0,
+    nChildren: seqsIdx
+      ? raggedRange(seqsIdx, r)[1] - raggedRange(seqsIdx, r)[0]
+      : 0,
   }));
 }
 
@@ -397,10 +392,7 @@ export async function readSequentialProtocols(
   nwbUrl: string,
   repRow?: number,
 ): Promise<SelectorOption[]> {
-  const g = await getHdf5Group(
-    nwbUrl,
-    `${IE_PREFIX}/sequential_recordings`,
-  );
+  const g = await getHdf5Group(nwbUrl, `${IE_PREFIX}/sequential_recordings`);
   if (!g) return [];
 
   // Restrict to seq rows belonging to the selected repetition, if any.
