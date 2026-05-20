@@ -194,6 +194,9 @@ export function useChain(nwbUrl: string, scope: ScopeSelection): ChainResult {
 
     (async () => {
       setResult((r) => ({ ...r, loading: true, error: undefined }));
+      // Always determine chain depth first, even if everything else fails, so
+      // the sidebar reflects what tables actually exist in the file.
+      let present: ChainTable[] = [];
       try {
         const ie = await getHdf5Group(nwbUrl, IE_PREFIX);
         if (!ie) {
@@ -206,8 +209,20 @@ export function useChain(nwbUrl: string, scope: ScopeSelection): ChainResult {
             });
           return;
         }
-        const present = await detectChainDepth(nwbUrl);
+        present = await detectChainDepth(nwbUrl);
+      } catch (exc: any) {
+        if (!cancelled)
+          setResult({
+            loading: false,
+            chainDepth: [],
+            sweeps: [],
+            availableSweeps: [],
+            error: exc?.message || String(exc),
+          });
+        return;
+      }
 
+      try {
         // Without a sequential-level selection on a file that has the chain,
         // require *some* upstream selection before walking. Otherwise the
         // tab would auto-render hundreds of sweeps on every file open.
@@ -261,8 +276,11 @@ export function useChain(nwbUrl: string, scope: ScopeSelection): ChainResult {
       } catch (exc: any) {
         if (!cancelled)
           setResult({
+            // Preserve chain depth so the sidebar still shows what's in the
+            // file even when the compound walk fails (e.g. raw refs from the
+            // h5wasm worker).
             loading: false,
-            chainDepth: [],
+            chainDepth: present,
             sweeps: [],
             availableSweeps: [],
             error: exc?.message || String(exc),
