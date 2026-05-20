@@ -93,11 +93,9 @@ async function loadOneSide(
   } else {
     // timestamps-based: load the matching slice of the timestamps array and
     // rebase to sweep-local time (subtract t[0]).
-    const tsRaw = (await getHdf5DatasetData(
-      nwbUrl,
-      `${side.path}/timestamps`,
-      { slice: [[effectiveStart, effectiveStart + effectiveCount]] },
-    )) as any;
+    const tsRaw = (await getHdf5DatasetData(nwbUrl, `${side.path}/timestamps`, {
+      slice: [[effectiveStart, effectiveStart + effectiveCount]],
+    })) as any;
     if (!tsRaw) {
       throw new Error(`failed to load timestamps slice for ${side.path}`);
     }
