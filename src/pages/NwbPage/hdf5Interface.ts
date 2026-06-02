@@ -286,7 +286,7 @@ export const getHdf5DatasetData = async (
         totalSize *= ds.shape[i];
       }
     }
-    const maxNumElements = 1e7;
+    const maxNumElements = 1e8;
     if (totalSize > maxNumElements) {
       // Format sizes in MB for human readability
       const formatSize = (size: number) => {
