@@ -12,6 +12,8 @@ export type SweepTrace = {
 export type LoadedSweep = {
   irtRow: number;
   seqRow?: number;
+  repRow?: number;
+  condRow?: number;
   protocolLabel?: string;
   response: SweepTrace;
   stimulus: SweepTrace;
@@ -158,6 +160,8 @@ export function useSweepData(
           loaded.push({
             irtRow: sw.irtRow,
             seqRow: sw.seqRow,
+            repRow: sw.repRow,
+            condRow: sw.condRow,
             protocolLabel: sw.protocolLabel,
             response,
             stimulus,

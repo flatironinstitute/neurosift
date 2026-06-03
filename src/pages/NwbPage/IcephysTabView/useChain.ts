@@ -17,7 +17,6 @@ export type ScopeSelection = {
   condRow?: number;
   repRow?: number;
   protoRow?: number;
-  sweepIrtRow?: number;
 };
 
 export type ResolvedSweep = {
@@ -25,6 +24,10 @@ export type ResolvedSweep = {
   // Parent sequential_recordings row, if discoverable from the chain walk.
   // Used to label and group traces by Protocol in the family overlay.
   seqRow?: number;
+  // Provenance up the chain (for "compare by" faceting): which repetition and
+  // experimental condition this sweep descended from.
+  repRow?: number;
+  condRow?: number;
   protocolLabel?: string;
   response: CompoundSweepRef;
   stimulus: CompoundSweepRef;
@@ -33,9 +36,10 @@ export type ResolvedSweep = {
 export type ChainResult = {
   loading: boolean;
   chainDepth: ChainTable[];
-  // Sweeps actually selected to plot (narrowed by sweepIrtRow if set).
+  // Sweeps in the current scope (Condition/Repetition/Protocol).
   sweeps: ResolvedSweep[];
-  // Pre-narrowing list, used to drive the Sweep selector's option list.
+  // Same set as `sweeps`; retained for callers that count the in-scope sweeps
+  // (e.g. the "compare by" cardinality check and the empty-state message).
   availableSweeps: ResolvedSweep[];
   error?: string;
 };
@@ -107,44 +111,120 @@ export const ALL_ROW = -1;
 const isSpecificRow = (v: number | undefined): v is number =>
   v !== undefined && v !== ALL_ROW;
 
-type IrtEntry = { irtRow: number; seqRow?: number };
+type IrtEntry = {
+  irtRow: number;
+  seqRow?: number;
+  repRow?: number;
+  condRow?: number;
+};
+
+async function readStimTypes(nwbUrl: string, nSeq: number): Promise<string[]> {
+  try {
+    const data = (await getHdf5DatasetData(
+      nwbUrl,
+      `${IE_PREFIX}/sequential_recordings/stimulus_type`,
+      {},
+    )) as any;
+    if (data)
+      return Array.from(data).map((x: any) =>
+        typeof x === "string" ? x : String(x),
+      );
+  } catch {
+    // fall through to row-index labels
+  }
+  return Array.from({ length: nSeq }, (_, i) => `row ${i}`);
+}
+
+// Inverse map seqRow -> repRow (from repetitions/sequential_recordings).
+async function buildSeqToRep(nwbUrl: string): Promise<Map<number, number>> {
+  const seqs = await readIntArray(
+    nwbUrl,
+    `${IE_PREFIX}/repetitions/sequential_recordings`,
+  );
+  const idx = await readIntArray(
+    nwbUrl,
+    `${IE_PREFIX}/repetitions/sequential_recordings_index`,
+  );
+  const map = new Map<number, number>();
+  for (let rep = 0; rep < idx.length; rep++) {
+    const [s, e] = raggedRange(idx, rep);
+    for (let i = s; i < e; i++) if (!map.has(seqs[i])) map.set(seqs[i], rep);
+  }
+  return map;
+}
+
+// Inverse map repRow -> condRow (from experimental_conditions/repetitions).
+async function buildRepToCond(nwbUrl: string): Promise<Map<number, number>> {
+  const reps = await readIntArray(
+    nwbUrl,
+    `${IE_PREFIX}/experimental_conditions/repetitions`,
+  );
+  const idx = await readIntArray(
+    nwbUrl,
+    `${IE_PREFIX}/experimental_conditions/repetitions_index`,
+  );
+  const map = new Map<number, number>();
+  for (let cond = 0; cond < idx.length; cond++) {
+    const [s, e] = raggedRange(idx, cond);
+    for (let i = s; i < e; i++) if (!map.has(reps[i])) map.set(reps[i], cond);
+  }
+  return map;
+}
 
 async function expandToIrtRows(
   nwbUrl: string,
   present: ChainTable[],
   scope: ScopeSelection,
 ): Promise<IrtEntry[]> {
-  // Step 1: determine which sequential_recordings rows are in scope.
-  // null = no constraint (broaden to all); empty list = explicit empty.
-  let seqRows: number[] | null = null;
-  if (isSpecificRow(scope.protoRow)) {
-    seqRows = [scope.protoRow];
-  } else if (
-    isSpecificRow(scope.repRow) &&
-    present.includes("sequential_recordings") &&
-    present.includes("repetitions")
-  ) {
-    seqRows = await sequentialsForRepetition(nwbUrl, scope.repRow);
-  } else if (
-    isSpecificRow(scope.condRow) &&
+  // Provenance maps so each IRT row can carry its repetition and experimental
+  // condition (for the "compare by" faceting), independent of the active filter.
+  const seqToRep = present.includes("repetitions")
+    ? await buildSeqToRep(nwbUrl)
+    : null;
+  const repToCond =
     present.includes("experimental_conditions") &&
-    present.includes("repetitions") &&
-    present.includes("sequential_recordings")
-  ) {
-    const repRows = await repetitionsForCondition(nwbUrl, scope.condRow);
-    seqRows = [];
-    for (const r of repRows) {
-      seqRows.push(...(await sequentialsForRepetition(nwbUrl, r)));
-    }
-  } else if (present.includes("sequential_recordings")) {
-    // No upstream filter: take all sequential rows so we can still tag
-    // each downstream IRT row with its parent protocol.
+    present.includes("repetitions")
+      ? await buildRepToCond(nwbUrl)
+      : null;
+
+  // Step 1: determine which sequential_recordings rows are in scope.
+  // null = no constraint (broaden to all).
+  let seqRows: number[] | null = null;
+  if (present.includes("sequential_recordings")) {
     const idDs = await getHdf5Dataset(
       nwbUrl,
       `${IE_PREFIX}/sequential_recordings/id`,
     );
-    const n = idDs?.shape[0] ?? 0;
-    seqRows = Array.from({ length: n }, (_, i) => i);
+    const nSeq = idDs?.shape[0] ?? 0;
+    const allSeq = Array.from({ length: nSeq }, (_, i) => i);
+
+    // Upstream (condition/repetition) constraint, if any.
+    let upstream: number[] | null = null;
+    if (isSpecificRow(scope.repRow) && present.includes("repetitions")) {
+      upstream = await sequentialsForRepetition(nwbUrl, scope.repRow);
+    } else if (
+      isSpecificRow(scope.condRow) &&
+      present.includes("experimental_conditions") &&
+      present.includes("repetitions")
+    ) {
+      const repRows = await repetitionsForCondition(nwbUrl, scope.condRow);
+      upstream = [];
+      for (const r of repRows) {
+        upstream.push(...(await sequentialsForRepetition(nwbUrl, r)));
+      }
+    }
+
+    const base = upstream ?? allSeq;
+
+    if (isSpecificRow(scope.protoRow)) {
+      // Aggregate by protocol NAME: the picked row is a representative; select
+      // every sequential row in the upstream scope sharing its stimulus_type.
+      const stim = await readStimTypes(nwbUrl, nSeq);
+      const name = stim[scope.protoRow];
+      seqRows = base.filter((sr) => stim[sr] === name);
+    } else {
+      seqRows = base;
+    }
   }
 
   // Step 2: sequential rows -> simultaneous rows, keeping parentage.
@@ -196,8 +276,11 @@ async function expandToIrtRows(
     for (const sr of simRows) {
       const [s, e] = raggedRange(simRecIdx, sr);
       const parentSeq = simToSeq?.get(sr);
+      const repRow =
+        parentSeq !== undefined ? seqToRep?.get(parentSeq) : undefined;
+      const condRow = repRow !== undefined ? repToCond?.get(repRow) : undefined;
       for (let i = s; i < e; i++) {
-        out.push({ irtRow: simRec[i], seqRow: parentSeq });
+        out.push({ irtRow: simRec[i], seqRow: parentSeq, repRow, condRow });
       }
     }
     return out;
@@ -292,6 +375,8 @@ export function useChain(nwbUrl: string, scope: ScopeSelection): ChainResult {
         const availableSweeps: ResolvedSweep[] = irtEntries.map((entry) => ({
           irtRow: entry.irtRow,
           seqRow: entry.seqRow,
+          repRow: entry.repRow,
+          condRow: entry.condRow,
           protocolLabel:
             entry.seqRow !== undefined && seqLabels
               ? seqLabels[entry.seqRow]
@@ -300,9 +385,7 @@ export function useChain(nwbUrl: string, scope: ScopeSelection): ChainResult {
           stimulus: extractCompoundRow(stimFull[entry.irtRow]),
         }));
 
-        const sweeps = isSpecificRow(scope.sweepIrtRow)
-          ? availableSweeps.filter((s) => s.irtRow === scope.sweepIrtRow)
-          : availableSweeps;
+        const sweeps = availableSweeps;
 
         if (!cancelled)
           setResult({
@@ -492,11 +575,19 @@ export async function readSequentialProtocols(
     `${IE_PREFIX}/sequential_recordings/simultaneous_recordings_index`,
   );
 
-  return seqRows.map((r) => {
+  // Dedup by protocol name: each unique stimulus_type becomes one option whose
+  // `row` is a representative sequential row, and whose child count sums all of
+  // its instances across the in-scope repetitions/conditions. Picking it selects
+  // every same-named protocol in scope (see expandToIrtRows).
+  const byName = new Map<string, SelectorOption>();
+  for (const r of seqRows) {
     const raw = stimTypeData?.[r];
     const label =
       typeof raw === "string" ? raw : raw != null ? String(raw) : `row ${r}`;
     const [s, e] = raggedRange(simIdx, r);
-    return { row: r, label, nChildren: e - s };
-  });
+    const cur = byName.get(label);
+    if (!cur) byName.set(label, { row: r, label, nChildren: e - s });
+    else cur.nChildren += e - s;
+  }
+  return [...byName.values()];
 }

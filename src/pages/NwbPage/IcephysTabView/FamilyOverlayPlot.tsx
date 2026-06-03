@@ -68,7 +68,13 @@ interface Props {
   height: number;
   // "protocol": one legend entry per parent protocol (next narrowable tier).
   // "sweep": one legend entry per sweep.
-  groupBy: "protocol" | "sweep";
+  // "condition"/"repetition": "compare by" faceting — one entry per
+  // experimental condition / repetition the sweep descended from.
+  groupBy: "protocol" | "sweep" | "condition" | "repetition";
+  // Compact mode for the small "Separate panels" view: drop the legend, tighten
+  // margins, and shrink axis titles to bare units so they don't overlap in a
+  // small panel.
+  compact?: boolean;
 }
 
 const FamilyOverlayPlot: FunctionComponent<Props> = ({
@@ -76,6 +82,7 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
   width,
   height,
   groupBy,
+  compact = false,
 }) => {
   const { data, layout } = useMemo(() => {
     const data: any[] = [];
@@ -92,6 +99,24 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
     // rather than "All".
     type GroupInfo = { id: number; label: string };
     const groupOf = (sw: LoadedSweep): GroupInfo => {
+      if (groupBy === "condition") {
+        return {
+          id: sw.condRow ?? -1,
+          label:
+            sw.condRow !== undefined
+              ? `condition ${sw.condRow}`
+              : "(no condition)",
+        };
+      }
+      if (groupBy === "repetition") {
+        return {
+          id: sw.repRow ?? -1,
+          label:
+            sw.repRow !== undefined
+              ? `repetition ${sw.repRow}`
+              : "(no repetition)",
+        };
+      }
       if (groupBy === "protocol" && sw.seqRow !== undefined) {
         return {
           id: sw.seqRow,
@@ -176,10 +201,14 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
       });
     });
 
+    const tickfont = compact ? { size: 8 } : undefined;
+    const standoff = compact ? 3 : 8;
     const layout: any = {
       width,
       height,
-      margin: { l: 70, r: 20, t: 20, b: 50 },
+      margin: compact
+        ? { l: 40, r: 8, t: 6, b: 30 }
+        : { l: 70, r: 20, t: 20, b: 50 },
       grid: { rows: 2, columns: 1, pattern: "independent" },
       xaxis: {
         domain: [0, 1],
@@ -189,22 +218,34 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
       },
       yaxis: {
         domain: [0.28, 1],
-        title: { text: `response (${respUnit.label})`, standoff: 8 },
+        title: {
+          text: compact ? respUnit.label : `response (${respUnit.label})`,
+          standoff,
+        },
+        tickfont,
         showgrid: true,
       },
       xaxis2: {
         domain: [0, 1],
         anchor: "y2",
-        title: { text: "time within sweep (ms)", standoff: 8 },
+        title: {
+          text: compact ? "ms" : "time within sweep (ms)",
+          standoff,
+        },
+        tickfont,
         matches: "x",
         showgrid: true,
       },
       yaxis2: {
         domain: [0, 0.22],
-        title: { text: `stimulus (${stimUnit.label})`, standoff: 8 },
+        title: {
+          text: compact ? stimUnit.label : `stimulus (${stimUnit.label})`,
+          standoff,
+        },
+        tickfont,
         showgrid: true,
       },
-      showlegend: true,
+      showlegend: !compact,
       legend: {
         x: 1.02,
         y: 1,
@@ -216,7 +257,7 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
     };
 
     return { data, layout };
-  }, [sweeps, width, height, groupBy]);
+  }, [sweeps, width, height, groupBy, compact]);
 
   if (sweeps.length === 0) {
     return (

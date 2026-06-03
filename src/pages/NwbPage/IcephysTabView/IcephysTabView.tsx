@@ -2,11 +2,13 @@ import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import { getHdf5Group } from "../hdf5Interface";
 import ConditionSelector from "./ConditionSelector";
 import FamilyOverlayPlot from "./FamilyOverlayPlot";
+import FamilySeparatePanels from "./FamilySeparatePanels";
 import ProtocolSelector from "./ProtocolSelector";
 import RepetitionSelector from "./RepetitionSelector";
-import SweepSelector from "./SweepSelector";
+import TemporalDistribution from "./TemporalDistribution";
 import { ALL_ROW, ScopeSelection, useChain } from "./useChain";
 import { useSweepData } from "./useSweepData";
+import { useSweepTimes } from "./useSweepTimes";
 
 interface IcephysTabViewProps {
   nwbUrl: string;
@@ -18,6 +20,10 @@ interface IcephysTabViewProps {
 const SIDEBAR_WIDTH = 320;
 const MAX_SWEEPS_AUTO = 60;
 
+// Stable empty scope for resolving the full-session sweep set (used by the
+// expanded timeline's whole-session context backdrop).
+const EMPTY_SCOPE: ScopeSelection = {};
+
 const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   nwbUrl,
   width,
@@ -27,6 +33,15 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   const [hasIcephys, setHasIcephys] = useState<boolean | null>(null);
   const [scope, setScope] = useState<ScopeSelection>({});
   const [forceRender, setForceRender] = useState(false);
+  // "Compare by" faceting: color the family overlay by condition or repetition
+  // instead of by protocol/sweep. "none" leaves the default grouping.
+  const [compareBy, setCompareBy] = useState<
+    "none" | "condition" | "repetition"
+  >("none");
+  // Family layout: overlay everything in one plot, or one panel per group.
+  const [layout, setLayout] = useState<"overlay" | "separate-panels">(
+    "overlay",
+  );
 
   useEffect(() => {
     if (!isExpanded) return;
@@ -50,8 +65,6 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     setScope((s) => ({ condRow: s.condRow, repRow: v }));
   const setProtoRow = (v: number | undefined) =>
     setScope((s) => ({ condRow: s.condRow, repRow: s.repRow, protoRow: v }));
-  const setSweepIrtRow = (v: number | undefined) =>
-    setScope((s) => ({ ...s, sweepIrtRow: v }));
 
   const chain = useChain(nwbUrl, scope);
 
@@ -63,14 +76,79 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   const hasAnySelection =
     scope.condRow !== undefined ||
     scope.repRow !== undefined ||
-    scope.protoRow !== undefined ||
-    scope.sweepIrtRow !== undefined;
+    scope.protoRow !== undefined;
+
+  // Flat files (only intracellular_recordings; no Condition/Repetition/Protocol
+  // tier to pick) have nothing to select, so render the whole family
+  // automatically. Otherwise wait for an explicit pick.
+  const hasNarrowableTier =
+    chain.chainDepth.includes("experimental_conditions") ||
+    chain.chainDepth.includes("repetitions") ||
+    chain.chainDepth.includes("sequential_recordings");
+  const shouldRender =
+    hasAnySelection || (!hasNarrowableTier && chain.availableSweeps.length > 0);
 
   const wouldRender = chain.sweeps.length;
   const exceedsCap =
-    hasAnySelection && wouldRender > MAX_SWEEPS_AUTO && !forceRender;
-  const sweepsToLoad = !hasAnySelection || exceedsCap ? [] : chain.sweeps;
+    shouldRender && wouldRender > MAX_SWEEPS_AUTO && !forceRender;
+  const sweepsToLoad = !shouldRender || exceedsCap ? [] : chain.sweeps;
   const sweepData = useSweepData(nwbUrl, sweepsToLoad);
+
+  // Group sweeps the same way the family overlay does so the timeline colors
+  // agree: by Protocol unless a specific Protocol is pinned.
+  const groupBy: "protocol" | "sweep" =
+    scope.protoRow === ALL_ROW || scope.protoRow === undefined
+      ? "protocol"
+      : "sweep";
+
+  // The temporal distribution is metadata-only (starting_time + rate), so we
+  // compute it for the full in-scope sweep set even when that exceeds the
+  // render cap. Seeing where/when the sweeps fall is exactly what helps decide
+  // whether to commit to a heavy render.
+  const sweepTimes = useSweepTimes(nwbUrl, shouldRender ? chain.sweeps : []);
+
+  // Whole-session sweep set + times: a gray backdrop showing the overall time
+  // structure of the recording, with the current selection highlighted on top.
+  // Metadata-only (starting_time + rate), so cheap even for the full session.
+  const showTimeline =
+    shouldRender && !chain.loading && chain.error !== "UNSUPPORTED_ASSET";
+  const fullChain = useChain(nwbUrl, EMPTY_SCOPE);
+  const contextTimes = useSweepTimes(
+    nwbUrl,
+    showTimeline ? fullChain.availableSweeps : [],
+  );
+
+  // "Compare by" is only meaningful for a tier that still VARIES within the
+  // current selection: if you have pinned one repetition, there is nothing to
+  // compare across repetitions. Derive this from the in-scope sweep provenance
+  // (chain.availableSweeps reflects the current Condition/Repetition/Protocol
+  // scope), not from table presence or the file-wide counts.
+  const distinctConds = new Set(
+    chain.availableSweeps.map((s) => s.condRow).filter((x) => x !== undefined),
+  ).size;
+  const distinctReps = new Set(
+    chain.availableSweeps.map((s) => s.repRow).filter((x) => x !== undefined),
+  ).size;
+  const canCompareCond = distinctConds >= 2;
+  const canCompareRep = distinctReps >= 2;
+
+  // Apply the facet only if the chosen axis is actually comparable; otherwise
+  // fall back to the default grouping (guards the render against a stale pick).
+  const facetActive =
+    (compareBy === "condition" && canCompareCond) ||
+    (compareBy === "repetition" && canCompareRep);
+  const familyGroupBy: "protocol" | "sweep" | "condition" | "repetition" =
+    facetActive ? compareBy : groupBy;
+
+  // Separate panels split the family into one panel per group; only meaningful
+  // for a categorical grouping (not per-sweep).
+  const canSeparatePanels = familyGroupBy !== "sweep";
+  const useSeparatePanels = layout === "separate-panels" && canSeparatePanels;
+
+  // Reset a now-unavailable facet pick (e.g. after switching files).
+  useEffect(() => {
+    if (compareBy !== "none" && !facetActive) setCompareBy("none");
+  }, [compareBy, facetActive]);
 
   // List of tiers that exist in this file's chain but the user has not yet
   // narrowed. Used in the "Large scope" warning to suggest concrete next
@@ -88,15 +166,16 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     scope.protoRow === undefined
   )
     unsetNarrowableTiers.push("Protocol");
-  if (scope.sweepIrtRow === undefined) unsetNarrowableTiers.push("Sweep");
 
   // reset force-render whenever scope changes
   useEffect(() => {
     setForceRender(false);
-  }, [scope.condRow, scope.repRow, scope.protoRow, scope.sweepIrtRow]);
+  }, [scope.condRow, scope.repRow, scope.protoRow]);
 
   const plotWidth = useMemo(() => width - SIDEBAR_WIDTH - 32, [width]);
   const plotHeight = useMemo(() => height - 32, [height]);
+
+  const timelineHeight = showTimeline ? 84 : 0;
 
   if (!isExpanded) return null;
 
@@ -154,13 +233,62 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
             onChange={setProtoRow}
           />
         )}
-        {/* Sweep is always available once the chain has any sweeps to drill into */}
-        {chain.availableSweeps.length > 0 && (
-          <SweepSelector
-            availableSweeps={chain.availableSweeps}
-            value={scope.sweepIrtRow}
-            onChange={setSweepIrtRow}
-          />
+        {/* Compare by: facet the family overlay by an upstream tier instead of
+            pooling everything into one family. Only offered for tiers the file
+            actually has. */}
+        {(canCompareCond || canCompareRep) && (
+          <div style={{ marginTop: 8, marginBottom: 12 }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: 12,
+                fontWeight: 600,
+                marginBottom: 6,
+              }}
+            >
+              Compare by
+            </label>
+            <select
+              value={compareBy}
+              onChange={(e) =>
+                setCompareBy(
+                  e.target.value as "none" | "condition" | "repetition",
+                )
+              }
+              style={{ width: "100%", padding: "6px 8px", fontSize: 13 }}
+            >
+              <option value="none">none</option>
+              {canCompareCond && <option value="condition">Condition</option>}
+              {canCompareRep && <option value="repetition">Repetition</option>}
+            </select>
+          </div>
+        )}
+
+        {/* Layout: overlay the groups, or show one panel per group. Only
+            meaningful when there is a categorical grouping to split. */}
+        {canSeparatePanels && (
+          <div style={{ marginTop: 8, marginBottom: 12 }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: 12,
+                fontWeight: 600,
+                marginBottom: 6,
+              }}
+            >
+              Layout
+            </label>
+            <select
+              value={layout}
+              onChange={(e) =>
+                setLayout(e.target.value as "overlay" | "separate-panels")
+              }
+              style={{ width: "100%", padding: "6px 8px", fontSize: 13 }}
+            >
+              <option value="overlay">Overlay</option>
+              <option value="separate-panels">Separate panels</option>
+            </select>
+          </div>
         )}
 
         <h3 style={{ marginTop: 24, marginBottom: 12 }}>Chain depth</h3>
@@ -213,7 +341,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
 
         {!chain.loading &&
           chain.error !== "UNSUPPORTED_ASSET" &&
-          !hasAnySelection && (
+          !shouldRender && (
             <div style={{ color: "#888", padding: 16, fontSize: 13 }}>
               Pick anything in the sidebar to start. Each pick narrows the
               scope; the plot renders once at least one tier is set (and the
@@ -226,7 +354,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
             </div>
           )}
 
-        {!chain.loading && hasAnySelection && exceedsCap && (
+        {!chain.loading && shouldRender && exceedsCap && (
           <div
             style={{
               padding: 16,
@@ -265,7 +393,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
           </div>
         )}
 
-        {!chain.loading && hasAnySelection && !exceedsCap && (
+        {!chain.loading && shouldRender && !exceedsCap && (
           <>
             {sweepData.loading && (
               <div style={{ color: "#888", marginBottom: 8 }}>
@@ -273,17 +401,38 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
                 )...
               </div>
             )}
-            <FamilyOverlayPlot
-              sweeps={sweepData.loaded}
-              width={plotWidth}
-              height={plotHeight - (sweepData.loading ? 24 : 0)}
-              groupBy={
-                scope.protoRow === ALL_ROW || scope.protoRow === undefined
-                  ? "protocol"
-                  : "sweep"
-              }
-            />
+            {useSeparatePanels ? (
+              <FamilySeparatePanels
+                sweeps={sweepData.loaded}
+                width={plotWidth}
+                height={
+                  plotHeight - timelineHeight - (sweepData.loading ? 24 : 0)
+                }
+                splitBy={
+                  familyGroupBy as "protocol" | "condition" | "repetition"
+                }
+              />
+            ) : (
+              <FamilyOverlayPlot
+                sweeps={sweepData.loaded}
+                width={plotWidth}
+                height={
+                  plotHeight - timelineHeight - (sweepData.loading ? 24 : 0)
+                }
+                groupBy={familyGroupBy}
+              />
+            )}
           </>
+        )}
+
+        {showTimeline && (
+          <TemporalDistribution
+            times={sweepTimes.times}
+            contextTimes={contextTimes.times}
+            loading={sweepTimes.loading}
+            width={plotWidth}
+            groupBy={familyGroupBy}
+          />
         )}
       </div>
     </div>
