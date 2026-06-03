@@ -28,6 +28,8 @@ export type ResolvedSweep = {
   // experimental condition this sweep descended from.
   repRow?: number;
   condRow?: number;
+  // The within-simultaneous electrode (channel) identity, e.g. "electrode-0".
+  electrode?: string;
   protocolLabel?: string;
   response: CompoundSweepRef;
   stimulus: CompoundSweepRef;
@@ -62,6 +64,19 @@ async function readIntArray(nwbUrl: string, path: string): Promise<number[]> {
   for (let i = 0; i < (data as any).length; i++)
     out.push(Number((data as any)[i]));
   return out;
+}
+
+// Resolve an electrode reference cell to a short label (the electrode group's
+// name, e.g. "electrode-0"). Mirrors the ref-cell shapes handled in chainHelpers.
+function electrodeLabelFromRef(cell: any): string | undefined {
+  let path: string | undefined;
+  if (cell && typeof cell === "object" && "_REFERENCE" in cell)
+    path = cell._REFERENCE?.path;
+  else if (cell && typeof cell === "object" && "path" in cell) path = cell.path;
+  else if (typeof cell === "string") path = cell;
+  if (!path) return undefined;
+  const parts = path.split("/").filter(Boolean);
+  return parts[parts.length - 1] || undefined;
 }
 
 async function readCompoundArray(nwbUrl: string, path: string): Promise<any[]> {
@@ -372,11 +387,28 @@ export function useChain(nwbUrl: string, scope: ScopeSelection): ChainResult {
           }
         }
 
+        // Electrode (channel) identity per IRT row, the within-simultaneous
+        // axis. Refs only resolve on the LINDI path; on the raw wasm path this
+        // stays undefined and the Electrode axis simply won't appear.
+        let electrodeLabels: (string | undefined)[] | null = null;
+        try {
+          const eData = await readCompoundArray(
+            nwbUrl,
+            `${IE_PREFIX}/intracellular_recordings/electrodes/electrode`,
+          );
+          electrodeLabels = eData.map(electrodeLabelFromRef);
+        } catch {
+          electrodeLabels = null;
+        }
+
         const availableSweeps: ResolvedSweep[] = irtEntries.map((entry) => ({
           irtRow: entry.irtRow,
           seqRow: entry.seqRow,
           repRow: entry.repRow,
           condRow: entry.condRow,
+          electrode: electrodeLabels
+            ? electrodeLabels[entry.irtRow]
+            : undefined,
           protocolLabel:
             entry.seqRow !== undefined && seqLabels
               ? seqLabels[entry.seqRow]

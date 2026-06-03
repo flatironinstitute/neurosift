@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useMemo } from "react";
 import Plot from "react-plotly.js";
+import { internId, shadesOf } from "./palette";
 import { LoadedSweep } from "./useSweepData";
 
 // Map NWB SI units to a display unit + scale factor. NWB stores values in SI
@@ -70,11 +71,15 @@ interface Props {
   // "sweep": one legend entry per sweep.
   // "condition"/"repetition": "compare by" faceting — one entry per
   // experimental condition / repetition the sweep descended from.
-  groupBy: "protocol" | "sweep" | "condition" | "repetition";
+  groupBy: "protocol" | "sweep" | "condition" | "repetition" | "electrode";
   // Compact mode for the small "Separate panels" view: drop the legend, tighten
   // margins, and shrink axis titles to bare units so they don't overlap in a
   // small panel.
   compact?: boolean;
+  // When set with groupBy="sweep", the per-sweep gradient is built as shades of
+  // this base hue instead of the default Blues — used by Separate panels so each
+  // panel's gradient matches that group's categorical color.
+  baseColor?: string;
 }
 
 const FamilyOverlayPlot: FunctionComponent<Props> = ({
@@ -83,6 +88,7 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
   height,
   groupBy,
   compact = false,
+  baseColor,
 }) => {
   const { data, layout } = useMemo(() => {
     const data: any[] = [];
@@ -117,6 +123,12 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
               : "(no repetition)",
         };
       }
+      if (groupBy === "electrode") {
+        return {
+          id: internId(sw.electrode ?? "?"),
+          label: sw.electrode ?? "(no electrode)",
+        };
+      }
       if (groupBy === "protocol" && sw.seqRow !== undefined) {
         return {
           id: sw.seqRow,
@@ -147,7 +159,7 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
       if (groupBy === "sweep") {
         const u = N > 1 ? i / (N - 1) : 0;
         const t = tMin + u * (1 - tMin);
-        color = sequential(t);
+        color = baseColor ? shadesOf(baseColor, t) : sequential(t);
       } else {
         color = categorical(i);
       }
@@ -257,7 +269,7 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
     };
 
     return { data, layout };
-  }, [sweeps, width, height, groupBy, compact]);
+  }, [sweeps, width, height, groupBy, compact, baseColor]);
 
   if (sweeps.length === 0) {
     return (

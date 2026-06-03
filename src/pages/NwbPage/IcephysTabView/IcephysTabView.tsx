@@ -33,15 +33,14 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   const [hasIcephys, setHasIcephys] = useState<boolean | null>(null);
   const [scope, setScope] = useState<ScopeSelection>({});
   const [forceRender, setForceRender] = useState(false);
-  // "Compare by" faceting: color the family overlay by condition or repetition
-  // instead of by protocol/sweep. "none" leaves the default grouping.
-  const [compareBy, setCompareBy] = useState<
-    "none" | "condition" | "repetition"
+  // Encoding channels (the "how to compare" controls, shown above the plot).
+  // Filters (Condition/Repetition) stay in the sidebar as the "what" controls.
+  const [colorBy, setColorBy] = useState<
+    "auto" | "condition" | "repetition" | "electrode"
+  >("auto");
+  const [panelsBy, setPanelsBy] = useState<
+    "none" | "protocol" | "condition" | "repetition" | "electrode"
   >("none");
-  // Family layout: overlay everything in one plot, or one panel per group.
-  const [layout, setLayout] = useState<"overlay" | "separate-panels">(
-    "overlay",
-  );
 
   useEffect(() => {
     if (!isExpanded) return;
@@ -59,12 +58,15 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     };
   }, [nwbUrl, isExpanded]);
 
-  // Cascade-reset rules: changing an upper level clears everything below it.
-  const setCondRow = (v: number | undefined) => setScope({ condRow: v });
-  const setRepRow = (v: number | undefined) =>
-    setScope((s) => ({ condRow: s.condRow, repRow: v }));
+  // Protocol is the anchor; Condition/Repetition are filters that narrow it.
+  // Changing a filter keeps the chosen Protocol. Condition contains Repetition,
+  // so changing Condition resets Repetition.
   const setProtoRow = (v: number | undefined) =>
-    setScope((s) => ({ condRow: s.condRow, repRow: s.repRow, protoRow: v }));
+    setScope((s) => ({ ...s, protoRow: v }));
+  const setCondRow = (v: number | undefined) =>
+    setScope((s) => ({ protoRow: s.protoRow, condRow: v }));
+  const setRepRow = (v: number | undefined) =>
+    setScope((s) => ({ protoRow: s.protoRow, condRow: s.condRow, repRow: v }));
 
   const chain = useChain(nwbUrl, scope);
 
@@ -94,9 +96,9 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   const sweepsToLoad = !shouldRender || exceedsCap ? [] : chain.sweeps;
   const sweepData = useSweepData(nwbUrl, sweepsToLoad);
 
-  // Group sweeps the same way the family overlay does so the timeline colors
-  // agree: by Protocol unless a specific Protocol is pinned.
-  const groupBy: "protocol" | "sweep" =
+  // Default ("auto") color grouping: by Protocol unless a specific Protocol is
+  // pinned (then by sweep). The Color-by control can override this.
+  const autoColor: "protocol" | "sweep" =
     scope.protoRow === ALL_ROW || scope.protoRow === undefined
       ? "protocol"
       : "sweep";
@@ -118,37 +120,81 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     showTimeline ? fullChain.availableSweeps : [],
   );
 
-  // "Compare by" is only meaningful for a tier that still VARIES within the
-  // current selection: if you have pinned one repetition, there is nothing to
-  // compare across repetitions. Derive this from the in-scope sweep provenance
-  // (chain.availableSweeps reflects the current Condition/Repetition/Protocol
-  // scope), not from table presence or the file-wide counts.
+  // An axis can be a Color or Panels channel only if it actually VARIES within
+  // the current scope (filtering to one repetition leaves nothing to compare
+  // across repetitions). Derived from the in-scope sweep provenance.
   const distinctConds = new Set(
     chain.availableSweeps.map((s) => s.condRow).filter((x) => x !== undefined),
   ).size;
   const distinctReps = new Set(
     chain.availableSweeps.map((s) => s.repRow).filter((x) => x !== undefined),
   ).size;
-  const canCompareCond = distinctConds >= 2;
-  const canCompareRep = distinctReps >= 2;
+  const distinctProtocols = new Set(
+    chain.availableSweeps.map((s) => s.protocolLabel ?? `seq ${s.seqRow}`),
+  ).size;
+  const distinctElectrodes = new Set(
+    chain.availableSweeps
+      .map((s) => s.electrode)
+      .filter((x) => x !== undefined),
+  ).size;
+  const condVaries = distinctConds >= 2;
+  const repVaries = distinctReps >= 2;
+  const protocolVaries = distinctProtocols >= 2;
+  const electrodeVaries = distinctElectrodes >= 2;
 
-  // Apply the facet only if the chosen axis is actually comparable; otherwise
-  // fall back to the default grouping (guards the render against a stale pick).
-  const facetActive =
-    (compareBy === "condition" && canCompareCond) ||
-    (compareBy === "repetition" && canCompareRep);
-  const familyGroupBy: "protocol" | "sweep" | "condition" | "repetition" =
-    facetActive ? compareBy : groupBy;
+  // Resolve the two encoding channels, falling back when the chosen axis does
+  // not vary (guards the render against a stale pick).
+  const resolvedColor:
+    | "protocol"
+    | "sweep"
+    | "condition"
+    | "repetition"
+    | "electrode" =
+    colorBy === "condition" && condVaries
+      ? "condition"
+      : colorBy === "repetition" && repVaries
+        ? "repetition"
+        : colorBy === "electrode" && electrodeVaries
+          ? "electrode"
+          : autoColor;
+  const resolvedPanels:
+    | "none"
+    | "protocol"
+    | "condition"
+    | "repetition"
+    | "electrode" =
+    panelsBy === "protocol" && protocolVaries
+      ? "protocol"
+      : panelsBy === "condition" && condVaries
+        ? "condition"
+        : panelsBy === "repetition" && repVaries
+          ? "repetition"
+          : panelsBy === "electrode" && electrodeVaries
+            ? "electrode"
+            : "none";
+  // Inside a panel split by axis X, coloring by X is constant, so fall back to
+  // a per-sweep gradient within each panel.
+  const innerColor:
+    | "protocol"
+    | "sweep"
+    | "condition"
+    | "repetition"
+    | "electrode" = resolvedColor === resolvedPanels ? "sweep" : resolvedColor;
 
-  // Separate panels split the family into one panel per group; only meaningful
-  // for a categorical grouping (not per-sweep).
-  const canSeparatePanels = familyGroupBy !== "sweep";
-  const useSeparatePanels = layout === "separate-panels" && canSeparatePanels;
-
-  // Reset a now-unavailable facet pick (e.g. after switching files).
+  // Reset stale encoding picks (e.g. after switching files or filtering).
   useEffect(() => {
-    if (compareBy !== "none" && !facetActive) setCompareBy("none");
-  }, [compareBy, facetActive]);
+    if (colorBy === "condition" && !condVaries) setColorBy("auto");
+    if (colorBy === "repetition" && !repVaries) setColorBy("auto");
+    if (colorBy === "electrode" && !electrodeVaries) setColorBy("auto");
+  }, [colorBy, condVaries, repVaries, electrodeVaries]);
+  useEffect(() => {
+    const ok =
+      (panelsBy === "protocol" && protocolVaries) ||
+      (panelsBy === "condition" && condVaries) ||
+      (panelsBy === "repetition" && repVaries) ||
+      (panelsBy === "electrode" && electrodeVaries);
+    if (panelsBy !== "none" && !ok) setPanelsBy("none");
+  }, [panelsBy, protocolVaries, condVaries, repVaries, electrodeVaries]);
 
   // List of tiers that exist in this file's chain but the user has not yet
   // narrowed. Used in the "Large scope" warning to suggest concrete next
@@ -210,6 +256,16 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
       >
         <h3 style={{ marginTop: 0, marginBottom: 12 }}>Scope</h3>
 
+        {/* Protocol is the anchor (lists all protocols, independent of the
+            Condition/Repetition filters below). */}
+        {hasSeq && (
+          <ProtocolSelector
+            nwbUrl={nwbUrl}
+            repRow={undefined}
+            value={scope.protoRow}
+            onChange={setProtoRow}
+          />
+        )}
         {hasCond && (
           <ConditionSelector
             nwbUrl={nwbUrl}
@@ -224,71 +280,6 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
             value={scope.repRow}
             onChange={setRepRow}
           />
-        )}
-        {hasSeq && (
-          <ProtocolSelector
-            nwbUrl={nwbUrl}
-            repRow={scope.repRow}
-            value={scope.protoRow}
-            onChange={setProtoRow}
-          />
-        )}
-        {/* Compare by: facet the family overlay by an upstream tier instead of
-            pooling everything into one family. Only offered for tiers the file
-            actually has. */}
-        {(canCompareCond || canCompareRep) && (
-          <div style={{ marginTop: 8, marginBottom: 12 }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: 12,
-                fontWeight: 600,
-                marginBottom: 6,
-              }}
-            >
-              Compare by
-            </label>
-            <select
-              value={compareBy}
-              onChange={(e) =>
-                setCompareBy(
-                  e.target.value as "none" | "condition" | "repetition",
-                )
-              }
-              style={{ width: "100%", padding: "6px 8px", fontSize: 13 }}
-            >
-              <option value="none">none</option>
-              {canCompareCond && <option value="condition">Condition</option>}
-              {canCompareRep && <option value="repetition">Repetition</option>}
-            </select>
-          </div>
-        )}
-
-        {/* Layout: overlay the groups, or show one panel per group. Only
-            meaningful when there is a categorical grouping to split. */}
-        {canSeparatePanels && (
-          <div style={{ marginTop: 8, marginBottom: 12 }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: 12,
-                fontWeight: 600,
-                marginBottom: 6,
-              }}
-            >
-              Layout
-            </label>
-            <select
-              value={layout}
-              onChange={(e) =>
-                setLayout(e.target.value as "overlay" | "separate-panels")
-              }
-              style={{ width: "100%", padding: "6px 8px", fontSize: 13 }}
-            >
-              <option value="overlay">Overlay</option>
-              <option value="separate-panels">Separate panels</option>
-            </select>
-          </div>
         )}
 
         <h3 style={{ marginTop: 24, marginBottom: 12 }}>Chain depth</h3>
@@ -395,31 +386,97 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
 
         {!chain.loading && shouldRender && !exceedsCap && (
           <>
+            {/* Encoding bar: how to compare (filters live in the sidebar). */}
+            <div
+              style={{
+                display: "flex",
+                gap: 16,
+                alignItems: "center",
+                height: 28,
+                marginBottom: 8,
+                fontSize: 12,
+                color: "#444",
+              }}
+            >
+              <label>
+                Color by{" "}
+                <select
+                  value={colorBy}
+                  onChange={(e) =>
+                    setColorBy(
+                      e.target.value as
+                        | "auto"
+                        | "condition"
+                        | "repetition"
+                        | "electrode",
+                    )
+                  }
+                  style={{ fontSize: 12, padding: "2px 4px" }}
+                >
+                  <option value="auto">auto</option>
+                  {condVaries && <option value="condition">Condition</option>}
+                  {repVaries && <option value="repetition">Repetition</option>}
+                  {electrodeVaries && (
+                    <option value="electrode">Electrode</option>
+                  )}
+                </select>
+              </label>
+              <label>
+                Panels by{" "}
+                <select
+                  value={panelsBy}
+                  onChange={(e) =>
+                    setPanelsBy(
+                      e.target.value as
+                        | "none"
+                        | "protocol"
+                        | "condition"
+                        | "repetition"
+                        | "electrode",
+                    )
+                  }
+                  style={{ fontSize: 12, padding: "2px 4px" }}
+                >
+                  <option value="none">none</option>
+                  {protocolVaries && <option value="protocol">Protocol</option>}
+                  {condVaries && <option value="condition">Condition</option>}
+                  {repVaries && <option value="repetition">Repetition</option>}
+                  {electrodeVaries && (
+                    <option value="electrode">Electrode</option>
+                  )}
+                </select>
+              </label>
+            </div>
             {sweepData.loading && (
               <div style={{ color: "#888", marginBottom: 8 }}>
                 loading sweeps ({sweepData.loaded.length}/{chain.sweeps.length}
                 )...
               </div>
             )}
-            {useSeparatePanels ? (
-              <FamilySeparatePanels
-                sweeps={sweepData.loaded}
-                width={plotWidth}
-                height={
-                  plotHeight - timelineHeight - (sweepData.loading ? 24 : 0)
-                }
-                splitBy={
-                  familyGroupBy as "protocol" | "condition" | "repetition"
-                }
-              />
-            ) : (
+            {resolvedPanels === "none" ? (
               <FamilyOverlayPlot
                 sweeps={sweepData.loaded}
                 width={plotWidth}
                 height={
-                  plotHeight - timelineHeight - (sweepData.loading ? 24 : 0)
+                  plotHeight -
+                  timelineHeight -
+                  36 -
+                  (sweepData.loading ? 24 : 0)
                 }
-                groupBy={familyGroupBy}
+                groupBy={resolvedColor}
+              />
+            ) : (
+              <FamilySeparatePanels
+                sweeps={sweepData.loaded}
+                width={plotWidth}
+                height={
+                  plotHeight -
+                  timelineHeight -
+                  36 -
+                  (sweepData.loading ? 24 : 0)
+                }
+                splitBy={resolvedPanels}
+                innerGroupBy={innerColor}
               />
             )}
           </>
@@ -431,7 +488,8 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
             contextTimes={contextTimes.times}
             loading={sweepTimes.loading}
             width={plotWidth}
-            groupBy={familyGroupBy}
+            groupBy={resolvedColor}
+            panelsBy={resolvedPanels}
           />
         )}
       </div>
