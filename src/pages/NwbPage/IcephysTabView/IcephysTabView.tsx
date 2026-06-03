@@ -142,6 +142,48 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   const protocolVaries = distinctProtocols >= 2;
   const electrodeVaries = distinctElectrodes >= 2;
 
+  // File-wide data summary for the sidebar (always-on orientation), from the
+  // whole-session sweep set.
+  const fileSweeps = fullChain.availableSweeps;
+  const fileSummary: string[] = [];
+  if (fileSweeps.length) {
+    const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
+    const nP = new Set(fileSweeps.map((s) => s.protocolLabel).filter(Boolean))
+      .size;
+    const nR = new Set(
+      fileSweeps.map((s) => s.repRow).filter((x) => x !== undefined),
+    ).size;
+    const nC = new Set(
+      fileSweeps.map((s) => s.condRow).filter((x) => x !== undefined),
+    ).size;
+    const nE = new Set(fileSweeps.map((s) => s.electrode).filter(Boolean)).size;
+    fileSummary.push(plural(fileSweeps.length, "sweep"));
+    if (nP > 0) fileSummary.push(plural(nP, "protocol"));
+    if (nR > 0) fileSummary.push(plural(nR, "repetition"));
+    if (nC > 0) fileSummary.push(plural(nC, "condition"));
+    if (nE > 0) fileSummary.push(plural(nE, "electrode"));
+  }
+
+  // Selection metadata: distinct values of each custom per-sweep column over the
+  // in-scope sweeps (surfaces lab columns like protocol_type LP/SP, run, etc.).
+  const selectionMeta: { name: string; display: string }[] = [];
+  for (const col of chain.customColumns ?? []) {
+    const vals = new Set<string>();
+    for (const s of chain.sweeps) {
+      const v = col.values[s.irtRow];
+      if (v !== undefined && v !== "") vals.add(v);
+    }
+    if (vals.size === 0) continue;
+    const arr = [...vals];
+    const display =
+      arr.length === 1
+        ? arr[0]
+        : arr.length <= 3
+          ? arr.join(", ")
+          : `${arr.length} values`;
+    selectionMeta.push({ name: col.name, display });
+  }
+
   // Resolve the two encoding channels, falling back when the chosen axis does
   // not vary (guards the render against a stale pick).
   const resolvedColor:
@@ -282,15 +324,36 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
           />
         )}
 
-        <h3 style={{ marginTop: 24, marginBottom: 12 }}>Chain depth</h3>
-        <div style={{ fontSize: 11, color: "#666" }}>
-          {chain.chainDepth.length}/5 tables present:
-          <ul style={{ marginTop: 4, paddingLeft: 16 }}>
-            {chain.chainDepth.map((t) => (
-              <li key={t}>{t}</li>
-            ))}
-          </ul>
+        <h3 style={{ marginTop: 24, marginBottom: 8 }}>This recording</h3>
+        <div
+          style={{ fontSize: 12, color: "#555", lineHeight: 1.5 }}
+          title={`${chain.chainDepth.length}/5 icephys tables present: ${chain.chainDepth.join(", ")}`}
+        >
+          {fileSummary.length ? fileSummary.join(" · ") : "..."}{" "}
+          <span style={{ color: "#aaa", cursor: "help" }}>&#9432;</span>
         </div>
+
+        {shouldRender && selectionMeta.length > 0 && (
+          <div style={{ marginTop: 12 }}>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: "#666",
+                marginBottom: 4,
+              }}
+            >
+              Selection
+            </div>
+            <div style={{ fontSize: 12, color: "#555", lineHeight: 1.5 }}>
+              {selectionMeta.map((m) => (
+                <div key={m.name}>
+                  <span style={{ color: "#888" }}>{m.name}:</span> {m.display}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {chain.error && chain.error !== "UNSUPPORTED_ASSET" && (
           <div style={{ marginTop: 12, color: "#b00", fontSize: 12 }}>

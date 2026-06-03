@@ -35,6 +35,10 @@ export type ResolvedSweep = {
   stimulus: CompoundSweepRef;
 };
 
+// A user-defined (non-structural) column on the intracellular_recordings table,
+// indexed by IRT row. Surfaced as "selection metadata" in the sidebar.
+export type CustomColumn = { name: string; values: string[] };
+
 export type ChainResult = {
   loading: boolean;
   chainDepth: ChainTable[];
@@ -43,6 +47,8 @@ export type ChainResult = {
   // Same set as `sweeps`; retained for callers that count the in-scope sweeps
   // (e.g. the "compare by" cardinality check and the empty-state message).
   availableSweeps: ResolvedSweep[];
+  // Custom per-sweep columns from intracellular_recordings (full file, IRT-indexed).
+  customColumns?: CustomColumn[];
   error?: string;
 };
 
@@ -419,12 +425,44 @@ export function useChain(nwbUrl: string, scope: ScopeSelection): ChainResult {
 
         const sweeps = availableSweeps;
 
+        // Custom (non-structural) per-sweep columns on intracellular_recordings,
+        // e.g. protocol_type (LP/SP), protocol_name, run. Surfaced as selection
+        // metadata in the sidebar. Best-effort: skip on any read failure.
+        let customColumns: CustomColumn[] = [];
+        try {
+          const irtGroup = await getHdf5Group(
+            nwbUrl,
+            `${IE_PREFIX}/intracellular_recordings`,
+          );
+          const dsList = (irtGroup as any)?.datasets ?? [];
+          for (const d of dsList) {
+            const name: string = d.name;
+            if (name === "id" || name.endsWith("_index")) continue;
+            const data = (await getHdf5DatasetData(
+              nwbUrl,
+              `${IE_PREFIX}/intracellular_recordings/${name}`,
+              {},
+            )) as any;
+            if (data && data.length !== undefined) {
+              customColumns.push({
+                name,
+                values: Array.from(data).map((x: any) =>
+                  typeof x === "string" ? x : String(x),
+                ),
+              });
+            }
+          }
+        } catch {
+          customColumns = [];
+        }
+
         if (!cancelled)
           setResult({
             loading: false,
             chainDepth: present,
             sweeps,
             availableSweeps,
+            customColumns,
           });
       } catch (exc: any) {
         if (!cancelled)
