@@ -626,13 +626,19 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     timelineColorRaw === "cell" ? "electrode" : timelineColorRaw;
 
   // Reset stale encoding picks (e.g. after switching files or filtering).
+  // Guarded by !chain.loading: the *Varies flags come from chain.availableSweeps,
+  // which is empty while loading, so without this guard a URL-seeded encoding
+  // axis would be reset to its default before the data arrives (it would look
+  // like the axis does not vary). Once loaded, the gate runs and validates.
   useEffect(() => {
+    if (chain.loading) return;
     if (colorBy === "condition" && !condVaries) setColorBy("auto");
     if (colorBy === "repetition" && !repVaries) setColorBy("auto");
     if (colorBy === "electrode" && !electrodeVaries) setColorBy("auto");
     if (colorBy === "cell" && !cellVaries) setColorBy("auto");
-  }, [colorBy, condVaries, repVaries, electrodeVaries, cellVaries]);
+  }, [colorBy, condVaries, repVaries, electrodeVaries, cellVaries, chain.loading]);
   useEffect(() => {
+    if (chain.loading) return;
     const ok =
       (panelsBy === "protocol" && protocolVaries) ||
       (panelsBy === "condition" && condVaries) ||
@@ -647,10 +653,12 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     repVaries,
     electrodeVaries,
     cellVaries,
+    chain.loading,
   ]);
   // Reset the second panel axis when it becomes invalid (no first axis, same as
   // the first, or no longer varies).
   useEffect(() => {
+    if (chain.loading) return;
     if (panelsBy2 === "none") return;
     const varies =
       (panelsBy2 === "protocol" && protocolVaries) ||
@@ -668,6 +676,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     repVaries,
     electrodeVaries,
     cellVaries,
+    chain.loading,
   ]);
 
   // Reset the sample size to the default whenever scope changes, so a new
