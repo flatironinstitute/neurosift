@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-import { getHdf5Dataset, getHdf5DatasetData } from "../hdf5Interface";
+import {
+  getHdf5Dataset,
+  getHdf5DatasetData,
+  getHdf5Group,
+} from "../hdf5Interface";
 import { ResolvedSweep } from "./useChain";
 
 export type SweepTrace = {
@@ -17,7 +21,11 @@ export type LoadedSweep = {
   electrode?: string;
   protocolLabel?: string;
   response: SweepTrace;
-  stimulus: SweepTrace;
+  // null when the sweep has no real stimulus (IZeroClampSeries), see below.
+  stimulus: SweepTrace | null;
+  // True for zero-current-clamp recordings, which have no stimulus. The plot
+  // suppresses the stimulus panel for these.
+  noStimulus?: boolean;
 };
 
 export type SweepDataResult = {
@@ -154,10 +162,26 @@ export function useSweepData(
         const loaded: LoadedSweep[] = [];
         for (const sw of sweeps) {
           if (cancelled) return;
-          const [response, stimulus] = await Promise.all([
-            loadOneSide(nwbUrl, sw.response),
-            loadOneSide(nwbUrl, sw.stimulus),
-          ]);
+          // IZeroClampSeries (zero-current clamp) has no stimulus. Writers keep
+          // the file valid by pointing the stimulus reference back at the
+          // response series with a (-1,-1) sentinel (pynwb: "set them to the
+          // same TimeSeries to keep the I/O happy"), so naively loading the
+          // stimulus side duplicates the response into a bogus "stimulus" panel.
+          // Detect it from the response neurodata_type (authoritative, and
+          // independent of whatever the producer wrote on the stimulus side),
+          // with the stimulus-points-at-response path equality as a cheap
+          // fallback. When detected, skip the stimulus load entirely.
+          const responseGroup = await getHdf5Group(nwbUrl, sw.response.path);
+          const responseType = String(
+            responseGroup?.attrs?.neurodata_type ?? "",
+          );
+          const noStimulus =
+            responseType === "IZeroClampSeries" ||
+            sw.stimulus.path === sw.response.path;
+          const response = await loadOneSide(nwbUrl, sw.response);
+          const stimulus = noStimulus
+            ? null
+            : await loadOneSide(nwbUrl, sw.stimulus);
           loaded.push({
             irtRow: sw.irtRow,
             seqRow: sw.seqRow,
@@ -167,6 +191,7 @@ export function useSweepData(
             protocolLabel: sw.protocolLabel,
             response,
             stimulus,
+            noStimulus,
           });
           // incremental: push partial results so the plot updates as sweeps arrive
           if (!cancelled) {

@@ -6,12 +6,14 @@ interface Props {
   nwbUrl: string;
   value: number | undefined;
   onChange: (row: number | undefined) => void;
+  optionEnabled?: (opt: SelectorOption) => boolean;
 }
 
 const ConditionSelector: FunctionComponent<Props> = ({
   nwbUrl,
   value,
   onChange,
+  optionEnabled,
 }) => {
   const [options, setOptions] = useState<SelectorOption[] | null>(null);
   const [error, setError] = useState<string | undefined>();
@@ -42,6 +44,7 @@ const ConditionSelector: FunctionComponent<Props> = ({
       childLabel="rep"
       error={error}
       allowAll
+      optionEnabled={optionEnabled}
     />
   );
 };

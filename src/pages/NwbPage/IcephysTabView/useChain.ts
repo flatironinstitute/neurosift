@@ -4,6 +4,7 @@ import {
   getHdf5Dataset,
   getHdf5DatasetData,
   getHdf5Group,
+  isLindiBackedAsset,
 } from "../hdf5Interface";
 import {
   CHAIN_TABLES,
@@ -332,6 +333,24 @@ export function useChain(nwbUrl: string, scope: ScopeSelection): ChainResult {
 
     (async () => {
       setResult((r) => ({ ...r, loading: true, error: undefined }));
+
+      // Icephys needs reference dereferencing, which only the LINDI path
+      // supports today. A non-LINDI asset cannot be resolved (the wasm path
+      // returns raw reference bytes), and walking the chain to discover that is
+      // very slow, so reject it up front before any reads.
+      const lindi = await isLindiBackedAsset(nwbUrl);
+      if (cancelled) return;
+      if (!lindi) {
+        setResult({
+          loading: false,
+          chainDepth: [],
+          sweeps: [],
+          availableSweeps: [],
+          error: "UNSUPPORTED_ASSET",
+        });
+        return;
+      }
+
       // Always determine chain depth first, even if everything else fails, so
       // the sidebar reflects what tables actually exist in the file.
       let present: ChainTable[] = [];
@@ -361,17 +380,23 @@ export function useChain(nwbUrl: string, scope: ScopeSelection): ChainResult {
       }
 
       try {
-        const irtEntries = await expandToIrtRows(nwbUrl, present, scope);
-
-        // Read the two compound columns once and index by IRT row.
+        // Fast unsupported-asset detection: read the response reference column
+        // and probe one row BEFORE the (expensive) chain walk. On the raw wasm
+        // path references can't be dereferenced, so extractCompoundRow throws
+        // UNSUPPORTED_ASSET here after a single read instead of after walking the
+        // whole chain. LINDI-backed files resolve the reference and fall through.
         const respFull = await readCompoundArray(
           nwbUrl,
           `${IE_PREFIX}/intracellular_recordings/responses/response`,
         );
+        if (respFull.length > 0) extractCompoundRow(respFull[0]);
         const stimFull = await readCompoundArray(
           nwbUrl,
           `${IE_PREFIX}/intracellular_recordings/stimuli/stimulus`,
         );
+
+        // Index the compound columns by IRT row (built below).
+        const irtEntries = await expandToIrtRows(nwbUrl, present, scope);
 
         // Build a seqRow -> stimulus_type label map for protocol-level grouping
         // in the family overlay. Skip when the file has no sequential table.
@@ -644,6 +669,30 @@ export async function readSequentialProtocols(
     nwbUrl,
     `${IE_PREFIX}/sequential_recordings/simultaneous_recordings_index`,
   );
+  // The "(N sweeps)" count must be IRT rows (the actual sweeps), not the number
+  // of simultaneous recordings: each simultaneous recording fans out to multiple
+  // IRT rows (one per electrode) via simultaneous_recordings/recordings_index.
+  // Counting simultaneous recordings under-reports (e.g. a dual-electrode file
+  // shows half the sweeps). Read recordings_index to expand; fall back to the
+  // simultaneous-recording count if it is unavailable.
+  let recIdx: number[] | null = null;
+  try {
+    recIdx = await readIntArray(
+      nwbUrl,
+      `${IE_PREFIX}/simultaneous_recordings/recordings_index`,
+    );
+  } catch {
+    recIdx = null;
+  }
+  const irtCountForSimRange = (s: number, e: number): number => {
+    if (!recIdx || recIdx.length === 0) return e - s;
+    let n = 0;
+    for (let j = s; j < e; j++) {
+      const [a, b] = raggedRange(recIdx, j);
+      n += b - a;
+    }
+    return n;
+  };
 
   // Dedup by protocol name: each unique stimulus_type becomes one option whose
   // `row` is a representative sequential row, and whose child count sums all of
@@ -655,9 +704,10 @@ export async function readSequentialProtocols(
     const label =
       typeof raw === "string" ? raw : raw != null ? String(raw) : `row ${r}`;
     const [s, e] = raggedRange(simIdx, r);
+    const n = irtCountForSimRange(s, e);
     const cur = byName.get(label);
-    if (!cur) byName.set(label, { row: r, label, nChildren: e - s });
-    else cur.nChildren += e - s;
+    if (!cur) byName.set(label, { row: r, label, nChildren: n });
+    else cur.nChildren += n;
   }
   return [...byName.values()];
 }

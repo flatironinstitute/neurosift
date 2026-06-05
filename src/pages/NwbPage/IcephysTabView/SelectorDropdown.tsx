@@ -31,6 +31,10 @@ interface Props {
   // whose single `ramp` protocol caused the Protocol selector to vanish
   // and left the user with no obvious way to render anything).
   hideWhenSingleOption?: boolean;
+  // Cross-filtering: an option is rendered disabled (greyed, unselectable) when
+  // this returns false — i.e. that value does not co-occur with the other
+  // axes' current selections. "All" is never disabled.
+  optionEnabled?: (opt: SelectorOption) => boolean;
 }
 
 const SelectorDropdown: FunctionComponent<Props> = ({
@@ -42,6 +46,7 @@ const SelectorDropdown: FunctionComponent<Props> = ({
   error,
   childLabel,
   hideWhenSingleOption = true,
+  optionEnabled,
 }) => {
   if (error) {
     return (
@@ -114,8 +119,9 @@ const SelectorDropdown: FunctionComponent<Props> = ({
           const childCount = childLabel
             ? ` (${opt.nChildren} ${childLabel}${opt.nChildren === 1 ? "" : "s"})`
             : "";
+          const disabled = optionEnabled ? !optionEnabled(opt) : false;
           return (
-            <option key={opt.row} value={opt.row}>
+            <option key={opt.row} value={opt.row} disabled={disabled}>
               {opt.label}
               {childCount}
             </option>

@@ -7,6 +7,7 @@ interface Props {
   repRow: number | undefined; // upstream filter
   value: number | undefined;
   onChange: (row: number | undefined) => void;
+  optionEnabled?: (opt: SelectorOption) => boolean;
 }
 
 const ProtocolSelector: FunctionComponent<Props> = ({
@@ -14,6 +15,7 @@ const ProtocolSelector: FunctionComponent<Props> = ({
   repRow,
   value,
   onChange,
+  optionEnabled,
 }) => {
   const [options, setOptions] = useState<SelectorOption[] | null>(null);
   const [error, setError] = useState<string | undefined>();
@@ -47,6 +49,7 @@ const ProtocolSelector: FunctionComponent<Props> = ({
       // Protocol gates rendering, so stay visible even with one option.
       // See the design-decision note on SelectorDropdown.Props.
       hideWhenSingleOption={false}
+      optionEnabled={optionEnabled}
     />
   );
 };

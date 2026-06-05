@@ -1,4 +1,10 @@
-import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import {
+  CSSProperties,
+  FunctionComponent,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { getHdf5Group } from "../hdf5Interface";
 import ConditionSelector from "./ConditionSelector";
 import FamilyOverlayPlot from "./FamilyOverlayPlot";
@@ -6,7 +12,7 @@ import FamilySeparatePanels from "./FamilySeparatePanels";
 import ProtocolSelector from "./ProtocolSelector";
 import RepetitionSelector from "./RepetitionSelector";
 import TemporalDistribution from "./TemporalDistribution";
-import { ALL_ROW, ScopeSelection, useChain } from "./useChain";
+import { ALL_ROW, ResolvedSweep, ScopeSelection, useChain } from "./useChain";
 import { useSweepData } from "./useSweepData";
 import { useSweepTimes } from "./useSweepTimes";
 
@@ -18,11 +24,68 @@ interface IcephysTabViewProps {
 }
 
 const SIDEBAR_WIDTH = 320;
-const MAX_SWEEPS_AUTO = 60;
+// Large families are sampled rather than blocked: plot this many evenly-spaced
+// sweeps by default (overlay), with "plot more" / "plot all" to expand.
+const SAMPLE_SIZE = 30;
+// When faceted (Panels by set), sample each panel independently up to this many
+// sweeps, so every category is represented rather than dropped for being a small
+// share of the total. Scales with the same expand control as SAMPLE_SIZE.
+const PANEL_SAMPLE_SIZE = 12;
+// Above this many sweeps, "plot all" carries a "may be slow" caution.
+const PLOT_ALL_WARN = 60;
+
+// Panel grouping key for sampling, matching FamilySeparatePanels.groupOf so the
+// sampled groups line up with the panels actually rendered.
+function panelKey(
+  sw: ResolvedSweep,
+  axis: "protocol" | "condition" | "repetition" | "electrode",
+): string {
+  if (axis === "condition") return `c${sw.condRow ?? -1}`;
+  if (axis === "repetition") return `r${sw.repRow ?? -1}`;
+  if (axis === "electrode") return `e:${sw.electrode ?? "?"}`;
+  return `p:${sw.protocolLabel || `seq ${sw.seqRow}`}`;
+}
+
+// Evenly-spaced indices [0..total) of size <= n, inclusive of the first and last
+// so a sampled view of an ordered family spans its full range (light -> dark)
+// rather than just the head. Returns every index when total <= n.
+function sampleIndices(total: number, n: number): number[] {
+  if (total <= 0) return [];
+  if (total <= n) return Array.from({ length: total }, (_, i) => i);
+  if (n <= 1) return [0];
+  const out: number[] = [];
+  const seen = new Set<number>();
+  for (let i = 0; i < n; i++) {
+    const idx = Math.round((i * (total - 1)) / (n - 1));
+    if (!seen.has(idx)) {
+      seen.add(idx);
+      out.push(idx);
+    }
+  }
+  return out;
+}
 
 // Stable empty scope for resolving the full-session sweep set (used by the
 // expanded timeline's whole-session context backdrop).
 const EMPTY_SCOPE: ScopeSelection = {};
+
+// Selected-sweeps table cell styles.
+const selThStyle: CSSProperties = {
+  textAlign: "left",
+  padding: "2px 6px",
+  borderBottom: "1px solid #ddd",
+  position: "sticky",
+  top: 0,
+  background: "#fff",
+  whiteSpace: "nowrap",
+  fontWeight: 600,
+  color: "#666",
+};
+const selTdStyle: CSSProperties = {
+  padding: "2px 6px",
+  borderBottom: "1px solid #f0f0f0",
+  whiteSpace: "nowrap",
+};
 
 const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   nwbUrl,
@@ -32,7 +95,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
 }) => {
   const [hasIcephys, setHasIcephys] = useState<boolean | null>(null);
   const [scope, setScope] = useState<ScopeSelection>({});
-  const [forceRender, setForceRender] = useState(false);
+  const [sampleLimit, setSampleLimit] = useState(SAMPLE_SIZE);
   // Encoding channels (the "how to compare" controls, shown above the plot).
   // Filters (Condition/Repetition) stay in the sidebar as the "what" controls.
   const [colorBy, setColorBy] = useState<
@@ -58,6 +121,14 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     };
   }, [nwbUrl, isExpanded]);
 
+  // Reset selection + encoding when switching files: a selection valid in one
+  // file may be invalid in another.
+  useEffect(() => {
+    setScope({});
+    setColorBy("auto");
+    setPanelsBy("none");
+  }, [nwbUrl]);
+
   // Protocol is the anchor; Condition/Repetition are filters that narrow it.
   // Changing a filter keeps the chosen Protocol. Condition contains Repetition,
   // so changing Condition resets Repetition.
@@ -71,10 +142,9 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   const chain = useChain(nwbUrl, scope);
 
   // Render gate: any explicit selection at any tier commits to rendering.
-  // The MAX_SWEEPS_AUTO cap is the only safety net against runaway renders;
-  // for large scopes the user sees the yellow "Large scope" card with the
-  // suggested narrower tiers and a Render-anyway button rather than an
-  // automatic 191-sweep fetch storm.
+  // A large family is not blocked; it is sampled (an evenly-spaced subset is
+  // plotted, with "plot more"/"plot all" to expand), so there is no runaway
+  // full-family fetch on the first paint.
   const hasAnySelection =
     scope.condRow !== undefined ||
     scope.repRow !== undefined ||
@@ -90,12 +160,6 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   const shouldRender =
     hasAnySelection || (!hasNarrowableTier && chain.availableSweeps.length > 0);
 
-  const wouldRender = chain.sweeps.length;
-  const exceedsCap =
-    shouldRender && wouldRender > MAX_SWEEPS_AUTO && !forceRender;
-  const sweepsToLoad = !shouldRender || exceedsCap ? [] : chain.sweeps;
-  const sweepData = useSweepData(nwbUrl, sweepsToLoad);
-
   // Default ("auto") color grouping: by Protocol unless a specific Protocol is
   // pinned (then by sweep). The Color-by control can override this.
   const autoColor: "protocol" | "sweep" =
@@ -104,9 +168,8 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
       : "sweep";
 
   // The temporal distribution is metadata-only (starting_time + rate), so we
-  // compute it for the full in-scope sweep set even when that exceeds the
-  // render cap. Seeing where/when the sweeps fall is exactly what helps decide
-  // whether to commit to a heavy render.
+  // compute it for the full in-scope sweep set even when only a sample is
+  // plotted. Seeing where/when every sweep falls is the full-family context.
   const sweepTimes = useSweepTimes(nwbUrl, shouldRender ? chain.sweeps : []);
 
   // Whole-session sweep set + times: a gray backdrop showing the overall time
@@ -164,25 +227,81 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     if (nE > 0) fileSummary.push(plural(nE, "electrode"));
   }
 
-  // Selection metadata: distinct values of each custom per-sweep column over the
-  // in-scope sweeps (surfaces lab columns like protocol_type LP/SP, run, etc.).
-  const selectionMeta: { name: string; display: string }[] = [];
-  for (const col of chain.customColumns ?? []) {
+  // Cross-filter: enabled values per filter axis = those that co-occur with the
+  // OTHER axes' current selections. Disabled (greyed) options can't be picked,
+  // so an empty Protocol + Condition + Repetition combination can't be built.
+  const condSel =
+    scope.condRow !== undefined && scope.condRow !== ALL_ROW
+      ? scope.condRow
+      : undefined;
+  const repSel =
+    scope.repRow !== undefined && scope.repRow !== ALL_ROW
+      ? scope.repRow
+      : undefined;
+  const protoNameSel =
+    scope.protoRow !== undefined && scope.protoRow !== ALL_ROW
+      ? fileSweeps.find((s) => s.seqRow === scope.protoRow)?.protocolLabel
+      : undefined;
+  const enabledConds = new Set<number>();
+  const enabledReps = new Set<number>();
+  const enabledProtoNames = new Set<string>();
+  for (const s of fileSweeps) {
+    const okC = condSel === undefined || s.condRow === condSel;
+    const okR = repSel === undefined || s.repRow === repSel;
+    const okP = protoNameSel === undefined || s.protocolLabel === protoNameSel;
+    if (okR && okP && s.condRow !== undefined) enabledConds.add(s.condRow);
+    if (okC && okP && s.repRow !== undefined) enabledReps.add(s.repRow);
+    if (okC && okR && s.protocolLabel) enabledProtoNames.add(s.protocolLabel);
+  }
+  const haveProvenance = fileSweeps.length > 0;
+
+  // Selection table: the slice of the intracellular_recordings table for the
+  // selected sweeps. Information criterion (same as selectors): a column becomes
+  // a table column only if it VARIES across the selection; columns that are
+  // constant collapse into a single "shared" line, rather than repeating one
+  // value down every row.
+  // The table is metadata-only short strings in a scrolling box, so show every
+  // selected sweep. A low cap (e.g. 20) is actively misleading: rows are in
+  // sweep order, so the first N can all share one protocol while later sweeps
+  // span others, making a genuinely-varying column look constant. The high cap
+  // is just a DOM-size backstop for pathological flat files; real icephys
+  // scopes are well under it.
+  const SELECTION_ROW_CAP = 500;
+  const selSweeps = chain.sweeps;
+  const customCols = chain.customColumns ?? [];
+  const candidateCols: {
+    header: string;
+    get: (s: ResolvedSweep) => string | undefined;
+  }[] = [
+    { header: "protocol", get: (s) => s.protocolLabel },
+    {
+      header: "condition",
+      get: (s) => (s.condRow !== undefined ? String(s.condRow) : undefined),
+    },
+    {
+      header: "repetition",
+      get: (s) => (s.repRow !== undefined ? String(s.repRow) : undefined),
+    },
+    { header: "electrode", get: (s) => s.electrode },
+    ...customCols.map((c) => ({
+      header: c.name,
+      get: (s: ResolvedSweep) => c.values[s.irtRow],
+    })),
+  ];
+  const dfVaryingCols: typeof candidateCols = [];
+  const dfShared: { header: string; value: string }[] = [];
+  for (const col of candidateCols) {
     const vals = new Set<string>();
-    for (const s of chain.sweeps) {
-      const v = col.values[s.irtRow];
+    for (const s of selSweeps) {
+      const v = col.get(s);
       if (v !== undefined && v !== "") vals.add(v);
     }
     if (vals.size === 0) continue;
-    const arr = [...vals];
-    const display =
-      arr.length === 1
-        ? arr[0]
-        : arr.length <= 3
-          ? arr.join(", ")
-          : `${arr.length} values`;
-    selectionMeta.push({ name: col.name, display });
+    if (vals.size === 1)
+      dfShared.push({ header: col.header, value: [...vals][0] });
+    else dfVaryingCols.push(col);
   }
+  const dfRows = selSweeps.slice(0, SELECTION_ROW_CAP);
 
   // Resolve the two encoding channels, falling back when the chosen axis does
   // not vary (guards the render against a stale pick).
@@ -223,6 +342,56 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     | "repetition"
     | "electrode" = resolvedColor === resolvedPanels ? "sweep" : resolvedColor;
 
+  // Sampling: render an evenly-spaced subset so a large family paints fast.
+  // - Overlay (Panels by = none): one global stride of up to `sampleLimit`.
+  // - Faceted (Panels by set): sample each panel independently up to `perPanelCap`,
+  //   so every category is represented (a small panel is not dropped for being a
+  //   small share of the total). The per-panel cap scales with the same control,
+  //   so "plot more"/"plot all" grow both modes. The metadata-only timeline below
+  //   always shows every sweep.
+  const perPanelCap = Math.max(
+    1,
+    Math.round((PANEL_SAMPLE_SIZE / SAMPLE_SIZE) * sampleLimit),
+  );
+  let sweepsToLoad: ResolvedSweep[] = [];
+  if (shouldRender) {
+    if (resolvedPanels === "none") {
+      sweepsToLoad = sampleIndices(chain.sweeps.length, sampleLimit).map(
+        (i) => chain.sweeps[i],
+      );
+    } else {
+      const groups = new Map<string, number[]>();
+      chain.sweeps.forEach((sw, i) => {
+        const key = panelKey(sw, resolvedPanels);
+        const arr = groups.get(key);
+        if (arr) arr.push(i);
+        else groups.set(key, [i]);
+      });
+      const keep = new Set<number>();
+      for (const idxs of groups.values()) {
+        for (const j of sampleIndices(idxs.length, perPanelCap))
+          keep.add(idxs[j]);
+      }
+      sweepsToLoad = chain.sweeps.filter((_, i) => keep.has(i));
+    }
+  }
+  const isSampled = shouldRender && sweepsToLoad.length < chain.sweeps.length;
+  const sweepData = useSweepData(nwbUrl, sweepsToLoad);
+
+  // The timeline mirrors the visible categorical encoding: color by the Color
+  // axis when it is categorical, otherwise by the Panels axis. So when Color by
+  // = auto resolves to a per-sweep gradient but Panels splits by (say)
+  // repetition, the timeline picks up the same categorical repetition colors.
+  const timelineColor:
+    | "protocol"
+    | "sweep"
+    | "condition"
+    | "repetition"
+    | "electrode" =
+    resolvedColor === "sweep" && resolvedPanels !== "none"
+      ? resolvedPanels
+      : resolvedColor;
+
   // Reset stale encoding picks (e.g. after switching files or filtering).
   useEffect(() => {
     if (colorBy === "condition" && !condVaries) setColorBy("auto");
@@ -238,26 +407,11 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     if (panelsBy !== "none" && !ok) setPanelsBy("none");
   }, [panelsBy, protocolVaries, condVaries, repVaries, electrodeVaries]);
 
-  // List of tiers that exist in this file's chain but the user has not yet
-  // narrowed. Used in the "Large scope" warning to suggest concrete next
-  // picks the user can make to bring the sweep count under the cap.
-  const unsetNarrowableTiers: string[] = [];
-  if (
-    chain.chainDepth.includes("experimental_conditions") &&
-    scope.condRow === undefined
-  )
-    unsetNarrowableTiers.push("Condition");
-  if (chain.chainDepth.includes("repetitions") && scope.repRow === undefined)
-    unsetNarrowableTiers.push("Repetition");
-  if (
-    chain.chainDepth.includes("sequential_recordings") &&
-    scope.protoRow === undefined
-  )
-    unsetNarrowableTiers.push("Protocol");
-
-  // reset force-render whenever scope changes
+  // Reset the sample size to the default whenever scope changes, so a new
+  // selection starts from a small evenly-spaced sample rather than a previously
+  // expanded one.
   useEffect(() => {
-    setForceRender(false);
+    setSampleLimit(SAMPLE_SIZE);
   }, [scope.condRow, scope.repRow, scope.protoRow]);
 
   const plotWidth = useMemo(() => width - SIDEBAR_WIDTH - 32, [width]);
@@ -284,6 +438,70 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   const hasRep = chain.chainDepth.includes("repetitions");
   const hasSeq = chain.chainDepth.includes("sequential_recordings");
 
+  // Encoding bar (Color by / Panels by): how to compare. Rendered both above the
+  // plot and above the "Large scope" cap card, so the comparison controls (e.g.
+  // Color by = Electrode on a dual-electrode file) stay reachable even when the
+  // broad selection is over the auto-render cap. Changing them does not change
+  // the sweep count, so it is safe to keep them visible in the capped state.
+  const encodingBar = (
+    <div
+      style={{
+        display: "flex",
+        gap: 16,
+        alignItems: "center",
+        height: 28,
+        marginBottom: 8,
+        fontSize: 12,
+        color: "#444",
+      }}
+    >
+      <label>
+        Color by{" "}
+        <select
+          value={colorBy}
+          onChange={(e) =>
+            setColorBy(
+              e.target.value as
+                | "auto"
+                | "condition"
+                | "repetition"
+                | "electrode",
+            )
+          }
+          style={{ fontSize: 12, padding: "2px 4px" }}
+        >
+          <option value="auto">auto</option>
+          {condVaries && <option value="condition">Condition</option>}
+          {repVaries && <option value="repetition">Repetition</option>}
+          {electrodeVaries && <option value="electrode">Electrode</option>}
+        </select>
+      </label>
+      <label>
+        Panels by{" "}
+        <select
+          value={panelsBy}
+          onChange={(e) =>
+            setPanelsBy(
+              e.target.value as
+                | "none"
+                | "protocol"
+                | "condition"
+                | "repetition"
+                | "electrode",
+            )
+          }
+          style={{ fontSize: 12, padding: "2px 4px" }}
+        >
+          <option value="none">none</option>
+          {protocolVaries && <option value="protocol">Protocol</option>}
+          {condVaries && <option value="condition">Condition</option>}
+          {repVaries && <option value="repetition">Repetition</option>}
+          {electrodeVaries && <option value="electrode">Electrode</option>}
+        </select>
+      </label>
+    </div>
+  );
+
   return (
     <div style={{ display: "flex", width, height, overflow: "hidden" }}>
       <div
@@ -298,14 +516,18 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
       >
         <h3 style={{ marginTop: 0, marginBottom: 12 }}>Scope</h3>
 
-        {/* Protocol is the anchor (lists all protocols, independent of the
-            Condition/Repetition filters below). */}
+        {/* Protocol is the anchor (lists all protocols). Condition/Repetition
+            are filters. All three cross-filter: an option is greyed when it
+            does not co-occur with the other axes' current picks. */}
         {hasSeq && (
           <ProtocolSelector
             nwbUrl={nwbUrl}
             repRow={undefined}
             value={scope.protoRow}
             onChange={setProtoRow}
+            optionEnabled={
+              haveProvenance ? (o) => enabledProtoNames.has(o.label) : undefined
+            }
           />
         )}
         {hasCond && (
@@ -313,18 +535,24 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
             nwbUrl={nwbUrl}
             value={scope.condRow}
             onChange={setCondRow}
+            optionEnabled={
+              haveProvenance ? (o) => enabledConds.has(o.row) : undefined
+            }
           />
         )}
         {hasRep && (
           <RepetitionSelector
             nwbUrl={nwbUrl}
-            condRow={scope.condRow}
+            condRow={undefined}
             value={scope.repRow}
             onChange={setRepRow}
+            optionEnabled={
+              haveProvenance ? (o) => enabledReps.has(o.row) : undefined
+            }
           />
         )}
 
-        <h3 style={{ marginTop: 24, marginBottom: 8 }}>This recording</h3>
+        <h3 style={{ marginTop: 24, marginBottom: 8 }}>Summary</h3>
         <div
           style={{ fontSize: 12, color: "#555", lineHeight: 1.5 }}
           title={`${chain.chainDepth.length}/5 icephys tables present: ${chain.chainDepth.join(", ")}`}
@@ -333,27 +561,64 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
           <span style={{ color: "#aaa", cursor: "help" }}>&#9432;</span>
         </div>
 
-        {shouldRender && selectionMeta.length > 0 && (
-          <div style={{ marginTop: 12 }}>
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: "#666",
-                marginBottom: 4,
-              }}
-            >
-              Selection
-            </div>
-            <div style={{ fontSize: 12, color: "#555", lineHeight: 1.5 }}>
-              {selectionMeta.map((m) => (
-                <div key={m.name}>
-                  <span style={{ color: "#888" }}>{m.name}:</span> {m.display}
+        {shouldRender &&
+          selSweeps.length > 0 &&
+          (dfShared.length > 0 || dfVaryingCols.length > 0) && (
+            <div style={{ marginTop: 12 }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "#666",
+                  marginBottom: 4,
+                }}
+              >
+                {selSweeps.length === 1 ? "Selected sweep" : "Selected sweeps"}
+                {dfVaryingCols.length > 0 && selSweeps.length > dfRows.length
+                  ? ` (first ${dfRows.length} of ${selSweeps.length})`
+                  : ""}
+              </div>
+              {dfShared.length > 0 && (
+                <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>
+                  {dfShared.map((s) => `${s.header}: ${s.value}`).join(" · ")}
                 </div>
-              ))}
+              )}
+              {dfVaryingCols.length > 0 && (
+                <div style={{ maxHeight: 220, overflow: "auto" }}>
+                  <table
+                    style={{
+                      borderCollapse: "collapse",
+                      fontSize: 11,
+                      color: "#444",
+                    }}
+                  >
+                    <thead>
+                      <tr>
+                        <th style={selThStyle}>sweep</th>
+                        {dfVaryingCols.map((c) => (
+                          <th key={c.header} style={selThStyle}>
+                            {c.header}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dfRows.map((s) => (
+                        <tr key={s.irtRow}>
+                          <td style={selTdStyle}>{s.irtRow}</td>
+                          {dfVaryingCols.map((c) => (
+                            <td key={c.header} style={selTdStyle}>
+                              {c.get(s) ?? ""}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          )}
 
         {chain.error && chain.error !== "UNSUPPORTED_ASSET" && (
           <div style={{ marginTop: 12, color: "#b00", fontSize: 12 }}>
@@ -398,118 +663,83 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
           !shouldRender && (
             <div style={{ color: "#888", padding: 16, fontSize: 13 }}>
               Pick anything in the sidebar to start. Each pick narrows the
-              scope; the plot renders once at least one tier is set (and the
-              resulting sweep count is under {MAX_SWEEPS_AUTO}).
+              scope; the plot renders once at least one tier is set.
               {chain.availableSweeps.length > 0 && (
                 <div style={{ marginTop: 6, fontSize: 12, color: "#aaa" }}>
-                  ({chain.availableSweeps.length} sweeps in this file)
+                  (<strong>{chain.availableSweeps.length}</strong> sweeps in
+                  this file)
                 </div>
               )}
             </div>
           )}
 
-        {!chain.loading && shouldRender && exceedsCap && (
-          <div
-            style={{
-              padding: 16,
-              border: "1px solid #fc0",
-              background: "#fffbe6",
-              borderRadius: 4,
-              fontSize: 13,
-            }}
-          >
-            <div style={{ fontWeight: 600, marginBottom: 6 }}>
-              Large scope selected
+        {!chain.loading &&
+          shouldRender &&
+          chain.sweeps.length > 0 &&
+          encodingBar}
+
+        {!chain.loading &&
+          shouldRender &&
+          !chain.error &&
+          chain.sweeps.length === 0 && (
+            <div style={{ color: "#888", padding: 16, fontSize: 13 }}>
+              No sweeps match this selection — the chosen Protocol isn't
+              recorded in the selected Condition/Repetition. Clear a filter (set
+              it back to "All" / unset) or pick a different one.
             </div>
-            <div style={{ color: "#666" }}>
-              This selection would render {wouldRender} sweeps; the auto-render
-              cap is {MAX_SWEEPS_AUTO}.
-            </div>
-            {unsetNarrowableTiers.length > 0 && (
-              <div style={{ color: "#666", marginTop: 6 }}>
-                To narrow, pick a{" "}
-                {unsetNarrowableTiers.map((t, i) => (
-                  <span key={t}>
-                    {i > 0 &&
-                      (i === unsetNarrowableTiers.length - 1 ? " or " : ", ")}
-                    <strong>{t}</strong>
-                  </span>
-                ))}{" "}
-                from the sidebar.
+          )}
+
+        {!chain.loading && shouldRender && chain.sweeps.length > 0 && (
+          <>
+            {isSampled && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: 8,
+                  fontSize: 12,
+                  color: "#666",
+                }}
+              >
+                <span>
+                  showing {sweepsToLoad.length} of{" "}
+                  <strong>{chain.sweeps.length}</strong> sweeps{" "}
+                  {resolvedPanels === "none"
+                    ? "(evenly spaced)"
+                    : `(up to ${perPanelCap} per panel)`}
+                </span>
+                <button
+                  onClick={() =>
+                    setSampleLimit((l) => Math.min(chain.sweeps.length, l * 2))
+                  }
+                  style={{ fontSize: 12, padding: "2px 8px" }}
+                >
+                  plot more
+                </button>
+                <button
+                  onClick={() => setSampleLimit(chain.sweeps.length)}
+                  title={
+                    chain.sweeps.length > PLOT_ALL_WARN
+                      ? "Rendering the whole family may be slow."
+                      : undefined
+                  }
+                  style={{
+                    fontSize: 12,
+                    padding: "2px 8px",
+                    ...(chain.sweeps.length > PLOT_ALL_WARN
+                      ? {
+                          color: "#92600a",
+                          border: "1px solid #e0a800",
+                          background: "#fffbe6",
+                        }
+                      : {}),
+                  }}
+                >
+                  plot all{chain.sweeps.length > PLOT_ALL_WARN ? " (slow)" : ""}
+                </button>
               </div>
             )}
-            <button
-              onClick={() => setForceRender(true)}
-              style={{ marginTop: 8, padding: "4px 10px", fontSize: 12 }}
-            >
-              Render anyway
-            </button>
-          </div>
-        )}
-
-        {!chain.loading && shouldRender && !exceedsCap && (
-          <>
-            {/* Encoding bar: how to compare (filters live in the sidebar). */}
-            <div
-              style={{
-                display: "flex",
-                gap: 16,
-                alignItems: "center",
-                height: 28,
-                marginBottom: 8,
-                fontSize: 12,
-                color: "#444",
-              }}
-            >
-              <label>
-                Color by{" "}
-                <select
-                  value={colorBy}
-                  onChange={(e) =>
-                    setColorBy(
-                      e.target.value as
-                        | "auto"
-                        | "condition"
-                        | "repetition"
-                        | "electrode",
-                    )
-                  }
-                  style={{ fontSize: 12, padding: "2px 4px" }}
-                >
-                  <option value="auto">auto</option>
-                  {condVaries && <option value="condition">Condition</option>}
-                  {repVaries && <option value="repetition">Repetition</option>}
-                  {electrodeVaries && (
-                    <option value="electrode">Electrode</option>
-                  )}
-                </select>
-              </label>
-              <label>
-                Panels by{" "}
-                <select
-                  value={panelsBy}
-                  onChange={(e) =>
-                    setPanelsBy(
-                      e.target.value as
-                        | "none"
-                        | "protocol"
-                        | "condition"
-                        | "repetition"
-                        | "electrode",
-                    )
-                  }
-                  style={{ fontSize: 12, padding: "2px 4px" }}
-                >
-                  <option value="none">none</option>
-                  {protocolVaries && <option value="protocol">Protocol</option>}
-                  {condVaries && <option value="condition">Condition</option>}
-                  {repVaries && <option value="repetition">Repetition</option>}
-                  {electrodeVaries && (
-                    <option value="electrode">Electrode</option>
-                  )}
-                </select>
-              </label>
-            </div>
             {sweepData.loading && (
               <div style={{ color: "#888", marginBottom: 8 }}>
                 loading sweeps ({sweepData.loaded.length}/{chain.sweeps.length}
@@ -551,8 +781,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
             contextTimes={contextTimes.times}
             loading={sweepTimes.loading}
             width={plotWidth}
-            groupBy={resolvedColor}
-            panelsBy={resolvedPanels}
+            groupBy={timelineColor}
           />
         )}
       </div>

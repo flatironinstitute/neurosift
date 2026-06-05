@@ -11,20 +11,6 @@ interface Props {
   width: number;
   // Match the family overlay's grouping so colors agree across views.
   groupBy: "protocol" | "sweep" | "condition" | "repetition" | "electrode";
-  // The Panels axis: also separates the timeline into lanes, so setting Panels
-  // by (not just Color by) is reflected here.
-  panelsBy: "none" | "protocol" | "condition" | "repetition" | "electrode";
-}
-
-type Axis = "protocol" | "sweep" | "condition" | "repetition" | "electrode";
-
-// Stable string key for a sweep's group under a given axis (for lane grouping).
-function idForAxis(t: SweepTime, axis: Axis): string {
-  if (axis === "condition") return `c${t.condRow ?? -1}`;
-  if (axis === "repetition") return `r${t.repRow ?? -1}`;
-  if (axis === "electrode") return `e${t.electrode ?? "?"}`;
-  if (axis === "protocol") return `p${t.protocolLabel ?? `seq ${t.seqRow}`}`;
-  return `s${t.irtRow}`;
 }
 
 const HEIGHT = 84;
@@ -56,7 +42,6 @@ const TemporalDistribution: FunctionComponent<Props> = ({
   loading,
   width,
   groupBy,
-  panelsBy,
 }) => {
   const [hover, setHover] = useState<{
     x: number;
@@ -99,7 +84,6 @@ const TemporalDistribution: FunctionComponent<Props> = ({
       colorOf: colorsForGroups(order, groupBy),
       t0: Math.min(...times.map((t) => t.startSec)),
       latest: Math.max(...times.map((t) => t.startSec)),
-      selectedIrt: new Set(times.map((t) => t.irtRow)),
     };
   }, [times, groupBy]);
 
@@ -123,32 +107,36 @@ const TemporalDistribution: FunctionComponent<Props> = ({
   const xOf = (sec: number) =>
     MARGIN_L + ((sec - rangeT0) / Math.max(1e-6, rangeT1 - rangeT0)) * plotW;
 
-  // Lay the colored selection out in lanes so same-time sweeps (e.g. the two
-  // electrodes of a simultaneous recording) don't overlap into a single tick.
-  // Lane = the combination of the active categorical channels: the Panels axis,
-  // plus the Color axis when it is categorical (not the per-sweep gradient). So
-  // either Color-by or Panels-by separating an axis is reflected here.
-  const laneKey = (t: SweepTime): string => {
-    const parts: string[] = [];
-    if (panelsBy !== "none") parts.push("P" + idForAxis(t, panelsBy));
-    if (groupBy !== "sweep") parts.push("C" + idForAxis(t, groupBy));
-    return parts.join("|");
-  };
-  const laneIndex = new Map<string, number>();
-  for (const t of times) {
-    const k = laneKey(t);
-    if (!laneIndex.has(k)) laneIndex.set(k, laneIndex.size);
-  }
+  // Lanes: one row per electrode. The only sweeps that can share a session-time
+  // onset are those recorded on different electrodes at the same instant (NWB
+  // simultaneous_recordings); everything else is sequential and already
+  // separates along the time axis. So the lane axis is exactly the simultaneity
+  // axis: row = which electrode (a stable physical channel), color = the
+  // comparison (groupBy), x = time. Rows are independent of the Color/Panels
+  // encoding, so the strip layout stays stable as the encoding changes. See the
+  // design-doc "Lane layout" entry.
+  const MAX_LANES = 8;
+  const laneKey = (t: SweepTime): string => t.electrode ?? "(no electrode)";
+  // Stable order by electrode label (not first-appearance), so a given file
+  // always lays its electrodes out the same way.
+  const laneIds = Array.from(new Set(times.map(laneKey))).sort();
+  const laneIndex = new Map<string, number>(laneIds.map((k, i) => [k, i]));
   const laneTop = 4;
   const laneAreaH = svgH - AXIS_H - laneTop;
-  const useLanes = laneIndex.size >= 2 && laneIndex.size <= 8;
+  // With more electrodes than fit legibly, collapse to one centered row (bars
+  // may then overlap) rather than render unreadably thin lanes. Real files have
+  // one or two intracellular electrodes, so this rarely triggers.
+  const useLanes = laneIndex.size >= 2 && laneIndex.size <= MAX_LANES;
   const nLanes = useLanes ? laneIndex.size : 1;
   const laneH = laneAreaH / nLanes;
   const laneCenter = (t: SweepTime) =>
     useLanes
       ? laneTop + (laneIndex.get(laneKey(t)) ?? 0) * laneH + laneH / 2
       : yc;
-  const tickH = useLanes ? Math.max(8, laneH - 3) : 22;
+  // Signal bar fills its lane (full strip height when there's a single lane);
+  // its WIDTH is the sweep duration. Context lives on the axis (gray coverage),
+  // a different shape, so signal vs context read as different roles.
+  const tickH = Math.max(8, laneH - (useLanes ? 3 : 0));
 
   const total = contextTimes.length || times.length;
   const summary = sel
@@ -186,46 +174,50 @@ const TemporalDistribution: FunctionComponent<Props> = ({
       </div>
 
       <svg width={width} height={svgH} style={{ display: "block" }}>
-        {/* gray backdrop: every sweep in the session (skip the selected ones,
-            which are drawn colored on top) */}
-        {contextTimes.map((t) =>
-          sel?.selectedIrt.has(t.irtRow) ? null : (
+        {/* Whole-session gray backdrop: one translucent gray duration band per
+            session sweep, full strip height, drawn behind the signal so the
+            colored selection sits on top. Overlapping bands accumulate, so a
+            time region with many sweeps reads darker than a sparse one. Always
+            on (the per-sweep context is the point of the strip). */}
+        {contextTimes.map((t, i) => {
+          const x0 = xOf(t.startSec);
+          const x1 = xOf(t.startSec + (t.durationSec || 0));
+          return (
             <rect
-              key={`a-${t.irtRow}`}
-              x={xOf(t.startSec)}
+              key={`ctxb-${i}`}
+              x={x0}
               y={laneTop}
-              width={1.5}
+              width={Math.max(1.5, x1 - x0)}
               height={laneAreaH}
-              fill="#ececec"
-              onMouseEnter={() =>
-                setHover({
-                  x: xOf(t.startSec),
-                  y: yc,
-                  label: `sweep ${t.irtRow} @ ${fmtClock(t.startSec)}`,
-                })
-              }
-              onMouseLeave={() => setHover(null)}
+              fill="#c0c0c0"
+              fillOpacity={0.22}
             />
-          ),
-        )}
+          );
+        })}
 
-        {/* selection highlighted on top, laid out in lanes by group */}
+        {/* Signal: the selection as colored duration bars (start -> end), laid
+            out in lanes by group. The bar width is the sweep's duration, so a
+            selection spanning the whole session reads as a full-width bar, not
+            a start-point tick. (Context is the gray coverage on the axis.) */}
         {sel &&
           times.map((t) => {
             const id = sel.idOf(t);
             const color = sel.colorOf.get(id) || "#2171b5";
             const cy = laneCenter(t);
+            const x0 = xOf(t.startSec);
+            const x1 = xOf(t.startSec + (t.durationSec || 0));
             return (
               <rect
                 key={`s-${t.irtRow}`}
-                x={xOf(t.startSec)}
+                x={x0}
                 y={cy - tickH / 2}
-                width={2.5}
+                width={Math.max(2, x1 - x0)}
                 height={tickH}
+                rx={1}
                 fill={color}
                 onMouseEnter={() =>
                   setHover({
-                    x: xOf(t.startSec),
+                    x: x0,
                     y: cy,
                     label: `${sel.labelOf.get(id) || ""} · sweep ${
                       t.irtRow
@@ -247,7 +239,7 @@ const TemporalDistribution: FunctionComponent<Props> = ({
                 y1={axisY}
                 x2={MARGIN_L + plotW}
                 y2={axisY}
-                stroke="#ccc"
+                stroke="#ddd"
               />
               {axisTicks(rangeT0, rangeT1).map((tk, i) => (
                 <g key={i}>

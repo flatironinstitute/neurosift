@@ -4,9 +4,10 @@ import { readRepetitions, SelectorOption } from "./useChain";
 
 interface Props {
   nwbUrl: string;
-  condRow: number | undefined; // upstream filter
+  condRow: number | undefined; // upstream filter (pass undefined to list all)
   value: number | undefined;
   onChange: (row: number | undefined) => void;
+  optionEnabled?: (opt: SelectorOption) => boolean;
 }
 
 const RepetitionSelector: FunctionComponent<Props> = ({
@@ -14,6 +15,7 @@ const RepetitionSelector: FunctionComponent<Props> = ({
   condRow,
   value,
   onChange,
+  optionEnabled,
 }) => {
   const [options, setOptions] = useState<SelectorOption[] | null>(null);
   const [error, setError] = useState<string | undefined>();
@@ -44,6 +46,7 @@ const RepetitionSelector: FunctionComponent<Props> = ({
       childLabel="protocol"
       error={error}
       allowAll
+      optionEnabled={optionEnabled}
     />
   );
 };
