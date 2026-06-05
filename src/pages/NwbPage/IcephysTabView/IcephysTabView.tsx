@@ -3,8 +3,10 @@ import {
   FunctionComponent,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { getHdf5Group } from "../hdf5Interface";
 import ConditionSelector from "./ConditionSelector";
 import FacetLegend, { facetColors } from "./FacetLegend";
@@ -72,6 +74,47 @@ function sampleIndices(total: number, n: number): number[] {
 // expanded timeline's whole-session context backdrop).
 const EMPTY_SCOPE: ScopeSelection = {};
 
+// --- URL persistence of the icephys view ----------------------------------
+// The tab serializes its selection (Protocol/Condition/Repetition) and encoding
+// (Color by / Panels by / & by / window / lock y) into namespaced query params,
+// so a refresh or a copied link reproduces the view. Params are written with
+// replace (no history churn) and omitted at their default value (a fresh file
+// stays a clean URL). Read values are seeds only: the existing cardinality
+// gating and reset logic still validate them against the actual file.
+const COLOR_BY_VALUES = [
+  "auto",
+  "condition",
+  "repetition",
+  "electrode",
+  "cell",
+] as const;
+const PANELS_BY_VALUES = [
+  "none",
+  "protocol",
+  "condition",
+  "repetition",
+  "electrode",
+  "cell",
+] as const;
+
+function numParam(sp: URLSearchParams, key: string): number | undefined {
+  const v = sp.get(key);
+  if (v === null) return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+}
+function enumParam<T extends string>(
+  sp: URLSearchParams,
+  key: string,
+  allowed: readonly T[],
+  fallback: T,
+): T {
+  const v = sp.get(key);
+  return v !== null && (allowed as readonly string[]).includes(v)
+    ? (v as T)
+    : fallback;
+}
+
 // Selected-sweeps table cell styles.
 const selThStyle: CSSProperties = {
   textAlign: "left",
@@ -96,32 +139,45 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   height,
   isExpanded,
 }) => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
   const [hasIcephys, setHasIcephys] = useState<boolean | null>(null);
-  const [scope, setScope] = useState<ScopeSelection>({});
+  // Selection + encoding are seeded from the URL (a refresh / shared link), then
+  // kept in sync below; see the URL-persistence note above.
+  const [scope, setScope] = useState<ScopeSelection>(() => ({
+    protoRow: numParam(searchParams, "icephysProtocol"),
+    condRow: numParam(searchParams, "icephysCondition"),
+    repRow: numParam(searchParams, "icephysRepetition"),
+  }));
   const [sampleLimit, setSampleLimit] = useState(SAMPLE_SIZE);
   // Encoding channels (the "how to compare" controls, shown above the plot).
   // Filters (Condition/Repetition) stay in the sidebar as the "what" controls.
   const [colorBy, setColorBy] = useState<
     "auto" | "condition" | "repetition" | "electrode" | "cell"
-  >("auto");
+  >(() => enumParam(searchParams, "icephysColorBy", COLOR_BY_VALUES, "auto"));
   const [panelsBy, setPanelsBy] = useState<
     "none" | "protocol" | "condition" | "repetition" | "electrode" | "cell"
-  >("none");
+  >(() => enumParam(searchParams, "icephysPanelsBy", PANELS_BY_VALUES, "none"));
   // Optional second panel axis -> 2-D facet grid (rows = panelsBy, cols = this).
   const [panelsBy2, setPanelsBy2] = useState<
     "none" | "protocol" | "condition" | "repetition" | "electrode" | "cell"
-  >("none");
+  >(() => enumParam(searchParams, "icephysAndBy", PANELS_BY_VALUES, "none"));
   // Within-sweep x-window crop (ms), shared across all panels. Empty = full range.
-  const [xWindowStr, setXWindowStr] = useState<{ start: string; end: string }>({
-    start: "",
-    end: "",
-  });
+  const [xWindowStr, setXWindowStr] = useState<{ start: string; end: string }>(
+    () => ({
+      start: searchParams.get("icephysWindowStart") ?? "",
+      end: searchParams.get("icephysWindowEnd") ?? "",
+    }),
+  );
   // Lock the y-axis to a shared range across facet panels (per display unit) so
   // amplitudes are comparable. Opt-in (off by default): computing the shared
   // range is a pass over the loaded sample data, so it runs only when the user
   // turns it on, and only once the sample has loaded. Users can still box-zoom /
   // double-click each panel; unchecking releases the lock (autorange).
-  const [lockY, setLockY] = useState(false);
+  const [lockY, setLockY] = useState(
+    () => searchParams.get("icephysLockY") === "1",
+  );
 
   useEffect(() => {
     if (!isExpanded) return;
@@ -140,14 +196,60 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   }, [nwbUrl, isExpanded]);
 
   // Reset selection + encoding when switching files: a selection valid in one
-  // file may be invalid in another.
+  // file may be invalid in another. Skip the first run so URL-seeded state (a
+  // refresh / shared link) survives the initial mount; reset only on a real
+  // file change.
+  const persistedUrlRef = useRef<string | null>(null);
   useEffect(() => {
+    if (persistedUrlRef.current === null) {
+      persistedUrlRef.current = nwbUrl;
+      return;
+    }
+    if (persistedUrlRef.current === nwbUrl) return;
+    persistedUrlRef.current = nwbUrl;
     setScope({});
     setColorBy("auto");
     setPanelsBy("none");
     setPanelsBy2("none");
     setXWindowStr({ start: "", end: "" });
+    setLockY(false);
   }, [nwbUrl]);
+
+  // Mirror the icephys view into the URL (replace, default-omit) so a refresh or
+  // a copied link reproduces it. All synced controls are discrete, so this is
+  // one cheap replaceState per change; the equality guard prevents a navigate
+  // loop (after navigate, searchParams equals p, so the next run is a no-op).
+  useEffect(() => {
+    const p = new URLSearchParams(searchParams);
+    const put = (key: string, value: string | number | undefined) => {
+      if (value === undefined || value === "") p.delete(key);
+      else p.set(key, String(value));
+    };
+    put("icephysProtocol", scope.protoRow);
+    put("icephysCondition", scope.condRow);
+    put("icephysRepetition", scope.repRow);
+    put("icephysColorBy", colorBy === "auto" ? undefined : colorBy);
+    put("icephysPanelsBy", panelsBy === "none" ? undefined : panelsBy);
+    put("icephysAndBy", panelsBy2 === "none" ? undefined : panelsBy2);
+    put("icephysWindowStart", xWindowStr.start || undefined);
+    put("icephysWindowEnd", xWindowStr.end || undefined);
+    put("icephysLockY", lockY ? "1" : undefined);
+    if (p.toString() !== searchParams.toString()) {
+      navigate(`?${p.toString()}`, { replace: true });
+    }
+  }, [
+    scope.protoRow,
+    scope.condRow,
+    scope.repRow,
+    colorBy,
+    panelsBy,
+    panelsBy2,
+    xWindowStr.start,
+    xWindowStr.end,
+    lockY,
+    searchParams,
+    navigate,
+  ]);
 
   // Protocol is the anchor; Condition/Repetition are filters that narrow it.
   // Changing a filter keeps the chosen Protocol. Condition contains Repetition,
@@ -499,7 +601,9 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   // the same way the panels assign them, so the legend matches.
   const legendAxis = innerColor !== "sweep" ? innerColor : resolvedPanels;
   const facetLegend =
-    resolvedPanels !== "none" && sweepData.loaded.length > 0
+    resolvedPanels !== "none" &&
+    legendAxis !== "none" &&
+    sweepData.loaded.length > 0
       ? facetColors(sweepData.loaded, legendAxis)
       : null;
 
