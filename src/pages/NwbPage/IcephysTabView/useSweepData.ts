@@ -19,6 +19,7 @@ export type LoadedSweep = {
   repRow?: number;
   condRow?: number;
   electrode?: string;
+  cell?: string;
   protocolLabel?: string;
   response: SweepTrace;
   // null when the sweep has no real stimulus (IZeroClampSeries), see below.
@@ -188,6 +189,7 @@ export function useSweepData(
             repRow: sw.repRow,
             condRow: sw.condRow,
             electrode: sw.electrode,
+            cell: sw.cell,
             protocolLabel: sw.protocolLabel,
             response,
             stimulus,

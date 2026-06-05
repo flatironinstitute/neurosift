@@ -1,4 +1,5 @@
 import { FunctionComponent, useMemo } from "react";
+import { facetColors } from "./FacetLegend";
 import FamilyOverlayPlot from "./FamilyOverlayPlot";
 import { categorical } from "./palette";
 import { LoadedSweep } from "./useSweepData";
@@ -8,9 +9,21 @@ interface Props {
   width: number;
   height: number;
   // Which axis becomes one panel per value.
-  splitBy: "protocol" | "condition" | "repetition" | "electrode";
+  splitBy: "protocol" | "condition" | "repetition" | "electrode" | "cell";
   // How to color sweeps within each panel (the Color channel).
-  innerGroupBy: "protocol" | "sweep" | "condition" | "repetition" | "electrode";
+  innerGroupBy:
+    | "protocol"
+    | "sweep"
+    | "condition"
+    | "repetition"
+    | "electrode"
+    | "cell";
+  // Within-sweep x-window crop, applied to every panel (so the window is shared
+  // across panels). Null = autorange.
+  xRangeMs?: [number, number] | null;
+  // Fixed y-range per display unit, shared across panels (locked y). Undefined
+  // = each panel autoranges its own y.
+  yRangeByUnit?: Record<string, [number, number]>;
 }
 
 const PANEL_MIN_W = 300;
@@ -39,6 +52,9 @@ function groupOf(
       label: sw.electrode ?? "(no electrode)",
     };
   }
+  if (splitBy === "cell") {
+    return { key: `cell:${sw.cell ?? "?"}`, label: sw.cell ?? "(no cell)" };
+  }
   // protocol: split by name so the same protocol across repetitions is one panel
   const name = sw.protocolLabel || `seq ${sw.seqRow}`;
   return { key: `p:${name}`, label: name };
@@ -50,6 +66,8 @@ const FamilySeparatePanels: FunctionComponent<Props> = ({
   height,
   splitBy,
   innerGroupBy,
+  xRangeMs,
+  yRangeByUnit,
 }) => {
   const groups = useMemo(() => {
     const order: string[] = [];
@@ -75,6 +93,11 @@ const FamilySeparatePanels: FunctionComponent<Props> = ({
     Math.min(groups.length, Math.floor(width / PANEL_MIN_W)),
   );
   const panelW = Math.floor(width / cols);
+
+  // Shared categorical colors (when the inner color is categorical) so the
+  // panels and the sidebar legend agree. The legend itself is rendered in the
+  // sidebar by IcephysTabView, not here, to keep the crowded plot area clean.
+  const fc = innerColor !== "sweep" ? facetColors(sweeps, innerColor) : null;
 
   return (
     <div
@@ -111,7 +134,10 @@ const FamilySeparatePanels: FunctionComponent<Props> = ({
             width={panelW}
             height={PANEL_H - LABEL_H}
             groupBy={innerColor}
+            groupColors={fc?.colorOf}
             baseColor={innerColor === "sweep" ? categorical(i) : undefined}
+            xRangeMs={xRangeMs}
+            yRangeByUnit={yRangeByUnit}
             compact
           />
         </div>

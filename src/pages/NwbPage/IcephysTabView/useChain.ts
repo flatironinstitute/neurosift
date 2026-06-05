@@ -31,6 +31,10 @@ export type ResolvedSweep = {
   condRow?: number;
   // The within-simultaneous electrode (channel) identity, e.g. "electrode-0".
   electrode?: string;
+  // Cell identity from the standard IntracellularElectrode.cell_id field.
+  // Electrodes group into cells (e.g. a soma + its dendritic electrodes share a
+  // cell_id). Undefined on files that don't set it.
+  cell?: string;
   protocolLabel?: string;
   response: CompoundSweepRef;
   stimulus: CompoundSweepRef;
@@ -75,12 +79,16 @@ async function readIntArray(nwbUrl: string, path: string): Promise<number[]> {
 
 // Resolve an electrode reference cell to a short label (the electrode group's
 // name, e.g. "electrode-0"). Mirrors the ref-cell shapes handled in chainHelpers.
-function electrodeLabelFromRef(cell: any): string | undefined {
-  let path: string | undefined;
+function electrodePathFromRef(cell: any): string | undefined {
   if (cell && typeof cell === "object" && "_REFERENCE" in cell)
-    path = cell._REFERENCE?.path;
-  else if (cell && typeof cell === "object" && "path" in cell) path = cell.path;
-  else if (typeof cell === "string") path = cell;
+    return cell._REFERENCE?.path;
+  if (cell && typeof cell === "object" && "path" in cell) return cell.path;
+  if (typeof cell === "string") return cell;
+  return undefined;
+}
+
+function electrodeLabelFromRef(cell: any): string | undefined {
+  const path = electrodePathFromRef(cell);
   if (!path) return undefined;
   const parts = path.split("/").filter(Boolean);
   return parts[parts.length - 1] || undefined;
@@ -418,16 +426,47 @@ export function useChain(nwbUrl: string, scope: ScopeSelection): ChainResult {
           }
         }
 
-        // Electrode (channel) identity per IRT row, the within-simultaneous
-        // axis. Refs only resolve on the LINDI path; on the raw wasm path this
-        // stays undefined and the Electrode axis simply won't appear.
+        // Electrode (channel) identity + Cell identity per IRT row. Electrode is
+        // the within-simultaneous channel (the electrode group's name). Cell
+        // comes from the standard IntracellularElectrode.cell_id field, so a
+        // soma + its dendritic electrodes group under one cell. Refs only
+        // resolve on the LINDI path; on the raw wasm path these stay undefined
+        // and the axes simply won't appear.
         let electrodeLabels: (string | undefined)[] | null = null;
+        let cellLabels: (string | undefined)[] | null = null;
         try {
           const eData = await readCompoundArray(
             nwbUrl,
             `${IE_PREFIX}/intracellular_recordings/electrodes/electrode`,
           );
           electrodeLabels = eData.map(electrodeLabelFromRef);
+          // cell_id: one read per distinct electrode object.
+          const paths = Array.from(
+            new Set(
+              eData.map(electrodePathFromRef).filter(Boolean) as string[],
+            ),
+          );
+          const cellByPath = new Map<string, string>();
+          for (const p of paths) {
+            try {
+              const cid = (await getHdf5DatasetData(
+                nwbUrl,
+                `${p}/cell_id`,
+                {},
+              )) as any;
+              const v = Array.isArray(cid) ? cid[0] : cid;
+              if (v !== undefined && v !== null && String(v) !== "")
+                cellByPath.set(p, String(v));
+            } catch {
+              /* this electrode has no cell_id field */
+            }
+          }
+          if (cellByPath.size > 0) {
+            cellLabels = eData.map((c) => {
+              const p = electrodePathFromRef(c);
+              return p ? cellByPath.get(p) : undefined;
+            });
+          }
         } catch {
           electrodeLabels = null;
         }
@@ -440,6 +479,7 @@ export function useChain(nwbUrl: string, scope: ScopeSelection): ChainResult {
           electrode: electrodeLabels
             ? electrodeLabels[entry.irtRow]
             : undefined,
+          cell: cellLabels ? cellLabels[entry.irtRow] : undefined,
           protocolLabel:
             entry.seqRow !== undefined && seqLabels
               ? seqLabels[entry.seqRow]

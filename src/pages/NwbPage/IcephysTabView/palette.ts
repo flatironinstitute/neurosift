@@ -104,7 +104,13 @@ export function shadesOf(baseHex: string, t: number): string {
 //   groupBy "protocol" -> categorical Okabe-Ito.
 export function colorsForGroups(
   order: number[],
-  groupBy: "protocol" | "sweep" | "condition" | "repetition" | "electrode",
+  groupBy:
+    | "protocol"
+    | "sweep"
+    | "condition"
+    | "repetition"
+    | "electrode"
+    | "cell",
 ): Map<number, string> {
   const n = order.length;
   const tMin = Math.max(0, (5 - n) / 10);

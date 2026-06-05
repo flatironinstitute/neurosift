@@ -7,7 +7,9 @@ import {
 } from "react";
 import { getHdf5Group } from "../hdf5Interface";
 import ConditionSelector from "./ConditionSelector";
-import FamilyOverlayPlot from "./FamilyOverlayPlot";
+import FacetLegend, { facetColors } from "./FacetLegend";
+import FamilyFacetGrid from "./FamilyFacetGrid";
+import FamilyOverlayPlot, { pickDisplayUnit } from "./FamilyOverlayPlot";
 import FamilySeparatePanels from "./FamilySeparatePanels";
 import ProtocolSelector from "./ProtocolSelector";
 import RepetitionSelector from "./RepetitionSelector";
@@ -38,11 +40,12 @@ const PLOT_ALL_WARN = 60;
 // sampled groups line up with the panels actually rendered.
 function panelKey(
   sw: ResolvedSweep,
-  axis: "protocol" | "condition" | "repetition" | "electrode",
+  axis: "protocol" | "condition" | "repetition" | "electrode" | "cell",
 ): string {
   if (axis === "condition") return `c${sw.condRow ?? -1}`;
   if (axis === "repetition") return `r${sw.repRow ?? -1}`;
   if (axis === "electrode") return `e:${sw.electrode ?? "?"}`;
+  if (axis === "cell") return `cell:${sw.cell ?? "?"}`;
   return `p:${sw.protocolLabel || `seq ${sw.seqRow}`}`;
 }
 
@@ -99,11 +102,26 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   // Encoding channels (the "how to compare" controls, shown above the plot).
   // Filters (Condition/Repetition) stay in the sidebar as the "what" controls.
   const [colorBy, setColorBy] = useState<
-    "auto" | "condition" | "repetition" | "electrode"
+    "auto" | "condition" | "repetition" | "electrode" | "cell"
   >("auto");
   const [panelsBy, setPanelsBy] = useState<
-    "none" | "protocol" | "condition" | "repetition" | "electrode"
+    "none" | "protocol" | "condition" | "repetition" | "electrode" | "cell"
   >("none");
+  // Optional second panel axis -> 2-D facet grid (rows = panelsBy, cols = this).
+  const [panelsBy2, setPanelsBy2] = useState<
+    "none" | "protocol" | "condition" | "repetition" | "electrode" | "cell"
+  >("none");
+  // Within-sweep x-window crop (ms), shared across all panels. Empty = full range.
+  const [xWindowStr, setXWindowStr] = useState<{ start: string; end: string }>({
+    start: "",
+    end: "",
+  });
+  // Lock the y-axis to a shared range across facet panels (per display unit) so
+  // amplitudes are comparable. Opt-in (off by default): computing the shared
+  // range is a pass over the loaded sample data, so it runs only when the user
+  // turns it on, and only once the sample has loaded. Users can still box-zoom /
+  // double-click each panel; unchecking releases the lock (autorange).
+  const [lockY, setLockY] = useState(false);
 
   useEffect(() => {
     if (!isExpanded) return;
@@ -127,6 +145,8 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     setScope({});
     setColorBy("auto");
     setPanelsBy("none");
+    setPanelsBy2("none");
+    setXWindowStr({ start: "", end: "" });
   }, [nwbUrl]);
 
   // Protocol is the anchor; Condition/Repetition are filters that narrow it.
@@ -200,10 +220,14 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
       .map((s) => s.electrode)
       .filter((x) => x !== undefined),
   ).size;
+  const distinctCells = new Set(
+    chain.availableSweeps.map((s) => s.cell).filter((x) => x !== undefined),
+  ).size;
   const condVaries = distinctConds >= 2;
   const repVaries = distinctReps >= 2;
   const protocolVaries = distinctProtocols >= 2;
   const electrodeVaries = distinctElectrodes >= 2;
+  const cellVaries = distinctCells >= 2;
 
   // File-wide data summary for the sidebar (always-on orientation), from the
   // whole-session sweep set.
@@ -310,20 +334,24 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     | "sweep"
     | "condition"
     | "repetition"
-    | "electrode" =
+    | "electrode"
+    | "cell" =
     colorBy === "condition" && condVaries
       ? "condition"
       : colorBy === "repetition" && repVaries
         ? "repetition"
         : colorBy === "electrode" && electrodeVaries
           ? "electrode"
-          : autoColor;
+          : colorBy === "cell" && cellVaries
+            ? "cell"
+            : autoColor;
   const resolvedPanels:
     | "none"
     | "protocol"
     | "condition"
     | "repetition"
-    | "electrode" =
+    | "electrode"
+    | "cell" =
     panelsBy === "protocol" && protocolVaries
       ? "protocol"
       : panelsBy === "condition" && condVaries
@@ -332,15 +360,60 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
           ? "repetition"
           : panelsBy === "electrode" && electrodeVaries
             ? "electrode"
-            : "none";
-  // Inside a panel split by axis X, coloring by X is constant, so fall back to
-  // a per-sweep gradient within each panel.
+            : panelsBy === "cell" && cellVaries
+              ? "cell"
+              : "none";
+  // Optional second panel axis (the columns of a 2-D facet grid). Only when the
+  // first panel axis is set, the second varies, and it differs from the first.
+  const resolvedPanels2:
+    | "none"
+    | "protocol"
+    | "condition"
+    | "repetition"
+    | "electrode"
+    | "cell" =
+    resolvedPanels === "none"
+      ? "none"
+      : panelsBy2 === "protocol" &&
+          protocolVaries &&
+          resolvedPanels !== "protocol"
+        ? "protocol"
+        : panelsBy2 === "condition" &&
+            condVaries &&
+            resolvedPanels !== "condition"
+          ? "condition"
+          : panelsBy2 === "repetition" &&
+              repVaries &&
+              resolvedPanels !== "repetition"
+            ? "repetition"
+            : panelsBy2 === "electrode" &&
+                electrodeVaries &&
+                resolvedPanels !== "electrode"
+              ? "electrode"
+              : panelsBy2 === "cell" && cellVaries && resolvedPanels !== "cell"
+                ? "cell"
+                : "none";
+  // Inside a panel, the panel axis (or axes) is constant, so coloring by it would
+  // be flat; fall back to a per-sweep gradient.
   const innerColor:
     | "protocol"
     | "sweep"
     | "condition"
     | "repetition"
-    | "electrode" = resolvedColor === resolvedPanels ? "sweep" : resolvedColor;
+    | "electrode"
+    | "cell" =
+    resolvedColor === resolvedPanels || resolvedColor === resolvedPanels2
+      ? "sweep"
+      : resolvedColor;
+
+  // Within-sweep x-window crop (ms). Valid only when both ends parse and end >
+  // start; otherwise null (autorange). Shared across all panels.
+  const xwStart = parseFloat(xWindowStr.start);
+  const xwEnd = parseFloat(xWindowStr.end);
+  const xRangeMs: [number, number] | null =
+    Number.isFinite(xwStart) && Number.isFinite(xwEnd) && xwEnd > xwStart
+      ? [xwStart, xwEnd]
+      : null;
 
   // Sampling: render an evenly-spaced subset so a large family paints fast.
   // - Overlay (Panels by = none): one global stride of up to `sampleLimit`.
@@ -362,7 +435,13 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     } else {
       const groups = new Map<string, number[]>();
       chain.sweeps.forEach((sw, i) => {
-        const key = panelKey(sw, resolvedPanels);
+        // Sample per facet cell: one axis (1-D) or the (row, col) pair (2-D).
+        const key =
+          resolvedPanels2 === "none"
+            ? panelKey(sw, resolvedPanels)
+            : panelKey(sw, resolvedPanels) +
+              "|" +
+              panelKey(sw, resolvedPanels2);
         const arr = groups.get(key);
         if (arr) arr.push(i);
         else groups.set(key, [i]);
@@ -378,34 +457,114 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   const isSampled = shouldRender && sweepsToLoad.length < chain.sweeps.length;
   const sweepData = useSweepData(nwbUrl, sweepsToLoad);
 
+  // Shared y-range per display unit (mV, pA, ...) across faceted panels, so a
+  // locked y makes amplitudes comparable. Only computed for faceted views, and
+  // only once the sample has loaded (avoids repeated full passes mid-load).
+  const yRangeByUnit = useMemo<
+    Record<string, [number, number]> | undefined
+  >(() => {
+    if (resolvedPanels === "none" || !lockY || sweepData.loading)
+      return undefined;
+    const acc: Record<string, [number, number]> = {};
+    const track = (unit: string, ys: Float32Array, scale: number) => {
+      let lo = acc[unit]?.[0] ?? Infinity;
+      let hi = acc[unit]?.[1] ?? -Infinity;
+      for (let i = 0; i < ys.length; i++) {
+        const v = ys[i] * scale;
+        if (v < lo) lo = v;
+        if (v > hi) hi = v;
+      }
+      if (lo <= hi) acc[unit] = [lo, hi];
+    };
+    for (const sw of sweepData.loaded) {
+      const ru = pickDisplayUnit(sw.response.unit);
+      track(ru.label, sw.response.y, ru.scale);
+      if (sw.stimulus) {
+        const su = pickDisplayUnit(sw.stimulus.unit);
+        track(su.label, sw.stimulus.y, su.scale);
+      }
+    }
+    // Pad 5% so traces aren't flush against the panel edge.
+    for (const k of Object.keys(acc)) {
+      const [lo, hi] = acc[k];
+      const pad = (hi - lo) * 0.05 || 1;
+      acc[k] = [lo - pad, hi + pad];
+    }
+    return Object.keys(acc).length ? acc : undefined;
+  }, [sweepData.loaded, sweepData.loading, resolvedPanels, lockY]);
+
+  // Faceted-view color legend, rendered in the sidebar (the plot area is busy).
+  // Keyed to the inner-color axis when it is categorical, otherwise to the panel
+  // axis (whose per-panel hue is the categorical encoding). Colors are computed
+  // the same way the panels assign them, so the legend matches.
+  const legendAxis = innerColor !== "sweep" ? innerColor : resolvedPanels;
+  const facetLegend =
+    resolvedPanels !== "none" && sweepData.loaded.length > 0
+      ? facetColors(sweepData.loaded, legendAxis)
+      : null;
+
   // The timeline mirrors the visible categorical encoding: color by the Color
   // axis when it is categorical, otherwise by the Panels axis. So when Color by
   // = auto resolves to a per-sweep gradient but Panels splits by (say)
   // repetition, the timeline picks up the same categorical repetition colors.
+  const timelineColorRaw =
+    resolvedColor === "sweep" && resolvedPanels !== "none"
+      ? resolvedPanels
+      : resolvedColor;
+  // The timeline strip has no Cell axis (its lanes are electrodes), so a
+  // cell-colored selection is shown there by electrode instead.
   const timelineColor:
     | "protocol"
     | "sweep"
     | "condition"
     | "repetition"
     | "electrode" =
-    resolvedColor === "sweep" && resolvedPanels !== "none"
-      ? resolvedPanels
-      : resolvedColor;
+    timelineColorRaw === "cell" ? "electrode" : timelineColorRaw;
 
   // Reset stale encoding picks (e.g. after switching files or filtering).
   useEffect(() => {
     if (colorBy === "condition" && !condVaries) setColorBy("auto");
     if (colorBy === "repetition" && !repVaries) setColorBy("auto");
     if (colorBy === "electrode" && !electrodeVaries) setColorBy("auto");
-  }, [colorBy, condVaries, repVaries, electrodeVaries]);
+    if (colorBy === "cell" && !cellVaries) setColorBy("auto");
+  }, [colorBy, condVaries, repVaries, electrodeVaries, cellVaries]);
   useEffect(() => {
     const ok =
       (panelsBy === "protocol" && protocolVaries) ||
       (panelsBy === "condition" && condVaries) ||
       (panelsBy === "repetition" && repVaries) ||
-      (panelsBy === "electrode" && electrodeVaries);
+      (panelsBy === "electrode" && electrodeVaries) ||
+      (panelsBy === "cell" && cellVaries);
     if (panelsBy !== "none" && !ok) setPanelsBy("none");
-  }, [panelsBy, protocolVaries, condVaries, repVaries, electrodeVaries]);
+  }, [
+    panelsBy,
+    protocolVaries,
+    condVaries,
+    repVaries,
+    electrodeVaries,
+    cellVaries,
+  ]);
+  // Reset the second panel axis when it becomes invalid (no first axis, same as
+  // the first, or no longer varies).
+  useEffect(() => {
+    if (panelsBy2 === "none") return;
+    const varies =
+      (panelsBy2 === "protocol" && protocolVaries) ||
+      (panelsBy2 === "condition" && condVaries) ||
+      (panelsBy2 === "repetition" && repVaries) ||
+      (panelsBy2 === "electrode" && electrodeVaries) ||
+      (panelsBy2 === "cell" && cellVaries);
+    if (panelsBy === "none" || panelsBy2 === panelsBy || !varies)
+      setPanelsBy2("none");
+  }, [
+    panelsBy,
+    panelsBy2,
+    protocolVaries,
+    condVaries,
+    repVaries,
+    electrodeVaries,
+    cellVaries,
+  ]);
 
   // Reset the sample size to the default whenever scope changes, so a new
   // selection starts from a small evenly-spaced sample rather than a previously
@@ -465,7 +624,8 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
                 | "auto"
                 | "condition"
                 | "repetition"
-                | "electrode",
+                | "electrode"
+                | "cell",
             )
           }
           style={{ fontSize: 12, padding: "2px 4px" }}
@@ -474,6 +634,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
           {condVaries && <option value="condition">Condition</option>}
           {repVaries && <option value="repetition">Repetition</option>}
           {electrodeVaries && <option value="electrode">Electrode</option>}
+          {cellVaries && <option value="cell">Cell</option>}
         </select>
       </label>
       <label>
@@ -487,7 +648,8 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
                 | "protocol"
                 | "condition"
                 | "repetition"
-                | "electrode",
+                | "electrode"
+                | "cell",
             )
           }
           style={{ fontSize: 12, padding: "2px 4px" }}
@@ -497,8 +659,90 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
           {condVaries && <option value="condition">Condition</option>}
           {repVaries && <option value="repetition">Repetition</option>}
           {electrodeVaries && <option value="electrode">Electrode</option>}
+          {cellVaries && <option value="cell">Cell</option>}
         </select>
       </label>
+      {panelsBy !== "none" && (
+        <label>
+          &amp; by{" "}
+          <select
+            value={panelsBy2}
+            onChange={(e) =>
+              setPanelsBy2(
+                e.target.value as
+                  | "none"
+                  | "protocol"
+                  | "condition"
+                  | "repetition"
+                  | "electrode"
+                  | "cell",
+              )
+            }
+            style={{ fontSize: 12, padding: "2px 4px" }}
+          >
+            <option value="none">none</option>
+            {protocolVaries && panelsBy !== "protocol" && (
+              <option value="protocol">Protocol</option>
+            )}
+            {condVaries && panelsBy !== "condition" && (
+              <option value="condition">Condition</option>
+            )}
+            {repVaries && panelsBy !== "repetition" && (
+              <option value="repetition">Repetition</option>
+            )}
+            {electrodeVaries && panelsBy !== "electrode" && (
+              <option value="electrode">Electrode</option>
+            )}
+            {cellVaries && panelsBy !== "cell" && (
+              <option value="cell">Cell</option>
+            )}
+          </select>
+        </label>
+      )}
+      <label>
+        window (ms){" "}
+        <input
+          type="number"
+          value={xWindowStr.start}
+          placeholder="start"
+          onChange={(e) =>
+            setXWindowStr((w) => ({ ...w, start: e.target.value }))
+          }
+          style={{ width: 56, fontSize: 12, padding: "2px 4px" }}
+        />
+        {" - "}
+        <input
+          type="number"
+          value={xWindowStr.end}
+          placeholder="end"
+          onChange={(e) =>
+            setXWindowStr((w) => ({ ...w, end: e.target.value }))
+          }
+          style={{ width: 56, fontSize: 12, padding: "2px 4px" }}
+        />
+        {(xWindowStr.start !== "" || xWindowStr.end !== "") && (
+          <button
+            onClick={() => setXWindowStr({ start: "", end: "" })}
+            style={{ marginLeft: 4, fontSize: 11, padding: "1px 6px" }}
+          >
+            full
+          </button>
+        )}
+      </label>
+      {panelsBy !== "none" && (
+        <label
+          style={{ display: "flex", alignItems: "center", gap: 4 }}
+          title="Share one y-scale across panels (per unit) so amplitudes are comparable. Off = each panel autoscales."
+        >
+          <input
+            type="checkbox"
+            checked={lockY}
+            onChange={(e) => setLockY(e.target.checked)}
+            style={{ margin: 0 }}
+          />
+          lock y
+        </label>
+      )}
     </div>
   );
 
@@ -619,6 +863,22 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
               )}
             </div>
           )}
+
+        {facetLegend && facetLegend.order.length > 0 && (
+          <div style={{ marginTop: 12 }}>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: "#666",
+                marginBottom: 2,
+              }}
+            >
+              Colors ({legendAxis})
+            </div>
+            <FacetLegend categorical={facetLegend} />
+          </div>
+        )}
 
         {chain.error && chain.error !== "UNSUPPORTED_ASSET" && (
           <div style={{ marginTop: 12, color: "#b00", fontSize: 12 }}>
@@ -757,8 +1017,9 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
                   (sweepData.loading ? 24 : 0)
                 }
                 groupBy={resolvedColor}
+                xRangeMs={xRangeMs}
               />
-            ) : (
+            ) : resolvedPanels2 === "none" ? (
               <FamilySeparatePanels
                 sweeps={sweepData.loaded}
                 width={plotWidth}
@@ -770,6 +1031,24 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
                 }
                 splitBy={resolvedPanels}
                 innerGroupBy={innerColor}
+                xRangeMs={xRangeMs}
+                yRangeByUnit={yRangeByUnit}
+              />
+            ) : (
+              <FamilyFacetGrid
+                sweeps={sweepData.loaded}
+                width={plotWidth}
+                height={
+                  plotHeight -
+                  timelineHeight -
+                  36 -
+                  (sweepData.loading ? 24 : 0)
+                }
+                rowAxis={resolvedPanels}
+                colAxis={resolvedPanels2}
+                innerGroupBy={innerColor}
+                xRangeMs={xRangeMs}
+                yRangeByUnit={yRangeByUnit}
               />
             )}
           </>

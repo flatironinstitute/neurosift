@@ -8,7 +8,10 @@ import { LoadedSweep } from "./useSweepData";
 // after applying `conversion`, but in icephys the conventional units used in
 // figures are mV and pA. If the file's unit string is already an offset unit
 // (e.g. "millivolts"), we leave the data untouched.
-function pickDisplayUnit(siUnit: string): { label: string; scale: number } {
+export function pickDisplayUnit(siUnit: string): {
+  label: string;
+  scale: number;
+} {
   const u = siUnit.toLowerCase().trim();
   if (u === "volts" || u === "v") return { label: "mV", scale: 1e3 };
   if (u === "amperes" || u === "ampere" || u === "a")
@@ -63,6 +66,53 @@ function categorical(i: number): string {
   ];
 }
 
+export type GroupBy =
+  | "protocol"
+  | "sweep"
+  | "condition"
+  | "repetition"
+  | "electrode"
+  | "cell";
+
+// Stable (id, label) for a sweep under a grouping axis. The ids are global
+// (condRow/repRow/seqRow, or internId for string axes), so the same group maps
+// to the same id across panels — which lets a shared legend's colors match.
+export function groupOf(
+  sw: LoadedSweep,
+  groupBy: GroupBy,
+): { id: number; label: string } {
+  if (groupBy === "condition")
+    return {
+      id: sw.condRow ?? -1,
+      label:
+        sw.condRow !== undefined ? `condition ${sw.condRow}` : "(no condition)",
+    };
+  if (groupBy === "repetition")
+    return {
+      id: sw.repRow ?? -1,
+      label:
+        sw.repRow !== undefined ? `repetition ${sw.repRow}` : "(no repetition)",
+    };
+  if (groupBy === "electrode")
+    return {
+      id: internId(sw.electrode ?? "?"),
+      label: sw.electrode ?? "(no electrode)",
+    };
+  if (groupBy === "cell")
+    return {
+      id: internId("cell:" + (sw.cell ?? "?")),
+      label: sw.cell ?? "(no cell)",
+    };
+  if (groupBy === "protocol" && sw.seqRow !== undefined) {
+    // Key by protocol name, not seqRow: the same protocol run across several
+    // sequential recordings (i.e. repetitions) should share one color and one
+    // legend entry, not get a fresh color per recording.
+    const name = sw.protocolLabel || `seq ${sw.seqRow}`;
+    return { id: internId("p:" + name), label: name };
+  }
+  return { id: sw.irtRow, label: `sweep ${sw.irtRow}` };
+}
+
 interface Props {
   sweeps: LoadedSweep[];
   width: number;
@@ -71,7 +121,11 @@ interface Props {
   // "sweep": one legend entry per sweep.
   // "condition"/"repetition": "compare by" faceting — one entry per
   // experimental condition / repetition the sweep descended from.
-  groupBy: "protocol" | "sweep" | "condition" | "repetition" | "electrode";
+  groupBy: GroupBy;
+  // Shared categorical color map (group id -> color), so faceted panels and the
+  // shared legend agree on colors. Used only for categorical groupings; the
+  // per-sweep gradient ignores it. Falls back to local categorical() if absent.
+  groupColors?: Map<number, string>;
   // Compact mode for the small "Separate panels" view: drop the legend, tighten
   // margins, and shrink axis titles to bare units so they don't overlap in a
   // small panel.
@@ -80,6 +134,14 @@ interface Props {
   // this base hue instead of the default Blues — used by Separate panels so each
   // panel's gradient matches that group's categorical color.
   baseColor?: string;
+  // Crop the within-sweep x-axis to this [startMs, endMs] window (display only).
+  // The stimulus axis follows via `matches: "x"`. Null/undefined = autorange.
+  xRangeMs?: [number, number] | null;
+  // Fixed y-range per display unit (e.g. { mV: [..], pA: [..] }) so faceted
+  // panels share a common y-scale. The response axis uses the entry for its
+  // unit, the stimulus axis the entry for its unit. Absent unit = autorange.
+  // Not locked (no `fixedrange`), so the user can still zoom/double-click.
+  yRangeByUnit?: Record<string, [number, number]>;
 }
 
 const FamilyOverlayPlot: FunctionComponent<Props> = ({
@@ -87,8 +149,11 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
   width,
   height,
   groupBy,
+  groupColors,
   compact = false,
   baseColor,
+  xRangeMs,
+  yRangeByUnit,
 }) => {
   const { data, layout } = useMemo(() => {
     const data: any[] = [];
@@ -110,45 +175,12 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
     // scope (user picked "All" explicitly; respect it). To see sweep-level
     // gradient on a single-protocol file, pick the Protocol specifically
     // rather than "All".
-    type GroupInfo = { id: number; label: string };
-    const groupOf = (sw: LoadedSweep): GroupInfo => {
-      if (groupBy === "condition") {
-        return {
-          id: sw.condRow ?? -1,
-          label:
-            sw.condRow !== undefined
-              ? `condition ${sw.condRow}`
-              : "(no condition)",
-        };
-      }
-      if (groupBy === "repetition") {
-        return {
-          id: sw.repRow ?? -1,
-          label:
-            sw.repRow !== undefined
-              ? `repetition ${sw.repRow}`
-              : "(no repetition)",
-        };
-      }
-      if (groupBy === "electrode") {
-        return {
-          id: internId(sw.electrode ?? "?"),
-          label: sw.electrode ?? "(no electrode)",
-        };
-      }
-      if (groupBy === "protocol" && sw.seqRow !== undefined) {
-        return {
-          id: sw.seqRow,
-          label: sw.protocolLabel || `seq ${sw.seqRow}`,
-        };
-      }
-      return { id: sw.irtRow, label: `sweep ${sw.irtRow}` };
-    };
+    const gOf = (sw: LoadedSweep) => groupOf(sw, groupBy);
 
     const groupOrder: number[] = [];
     const groupLabels = new Map<number, string>();
     for (const sw of sweeps) {
-      const g = groupOf(sw);
+      const g = gOf(sw);
       if (!groupLabels.has(g.id)) {
         groupOrder.push(g.id);
         groupLabels.set(g.id, g.label);
@@ -168,14 +200,16 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
         const t = tMin + u * (1 - tMin);
         color = baseColor ? shadesOf(baseColor, t) : sequential(t);
       } else {
-        color = categorical(i);
+        // Prefer the shared (cross-panel) color map so faceted panels and the
+        // shared legend agree; fall back to local order.
+        color = groupColors?.get(gid) ?? categorical(i);
       }
       colorOfGroup.set(gid, color);
     });
     const legendShownFor = new Set<number>();
 
     sweeps.forEach((sw) => {
-      const g = groupOf(sw);
+      const g = gOf(sw);
       const color = colorOfGroup.get(g.id) || "#444";
       const showInLegend = !legendShownFor.has(g.id);
       if (showInLegend) legendShownFor.add(g.id);
@@ -234,6 +268,15 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
       yanchor: "top",
       font: { size: 11 },
     };
+    // Within-sweep x-window crop (display only). Applied to the primary x-axis;
+    // the stimulus x-axis follows via `matches: "x"`.
+    const xr = xRangeMs ? { range: xRangeMs, autorange: false } : {};
+    // Fixed (shared-across-facets) y-range per unit. Set `range` only, not
+    // `fixedrange`, so the user can still box-zoom / double-click each panel.
+    const yrResp = yRangeByUnit?.[respUnit.label];
+    const yrStim = yRangeByUnit?.[stimUnit.label];
+    const yResp = yrResp ? { range: yrResp, autorange: false } : {};
+    const yStim = yrStim ? { range: yrStim, autorange: false } : {};
     // No-stimulus families (IZeroClamp) get a single response panel filling the
     // height, with the time axis on the response plot itself.
     const layout: any = noStimulus
@@ -250,6 +293,7 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
             },
             tickfont,
             showgrid: true,
+            ...xr,
           },
           yaxis: {
             domain: [0, 1],
@@ -259,6 +303,7 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
             },
             tickfont,
             showgrid: true,
+            ...yResp,
           },
           showlegend: !compact,
           legend,
@@ -274,6 +319,7 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
             anchor: "y",
             showticklabels: false,
             showgrid: true,
+            ...xr,
           },
           yaxis: {
             domain: [0.28, 1],
@@ -283,6 +329,7 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
             },
             tickfont,
             showgrid: true,
+            ...yResp,
           },
           xaxis2: {
             domain: [0, 1],
@@ -303,6 +350,7 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
             },
             tickfont,
             showgrid: true,
+            ...yStim,
           },
           showlegend: !compact,
           legend,
@@ -310,7 +358,17 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
         };
 
     return { data, layout };
-  }, [sweeps, width, height, groupBy, compact, baseColor]);
+  }, [
+    sweeps,
+    width,
+    height,
+    groupBy,
+    groupColors,
+    compact,
+    baseColor,
+    xRangeMs,
+    yRangeByUnit,
+  ]);
 
   if (sweeps.length === 0) {
     return (
