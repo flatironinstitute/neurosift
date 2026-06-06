@@ -88,6 +88,7 @@ const EMPTY_SCOPE: ScopeSelection = {};
 // gating and reset logic still validate them against the actual file.
 const COLOR_BY_VALUES = [
   "auto",
+  "protocol",
   "condition",
   "repetition",
   "electrode",
@@ -159,7 +160,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   // Encoding channels (the "how to compare" controls, shown above the plot).
   // Filters (Condition/Repetition) stay in the sidebar as the "what" controls.
   const [colorBy, setColorBy] = useState<
-    "auto" | "condition" | "repetition" | "electrode" | "cell"
+    "auto" | "protocol" | "condition" | "repetition" | "electrode" | "cell"
   >(() => enumParam(searchParams, "icephysColorBy", COLOR_BY_VALUES, "auto"));
   const [panelsBy, setPanelsBy] = useState<
     "none" | "protocol" | "condition" | "repetition" | "electrode" | "cell"
@@ -443,15 +444,17 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     | "repetition"
     | "electrode"
     | "cell" =
-    colorBy === "condition" && condVaries
-      ? "condition"
-      : colorBy === "repetition" && repVaries
-        ? "repetition"
-        : colorBy === "electrode" && electrodeVaries
-          ? "electrode"
-          : colorBy === "cell" && cellVaries
-            ? "cell"
-            : autoColor;
+    colorBy === "protocol" && protocolVaries
+      ? "protocol"
+      : colorBy === "condition" && condVaries
+        ? "condition"
+        : colorBy === "repetition" && repVaries
+          ? "repetition"
+          : colorBy === "electrode" && electrodeVaries
+            ? "electrode"
+            : colorBy === "cell" && cellVaries
+              ? "cell"
+              : autoColor;
   const resolvedPanels:
     | "none"
     | "protocol"
@@ -637,12 +640,14 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   // like the axis does not vary). Once loaded, the gate runs and validates.
   useEffect(() => {
     if (chain.loading) return;
+    if (colorBy === "protocol" && !protocolVaries) setColorBy("auto");
     if (colorBy === "condition" && !condVaries) setColorBy("auto");
     if (colorBy === "repetition" && !repVaries) setColorBy("auto");
     if (colorBy === "electrode" && !electrodeVaries) setColorBy("auto");
     if (colorBy === "cell" && !cellVaries) setColorBy("auto");
   }, [
     colorBy,
+    protocolVaries,
     condVaries,
     repVaries,
     electrodeVaries,
@@ -747,6 +752,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
             setColorBy(
               e.target.value as
                 | "auto"
+                | "protocol"
                 | "condition"
                 | "repetition"
                 | "electrode"
@@ -756,6 +762,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
           style={{ fontSize: 12, padding: "2px 4px" }}
         >
           <option value="auto">auto</option>
+          {protocolVaries && <option value="protocol">Protocol</option>}
           {condVaries && <option value="condition">Condition</option>}
           {repVaries && <option value="repetition">Repetition</option>}
           {electrodeVaries && <option value="electrode">Electrode</option>}
