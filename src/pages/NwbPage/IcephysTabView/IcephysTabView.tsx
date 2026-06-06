@@ -32,10 +32,6 @@ const SIDEBAR_WIDTH = 320;
 // Large families are sampled rather than blocked: plot this many evenly-spaced
 // sweeps by default (overlay), with "plot more" / "plot all" to expand.
 const SAMPLE_SIZE = 30;
-// When faceted (Panels by set), sample each panel independently up to this many
-// sweeps, so every category is represented rather than dropped for being a small
-// share of the total. Scales with the same expand control as SAMPLE_SIZE.
-const PANEL_SAMPLE_SIZE = 12;
 // Above this many sweeps, "plot all" carries a "may be slow" caution.
 const PLOT_ALL_WARN = 60;
 // The app's global StatusBarDiv (the "v0.1.0 ..." footer) is position:absolute
@@ -63,6 +59,21 @@ function panelKey(
   if (axis.startsWith("col:"))
     return `${axis}=${sw.custom?.[axis.slice(4)] ?? "?"}`;
   return `p:${sw.protocolLabel || `seq ${sw.seqRow}`}`;
+}
+
+// Human-readable label for a panel-axis value, for the per-facet count grid.
+function panelLabel(
+  sw: ResolvedSweep & { custom?: Record<string, string> },
+  axis: string,
+): string {
+  if (axis === "condition")
+    return sw.condRow !== undefined ? `condition ${sw.condRow}` : "(none)";
+  if (axis === "repetition")
+    return sw.repRow !== undefined ? `repetition ${sw.repRow}` : "(none)";
+  if (axis === "electrode") return sw.electrode ?? "(no electrode)";
+  if (axis === "cell") return sw.cell ?? "(no cell)";
+  if (axis.startsWith("col:")) return sw.custom?.[axis.slice(4)] ?? "(none)";
+  return sw.protocolLabel || `seq ${sw.seqRow}`;
 }
 
 // Evenly-spaced indices [0..total) of size <= n, inclusive of the first and last
@@ -148,6 +159,13 @@ const selThStyle: CSSProperties = {
 const selTdStyle: CSSProperties = {
   padding: "2px 6px",
   borderBottom: "1px solid #f0f0f0",
+  whiteSpace: "nowrap",
+};
+// Per-facet sweep-count grid cell.
+const fcCell: CSSProperties = {
+  border: "1px solid #eee",
+  padding: "1px 6px",
+  textAlign: "center",
   whiteSpace: "nowrap",
 };
 
@@ -599,18 +617,17 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
       ? [xwStart, xwEnd]
       : null;
 
-  // Sampling: render an evenly-spaced subset so a large family paints fast.
+  // Sampling: render an evenly-spaced subset so a large family paints fast, and
+  // so a faceted view is bounded overall (not 12 x panels, which ballooned with
+  // panel count and made big grids slow).
   // - Overlay (Panels by = none): one global stride of up to `sampleLimit`.
-  // - Faceted (Panels by set): sample each panel independently up to `perPanelCap`,
-  //   so every category is represented (a small panel is not dropped for being a
-  //   small share of the total). The per-panel cap scales with the same control,
-  //   so "plot more"/"plot all" grow both modes. The metadata-only timeline below
-  //   always shows every sweep.
-  const perPanelCap = Math.max(
-    1,
-    Math.round((PANEL_SAMPLE_SIZE / SAMPLE_SIZE) * sampleLimit),
-  );
+  // - Faceted (Panels by set): spread the SAME total budget (`sampleLimit`) evenly
+  //   across the panels, so the grid loads about as many sweeps as the overlay.
+  //   Every panel still gets at least 1 evenly-spaced sweep, and "plot all"
+  //   (sampleLimit = all sweeps) makes the per-panel share big enough to load all.
+  //   The metadata-only timeline below always shows every sweep regardless.
   let sweepsToLoad: ResolvedSweep[] = [];
+  let perPanelCap = 0;
   if (shouldRender) {
     if (resolvedPanels === "none") {
       sweepsToLoad = sampleIndices(inScopeRows.length, sampleLimit).map(
@@ -630,6 +647,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
         if (arr) arr.push(i);
         else groups.set(key, [i]);
       });
+      perPanelCap = Math.max(1, Math.ceil(sampleLimit / groups.size));
       const keep = new Set<number>();
       for (const idxs of groups.values()) {
         for (const j of sampleIndices(idxs.length, perPanelCap))
@@ -688,6 +706,38 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     sweepData.loaded.length > 0
       ? facetColors(sweepData.loaded, legendAxis)
       : null;
+
+  // Per-facet sweep counts for the sidebar grid: how many sweeps fall in each
+  // panel (1-D) or each (row, col) cell (2-D), over the full in-scope set (not
+  // the sample). Mirrors the facet layout so it reads like a tiny contingency
+  // table. Null when not faceted.
+  const facetCounts = useMemo(() => {
+    if (resolvedPanels === "none" || inScopeRows.length === 0) return null;
+    const rowOrder: string[] = [];
+    const rowLabel = new Map<string, string>();
+    const colOrder: string[] = [];
+    const colLabel = new Map<string, string>();
+    const count = new Map<string, number>(); // keyed by JSON.stringify([rk, ck])
+    const twoD = resolvedPanels2 !== "none";
+    for (const sw of inScopeRows) {
+      const rk = panelKey(sw, resolvedPanels);
+      if (!rowLabel.has(rk)) {
+        rowLabel.set(rk, panelLabel(sw, resolvedPanels));
+        rowOrder.push(rk);
+      }
+      let ck = "";
+      if (twoD) {
+        ck = panelKey(sw, resolvedPanels2);
+        if (!colLabel.has(ck)) {
+          colLabel.set(ck, panelLabel(sw, resolvedPanels2));
+          colOrder.push(ck);
+        }
+      }
+      const key = JSON.stringify([rk, ck]);
+      count.set(key, (count.get(key) ?? 0) + 1);
+    }
+    return { rowOrder, rowLabel, colOrder, colLabel, count, twoD };
+  }, [inScopeRows, resolvedPanels, resolvedPanels2]);
 
   // The timeline mirrors the visible categorical encoding: color by the Color
   // axis when it is categorical, otherwise by the Panels axis. So when Color by
@@ -1109,6 +1159,68 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
           </div>
         )}
 
+        {facetCounts && (
+          <div style={{ marginTop: 12 }}>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: "#666",
+                marginBottom: 2,
+              }}
+            >
+              Sweeps per panel
+            </div>
+            <table style={{ borderCollapse: "collapse", fontSize: 11 }}>
+              <tbody>
+                {facetCounts.twoD && (
+                  <tr>
+                    <td style={fcCell} />
+                    {facetCounts.colOrder.map((ck) => (
+                      <td
+                        key={ck}
+                        style={{ ...fcCell, fontWeight: 600, color: "#666" }}
+                        title={facetCounts.colLabel.get(ck)}
+                      >
+                        {facetCounts.colLabel.get(ck)}
+                      </td>
+                    ))}
+                  </tr>
+                )}
+                {facetCounts.rowOrder.map((rk) => (
+                  <tr key={rk}>
+                    <td
+                      style={{
+                        ...fcCell,
+                        fontWeight: 600,
+                        color: "#666",
+                        textAlign: "left",
+                      }}
+                      title={facetCounts.rowLabel.get(rk)}
+                    >
+                      {facetCounts.rowLabel.get(rk)}
+                    </td>
+                    {(facetCounts.twoD ? facetCounts.colOrder : [""]).map(
+                      (ck) => {
+                        const n =
+                          facetCounts.count.get(JSON.stringify([rk, ck])) ?? 0;
+                        return (
+                          <td
+                            key={ck || "n"}
+                            style={{ ...fcCell, color: "#444" }}
+                          >
+                            {n || "-"}
+                          </td>
+                        );
+                      },
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         {table.error && table.error !== "UNSUPPORTED_ASSET" && (
           <div style={{ marginTop: 12, color: "#b00", fontSize: 12 }}>
             chain error: {table.error}
@@ -1230,7 +1342,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
             )}
             {sweepData.loading && (
               <div style={{ color: "#888", marginBottom: 8 }}>
-                loading sweeps ({sweepData.loaded.length}/{inScopeRows.length}
+                loading sweeps ({sweepData.loaded.length}/{sweepsToLoad.length}
                 )...
               </div>
             )}
