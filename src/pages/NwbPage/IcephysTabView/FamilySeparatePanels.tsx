@@ -8,8 +8,14 @@ interface Props {
   sweeps: LoadedSweep[];
   width: number;
   height: number;
-  // Which axis becomes one panel per value.
-  splitBy: "protocol" | "condition" | "repetition" | "electrode" | "cell";
+  // Which axis becomes one panel per value. "col:<name>" = a custom column.
+  splitBy:
+    | "protocol"
+    | "condition"
+    | "repetition"
+    | "electrode"
+    | "cell"
+    | (string & {});
   // How to color sweeps within each panel (the Color channel).
   innerGroupBy:
     | "protocol"
@@ -17,7 +23,8 @@ interface Props {
     | "condition"
     | "repetition"
     | "electrode"
-    | "cell";
+    | "cell"
+    | (string & {});
   // Within-sweep x-window crop, applied to every panel (so the window is shared
   // across panels). Null = autorange.
   xRangeMs?: [number, number] | null;
@@ -54,6 +61,10 @@ function groupOf(
   }
   if (splitBy === "cell") {
     return { key: `cell:${sw.cell ?? "?"}`, label: sw.cell ?? "(no cell)" };
+  }
+  if (splitBy.startsWith("col:")) {
+    const v = sw.custom?.[splitBy.slice(4)];
+    return { key: `${splitBy}=${v ?? "?"}`, label: v ?? "(none)" };
   }
   // protocol: split by name so the same protocol across repetitions is one panel
   const name = sw.protocolLabel || `seq ${sw.seqRow}`;

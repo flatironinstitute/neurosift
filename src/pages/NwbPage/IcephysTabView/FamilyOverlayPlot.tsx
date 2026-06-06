@@ -72,7 +72,10 @@ export type GroupBy =
   | "condition"
   | "repetition"
   | "electrode"
-  | "cell";
+  | "cell"
+  // A custom intracellular_recordings column axis, encoded as "col:<name>".
+  // `(string & {})` keeps autocomplete for the built-ins while accepting these.
+  | (string & {});
 
 // Stable (id, label) for a sweep under a grouping axis. The ids are global
 // (condRow/repRow/seqRow, or internId for string axes), so the same group maps
@@ -109,6 +112,12 @@ export function groupOf(
     // legend entry, not get a fresh color per recording.
     const name = sw.protocolLabel || `seq ${sw.seqRow}`;
     return { id: internId("p:" + name), label: name };
+  }
+  if (groupBy.startsWith("col:")) {
+    // Custom intracellular_recordings column: group by its per-sweep value.
+    const colName = groupBy.slice(4);
+    const v = sw.custom?.[colName];
+    return { id: internId(groupBy + "=" + (v ?? "?")), label: v ?? "(none)" };
   }
   return { id: sw.irtRow, label: `sweep ${sw.irtRow}` };
 }

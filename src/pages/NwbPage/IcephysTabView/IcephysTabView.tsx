@@ -43,17 +43,22 @@ const PLOT_ALL_WARN = 60;
 // that does not exclude it, so reserve it here; otherwise the timeline strip
 // (pinned at the bottom) has its session-time axis labels painted over by it.
 const STATUS_BAR_H = 24;
+// A custom column is offered as an encoding axis only when its distinct-value
+// count in scope is in [2, this]. Above it, faceting/coloring is illegible.
+const MAX_CUSTOM_AXIS_VALUES = 8;
 
 // Panel grouping key for sampling, matching FamilySeparatePanels.groupOf so the
 // sampled groups line up with the panels actually rendered.
 function panelKey(
-  sw: ResolvedSweep,
-  axis: "protocol" | "condition" | "repetition" | "electrode" | "cell",
+  sw: ResolvedSweep & { custom?: Record<string, string> },
+  axis: string,
 ): string {
   if (axis === "condition") return `c${sw.condRow ?? -1}`;
   if (axis === "repetition") return `r${sw.repRow ?? -1}`;
   if (axis === "electrode") return `e:${sw.electrode ?? "?"}`;
   if (axis === "cell") return `cell:${sw.cell ?? "?"}`;
+  if (axis.startsWith("col:"))
+    return `${axis}=${sw.custom?.[axis.slice(4)] ?? "?"}`;
   return `p:${sw.protocolLabel || `seq ${sw.seqRow}`}`;
 }
 
@@ -110,16 +115,19 @@ function numParam(sp: URLSearchParams, key: string): number | undefined {
   const n = Number(v);
   return Number.isFinite(n) ? n : undefined;
 }
-function enumParam<T extends string>(
+// Seed an encoding-axis value (Color/Panels) from the URL: a built-in from
+// `allowed`, or any "col:<name>" custom-column axis (validated later, once the
+// data loads, by the cardinality gate). Unknown values fall back.
+function axisParam<T extends string>(
   sp: URLSearchParams,
   key: string,
   allowed: readonly T[],
   fallback: T,
-): T {
+): T | string {
   const v = sp.get(key);
-  return v !== null && (allowed as readonly string[]).includes(v)
-    ? (v as T)
-    : fallback;
+  if (v === null) return fallback;
+  if (v.startsWith("col:")) return v;
+  return (allowed as readonly string[]).includes(v) ? v : fallback;
 }
 
 // Selected-sweeps table cell styles.
@@ -160,16 +168,36 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   const [sampleLimit, setSampleLimit] = useState(SAMPLE_SIZE);
   // Encoding channels (the "how to compare" controls, shown above the plot).
   // Filters (Condition/Repetition) stay in the sidebar as the "what" controls.
+  // Axis unions include (string & {}) so a custom "col:<name>" column can be a
+  // Color/Panels axis; the built-in literals stay for autocomplete.
   const [colorBy, setColorBy] = useState<
-    "auto" | "protocol" | "condition" | "repetition" | "electrode" | "cell"
-  >(() => enumParam(searchParams, "icephysColorBy", COLOR_BY_VALUES, "auto"));
+    | "auto"
+    | "protocol"
+    | "condition"
+    | "repetition"
+    | "electrode"
+    | "cell"
+    | (string & {})
+  >(() => axisParam(searchParams, "icephysColorBy", COLOR_BY_VALUES, "auto"));
   const [panelsBy, setPanelsBy] = useState<
-    "none" | "protocol" | "condition" | "repetition" | "electrode" | "cell"
-  >(() => enumParam(searchParams, "icephysPanelsBy", PANELS_BY_VALUES, "none"));
+    | "none"
+    | "protocol"
+    | "condition"
+    | "repetition"
+    | "electrode"
+    | "cell"
+    | (string & {})
+  >(() => axisParam(searchParams, "icephysPanelsBy", PANELS_BY_VALUES, "none"));
   // Optional second panel axis -> 2-D facet grid (rows = panelsBy, cols = this).
   const [panelsBy2, setPanelsBy2] = useState<
-    "none" | "protocol" | "condition" | "repetition" | "electrode" | "cell"
-  >(() => enumParam(searchParams, "icephysAndBy", PANELS_BY_VALUES, "none"));
+    | "none"
+    | "protocol"
+    | "condition"
+    | "repetition"
+    | "electrode"
+    | "cell"
+    | (string & {})
+  >(() => axisParam(searchParams, "icephysAndBy", PANELS_BY_VALUES, "none"));
   // Within-sweep x-window crop (ms), shared across all panels. Empty = full range.
   const [xWindowStr, setXWindowStr] = useState<{ start: string; end: string }>(
     () => ({
@@ -359,6 +387,29 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   const electrodeVaries = distinctElectrodes >= 2;
   const cellVaries = distinctCells >= 2;
 
+  // Custom intracellular_recordings columns offered as encoding axes (Color by /
+  // Panels by / & by), keyed "col:<name>". Same information criterion as the
+  // built-in axes (>= 2 distinct values in scope), plus an upper bound: a column
+  // with too many distinct values would make a facet grid of confetti or a
+  // wrapped palette, so it stays in the Selected-sweeps table rather than becoming
+  // an axis.
+  const customAxisOptions = useMemo(() => {
+    return table.columns
+      .map((name) => {
+        const distinct = new Set(
+          inScopeRows
+            .map((r) => r.custom[name])
+            .filter((v) => v !== undefined && v !== ""),
+        ).size;
+        return { name, axis: `col:${name}`, distinct };
+      })
+      .filter((o) => o.distinct >= 2 && o.distinct <= MAX_CUSTOM_AXIS_VALUES);
+  }, [table.columns, inScopeRows]);
+  const customAxisSet = useMemo(
+    () => new Set(customAxisOptions.map((o) => o.axis)),
+    [customAxisOptions],
+  );
+
   // File-wide data summary for the sidebar (always-on orientation), from the
   // whole-session sweep set.
   const fileSweeps = table.rows;
@@ -458,14 +509,11 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
 
   // Resolve the two encoding channels, falling back when the chosen axis does
   // not vary (guards the render against a stale pick).
-  const resolvedColor:
-    | "protocol"
-    | "sweep"
-    | "condition"
-    | "repetition"
-    | "electrode"
-    | "cell" =
-    colorBy === "protocol" && protocolVaries
+  const resolvedColor: string = colorBy.startsWith("col:")
+    ? customAxisSet.has(colorBy)
+      ? colorBy
+      : autoColor
+    : colorBy === "protocol" && protocolVaries
       ? "protocol"
       : colorBy === "condition" && condVaries
         ? "condition"
@@ -476,14 +524,11 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
             : colorBy === "cell" && cellVaries
               ? "cell"
               : autoColor;
-  const resolvedPanels:
-    | "none"
-    | "protocol"
-    | "condition"
-    | "repetition"
-    | "electrode"
-    | "cell" =
-    panelsBy === "protocol" && protocolVaries
+  const resolvedPanels: string = panelsBy.startsWith("col:")
+    ? customAxisSet.has(panelsBy)
+      ? panelsBy
+      : "none"
+    : panelsBy === "protocol" && protocolVaries
       ? "protocol"
       : panelsBy === "condition" && condVaries
         ? "condition"
@@ -496,43 +541,37 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
               : "none";
   // Optional second panel axis (the columns of a 2-D facet grid). Only when the
   // first panel axis is set, the second varies, and it differs from the first.
-  const resolvedPanels2:
-    | "none"
-    | "protocol"
-    | "condition"
-    | "repetition"
-    | "electrode"
-    | "cell" =
+  const resolvedPanels2: string =
     resolvedPanels === "none"
       ? "none"
-      : panelsBy2 === "protocol" &&
-          protocolVaries &&
-          resolvedPanels !== "protocol"
-        ? "protocol"
-        : panelsBy2 === "condition" &&
-            condVaries &&
-            resolvedPanels !== "condition"
-          ? "condition"
-          : panelsBy2 === "repetition" &&
-              repVaries &&
-              resolvedPanels !== "repetition"
-            ? "repetition"
-            : panelsBy2 === "electrode" &&
-                electrodeVaries &&
-                resolvedPanels !== "electrode"
-              ? "electrode"
-              : panelsBy2 === "cell" && cellVaries && resolvedPanels !== "cell"
-                ? "cell"
-                : "none";
+      : panelsBy2.startsWith("col:")
+        ? customAxisSet.has(panelsBy2) && resolvedPanels !== panelsBy2
+          ? panelsBy2
+          : "none"
+        : panelsBy2 === "protocol" &&
+            protocolVaries &&
+            resolvedPanels !== "protocol"
+          ? "protocol"
+          : panelsBy2 === "condition" &&
+              condVaries &&
+              resolvedPanels !== "condition"
+            ? "condition"
+            : panelsBy2 === "repetition" &&
+                repVaries &&
+                resolvedPanels !== "repetition"
+              ? "repetition"
+              : panelsBy2 === "electrode" &&
+                  electrodeVaries &&
+                  resolvedPanels !== "electrode"
+                ? "electrode"
+                : panelsBy2 === "cell" &&
+                    cellVaries &&
+                    resolvedPanels !== "cell"
+                  ? "cell"
+                  : "none";
   // Inside a panel, the panel axis (or axes) is constant, so coloring by it would
   // be flat; fall back to a per-sweep gradient.
-  const innerColor:
-    | "protocol"
-    | "sweep"
-    | "condition"
-    | "repetition"
-    | "electrode"
-    | "cell" =
+  const innerColor: string =
     resolvedColor === resolvedPanels || resolvedColor === resolvedPanels2
       ? "sweep"
       : resolvedColor;
@@ -644,15 +683,26 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     resolvedColor === "sweep" && resolvedPanels !== "none"
       ? resolvedPanels
       : resolvedColor;
-  // The timeline strip has no Cell axis (its lanes are electrodes), so a
-  // cell-colored selection is shown there by electrode instead.
+  // The timeline strip supports only the built-in categorical axes (its lanes
+  // are electrodes). A cell-colored selection is shown there by electrode; a
+  // custom-column color falls back to a per-sweep gradient rather than being
+  // mirrored on the strip.
   const timelineColor:
     | "protocol"
     | "sweep"
     | "condition"
     | "repetition"
     | "electrode" =
-    timelineColorRaw === "cell" ? "electrode" : timelineColorRaw;
+    timelineColorRaw === "cell"
+      ? "electrode"
+      : timelineColorRaw.startsWith("col:")
+        ? "sweep"
+        : (timelineColorRaw as
+            | "protocol"
+            | "sweep"
+            | "condition"
+            | "repetition"
+            | "electrode");
 
   // Reset stale encoding picks (e.g. after switching files or filtering).
   // Guarded by !table.loading: the *Varies flags come from inScopeRows,
@@ -666,6 +716,8 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     if (colorBy === "repetition" && !repVaries) setColorBy("auto");
     if (colorBy === "electrode" && !electrodeVaries) setColorBy("auto");
     if (colorBy === "cell" && !cellVaries) setColorBy("auto");
+    if (colorBy.startsWith("col:") && !customAxisSet.has(colorBy))
+      setColorBy("auto");
   }, [
     colorBy,
     protocolVaries,
@@ -673,6 +725,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     repVaries,
     electrodeVaries,
     cellVaries,
+    customAxisSet,
     table.loading,
   ]);
   useEffect(() => {
@@ -682,7 +735,8 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
       (panelsBy === "condition" && condVaries) ||
       (panelsBy === "repetition" && repVaries) ||
       (panelsBy === "electrode" && electrodeVaries) ||
-      (panelsBy === "cell" && cellVaries);
+      (panelsBy === "cell" && cellVaries) ||
+      (panelsBy.startsWith("col:") && customAxisSet.has(panelsBy));
     if (panelsBy !== "none" && !ok) setPanelsBy("none");
   }, [
     panelsBy,
@@ -691,6 +745,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     repVaries,
     electrodeVaries,
     cellVaries,
+    customAxisSet,
     table.loading,
   ]);
   // Reset the second panel axis when it becomes invalid (no first axis, same as
@@ -703,7 +758,8 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
       (panelsBy2 === "condition" && condVaries) ||
       (panelsBy2 === "repetition" && repVaries) ||
       (panelsBy2 === "electrode" && electrodeVaries) ||
-      (panelsBy2 === "cell" && cellVaries);
+      (panelsBy2 === "cell" && cellVaries) ||
+      (panelsBy2.startsWith("col:") && customAxisSet.has(panelsBy2));
     if (panelsBy === "none" || panelsBy2 === panelsBy || !varies)
       setPanelsBy2("none");
   }, [
@@ -714,6 +770,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     repVaries,
     electrodeVaries,
     cellVaries,
+    customAxisSet,
     table.loading,
   ]);
 
@@ -769,17 +826,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
         Color by{" "}
         <select
           value={colorBy}
-          onChange={(e) =>
-            setColorBy(
-              e.target.value as
-                | "auto"
-                | "protocol"
-                | "condition"
-                | "repetition"
-                | "electrode"
-                | "cell",
-            )
-          }
+          onChange={(e) => setColorBy(e.target.value as typeof colorBy)}
           style={{ fontSize: 12, padding: "2px 4px" }}
         >
           <option value="auto">auto</option>
@@ -788,23 +835,18 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
           {repVaries && <option value="repetition">Repetition</option>}
           {electrodeVaries && <option value="electrode">Electrode</option>}
           {cellVaries && <option value="cell">Cell</option>}
+          {customAxisOptions.map((o) => (
+            <option key={o.axis} value={o.axis}>
+              {o.name}
+            </option>
+          ))}
         </select>
       </label>
       <label>
         Panels by{" "}
         <select
           value={panelsBy}
-          onChange={(e) =>
-            setPanelsBy(
-              e.target.value as
-                | "none"
-                | "protocol"
-                | "condition"
-                | "repetition"
-                | "electrode"
-                | "cell",
-            )
-          }
+          onChange={(e) => setPanelsBy(e.target.value as typeof panelsBy)}
           style={{ fontSize: 12, padding: "2px 4px" }}
         >
           <option value="none">none</option>
@@ -813,6 +855,11 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
           {repVaries && <option value="repetition">Repetition</option>}
           {electrodeVaries && <option value="electrode">Electrode</option>}
           {cellVaries && <option value="cell">Cell</option>}
+          {customAxisOptions.map((o) => (
+            <option key={o.axis} value={o.axis}>
+              {o.name}
+            </option>
+          ))}
         </select>
       </label>
       {panelsBy !== "none" && (
@@ -820,17 +867,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
           &amp; by{" "}
           <select
             value={panelsBy2}
-            onChange={(e) =>
-              setPanelsBy2(
-                e.target.value as
-                  | "none"
-                  | "protocol"
-                  | "condition"
-                  | "repetition"
-                  | "electrode"
-                  | "cell",
-              )
-            }
+            onChange={(e) => setPanelsBy2(e.target.value as typeof panelsBy2)}
             style={{ fontSize: 12, padding: "2px 4px" }}
           >
             <option value="none">none</option>
@@ -849,6 +886,13 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
             {cellVaries && panelsBy !== "cell" && (
               <option value="cell">Cell</option>
             )}
+            {customAxisOptions
+              .filter((o) => o.axis !== panelsBy)
+              .map((o) => (
+                <option key={o.axis} value={o.axis}>
+                  {o.name}
+                </option>
+              ))}
           </select>
         </label>
       )}
@@ -1027,7 +1071,9 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
                 marginBottom: 2,
               }}
             >
-              Colors ({legendAxis})
+              Colors (
+              {legendAxis.startsWith("col:") ? legendAxis.slice(4) : legendAxis}
+              )
             </div>
             <FacetLegend categorical={facetLegend} />
           </div>

@@ -110,7 +110,9 @@ export function colorsForGroups(
     | "condition"
     | "repetition"
     | "electrode"
-    | "cell",
+    | "cell"
+    // Custom "col:<name>" axes are categorical (handled by the else branch).
+    | (string & {}),
 ): Map<number, string> {
   const n = order.length;
   const tMin = Math.max(0, (5 - n) / 10);

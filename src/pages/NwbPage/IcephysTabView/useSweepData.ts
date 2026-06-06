@@ -21,6 +21,9 @@ export type LoadedSweep = {
   electrode?: string;
   cell?: string;
   protocolLabel?: string;
+  // Custom intracellular_recordings columns by name, carried through so the plot
+  // can group/color by them (see IcephysRow). Undefined when the file has none.
+  custom?: Record<string, string>;
   response: SweepTrace;
   // null when the sweep has no real stimulus (IZeroClampSeries), see below.
   stimulus: SweepTrace | null;
@@ -130,7 +133,7 @@ async function loadOneSide(
 
 export function useSweepData(
   nwbUrl: string,
-  sweeps: ResolvedSweep[],
+  sweeps: (ResolvedSweep & { custom?: Record<string, string> })[],
 ): SweepDataResult {
   const [result, setResult] = useState<SweepDataResult>({
     loading: false,
@@ -191,6 +194,7 @@ export function useSweepData(
             electrode: sw.electrode,
             cell: sw.cell,
             protocolLabel: sw.protocolLabel,
+            custom: sw.custom,
             response,
             stimulus,
             noStimulus,
