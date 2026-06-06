@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   getHdf5Dataset,
   getHdf5DatasetData,
@@ -140,9 +140,9 @@ export function useSweepData(
     loaded: [],
   });
 
-  // Stable dep: serialise the sweep descriptors
-  const sweepsKey = JSON.stringify(
-    sweeps.map((s) => [
+  // Stable identity for one sweep's trace data (same fields the loader reads).
+  const sweepKey = (s: ResolvedSweep): string =>
+    JSON.stringify([
       s.irtRow,
       s.response.path,
       s.response.idxStart,
@@ -150,8 +150,18 @@ export function useSweepData(
       s.stimulus.path,
       s.stimulus.idxStart,
       s.stimulus.count,
-    ]),
-  );
+    ]);
+  const sweepsKey = JSON.stringify(sweeps.map(sweepKey));
+
+  // Cache of already-loaded traces, keyed by sweepKey, kept across re-runs so
+  // expanding the sample ("plot more" / "plot all") reuses what's loaded and
+  // only fetches the new sweeps instead of restarting from scratch. Cleared on
+  // file switch (the keys include file-specific paths, but clearing also frees
+  // the previous file's trace memory).
+  const cacheRef = useRef<Map<string, LoadedSweep>>(new Map());
+  useEffect(() => {
+    cacheRef.current = new Map();
+  }, [nwbUrl]);
 
   useEffect(() => {
     let cancelled = false;
@@ -159,13 +169,23 @@ export function useSweepData(
       setResult({ loading: false, loaded: [] });
       return;
     }
-    setResult((r) => ({ ...r, loading: true, error: undefined }));
+    const cache = cacheRef.current;
+    // Rebuild the loaded list from the cache, in sweeps order; emit so already
+    // -loaded sweeps appear immediately (the "continue, don't restart" behavior).
+    const emit = () => {
+      if (cancelled) return;
+      const loaded = sweeps
+        .map((s) => cache.get(sweepKey(s)))
+        .filter(Boolean) as LoadedSweep[];
+      setResult({ loading: loaded.length < sweeps.length, loaded });
+    };
+    emit();
 
     (async () => {
       try {
-        const loaded: LoadedSweep[] = [];
         for (const sw of sweeps) {
           if (cancelled) return;
+          if (cache.has(sweepKey(sw))) continue; // reuse, don't refetch
           // IZeroClampSeries (zero-current clamp) has no stimulus. Writers keep
           // the file valid by pointing the stimulus reference back at the
           // response series with a (-1,-1) sentinel (pynwb: "set them to the
@@ -186,7 +206,7 @@ export function useSweepData(
           const stimulus = noStimulus
             ? null
             : await loadOneSide(nwbUrl, sw.stimulus);
-          loaded.push({
+          cache.set(sweepKey(sw), {
             irtRow: sw.irtRow,
             seqRow: sw.seqRow,
             repRow: sw.repRow,
@@ -199,13 +219,7 @@ export function useSweepData(
             stimulus,
             noStimulus,
           });
-          // incremental: push partial results so the plot updates as sweeps arrive
-          if (!cancelled) {
-            setResult({
-              loading: loaded.length < sweeps.length,
-              loaded: [...loaded],
-            });
-          }
+          emit(); // incremental: plot updates as each new sweep arrives
         }
       } catch (exc: any) {
         if (!cancelled)

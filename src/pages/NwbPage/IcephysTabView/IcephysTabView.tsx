@@ -76,23 +76,37 @@ function panelLabel(
   return sw.protocolLabel || `seq ${sw.seqRow}`;
 }
 
-// Evenly-spaced indices [0..total) of size <= n, inclusive of the first and last
-// so a sampled view of an ordered family spans its full range (light -> dark)
-// rather than just the head. Returns every index when total <= n.
+// Even-ish spread of <= n indices over [0..total), NESTED in n: the result for a
+// larger n is a superset of the result for a smaller n. That nesting is what lets
+// "plot more" / "plot all" reuse already-loaded sweeps (see useSweepData's cache)
+// instead of resampling a different set and reloading from scratch. Endpoints
+// come first (so an ordered family still spans light -> dark), then the midpoint,
+// then quarters, etc. (recursive bisection, breadth-first). Returns every index
+// when total <= n. The build order is independent of n, so slicing to n yields
+// nested prefixes.
 function sampleIndices(total: number, n: number): number[] {
   if (total <= 0) return [];
-  if (total <= n) return Array.from({ length: total }, (_, i) => i);
+  if (n >= total) return Array.from({ length: total }, (_, i) => i);
   if (n <= 1) return [0];
-  const out: number[] = [];
+  const order: number[] = [];
   const seen = new Set<number>();
-  for (let i = 0; i < n; i++) {
-    const idx = Math.round((i * (total - 1)) / (n - 1));
-    if (!seen.has(idx)) {
-      seen.add(idx);
-      out.push(idx);
+  const add = (i: number) => {
+    if (i >= 0 && i < total && !seen.has(i)) {
+      seen.add(i);
+      order.push(i);
     }
+  };
+  add(0);
+  add(total - 1);
+  const queue: [number, number][] = [[0, total - 1]];
+  while (order.length < n && queue.length) {
+    const [lo, hi] = queue.shift()!;
+    const mid = Math.floor((lo + hi) / 2);
+    add(mid);
+    if (mid - lo > 1) queue.push([lo, mid]);
+    if (hi - mid > 1) queue.push([mid, hi]);
   }
-  return out;
+  return order.slice(0, n).sort((a, b) => a - b);
 }
 
 // A scope row value is a real selection (not the "All" sentinel and not unset).
