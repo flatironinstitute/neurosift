@@ -37,6 +37,11 @@ const SAMPLE_SIZE = 30;
 const PANEL_SAMPLE_SIZE = 12;
 // Above this many sweeps, "plot all" carries a "may be slow" caution.
 const PLOT_ALL_WARN = 60;
+// The app's global StatusBarDiv (the "v0.1.0 ..." footer) is position:absolute
+// and overlays the bottom ~21px of the content area. The tab is handed a height
+// that does not exclude it, so reserve it here; otherwise the timeline strip
+// (pinned at the bottom) has its session-time axis labels painted over by it.
+const STATUS_BAR_H = 24;
 
 // Panel grouping key for sampling, matching FamilySeparatePanels.groupOf so the
 // sampled groups line up with the panels actually rendered.
@@ -636,7 +641,14 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     if (colorBy === "repetition" && !repVaries) setColorBy("auto");
     if (colorBy === "electrode" && !electrodeVaries) setColorBy("auto");
     if (colorBy === "cell" && !cellVaries) setColorBy("auto");
-  }, [colorBy, condVaries, repVaries, electrodeVaries, cellVaries, chain.loading]);
+  }, [
+    colorBy,
+    condVaries,
+    repVaries,
+    electrodeVaries,
+    cellVaries,
+    chain.loading,
+  ]);
   useEffect(() => {
     if (chain.loading) return;
     const ok =
@@ -687,7 +699,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   }, [scope.condRow, scope.repRow, scope.protoRow]);
 
   const plotWidth = useMemo(() => width - SIDEBAR_WIDTH - 32, [width]);
-  const plotHeight = useMemo(() => height - 32, [height]);
+  const plotHeight = useMemo(() => height - 32 - STATUS_BAR_H, [height]);
 
   const timelineHeight = showTimeline ? 84 : 0;
 
