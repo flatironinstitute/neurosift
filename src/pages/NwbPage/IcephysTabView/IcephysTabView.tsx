@@ -46,6 +46,9 @@ const STATUS_BAR_H = 24;
 // A custom column is offered as an encoding axis only when its distinct-value
 // count in scope is in [2, this]. Above it, faceting/coloring is illegible.
 const MAX_CUSTOM_AXIS_VALUES = 8;
+// Height reserved above the plot for the two-row encoding bar (row 1: Color by /
+// Panels by / & by; row 2: window + lock y). Subtracted from the plot height.
+const ENCODING_BAR_H = 64;
 
 // Panel grouping key for sampling, matching FamilySeparatePanels.groupOf so the
 // sampled groups line up with the panels actually rendered.
@@ -576,10 +579,21 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
       ? "sweep"
       : resolvedColor;
 
-  // Within-sweep x-window crop (ms). Valid only when both ends parse and end >
-  // start; otherwise null (autorange). Shared across all panels.
+  // Within-sweep x-window crop (ms). Valid only when both ends parse and
+  // start < end; otherwise null (autorange). A reversed/equal window is not
+  // silently swapped: it is flagged with an inline error (see windowError) so a
+  // mistake is surfaced rather than guessed at. Shared across panels.
   const xwStart = parseFloat(xWindowStr.start);
   const xwEnd = parseFloat(xWindowStr.end);
+  const bothWindowEndsSet =
+    xWindowStr.start.trim() !== "" && xWindowStr.end.trim() !== "";
+  const windowError: string | null = bothWindowEndsSet
+    ? !Number.isFinite(xwStart) || !Number.isFinite(xwEnd)
+      ? "window bounds must be numbers"
+      : xwStart >= xwEnd
+        ? "window start must be less than end"
+        : null
+    : null;
   const xRangeMs: [number, number] | null =
     Number.isFinite(xwStart) && Number.isFinite(xwEnd) && xwEnd > xwStart
       ? [xwStart, xwEnd]
@@ -811,135 +825,159 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   // broad selection is over the auto-render cap. Changing them does not change
   // the sweep count, so it is safe to keep them visible in the capped state.
   const encodingBar = (
-    <div
-      style={{
-        display: "flex",
-        gap: 16,
-        alignItems: "center",
-        height: 28,
-        marginBottom: 8,
-        fontSize: 12,
-        color: "#444",
-      }}
-    >
-      <label>
-        Color by{" "}
-        <select
-          value={colorBy}
-          onChange={(e) => setColorBy(e.target.value as typeof colorBy)}
-          style={{ fontSize: 12, padding: "2px 4px" }}
-        >
-          <option value="auto">auto</option>
-          {protocolVaries && <option value="protocol">Protocol</option>}
-          {condVaries && <option value="condition">Condition</option>}
-          {repVaries && <option value="repetition">Repetition</option>}
-          {electrodeVaries && <option value="electrode">Electrode</option>}
-          {cellVaries && <option value="cell">Cell</option>}
-          {customAxisOptions.map((o) => (
-            <option key={o.axis} value={o.axis}>
-              {o.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Panels by{" "}
-        <select
-          value={panelsBy}
-          onChange={(e) => setPanelsBy(e.target.value as typeof panelsBy)}
-          style={{ fontSize: 12, padding: "2px 4px" }}
-        >
-          <option value="none">none</option>
-          {protocolVaries && <option value="protocol">Protocol</option>}
-          {condVaries && <option value="condition">Condition</option>}
-          {repVaries && <option value="repetition">Repetition</option>}
-          {electrodeVaries && <option value="electrode">Electrode</option>}
-          {cellVaries && <option value="cell">Cell</option>}
-          {customAxisOptions.map((o) => (
-            <option key={o.axis} value={o.axis}>
-              {o.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      {panelsBy !== "none" && (
+    <div style={{ marginBottom: 8, fontSize: 12, color: "#444" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 16,
+          alignItems: "center",
+          minHeight: 28,
+        }}
+      >
         <label>
-          &amp; by{" "}
+          Color by{" "}
           <select
-            value={panelsBy2}
-            onChange={(e) => setPanelsBy2(e.target.value as typeof panelsBy2)}
+            value={colorBy}
+            onChange={(e) => setColorBy(e.target.value as typeof colorBy)}
+            style={{ fontSize: 12, padding: "2px 4px" }}
+          >
+            <option value="auto">auto</option>
+            {protocolVaries && <option value="protocol">Protocol</option>}
+            {condVaries && <option value="condition">Condition</option>}
+            {repVaries && <option value="repetition">Repetition</option>}
+            {electrodeVaries && <option value="electrode">Electrode</option>}
+            {cellVaries && <option value="cell">Cell</option>}
+            {customAxisOptions.map((o) => (
+              <option key={o.axis} value={o.axis}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Panels by{" "}
+          <select
+            value={panelsBy}
+            onChange={(e) => setPanelsBy(e.target.value as typeof panelsBy)}
             style={{ fontSize: 12, padding: "2px 4px" }}
           >
             <option value="none">none</option>
-            {protocolVaries && panelsBy !== "protocol" && (
-              <option value="protocol">Protocol</option>
-            )}
-            {condVaries && panelsBy !== "condition" && (
-              <option value="condition">Condition</option>
-            )}
-            {repVaries && panelsBy !== "repetition" && (
-              <option value="repetition">Repetition</option>
-            )}
-            {electrodeVaries && panelsBy !== "electrode" && (
-              <option value="electrode">Electrode</option>
-            )}
-            {cellVaries && panelsBy !== "cell" && (
-              <option value="cell">Cell</option>
-            )}
-            {customAxisOptions
-              .filter((o) => o.axis !== panelsBy)
-              .map((o) => (
-                <option key={o.axis} value={o.axis}>
-                  {o.name}
-                </option>
-              ))}
+            {protocolVaries && <option value="protocol">Protocol</option>}
+            {condVaries && <option value="condition">Condition</option>}
+            {repVaries && <option value="repetition">Repetition</option>}
+            {electrodeVaries && <option value="electrode">Electrode</option>}
+            {cellVaries && <option value="cell">Cell</option>}
+            {customAxisOptions.map((o) => (
+              <option key={o.axis} value={o.axis}>
+                {o.name}
+              </option>
+            ))}
           </select>
         </label>
-      )}
-      <label>
-        window (ms){" "}
-        <input
-          type="number"
-          value={xWindowStr.start}
-          placeholder="start"
-          onChange={(e) =>
-            setXWindowStr((w) => ({ ...w, start: e.target.value }))
-          }
-          style={{ width: 56, fontSize: 12, padding: "2px 4px" }}
-        />
-        {" - "}
-        <input
-          type="number"
-          value={xWindowStr.end}
-          placeholder="end"
-          onChange={(e) =>
-            setXWindowStr((w) => ({ ...w, end: e.target.value }))
-          }
-          style={{ width: 56, fontSize: 12, padding: "2px 4px" }}
-        />
-        {(xWindowStr.start !== "" || xWindowStr.end !== "") && (
-          <button
-            onClick={() => setXWindowStr({ start: "", end: "" })}
-            style={{ marginLeft: 4, fontSize: 11, padding: "1px 6px" }}
-          >
-            full
-          </button>
+        {panelsBy !== "none" && (
+          <label>
+            &amp; by{" "}
+            <select
+              value={panelsBy2}
+              onChange={(e) => setPanelsBy2(e.target.value as typeof panelsBy2)}
+              style={{ fontSize: 12, padding: "2px 4px" }}
+            >
+              <option value="none">none</option>
+              {protocolVaries && panelsBy !== "protocol" && (
+                <option value="protocol">Protocol</option>
+              )}
+              {condVaries && panelsBy !== "condition" && (
+                <option value="condition">Condition</option>
+              )}
+              {repVaries && panelsBy !== "repetition" && (
+                <option value="repetition">Repetition</option>
+              )}
+              {electrodeVaries && panelsBy !== "electrode" && (
+                <option value="electrode">Electrode</option>
+              )}
+              {cellVaries && panelsBy !== "cell" && (
+                <option value="cell">Cell</option>
+              )}
+              {customAxisOptions
+                .filter((o) => o.axis !== panelsBy)
+                .map((o) => (
+                  <option key={o.axis} value={o.axis}>
+                    {o.name}
+                  </option>
+                ))}
+            </select>
+          </label>
         )}
-      </label>
-      {panelsBy !== "none" && (
-        <label
-          style={{ display: "flex", alignItems: "center", gap: 4 }}
-          title="Share one y-scale across panels (per unit) so amplitudes are comparable. Off = each panel autoscales."
-        >
+      </div>
+      <div
+        style={{
+          display: "flex",
+          gap: 16,
+          alignItems: "center",
+          minHeight: 28,
+          marginTop: 4,
+        }}
+      >
+        <label>
+          window (ms){" "}
           <input
-            type="checkbox"
-            checked={lockY}
-            onChange={(e) => setLockY(e.target.checked)}
-            style={{ margin: 0 }}
+            type="number"
+            value={xWindowStr.start}
+            placeholder="start"
+            onChange={(e) =>
+              setXWindowStr((w) => ({ ...w, start: e.target.value }))
+            }
+            style={{
+              width: 56,
+              fontSize: 12,
+              padding: "2px 4px",
+              borderColor: windowError ? "#c00" : undefined,
+            }}
           />
-          lock y
+          {" - "}
+          <input
+            type="number"
+            value={xWindowStr.end}
+            placeholder="end"
+            onChange={(e) =>
+              setXWindowStr((w) => ({ ...w, end: e.target.value }))
+            }
+            style={{
+              width: 56,
+              fontSize: 12,
+              padding: "2px 4px",
+              borderColor: windowError ? "#c00" : undefined,
+            }}
+          />
+          {(xWindowStr.start !== "" || xWindowStr.end !== "") && (
+            <button
+              onClick={() => setXWindowStr({ start: "", end: "" })}
+              style={{ marginLeft: 4, fontSize: 11, padding: "1px 6px" }}
+            >
+              full
+            </button>
+          )}
+          {windowError && (
+            <span style={{ marginLeft: 6, fontSize: 11, color: "#c00" }}>
+              {windowError}
+            </span>
+          )}
         </label>
-      )}
+        {panelsBy !== "none" && (
+          <label
+            style={{ display: "flex", alignItems: "center", gap: 4 }}
+            title="Share one y-scale across panels (per unit) so amplitudes are comparable. Off = each panel autoscales."
+          >
+            <input
+              type="checkbox"
+              checked={lockY}
+              onChange={(e) => setLockY(e.target.checked)}
+              style={{ margin: 0 }}
+            />
+            lock y
+          </label>
+        )}
+      </div>
     </div>
   );
 
@@ -1211,7 +1249,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
                 height={
                   plotHeight -
                   timelineHeight -
-                  36 -
+                  ENCODING_BAR_H -
                   (sweepData.loading ? 24 : 0)
                 }
                 groupBy={resolvedColor}
@@ -1224,7 +1262,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
                 height={
                   plotHeight -
                   timelineHeight -
-                  36 -
+                  ENCODING_BAR_H -
                   (sweepData.loading ? 24 : 0)
                 }
                 splitBy={resolvedPanels}
@@ -1239,7 +1277,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
                 height={
                   plotHeight -
                   timelineHeight -
-                  36 -
+                  ENCODING_BAR_H -
                   (sweepData.loading ? 24 : 0)
                 }
                 rowAxis={resolvedPanels}
