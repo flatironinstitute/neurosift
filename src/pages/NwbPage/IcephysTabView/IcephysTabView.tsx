@@ -697,26 +697,18 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     resolvedColor === "sweep" && resolvedPanels !== "none"
       ? resolvedPanels
       : resolvedColor;
-  // The timeline strip supports only the built-in categorical axes (its lanes
-  // are electrodes). A cell-colored selection is shown there by electrode; a
-  // custom-column color falls back to a per-sweep gradient rather than being
-  // mirrored on the strip.
+  // The timeline strip mirrors the categorical color axis, including custom
+  // "col:<name>" columns. Its lanes are electrodes, and SweepTime has no cell
+  // field, so a cell-colored selection is shown there by electrode; everything
+  // else (built-ins and custom columns) passes through unchanged.
   const timelineColor:
     | "protocol"
     | "sweep"
     | "condition"
     | "repetition"
-    | "electrode" =
-    timelineColorRaw === "cell"
-      ? "electrode"
-      : timelineColorRaw.startsWith("col:")
-        ? "sweep"
-        : (timelineColorRaw as
-            | "protocol"
-            | "sweep"
-            | "condition"
-            | "repetition"
-            | "electrode");
+    | "electrode"
+    | (string & {}) =
+    timelineColorRaw === "cell" ? "electrode" : timelineColorRaw;
 
   // Reset stale encoding picks (e.g. after switching files or filtering).
   // Guarded by !table.loading: the *Varies flags come from inScopeRows,

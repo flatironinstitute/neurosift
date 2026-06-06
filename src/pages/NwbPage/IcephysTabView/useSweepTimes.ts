@@ -13,6 +13,9 @@ export type SweepTime = {
   condRow?: number;
   electrode?: string;
   protocolLabel?: string;
+  // Custom intracellular_recordings columns by name, so the timeline can color
+  // by a custom-column axis (mirroring the plot's Color by).
+  custom?: Record<string, string>;
   startSec: number; // absolute time from session start
   durationSec: number; // count / rate (0 if unknown)
 };
@@ -31,7 +34,7 @@ function scalar(v: any): number {
 
 async function readSweepTime(
   nwbUrl: string,
-  sw: ResolvedSweep,
+  sw: ResolvedSweep & { custom?: Record<string, string> },
 ): Promise<SweepTime | null> {
   const path = sw.response.path;
 
@@ -71,6 +74,7 @@ async function readSweepTime(
     condRow: sw.condRow,
     electrode: sw.electrode,
     protocolLabel: sw.protocolLabel,
+    custom: sw.custom,
     startSec,
     durationSec,
   };
@@ -78,7 +82,7 @@ async function readSweepTime(
 
 export function useSweepTimes(
   nwbUrl: string,
-  sweeps: ResolvedSweep[],
+  sweeps: (ResolvedSweep & { custom?: Record<string, string> })[],
 ): SweepTimesResult {
   const [result, setResult] = useState<SweepTimesResult>({
     loading: false,

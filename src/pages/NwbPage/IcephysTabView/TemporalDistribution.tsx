@@ -9,8 +9,15 @@ interface Props {
   contextTimes: SweepTime[];
   loading: boolean;
   width: number;
-  // Match the family overlay's grouping so colors agree across views.
-  groupBy: "protocol" | "sweep" | "condition" | "repetition" | "electrode";
+  // Match the family overlay's grouping so colors agree across views. A custom
+  // intracellular_recordings column axis is "col:<name>".
+  groupBy:
+    | "protocol"
+    | "sweep"
+    | "condition"
+    | "repetition"
+    | "electrode"
+    | (string & {});
 }
 
 const HEIGHT = 84;
@@ -59,6 +66,8 @@ const TemporalDistribution: FunctionComponent<Props> = ({
       if (groupBy === "repetition") return t.repRow ?? -1;
       if (groupBy === "electrode") return internId(t.electrode ?? "?");
       if (groupBy === "protocol") return t.seqRow ?? -1;
+      if (groupBy.startsWith("col:"))
+        return internId(groupBy + "=" + (t.custom?.[groupBy.slice(4)] ?? "?"));
       return t.irtRow;
     };
     const labelFor = (t: SweepTime) => {
@@ -68,6 +77,8 @@ const TemporalDistribution: FunctionComponent<Props> = ({
         return t.repRow !== undefined ? `repetition ${t.repRow}` : "(none)";
       if (groupBy === "electrode") return t.electrode ?? "(no electrode)";
       if (groupBy === "protocol") return t.protocolLabel || `seq ${t.seqRow}`;
+      if (groupBy.startsWith("col:"))
+        return t.custom?.[groupBy.slice(4)] ?? "(none)";
       return `sweep ${t.irtRow}`;
     };
     for (const t of times) {
