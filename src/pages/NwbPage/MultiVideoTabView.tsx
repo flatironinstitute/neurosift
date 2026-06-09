@@ -31,6 +31,8 @@ const SUPPORTED_TYPES = new Set(["ImageSeries"]);
 
 const START_TOLERANCE_SEC = 0.25;
 const DRIFT_TOLERANCE_SEC = 0.1;
+// Left/Right arrow keys seek the shared timeline by this much (YouTube uses 5 s).
+const ARROW_SEEK_SEC = 5;
 
 type LayoutMode = "row" | "column" | "grid";
 
@@ -224,7 +226,7 @@ const ShareVideoButton: FunctionComponent<{
 
   return (
     <div style={{ display: "flex", alignItems: "center" }}>
-      <Tooltip title="Copy link with current video arrangement">
+      <Tooltip title="Copy link with current video arrangement and timestamp">
         <IconButton
           size="small"
           onClick={handleShare}
@@ -675,14 +677,16 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
       : null;
   };
 
-  // Drive a single long-lived drift loop off isPlaying only. The loop reads the
-  // current selection from a ref, so toggling cameras does not restart it (which
-  // previously raced the self-rescheduling async pass).
+  // Drive the drift loop while playing with at least two cameras. The loop reads
+  // the current selection from a ref, so toggling cameras does not restart it;
+  // gating on the count restarts it if the selection drops to one (no leader /
+  // follower pair) and then grows back.
+  const driftActive = isPlaying && selectedVideos.length >= 2;
   useEffect(() => {
-    if (isPlaying && syncAnimationRef.current === null) {
+    if (driftActive && syncAnimationRef.current === null) {
       syncAnimationRef.current = requestAnimationFrame(runDriftCorrection);
     }
-    if (!isPlaying && syncAnimationRef.current !== null) {
+    if (!driftActive && syncAnimationRef.current !== null) {
       cancelAnimationFrame(syncAnimationRef.current);
       syncAnimationRef.current = null;
     }
@@ -692,7 +696,7 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
         syncAnimationRef.current = null;
       }
     };
-  }, [isPlaying]);
+  }, [driftActive]);
 
   // React to selection changes on the mounted-but-hidden videos: pause anything
   // that is no longer displayed, and catch up anything just (re)displayed to the
@@ -754,6 +758,37 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
     setSharedTime(clamped);
     syncVideosToSessionTime(clamped);
   };
+
+  // Left/Right arrows seek the shared timeline by ARROW_SEEK_SEC, YouTube-style.
+  // Held in a ref so the window listener always calls the latest closure without
+  // re-subscribing on every shared-time tick.
+  const handleSeekRef = useRef(handleSeek);
+  handleSeekRef.current = handleSeek;
+  useEffect(() => {
+    if (!isExpanded) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      // Don't hijack arrows while a form control (slider, checkboxes, layout
+      // radios, text fields) is focused.
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      const current = sharedTimeRef.current;
+      if (current === undefined) return;
+      e.preventDefault();
+      const delta = e.key === "ArrowLeft" ? -ARROW_SEEK_SEC : ARROW_SEEK_SEC;
+      handleSeekRef.current(current + delta);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isExpanded]);
 
   const gridDimensions = calculateGridDimensions(
     layoutMode,
