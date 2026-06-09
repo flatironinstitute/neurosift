@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useState, lazy, Suspense } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  lazy,
+  Suspense,
+} from "react";
 import {
   FixedTab,
   TabBar,
@@ -17,14 +24,20 @@ import NwbHierarchyView from "./NwbHierarchyView";
 import Hdf5View from "./Hdf5View";
 import TimeseriesAlignmentView from "./TimeseriesAlignmentView";
 import NwbUsageScript from "./components/NwbUsageScript";
+import MultiVideoTabView from "./MultiVideoTabView";
 import IcephysTabView from "./IcephysTabView";
+import { hasExternalVideos } from "./externalVideoUtils";
 
 const SpecificationsView = lazy(
   () => import("./SpecificationsView/SpecificationsView"),
 );
 
-const FIXED_TABS: FixedTab[] = [
+// All possible fixed tabs. "video-widget" and "icephys" are data-dependent and
+// only shown when the file actually contains the corresponding data (see below),
+// so they do not appear as dead buttons.
+const ALL_FIXED_TABS: FixedTab[] = [
   { id: "widgets", label: "Widgets" },
+  { id: "video-widget", label: "Videos" },
   { id: "icephys", label: "Icephys" },
   { id: "timeseries-alignment", label: "Timeseries Alignment" },
   { id: "python-usage", label: "Python Usage" },
@@ -32,7 +45,7 @@ const FIXED_TABS: FixedTab[] = [
   { id: "hdf5", label: "HDF5", group: "secondary" },
 ];
 
-const FIXED_TAB_IDS = new Set(FIXED_TABS.map((t) => t.id));
+const FIXED_TAB_IDS = new Set(ALL_FIXED_TABS.map((t) => t.id));
 
 interface MainWorkspaceProps {
   nwbUrl: string;
@@ -67,6 +80,54 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
   const [activeFixedTab, setActiveFixedTab] = useState(
     isFixedTabInitial ? initialTabId : "widgets",
   );
+  // Presence of data-dependent tabs (undefined = still checking). The tabs are
+  // shown only once confirmed present, so there is no flash of a dead button.
+  const [hasVideos, setHasVideos] = useState<boolean | undefined>(undefined);
+  const [hasIcephys, setHasIcephys] = useState<boolean | undefined>(undefined);
+
+  // Detect whether the file has external videos / intracellular ephys, to decide
+  // whether to show those tabs at all.
+  useEffect(() => {
+    let cancelled = false;
+    setHasVideos(undefined);
+    setHasIcephys(undefined);
+    (async () => {
+      const found = await hasExternalVideos(nwbUrl);
+      if (!cancelled) setHasVideos(found);
+    })();
+    (async () => {
+      const irt = await getHdf5Group(
+        nwbUrl,
+        "/general/intracellular_ephys/intracellular_recordings",
+      );
+      if (!cancelled) setHasIcephys(irt !== undefined);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [nwbUrl]);
+
+  const fixedTabs = useMemo(
+    () =>
+      ALL_FIXED_TABS.filter((t) => {
+        if (t.id === "video-widget") return hasVideos === true;
+        if (t.id === "icephys") return hasIcephys === true;
+        return true;
+      }),
+    [hasVideos, hasIcephys],
+  );
+
+  // If the active fixed tab turned out to be a data-dependent one the file does
+  // not have (e.g. a ?tab=video-widget link to a file with no videos), fall back
+  // to the Widgets tab.
+  useEffect(() => {
+    if (activeFixedTab === "video-widget" && hasVideos === false) {
+      setActiveFixedTab("widgets");
+    }
+    if (activeFixedTab === "icephys" && hasIcephys === false) {
+      setActiveFixedTab("widgets");
+    }
+  }, [activeFixedTab, hasVideos, hasIcephys]);
 
   const hasDynamicTabs = tabsState.tabs.length > 0;
   const tabBarHeight =
@@ -176,7 +237,7 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
         activeTabId={isDynamicTabActive ? tabsState.activeTabId : "main"}
         onSwitchTab={handleDynamicTabSwitch}
         onCloseTab={handleDynamicTabClose}
-        fixedTabs={FIXED_TABS}
+        fixedTabs={fixedTabs}
         fixedTabActiveId={activeFixedTab}
         onFixedTabSwitch={handleFixedTabSwitch}
         width={width}
@@ -225,6 +286,25 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
                 nwbUrl={nwbUrl}
                 width={contentWidth}
                 isExpanded={showFixedContent && activeFixedTab === "hdf5"}
+              />
+            </ScrollY>
+          </div>
+          <div
+            style={{
+              display:
+                showFixedContent && activeFixedTab === "video-widget"
+                  ? "block"
+                  : "none",
+            }}
+          >
+            <ScrollY width={contentWidth} height={contentHeight}>
+              <MultiVideoTabView
+                nwbUrl={nwbUrl}
+                width={contentWidth}
+                height={contentHeight}
+                isExpanded={
+                  showFixedContent && activeFixedTab === "video-widget"
+                }
               />
             </ScrollY>
           </div>

@@ -13,13 +13,7 @@ export const externalFileVideoPlugin: NwbObjectViewPlugin = {
     const group = await getHdf5Group(nwbUrl, path);
     if (!group) return false;
 
-    // These NWB types can store video in external files
-    const supportedTypes = [
-      "ImageSeries",
-      "OnePhotonSeries",
-      "TwoPhotonSeries",
-    ];
-    if (!supportedTypes.includes(group.attrs.neurodata_type)) {
+    if (group.attrs.neurodata_type !== "ImageSeries") {
       return false;
     }
 
