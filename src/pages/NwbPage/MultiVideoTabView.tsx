@@ -1,7 +1,8 @@
 import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
 import { IconButton, Tooltip } from "@mui/material";
 import ShareIcon from "@mui/icons-material/Share";
-import { getHdf5Group } from "./hdf5Interface";
+import { getHdf5Dataset, getHdf5Group } from "./hdf5Interface";
+import { IrregularTimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
 import {
   ExternalVideoCandidate,
   getExternalFileForSeries,
@@ -246,6 +247,16 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   const [metadataLoaded, setMetadataLoaded] = useState<Record<string, boolean>>(
     {},
   );
+  // Per-series timestamps clients, keyed by path. Each entry maps session time
+  // to a frame index (and back) using the file's real per-frame timestamps. A
+  // null entry means the series has no timestamps, so the uniform-rate fallback
+  // is used. Held in a ref because the drift-correction loop reads it directly.
+  const timestampClientsRef = useRef<
+    Record<
+      string,
+      { client: IrregularTimeseriesTimestampsClient; nFrames: number } | null
+    >
+  >({});
   const [playbackErrors, setPlaybackErrors] = useState<Record<string, string>>(
     {},
   );
@@ -253,6 +264,12 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   const [sharedTime, setSharedTime] = useState<number | undefined>(undefined);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const syncAnimationRef = useRef<number | null>(null);
+  // Mirrors isPlaying so the async drift loop can read the latest value across
+  // its await points and stop cleanly.
+  const isPlayingRef = useRef(false);
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
 
   // Apply URL params once candidates are loaded
   useEffect(() => {
@@ -424,51 +441,160 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
     };
   }, [nwbUrl, searchParams, selectedVideos, resolvedUrls, urlErrors]);
 
-  const syncVideosToSessionTime = (sessionTime: number) => {
-    for (const video of selectedVideos) {
-      const element = videoRefs.current[video.path];
-      if (!element) continue;
-      const clampedSessionTime = clamp(
-        sessionTime,
-        video.startTime,
-        video.endTime,
-      );
-      const nextCurrentTime = Math.max(0, clampedSessionTime - video.startTime);
-      if (Math.abs(element.currentTime - nextCurrentTime) > 0.01) {
-        element.currentTime = nextCurrentTime;
+  // Build a timestamps client per selected series so playback can map session
+  // time onto the correct frame instead of assuming a uniform rate. The client
+  // does a chunked, lazily-cached binary search over the file's per-frame
+  // timestamps rather than downloading them all up front.
+  useEffect(() => {
+    if (selectedVideos.length === 0) return;
+    let canceled = false;
+
+    const buildClients = async () => {
+      for (const candidate of selectedVideos) {
+        if (candidate.path in timestampClientsRef.current) continue;
+        try {
+          const timestampsDataset = await getHdf5Dataset(
+            nwbUrl,
+            `${candidate.path}/timestamps`,
+          );
+          if (!timestampsDataset || timestampsDataset.shape[0] < 2) {
+            timestampClientsRef.current[candidate.path] = null;
+            continue;
+          }
+          const client = new IrregularTimeseriesTimestampsClient(
+            nwbUrl,
+            candidate.path,
+          );
+          await client.initialize();
+          if (canceled) return;
+          timestampClientsRef.current[candidate.path] = {
+            client,
+            nFrames: timestampsDataset.shape[0],
+          };
+        } catch (err) {
+          console.warn(
+            "Problem initializing timestamps client",
+            candidate.path,
+            err,
+          );
+          timestampClientsRef.current[candidate.path] = null;
+        }
       }
+    };
+
+    buildClients();
+    return () => {
+      canceled = true;
+    };
+  }, [nwbUrl, selectedVideos]);
+
+  // Map a session time to the file currentTime of the frame active at that time.
+  // With per-frame timestamps this handles differing frame rates and dropped
+  // frames; without them it falls back to the uniform start-offset assumption.
+  const sessionTimeToFileTime = async (
+    video: ExternalVideoCandidate,
+    sessionTime: number,
+    element: HTMLVideoElement,
+  ) => {
+    const entry = timestampClientsRef.current[video.path];
+    const duration = element.duration;
+    if (entry && entry.nFrames > 1 && duration && isFinite(duration)) {
+      const frameIndex = await entry.client.getDataIndexForTime(sessionTime);
+      return clamp((frameIndex / (entry.nFrames - 1)) * duration, 0, duration);
     }
+    return Math.max(0, sessionTime - video.startTime);
   };
 
-  const runDriftCorrection = () => {
-    if (!isPlaying || selectedVideos.length < 2) {
+  // Inverse of sessionTimeToFileTime: read the session time of the frame the
+  // element is currently showing.
+  const fileTimeToSessionTime = async (
+    video: ExternalVideoCandidate,
+    element: HTMLVideoElement,
+  ) => {
+    const entry = timestampClientsRef.current[video.path];
+    const duration = element.duration;
+    if (entry && entry.nFrames > 1 && duration && isFinite(duration)) {
+      const frameIndex = clamp(
+        Math.round((element.currentTime / duration) * (entry.nFrames - 1)),
+        0,
+        entry.nFrames - 1,
+      );
+      const ts = await entry.client.getTimestampsForDataIndices(
+        frameIndex,
+        frameIndex + 1,
+      );
+      if (ts && ts.length > 0) return ts[0];
+    }
+    return video.startTime + element.currentTime;
+  };
+
+  const syncVideosToSessionTime = async (sessionTime: number) => {
+    await Promise.all(
+      selectedVideos.map(async (video) => {
+        const element = videoRefs.current[video.path];
+        if (!element) return;
+        const clampedSessionTime = clamp(
+          sessionTime,
+          video.startTime,
+          video.endTime,
+        );
+        const nextCurrentTime = await sessionTimeToFileTime(
+          video,
+          clampedSessionTime,
+          element,
+        );
+        if (Math.abs(element.currentTime - nextCurrentTime) > 0.01) {
+          element.currentTime = nextCurrentTime;
+        }
+      }),
+    );
+  };
+
+  // One pass of drift correction. Because the timestamp lookups are async, the
+  // next animation frame is only scheduled after a pass completes, so passes
+  // never overlap; isPlayingRef lets a pass bail out if playback has stopped.
+  const runDriftCorrection = async () => {
+    if (!isPlayingRef.current || selectedVideos.length < 2) {
       syncAnimationRef.current = null;
       return;
     }
     const leader = selectedVideos[0];
     const leaderElement = videoRefs.current[leader.path];
-    if (!leaderElement) {
-      syncAnimationRef.current = requestAnimationFrame(runDriftCorrection);
+    if (leaderElement) {
+      const leaderSessionTime = await fileTimeToSessionTime(
+        leader,
+        leaderElement,
+      );
+      await Promise.all(
+        selectedVideos.slice(1).map(async (follower) => {
+          const followerElement = videoRefs.current[follower.path];
+          if (!followerElement) return;
+          const clampedLeaderSession = clamp(
+            leaderSessionTime,
+            follower.startTime,
+            follower.endTime,
+          );
+          const targetCurrentTime = await sessionTimeToFileTime(
+            follower,
+            clampedLeaderSession,
+            followerElement,
+          );
+          if (
+            Math.abs(followerElement.currentTime - targetCurrentTime) >
+            DRIFT_TOLERANCE_SEC
+          ) {
+            followerElement.currentTime = targetCurrentTime;
+          }
+        }),
+      );
+    }
+    if (!isPlayingRef.current) {
+      syncAnimationRef.current = null;
       return;
     }
-    const leaderSessionTime = leader.startTime + leaderElement.currentTime;
-    for (let i = 1; i < selectedVideos.length; i++) {
-      const follower = selectedVideos[i];
-      const followerElement = videoRefs.current[follower.path];
-      if (!followerElement) continue;
-      const targetCurrentTime = Math.max(
-        0,
-        clamp(leaderSessionTime, follower.startTime, follower.endTime) -
-          follower.startTime,
-      );
-      if (
-        Math.abs(followerElement.currentTime - targetCurrentTime) >
-        DRIFT_TOLERANCE_SEC
-      ) {
-        followerElement.currentTime = targetCurrentTime;
-      }
-    }
-    syncAnimationRef.current = requestAnimationFrame(runDriftCorrection);
+    syncAnimationRef.current = requestAnimationFrame(() => {
+      runDriftCorrection();
+    });
   };
 
   useEffect(() => {
@@ -497,7 +623,7 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
       return;
     }
 
-    syncVideosToSessionTime(sharedTime);
+    await syncVideosToSessionTime(sharedTime);
     const playPromises = selectedVideos.map(async (video) => {
       const element = videoRefs.current[video.path];
       if (!element) return;
@@ -858,10 +984,13 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
                                 );
                                 const element = videoRefs.current[video.path];
                                 if (element) {
-                                  element.currentTime = Math.max(
-                                    0,
-                                    target - video.startTime,
-                                  );
+                                  sessionTimeToFileTime(
+                                    video,
+                                    target,
+                                    element,
+                                  ).then((fileTime) => {
+                                    element.currentTime = fileTime;
+                                  });
                                 }
                               }}
                               onTimeUpdate={() => {
@@ -874,12 +1003,18 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
                                 const leader = selectedVideos[0];
                                 const element = videoRefs.current[leader.path];
                                 if (!element) return;
-                                const nextTime = clamp(
-                                  leader.startTime + element.currentTime,
-                                  sessionWindow?.start ?? leader.startTime,
-                                  sessionWindow?.end ?? leader.endTime,
+                                fileTimeToSessionTime(leader, element).then(
+                                  (sessionTime) => {
+                                    setSharedTime(
+                                      clamp(
+                                        sessionTime,
+                                        sessionWindow?.start ??
+                                          leader.startTime,
+                                        sessionWindow?.end ?? leader.endTime,
+                                      ),
+                                    );
+                                  },
                                 );
-                                setSharedTime(nextTime);
                               }}
                               onEnded={() => {
                                 if (selectedVideos[0]?.path === video.path) {
