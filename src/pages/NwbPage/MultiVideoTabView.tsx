@@ -15,6 +15,7 @@ import {
   getExternalFileForSeries,
   getSeriesTimeRange,
   resolveExternalVideoFromFile,
+  VIDEO_DISCOVERY_ROOTS,
 } from "./externalVideoUtils";
 
 import { useSearchParams } from "react-router-dom";
@@ -25,14 +26,6 @@ type Props = {
   height: number;
   isExpanded?: boolean;
 };
-
-const RELEVANT_ROOT_PATHS = [
-  "/acquisition",
-  "/processing",
-  "/analysis",
-  "/stimulus",
-  "/intervals",
-];
 
 const SUPPORTED_TYPES = new Set(["ImageSeries"]);
 
@@ -445,7 +438,7 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
     const load = async () => {
       try {
         const found: ExternalVideoCandidate[] = [];
-        for (const rootPath of RELEVANT_ROOT_PATHS) {
+        for (const rootPath of VIDEO_DISCOVERY_ROOTS) {
           if (canceled) return;
           await visitGroup(rootPath, found);
         }

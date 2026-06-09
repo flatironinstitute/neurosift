@@ -257,3 +257,38 @@ export const getSeriesTimeRange = async (
 
   return { startTime: 0, endTime: 0 };
 };
+
+// Roots under which external-file videos are discovered.
+export const VIDEO_DISCOVERY_ROOTS = [
+  "/acquisition",
+  "/processing",
+  "/analysis",
+  "/stimulus",
+  "/intervals",
+];
+
+/**
+ * Returns true as soon as one external-file ImageSeries is found anywhere under
+ * the discovery roots. Used to decide whether to show the Videos tab at all, so
+ * a file with no external videos does not get a dead button.
+ */
+export const hasExternalVideos = async (nwbUrl: string): Promise<boolean> => {
+  const visit = async (path: string): Promise<boolean> => {
+    const group = await getHdf5Group(nwbUrl, path);
+    if (!group) return false;
+    if (
+      group.attrs?.neurodata_type === "ImageSeries" &&
+      group.datasets.some((ds) => ds.name === "external_file")
+    ) {
+      return true;
+    }
+    for (const subgroup of group.subgroups || []) {
+      if (await visit(subgroup.path)) return true;
+    }
+    return false;
+  };
+  for (const root of VIDEO_DISCOVERY_ROOTS) {
+    if (await visit(root)) return true;
+  }
+  return false;
+};
