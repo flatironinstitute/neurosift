@@ -94,6 +94,40 @@ const getCompatibilityReason = (
   return undefined;
 };
 
+// videoOrder encodes both the selection and its order. We serialize by series
+// name (stable across changes to the file's set of videos) rather than by
+// positional index; decoding accepts names or, for backward compatibility with
+// older links, numeric indices into the candidate list.
+const encodeVideoOrder = (
+  selectedPaths: string[],
+  candidates: ExternalVideoCandidate[],
+) => {
+  const byPath = new Map(candidates.map((c) => [c.path, c]));
+  return selectedPaths
+    .map((p) => byPath.get(p)?.name)
+    .filter((n): n is string => !!n)
+    .join(",");
+};
+
+const decodeVideoOrder = (
+  param: string,
+  candidates: ExternalVideoCandidate[],
+) => {
+  const byName = new Map(candidates.map((c) => [c.name, c]));
+  return param
+    .split(",")
+    .map((token) => {
+      const named = byName.get(token);
+      if (named) return named.path;
+      const index = Number(token);
+      if (Number.isInteger(index) && index >= 0 && index < candidates.length) {
+        return candidates[index].path;
+      }
+      return undefined;
+    })
+    .filter((p): p is string => !!p);
+};
+
 const calculateGridDimensions = (layoutMode: LayoutMode, count: number) => {
   if (count === 0) return { rows: 0, cols: 0 };
   if (layoutMode === "row") {
@@ -204,10 +238,10 @@ const ShareVideoButton: FunctionComponent<{
 
   const handleShare = () => {
     const url = new URL(window.location.href);
-    const indices = selectedPaths
-      .map((p) => candidates.findIndex((c) => c.path === p))
-      .filter((i) => i >= 0);
-    url.searchParams.set("videoOrder", indices.join(","));
+    url.searchParams.set(
+      "videoOrder",
+      encodeVideoOrder(selectedPaths, candidates),
+    );
     if (layoutMode !== "row") {
       url.searchParams.set("videoLayout", layoutMode);
     } else {
@@ -254,7 +288,7 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   height,
   isExpanded,
 }) => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [candidates, setCandidates] = useState<ExternalVideoCandidate[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
@@ -273,6 +307,11 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   const [urlErrors, setUrlErrors] = useState<Record<string, string>>({});
   const [urlLoading, setUrlLoading] = useState<Record<string, boolean>>({});
   const [metadataLoaded, setMetadataLoaded] = useState<Record<string, boolean>>(
+    {},
+  );
+  // Cameras that are selected but kept hidden until they finish seeking to the
+  // shared time, so a re-displayed camera never shows its stale (pre-seek) frame.
+  const [resyncPending, setResyncPending] = useState<Record<string, boolean>>(
     {},
   );
   // Per-series per-frame timestamps, keyed by path, materialized once into a
@@ -320,14 +359,37 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
     initialVideoOrderApplied.current = true;
     const param = searchParams.get("videoOrder");
     if (!param) return;
-    const indices = param.split(",").map(Number);
-    const paths = indices
-      .filter((i) => !isNaN(i) && i >= 0 && i < candidates.length)
-      .map((i) => candidates[i].path);
+    const paths = decodeVideoOrder(param, candidates);
     if (paths.length > 0) {
       setSelectedPaths(paths);
     }
   }, [candidates, searchParams]);
+
+  // Live-persist selection order and layout to the URL (replace, no history
+  // churn) so a refresh restores the arrangement and the address bar reflects
+  // the current view. Defaults are omitted. The time cursor is intentionally NOT
+  // written live (it moves ~4 Hz); it is captured only on Share.
+  useEffect(() => {
+    if (
+      !isExpanded ||
+      candidates.length === 0 ||
+      !initialVideoOrderApplied.current
+    ) {
+      return;
+    }
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        const order = encodeVideoOrder(selectedPaths, candidates);
+        if (order) next.set("videoOrder", order);
+        else next.delete("videoOrder");
+        if (layoutMode !== "row") next.set("videoLayout", layoutMode);
+        else next.delete("videoLayout");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [isExpanded, selectedPaths, layoutMode, candidates, setSearchParams]);
 
   useEffect(() => {
     if (!isExpanded) return;
@@ -711,6 +773,16 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
         videoRefs.current[video.path]?.pause();
       }
     }
+    // Drop any pending-resync flags for cameras no longer selected.
+    setResyncPending((prevPending) => {
+      let changed = false;
+      const next: Record<string, boolean> = {};
+      for (const path of Object.keys(prevPending)) {
+        if (selectedPaths.includes(path)) next[path] = prevPending[path];
+        else changed = true;
+      }
+      return changed ? next : prevPending;
+    });
 
     const newlyShown = selectedPaths.filter((path) => !prev.includes(path));
     newlyShown.forEach((path) => {
@@ -718,15 +790,52 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
       const element = videoRefs.current[path];
       if (!video || !element) return;
       const t = sharedTimeRef.current;
-      if (t !== undefined) {
-        const clamped = clamp(t, video.startTime, video.endTime);
-        element.currentTime = sessionTimeToFileTime(video, clamped, element);
-      }
-      if (isPlayingRef.current) {
-        element.play().catch(() => {});
+      const target =
+        t !== undefined
+          ? sessionTimeToFileTime(
+              video,
+              clamp(t, video.startTime, video.endTime),
+              element,
+            )
+          : undefined;
+      const playIfStillSelected = () => {
+        if (
+          isPlayingRef.current &&
+          selectedVideosRef.current.some((v) => v.path === path)
+        ) {
+          element.play().catch(() => {});
+        }
+      };
+
+      // Genuine re-display (already has metadata) that needs a real seek: keep
+      // the panel hidden until the seek lands so the stale frame is never shown.
+      if (
+        metadataLoaded[path] &&
+        target !== undefined &&
+        Math.abs(element.currentTime - target) > 0.05
+      ) {
+        setResyncPending((prevPending) => ({ ...prevPending, [path]: true }));
+        const reveal = () => {
+          element.removeEventListener("seeked", reveal);
+          window.clearTimeout(timer);
+          setResyncPending((prevPending) => {
+            if (!prevPending[path]) return prevPending;
+            const next = { ...prevPending };
+            delete next[path];
+            return next;
+          });
+          playIfStillSelected();
+        };
+        // Fallback in case "seeked" never fires (e.g. already-buffered no-op).
+        const timer = window.setTimeout(reveal, 2000);
+        element.addEventListener("seeked", reveal);
+        element.currentTime = target;
+      } else {
+        if (target !== undefined) element.currentTime = target;
+        playIfStillSelected();
       }
     });
-  }, [selectedPaths, mountedVideos]);
+  }, [selectedPaths, mountedVideos, metadataLoaded]);
 
   const handlePlayPause = async () => {
     if (selectedVideos.length === 0 || sharedTime === undefined) return;
@@ -1064,9 +1173,12 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
                   const tileError = urlErrors[video.path] || playbackError;
                   // Deselected videos stay mounted (so reselecting is instant and
                   // keeps their position) but are hidden and excluded from the
-                  // grid flow; selection order drives their visual order.
+                  // grid flow; selection order drives their visual order. A
+                  // re-displayed camera stays hidden until it has seeked to the
+                  // shared time (resyncPending) so its stale frame is never shown.
                   const selectionIndex = selectedPaths.indexOf(video.path);
-                  const isShown = selectionIndex >= 0;
+                  const isShown =
+                    selectionIndex >= 0 && !resyncPending[video.path];
                   return (
                     <div
                       key={video.path}
