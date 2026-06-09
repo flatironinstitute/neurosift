@@ -45,6 +45,21 @@ const clamp = (value: number, min: number, max: number) => {
   return Math.min(Math.max(value, min), max);
 };
 
+/** Largest index i such that timestamps[i] <= t (timestamps assumed ascending). */
+const findFrameIndexForSessionTime = (timestamps: Float64Array, t: number) => {
+  const last = timestamps.length - 1;
+  if (t <= timestamps[0]) return 0;
+  if (t >= timestamps[last]) return last;
+  let lo = 0;
+  let hi = last;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (timestamps[mid] <= t) lo = mid;
+    else hi = mid - 1;
+  }
+  return lo;
+};
+
 const areCompatible = (
   a: ExternalVideoCandidate,
   b: ExternalVideoCandidate,
@@ -251,16 +266,12 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   const [metadataLoaded, setMetadataLoaded] = useState<Record<string, boolean>>(
     {},
   );
-  // Per-series timestamps clients, keyed by path. Each entry maps session time
-  // to a frame index (and back) using the file's real per-frame timestamps. A
-  // null entry means the series has no timestamps, so the uniform-rate fallback
-  // is used. Held in a ref because the drift-correction loop reads it directly.
-  const timestampClientsRef = useRef<
-    Record<
-      string,
-      { client: IrregularTimeseriesTimestampsClient; nFrames: number } | null
-    >
-  >({});
+  // Per-series per-frame timestamps, keyed by path, materialized once into a
+  // plain Float64Array so the drift loop can map session time to a frame with a
+  // synchronous binary search (no per-frame I/O). A null entry means the series
+  // has no usable timestamps, so the uniform-rate fallback is used. Held in a
+  // ref because the loop reads it directly.
+  const timestampsRef = useRef<Record<string, Float64Array | null>>({});
   const [playbackErrors, setPlaybackErrors] = useState<Record<string, string>>(
     {},
   );
@@ -474,48 +485,47 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
     };
   }, [nwbUrl, searchParams, selectedVideos, resolvedUrls, urlErrors]);
 
-  // Build a timestamps client per selected series so playback can map session
-  // time onto the correct frame instead of assuming a uniform rate. The client
-  // does a chunked, lazily-cached binary search over the file's per-frame
-  // timestamps rather than downloading them all up front.
+  // Materialize the full per-frame timestamps for each selected series once,
+  // into a plain Float64Array. We use the existing timestamps client only to
+  // fetch (a single bounded read), then keep the array in memory so the hot loop
+  // can do synchronous lookups instead of awaiting per-frame chunk reads.
   useEffect(() => {
     if (selectedVideos.length === 0) return;
     let canceled = false;
 
-    const buildClients = async () => {
+    const loadTimestamps = async () => {
       for (const candidate of selectedVideos) {
-        if (candidate.path in timestampClientsRef.current) continue;
+        if (candidate.path in timestampsRef.current) continue;
         try {
-          const timestampsDataset = await getHdf5Dataset(
+          const dataset = await getHdf5Dataset(
             nwbUrl,
             `${candidate.path}/timestamps`,
           );
-          if (!timestampsDataset || timestampsDataset.shape[0] < 2) {
-            timestampClientsRef.current[candidate.path] = null;
+          if (!dataset || dataset.shape[0] < 2) {
+            timestampsRef.current[candidate.path] = null;
             continue;
           }
           const client = new IrregularTimeseriesTimestampsClient(
             nwbUrl,
             candidate.path,
           );
-          await client.initialize();
-          if (canceled) return;
-          timestampClientsRef.current[candidate.path] = {
-            client,
-            nFrames: timestampsDataset.shape[0],
-          };
-        } catch (err) {
-          console.warn(
-            "Problem initializing timestamps client",
-            candidate.path,
-            err,
+          const data = await client.getTimestampsForDataIndices(
+            0,
+            dataset.shape[0],
           );
-          timestampClientsRef.current[candidate.path] = null;
+          if (canceled) return;
+          timestampsRef.current[candidate.path] =
+            data instanceof Float64Array
+              ? data
+              : Float64Array.from(data as ArrayLike<number>);
+        } catch (err) {
+          console.warn("Problem loading video timestamps", candidate.path, err);
+          timestampsRef.current[candidate.path] = null;
         }
       }
     };
 
-    buildClients();
+    loadTimestamps();
     return () => {
       canceled = true;
     };
@@ -524,135 +534,120 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   // Map a session time to the file currentTime of the frame active at that time.
   // With per-frame timestamps this handles differing frame rates and dropped
   // frames; without them it falls back to the uniform start-offset assumption.
-  const sessionTimeToFileTime = async (
+  const sessionTimeToFileTime = (
     video: ExternalVideoCandidate,
     sessionTime: number,
     element: HTMLVideoElement,
   ) => {
-    const entry = timestampClientsRef.current[video.path];
+    const timestamps = timestampsRef.current[video.path];
     const duration = element.duration;
     if (
-      entry &&
-      entry.nFrames > 1 &&
+      timestamps &&
+      timestamps.length > 1 &&
       duration &&
       isFinite(duration) &&
       Number.isFinite(sessionTime)
     ) {
-      const frameIndex = await entry.client.getDataIndexForTime(sessionTime);
-      return clamp((frameIndex / (entry.nFrames - 1)) * duration, 0, duration);
+      const frameIndex = findFrameIndexForSessionTime(timestamps, sessionTime);
+      return clamp(
+        (frameIndex / (timestamps.length - 1)) * duration,
+        0,
+        duration,
+      );
     }
     return Math.max(0, sessionTime - video.startTime);
   };
 
   // Inverse of sessionTimeToFileTime: read the session time of the frame the
   // element is currently showing.
-  const fileTimeToSessionTime = async (
+  const fileTimeToSessionTime = (
     video: ExternalVideoCandidate,
     element: HTMLVideoElement,
   ) => {
-    const entry = timestampClientsRef.current[video.path];
+    const timestamps = timestampsRef.current[video.path];
     const duration = element.duration;
     if (
-      entry &&
-      entry.nFrames > 1 &&
+      timestamps &&
+      timestamps.length > 1 &&
       duration &&
       isFinite(duration) &&
       Number.isFinite(element.currentTime)
     ) {
       const frameIndex = clamp(
-        Math.round((element.currentTime / duration) * (entry.nFrames - 1)),
+        Math.round((element.currentTime / duration) * (timestamps.length - 1)),
         0,
-        entry.nFrames - 1,
+        timestamps.length - 1,
       );
-      const ts = await entry.client.getTimestampsForDataIndices(
-        frameIndex,
-        frameIndex + 1,
-      );
-      if (ts && ts.length > 0) return ts[0];
+      return timestamps[frameIndex];
     }
     return video.startTime + element.currentTime;
   };
 
-  const syncVideosToSessionTime = async (sessionTime: number) => {
-    await Promise.all(
-      selectedVideos.map(async (video) => {
-        const element = videoRefs.current[video.path];
-        if (!element) return;
-        const clampedSessionTime = clamp(
-          sessionTime,
-          video.startTime,
-          video.endTime,
-        );
-        const nextCurrentTime = await sessionTimeToFileTime(
-          video,
-          clampedSessionTime,
-          element,
-        );
-        if (Math.abs(element.currentTime - nextCurrentTime) > 0.01) {
-          element.currentTime = nextCurrentTime;
-        }
-      }),
-    );
+  const syncVideosToSessionTime = (sessionTime: number) => {
+    for (const video of selectedVideos) {
+      const element = videoRefs.current[video.path];
+      if (!element) continue;
+      const clampedSessionTime = clamp(
+        sessionTime,
+        video.startTime,
+        video.endTime,
+      );
+      const nextCurrentTime = sessionTimeToFileTime(
+        video,
+        clampedSessionTime,
+        element,
+      );
+      if (Math.abs(element.currentTime - nextCurrentTime) > 0.01) {
+        element.currentTime = nextCurrentTime;
+      }
+    }
   };
 
-  // One pass of drift correction. Because the timestamp lookups are async, the
-  // next animation frame is only scheduled after a pass completes, so passes
-  // never overlap; isPlayingRef lets a pass bail out if playback has stopped.
-  // The whole pass is wrapped so a transient error (e.g. a momentary NaN time on
-  // a freshly mounted element) cannot kill the loop and freeze synchronization.
-  const runDriftCorrection = async () => {
+  // One synchronous pass of drift correction, rescheduled every animation frame
+  // while playing. The lookups are in-memory (no awaits), so the pass cannot
+  // stall or be killed by a rejected promise, and reads the live selection from
+  // a ref so toggling cameras never restarts the loop.
+  const runDriftCorrection = () => {
     const currentVideos = selectedVideosRef.current;
     if (!isPlayingRef.current || currentVideos.length < 2) {
       syncAnimationRef.current = null;
       return;
     }
-    try {
-      const leader = currentVideos[0];
-      const leaderElement = videoRefs.current[leader.path];
-      if (leaderElement) {
-        const leaderSessionTime = await fileTimeToSessionTime(
-          leader,
-          leaderElement,
+    const leader = currentVideos[0];
+    const leaderElement = videoRefs.current[leader.path];
+    if (leaderElement) {
+      const leaderSessionTime = fileTimeToSessionTime(leader, leaderElement);
+      for (let i = 1; i < currentVideos.length; i++) {
+        const follower = currentVideos[i];
+        const followerElement = videoRefs.current[follower.path];
+        if (!followerElement) continue;
+        const clampedLeaderSession = clamp(
+          leaderSessionTime,
+          follower.startTime,
+          follower.endTime,
         );
-        await Promise.all(
-          currentVideos.slice(1).map(async (follower) => {
-            const followerElement = videoRefs.current[follower.path];
-            if (!followerElement) return;
-            const clampedLeaderSession = clamp(
-              leaderSessionTime,
-              follower.startTime,
-              follower.endTime,
-            );
-            const targetCurrentTime = await sessionTimeToFileTime(
-              follower,
-              clampedLeaderSession,
-              followerElement,
-            );
-            if (
-              Math.abs(followerElement.currentTime - targetCurrentTime) >
-              DRIFT_TOLERANCE_SEC
-            ) {
-              followerElement.currentTime = targetCurrentTime;
-            }
-            // Restart a follower that is paused, e.g. a camera that was toggled
-            // off and back on. Seeking above happens first, so it cannot abort
-            // this play() the way an out-of-band seek would.
-            if (followerElement.paused) {
-              followerElement.play().catch(() => {});
-            }
-          }),
+        const targetCurrentTime = sessionTimeToFileTime(
+          follower,
+          clampedLeaderSession,
+          followerElement,
         );
+        if (
+          Math.abs(followerElement.currentTime - targetCurrentTime) >
+          DRIFT_TOLERANCE_SEC
+        ) {
+          followerElement.currentTime = targetCurrentTime;
+        }
+        // Restart a follower that is paused, e.g. a camera toggled off and back
+        // on. Seeking above happens first, so it cannot abort this play() the
+        // way an out-of-band seek would.
+        if (followerElement.paused) {
+          followerElement.play().catch(() => {});
+        }
       }
-    } catch (err) {
-      console.warn("Drift correction pass failed", err);
     }
-    if (isPlayingRef.current) {
-      syncAnimationRef.current = requestAnimationFrame(() => {
-        runDriftCorrection();
-      });
-    } else {
-      syncAnimationRef.current = null;
-    }
+    syncAnimationRef.current = isPlayingRef.current
+      ? requestAnimationFrame(runDriftCorrection)
+      : null;
   };
 
   // Drive a single long-lived drift loop off isPlaying only. The loop reads the
@@ -689,18 +684,14 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
     }
 
     const newlyShown = selectedPaths.filter((path) => !prev.includes(path));
-    newlyShown.forEach(async (path) => {
+    newlyShown.forEach((path) => {
       const video = mountedVideos.find((v) => v.path === path);
       const element = videoRefs.current[path];
       if (!video || !element) return;
       const t = sharedTimeRef.current;
       if (t !== undefined) {
         const clamped = clamp(t, video.startTime, video.endTime);
-        element.currentTime = await sessionTimeToFileTime(
-          video,
-          clamped,
-          element,
-        );
+        element.currentTime = sessionTimeToFileTime(video, clamped, element);
       }
       if (isPlayingRef.current) {
         element.play().catch(() => {});
@@ -718,7 +709,7 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
       return;
     }
 
-    await syncVideosToSessionTime(sharedTime);
+    syncVideosToSessionTime(sharedTime);
     const playPromises = selectedVideos.map(async (video) => {
       const element = videoRefs.current[video.path];
       if (!element) return;
@@ -1091,13 +1082,11 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
                                 );
                                 const element = videoRefs.current[video.path];
                                 if (element) {
-                                  sessionTimeToFileTime(
+                                  element.currentTime = sessionTimeToFileTime(
                                     video,
                                     target,
                                     element,
-                                  ).then((fileTime) => {
-                                    element.currentTime = fileTime;
-                                  });
+                                  );
                                 }
                               }}
                               onTimeUpdate={() => {
@@ -1110,17 +1099,12 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
                                 const leader = selectedVideos[0];
                                 const element = videoRefs.current[leader.path];
                                 if (!element) return;
-                                fileTimeToSessionTime(leader, element).then(
-                                  (sessionTime) => {
-                                    setSharedTime(
-                                      clamp(
-                                        sessionTime,
-                                        sessionWindow?.start ??
-                                          leader.startTime,
-                                        sessionWindow?.end ?? leader.endTime,
-                                      ),
-                                    );
-                                  },
+                                setSharedTime(
+                                  clamp(
+                                    fileTimeToSessionTime(leader, element),
+                                    sessionWindow?.start ?? leader.startTime,
+                                    sessionWindow?.end ?? leader.endTime,
+                                  ),
                                 );
                               }}
                               onEnded={() => {
