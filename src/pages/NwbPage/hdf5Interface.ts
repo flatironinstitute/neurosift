@@ -188,6 +188,20 @@ const getRemoteH5FileForUrl = async (url: string) => {
   return hdf5Files[url];
 };
 
+// Whether the asset resolves to a LINDI sidecar (.lindi.json / .lindi.tar).
+// Icephys requires dereferencing object references, which only the LINDI path
+// supports today, so a non-LINDI asset can be rejected up front (before the
+// slow wasm-path chain walk) as unsupported.
+export const isLindiBackedAsset = async (url: string): Promise<boolean> => {
+  try {
+    await getRemoteH5FileForUrl(url);
+  } catch {
+    return false;
+  }
+  const resolved = hdf5Files[url]?.resolvedUrl ?? "";
+  return resolved.endsWith(".lindi.json") || resolved.endsWith(".lindi.tar");
+};
+
 export const getHdf5Group = async (
   url: string,
   path: string,
@@ -286,7 +300,7 @@ export const getHdf5DatasetData = async (
         totalSize *= ds.shape[i];
       }
     }
-    const maxNumElements = 1e7;
+    const maxNumElements = 1e8;
     if (totalSize > maxNumElements) {
       // Format sizes in MB for human readability
       const formatSize = (size: number) => {
