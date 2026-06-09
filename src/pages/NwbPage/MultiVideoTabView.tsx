@@ -186,7 +186,8 @@ const ShareVideoButton: FunctionComponent<{
   selectedPaths: string[];
   candidates: ExternalVideoCandidate[];
   layoutMode: LayoutMode;
-}> = ({ selectedPaths, candidates, layoutMode }) => {
+  sharedTime: number | undefined;
+}> = ({ selectedPaths, candidates, layoutMode, sharedTime }) => {
   const [showCopied, setShowCopied] = useState(false);
 
   useEffect(() => {
@@ -209,6 +210,12 @@ const ShareVideoButton: FunctionComponent<{
       url.searchParams.set("videoLayout", layoutMode);
     } else {
       url.searchParams.delete("videoLayout");
+    }
+    // Capture the current moment (YouTube-style), so the link lands there.
+    if (sharedTime !== undefined && Number.isFinite(sharedTime)) {
+      url.searchParams.set("videoTime", sharedTime.toFixed(2));
+    } else {
+      url.searchParams.delete("videoTime");
     }
     navigator.clipboard.writeText(url.toString()).then(() => {
       setShowCopied(true);
@@ -294,6 +301,16 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   // Previous selection, used to detect cameras that were just (re)displayed so
   // they can be caught up to the shared time.
   const prevSelectedRef = useRef<string[]>([]);
+  // A shared time captured from the URL (?videoTime=, in session seconds),
+  // applied once when the window is first known so a shared link lands on that
+  // moment (paused). Consumed after the first seed.
+  const initialVideoTimeRef = useRef<number | undefined>(
+    (() => {
+      const raw = searchParams.get("videoTime");
+      const value = raw === null ? NaN : Number(raw);
+      return Number.isFinite(value) ? value : undefined;
+    })(),
+  );
 
   // Apply URL params once candidates are loaded
   useEffect(() => {
@@ -432,6 +449,14 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
     if (!sessionWindow) {
       setIsPlaying(false);
       setSharedTime(undefined);
+      return;
+    }
+    // Consume the URL seed in the effect body (not inside the state updater,
+    // which React double-invokes and which must stay pure).
+    const seed = initialVideoTimeRef.current;
+    initialVideoTimeRef.current = undefined;
+    if (seed !== undefined) {
+      setSharedTime(clamp(seed, sessionWindow.start, sessionWindow.end));
       return;
     }
     setSharedTime((prev) =>
@@ -973,6 +998,7 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
                   selectedPaths={selectedPaths}
                   candidates={candidates}
                   layoutMode={layoutMode}
+                  sharedTime={sharedTime}
                 />
               )}
             </div>
