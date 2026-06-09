@@ -235,6 +235,10 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
+  // Paths whose <video> element has ever been selected. This set only grows: a
+  // deselected camera stays mounted (hidden and paused) so reselecting it is
+  // instant and keeps its playback position, with no remount churn.
+  const [mountedPaths, setMountedPaths] = useState<string[]>([]);
   const initialVideoOrderApplied = useRef(false);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>(() => {
     const param = searchParams.get("videoLayout");
@@ -270,6 +274,15 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
+  // The drift loop is long-lived; these refs let it read the current selection
+  // and shared time on every frame instead of capturing a stale closure when a
+  // camera is toggled on or off.
+  const selectedVideosRef = useRef<ExternalVideoCandidate[]>([]);
+  const sharedTimeRef = useRef<number | undefined>(undefined);
+  sharedTimeRef.current = sharedTime;
+  // Previous selection, used to detect cameras that were just (re)displayed so
+  // they can be caught up to the shared time.
+  const prevSelectedRef = useRef<string[]>([]);
 
   // Apply URL params once candidates are loaded
   useEffect(() => {
@@ -372,6 +385,27 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
       .map((path) => candidateMap.get(path))
       .filter((c) => c !== undefined);
   }, [candidates, selectedPaths]);
+  selectedVideosRef.current = selectedVideos;
+
+  // Grow the mounted set to include everything currently selected.
+  useEffect(() => {
+    setMountedPaths((prev) => {
+      const next = [...prev];
+      for (const path of selectedPaths) {
+        if (!next.includes(path)) next.push(path);
+      }
+      return next.length === prev.length ? prev : next;
+    });
+  }, [selectedPaths]);
+
+  // Candidates that should stay mounted (ever-selected), regardless of whether
+  // they are currently displayed.
+  const mountedVideos = useMemo(() => {
+    const candidateMap = new Map(candidates.map((c) => [c.path, c]));
+    return mountedPaths
+      .map((path) => candidateMap.get(path))
+      .filter((c) => c !== undefined);
+  }, [candidates, mountedPaths]);
 
   const sessionWindow = useMemo(() => {
     if (selectedVideos.length === 0) return undefined;
@@ -380,22 +414,21 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
     return { start, end };
   }, [selectedVideos]);
 
+  // Keep the shared time inside the current session window as the selection
+  // changes. Toggling a camera must NOT stop playback (videos stay mounted), so
+  // we only halt when nothing is selected at all.
   useEffect(() => {
-    if (syncAnimationRef.current !== null) {
-      cancelAnimationFrame(syncAnimationRef.current);
-      syncAnimationRef.current = null;
-    }
-    setIsPlaying(false);
-    if (sessionWindow) {
-      setSharedTime((prev) =>
-        prev === undefined
-          ? sessionWindow.start
-          : clamp(prev, sessionWindow.start, sessionWindow.end),
-      );
-    } else {
+    if (!sessionWindow) {
+      setIsPlaying(false);
       setSharedTime(undefined);
+      return;
     }
-  }, [sessionWindow?.start, sessionWindow?.end, selectedPaths.join("|")]);
+    setSharedTime((prev) =>
+      prev === undefined
+        ? sessionWindow.start
+        : clamp(prev, sessionWindow.start, sessionWindow.end),
+    );
+  }, [sessionWindow?.start, sessionWindow?.end]);
 
   useEffect(() => {
     if (selectedVideos.length === 0) return;
@@ -498,7 +531,13 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   ) => {
     const entry = timestampClientsRef.current[video.path];
     const duration = element.duration;
-    if (entry && entry.nFrames > 1 && duration && isFinite(duration)) {
+    if (
+      entry &&
+      entry.nFrames > 1 &&
+      duration &&
+      isFinite(duration) &&
+      Number.isFinite(sessionTime)
+    ) {
       const frameIndex = await entry.client.getDataIndexForTime(sessionTime);
       return clamp((frameIndex / (entry.nFrames - 1)) * duration, 0, duration);
     }
@@ -513,7 +552,13 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   ) => {
     const entry = timestampClientsRef.current[video.path];
     const duration = element.duration;
-    if (entry && entry.nFrames > 1 && duration && isFinite(duration)) {
+    if (
+      entry &&
+      entry.nFrames > 1 &&
+      duration &&
+      isFinite(duration) &&
+      Number.isFinite(element.currentTime)
+    ) {
       const frameIndex = clamp(
         Math.round((element.currentTime / duration) * (entry.nFrames - 1)),
         0,
@@ -553,50 +598,66 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   // One pass of drift correction. Because the timestamp lookups are async, the
   // next animation frame is only scheduled after a pass completes, so passes
   // never overlap; isPlayingRef lets a pass bail out if playback has stopped.
+  // The whole pass is wrapped so a transient error (e.g. a momentary NaN time on
+  // a freshly mounted element) cannot kill the loop and freeze synchronization.
   const runDriftCorrection = async () => {
-    if (!isPlayingRef.current || selectedVideos.length < 2) {
+    const currentVideos = selectedVideosRef.current;
+    if (!isPlayingRef.current || currentVideos.length < 2) {
       syncAnimationRef.current = null;
       return;
     }
-    const leader = selectedVideos[0];
-    const leaderElement = videoRefs.current[leader.path];
-    if (leaderElement) {
-      const leaderSessionTime = await fileTimeToSessionTime(
-        leader,
-        leaderElement,
-      );
-      await Promise.all(
-        selectedVideos.slice(1).map(async (follower) => {
-          const followerElement = videoRefs.current[follower.path];
-          if (!followerElement) return;
-          const clampedLeaderSession = clamp(
-            leaderSessionTime,
-            follower.startTime,
-            follower.endTime,
-          );
-          const targetCurrentTime = await sessionTimeToFileTime(
-            follower,
-            clampedLeaderSession,
-            followerElement,
-          );
-          if (
-            Math.abs(followerElement.currentTime - targetCurrentTime) >
-            DRIFT_TOLERANCE_SEC
-          ) {
-            followerElement.currentTime = targetCurrentTime;
-          }
-        }),
-      );
+    try {
+      const leader = currentVideos[0];
+      const leaderElement = videoRefs.current[leader.path];
+      if (leaderElement) {
+        const leaderSessionTime = await fileTimeToSessionTime(
+          leader,
+          leaderElement,
+        );
+        await Promise.all(
+          currentVideos.slice(1).map(async (follower) => {
+            const followerElement = videoRefs.current[follower.path];
+            if (!followerElement) return;
+            const clampedLeaderSession = clamp(
+              leaderSessionTime,
+              follower.startTime,
+              follower.endTime,
+            );
+            const targetCurrentTime = await sessionTimeToFileTime(
+              follower,
+              clampedLeaderSession,
+              followerElement,
+            );
+            if (
+              Math.abs(followerElement.currentTime - targetCurrentTime) >
+              DRIFT_TOLERANCE_SEC
+            ) {
+              followerElement.currentTime = targetCurrentTime;
+            }
+            // Restart a follower that is paused, e.g. a camera that was toggled
+            // off and back on. Seeking above happens first, so it cannot abort
+            // this play() the way an out-of-band seek would.
+            if (followerElement.paused) {
+              followerElement.play().catch(() => {});
+            }
+          }),
+        );
+      }
+    } catch (err) {
+      console.warn("Drift correction pass failed", err);
     }
-    if (!isPlayingRef.current) {
+    if (isPlayingRef.current) {
+      syncAnimationRef.current = requestAnimationFrame(() => {
+        runDriftCorrection();
+      });
+    } else {
       syncAnimationRef.current = null;
-      return;
     }
-    syncAnimationRef.current = requestAnimationFrame(() => {
-      runDriftCorrection();
-    });
   };
 
+  // Drive a single long-lived drift loop off isPlaying only. The loop reads the
+  // current selection from a ref, so toggling cameras does not restart it (which
+  // previously raced the self-rescheduling async pass).
   useEffect(() => {
     if (isPlaying && syncAnimationRef.current === null) {
       syncAnimationRef.current = requestAnimationFrame(runDriftCorrection);
@@ -611,7 +672,41 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
         syncAnimationRef.current = null;
       }
     };
-  }, [isPlaying, selectedVideos]);
+  }, [isPlaying]);
+
+  // React to selection changes on the mounted-but-hidden videos: pause anything
+  // that is no longer displayed, and catch up anything just (re)displayed to the
+  // shared time (resuming it if we are playing). The drift loop keeps it locked
+  // afterwards.
+  useEffect(() => {
+    const prev = prevSelectedRef.current;
+    prevSelectedRef.current = selectedPaths;
+
+    for (const video of mountedVideos) {
+      if (!selectedPaths.includes(video.path)) {
+        videoRefs.current[video.path]?.pause();
+      }
+    }
+
+    const newlyShown = selectedPaths.filter((path) => !prev.includes(path));
+    newlyShown.forEach(async (path) => {
+      const video = mountedVideos.find((v) => v.path === path);
+      const element = videoRefs.current[path];
+      if (!video || !element) return;
+      const t = sharedTimeRef.current;
+      if (t !== undefined) {
+        const clamped = clamp(t, video.startTime, video.endTime);
+        element.currentTime = await sessionTimeToFileTime(
+          video,
+          clamped,
+          element,
+        );
+      }
+      if (isPlayingRef.current) {
+        element.play().catch(() => {});
+      }
+    });
+  }, [selectedPaths, mountedVideos]);
 
   const handlePlayPause = async () => {
     if (selectedVideos.length === 0 || sharedTime === undefined) return;
@@ -890,11 +985,12 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
                 />
               )}
             </div>
-            {selectedVideos.length === 0 ? (
+            {selectedVideos.length === 0 && (
               <div style={{ color: "#666" }}>
                 Select one or more external videos to display them here.
               </div>
-            ) : (
+            )}
+            {mountedVideos.length > 0 && (
               <div
                 style={{
                   display: "grid",
@@ -910,12 +1006,23 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
                       : undefined,
                 }}
               >
-                {selectedVideos.map((video) => {
+                {mountedVideos.map((video) => {
                   const resolvedUrl = resolvedUrls[video.path];
                   const playbackError = playbackErrors[video.path];
                   const tileError = urlErrors[video.path] || playbackError;
+                  // Deselected videos stay mounted (so reselecting is instant and
+                  // keeps their position) but are hidden and excluded from the
+                  // grid flow; selection order drives their visual order.
+                  const selectionIndex = selectedPaths.indexOf(video.path);
+                  const isShown = selectionIndex >= 0;
                   return (
-                    <div key={video.path}>
+                    <div
+                      key={video.path}
+                      style={{
+                        display: isShown ? "block" : "none",
+                        order: isShown ? selectionIndex : 0,
+                      }}
+                    >
                       <div style={{ fontWeight: 600, marginBottom: 6 }}>
                         {video.name}
                       </div>
@@ -974,9 +1081,9 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
                                   [video.path]: true,
                                 }));
                                 const current =
-                                  sharedTime === undefined
+                                  sharedTimeRef.current === undefined
                                     ? video.startTime
-                                    : sharedTime;
+                                    : sharedTimeRef.current;
                                 const target = clamp(
                                   current,
                                   video.startTime,
