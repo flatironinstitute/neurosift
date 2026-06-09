@@ -1,4 +1,11 @@
-import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  FunctionComponent,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { IconButton, Tooltip } from "@mui/material";
 import ShareIcon from "@mui/icons-material/Share";
 import { getHdf5Dataset, getHdf5Group } from "./hdf5Interface";
@@ -763,8 +770,9 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   // React to selection changes on the mounted-but-hidden videos: pause anything
   // that is no longer displayed, and catch up anything just (re)displayed to the
   // shared time (resuming it if we are playing). The drift loop keeps it locked
-  // afterwards.
-  useEffect(() => {
+  // afterwards. This runs in a layout effect (before paint) so a re-displayed
+  // camera is marked resyncPending and hidden before its stale frame can flash.
+  useLayoutEffect(() => {
     const prev = prevSelectedRef.current;
     prevSelectedRef.current = selectedPaths;
 
@@ -877,18 +885,20 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
     if (!isExpanded) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-      // Don't hijack arrows while a form control (slider, checkboxes, layout
-      // radios, text fields) is focused.
+      // Ignore only controls where arrows have their own meaning: text entry,
+      // selects, and the layout radios (arrow keys move the radio group). The
+      // scrub slider (range) and the camera checkboxes still get the 5 s seek —
+      // we preventDefault below so the slider's tiny native step doesn't fire —
+      // so arrows work right after scrubbing, like YouTube.
       const target = e.target as HTMLElement | null;
-      if (
-        target &&
-        (target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.tagName === "SELECT" ||
-          target.isContentEditable)
-      ) {
-        return;
-      }
+      const tag = target?.tagName;
+      const inputType = (target as HTMLInputElement | null)?.type;
+      const isTextOrNavControl =
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        target?.isContentEditable === true ||
+        (tag === "INPUT" && inputType !== "range" && inputType !== "checkbox");
+      if (isTextOrNavControl) return;
       const current = sharedTimeRef.current;
       if (current === undefined) return;
       e.preventDefault();
