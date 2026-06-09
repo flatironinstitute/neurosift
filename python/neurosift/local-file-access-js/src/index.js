@@ -9,11 +9,18 @@ if (!dir) {
 }
 console.info('Serving files in', dir)
 
-// Allow CORS from neurosift.app flatironinstitute.github.io and localhost:3000
+// Allowed CORS origins. Exact-match list plus a pattern for Cloudflare Pages
+// preview deploys of this repo (every branch is published as
+// <branch>.neurosift.pages.dev), so `view-nwb --neurosift-url <preview>` works
+// without an allowlist edit per branch.
 const allowedOrigins = ['https://neurosift.app', 'https://flatironinstitute.github.io', 'http://localhost:3000', 'http://localhost:4200']
+const allowedOriginPatterns = [/^https:\/\/[a-z0-9-]+\.neurosift\.pages\.dev$/]
 app.use((req, resp, next) => {
     const origin = req.get('origin')
-    const allowedOrigin = allowedOrigins.includes(origin) ? origin : undefined
+    const isAllowed =
+        allowedOrigins.includes(origin) ||
+        (origin && allowedOriginPatterns.some((re) => re.test(origin)))
+    const allowedOrigin = isAllowed ? origin : undefined
     if (allowedOrigin) {
         resp.header('Access-Control-Allow-Origin', allowedOrigin)
         resp.header('Access-Control-Allow-Headers', "Origin, X-Requested-With, Content-Type, Accept, Range")
