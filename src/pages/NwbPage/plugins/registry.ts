@@ -20,6 +20,7 @@ import { intervalSeriesPlugin } from "./IntervalSeries";
 import { eventsPlugin } from "./Events";
 import { imageSeriesMp4Plugin } from "./ImageSeriesMp4";
 import { externalFileVideoPlugin } from "./ExternalFileVideo/index";
+import { vamePlugin } from "./VAME";
 import { NwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
 import {
   FigpackPoseEstimationPlugin,
@@ -44,6 +45,7 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   timeIntervalsPlugin,
   trialAlignedSeriesPlugin,
 
+  vamePlugin,
   externalFileVideoPlugin,
   imageSeriesMp4Plugin,
 
