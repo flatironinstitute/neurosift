@@ -109,6 +109,12 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   const [showEdges, setShowEdges] = useState(false);
   // Trajectory trails (recent path of each keypoint) are off by default.
   const [showTrails, setShowTrails] = useState(false);
+  // How far back (seconds) a trail reaches.
+  const [trailSec, setTrailSec] = useState(1.0);
+  // Hide keypoints whose confidence is below this (0 = show all).
+  const [confThreshold, setConfThreshold] = useState(0);
+  // Fade shown keypoints by their confidence (off by default).
+  const [fadeByConfidence, setFadeByConfidence] = useState(false);
   // Manual session-time nudge (seconds) for imprecise / skewed video timing.
   const [offset, setOffset] = useState(0);
   // Cross-file sibling-asset scan state (the pose's videos may live in another
@@ -316,9 +322,14 @@ const PoseEstimationView: FunctionComponent<Props> = ({
           { x0: 0, y0: 0, w: v.videoWidth, h: v.videoHeight },
           pose,
           sessionTime,
-          hidden,
-          showEdges,
-          showTrails,
+          {
+            hidden,
+            showEdges,
+            showTrails,
+            trailSec,
+            confThreshold,
+            fadeByConfidence,
+          },
         );
       }
       raf = requestAnimationFrame(loop);
@@ -328,7 +339,19 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       active = false;
       cancelAnimationFrame(raf);
     };
-  }, [pose, video, poseOnlyMode, hidden, showEdges, showTrails, offset, box]);
+  }, [
+    pose,
+    video,
+    poseOnlyMode,
+    hidden,
+    showEdges,
+    showTrails,
+    trailSec,
+    confThreshold,
+    fadeByConfidence,
+    offset,
+    box,
+  ]);
 
   // Pose-only rAF loop: advance an internal clock and draw the keypoints on a
   // plain canvas (no video). Runs only in pose-only mode.
@@ -354,7 +377,14 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       }
       const c = canvasRef.current;
       if (c)
-        drawPoseFrame(c, poseExtent, pose, clk.t, hidden, showEdges, showTrails);
+        drawPoseFrame(c, poseExtent, pose, clk.t, {
+          hidden,
+          showEdges,
+          showTrails,
+          trailSec,
+          confThreshold,
+          fadeByConfidence,
+        });
       if (now - lastUi > 100) {
         lastUi = now;
         setPoseUiTime(clk.t);
@@ -366,7 +396,18 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       active = false;
       cancelAnimationFrame(raf);
     };
-  }, [pose, poseExtent, poseOnlyMode, hidden, showEdges, showTrails, box]);
+  }, [
+    pose,
+    poseExtent,
+    poseOnlyMode,
+    hidden,
+    showEdges,
+    showTrails,
+    trailSec,
+    confThreshold,
+    fadeByConfidence,
+    box,
+  ]);
 
   if (poseError) {
     return (
@@ -682,17 +723,6 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                 />
                 Skeleton{pose.edges.length > 0 ? ` (${pose.edges.length})` : ""}
               </label>
-              <label
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-                title="Draw each keypoint's recent path (fading trail)"
-              >
-                <input
-                  type="checkbox"
-                  checked={showTrails}
-                  onChange={(e) => setShowTrails(e.target.checked)}
-                />
-                Trails
-              </label>
               <div style={{ display: "flex", gap: 6 }}>
                 <button
                   className="ns-pose-btn"
@@ -776,6 +806,95 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                 );
               })}
             </div>
+
+            {/* Trajectories: each keypoint's recent motion path. */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                borderTop: `1px solid ${HAIRLINE}`,
+                paddingTop: 8,
+              }}
+            >
+              <span style={{ color: INK.muted, fontSize: FS.small }}>
+                Trajectories
+              </span>
+              <label
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
+                title="Draw each keypoint's recent path (fading trail)"
+              >
+                <input
+                  type="checkbox"
+                  checked={showTrails}
+                  onChange={(e) => setShowTrails(e.target.checked)}
+                />
+                Show trails
+              </label>
+              {showTrails && (
+                <label
+                  style={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  title="How far back in time each trail reaches"
+                >
+                  <span style={{ color: INK.faint, fontSize: FS.small }}>
+                    window: {trailSec.toFixed(2)} s
+                  </span>
+                  <input
+                    type="range"
+                    min={0.25}
+                    max={5}
+                    step={0.25}
+                    value={trailSec}
+                    onChange={(e) => setTrailSec(Number(e.target.value))}
+                  />
+                </label>
+              )}
+            </div>
+
+            {/* Confidence: hide low-confidence points, and/or fade by confidence.
+                Only shown when the file stores per-frame confidence. */}
+            {pose.keypoints.some((k) => k.confidence) && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                  borderTop: `1px solid ${HAIRLINE}`,
+                  paddingTop: 8,
+                }}
+              >
+                <span style={{ color: INK.muted, fontSize: FS.small }}>
+                  Confidence
+                </span>
+                <label
+                  style={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  title="Keypoints below this confidence are not drawn"
+                >
+                  <span style={{ color: INK.faint, fontSize: FS.small }}>
+                    hide below: {confThreshold.toFixed(2)}
+                  </span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={confThreshold}
+                    onChange={(e) => setConfThreshold(Number(e.target.value))}
+                  />
+                </label>
+                <label
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  title="Fade each shown keypoint's opacity by its confidence"
+                >
+                  <input
+                    type="checkbox"
+                    checked={fadeByConfidence}
+                    onChange={(e) => setFadeByConfidence(e.target.checked)}
+                  />
+                  Fade by confidence
+                </label>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -15,6 +15,9 @@ export type PoseKeypoint = {
   coords: Float32Array;
   // Session time (seconds) per frame; length === coords.length / 2.
   timestamps: Float64Array;
+  // Per-frame tracking confidence (likelihood, usually 0-1) when the series
+  // stores it; null when absent. Used to fade / threshold low-confidence points.
+  confidence: Float32Array | null;
 };
 
 export type PoseData = {
@@ -210,6 +213,7 @@ export const loadPoseEstimation = async (
     coords: Float32Array;
     numFrames: number;
     timestamps: Float64Array | null;
+    confidence: Float32Array | null;
   };
   // Read one series: group metadata, the full (x, y) coordinate array, and its
   // timestamps. The data read dominates load time, so these run concurrently
@@ -238,12 +242,28 @@ export const loadPoseEstimation = async (
       g.datasets,
       numFrames,
     );
+
+    // Per-frame confidence (likelihood), when the series stores it.
+    let confidence: Float32Array | null = null;
+    const confDs = g.datasets.find((d) => d.name === "confidence");
+    if (confDs && confDs.shape?.[0]) {
+      const craw = await getHdf5DatasetData(
+        nwbUrl,
+        `${sg.path}/confidence`,
+        {},
+      );
+      if (craw && (craw as ArrayLike<number>).length) {
+        confidence = Float32Array.from(craw as ArrayLike<number>, Number);
+      }
+    }
+
     return {
       name: sg.name,
       color: keypointColor(i, seriesSubs.length),
       coords,
       numFrames,
       timestamps,
+      confidence,
     };
   };
 
@@ -284,6 +304,7 @@ export const loadPoseEstimation = async (
       color: l.color,
       coords: l.coords,
       timestamps: ts,
+      confidence: l.confidence,
     });
   }
   if (keypoints.length === 0) return null;
@@ -661,23 +682,40 @@ export const getPoseExtent = (pose: PoseData): SourceRect => {
   };
 };
 
+// Most points drawn per trajectory trail (older points are sub-sampled past this
+// to bound the per-frame cost regardless of the look-back window or frame rate).
+const TRAIL_MAX_POINTS = 80;
+
+export type DrawOptions = {
+  hidden: Set<string>;
+  showEdges: boolean;
+  showTrails: boolean;
+  // How far back (session seconds) a trajectory trail reaches.
+  trailSec: number;
+  // Hide keypoints whose confidence is below this (0 = show all).
+  confThreshold: number;
+  // Fade shown keypoints' opacity by their confidence.
+  fadeByConfidence: boolean;
+};
+
 // Draw the keypoints for `sessionTime` onto a canvas, mapping pose coordinates
 // through an object-fit:contain box for the given source rect. With a video, pass
 // the video's {0,0,videoWidth,videoHeight}; without one, pass getPoseExtent(pose).
-// How far back (session seconds) a trajectory trail reaches, and the most points
-// drawn per trail (older points are skipped past this to bound the cost).
-const TRAIL_SEC = 1.0;
-const TRAIL_MAX_POINTS = 80;
-
 export const drawPoseFrame = (
   canvas: HTMLCanvasElement,
   src: SourceRect,
   pose: PoseData,
   sessionTime: number,
-  hidden: Set<string>,
-  showEdges: boolean,
-  showTrails: boolean,
+  opts: DrawOptions,
 ): void => {
+  const {
+    hidden,
+    showEdges,
+    showTrails,
+    trailSec,
+    confThreshold,
+    fadeByConfidence,
+  } = opts;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -691,15 +729,25 @@ export const drawPoseFrame = (
   const r = Math.max(3, Math.min(canvas.width, canvas.height) / 130);
 
   // Resolve every keypoint's screen position at this frame once, so edges and
-  // dots share it. null = hidden or off (non-finite) and not drawn.
-  const pts: ({ x: number; y: number } | null)[] = pose.keypoints.map((kp) => {
-    if (hidden.has(kp.name)) return null;
-    const f = frameIndexAtTime(kp.timestamps, sessionTime);
-    const x = kp.coords[f * 2];
-    const y = kp.coords[f * 2 + 1];
-    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
-    return { x: offX + (x - x0) * scale, y: offY + (y - y0) * scale };
-  });
+  // dots share it. null = hidden, off-screen (non-finite), or below the
+  // confidence threshold. `alpha` fades the dot by its confidence.
+  const pts: ({ x: number; y: number; alpha: number } | null)[] =
+    pose.keypoints.map((kp) => {
+      if (hidden.has(kp.name)) return null;
+      const f = frameIndexAtTime(kp.timestamps, sessionTime);
+      const x = kp.coords[f * 2];
+      const y = kp.coords[f * 2 + 1];
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+      let alpha = 1;
+      if (kp.confidence) {
+        const c = kp.confidence[f];
+        if (Number.isFinite(c)) {
+          if (c < confThreshold) return null;
+          if (fadeByConfidence) alpha = Math.max(0.2, Math.min(1, c));
+        }
+      }
+      return { x: offX + (x - x0) * scale, y: offY + (y - y0) * scale, alpha };
+    });
 
   // Trajectory trails (under edges and dots): each keypoint's recent path over
   // the last TRAIL_SEC, fading with age so the current frame is the bright head.
@@ -709,17 +757,22 @@ export const drawPoseFrame = (
     for (const kp of pose.keypoints) {
       if (hidden.has(kp.name)) continue;
       const end = frameIndexAtTime(kp.timestamps, sessionTime);
-      const start = frameIndexAtTime(kp.timestamps, sessionTime - TRAIL_SEC);
+      const start = frameIndexAtTime(kp.timestamps, sessionTime - trailSec);
       const n = end - start;
       if (n <= 1) continue;
       const step = Math.max(1, Math.floor(n / TRAIL_MAX_POINTS));
       ctx.strokeStyle = kp.color;
+      const conf = kp.confidence;
       let prevX = NaN;
       let prevY = NaN;
       for (let f = start; f <= end; f += step) {
         const x = kp.coords[f * 2];
         const y = kp.coords[f * 2 + 1];
-        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        if (
+          !Number.isFinite(x) ||
+          !Number.isFinite(y) ||
+          (conf && conf[f] < confThreshold)
+        ) {
           prevX = NaN;
           continue;
         }
@@ -759,6 +812,7 @@ export const drawPoseFrame = (
   for (let i = 0; i < pose.keypoints.length; i++) {
     const p = pts[i];
     if (!p) continue;
+    ctx.globalAlpha = p.alpha;
     ctx.beginPath();
     ctx.arc(p.x, p.y, r, 0, 2 * Math.PI);
     ctx.fillStyle = pose.keypoints[i].color;
@@ -767,4 +821,5 @@ export const drawPoseFrame = (
     ctx.strokeStyle = "#000";
     ctx.stroke();
   }
+  ctx.globalAlpha = 1;
 };
