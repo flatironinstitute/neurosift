@@ -135,6 +135,30 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   const poseOnlyMode = !scanning && (noPlayableVideo || forcePoseOnly);
   const poseExtent = useMemo(() => (pose ? getPoseExtent(pose) : null), [pose]);
 
+  // Group discovered videos by their source file for the two-step picker (source
+  // file -> its videos). "(none)" = pose only is the first source option.
+  const sources: { key: string; label: string; videos: VideoCandidate[] }[] =
+    [];
+  for (const c of candidates) {
+    const key = c.sourceNwbUrl || "__this__";
+    let s = sources.find((x) => x.key === key);
+    if (!s) {
+      s = { key, label: c.sourceLabel || "(this file)", videos: [] };
+      sources.push(s);
+    }
+    s.videos.push(c);
+  }
+  const selectedSource = forcePoseOnly
+    ? undefined
+    : selectedCandidate
+      ? sources.find(
+          (s) => s.key === (selectedCandidate.sourceNwbUrl || "__this__"),
+        )
+      : sources[0];
+  const selectedSourceKey = forcePoseOnly
+    ? "__none__"
+    : (selectedSource?.key ?? "__none__");
+
   // Load the pose container.
   useEffect(() => {
     let canceled = false;
@@ -428,49 +452,71 @@ const PoseEstimationView: FunctionComponent<Props> = ({
               fontSize: 13,
             }}
           >
-            {/* Video: choose the overlay video, or view the pose alone. */}
+            {/* Background video: first pick a source file (or "none" = pose only),
+                then a video within it. The pose keypoints are the overlay; the
+                video is the background they are drawn on. */}
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={{ color: INK.muted, fontSize: FS.small }}>
-                Video
+                Background video
               </span>
-              <select
-                value={selectedVideoPath}
-                onChange={(e) => setSelectedVideoPath(e.target.value)}
-                disabled={scanning}
+              <label
+                style={{ display: "flex", flexDirection: "column", gap: 2 }}
               >
-                {candidates.length === 0 && (
-                  <option value="">
-                    {scanning
-                      ? "(searching other files...)"
-                      : "(no videos found)"}
-                  </option>
-                )}
-                {candidates.map((c, index) => (
-                  <option key={c.path} value={c.path}>
-                    {index === 0 && c.score > 0 ? "[suggested] " : ""}
-                    {c.name}
-                    {c.externalBasename ? ` (${c.externalBasename})` : ""}
-                    {c.sourceLabel ? ` - from ${c.sourceLabel}` : ""}
-                  </option>
-                ))}
-              </select>
-              {selectedCandidate?.sourceLabel && (
-                <span
-                  style={{ color: "#8a5a00", fontSize: FS.small }}
-                  title="This video is in a different asset than the pose (same session)."
-                >
-                  cross-file: {selectedCandidate.sourceLabel}
+                <span style={{ color: INK.faint, fontSize: FS.small }}>
+                  File
                 </span>
-              )}
-              {selectedCandidate && !codecError && !videoError && (
-                <button
-                  className="ns-pose-btn"
-                  onClick={() => setForcePoseOnly((v) => !v)}
-                  title="Switch between the video overlay and the pose drawn on its own"
-                  style={{ alignSelf: "flex-start" }}
+                <select
+                  value={selectedSourceKey}
+                  disabled={scanning}
+                  onChange={(e) => {
+                    const k = e.target.value;
+                    if (k === "__none__") {
+                      setForcePoseOnly(true);
+                      return;
+                    }
+                    setForcePoseOnly(false);
+                    const first = sources.find((s) => s.key === k)?.videos[0];
+                    if (first) setSelectedVideoPath(first.path);
+                  }}
                 >
-                  {forcePoseOnly ? "Show video" : "Pose only"}
-                </button>
+                  <option value="__none__">(none - pose only)</option>
+                  {sources.map((s) => (
+                    <option key={s.key} value={s.key}>
+                      {s.label}
+                    </option>
+                  ))}
+                  {sources.length === 0 && (
+                    <option value="__empty__" disabled>
+                      {scanning
+                        ? "(searching other files...)"
+                        : "(no videos found)"}
+                    </option>
+                  )}
+                </select>
+              </label>
+              {selectedSource && (
+                <label
+                  style={{ display: "flex", flexDirection: "column", gap: 2 }}
+                >
+                  <span style={{ color: INK.faint, fontSize: FS.small }}>
+                    Video
+                  </span>
+                  <select
+                    value={selectedVideoPath}
+                    onChange={(e) => {
+                      setForcePoseOnly(false);
+                      setSelectedVideoPath(e.target.value);
+                    }}
+                  >
+                    {selectedSource.videos.map((c, index) => (
+                      <option key={c.path} value={c.path}>
+                        {index === 0 && c.score > 0 ? "[suggested] " : ""}
+                        {c.name}
+                        {c.externalBasename ? ` (${c.externalBasename})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               )}
             </div>
             {/* Video alignment: the offset and how the pose and video spans line
@@ -803,7 +849,22 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                 controls
                 muted
                 playsInline
-                onError={() => setCodecError(true)}
+                onError={(e) => {
+                  const code = e.currentTarget.error?.code;
+                  // ABORTED fires normally when the src is swapped to another
+                  // video; it is not a real failure, so ignore it.
+                  if (code === MediaError.MEDIA_ERR_ABORTED) return;
+                  // A network failure is transient (dropped connection, expired
+                  // presigned URL): report it as such rather than blaming the
+                  // codec, but still fall back to pose-only.
+                  if (code === MediaError.MEDIA_ERR_NETWORK) {
+                    setVideoError("network error while loading the video");
+                    return;
+                  }
+                  // Unsupported container/codec or a decode failure: this element
+                  // genuinely cannot show the frame.
+                  setCodecError(true);
+                }}
                 style={{
                   position: "absolute",
                   inset: 0,
