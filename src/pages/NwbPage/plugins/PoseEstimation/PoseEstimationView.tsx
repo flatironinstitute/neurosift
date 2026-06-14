@@ -8,11 +8,12 @@ import {
   useState,
 } from "react";
 import { useSearchParams } from "react-router-dom";
+import { IconButton } from "@mui/material";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import getAuthorizationHeaderForUrl from "../../../util/getAuthorizationHeaderForUrl";
 import { resolveExternalVideoUrl } from "../../externalVideoUtils";
 import {
-  checkCompatibility,
-  Compatibility,
   drawPoseFrame,
   findSiblingVideoCandidates,
   findVideoCandidates,
@@ -103,10 +104,6 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   const [video, setVideo] = useState<ResolvedVideo | null>(null);
   const [videoError, setVideoError] = useState<string>();
   const [codecError, setCodecError] = useState(false);
-  const [videoDims, setVideoDims] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   // Skeleton edges are off by default (many files define no edges at all).
   const [showEdges, setShowEdges] = useState(false);
@@ -121,9 +118,9 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   // Pose-only playback clock (kept in a ref so the rAF loop does not re-render
   // every frame); the slider mirrors it at ~10 Hz.
-  const poseClock = useRef({ t: 0, playing: true, last: 0 });
+  const poseClock = useRef({ t: 0, playing: false, last: 0 });
   const [poseUiTime, setPoseUiTime] = useState(0);
-  const [posePlaying, setPosePlaying] = useState(true);
+  const [posePlaying, setPosePlaying] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -221,7 +218,6 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     setVideo(null);
     setVideoError(undefined);
     setCodecError(false);
-    setVideoDims(null);
     (async () => {
       try {
         const downloadUrl = await resolveExternalVideoUrl(
@@ -322,7 +318,12 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       clk.last = now;
       if (clk.playing) {
         clk.t += dt;
-        if (clk.t > pose.timeRange.end) clk.t = pose.timeRange.start;
+        // Stop at the end (no loop), matching the native video element.
+        if (clk.t >= pose.timeRange.end) {
+          clk.t = pose.timeRange.end;
+          clk.playing = false;
+          setPosePlaying(false);
+        }
       }
       const c = canvasRef.current;
       if (c) drawPoseFrame(c, poseExtent, pose, clk.t, hidden, showEdges);
@@ -338,15 +339,6 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       cancelAnimationFrame(raf);
     };
   }, [pose, poseExtent, poseOnlyMode, hidden, showEdges, box]);
-
-  const compatibility: Compatibility | null = useMemo(() => {
-    if (!pose || !video) return null;
-    return checkCompatibility(
-      pose,
-      { startTime: video.startTime, endTime: video.endTime },
-      videoDims,
-    );
-  }, [pose, video, videoDims]);
 
   if (poseError) {
     return (
@@ -413,14 +405,14 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                 {pose.keypoints.length} keypoints
               </div>
             </div>
-            <button
-              className="ns-pose-btn"
+            <IconButton
+              size="small"
               onClick={() => setPanelCollapsed(true)}
-              title="Hide the controls panel"
-              style={{ flexShrink: 0 }}
+              title="Collapse panel"
+              sx={{ flexShrink: 0 }}
             >
-              Hide Menu
-            </button>
+              <ChevronLeftIcon fontSize="small" />
+            </IconButton>
           </div>
 
           {/* Panel body: scrolls when the keypoint list is long. */}
@@ -436,8 +428,11 @@ const PoseEstimationView: FunctionComponent<Props> = ({
               fontSize: 13,
             }}
           >
-            <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span>Video</span>
+            {/* Video: choose the overlay video, or view the pose alone. */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span style={{ color: INK.muted, fontSize: FS.small }}>
+                Video
+              </span>
               <select
                 value={selectedVideoPath}
                 onChange={(e) => setSelectedVideoPath(e.target.value)}
@@ -459,156 +454,149 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                   </option>
                 ))}
               </select>
-            </label>
-            {selectedCandidate?.sourceLabel && (
-              <span
-                style={{ color: "#8a5a00", fontSize: FS.small }}
-                title="This video is in a different asset than the pose (same session)."
-              >
-                cross-file: {selectedCandidate.sourceLabel}
-              </span>
-            )}
-            <label
-              style={{ display: "flex", flexDirection: "column", gap: 4 }}
-              title={
-                video?.timestamps
-                  ? "Aligned through the video's per-frame timestamps. Nudge if the keypoints lead/lag the animal."
-                  : "This video has no per-frame timestamps; alignment is linear. Nudge to correct a constant shift."
-              }
-            >
-              <span>offset (s)</span>
-              <input
-                type="number"
-                step={0.1}
-                value={offset}
-                onChange={(e) => setOffset(Number(e.target.value) || 0)}
-                style={{ width: 80 }}
-              />
-            </label>
-            <span style={{ color: INK.faint, fontSize: FS.small }}>
-              {!poseOnlyMode && video
-                ? video.timestamps
-                  ? "timestamp-aligned"
-                  : "linear-aligned (no video timestamps)"
-                : ""}
-            </span>
-
-            {/* Graphical time-alignment: pose and video spans share one neutral
-                color (they are the same kind of thing); green is reserved for the
-                actual overlap segment, so the color has a single clear meaning. */}
-            {(() => {
-              const v = video;
-              const hasV = !!v && v.endTime > v.startTime;
-              const vStart =
-                v && v.endTime > v.startTime
-                  ? v.startTime
-                  : pose.timeRange.start;
-              const vEnd =
-                v && v.endTime > v.startTime ? v.endTime : pose.timeRange.end;
-              const ovStart = Math.max(pose.timeRange.start, vStart);
-              const ovEnd = Math.min(pose.timeRange.end, vEnd);
-              const hasOverlap = hasV && ovEnd > ovStart;
-              const t0 = Math.min(pose.timeRange.start, vStart);
-              const t1 = Math.max(pose.timeRange.end, vEnd);
-              const span = t1 - t0 || 1;
-              const SPAN_COLOR = "#9aa7b5"; // both pose and video, same muted slate
-              const OVERLAP_COLOR = "#2e7d32"; // green only for the overlap segment
-              const rowStyle: CSSProperties = {
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-              };
-              const labelStyle: CSSProperties = {
-                width: 44,
-                fontSize: 10,
-                color: INK.muted,
-                textAlign: "right",
-              };
-              const trackStyle: CSSProperties = {
-                position: "relative",
-                flex: 1,
-                height: 8,
-                background: HAIRLINE,
-                borderRadius: 3,
-              };
-              const seg = (
-                a: number,
-                b: number,
-                color: string,
-              ): CSSProperties => ({
-                position: "absolute",
-                top: 0,
-                bottom: 0,
-                left: `${((a - t0) / span) * 100}%`,
-                width: `${(Math.max(b - a, 0) / span) * 100}%`,
-                minWidth: 2,
-                background: color,
-                borderRadius: 3,
-              });
-              return (
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 4,
-                    borderTop: `1px solid ${HAIRLINE}`,
-                    paddingTop: 8,
-                  }}
+              {selectedCandidate?.sourceLabel && (
+                <span
+                  style={{ color: "#8a5a00", fontSize: FS.small }}
+                  title="This video is in a different asset than the pose (same session)."
                 >
-                  <span style={{ color: INK.muted, fontSize: FS.small }}>
-                    Alignment
-                  </span>
-                  <div style={rowStyle}>
-                    <span style={labelStyle}>pose</span>
-                    <div style={trackStyle}>
-                      <div
-                        style={seg(
-                          pose.timeRange.start,
-                          pose.timeRange.end,
-                          SPAN_COLOR,
-                        )}
-                      />
-                    </div>
-                  </div>
-                  <div style={rowStyle}>
-                    <span style={labelStyle}>video</span>
-                    <div style={trackStyle}>
-                      {hasV && <div style={seg(vStart, vEnd, SPAN_COLOR)} />}
-                    </div>
-                  </div>
-                  <div style={rowStyle}>
-                    <span style={labelStyle}>overlap</span>
-                    <div style={trackStyle}>
-                      {hasOverlap && (
-                        <div style={seg(ovStart, ovEnd, OVERLAP_COLOR)} />
-                      )}
-                    </div>
-                  </div>
-                  <span
-                    style={{ fontSize: 10, color: INK.muted, paddingLeft: 50 }}
+                  cross-file: {selectedCandidate.sourceLabel}
+                </span>
+              )}
+              {selectedCandidate && !codecError && !videoError && (
+                <button
+                  className="ns-pose-btn"
+                  onClick={() => setForcePoseOnly((v) => !v)}
+                  title="Switch between the video overlay and the pose drawn on its own"
+                  style={{ alignSelf: "flex-start" }}
+                >
+                  {forcePoseOnly ? "Show video" : "Pose only"}
+                </button>
+              )}
+            </div>
+            {/* Video alignment: the offset and how the pose and video spans line
+                up on the session clock (both spans share one neutral color). */}
+            {selectedCandidate &&
+              (() => {
+                const v = video;
+                const hasV = !!v && v.endTime > v.startTime;
+                const vStart =
+                  v && v.endTime > v.startTime
+                    ? v.startTime
+                    : pose.timeRange.start;
+                const vEnd =
+                  v && v.endTime > v.startTime ? v.endTime : pose.timeRange.end;
+                const ovStart = Math.max(pose.timeRange.start, vStart);
+                const ovEnd = Math.min(pose.timeRange.end, vEnd);
+                const hasOverlap = hasV && ovEnd > ovStart;
+                const t0 = Math.min(pose.timeRange.start, vStart);
+                const t1 = Math.max(pose.timeRange.end, vEnd);
+                const span = t1 - t0 || 1;
+                const SPAN_COLOR = "#9aa7b5";
+                const rowStyle: CSSProperties = {
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                };
+                const labelStyle: CSSProperties = {
+                  width: 40,
+                  fontSize: 10,
+                  color: INK.muted,
+                  textAlign: "right",
+                };
+                const trackStyle: CSSProperties = {
+                  position: "relative",
+                  flex: 1,
+                  height: 8,
+                  background: HAIRLINE,
+                  borderRadius: 3,
+                };
+                const seg = (a: number, b: number): CSSProperties => ({
+                  position: "absolute",
+                  top: 0,
+                  bottom: 0,
+                  left: `${((a - t0) / span) * 100}%`,
+                  width: `${(Math.max(b - a, 0) / span) * 100}%`,
+                  minWidth: 2,
+                  background: SPAN_COLOR,
+                  borderRadius: 3,
+                });
+                return (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                      borderTop: `1px solid ${HAIRLINE}`,
+                      paddingTop: 8,
+                    }}
                   >
-                    {!v
-                      ? "no video selected"
-                      : !hasV
+                    <span style={{ color: INK.muted, fontSize: FS.small }}>
+                      Video alignment
+                    </span>
+                    <label
+                      style={{ display: "flex", alignItems: "center", gap: 6 }}
+                      title={
+                        video?.timestamps
+                          ? "Aligned through the video's per-frame timestamps. Nudge if the keypoints lead/lag the animal."
+                          : "No per-frame timestamps; alignment is linear. Nudge to correct a constant shift."
+                      }
+                    >
+                      <span style={{ color: INK.muted }}>offset (s)</span>
+                      <input
+                        type="number"
+                        step={0.1}
+                        value={offset}
+                        onChange={(e) => setOffset(Number(e.target.value) || 0)}
+                        style={{ width: 70 }}
+                      />
+                    </label>
+                    <div style={rowStyle}>
+                      <span style={labelStyle}>pose</span>
+                      <div style={trackStyle}>
+                        <div
+                          style={seg(pose.timeRange.start, pose.timeRange.end)}
+                        />
+                      </div>
+                    </div>
+                    <div style={rowStyle}>
+                      <span style={labelStyle}>video</span>
+                      <div style={trackStyle}>
+                        {hasV && <div style={seg(vStart, vEnd)} />}
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: 10,
+                        paddingLeft: 46,
+                        color: !hasV
+                          ? INK.faint
+                          : hasOverlap
+                            ? "#2e7d32"
+                            : "#b26a00",
+                      }}
+                    >
+                      {!hasV
                         ? "video timing unknown"
                         : hasOverlap
-                          ? `${ovStart.toFixed(0)}-${ovEnd.toFixed(0)} s`
+                          ? `aligned ${ovStart.toFixed(0)}-${ovEnd.toFixed(0)} s`
                           : "no overlap - pick another video"}
-                  </span>
-                </div>
-              );
-            })()}
-
-            {selectedCandidate && !codecError && !videoError && (
-              <button
-                className="ns-pose-btn"
-                onClick={() => setForcePoseOnly((v) => !v)}
-                title="Switch between the video overlay and the pose drawn on its own"
-                style={{ alignSelf: "flex-start" }}
-              >
-                {forcePoseOnly ? "Show video" : "Pose only"}
-              </button>
-            )}
+                    </span>
+                    <span
+                      style={{
+                        color: INK.faint,
+                        fontSize: 10,
+                        paddingLeft: 46,
+                      }}
+                    >
+                      {video
+                        ? video.timestamps
+                          ? "timestamp-aligned"
+                          : "linear-aligned"
+                        : ""}
+                    </span>
+                  </div>
+                );
+              })()}
 
             {/* Keypoint legend / visibility toggles (vertical list, scrolls). */}
             <div
@@ -748,28 +736,13 @@ const PoseEstimationView: FunctionComponent<Props> = ({
               borderBottom: `1px solid ${HAIRLINE}`,
             }}
           >
-            <button
-              className="ns-pose-btn"
+            <IconButton
+              size="small"
               onClick={() => setPanelCollapsed(false)}
-              title="Show the controls panel"
+              title="Expand panel"
             >
-              Show Menu
-            </button>
-          </div>
-        )}
-
-        {/* Compatibility banner: obvious, warn-and-allow (colored background
-            separates it; no divider needed). */}
-        {compatibility && (
-          <div
-            style={{
-              padding: "6px 10px",
-              fontSize: FS.body,
-              background: compatibility.aligned ? "#eef8ee" : "#fff4e5",
-              color: compatibility.aligned ? "#256029" : "#8a5a00",
-            }}
-          >
-            <strong>{compatibility.headline}.</strong> {compatibility.detail}
+              <ChevronRightIcon fontSize="small" />
+            </IconButton>
           </div>
         )}
 
@@ -831,12 +804,6 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                 muted
                 playsInline
                 onError={() => setCodecError(true)}
-                onLoadedMetadata={(e) =>
-                  setVideoDims({
-                    width: e.currentTarget.videoWidth,
-                    height: e.currentTarget.videoHeight,
-                  })
-                }
                 style={{
                   position: "absolute",
                   inset: 0,
@@ -876,8 +843,15 @@ const PoseEstimationView: FunctionComponent<Props> = ({
             <button
               className="ns-pose-btn"
               onClick={() => {
-                poseClock.current.playing = !poseClock.current.playing;
-                setPosePlaying(poseClock.current.playing);
+                const clk = poseClock.current;
+                const next = !clk.playing;
+                // Pressing play at the end restarts from the beginning.
+                if (next && clk.t >= pose.timeRange.end) {
+                  clk.t = pose.timeRange.start;
+                  setPoseUiTime(pose.timeRange.start);
+                }
+                clk.playing = next;
+                setPosePlaying(next);
               }}
             >
               {posePlaying ? "Pause" : "Play"}
