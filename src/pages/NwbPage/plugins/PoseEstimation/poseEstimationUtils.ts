@@ -56,11 +56,15 @@ const basename = (p: string): string => p.split(/[\\/]/).pop() || p;
 
 // Collapse a name to alphanumerics for tolerant matching between a Skeleton node
 // ("leftFrontPaw") and a PoseEstimationSeries name ("PoseEstimationSeriesLeftfrontpaw").
-const normalizeName = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+const normalizeName = (s: string): string =>
+  s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 // Map a skeleton node name onto an index into `keypoints` (the series). Prefer an
 // exact normalized match, then suffix, then substring. Returns -1 if none.
-const matchNodeToKeypoint = (node: string, keypoints: PoseKeypoint[]): number => {
+const matchNodeToKeypoint = (
+  node: string,
+  keypoints: PoseKeypoint[],
+): number => {
   const nn = normalizeName(node);
   if (!nn) return -1;
   const norms = keypoints.map((kp) => normalizeName(kp.name));
@@ -122,7 +126,8 @@ const loadSkeletonEdges = async (
   // (a) Skeleton(s) linked directly under the PoseEstimation.
   for (const sg of poseGroup.subgroups) {
     if (sg.attrs?.neurodata_type === "Skeleton") candidatePaths.push(sg.path);
-    else if (/skeleton/i.test(sg.path.split("/").pop() || "")) candidatePaths.push(sg.path);
+    else if (/skeleton/i.test(sg.path.split("/").pop() || ""))
+      candidatePaths.push(sg.path);
   }
   // (b) The sibling `Skeletons` container (real group, reliable attrs).
   const parent = posePath.replace(/\/[^/]+$/, "");
@@ -214,7 +219,8 @@ export const loadPoseEstimation = async (
     const g = await getHdf5Group(nwbUrl, sg.path);
     if (!g) return null;
     const dataDs = g.datasets.find((d) => d.name === "data");
-    if (!dataDs || dataDs.shape.length !== 2 || dataDs.shape[1] < 2) return null;
+    if (!dataDs || dataDs.shape.length !== 2 || dataDs.shape[1] < 2)
+      return null;
     const numFrames = dataDs.shape[0];
     const stride = dataDs.shape[1];
 
@@ -226,7 +232,12 @@ export const loadPoseEstimation = async (
       coords[f * 2 + 1] = Number(raw[f * stride + 1]);
     }
 
-    const timestamps = await loadTimestamps(nwbUrl, sg.path, g.datasets, numFrames);
+    const timestamps = await loadTimestamps(
+      nwbUrl,
+      sg.path,
+      g.datasets,
+      numFrames,
+    );
     return {
       name: sg.name,
       color: keypointColor(i, seriesSubs.length),
@@ -268,7 +279,12 @@ export const loadPoseEstimation = async (
       ts = sibling?.timestamps ?? null;
     }
     if (!ts) continue;
-    keypoints.push({ name: l.name, color: l.color, coords: l.coords, timestamps: ts });
+    keypoints.push({
+      name: l.name,
+      color: l.color,
+      coords: l.coords,
+      timestamps: ts,
+    });
   }
   if (keypoints.length === 0) return null;
 
@@ -309,7 +325,13 @@ export const loadPoseEstimation = async (
   if (!Number.isFinite(start)) start = 0;
   if (!Number.isFinite(end)) end = 0;
 
-  return { keypoints, originalVideos, dimensions, edges, timeRange: { start, end } };
+  return {
+    keypoints,
+    originalVideos,
+    dimensions,
+    edges,
+    timeRange: { start, end },
+  };
 };
 
 // Walk the data roots for every external-file ImageSeries and rank each as a
@@ -328,7 +350,10 @@ export const findVideoCandidates = async (
       group.attrs?.neurodata_type === "ImageSeries" &&
       group.datasets.some((ds) => ds.name === "external_file")
     ) {
-      found.push({ path: group.path, name: group.path.split("/").pop() || group.path });
+      found.push({
+        path: group.path,
+        name: group.path.split("/").pop() || group.path,
+      });
     }
     for (const sub of group.subgroups || []) await visit(sub.path);
   };
@@ -361,7 +386,10 @@ export const findVideoCandidates = async (
       else if (extLower && (ov.includes(extLower) || extLower.includes(ov)))
         score = Math.max(score, 2);
       // The ImageSeries group name often echoes the camera ("body_video" etc.).
-      else if (ov.includes(nameLower) || nameLower.includes(ov.replace(/\.\w+$/, "")))
+      else if (
+        ov.includes(nameLower) ||
+        nameLower.includes(ov.replace(/\.\w+$/, ""))
+      )
         score = Math.max(score, 1);
     }
     // Pose container name vs video name ("LeftCamera" <-> "VideoLeftCamera").
@@ -418,7 +446,14 @@ export const findSiblingVideoCandidates = async (
   } catch {
     return [];
   }
-  // subject + session prefix, e.g. "sub-NYU-46/sub-NYU-46_ses-<uuid>".
+  // subject + session prefix, e.g. "sub-NYU-46/sub-NYU-46_ses-<uuid>". This is
+  // the BIDS-on-DANDI layout (every asset path begins sub-<id>/sub-<id>_ses-<id>),
+  // which the cross-file scan relies on to find sibling assets of the same
+  // session. It will NOT match an asset whose path does not follow it: a flat
+  // path with no sub-/ses- entities, a session without a ses- entity, a different
+  // separator/naming scheme, or a non-DANDI file. Those simply yield no
+  // cross-file candidates (the in-file path is unaffected). Accepted as fine:
+  // DANDI is standardizing on BIDS, so this layout is the direction of travel.
   const m = selfPath.match(/^(sub-[^/]+)\/\1_ses-([^_/]+)/);
   if (!m) return [];
   const prefix = `${m[1]}/${m[1]}_ses-${m[2]}`;
@@ -442,7 +477,11 @@ export const findSiblingVideoCandidates = async (
     const siblingUrl = `${api}/assets/${a.asset_id}/download/`;
     const label = a.path.split("/").pop() || a.path;
     try {
-      const cands = await findVideoCandidates(siblingUrl, originalVideos, poseName);
+      const cands = await findVideoCandidates(
+        siblingUrl,
+        originalVideos,
+        poseName,
+      );
       for (const c of cands) {
         out.push({ ...c, sourceNwbUrl: siblingUrl, sourceLabel: label });
       }
@@ -483,9 +522,17 @@ export const videoTimeToSessionTime = (
   videoTimestamps: Float64Array | null,
   offset: number,
 ): number => {
-  if (videoTimestamps && videoTimestamps.length > 0 && duration > 0 && Number.isFinite(duration)) {
+  if (
+    videoTimestamps &&
+    videoTimestamps.length > 0 &&
+    duration > 0 &&
+    Number.isFinite(duration)
+  ) {
     const n = videoTimestamps.length;
-    const idx = Math.min(n - 1, Math.max(0, Math.round((currentTime / duration) * (n - 1))));
+    const idx = Math.min(
+      n - 1,
+      Math.max(0, Math.round((currentTime / duration) * (n - 1))),
+    );
     return videoTimestamps[idx] + offset;
   }
   return startTime + currentTime + offset;
@@ -606,7 +653,12 @@ export const getPoseExtent = (pose: PoseData): SourceRect => {
   const w = maxX - minX || 1;
   const h = maxY - minY || 1;
   const pad = 0.05;
-  return { x0: minX - w * pad, y0: minY - h * pad, w: w * (1 + 2 * pad), h: h * (1 + 2 * pad) };
+  return {
+    x0: minX - w * pad,
+    y0: minY - h * pad,
+    w: w * (1 + 2 * pad),
+    h: h * (1 + 2 * pad),
+  };
 };
 
 // Draw the keypoints for `sessionTime` onto a canvas, mapping pose coordinates
