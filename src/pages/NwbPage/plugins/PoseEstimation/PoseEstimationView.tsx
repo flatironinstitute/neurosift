@@ -7,11 +7,15 @@ import {
   checkCompatibility,
   Compatibility,
   drawPoseFrame,
+  findSiblingVideoCandidates,
   findVideoCandidates,
+  getPoseExtent,
   getVideoTimeRange,
   loadPoseEstimation,
+  loadVideoTimestamps,
   PoseData,
   VideoCandidate,
+  videoTimeToSessionTime,
 } from "./poseEstimationUtils";
 
 type Props = {
@@ -25,6 +29,10 @@ type ResolvedVideo = {
   url: string;
   startTime: number;
   endTime: number;
+  // Per-frame session timestamps of the video ImageSeries, when present. Used to
+  // map the element's playback clock to session time through the real (possibly
+  // non-uniform) timing instead of a linear offset. Null falls back to linear.
+  timestamps: Float64Array | null;
 };
 
 // Standalone PoseEstimation overlay widget. Keyed on an ndx-pose PoseEstimation
@@ -55,10 +63,29 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   // Skeleton edges are off by default (many files define no edges at all).
   const [showEdges, setShowEdges] = useState(false);
+  // Manual session-time nudge (seconds) for imprecise / skewed video timing.
+  const [offset, setOffset] = useState(0);
+  // Cross-file sibling-asset scan state (the pose's videos may live in another
+  // asset of the same session, e.g. IBL).
+  const [scanning, setScanning] = useState(false);
+  // User toggle to view the pose alone (no video) even when a video exists.
+  const [forcePoseOnly, setForcePoseOnly] = useState(false);
+  // Pose-only playback clock (kept in a ref so the rAF loop does not re-render
+  // every frame); the slider mirrors it at ~10 Hz.
+  const poseClock = useRef({ t: 0, playing: true, last: 0 });
+  const [poseUiTime, setPoseUiTime] = useState(0);
+  const [posePlaying, setPosePlaying] = useState(true);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
+
+  const selectedCandidate = candidates.find((c) => c.path === selectedVideoPath);
+  const noPlayableVideo = !selectedCandidate || codecError || !!videoError;
+  // Render the pose alone (on a plain canvas with its own clock) when there is no
+  // playable video, or when the user forces it. Not while a sibling scan runs.
+  const poseOnlyMode = !scanning && (noPlayableVideo || forcePoseOnly);
+  const poseExtent = useMemo(() => (pose ? getPoseExtent(pose) : null), [pose]);
 
   // Load the pose container.
   useEffect(() => {
@@ -80,25 +107,59 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     };
   }, [nwbUrl, path]);
 
+  // Seed the pose-only clock at the start of the pose span.
+  useEffect(() => {
+    if (!pose) return;
+    poseClock.current.t = pose.timeRange.start;
+    setPoseUiTime(pose.timeRange.start);
+  }, [pose]);
+
   // Discover + rank candidate videos once the pose (its original_videos) is known.
+  // In-file first; if none, scan sibling assets of the same session (cross-file).
   useEffect(() => {
     if (!pose) return;
     let canceled = false;
+    setScanning(false);
     (async () => {
-      const cands = await findVideoCandidates(nwbUrl, pose.originalVideos);
+      const poseName = path.split("/").pop() || "";
+      const cands = await findVideoCandidates(nwbUrl, pose.originalVideos, poseName);
       if (canceled) return;
-      setCandidates(cands);
-      // Default to the best-ranked candidate (the suggestion).
-      setSelectedVideoPath((prev) => prev || (cands[0]?.path ?? ""));
+      if (cands.length > 0) {
+        setCandidates(cands);
+        setSelectedVideoPath((prev) => prev || (cands[0]?.path ?? ""));
+        return;
+      }
+      // No video in this file: look in sibling assets of the same session.
+      const dandisetId = searchParams.get("dandisetId");
+      if (!dandisetId) {
+        setCandidates([]);
+        return;
+      }
+      setScanning(true);
+      const siblings = await findSiblingVideoCandidates(
+        nwbUrl,
+        dandisetId,
+        searchParams.get("dandisetVersion") || "draft",
+        pose.originalVideos,
+        poseName,
+      );
+      if (canceled) return;
+      setScanning(false);
+      setCandidates(siblings);
+      setSelectedVideoPath((prev) => prev || (siblings[0]?.path ?? ""));
     })();
     return () => {
       canceled = true;
     };
-  }, [nwbUrl, pose]);
+  }, [nwbUrl, path, pose, searchParams]);
 
-  // Resolve the selected video to a playable URL + its session-time range.
+  // Resolve the selected video to a playable URL + its session-time range. The
+  // candidate may live in a sibling asset (cross-file), so resolve against its
+  // own source file rather than the pose file.
   useEffect(() => {
     if (!selectedVideoPath) return;
+    const cand = candidates.find((c) => c.path === selectedVideoPath);
+    const srcUrl = cand?.sourceNwbUrl || nwbUrl;
     let canceled = false;
     setVideo(null);
     setVideoError(undefined);
@@ -107,7 +168,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     (async () => {
       try {
         const downloadUrl = await resolveExternalVideoUrl(
-          nwbUrl,
+          srcUrl,
           selectedVideoPath,
           searchParams.get("dandisetId"),
           searchParams.get("dandisetVersion") || "draft",
@@ -120,12 +181,14 @@ const PoseEstimationView: FunctionComponent<Props> = ({
           downloadUrl,
           auth ? { Authorization: auth } : undefined,
         );
-        const range = await getVideoTimeRange(nwbUrl, selectedVideoPath);
+        const range = await getVideoTimeRange(srcUrl, selectedVideoPath);
+        const timestamps = await loadVideoTimestamps(srcUrl, selectedVideoPath);
         if (canceled) return;
         setVideo({
           url: redirected || downloadUrl,
           startTime: range.startTime,
           endTime: range.endTime,
+          timestamps,
         });
       } catch (err) {
         if (!canceled) setVideoError(err instanceof Error ? err.message : String(err));
@@ -134,10 +197,11 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     return () => {
       canceled = true;
     };
-  }, [nwbUrl, selectedVideoPath, searchParams]);
+  }, [nwbUrl, selectedVideoPath, candidates, searchParams]);
 
-  // Keep the overlay canvas buffer matched to the rendered video box so the
-  // contain-mapping math is in the same pixel space.
+  // Keep the canvas buffer matched to the rendered box so the contain-mapping math
+  // is in the same pixel space. The box is present in both video and pose-only
+  // modes, so re-measure when either the data or the mode changes.
   const [box, setBox] = useState({ w: 0, h: 0 });
   useEffect(() => {
     const el = boxRef.current;
@@ -147,12 +211,12 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [video]);
+  }, [pose, video, poseOnlyMode, scanning]);
 
-  // Single rAF loop: redraw the keypoints at the video's current session time
-  // (videoStartTime + currentTime). Runs while playing and paused.
+  // Video-overlay rAF loop: redraw the keypoints at the video's current session
+  // time. Runs while playing and paused. Inactive in pose-only mode.
   useEffect(() => {
-    if (!pose || !video) return;
+    if (!pose || !video || poseOnlyMode) return;
     let raf = 0;
     let active = true;
     const loop = () => {
@@ -160,7 +224,21 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       const v = videoRef.current;
       const c = canvasRef.current;
       if (v && c) {
-        drawPoseFrame(c, v, pose, video.startTime + v.currentTime, hidden, showEdges);
+        const sessionTime = videoTimeToSessionTime(
+          v.currentTime,
+          v.duration,
+          video.startTime,
+          video.timestamps,
+          offset,
+        );
+        drawPoseFrame(
+          c,
+          { x0: 0, y0: 0, w: v.videoWidth, h: v.videoHeight },
+          pose,
+          sessionTime,
+          hidden,
+          showEdges,
+        );
       }
       raf = requestAnimationFrame(loop);
     };
@@ -169,7 +247,39 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       active = false;
       cancelAnimationFrame(raf);
     };
-  }, [pose, video, hidden, showEdges, box]);
+  }, [pose, video, poseOnlyMode, hidden, showEdges, offset, box]);
+
+  // Pose-only rAF loop: advance an internal clock and draw the keypoints on a
+  // plain canvas (no video). Runs only in pose-only mode.
+  useEffect(() => {
+    if (!pose || !poseExtent || !poseOnlyMode) return;
+    let raf = 0;
+    let active = true;
+    let lastUi = 0;
+    poseClock.current.last = performance.now();
+    const loop = (now: number) => {
+      if (!active) return;
+      const clk = poseClock.current;
+      const dt = (now - clk.last) / 1000;
+      clk.last = now;
+      if (clk.playing) {
+        clk.t += dt;
+        if (clk.t > pose.timeRange.end) clk.t = pose.timeRange.start;
+      }
+      const c = canvasRef.current;
+      if (c) drawPoseFrame(c, poseExtent, pose, clk.t, hidden, showEdges);
+      if (now - lastUi > 100) {
+        lastUi = now;
+        setPoseUiTime(clk.t);
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => {
+      active = false;
+      cancelAnimationFrame(raf);
+    };
+  }, [pose, poseExtent, poseOnlyMode, hidden, showEdges, box]);
 
   const compatibility: Compatibility | null = useMemo(() => {
     if (!pose || !video) return null;
@@ -188,8 +298,6 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     );
   }
   if (!pose) return <div style={{ padding: 20 }}>Loading pose data...</div>;
-
-  const selectedCandidate = candidates.find((c) => c.path === selectedVideoPath);
 
   return (
     <div
@@ -221,17 +329,31 @@ const PoseEstimationView: FunctionComponent<Props> = ({
             value={selectedVideoPath}
             onChange={(e) => setSelectedVideoPath(e.target.value)}
             style={{ maxWidth: 360 }}
+            disabled={scanning}
           >
-            {candidates.length === 0 && <option value="">(no videos found)</option>}
+            {candidates.length === 0 && (
+              <option value="">
+                {scanning ? "(searching other files...)" : "(no videos found)"}
+              </option>
+            )}
             {candidates.map((c, index) => (
               <option key={c.path} value={c.path}>
                 {index === 0 && c.score > 0 ? "[suggested] " : ""}
-                {c.path}
+                {c.name}
                 {c.externalBasename ? ` (${c.externalBasename})` : ""}
+                {c.sourceLabel ? ` - from ${c.sourceLabel}` : ""}
               </option>
             ))}
           </select>
         </label>
+        {selectedCandidate?.sourceLabel && (
+          <span
+            style={{ color: "#8a5a00", fontSize: 11 }}
+            title="This video is in a different asset than the pose (same session)."
+          >
+            cross-file: {selectedCandidate.sourceLabel}
+          </span>
+        )}
         <label
           style={{
             whiteSpace: "nowrap",
@@ -251,6 +373,39 @@ const PoseEstimationView: FunctionComponent<Props> = ({
           />{" "}
           Skeleton{pose.edges.length > 0 ? ` (${pose.edges.length})` : ""}
         </label>
+        <label
+          style={{ whiteSpace: "nowrap" }}
+          title={
+            video?.timestamps
+              ? "Aligned through the video's per-frame timestamps. Nudge if the keypoints lead/lag the animal."
+              : "This video has no per-frame timestamps; alignment is linear. Nudge to correct a constant shift."
+          }
+        >
+          offset (s):{" "}
+          <input
+            type="number"
+            step={0.1}
+            value={offset}
+            onChange={(e) => setOffset(Number(e.target.value) || 0)}
+            style={{ width: 64 }}
+          />
+        </label>
+        <span style={{ color: "#999", fontSize: 11 }}>
+          {!poseOnlyMode && video
+            ? video.timestamps
+              ? "timestamp-aligned"
+              : "linear-aligned (no video timestamps)"
+            : ""}
+        </span>
+        {selectedCandidate && !codecError && !videoError && (
+          <button
+            onClick={() => setForcePoseOnly((v) => !v)}
+            title="Switch between the video overlay and the pose drawn on its own"
+            style={{ padding: "2px 8px", cursor: "pointer" }}
+          >
+            {forcePoseOnly ? "Show video" : "Pose only"}
+          </button>
+        )}
       </div>
 
       {/* Compatibility banner: obvious, warn-and-allow. */}
@@ -268,26 +423,47 @@ const PoseEstimationView: FunctionComponent<Props> = ({
         </div>
       )}
 
-      {/* Video + pose overlay. */}
-      <div style={{ flex: 1, minHeight: 0, position: "relative", background: "#111" }}>
-        {videoError || codecError ? (
-          <div style={{ padding: 18, color: "#6b5a2e" }}>
-            {videoError
-              ? `Could not resolve the video: ${videoError}`
-              : "This video could not be played (its container or codec is not " +
-                "supported by the browser, e.g. AVI or MKV). Pick a different video."}
-          </div>
-        ) : !selectedCandidate ? (
+      {/* Pose-only notice (codec / no-video reason), above the canvas. */}
+      {poseOnlyMode && (
+        <div
+          style={{
+            padding: "5px 10px",
+            fontSize: 12,
+            background: "#eef2f8",
+            color: "#33506e",
+            borderBottom: "1px solid #d6e0ee",
+          }}
+        >
+          {codecError
+            ? "Video could not be played (codec unsupported), showing the pose on its own."
+            : videoError
+              ? `Video could not be resolved (${videoError}), showing the pose on its own.`
+              : !selectedCandidate
+                ? "No video found for this pose (here or in sibling files of the session), showing the pose on its own."
+                : "Pose-only view (video hidden)."}
+        </div>
+      )}
+
+      {/* Main area: video overlay, pose-only canvas, or a status message. */}
+      <div
+        ref={boxRef}
+        style={{ flex: 1, minHeight: 0, position: "relative", background: "#111" }}
+      >
+        {scanning ? (
           <div style={{ padding: 18, color: "#aaa" }}>
-            No external-file video in this file to overlay the pose on.
+            Searching other files in this session for a video...
           </div>
+        ) : poseOnlyMode ? (
+          <canvas
+            ref={canvasRef}
+            width={box.w}
+            height={box.h}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+          />
         ) : !video ? (
           <div style={{ padding: 18, color: "#aaa" }}>Resolving video...</div>
         ) : (
-          <div
-            ref={boxRef}
-            style={{ position: "absolute", inset: 0 }}
-          >
+          <>
             <video
               ref={videoRef}
               src={video.url}
@@ -321,9 +497,49 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                 pointerEvents: "none",
               }}
             />
-          </div>
+          </>
         )}
       </div>
+
+      {/* Pose-only transport: play/pause + scrub over the pose time span. */}
+      {poseOnlyMode && pose.keypoints.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "5px 10px",
+            borderTop: "1px solid #eee",
+            fontSize: 12,
+          }}
+        >
+          <button
+            onClick={() => {
+              poseClock.current.playing = !poseClock.current.playing;
+              setPosePlaying(poseClock.current.playing);
+            }}
+            style={{ padding: "2px 10px", cursor: "pointer" }}
+          >
+            {posePlaying ? "Pause" : "Play"}
+          </button>
+          <input
+            type="range"
+            min={pose.timeRange.start}
+            max={pose.timeRange.end}
+            step={(pose.timeRange.end - pose.timeRange.start) / 2000 || 0.01}
+            value={poseUiTime}
+            onChange={(e) => {
+              const t = Number(e.target.value);
+              poseClock.current.t = t;
+              setPoseUiTime(t);
+            }}
+            style={{ flex: 1 }}
+          />
+          <span style={{ color: "#666", fontVariantNumeric: "tabular-nums" }}>
+            {poseUiTime.toFixed(1)} / {pose.timeRange.end.toFixed(1)} s
+          </span>
+        </div>
+      )}
 
       {/* Keypoint legend / visibility toggles. */}
       <div

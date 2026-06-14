@@ -38,6 +38,11 @@ export type VideoCandidate = {
   externalBasename: string;
   // Higher = a better name-based guess for this pose; the menu sorts on it.
   score: number;
+  // For a candidate that lives in a DIFFERENT asset than the pose (the cross-file
+  // case): the sibling file's nwbUrl and a short label naming its source asset.
+  // Absent for in-file candidates (resolve against the pose file's own url).
+  sourceNwbUrl?: string;
+  sourceLabel?: string;
 };
 
 // ndx-pose carries no per-keypoint color, so spread hues evenly over a stable
@@ -292,6 +297,7 @@ export const loadPoseEstimation = async (
 export const findVideoCandidates = async (
   nwbUrl: string,
   originalVideos: string[],
+  poseName?: string,
 ): Promise<VideoCandidate[]> => {
   const found: { path: string; name: string }[] = [];
   const visit = async (path: string): Promise<void> => {
@@ -308,6 +314,10 @@ export const findVideoCandidates = async (
   for (const root of VIDEO_DISCOVERY_ROOTS) await visit(root);
 
   const ovBases = originalVideos.map((v) => basename(v).toLowerCase());
+  // The pose container name often names its camera (IBL "LeftCamera" pairs with
+  // the "VideoLeftCamera" ImageSeries), which is the only cross-file signal when
+  // original_videos is empty.
+  const poseLower = (poseName || "").toLowerCase();
   const candidates: VideoCandidate[] = [];
   for (const f of found) {
     let externalBasename = "";
@@ -333,6 +343,14 @@ export const findVideoCandidates = async (
       else if (ov.includes(nameLower) || nameLower.includes(ov.replace(/\.\w+$/, "")))
         score = Math.max(score, 1);
     }
+    // Pose container name vs video name ("LeftCamera" <-> "VideoLeftCamera").
+    if (
+      poseLower &&
+      poseLower.length >= 4 &&
+      (nameLower.includes(poseLower) || poseLower.includes(nameLower))
+    ) {
+      score = Math.max(score, 2);
+    }
     candidates.push({ path: f.path, name: f.name, externalBasename, score });
   }
   candidates.sort((a, b) => b.score - a.score || a.path.localeCompare(b.path));
@@ -340,6 +358,117 @@ export const findVideoCandidates = async (
 };
 
 export const getVideoTimeRange = getSeriesTimeRange;
+
+const assetIdFromUrl = (nwbUrl: string): string | null => {
+  const m = nwbUrl.match(/\/assets\/([0-9a-fA-F-]{36})\//);
+  return m ? m[1] : null;
+};
+
+const dandiApiBase = (nwbUrl: string): string => {
+  try {
+    return new URL(nwbUrl).origin + "/api";
+  } catch {
+    return "https://api.dandiarchive.org/api";
+  }
+};
+
+// Find overlay-video candidates in SIBLING assets of the same session, for the
+// cross-file case (pose in one asset, video in another, e.g. IBL: pose in the
+// _desc-processed asset, the camera videos in the _desc-raw asset of the same
+// session). Resolves this asset's DANDI path, finds same subject+session assets
+// via a path-prefix query, opens each sibling .nwb, runs the in-file candidate
+// scan against it, and tags the results with their source file so the resolver
+// uses the sibling's url. DANDI-hosted public assets only.
+export const findSiblingVideoCandidates = async (
+  nwbUrl: string,
+  dandisetId: string,
+  version: string,
+  originalVideos: string[],
+  poseName?: string,
+): Promise<VideoCandidate[]> => {
+  const assetId = assetIdFromUrl(nwbUrl);
+  if (!assetId || !dandisetId) return [];
+  const api = dandiApiBase(nwbUrl);
+
+  let selfPath = "";
+  try {
+    const rec = await fetch(`${api}/assets/${assetId}/`).then((r) => r.json());
+    selfPath = rec?.path || "";
+  } catch {
+    return [];
+  }
+  // subject + session prefix, e.g. "sub-NYU-46/sub-NYU-46_ses-<uuid>".
+  const m = selfPath.match(/^(sub-[^/]+)\/\1_ses-([^_/]+)/);
+  if (!m) return [];
+  const prefix = `${m[1]}/${m[1]}_ses-${m[2]}`;
+
+  let results: { asset_id: string; path: string }[] = [];
+  try {
+    const url =
+      `${api}/dandisets/${dandisetId}/versions/${version}/assets/` +
+      `?path=${encodeURIComponent(prefix)}&page_size=100`;
+    const data = await fetch(url).then((r) => r.json());
+    results = (data?.results || []).filter(
+      (a: { path: string; asset_id: string }) =>
+        a.path.endsWith(".nwb") && a.asset_id !== assetId,
+    );
+  } catch {
+    return [];
+  }
+
+  const out: VideoCandidate[] = [];
+  for (const a of results) {
+    const siblingUrl = `${api}/assets/${a.asset_id}/download/`;
+    const label = a.path.split("/").pop() || a.path;
+    try {
+      const cands = await findVideoCandidates(siblingUrl, originalVideos, poseName);
+      for (const c of cands) {
+        out.push({ ...c, sourceNwbUrl: siblingUrl, sourceLabel: label });
+      }
+    } catch {
+      /* skip an unreadable sibling */
+    }
+  }
+  out.sort((a, b) => b.score - a.score || a.path.localeCompare(b.path));
+  return out;
+};
+
+// Read a video ImageSeries' full per-frame session timestamps, if it stores them.
+// Used to map the <video> element's playback clock to session time through the real
+// (often non-uniform, dropped-frame) timing rather than a single linear offset.
+// Returns null when the series has no per-frame timestamps (then the caller falls
+// back to startTime + currentTime).
+export const loadVideoTimestamps = async (
+  nwbUrl: string,
+  videoPath: string,
+): Promise<Float64Array | null> => {
+  const grp = await getHdf5Group(nwbUrl, videoPath);
+  if (!grp) return null;
+  const ts = grp.datasets.find((d) => d.name === "timestamps");
+  if (!ts || !ts.shape?.[0]) return null;
+  const data = await getHdf5DatasetData(nwbUrl, `${videoPath}/timestamps`, {});
+  if (!data || !(data as ArrayLike<number>).length) return null;
+  return Float64Array.from(data as ArrayLike<number>, Number);
+};
+
+// Map the <video> element's playback time to session time. When the video has
+// per-frame timestamps, locate the displayed frame (currentTime as a fraction of
+// the element duration) and read its real session time; otherwise fall back to the
+// linear startTime + currentTime. `offset` is the user's manual nudge (seconds).
+export const videoTimeToSessionTime = (
+  currentTime: number,
+  duration: number,
+  startTime: number,
+  videoTimestamps: Float64Array | null,
+  offset: number,
+): number => {
+  if (videoTimestamps && videoTimestamps.length > 0 && duration > 0 && Number.isFinite(duration)) {
+    const n = videoTimestamps.length;
+    const idx = Math.min(n - 1, Math.max(0, Math.round((currentTime / duration) * (n - 1))));
+    return videoTimestamps[idx] + offset;
+  }
+  return startTime + currentTime + offset;
+};
 
 // First frame index whose timestamp is >= t (binary search; clamps to range).
 const frameIndexAtTime = (timestamps: Float64Array, t: number): number => {
@@ -422,12 +551,49 @@ export const checkCompatibility = (
   };
 };
 
-// Draw the keypoints for `sessionTime` onto a canvas sized to the rendered video
-// box. Maps video-pixel coordinates through the same object-fit:contain box the
-// <video> uses.
+// The coordinate window the pose is drawn into: an origin and size in pose-pixel
+// space. For the video overlay this is {0, 0, videoWidth, videoHeight}; for the
+// pose-only view it is the declared dimensions or a computed bounding box.
+export type SourceRect = { x0: number; y0: number; w: number; h: number };
+
+// The drawing area for the pose-only view (no video). Prefer the PoseEstimation's
+// declared dimensions ([height, width]); otherwise compute a padded bounding box
+// over a sample of frames across keypoints.
+export const getPoseExtent = (pose: PoseData): SourceRect => {
+  if (pose.dimensions.length > 0) {
+    const [hgt, wdt] = pose.dimensions[0];
+    if (wdt > 0 && hgt > 0) return { x0: 0, y0: 0, w: wdt, h: hgt };
+  }
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const kp of pose.keypoints) {
+    const n = kp.coords.length / 2;
+    const step = Math.max(1, Math.floor(n / 500));
+    for (let f = 0; f < n; f += step) {
+      const x = kp.coords[f * 2];
+      const y = kp.coords[f * 2 + 1];
+      if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+  if (!Number.isFinite(minX)) return { x0: 0, y0: 0, w: 1, h: 1 };
+  const w = maxX - minX || 1;
+  const h = maxY - minY || 1;
+  const pad = 0.05;
+  return { x0: minX - w * pad, y0: minY - h * pad, w: w * (1 + 2 * pad), h: h * (1 + 2 * pad) };
+};
+
+// Draw the keypoints for `sessionTime` onto a canvas, mapping pose coordinates
+// through an object-fit:contain box for the given source rect. With a video, pass
+// the video's {0,0,videoWidth,videoHeight}; without one, pass getPoseExtent(pose).
 export const drawPoseFrame = (
   canvas: HTMLCanvasElement,
-  video: HTMLVideoElement,
+  src: SourceRect,
   pose: PoseData,
   sessionTime: number,
   hidden: Set<string>,
@@ -437,13 +603,12 @@ export const drawPoseFrame = (
   if (!ctx) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const vw = video.videoWidth;
-  const vh = video.videoHeight;
-  if (!vw || !vh) return;
+  const { x0, y0, w, h } = src;
+  if (!w || !h) return;
 
-  const scale = Math.min(canvas.width / vw, canvas.height / vh);
-  const offX = (canvas.width - vw * scale) / 2;
-  const offY = (canvas.height - vh * scale) / 2;
+  const scale = Math.min(canvas.width / w, canvas.height / h);
+  const offX = (canvas.width - w * scale) / 2;
+  const offY = (canvas.height - h * scale) / 2;
   const r = Math.max(3, Math.min(canvas.width, canvas.height) / 130);
 
   // Resolve every keypoint's screen position at this frame once, so edges and
@@ -454,7 +619,7 @@ export const drawPoseFrame = (
     const x = kp.coords[f * 2];
     const y = kp.coords[f * 2 + 1];
     if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
-    return { x: offX + x * scale, y: offY + y * scale };
+    return { x: offX + (x - x0) * scale, y: offY + (y - y0) * scale };
   });
 
   // Skeleton edges first, so the dots sit on top of the lines.
