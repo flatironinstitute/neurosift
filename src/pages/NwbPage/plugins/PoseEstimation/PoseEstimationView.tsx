@@ -1,5 +1,12 @@
 import { getRedirectUrl } from "@hdf5Interface";
-import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  CSSProperties,
+  FunctionComponent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useSearchParams } from "react-router-dom";
 import getAuthorizationHeaderForUrl from "../../../util/getAuthorizationHeaderForUrl";
 import { resolveExternalVideoUrl } from "../../externalVideoUtils";
@@ -485,6 +492,113 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                   : "linear-aligned (no video timestamps)"
                 : ""}
             </span>
+
+            {/* Graphical time-alignment: pose and video spans share one neutral
+                color (they are the same kind of thing); green is reserved for the
+                actual overlap segment, so the color has a single clear meaning. */}
+            {(() => {
+              const v = video;
+              const hasV = !!v && v.endTime > v.startTime;
+              const vStart =
+                v && v.endTime > v.startTime
+                  ? v.startTime
+                  : pose.timeRange.start;
+              const vEnd =
+                v && v.endTime > v.startTime ? v.endTime : pose.timeRange.end;
+              const ovStart = Math.max(pose.timeRange.start, vStart);
+              const ovEnd = Math.min(pose.timeRange.end, vEnd);
+              const hasOverlap = hasV && ovEnd > ovStart;
+              const t0 = Math.min(pose.timeRange.start, vStart);
+              const t1 = Math.max(pose.timeRange.end, vEnd);
+              const span = t1 - t0 || 1;
+              const SPAN_COLOR = "#9aa7b5"; // both pose and video, same muted slate
+              const OVERLAP_COLOR = "#2e7d32"; // green only for the overlap segment
+              const rowStyle: CSSProperties = {
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              };
+              const labelStyle: CSSProperties = {
+                width: 44,
+                fontSize: 10,
+                color: INK.muted,
+                textAlign: "right",
+              };
+              const trackStyle: CSSProperties = {
+                position: "relative",
+                flex: 1,
+                height: 8,
+                background: HAIRLINE,
+                borderRadius: 3,
+              };
+              const seg = (
+                a: number,
+                b: number,
+                color: string,
+              ): CSSProperties => ({
+                position: "absolute",
+                top: 0,
+                bottom: 0,
+                left: `${((a - t0) / span) * 100}%`,
+                width: `${(Math.max(b - a, 0) / span) * 100}%`,
+                minWidth: 2,
+                background: color,
+                borderRadius: 3,
+              });
+              return (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 4,
+                    borderTop: `1px solid ${HAIRLINE}`,
+                    paddingTop: 8,
+                  }}
+                >
+                  <span style={{ color: INK.muted, fontSize: FS.small }}>
+                    Alignment
+                  </span>
+                  <div style={rowStyle}>
+                    <span style={labelStyle}>pose</span>
+                    <div style={trackStyle}>
+                      <div
+                        style={seg(
+                          pose.timeRange.start,
+                          pose.timeRange.end,
+                          SPAN_COLOR,
+                        )}
+                      />
+                    </div>
+                  </div>
+                  <div style={rowStyle}>
+                    <span style={labelStyle}>video</span>
+                    <div style={trackStyle}>
+                      {hasV && <div style={seg(vStart, vEnd, SPAN_COLOR)} />}
+                    </div>
+                  </div>
+                  <div style={rowStyle}>
+                    <span style={labelStyle}>overlap</span>
+                    <div style={trackStyle}>
+                      {hasOverlap && (
+                        <div style={seg(ovStart, ovEnd, OVERLAP_COLOR)} />
+                      )}
+                    </div>
+                  </div>
+                  <span
+                    style={{ fontSize: 10, color: INK.muted, paddingLeft: 50 }}
+                  >
+                    {!v
+                      ? "no video selected"
+                      : !hasV
+                        ? "video timing unknown"
+                        : hasOverlap
+                          ? `${ovStart.toFixed(0)}-${ovEnd.toFixed(0)} s`
+                          : "no overlap - pick another video"}
+                  </span>
+                </div>
+              );
+            })()}
+
             {selectedCandidate && !codecError && !videoError && (
               <button
                 className="ns-pose-btn"
@@ -530,6 +644,28 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                 />
                 Skeleton{pose.edges.length > 0 ? ` (${pose.edges.length})` : ""}
               </label>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button
+                  className="ns-pose-btn"
+                  onClick={() => setHidden(new Set())}
+                  disabled={hidden.size === 0}
+                  title="Show every keypoint"
+                  style={{ fontSize: FS.small, padding: "1px 8px" }}
+                >
+                  Show all
+                </button>
+                <button
+                  className="ns-pose-btn"
+                  onClick={() =>
+                    setHidden(new Set(pose.keypoints.map((k) => k.name)))
+                  }
+                  disabled={hidden.size === pose.keypoints.length}
+                  title="Hide every keypoint"
+                  style={{ fontSize: FS.small, padding: "1px 8px" }}
+                >
+                  Hide all
+                </button>
+              </div>
               {pose.keypoints.map((kp) => {
                 const off = hidden.has(kp.name);
                 return (
@@ -543,7 +679,17 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                         return next;
                       })
                     }
-                    title="Toggle this keypoint"
+                    onDoubleClick={() =>
+                      setHidden((prev) => {
+                        const all = pose.keypoints.map((k) => k.name);
+                        const isolated =
+                          prev.size === all.length - 1 && !prev.has(kp.name);
+                        return isolated
+                          ? new Set()
+                          : new Set(all.filter((n) => n !== kp.name));
+                      })
+                    }
+                    title="Click to toggle; double-click to show only this"
                     style={{
                       display: "flex",
                       alignItems: "center",
