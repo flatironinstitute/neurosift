@@ -206,18 +206,20 @@ export const loadPoseEstimation = async (
     numFrames: number;
     timestamps: Float64Array | null;
   };
-  const loaded: Loaded[] = [];
-  for (let i = 0; i < seriesSubs.length; i++) {
+  // Read one series: group metadata, the full (x, y) coordinate array, and its
+  // timestamps. The data read dominates load time, so these run concurrently
+  // across series (below) rather than one after another.
+  const loadOne = async (i: number): Promise<Loaded | null> => {
     const sg = seriesSubs[i];
     const g = await getHdf5Group(nwbUrl, sg.path);
-    if (!g) continue;
+    if (!g) return null;
     const dataDs = g.datasets.find((d) => d.name === "data");
-    if (!dataDs || dataDs.shape.length !== 2 || dataDs.shape[1] < 2) continue;
+    if (!dataDs || dataDs.shape.length !== 2 || dataDs.shape[1] < 2) return null;
     const numFrames = dataDs.shape[0];
     const stride = dataDs.shape[1];
 
     const raw = await getHdf5DatasetData(nwbUrl, `${sg.path}/data`, {});
-    if (!raw) continue;
+    if (!raw) return null;
     const coords = new Float32Array(numFrames * 2);
     for (let f = 0; f < numFrames; f++) {
       coords[f * 2] = Number(raw[f * stride]);
@@ -225,14 +227,33 @@ export const loadPoseEstimation = async (
     }
 
     const timestamps = await loadTimestamps(nwbUrl, sg.path, g.datasets, numFrames);
-    loaded.push({
+    return {
       name: sg.name,
       color: keypointColor(i, seriesSubs.length),
       coords,
       numFrames,
       timestamps,
-    });
-  }
+    };
+  };
+
+  // Bounded-concurrency pool: the per-series coordinate reads are independent and
+  // latency-bound, so pipelining a few at a time cuts total load time severalfold
+  // versus the old sequential loop. Results are kept in discovery order (so colors
+  // and the sibling-timestamp fallback below are stable).
+  const CONCURRENCY = 8;
+  const results: (Loaded | null)[] = new Array(seriesSubs.length).fill(null);
+  let nextIndex = 0;
+  const worker = async (): Promise<void> => {
+    for (;;) {
+      const i = nextIndex++;
+      if (i >= seriesSubs.length) return;
+      results[i] = await loadOne(i);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, seriesSubs.length) }, worker),
+  );
+  const loaded: Loaded[] = results.filter((r): r is Loaded => r !== null);
 
   // Second pass: ndx-pose often stores the real timestamps on only one series and
   // links the rest; if a series' linked timestamps did not resolve, reuse a sibling's
