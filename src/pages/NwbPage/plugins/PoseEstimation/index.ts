@@ -17,7 +17,9 @@ export const poseEstimationPlugin: NwbObjectViewPlugin = {
   },
   component: PoseEstimationView,
   requiresWindowDimensions: true,
-  showInMultiView: false,
+  // Can join a multi-view and sync to the shared timeline clock (so the pose
+  // scrubs in lockstep with other timeseries panels, e.g. a raster).
+  showInMultiView: true,
   launchableFromTable: true,
 };
 

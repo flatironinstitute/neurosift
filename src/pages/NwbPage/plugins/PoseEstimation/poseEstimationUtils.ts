@@ -559,6 +559,33 @@ export const videoTimeToSessionTime = (
   return startTime + currentTime + offset;
 };
 
+// Inverse of videoTimeToSessionTime: given a session time, the <video> element's
+// playback time to seek to (so an external scrub of the shared clock can drive the
+// video). Uses per-frame timestamps when present, else the linear fallback.
+export const sessionTimeToVideoTime = (
+  sessionTime: number,
+  duration: number,
+  startTime: number,
+  videoTimestamps: Float64Array | null,
+  offset: number,
+): number => {
+  const target = sessionTime - offset;
+  if (
+    videoTimestamps &&
+    videoTimestamps.length > 0 &&
+    duration > 0 &&
+    Number.isFinite(duration)
+  ) {
+    const n = videoTimestamps.length;
+    const idx = frameIndexAtTime(videoTimestamps, target);
+    return Math.max(0, Math.min(duration, (idx / (n - 1)) * duration));
+  }
+  const t = target - startTime;
+  return Number.isFinite(duration) && duration > 0
+    ? Math.max(0, Math.min(duration, t))
+    : Math.max(0, t);
+};
+
 // First frame index whose timestamp is >= t (binary search; clamps to range).
 const frameIndexAtTime = (timestamps: Float64Array, t: number): number => {
   if (timestamps.length === 0) return 0;

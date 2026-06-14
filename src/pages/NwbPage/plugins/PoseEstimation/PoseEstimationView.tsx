@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 import { IconButton } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -22,6 +23,7 @@ import {
   loadPoseEstimation,
   loadVideoTimestamps,
   PoseData,
+  sessionTimeToVideoTime,
   VideoCandidate,
   videoTimeToSessionTime,
 } from "./poseEstimationUtils";
@@ -134,6 +136,18 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
 
+  // Shared timeline (multi-view): the widget both pushes its current session time
+  // to the shared clock and follows external scrubs of it. The push throttle and a
+  // follow-tolerance (bigger than the push lag) together avoid a feedback loop, the
+  // same drift-band idea as the multi-video tab.
+  const { currentTime, setCurrentTime, initializeTimeseriesSelection } =
+    useTimeseriesSelection();
+  const currentTimeRef = useRef<number | undefined>(undefined);
+  currentTimeRef.current = currentTime;
+  const lastPushRef = useRef(0);
+  const SHARED_PUSH_MS = 100;
+  const SHARED_FOLLOW_TOL = 0.3;
+
   const selectedCandidate = candidates.find(
     (c) => c.path === selectedVideoPath,
   );
@@ -189,12 +203,19 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     };
   }, [nwbUrl, path]);
 
-  // Seed the pose-only clock at the start of the pose span.
+  // Seed the pose-only clock at the start of the pose span, and register the pose
+  // span with the shared timeline so other multi-view panels know the time range.
   useEffect(() => {
     if (!pose) return;
     poseClock.current.t = pose.timeRange.start;
     setPoseUiTime(pose.timeRange.start);
-  }, [pose]);
+    initializeTimeseriesSelection({
+      startTimeSec: pose.timeRange.start,
+      endTimeSec: pose.timeRange.end,
+      initialVisibleStartTimeSec: pose.timeRange.start,
+      initialVisibleEndTimeSec: pose.timeRange.end,
+    });
+  }, [pose, initializeTimeseriesSelection]);
 
   // Discover + rank candidate videos once the pose (its original_videos) is known.
   // In-file first; if none, scan sibling assets of the same session (cross-file).
@@ -317,20 +338,42 @@ const PoseEstimationView: FunctionComponent<Props> = ({
           video.timestamps,
           offset,
         );
-        drawPoseFrame(
-          c,
-          { x0: 0, y0: 0, w: v.videoWidth, h: v.videoHeight },
-          pose,
-          sessionTime,
-          {
-            hidden,
-            showEdges,
-            showTrails,
-            trailSec,
-            confThreshold,
-            fadeByConfidence,
-          },
-        );
+        // Pose coords live in the pose's own pixel space (pose.dimensions =
+        // [height, width]); normalize by that so the overlay tracks even when the
+        // displayed video is a different resolution than the one the pose was
+        // computed on. Fall back to the video's intrinsic size when dimensions are
+        // absent, or when their aspect disagrees with the video (a real crop
+        // mismatch / unreliable metadata, where rescaling would misplace the dots).
+        let src = { x0: 0, y0: 0, w: v.videoWidth, h: v.videoHeight };
+        const poseDim = pose.dimensions[0];
+        if (
+          poseDim &&
+          poseDim[0] > 0 &&
+          poseDim[1] > 0 &&
+          v.videoWidth > 0 &&
+          v.videoHeight > 0
+        ) {
+          const poseAspect = poseDim[1] / poseDim[0];
+          const videoAspect = v.videoWidth / v.videoHeight;
+          if (Math.abs(poseAspect - videoAspect) / videoAspect < 0.02) {
+            src = { x0: 0, y0: 0, w: poseDim[1], h: poseDim[0] };
+          }
+        }
+        drawPoseFrame(c, src, pose, sessionTime, {
+          hidden,
+          showEdges,
+          showTrails,
+          trailSec,
+          confThreshold,
+          fadeByConfidence,
+        });
+        // Push our session time to the shared clock (throttled) so other
+        // multi-view panels follow. The follow-effect's tolerance ignores these.
+        const now = performance.now();
+        if (now - lastPushRef.current > SHARED_PUSH_MS) {
+          lastPushRef.current = now;
+          setCurrentTime(sessionTime);
+        }
       }
       raf = requestAnimationFrame(loop);
     };
@@ -351,7 +394,33 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     fadeByConfidence,
     offset,
     box,
+    setCurrentTime,
   ]);
+
+  // Follow the shared clock: when an external view scrubs it far from where our
+  // video is, seek the video to match (tolerance absorbs our own pushes).
+  useEffect(() => {
+    if (poseOnlyMode || !video || currentTime === undefined) return;
+    const v = videoRef.current;
+    if (!v) return;
+    const vSession = videoTimeToSessionTime(
+      v.currentTime,
+      v.duration,
+      video.startTime,
+      video.timestamps,
+      offset,
+    );
+    if (Math.abs(currentTime - vSession) > SHARED_FOLLOW_TOL) {
+      const target = sessionTimeToVideoTime(
+        currentTime,
+        v.duration,
+        video.startTime,
+        video.timestamps,
+        offset,
+      );
+      if (Math.abs(v.currentTime - target) > 0.05) v.currentTime = target;
+    }
+  }, [currentTime, video, poseOnlyMode, offset]);
 
   // Pose-only rAF loop: advance an internal clock and draw the keypoints on a
   // plain canvas (no video). Runs only in pose-only mode.
@@ -388,6 +457,8 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       if (now - lastUi > 100) {
         lastUi = now;
         setPoseUiTime(clk.t);
+        // While playing, lead the shared clock so other panels follow.
+        if (clk.playing) setCurrentTime(clk.t);
       }
       raf = requestAnimationFrame(loop);
     };
@@ -407,7 +478,19 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     confThreshold,
     fadeByConfidence,
     box,
+    setCurrentTime,
   ]);
+
+  // Follow the shared clock in pose-only mode: when idle (not playing) and an
+  // external view scrubs it away from our position, jump to it.
+  useEffect(() => {
+    if (!poseOnlyMode || currentTime === undefined) return;
+    if (poseClock.current.playing) return;
+    if (Math.abs(currentTime - poseClock.current.t) > SHARED_FOLLOW_TOL) {
+      poseClock.current.t = currentTime;
+      setPoseUiTime(currentTime);
+    }
+  }, [currentTime, poseOnlyMode]);
 
   if (poseError) {
     return (
@@ -1061,6 +1144,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                 const t = Number(e.target.value);
                 poseClock.current.t = t;
                 setPoseUiTime(t);
+                setCurrentTime(t); // scrubbing drives the shared clock
               }}
               style={{ flex: 1 }}
             />
