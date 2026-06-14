@@ -664,6 +664,11 @@ export const getPoseExtent = (pose: PoseData): SourceRect => {
 // Draw the keypoints for `sessionTime` onto a canvas, mapping pose coordinates
 // through an object-fit:contain box for the given source rect. With a video, pass
 // the video's {0,0,videoWidth,videoHeight}; without one, pass getPoseExtent(pose).
+// How far back (session seconds) a trajectory trail reaches, and the most points
+// drawn per trail (older points are skipped past this to bound the cost).
+const TRAIL_SEC = 1.0;
+const TRAIL_MAX_POINTS = 80;
+
 export const drawPoseFrame = (
   canvas: HTMLCanvasElement,
   src: SourceRect,
@@ -671,6 +676,7 @@ export const drawPoseFrame = (
   sessionTime: number,
   hidden: Set<string>,
   showEdges: boolean,
+  showTrails: boolean,
 ): void => {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
@@ -694,6 +700,46 @@ export const drawPoseFrame = (
     if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
     return { x: offX + (x - x0) * scale, y: offY + (y - y0) * scale };
   });
+
+  // Trajectory trails (under edges and dots): each keypoint's recent path over
+  // the last TRAIL_SEC, fading with age so the current frame is the bright head.
+  if (showTrails) {
+    ctx.lineWidth = Math.max(1.2, r * 0.4);
+    ctx.lineCap = "round";
+    for (const kp of pose.keypoints) {
+      if (hidden.has(kp.name)) continue;
+      const end = frameIndexAtTime(kp.timestamps, sessionTime);
+      const start = frameIndexAtTime(kp.timestamps, sessionTime - TRAIL_SEC);
+      const n = end - start;
+      if (n <= 1) continue;
+      const step = Math.max(1, Math.floor(n / TRAIL_MAX_POINTS));
+      ctx.strokeStyle = kp.color;
+      let prevX = NaN;
+      let prevY = NaN;
+      for (let f = start; f <= end; f += step) {
+        const x = kp.coords[f * 2];
+        const y = kp.coords[f * 2 + 1];
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+          prevX = NaN;
+          continue;
+        }
+        const sx = offX + (x - x0) * scale;
+        const sy = offY + (y - y0) * scale;
+        if (Number.isFinite(prevX)) {
+          // age 0 = current (opaque) .. 1 = oldest (faint).
+          const age = (end - f) / n;
+          ctx.globalAlpha = Math.max(0.06, 1 - age);
+          ctx.beginPath();
+          ctx.moveTo(prevX, prevY);
+          ctx.lineTo(sx, sy);
+          ctx.stroke();
+        }
+        prevX = sx;
+        prevY = sy;
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
 
   // Skeleton edges first, so the dots sit on top of the lines.
   if (showEdges && pose.edges.length > 0) {

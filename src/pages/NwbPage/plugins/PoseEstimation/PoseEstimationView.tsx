@@ -107,6 +107,8 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   // Skeleton edges are off by default (many files define no edges at all).
   const [showEdges, setShowEdges] = useState(false);
+  // Trajectory trails (recent path of each keypoint) are off by default.
+  const [showTrails, setShowTrails] = useState(false);
   // Manual session-time nudge (seconds) for imprecise / skewed video timing.
   const [offset, setOffset] = useState(0);
   // Cross-file sibling-asset scan state (the pose's videos may live in another
@@ -316,6 +318,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
           sessionTime,
           hidden,
           showEdges,
+          showTrails,
         );
       }
       raf = requestAnimationFrame(loop);
@@ -325,7 +328,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       active = false;
       cancelAnimationFrame(raf);
     };
-  }, [pose, video, poseOnlyMode, hidden, showEdges, offset, box]);
+  }, [pose, video, poseOnlyMode, hidden, showEdges, showTrails, offset, box]);
 
   // Pose-only rAF loop: advance an internal clock and draw the keypoints on a
   // plain canvas (no video). Runs only in pose-only mode.
@@ -350,7 +353,8 @@ const PoseEstimationView: FunctionComponent<Props> = ({
         }
       }
       const c = canvasRef.current;
-      if (c) drawPoseFrame(c, poseExtent, pose, clk.t, hidden, showEdges);
+      if (c)
+        drawPoseFrame(c, poseExtent, pose, clk.t, hidden, showEdges, showTrails);
       if (now - lastUi > 100) {
         lastUi = now;
         setPoseUiTime(clk.t);
@@ -362,7 +366,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       active = false;
       cancelAnimationFrame(raf);
     };
-  }, [pose, poseExtent, poseOnlyMode, hidden, showEdges, box]);
+  }, [pose, poseExtent, poseOnlyMode, hidden, showEdges, showTrails, box]);
 
   if (poseError) {
     return (
@@ -677,6 +681,17 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                   onChange={(e) => setShowEdges(e.target.checked)}
                 />
                 Skeleton{pose.edges.length > 0 ? ` (${pose.edges.length})` : ""}
+              </label>
+              <label
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
+                title="Draw each keypoint's recent path (fading trail)"
+              >
+                <input
+                  type="checkbox"
+                  checked={showTrails}
+                  onChange={(e) => setShowTrails(e.target.checked)}
+                />
+                Trails
               </label>
               <div style={{ display: "flex", gap: 6 }}>
                 <button
