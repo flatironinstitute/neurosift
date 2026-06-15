@@ -26,6 +26,13 @@ export type PoseData = {
   // source video filenames, and each source video's [height, width] in pixels.
   originalVideos: string[];
   dimensions: number[][];
+  // The basename of the video this pose links to via the ndx-pose 0.3.0
+  // `source_video` soft link (an in-file ImageSeries' external_file), when the
+  // container defines it. This is the authoritative same-file pairing, so the
+  // discovery step suggests the matching ImageSeries instead of name-guessing.
+  // Undefined when the container has no source_video link (older ndx-pose, or
+  // the cross-file case where the video lives in a sibling asset).
+  sourceVideoBasename?: string;
   // Skeleton connectivity as pairs of indices into `keypoints` (resolved from the
   // ndx-pose Skeleton's node-index edges by matching node names to series names).
   // Empty when the file defines no edges (DeepLabCut exports often omit them).
@@ -56,6 +63,10 @@ export type VideoCandidate = {
   // Absent for in-file candidates (resolve against the pose file's own url).
   sourceNwbUrl?: string;
   sourceLabel?: string;
+  // True when this candidate is the one the pose's ndx-pose 0.3.0 `source_video`
+  // soft link points at (matched by external_file basename): an authoritative
+  // same-file pairing, not a name guess. Sorted first and labeled "[linked]".
+  linked?: boolean;
 };
 
 // ndx-pose carries no per-keypoint color. Spread the keypoints over evenly-spaced
@@ -404,6 +415,30 @@ export const loadPoseEstimation = async (
     }
   }
 
+  // ndx-pose 0.3.0 source_video soft link: the authoritative in-file pairing of
+  // this pose with an ImageSeries. HDF5 follows the link transparently when read
+  // through its path, so read the linked series' external_file basename and pass
+  // it to the discovery step to mark the matching candidate as linked (rather
+  // than rely on the name heuristic). Best-effort: absent on older ndx-pose.
+  let sourceVideoBasename: string | undefined;
+  const svLink = group.subgroups.find((sg) => sg.name === "source_video");
+  if (svLink) {
+    const linked = await getHdf5Group(nwbUrl, svLink.path);
+    if (linked && linked.datasets.some((d) => d.name === "external_file")) {
+      try {
+        const ext = await getHdf5DatasetData(
+          nwbUrl,
+          `${svLink.path}/external_file`,
+          { slice: [[0, 1]] },
+        );
+        const bn = basename(String(normalizeExternalFileValue(ext?.[0]) ?? ""));
+        if (bn) sourceVideoBasename = bn;
+      } catch {
+        /* leave undefined */
+      }
+    }
+  }
+
   const edges = await loadSkeletonEdges(nwbUrl, group, posePath, keypoints);
 
   let start = Infinity;
@@ -426,6 +461,7 @@ export const loadPoseEstimation = async (
     keypoints,
     originalVideos,
     dimensions,
+    sourceVideoBasename,
     edges,
     is3D,
     spatialUnit,
@@ -480,6 +516,15 @@ export const loadConfidence = async (
   return out.size > 0 ? out : null;
 };
 
+// Score for the candidate the source_video link points at: above any
+// name-heuristic score (max 3) so the authoritative pairing always sorts first.
+const LINKED_VIDEO_SCORE = 10;
+
+// Reserved ndx soft-link subgroup names that point at a video or pose group
+// living elsewhere in the file. The video walk must not recurse into these or it
+// counts the same ImageSeries once per link that targets it.
+const LINK_SUBGROUP_NAMES = new Set(["source_video", "source_pose", "source"]);
+
 // Walk the data roots for every external-file ImageSeries and rank each as a
 // candidate video for this pose, using the (best-effort) original_videos names.
 // Ranking is only a menu sort; the time/dimension check is what actually gates.
@@ -487,6 +532,10 @@ export const findVideoCandidates = async (
   nwbUrl: string,
   originalVideos: string[],
   poseName?: string,
+  // The basename the pose's source_video link points at (ndx-pose 0.3.0). When a
+  // discovered ImageSeries' external_file matches it, that candidate is the
+  // authoritative pairing and is marked linked + sorted first.
+  linkedBasename?: string,
 ): Promise<VideoCandidate[]> => {
   const found: { path: string; name: string }[] = [];
   const visit = async (path: string): Promise<void> => {
@@ -501,11 +550,21 @@ export const findVideoCandidates = async (
         name: group.path.split("/").pop() || group.path,
       });
     }
-    for (const sub of group.subgroups || []) await visit(sub.path);
+    for (const sub of group.subgroups || []) {
+      // Skip the ndx soft links that point AT a video or pose (ndx-pose 0.3.0
+      // `source_video`, ndx-behavioral-bouts `source_video` / `source_pose` /
+      // `source`): each resolves to a group that the walk already reaches at its
+      // own canonical path, so following the link only yields duplicate
+      // candidates for the same underlying ImageSeries (one per linking object,
+      // e.g. mlost's four bout tables all link the same video).
+      if (LINK_SUBGROUP_NAMES.has(sub.name)) continue;
+      await visit(sub.path);
+    }
   };
   for (const root of VIDEO_DISCOVERY_ROOTS) await visit(root);
 
   const ovBases = originalVideos.map((v) => basename(v).toLowerCase());
+  const linkedLower = (linkedBasename || "").toLowerCase();
   // The pose container name often names its camera (IBL "LeftCamera" pairs with
   // the "VideoLeftCamera" ImageSeries), which is the only cross-file signal when
   // original_videos is empty.
@@ -546,7 +605,17 @@ export const findVideoCandidates = async (
     ) {
       score = Math.max(score, 2);
     }
-    candidates.push({ path: f.path, name: f.name, externalBasename, score });
+    // Authoritative match: this is the ImageSeries the source_video link targets.
+    // Outrank every name-heuristic score so it is suggested and selected first.
+    const linked = !!linkedLower && extLower === linkedLower;
+    if (linked) score = LINKED_VIDEO_SCORE;
+    candidates.push({
+      path: f.path,
+      name: f.name,
+      externalBasename,
+      score,
+      linked,
+    });
   }
   candidates.sort((a, b) => b.score - a.score || a.path.localeCompare(b.path));
   return candidates;

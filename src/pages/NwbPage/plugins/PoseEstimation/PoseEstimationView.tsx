@@ -474,6 +474,11 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   const poseReady = !!pose;
   const originalVideosRef = useRef<string[]>([]);
   if (pose) originalVideosRef.current = pose.originalVideos;
+  // The basename the ndx-pose 0.3.0 source_video link points at (in-file pairing).
+  // Read from a ref for the same reason as originalVideos: stable across the
+  // two-phase pose load, so the discovery effect need not depend on `pose`.
+  const sourceVideoBasenameRef = useRef<string | undefined>(undefined);
+  if (pose) sourceVideoBasenameRef.current = pose.sourceVideoBasename;
   const discoveredKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (!poseReady) return;
@@ -486,7 +491,12 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     (async () => {
       const poseName = path.split("/").pop() || "";
       const originalVideos = originalVideosRef.current;
-      const cands = await findVideoCandidates(nwbUrl, originalVideos, poseName);
+      const cands = await findVideoCandidates(
+        nwbUrl,
+        originalVideos,
+        poseName,
+        sourceVideoBasenameRef.current,
+      );
       if (canceled) return;
       if (cands.length > 0) {
         setCandidates(cands);
@@ -970,7 +980,11 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                   >
                     {selectedSource.videos.map((c, index) => (
                       <option key={c.path} value={c.path}>
-                        {index === 0 && c.score > 0 ? "[suggested] " : ""}
+                        {c.linked
+                          ? "[linked] "
+                          : index === 0 && c.score > 0
+                            ? "[suggested] "
+                            : ""}
                         {c.name}
                         {c.externalBasename ? ` (${c.externalBasename})` : ""}
                       </option>
