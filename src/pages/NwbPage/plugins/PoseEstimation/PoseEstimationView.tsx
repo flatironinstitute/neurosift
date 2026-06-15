@@ -21,6 +21,7 @@ import {
   findVideoCandidates,
   getPoseExtent,
   getVideoTimeRange,
+  loadConfidence,
   loadPoseEstimation,
   loadVideoTimestamps,
   PoseData,
@@ -328,6 +329,12 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   // True while the full-resolution coordinates are still streaming in the
   // background after the leading window has painted.
   const [loadingFull, setLoadingFull] = useState(false);
+  // Lazy confidence: the per-frame confidence arrays are fetched only when a
+  // confidence control is engaged (they are a major share of load time and the
+  // default controls do not use them). Cached here so re-merging after a
+  // coordinate swap, or re-engaging a control, does not refetch.
+  const confMapRef = useRef<Map<string, Float32Array> | null>(null);
+  const [loadingConf, setLoadingConf] = useState(false);
 
   // Load the pose container in two phases: a small leading window first (so the
   // overlay paints in a few seconds), then the full coordinate arrays in the
@@ -338,6 +345,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     setPose(null);
     setPoseError(undefined);
     setLoadingFull(false);
+    confMapRef.current = null; // drop the previous container's confidence cache
     (async () => {
       try {
         const lead = await loadPoseEstimation(nwbUrl, path, {
@@ -365,6 +373,56 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       canceled = true;
     };
   }, [nwbUrl, path]);
+
+  // Lazy confidence. Confidence is needed once a control engages it (threshold
+  // above 0, fade on, or a poseConf/poseFade deep-link). Two effects keep the
+  // fetch and the merge separate so the two-phase coordinate swap cannot cancel
+  // and restart the (often expensive) confidence fetch:
+  const confNeeded = confThreshold > 0 || fadeByConfidence;
+  const canFetchConf = !!pose?.hasConfidence;
+  const [confVersion, setConfVersion] = useState(0);
+
+  // Fetch the confidence arrays once per container when first needed. Gated on the
+  // boolean `canFetchConf` (steady across the leading->full coordinate swap, which
+  // recreates `pose`) rather than `pose` itself, so the swap does not re-run this
+  // and abort an in-flight fetch. Cached in confMapRef; the bump triggers merging.
+  useEffect(() => {
+    if (!canFetchConf || !confNeeded || confMapRef.current) return;
+    let canceled = false;
+    setLoadingConf(true);
+    (async () => {
+      try {
+        const map = await loadConfidence(nwbUrl, path);
+        if (canceled || !map) return;
+        confMapRef.current = map;
+        setConfVersion((v) => v + 1);
+      } finally {
+        if (!canceled) setLoadingConf(false);
+      }
+    })();
+    return () => {
+      canceled = true;
+    };
+  }, [canFetchConf, confNeeded, nwbUrl, path]);
+
+  // Merge cached confidence into the current pose. Re-runs on the coordinate swap
+  // (which recreates `pose` with confidence null) so the merge re-applies from the
+  // cache without refetching; the guard makes it a no-op once already merged.
+  useEffect(() => {
+    const map = confMapRef.current;
+    if (!pose || !map || pose.keypoints.some((k) => k.confidence)) return;
+    setPose((prev) =>
+      prev && !prev.keypoints.some((k) => k.confidence)
+        ? {
+            ...prev,
+            keypoints: prev.keypoints.map((kp) => ({
+              ...kp,
+              confidence: map.get(kp.name) ?? null,
+            })),
+          }
+        : prev,
+    );
+  }, [pose, confVersion]);
 
   // Seed the pose-only clock and register the pose span with the shared timeline,
   // ONCE per container. Gating on the container key (not just `pose`) is essential:
@@ -740,6 +798,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
               <div style={{ color: INK.muted, fontSize: FS.small }}>
                 {pose.keypoints.length} keypoints
                 {loadingFull ? " - loading full resolution..." : ""}
+                {loadingConf ? " - loading confidence..." : ""}
               </div>
             </div>
             <IconButton
@@ -1115,8 +1174,9 @@ const PoseEstimationView: FunctionComponent<Props> = ({
             </div>
 
             {/* Confidence: hide low-confidence points, and/or fade by confidence.
-                Only shown when the file stores per-frame confidence. */}
-            {pose.keypoints.some((k) => k.confidence) && (
+                Shown when the file stores per-frame confidence (detected from
+                metadata); the arrays are fetched lazily when a control engages. */}
+            {pose.hasConfidence && (
               <div
                 style={{
                   display: "flex",

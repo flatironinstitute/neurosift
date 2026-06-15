@@ -35,6 +35,11 @@ export type PoseData = {
   is3D: boolean;
   // The data unit (e.g. "px", "millimeters") if declared, for the 3D warning.
   spatialUnit: string | null;
+  // True when at least one series stores a per-frame confidence dataset. Detected
+  // from metadata without reading the (often large) confidence arrays, so the view
+  // can show the confidence controls; the arrays themselves are loaded lazily (via
+  // loadConfidence) only when a control engages them.
+  hasConfidence: boolean;
   // Overall session-time span of the pose (across keypoints).
   timeRange: { start: number; end: number };
 };
@@ -229,7 +234,7 @@ const loadTimestamps = async (
 export const loadPoseEstimation = async (
   nwbUrl: string,
   posePath: string,
-  opts?: { leadingFrames?: number },
+  opts?: { leadingFrames?: number; withConfidence?: boolean },
 ): Promise<PoseData | null> => {
   const group = await getHdf5Group(nwbUrl, posePath);
   if (!group) return null;
@@ -249,6 +254,7 @@ export const loadPoseEstimation = async (
     confidence: Float32Array | null;
     cols: number; // data columns: 2 = 2D pixel pose, 3 = 3D (world coords)
     unit: string | null; // data unit attr, e.g. "px" / "millimeters" / "meters"
+    hasConf: boolean; // series stores a confidence dataset (whether or not read)
   };
   // Read one series: group metadata, the full (x, y) coordinate array, and its
   // timestamps. The data read dominates load time, so these run concurrently
@@ -291,10 +297,14 @@ export const loadPoseEstimation = async (
       numFrames,
     );
 
-    // Per-frame confidence (likelihood), when the series stores it.
-    let confidence: Float32Array | null = null;
+    // Per-frame confidence (likelihood). Detect its presence from metadata, but
+    // read the (often large) array only when the caller asks: confidence is a
+    // major share of load time and the default UI does not use it, so it is loaded
+    // lazily once a confidence control is engaged (see loadConfidence).
     const confDs = g.datasets.find((d) => d.name === "confidence");
-    if (confDs && confDs.shape?.[0]) {
+    const hasConf = !!(confDs && confDs.shape?.[0]);
+    let confidence: Float32Array | null = null;
+    if (hasConf && opts?.withConfidence) {
       const craw = await getHdf5DatasetData(
         nwbUrl,
         `${sg.path}/confidence`,
@@ -314,6 +324,7 @@ export const loadPoseEstimation = async (
       confidence,
       cols: stride,
       unit,
+      hasConf,
     };
   };
 
@@ -409,6 +420,7 @@ export const loadPoseEstimation = async (
   // a 2D video without camera calibration; flag it so the view can warn.
   const is3D = loaded.some((l) => l.cols >= 3);
   const spatialUnit = loaded.find((l) => l.unit)?.unit ?? null;
+  const hasConfidence = loaded.some((l) => l.hasConf);
 
   return {
     keypoints,
@@ -417,8 +429,55 @@ export const loadPoseEstimation = async (
     edges,
     is3D,
     spatialUnit,
+    hasConfidence,
     timeRange: { start, end },
   };
+};
+
+// Lazily read the per-frame confidence arrays for a PoseEstimation, keyed by
+// series name (matching PoseKeypoint.name). Separated from loadPoseEstimation so
+// the (often large) confidence data is fetched only when a confidence control is
+// engaged; with the default controls it is never read. Reuses the same
+// bounded-concurrency pool as the coordinate load. Returns null when nothing was
+// readable. Arrays are full-length; the draw loop indexes them defensively, so a
+// length mismatch with a still-leading coordinate window degrades gracefully.
+export const loadConfidence = async (
+  nwbUrl: string,
+  posePath: string,
+): Promise<Map<string, Float32Array> | null> => {
+  const group = await getHdf5Group(nwbUrl, posePath);
+  if (!group) return null;
+  const seriesSubs = group.subgroups.filter(
+    (sg) => sg.attrs?.neurodata_type === "PoseEstimationSeries",
+  );
+  if (seriesSubs.length === 0) return null;
+
+  const out = new Map<string, Float32Array>();
+  const readOne = async (i: number): Promise<void> => {
+    const sg = seriesSubs[i];
+    const g = await getHdf5Group(nwbUrl, sg.path);
+    if (!g) return;
+    const confDs = g.datasets.find((d) => d.name === "confidence");
+    if (!confDs || !confDs.shape?.[0]) return;
+    const craw = await getHdf5DatasetData(nwbUrl, `${sg.path}/confidence`, {});
+    if (craw && (craw as ArrayLike<number>).length) {
+      out.set(sg.name, Float32Array.from(craw as ArrayLike<number>, Number));
+    }
+  };
+
+  const CONCURRENCY = 8;
+  let nextIndex = 0;
+  const worker = async (): Promise<void> => {
+    for (;;) {
+      const i = nextIndex++;
+      if (i >= seriesSubs.length) return;
+      await readOne(i);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, seriesSubs.length) }, worker),
+  );
+  return out.size > 0 ? out : null;
 };
 
 // Walk the data roots for every external-file ImageSeries and rank each as a
