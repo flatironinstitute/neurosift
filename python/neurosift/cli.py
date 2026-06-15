@@ -8,6 +8,7 @@ from contextlib import closing
 from .TemporaryDirectory import TemporaryDirectory
 import shutil
 import sys
+from urllib.parse import urlparse
 
 
 @click.group()
@@ -89,6 +90,11 @@ def view_nwb(file: str, neurosift_url: str):
 
         # run the service
         env["PORT"] = str(port)
+        # Tell the file server which neurosift origin to trust for CORS, derived
+        # from --neurosift-url (default https://neurosift.app), so a local dev
+        # build (e.g. http://localhost:5173) can read the served files.
+        parsed = urlparse(neurosift_url)
+        env["NEUROSIFT_ORIGIN"] = f"{parsed.scheme}://{parsed.netloc}"
         process = subprocess.Popen(
             ["npm", "run", "start", tmpdir],
             cwd=f"{this_directory}/local-file-access-js",
