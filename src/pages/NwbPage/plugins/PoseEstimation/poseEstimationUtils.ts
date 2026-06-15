@@ -229,6 +229,7 @@ const loadTimestamps = async (
 export const loadPoseEstimation = async (
   nwbUrl: string,
   posePath: string,
+  opts?: { leadingFrames?: number },
 ): Promise<PoseData | null> => {
   const group = await getHdf5Group(nwbUrl, posePath);
   if (!group) return null;
@@ -261,13 +262,24 @@ export const loadPoseEstimation = async (
       return null;
     const numFrames = dataDs.shape[0];
     const stride = dataDs.shape[1];
-    const unit =
-      dataDs.attrs?.unit != null ? String(dataDs.attrs.unit) : null;
+    const unit = dataDs.attrs?.unit != null ? String(dataDs.attrs.unit) : null;
 
-    const raw = await getHdf5DatasetData(nwbUrl, `${sg.path}/data`, {});
+    // Leading-window first paint: when opts.leadingFrames is set, read only the
+    // first rows so the overlay renders in a few seconds; the caller re-loads the
+    // full array in the background. timestamps stay full (below) so the
+    // session-time -> frame lookup is correct across the whole recording; frames
+    // past the window simply have no coords yet and are skipped while drawing.
+    const readRows = opts?.leadingFrames
+      ? Math.min(numFrames, opts.leadingFrames)
+      : numFrames;
+    const raw = await getHdf5DatasetData(
+      nwbUrl,
+      `${sg.path}/data`,
+      readRows < numFrames ? { slice: [[0, readRows]] } : {},
+    );
     if (!raw) return null;
-    const coords = new Float32Array(numFrames * 2);
-    for (let f = 0; f < numFrames; f++) {
+    const coords = new Float32Array(readRows * 2);
+    for (let f = 0; f < readRows; f++) {
       coords[f * 2] = Number(raw[f * stride]);
       coords[f * 2 + 1] = Number(raw[f * stride + 1]);
     }
@@ -286,7 +298,7 @@ export const loadPoseEstimation = async (
       const craw = await getHdf5DatasetData(
         nwbUrl,
         `${sg.path}/confidence`,
-        {},
+        readRows < numFrames ? { slice: [[0, readRows]] } : {},
       );
       if (craw && (craw as ArrayLike<number>).length) {
         confidence = Float32Array.from(craw as ArrayLike<number>, Number);

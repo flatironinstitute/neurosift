@@ -52,6 +52,9 @@ const FS = { body: 13, small: 11 };
 const INK = { muted: "#666", faint: "#999" };
 const HAIRLINE = "#e8e8e8";
 const PANEL_BG = "#fafafa";
+// Leading-window first paint: rows loaded up front so the overlay renders fast;
+// the full coordinate arrays then stream in the background and swap in.
+const LEADING_FRAMES = 6000;
 
 // Small inline spinner for the loading / empty states. The keyframe is injected
 // alongside it so it works in the early-return case too (before the main tree).
@@ -99,6 +102,11 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   path,
 }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  // Extract the DANDI identifiers as stable strings. Effects key off these rather
+  // than the whole `searchParams` object, so writing `pose*` params (which mutates
+  // searchParams) does not re-trigger candidate discovery or video resolution.
+  const dandisetId = searchParams.get("dandisetId");
+  const dandisetVersion = searchParams.get("dandisetVersion") || "draft";
 
   const [pose, setPose] = useState<PoseData | null>(null);
   const [poseError, setPoseError] = useState<string>();
@@ -315,37 +323,39 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     },
     [setSearchParams],
   );
-  const poseTimeSeededRef = useRef(false);
   const videoSeededRef = useRef(false);
 
-  // Seed the pose-only clock from poseTime once the pose is known (harmless in
-  // overlay mode, where poseClock is idle). The overlay seeds the <video> element
-  // in its onLoadedMetadata (it needs the element duration for the inverse map).
-  useEffect(() => {
-    if (poseTimeSeededRef.current || !pose) return;
-    poseTimeSeededRef.current = true;
-    const raw = searchParams.get("poseTime");
-    if (raw === null || !Number.isFinite(Number(raw))) return;
-    const t = Math.min(
-      pose.timeRange.end,
-      Math.max(pose.timeRange.start, Number(raw)),
-    );
-    poseClock.current.t = t;
-    setPoseUiTime(t);
-  }, [pose, searchParams]);
+  // True while the full-resolution coordinates are still streaming in the
+  // background after the leading window has painted.
+  const [loadingFull, setLoadingFull] = useState(false);
 
-  // Load the pose container.
+  // Load the pose container in two phases: a small leading window first (so the
+  // overlay paints in a few seconds), then the full coordinate arrays in the
+  // background, swapped in when ready. Small files skip phase 2 (the window
+  // already held everything). See the performance note in the design doc.
   useEffect(() => {
     let canceled = false;
     setPose(null);
     setPoseError(undefined);
+    setLoadingFull(false);
     (async () => {
       try {
-        const data = await loadPoseEstimation(nwbUrl, path);
+        const lead = await loadPoseEstimation(nwbUrl, path, {
+          leadingFrames: LEADING_FRAMES,
+        });
         if (canceled) return;
-        if (!data)
+        if (!lead)
           throw new Error("No PoseEstimationSeries found in this container.");
-        setPose(data);
+        setPose(lead);
+        const truncated = lead.keypoints.some(
+          (kp) => kp.coords.length / 2 < kp.timestamps.length,
+        );
+        if (!truncated) return; // leading window already covered the whole file
+        setLoadingFull(true);
+        const full = await loadPoseEstimation(nwbUrl, path);
+        if (canceled) return;
+        if (full) setPose(full);
+        setLoadingFull(false);
       } catch (err) {
         if (!canceled)
           setPoseError(err instanceof Error ? err.message : String(err));
@@ -356,24 +366,46 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     };
   }, [nwbUrl, path]);
 
-  // Seed the pose-only clock at the start of the pose span, and register the pose
-  // span with the shared timeline so other multi-view panels know the time range.
+  // Seed the pose-only clock and register the pose span with the shared timeline,
+  // ONCE per container. Gating on the container key (not just `pose`) is essential:
+  // the two-phase load swaps `pose` when the full coordinates arrive, and without
+  // this guard that swap would jump playback back to start. timeRange comes from
+  // the full timestamps in both phases, so leading and full agree on it. Initial
+  // position: a deep-linked poseTime (clamped) if present, else the span start.
+  const clockSeededKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (!pose) return;
-    poseClock.current.t = pose.timeRange.start;
-    setPoseUiTime(pose.timeRange.start);
+    const key = `${nwbUrl}|${path}`;
+    if (clockSeededKeyRef.current === key) return;
+    clockSeededKeyRef.current = key;
+    const raw = searchParams.get("poseTime");
+    const t0 =
+      raw !== null && Number.isFinite(Number(raw))
+        ? Math.min(
+            pose.timeRange.end,
+            Math.max(pose.timeRange.start, Number(raw)),
+          )
+        : pose.timeRange.start;
+    poseClock.current.t = t0;
+    setPoseUiTime(t0);
     initializeTimeseriesSelection({
       startTimeSec: pose.timeRange.start,
       endTimeSec: pose.timeRange.end,
       initialVisibleStartTimeSec: pose.timeRange.start,
       initialVisibleEndTimeSec: pose.timeRange.end,
     });
-  }, [pose, initializeTimeseriesSelection]);
+  }, [pose, nwbUrl, path, searchParams, initializeTimeseriesSelection]);
 
-  // Discover + rank candidate videos once the pose (its original_videos) is known.
-  // In-file first; if none, scan sibling assets of the same session (cross-file).
+  // Discover + rank candidate videos once per container (its original_videos is
+  // known). In-file first; if none, scan sibling assets of the same session.
+  // Gated on the container key so the phase-2 full-data `pose` swap does not
+  // re-scan siblings (which would rebuild candidates and reload the video).
+  const discoveredKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (!pose) return;
+    const key = `${nwbUrl}|${path}`;
+    if (discoveredKeyRef.current === key) return;
+    discoveredKeyRef.current = key;
     let canceled = false;
     setScanning(false);
     (async () => {
@@ -390,7 +422,6 @@ const PoseEstimationView: FunctionComponent<Props> = ({
         return;
       }
       // No video in this file: look in sibling assets of the same session.
-      const dandisetId = searchParams.get("dandisetId");
       if (!dandisetId) {
         setCandidates([]);
         return;
@@ -399,7 +430,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       const siblings = await findSiblingVideoCandidates(
         nwbUrl,
         dandisetId,
-        searchParams.get("dandisetVersion") || "draft",
+        dandisetVersion,
         pose.originalVideos,
         poseName,
       );
@@ -411,7 +442,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     return () => {
       canceled = true;
     };
-  }, [nwbUrl, path, pose, searchParams]);
+  }, [nwbUrl, path, pose, dandisetId, dandisetVersion]);
 
   // Resolve the selected video to a playable URL + its session-time range. The
   // candidate may live in a sibling asset (cross-file), so resolve against its
@@ -429,8 +460,8 @@ const PoseEstimationView: FunctionComponent<Props> = ({
         const downloadUrl = await resolveExternalVideoUrl(
           srcUrl,
           selectedVideoPath,
-          searchParams.get("dandisetId"),
-          searchParams.get("dandisetVersion") || "draft",
+          dandisetId,
+          dandisetVersion,
         );
         // A native <video> cannot send the DANDI auth header, so for an embargoed
         // asset the /download/ URL 401s. Pre-resolve the presigned S3 URL (with
@@ -457,7 +488,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     return () => {
       canceled = true;
     };
-  }, [nwbUrl, selectedVideoPath, candidates, searchParams]);
+  }, [nwbUrl, selectedVideoPath, candidates, dandisetId, dandisetVersion]);
 
   // Keep the canvas buffer matched to the rendered box so the contain-mapping math
   // is in the same pixel space. The box is present in both video and pose-only
@@ -708,6 +739,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
               </div>
               <div style={{ color: INK.muted, fontSize: FS.small }}>
                 {pose.keypoints.length} keypoints
+                {loadingFull ? " - loading full resolution..." : ""}
               </div>
             </div>
             <IconButton
