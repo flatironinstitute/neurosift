@@ -132,6 +132,9 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   // Cross-file sibling-asset scan state (the pose's videos may live in another
   // asset of the same session, e.g. IBL).
   const [scanning, setScanning] = useState(false);
+  // True once video discovery (in-file + any sibling scan) has fully concluded,
+  // so "no video found anywhere" can be told apart from "not searched yet".
+  const [discoveryDone, setDiscoveryDone] = useState(false);
   // User toggle to view the pose alone (no video) even when a video exists.
   const [forcePoseOnly, setForcePoseOnly] = useState(false);
   // Collapse the left controls panel to give the wide video the full width.
@@ -336,6 +339,9 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   // coordinate swap, or re-engaging a control, does not refetch.
   const confMapRef = useRef<Map<string, Float32Array> | null>(null);
   const [loadingConf, setLoadingConf] = useState(false);
+  // Auto-enable the skeleton once per container in the pure pose-only (no video
+  // found anywhere) case; see the effect after discovery below.
+  const edgesDefaultedRef = useRef(false);
 
   // Load the pose container in two phases: a small leading window first (so the
   // overlay paints in a few seconds), then the full coordinate arrays in the
@@ -346,7 +352,9 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     setPose(null);
     setPoseError(undefined);
     setLoadingFull(false);
+    setDiscoveryDone(false);
     confMapRef.current = null; // drop the previous container's confidence cache
+    edgesDefaultedRef.current = false; // re-evaluate the skeleton default per container
     (async () => {
       try {
         const lead = await loadPoseEstimation(nwbUrl, path, {
@@ -474,6 +482,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     discoveredKeyRef.current = key;
     let canceled = false;
     setScanning(false);
+    setDiscoveryDone(false);
     (async () => {
       const poseName = path.split("/").pop() || "";
       const originalVideos = originalVideosRef.current;
@@ -482,11 +491,13 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       if (cands.length > 0) {
         setCandidates(cands);
         setSelectedVideoPath((prev) => prev || (cands[0]?.path ?? ""));
+        setDiscoveryDone(true);
         return;
       }
       // No video in this file: look in sibling assets of the same session.
       if (!dandisetId) {
         setCandidates([]);
+        setDiscoveryDone(true);
         return;
       }
       setScanning(true);
@@ -501,11 +512,26 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       setScanning(false);
       setCandidates(siblings);
       setSelectedVideoPath((prev) => prev || (siblings[0]?.path ?? ""));
+      setDiscoveryDone(true);
     })();
     return () => {
       canceled = true;
     };
   }, [poseReady, nwbUrl, path, dandisetId, dandisetVersion]);
+
+  // Default the skeleton ON for a pure pose-only view: once discovery concludes
+  // with NO video anywhere and the file defines skeleton edges, turn edges on so
+  // the dot cloud reads as a body (with no video behind it, the skeleton matters
+  // more). Once per container, and only when the URL did not set poseEdges; a
+  // later manual toggle still wins because the once-guard stops it re-applying.
+  useEffect(() => {
+    if (!hydrated || edgesDefaultedRef.current) return;
+    if (!discoveryDone || !pose || pose.edges.length === 0) return;
+    edgesDefaultedRef.current = true;
+    if (candidates.length === 0 && searchParams.get("poseEdges") === null) {
+      setShowEdges(true);
+    }
+  }, [hydrated, discoveryDone, pose, candidates, searchParams]);
 
   // Resolve the selected video to a playable URL + its session-time range. The
   // candidate may live in a sibling asset (cross-file), so resolve against its
