@@ -13,6 +13,10 @@ export const timeIntervalsPlugin: NwbObjectViewPlugin = {
     const isTimeIntervals = [
       "TimeIntervals",
       "OptogeneticPulsesTable",
+      // BehavioralBouts (ndx-behavioral-bouts) is a TimeIntervals subclass, so
+      // it renders fine here as a fallback. The dedicated BehavioralBouts plugin
+      // is registered before this one and wins as the default view.
+      "BehavioralBouts",
     ].includes(nt);
     if (!isTimeIntervals) return false;
 

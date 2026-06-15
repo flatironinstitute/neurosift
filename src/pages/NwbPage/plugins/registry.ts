@@ -13,6 +13,8 @@ import {
   planeSegmentationPlugin,
 } from "./ImageSegmentation";
 import { timeIntervalsPlugin } from "./TimeIntervals";
+import { behavioralBoutsPlugin } from "./BehavioralBouts";
+import { poseEstimationPlugin } from "./PoseEstimation";
 import { trialAlignedSeriesPlugin } from "./TrialAlignedSeries";
 import { pythonScriptPlugin } from "./PythonScript";
 // import spikeDensityPlugin from "./SpikeDensity";
@@ -34,6 +36,9 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   intervalSeriesPlugin,
 
   behavioralEventsPlugin,
+  // Before dynamicTablePlugin and timeIntervalsPlugin so the dedicated
+  // video-synced ethogram wins over the generic table/interval views.
+  behavioralBoutsPlugin,
   dynamicTablePlugin,
   twoPhotonSeriesPlugin,
   spatialSeriesPlugin,
@@ -46,6 +51,7 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   trialAlignedSeriesPlugin,
 
   vamePlugin,
+  poseEstimationPlugin,
   externalFileVideoPlugin,
   imageSeriesMp4Plugin,
 

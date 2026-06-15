@@ -116,10 +116,11 @@ export const resolveExternalVideoFromFile = async (
     return externalFile;
   }
 
+  // Non-DANDI .nwb (e.g. served locally over HTTP): resolve the relative
+  // external_file against the .nwb file's own directory. This is what
+  // external_file means by NWB convention and lets a co-located video play.
   if (!isDandiAssetUrl(nwbUrl)) {
-    throw new Error(
-      "Only absolute URLs and DANDI-hosted relative external_file paths are supported in this first version.",
-    );
+    return new URL(externalFile.replace(/\\/g, "/"), nwbUrl).href;
   }
 
   if (!dandisetId) {

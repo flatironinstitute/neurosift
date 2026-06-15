@@ -205,15 +205,15 @@ const VAMEView: FunctionComponent<Props> = ({
     return m;
   }, [filteredBouts]);
 
-  // Motifs that still have at least one bout after filtering, sorted by bout
-  // count (most examples first).
-  const visibleMotifs = useMemo(
-    () =>
-      Array.from(summary.keys()).sort(
-        (a, b) => (summary.get(b)?.count || 0) - (summary.get(a)?.count || 0),
-      ),
-    [summary],
-  );
+  // Motifs that still have at least one bout after filtering, sorted by mean
+  // bout duration (longest typical episodes first).
+  const visibleMotifs = useMemo(() => {
+    const meanDur = (m: number) => {
+      const e = summary.get(m);
+      return e && e.count ? e.total / e.count : 0;
+    };
+    return Array.from(summary.keys()).sort((a, b) => meanDur(b) - meanDur(a));
+  }, [summary]);
 
   // All of the selected motif's bouts (after filtering).
   const selectedBouts = useMemo(

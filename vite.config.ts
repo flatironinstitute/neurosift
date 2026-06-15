@@ -5,6 +5,10 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // Dev server runs on 3000 (already in the view-nwb file server's CORS
+  // allowlist) so a local dev build can read locally served NWB files.
+  // strictPort: fail loudly instead of sliding to a non-allowlisted port.
+  server: { port: 3000, strictPort: true },
   resolve: {
     alias: {
       '@css': path.resolve(__dirname, './src/css'),
