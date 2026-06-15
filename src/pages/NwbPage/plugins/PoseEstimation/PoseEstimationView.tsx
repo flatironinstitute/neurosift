@@ -454,13 +454,20 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     });
   }, [pose, nwbUrl, path, searchParams, initializeTimeseriesSelection]);
 
-  // Discover + rank candidate videos once per container (its original_videos is
-  // known). In-file first; if none, scan sibling assets of the same session.
-  // Gated on the container key so the phase-2 full-data `pose` swap does not
-  // re-scan siblings (which would rebuild candidates and reload the video).
+  // Discover + rank candidate videos once per container. In-file first; if none,
+  // scan sibling assets of the same session. Gated on the steady boolean
+  // `poseReady` (and the stable container inputs) rather than `pose` itself: the
+  // two-phase load swaps `pose` when the full coordinates arrive, and if this
+  // effect depended on `pose` that swap would re-run it -> the cleanup would
+  // cancel the in-flight scan and the once-per-container guard would block the
+  // restart, so a cross-file video would silently never resolve. originalVideos
+  // (identical across both phases) is read from a ref to keep it out of the deps.
+  const poseReady = !!pose;
+  const originalVideosRef = useRef<string[]>([]);
+  if (pose) originalVideosRef.current = pose.originalVideos;
   const discoveredKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!pose) return;
+    if (!poseReady) return;
     const key = `${nwbUrl}|${path}`;
     if (discoveredKeyRef.current === key) return;
     discoveredKeyRef.current = key;
@@ -468,11 +475,8 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     setScanning(false);
     (async () => {
       const poseName = path.split("/").pop() || "";
-      const cands = await findVideoCandidates(
-        nwbUrl,
-        pose.originalVideos,
-        poseName,
-      );
+      const originalVideos = originalVideosRef.current;
+      const cands = await findVideoCandidates(nwbUrl, originalVideos, poseName);
       if (canceled) return;
       if (cands.length > 0) {
         setCandidates(cands);
@@ -489,7 +493,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
         nwbUrl,
         dandisetId,
         dandisetVersion,
-        pose.originalVideos,
+        originalVideos,
         poseName,
       );
       if (canceled) return;
@@ -500,7 +504,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     return () => {
       canceled = true;
     };
-  }, [nwbUrl, path, pose, dandisetId, dandisetVersion]);
+  }, [poseReady, nwbUrl, path, dandisetId, dandisetVersion]);
 
   // Resolve the selected video to a playable URL + its session-time range. The
   // candidate may live in a sibling asset (cross-file), so resolve against its
