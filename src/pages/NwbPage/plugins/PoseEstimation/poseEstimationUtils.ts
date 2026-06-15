@@ -30,6 +30,11 @@ export type PoseData = {
   // ndx-pose Skeleton's node-index edges by matching node names to series names).
   // Empty when the file defines no edges (DeepLabCut exports often omit them).
   edges: [number, number][];
+  // True when the series store 3D data (shape (n,3), e.g. DANNCE world coords);
+  // such pose cannot register on a 2D video without camera calibration.
+  is3D: boolean;
+  // The data unit (e.g. "px", "millimeters") if declared, for the 3D warning.
+  spatialUnit: string | null;
   // Overall session-time span of the pose (across keypoints).
   timeRange: { start: number; end: number };
 };
@@ -48,11 +53,38 @@ export type VideoCandidate = {
   sourceLabel?: string;
 };
 
-// ndx-pose carries no per-keypoint color, so spread hues evenly over a stable
-// (discovery-order) index.
+// ndx-pose carries no per-keypoint color. Spread the keypoints over evenly-spaced
+// hues in CIE LCh (HCL) at CONSTANT luminance and chroma, then convert to sRGB.
+// This is more principled than an HSL sweep: hue steps are perceptually even (HSL
+// over-weights greens and makes yellow pop), and equal L* means every dot is
+// equally visible on the dark video, no near-black entries (which is also why a
+// categorical map like Okabe-Ito is a poor fit here). It scales to any keypoint
+// count without repeating colors. Gamut-clamped to sRGB.
 const keypointColor = (index: number, total: number): string => {
-  const hue = (index * 360) / Math.max(total, 1);
-  return `hsl(${hue.toFixed(1)}, 85%, 55%)`;
+  const L = 67; // CIE L*: mid-light, clearly visible on the dark overlay
+  const C = 52; // chroma: vivid but mostly in sRGB gamut at this L*
+  const h = ((index / Math.max(total, 1)) * 360 * Math.PI) / 180;
+  const a = C * Math.cos(h);
+  const bb = C * Math.sin(h);
+  // Lab -> XYZ (D65)
+  const fy = (L + 16) / 116;
+  const fx = fy + a / 500;
+  const fz = fy - bb / 200;
+  const d = 6 / 29;
+  const finv = (t: number) => (t > d ? t * t * t : 3 * d * d * (t - 4 / 29));
+  const X = 0.95047 * finv(fx);
+  const Y = finv(fy);
+  const Z = 1.08883 * finv(fz);
+  // XYZ -> linear sRGB
+  const r = 3.2406 * X - 1.5372 * Y - 0.4986 * Z;
+  const g = -0.9689 * X + 1.8758 * Y + 0.0415 * Z;
+  const b = 0.0557 * X - 0.204 * Y + 1.057 * Z;
+  const enc = (u: number) => {
+    const v = Math.max(0, Math.min(1, u)); // gamut clip
+    return v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055;
+  };
+  const c255 = (u: number) => Math.round(enc(u) * 255);
+  return `rgb(${c255(r)}, ${c255(g)}, ${c255(b)})`;
 };
 
 const basename = (p: string): string => p.split(/[\\/]/).pop() || p;
@@ -214,6 +246,8 @@ export const loadPoseEstimation = async (
     numFrames: number;
     timestamps: Float64Array | null;
     confidence: Float32Array | null;
+    cols: number; // data columns: 2 = 2D pixel pose, 3 = 3D (world coords)
+    unit: string | null; // data unit attr, e.g. "px" / "millimeters" / "meters"
   };
   // Read one series: group metadata, the full (x, y) coordinate array, and its
   // timestamps. The data read dominates load time, so these run concurrently
@@ -227,6 +261,8 @@ export const loadPoseEstimation = async (
       return null;
     const numFrames = dataDs.shape[0];
     const stride = dataDs.shape[1];
+    const unit =
+      dataDs.attrs?.unit != null ? String(dataDs.attrs.unit) : null;
 
     const raw = await getHdf5DatasetData(nwbUrl, `${sg.path}/data`, {});
     if (!raw) return null;
@@ -264,6 +300,8 @@ export const loadPoseEstimation = async (
       numFrames,
       timestamps,
       confidence,
+      cols: stride,
+      unit,
     };
   };
 
@@ -309,6 +347,15 @@ export const loadPoseEstimation = async (
   }
   if (keypoints.length === 0) return null;
 
+  // Stable alphabetical order so the legend, the color rainbow, and any future
+  // index-based references (e.g. selecting keypoints in the URL) are consistent
+  // across files regardless of how the series were stored. Recolor by the sorted
+  // index so the hue spread follows the displayed order.
+  keypoints.sort((a, b) => a.name.localeCompare(b.name));
+  keypoints.forEach((kp, i) => {
+    kp.color = keypointColor(i, keypoints.length);
+  });
+
   // Container-level metadata (best-effort; both are unreliable in practice).
   let originalVideos: string[] = [];
   if (group.datasets.some((d) => d.name === "original_videos")) {
@@ -346,11 +393,18 @@ export const loadPoseEstimation = async (
   if (!Number.isFinite(start)) start = 0;
   if (!Number.isFinite(end)) end = 0;
 
+  // 3D pose (DANNCE etc.) stores (n, 3) world coordinates and cannot register on
+  // a 2D video without camera calibration; flag it so the view can warn.
+  const is3D = loaded.some((l) => l.cols >= 3);
+  const spatialUnit = loaded.find((l) => l.unit)?.unit ?? null;
+
   return {
     keypoints,
     originalVideos,
     dimensions,
     edges,
+    is3D,
+    spatialUnit,
     timeRange: { start, end },
   };
 };
@@ -821,18 +875,27 @@ export const drawPoseFrame = (
     ctx.globalAlpha = 1;
   }
 
-  // Skeleton edges first, so the dots sit on top of the lines.
+  // Skeleton edges first, so the dots sit on top of the lines. Each edge is
+  // stroked twice, a wider dark halo then the white line on top, so it stays
+  // legible on both dark and bright video (mirrors the dots' black outline).
   if (showEdges && pose.edges.length > 0) {
-    ctx.lineWidth = Math.max(1.5, r * 0.45);
-    ctx.strokeStyle = "rgba(255,255,255,0.85)";
-    for (const [a, b] of pose.edges) {
-      const pa = pts[a];
-      const pb = pts[b];
-      if (!pa || !pb) continue;
-      ctx.beginPath();
-      ctx.moveTo(pa.x, pa.y);
-      ctx.lineTo(pb.x, pb.y);
-      ctx.stroke();
+    const lineW = Math.max(1.5, r * 0.45);
+    ctx.lineCap = "round";
+    for (const pass of [
+      { w: lineW + 2, color: "rgba(0,0,0,0.55)" },
+      { w: lineW, color: "rgba(255,255,255,0.9)" },
+    ]) {
+      ctx.lineWidth = pass.w;
+      ctx.strokeStyle = pass.color;
+      for (const [a, b] of pose.edges) {
+        const pa = pts[a];
+        const pb = pts[b];
+        if (!pa || !pb) continue;
+        ctx.beginPath();
+        ctx.moveTo(pa.x, pa.y);
+        ctx.lineTo(pb.x, pb.y);
+        ctx.stroke();
+      }
     }
   }
 

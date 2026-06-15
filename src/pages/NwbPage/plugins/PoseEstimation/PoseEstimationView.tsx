@@ -2,6 +2,7 @@ import { getRedirectUrl } from "@hdf5Interface";
 import {
   CSSProperties,
   FunctionComponent,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -97,7 +98,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   nwbUrl,
   path,
 }) => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [pose, setPose] = useState<PoseData | null>(null);
   const [poseError, setPoseError] = useState<string>();
@@ -180,6 +181,158 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   const selectedSourceKey = forcePoseOnly
     ? "__none__"
     : (selectedSource?.key ?? "__none__");
+
+  // --- URL persistence (static view state). See url_react_router.md for the
+  // param schema and write-timing rules; poseTime is handled separately.
+  // Keypoint series names share a long common prefix (e.g. "PoseEstimationSeries");
+  // strip it for the URL value, shorter and still a stable per-file id.
+  const namePrefix = useMemo(() => {
+    const names = pose?.keypoints.map((k) => k.name) ?? [];
+    if (names.length < 2) return "";
+    let pfx = names[0];
+    for (const n of names) {
+      while (pfx && !n.startsWith(pfx)) pfx = pfx.slice(0, -1);
+      if (!pfx) break;
+    }
+    return pfx;
+  }, [pose]);
+  const shortName = useCallback(
+    (n: string) =>
+      namePrefix && n.startsWith(namePrefix) ? n.slice(namePrefix.length) : n,
+    [namePrefix],
+  );
+
+  const [hydrated, setHydrated] = useState(false);
+  const videoHydratedRef = useRef(false);
+
+  // Hydrate static view state from the URL once the pose (hence keypoint names)
+  // is known. Flipping `hydrated` gates the writer so it cannot clobber the
+  // incoming params before they are applied.
+  useEffect(() => {
+    if (!pose || hydrated) return;
+    const g = (k: string) => searchParams.get(k);
+    const off = g("poseOffset");
+    if (off !== null) setOffset(Number(off) || 0);
+    if (g("poseEdges") === "1") setShowEdges(true);
+    if (g("poseOnly") === "1") setForcePoseOnly(true);
+    const conf = g("poseConf");
+    if (conf !== null) setConfThreshold(Number(conf) || 0);
+    if (g("poseFade") === "1") setFadeByConfidence(true);
+    if (g("poseTrails") === "1") setShowTrails(true);
+    const tw = g("poseTrailSec");
+    if (tw !== null) setTrailSec(Number(tw) || 1.0);
+    const hid = g("poseHidden");
+    if (hid) {
+      const want = new Set(hid.split(",").filter(Boolean));
+      const full = pose.keypoints
+        .map((k) => k.name)
+        .filter((n) => want.has(shortName(n)));
+      if (full.length) setHidden(new Set(full));
+    }
+    setHydrated(true);
+  }, [pose, hydrated, searchParams, shortName]);
+
+  // Apply the selected video from the URL once candidates are discovered (incl.
+  // the cross-file sibling scan), matched by series name (+ source asset id).
+  useEffect(() => {
+    if (videoHydratedRef.current || candidates.length === 0) return;
+    const wantName = searchParams.get("poseVideo");
+    const wantSrc = searchParams.get("poseVideoSource");
+    if (wantName) {
+      const m = candidates.find(
+        (c) =>
+          c.name === wantName &&
+          (!wantSrc || (c.sourceNwbUrl || "").includes(wantSrc)),
+      );
+      if (m) setSelectedVideoPath(m.path);
+    }
+    videoHydratedRef.current = true;
+  }, [candidates, searchParams]);
+
+  // Write static view state to the URL live (replace, defaults omitted). poseVideo
+  // is written only after the video has been applied, so the incoming param is
+  // not wiped before it is read.
+  useEffect(() => {
+    if (!hydrated) return;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        const setDel = (k: string, v: string | null) =>
+          v ? next.set(k, v) : next.delete(k);
+        setDel("poseOffset", offset !== 0 ? String(offset) : null);
+        setDel(
+          "poseHidden",
+          hidden.size ? [...hidden].map(shortName).sort().join(",") : null,
+        );
+        setDel("poseEdges", showEdges ? "1" : null);
+        setDel("poseOnly", forcePoseOnly ? "1" : null);
+        setDel("poseConf", confThreshold > 0 ? String(confThreshold) : null);
+        setDel("poseFade", fadeByConfidence ? "1" : null);
+        setDel("poseTrails", showTrails ? "1" : null);
+        setDel("poseTrailSec", trailSec !== 1.0 ? String(trailSec) : null);
+        if (videoHydratedRef.current) {
+          const cand = candidates.find((c) => c.path === selectedVideoPath);
+          const suggested = candidates[0];
+          const isSuggested =
+            !!cand && !!suggested && cand.path === suggested.path;
+          setDel("poseVideo", cand && !isSuggested ? cand.name : null);
+          const m = cand?.sourceNwbUrl?.match(/\/assets\/([0-9a-fA-F-]{36})\//);
+          setDel("poseVideoSource", m ? m[1] : null);
+        }
+        return next;
+      },
+      { replace: true },
+    );
+  }, [
+    hydrated,
+    offset,
+    hidden,
+    showEdges,
+    forcePoseOnly,
+    confThreshold,
+    fadeByConfidence,
+    showTrails,
+    trailSec,
+    selectedVideoPath,
+    candidates,
+    shortName,
+    setSearchParams,
+  ]);
+
+  // poseTime: written on pause/seek (never live), cleared on play; the loader
+  // accepts any value and seeds it paused (see url_react_router.md).
+  const writePoseTime = useCallback(
+    (t: number | null) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (t === null || !Number.isFinite(t)) next.delete("poseTime");
+          else next.set("poseTime", t.toFixed(3));
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+  const poseTimeSeededRef = useRef(false);
+  const videoSeededRef = useRef(false);
+
+  // Seed the pose-only clock from poseTime once the pose is known (harmless in
+  // overlay mode, where poseClock is idle). The overlay seeds the <video> element
+  // in its onLoadedMetadata (it needs the element duration for the inverse map).
+  useEffect(() => {
+    if (poseTimeSeededRef.current || !pose) return;
+    poseTimeSeededRef.current = true;
+    const raw = searchParams.get("poseTime");
+    if (raw === null || !Number.isFinite(Number(raw))) return;
+    const t = Math.min(
+      pose.timeRange.end,
+      Math.max(pose.timeRange.start, Number(raw)),
+    );
+    poseClock.current.t = t;
+    setPoseUiTime(t);
+  }, [pose, searchParams]);
 
   // Load the pose container.
   useEffect(() => {
@@ -828,66 +981,61 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                   Hide all
                 </button>
               </div>
-              {pose.keypoints.map((kp) => {
-                const off = hidden.has(kp.name);
-                return (
-                  <button
-                    key={kp.name}
-                    onClick={() =>
-                      setHidden((prev) => {
-                        const next = new Set(prev);
-                        if (next.has(kp.name)) next.delete(kp.name);
-                        else next.add(kp.name);
-                        return next;
-                      })
-                    }
-                    onDoubleClick={() =>
-                      setHidden((prev) => {
-                        const all = pose.keypoints.map((k) => k.name);
-                        const isolated =
-                          prev.size === all.length - 1 && !prev.has(kp.name);
-                        return isolated
-                          ? new Set()
-                          : new Set(all.filter((n) => n !== kp.name));
-                      })
-                    }
-                    title="Click to toggle; double-click to show only this"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "2px 7px",
-                      border: `1px solid ${HAIRLINE}`,
-                      borderRadius: 6,
-                      background: off ? "#f4f4f4" : "#fff",
-                      color: off ? INK.faint : "#333",
-                      cursor: "pointer",
-                      fontSize: FS.small,
-                      textAlign: "left",
-                    }}
-                  >
-                    <span
+              {/* Compact wrapped chips (alphabetical), not a full-width list. */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                {pose.keypoints.map((kp) => {
+                  const off = hidden.has(kp.name);
+                  return (
+                    <button
+                      key={kp.name}
+                      onClick={() =>
+                        setHidden((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(kp.name)) next.delete(kp.name);
+                          else next.add(kp.name);
+                          return next;
+                        })
+                      }
+                      onDoubleClick={() =>
+                        setHidden((prev) => {
+                          const all = pose.keypoints.map((k) => k.name);
+                          const isolated =
+                            prev.size === all.length - 1 && !prev.has(kp.name);
+                          return isolated
+                            ? new Set()
+                            : new Set(all.filter((n) => n !== kp.name));
+                        })
+                      }
+                      title="Click to toggle; double-click to show only this"
                       style={{
-                        width: 9,
-                        height: 9,
-                        borderRadius: "50%",
-                        background: off ? "#ccc" : kp.color,
-                        border: "1px solid #0003",
-                        flexShrink: 0,
-                      }}
-                    />
-                    <span
-                      style={{
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                        padding: "1px 6px",
+                        border: `1px solid ${HAIRLINE}`,
+                        borderRadius: 10,
+                        background: off ? "#f4f4f4" : "#fff",
+                        color: off ? INK.faint : "#333",
+                        cursor: "pointer",
+                        fontSize: FS.small,
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {kp.name}
-                    </span>
-                  </button>
-                );
-              })}
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          background: off ? "#ccc" : kp.color,
+                          border: "1px solid #0003",
+                          flexShrink: 0,
+                        }}
+                      />
+                      {shortName(kp.name)}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Trajectories: each keypoint's recent motion path. */}
@@ -1029,6 +1177,27 @@ const PoseEstimationView: FunctionComponent<Props> = ({
           </div>
         )}
 
+        {/* 3D pose cannot register on a 2D video without camera calibration; warn
+            (the overlay is still drawn, the dots just will not sit on the animal). */}
+        {pose.is3D && !poseOnlyMode && (
+          <div
+            style={{
+              padding: "6px 10px",
+              fontSize: FS.body,
+              background: "#fff4e5",
+              color: "#8a5a00",
+            }}
+          >
+            This is 3D pose
+            {pose.spatialUnit
+              ? ` (${pose.spatialUnit}, world coordinates)`
+              : " (world coordinates)"}
+            ; on a 2D video the keypoints cannot register without the camera
+            calibration, which is not in this file, so the dots will not sit on
+            the animal. Use "Pose only" to view the pose on its own.
+          </div>
+        )}
+
         {/* Main area: video overlay, pose-only canvas, or a status message. */}
         <div
           ref={boxRef}
@@ -1082,6 +1251,48 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                   // genuinely cannot show the frame.
                   setCodecError(true);
                 }}
+                onLoadedMetadata={(e) => {
+                  if (videoSeededRef.current || !video) return;
+                  videoSeededRef.current = true;
+                  const raw = searchParams.get("poseTime");
+                  if (raw === null || !Number.isFinite(Number(raw))) return;
+                  const v = e.currentTarget;
+                  v.currentTime = sessionTimeToVideoTime(
+                    Number(raw),
+                    v.duration,
+                    video.startTime,
+                    video.timestamps,
+                    offset,
+                  );
+                  v.pause();
+                }}
+                onPause={(e) => {
+                  if (!video) return;
+                  const v = e.currentTarget;
+                  writePoseTime(
+                    videoTimeToSessionTime(
+                      v.currentTime,
+                      v.duration,
+                      video.startTime,
+                      video.timestamps,
+                      offset,
+                    ),
+                  );
+                }}
+                onSeeked={(e) => {
+                  const v = e.currentTarget;
+                  if (!video || !v.paused) return;
+                  writePoseTime(
+                    videoTimeToSessionTime(
+                      v.currentTime,
+                      v.duration,
+                      video.startTime,
+                      video.timestamps,
+                      offset,
+                    ),
+                  );
+                }}
+                onPlay={() => writePoseTime(null)}
                 style={{
                   position: "absolute",
                   inset: 0,
@@ -1130,6 +1341,8 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                 }
                 clk.playing = next;
                 setPosePlaying(next);
+                if (next) writePoseTime(null);
+                else writePoseTime(clk.t);
               }}
             >
               {posePlaying ? "Pause" : "Play"}
@@ -1145,6 +1358,10 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                 poseClock.current.t = t;
                 setPoseUiTime(t);
                 setCurrentTime(t); // scrubbing drives the shared clock
+              }}
+              onPointerUp={() => {
+                if (!poseClock.current.playing)
+                  writePoseTime(poseClock.current.t);
               }}
               style={{ flex: 1 }}
             />
