@@ -162,13 +162,15 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     (c) => c.path === selectedVideoPath,
   );
   const noPlayableVideo = !selectedCandidate || codecError || !!videoError;
-  // Render the pose alone (on a plain canvas with its own clock) when there is no
-  // playable video, or when the user forces it. Not while a sibling scan runs.
-  const poseOnlyMode = !scanning && (noPlayableVideo || forcePoseOnly);
+  // Render the pose alone (on a plain canvas with its own clock) when the user
+  // picks "Pose only" (forcePoseOnly), or as a fallback when no playable video
+  // exists once the sibling scan has finished. An explicit Pose-only choice wins
+  // immediately, even mid-scan, so 3D (which defaults to it) never waits.
+  const poseOnlyMode = forcePoseOnly || (!scanning && noPlayableVideo);
   const poseExtent = useMemo(() => (pose ? getPoseExtent(pose) : null), [pose]);
 
-  // Group discovered videos by their source file for the two-step picker (source
-  // file -> its videos). "(none)" = pose only is the first source option.
+  // Group discovered videos by their source file for the two-step picker (which
+  // source file, then which video within it).
   const sources: { key: string; label: string; videos: VideoCandidate[] }[] =
     [];
   for (const c of candidates) {
@@ -180,16 +182,12 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     }
     s.videos.push(c);
   }
-  const selectedSource = forcePoseOnly
-    ? undefined
-    : selectedCandidate
-      ? sources.find(
-          (s) => s.key === (selectedCandidate.sourceNwbUrl || "__this__"),
-        )
-      : sources[0];
-  const selectedSourceKey = forcePoseOnly
-    ? "__none__"
-    : (selectedSource?.key ?? "__none__");
+  const selectedSource = selectedCandidate
+    ? sources.find(
+        (s) => s.key === (selectedCandidate.sourceNwbUrl || "__this__"),
+      )
+    : sources[0];
+  const selectedSourceKey = selectedSource?.key ?? "__empty__";
 
   // --- URL persistence (static view state). See url_react_router.md for the
   // param schema and write-timing rules; poseTime is handled separately.
@@ -223,7 +221,10 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     const off = g("poseOffset");
     if (off !== null) setOffset(Number(off) || 0);
     if (g("poseEdges") === "1") setShowEdges(true);
+    // 3D pose defaults to pose-only (overlaying world coordinates on a 2D camera
+    // is meaningless); an explicit poseOnly param or a chosen poseVideo wins.
     if (g("poseOnly") === "1") setForcePoseOnly(true);
+    else if (pose.is3D && !g("poseVideo")) setForcePoseOnly(true);
     const conf = g("poseConf");
     if (conf !== null) setConfThreshold(Number(conf) || 0);
     if (g("poseFade") === "1") setFadeByConfidence(true);
@@ -828,10 +829,75 @@ const PoseEstimationView: FunctionComponent<Props> = ({
               fontSize: 13,
             }}
           >
-            {/* Background video: first pick a source file (or "none" = pose only),
-                then a video within it. The pose keypoints are the overlay; the
-                video is the background they are drawn on. */}
+            {/* View switch: keypoints overlaid on the video, or the pose on its
+                own. Pose-only is always available; it is also the automatic
+                fallback when no video can play, and the default for 3D pose. */}
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span style={{ color: INK.muted, fontSize: FS.small }}>View</span>
+              <div
+                style={{
+                  display: "flex",
+                  width: "fit-content",
+                  border: `1px solid ${HAIRLINE}`,
+                  borderRadius: 6,
+                  overflow: "hidden",
+                }}
+              >
+                <button
+                  onClick={() => setForcePoseOnly(false)}
+                  disabled={!scanning && noPlayableVideo}
+                  style={{
+                    padding: "3px 12px",
+                    fontSize: FS.small,
+                    border: "none",
+                    borderRight: `1px solid ${HAIRLINE}`,
+                    background: !poseOnlyMode ? "#eef2f7" : "#fff",
+                    color:
+                      !scanning && noPlayableVideo
+                        ? "#ccc"
+                        : !poseOnlyMode
+                          ? "#1f3b57"
+                          : INK.muted,
+                    fontWeight: !poseOnlyMode ? 600 : 400,
+                    cursor: !scanning && noPlayableVideo ? "default" : "pointer",
+                  }}
+                >
+                  Overlay
+                </button>
+                <button
+                  onClick={() => setForcePoseOnly(true)}
+                  style={{
+                    padding: "3px 12px",
+                    fontSize: FS.small,
+                    border: "none",
+                    background: poseOnlyMode ? "#eef2f7" : "#fff",
+                    color: poseOnlyMode ? "#1f3b57" : INK.muted,
+                    fontWeight: poseOnlyMode ? 600 : 400,
+                    cursor: "pointer",
+                  }}
+                >
+                  Pose only
+                </button>
+              </div>
+              {pose.is3D && (
+                <span style={{ color: INK.faint, fontSize: FS.small }}>
+                  3D pose: shown on its own; an overlay would not register on a 2D
+                  camera.
+                </span>
+              )}
+            </div>
+
+            {/* Background video: pick which source file, then which video within
+                it. The pose keypoints are the overlay; the video is the
+                background they are drawn on. Greyed out in pose-only. */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                opacity: poseOnlyMode ? 0.5 : 1,
+              }}
+            >
               <span style={{ color: INK.muted, fontSize: FS.small }}>
                 Background video
               </span>
@@ -843,19 +909,13 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                 </span>
                 <select
                   value={selectedSourceKey}
-                  disabled={scanning}
+                  disabled={scanning || poseOnlyMode}
                   onChange={(e) => {
                     const k = e.target.value;
-                    if (k === "__none__") {
-                      setForcePoseOnly(true);
-                      return;
-                    }
-                    setForcePoseOnly(false);
                     const first = sources.find((s) => s.key === k)?.videos[0];
                     if (first) setSelectedVideoPath(first.path);
                   }}
                 >
-                  <option value="__none__">(none - pose only)</option>
                   {sources.map((s) => (
                     <option key={s.key} value={s.key}>
                       {s.label}
@@ -879,10 +939,8 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                   </span>
                   <select
                     value={selectedVideoPath}
-                    onChange={(e) => {
-                      setForcePoseOnly(false);
-                      setSelectedVideoPath(e.target.value);
-                    }}
+                    disabled={poseOnlyMode}
+                    onChange={(e) => setSelectedVideoPath(e.target.value)}
                   >
                     {selectedSource.videos.map((c, index) => (
                       <option key={c.path} value={c.path}>
