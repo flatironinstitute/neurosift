@@ -116,6 +116,17 @@ export const resolveExternalVideoFromFile = async (
     return externalFile;
   }
 
+  // Local files served by `neurosift view-nwb`: the CLI symlinks the referenced
+  // video into the same directory it serves, by basename, so resolve external_file
+  // to its basename as a sibling of the NWB URL. This handles any stored path
+  // shape (relative, "../", absolute POSIX, or Windows) uniformly. Scoped to
+  // localhost (the view-nwb case we control), matching RemoteH5File.dataIsRemote.
+  if (nwbUrl.startsWith("http://localhost")) {
+    const base =
+      externalFile.replace(/\\/g, "/").split("/").pop() || externalFile;
+    return new URL(base, nwbUrl).href;
+  }
+
   if (!isDandiAssetUrl(nwbUrl)) {
     throw new Error(
       "Only absolute URLs and DANDI-hosted relative external_file paths are supported in this first version.",
