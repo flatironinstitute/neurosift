@@ -21,7 +21,15 @@ export type BoutLabel = {
 };
 
 // A bout currently shown as a montage clip, marked on the timeline with a letter.
-export type ClipMark = { startTime: number; labelId: number; letter: string };
+// `extra` carries its per-row columns so the timeline can print value lines under
+// the letter without a second lookup.
+export type ClipMark = {
+  startTime: number;
+  stopTime: number;
+  labelId: number;
+  letter: string;
+  extra?: Record<string, number | string>;
+};
 
 // Everything the view needs from a BehavioralBouts group.
 export type BehavioralBoutsData = {

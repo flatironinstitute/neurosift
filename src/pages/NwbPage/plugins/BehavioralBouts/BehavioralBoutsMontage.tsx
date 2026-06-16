@@ -16,10 +16,9 @@ const TOL = 0.34;
 export type DisplayedClip = {
   bout: Bout;
   label: string;
-  // Set only when a feature sort is active: the bout's value for the sort column,
-  // pre-formatted, and its 0..1 position on the behavior's range (the gauge fill).
+  // The primary value column's value for this bout, pre-formatted (shown big on
+  // the tile). Set only when at least one value column is selected.
   featureValueText?: string;
-  featureFrac?: number | null;
 };
 
 type Props = {
@@ -295,7 +294,7 @@ const BehavioralBoutsMontage: FunctionComponent<Props> = ({
         }}
       >
         {displayedClips.map(
-          ({ bout, label, featureValueText, featureFrac }, index) => (
+          ({ bout, label, featureValueText }, index) => (
             <BoutMontageTile
               key={`${bout.labelId}-${bout.startTime}-${index}`}
               size={size}
@@ -306,7 +305,6 @@ const BehavioralBoutsMontage: FunctionComponent<Props> = ({
               color={color}
               featureName={featureName}
               featureValueText={featureValueText}
-              featureFrac={featureFrac}
               hasVideo={hasVideo}
             videoUrl={videoUrl}
             resetSignal={resetSignal}

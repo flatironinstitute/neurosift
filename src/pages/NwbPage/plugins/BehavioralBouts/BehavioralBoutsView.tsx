@@ -93,16 +93,16 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
   const [minBoutMs, setMinBoutMs] = useState(() => num("bbMinBout", 0));
   const [padSec, setPadSec] = useState(() => num("bbPad", 0.5));
   const [seed, setSeed] = useState(() => num("bbSeed", 1));
-  // How the behavior selector list is ordered (sidebar control, above the list).
-  const [behaviorOrder, setBehaviorOrder] = useState<
-    "mean" | "count" | "total" | "name"
-  >(() => {
-    const v = searchParams.get("bbOrder");
-    return v === "count" || v === "total" || v === "name" ? v : "mean";
-  });
-  // A numeric extra column (kinematic feature) whose value is shown on each
-  // montage tile + the per-bout table. null = none. Color is NOT used for this;
-  // the value shows as a number + a bar gauge. Sorting by it is opt-in (sortOn).
+  // How the behavior selector list is ordered (sidebar control, above the list):
+  // a structural key ("mean" duration / "count" / "total" / "name") or a numeric
+  // extra column name, meaning "by the per-behavior mean of that column".
+  const [behaviorOrder, setBehaviorOrder] = useState<string>(
+    () => searchParams.get("bbOrder") || "mean",
+  );
+  // The numeric extra column (kinematic feature) to show: big on each montage
+  // tile + a "column = value" line under the bottom-timeline clip letters. Color
+  // is never used for it. Sorting the montage by it is opt-in (sortOn). One at a
+  // time (the per-bout table carries all columns); null = none, the default.
   const [featureColumn, setFeatureColumn] = useState<string | null>(
     () => searchParams.get("bbValue") || null,
   );
@@ -222,20 +222,48 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
     [data],
   );
 
-  // Each BehavioralBouts table has its own columns, so drop a sort column that
-  // does not exist on the newly loaded object (but only once data is in, so a
-  // column pinned in the URL survives the initial empty-numericColumns render).
+  // Each BehavioralBouts table has its own columns, so drop any selected value
+  // column that does not exist on the newly loaded object (only once data is in,
+  // so columns pinned in the URL survive the initial empty-numericColumns render).
   useEffect(() => {
     if (!data) return;
     if (featureColumn && !numericColumns.includes(featureColumn)) {
       setFeatureColumn(null);
       setSortOn(false);
     }
-  }, [data, numericColumns, featureColumn]);
+    const STRUCTURAL = ["mean", "count", "total", "name"];
+    if (
+      !STRUCTURAL.includes(behaviorOrder) &&
+      !numericColumns.includes(behaviorOrder)
+    )
+      setBehaviorOrder("mean");
+  }, [data, numericColumns, featureColumn, behaviorOrder]);
 
-  // The active feature scale, built over the SELECTED behavior's bouts so the
-  // gauge spans that behavior's own range. null when no column is picked, no
-  // selection, or the column has no finite values for this behavior.
+  // When ordering behaviors by a kinematic column, the per-behavior mean of that
+  // column over its (filtered) bouts (NaN values skipped). null for the
+  // structural orderings (mean duration / count / total / name).
+  const orderColumn = numericColumns.includes(behaviorOrder)
+    ? behaviorOrder
+    : null;
+  const behaviorColMean = useMemo(() => {
+    if (!orderColumn) return null;
+    const acc = new Map<number, { sum: number; n: number }>();
+    for (const b of filteredBouts) {
+      const raw = b.extra?.[orderColumn];
+      const v = typeof raw === "number" ? raw : Number(raw);
+      if (!Number.isFinite(v)) continue;
+      const e = acc.get(b.labelId) || { sum: 0, n: 0 };
+      e.sum += v;
+      e.n += 1;
+      acc.set(b.labelId, e);
+    }
+    const m = new Map<number, number>();
+    for (const [id, e] of acc) m.set(id, e.n ? e.sum / e.n : NaN);
+    return m;
+  }, [orderColumn, filteredBouts]);
+
+  // Feature scale for the chosen column, built over the SELECTED behavior's bouts.
+  // null when none is picked, no behavior is selected, or the column is all-NaN.
   const featureScale = useMemo(() => {
     if (!featureColumn || selectedLabelId === null) return null;
     const sel = filteredBouts.filter((b) => b.labelId === selectedLabelId);
@@ -286,7 +314,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
       picked = seededShuffle(sel, seed).slice(0, clipCount);
       picked.sort((a, b) => a.startTime - b.startTime);
     }
-    // Show the chosen column's value on every tile whenever a column is picked,
+    // Show the primary column's value big on every tile whenever one is picked,
     // independent of whether sorting is on.
     return picked.map((bout, index) => ({
       bout,
@@ -294,7 +322,6 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
       featureValueText: featureScale
         ? formatFeatureValue(featureScale.value(bout))
         : undefined,
-      featureFrac: featureScale ? featureScale.norm(bout) : undefined,
     }));
   }, [
     data,
@@ -311,8 +338,10 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
     () =>
       displayedClips.map((c) => ({
         startTime: c.bout.startTime,
+        stopTime: c.bout.stopTime,
         labelId: c.bout.labelId,
         letter: c.label,
+        extra: c.bout.extra,
       })),
     [displayedClips],
   );
@@ -445,7 +474,11 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
   const selectedColor = selectedLabel?.color || "#888";
   const selectedBoutCount = selectedStats?.count || 0;
 
-  const bottomH = canMontage ? clamp(Math.round(height * 0.17), 80, 130) : 0;
+  // The bottom timeline grows with the clip-letter line + one printed value line
+  // per selected column (kept in sync with BoutsTimeline's LABEL_H / VALUE_H = 13).
+  const bottomH = canMontage
+    ? clamp(Math.round(height * 0.17), 80, 130) + 13 + (featureColumn ? 21 : 0)
+    : 0;
   // The montage + bottom timeline span the area right of the sidebar (so the
   // timeline does not run under the left menu); full width when it is collapsed.
   const montageW = Math.max(40, width - (sidebarCollapsed ? 0 : SIDEBAR_W));
@@ -453,6 +486,16 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
   const visibleLabels = data.labels
     .filter((l) => (summary.get(l.labelId)?.count || 0) > 0)
     .sort((a, b) => {
+      if (orderColumn && behaviorColMean) {
+        // By the per-behavior mean of the chosen column, highest first; behaviors
+        // with no finite values (e.g. tracking gaps) sort last.
+        const ma = behaviorColMean.get(a.labelId);
+        const mb = behaviorColMean.get(b.labelId);
+        const va = ma === undefined || !Number.isFinite(ma) ? -Infinity : ma;
+        const vb = mb === undefined || !Number.isFinite(mb) ? -Infinity : mb;
+        if (va !== vb) return vb - va;
+        return meanDur(b.labelId) - meanDur(a.labelId);
+      }
       if (behaviorOrder === "name") return a.name.localeCompare(b.name);
       if (behaviorOrder === "count")
         return (summary.get(b.labelId)?.count || 0) - (summary.get(a.labelId)?.count || 0);
@@ -715,22 +758,25 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
                   info={
                     "How the behavior list below is sorted. Mean duration (default) " +
                     "surfaces the most sustained behaviors first; count and total " +
-                    "rank by how often / how long each occurs; name is alphabetical."
+                    "rank by how often / how long each occurs; name is alphabetical. " +
+                    "Each kinematic column also ranks behaviors by its per-behavior " +
+                    "mean (highest first), e.g. fastest behaviors by mean mean_speed."
                   }
                 />
                 <select
                   value={behaviorOrder}
-                  onChange={(e) =>
-                    setBehaviorOrder(
-                      e.target.value as "mean" | "count" | "total" | "name",
-                    )
-                  }
+                  onChange={(e) => setBehaviorOrder(e.target.value)}
                   style={{ fontSize: 11 }}
                 >
                   <option value="mean">mean duration</option>
                   <option value="count">bout count</option>
                   <option value="total">total duration</option>
                   <option value="name">name</option>
+                  {numericColumns.map((c) => (
+                    <option key={c} value={c}>
+                      mean {c}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -782,10 +828,18 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
                           fontSize: 11,
                           whiteSpace: "nowrap",
                         }}
-                        title="bouts · mean duration"
+                        title={
+                          orderColumn
+                            ? `bouts · mean ${orderColumn}`
+                            : "bouts · mean duration"
+                        }
                       >
                         {summary.get(l.labelId)?.count || 0} ·{" "}
-                        {meanDur(l.labelId).toFixed(1)}s
+                        {orderColumn && behaviorColMean
+                          ? formatFeatureValue(
+                              behaviorColMean.get(l.labelId) ?? null,
+                            )
+                          : `${meanDur(l.labelId).toFixed(1)}s`}
                       </span>
                     </button>
                   );
@@ -941,7 +995,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
                                 }
                                 title={
                                   sortable
-                                    ? "Click to show this value on the montage and sort by it"
+                                    ? "Click to show this value and sort by it"
                                     : undefined
                                 }
                               >
@@ -996,8 +1050,9 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
                     </div>
                   )}
 
-                  {/* Value-on-montage control: show one column's value on every
-                      tile (+ bar gauge); optionally sort the montage by it. */}
+                  {/* Value control: pick one numeric column to show. It is the big
+                      number on each tile + a "column = value" line under the
+                      timeline clip letters. Optional sort by it. None by default. */}
                   {numericColumns.length > 0 && (
                     <div
                       style={{
@@ -1011,13 +1066,14 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
                       }}
                     >
                       <SectionTitle
-                        text="value on montage"
+                        text="value"
                         small
                         info={
-                          "Show one column's value (and a bar gauge) on every " +
-                          "montage tile. Tick 'sort' to also order the montage by " +
-                          "it (highest or lowest first); left unsorted, the montage " +
-                          "keeps its usual random sample."
+                          "Pick one numeric column to show. It appears as the big " +
+                          "value on each montage tile and as a 'column = value' line " +
+                          "under the clip letters on the bottom timeline. Tick 'sort' " +
+                          "to order the montage by it. Click a column header in the " +
+                          "table above to pick it here."
                         }
                       />
                       <select
@@ -1130,6 +1186,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
                 domEnd={domain.domEnd}
                 selectedLabelId={selectedLabelId}
                 clipMarks={clipMarks}
+                valueColumn={featureColumn}
                 observed={observed}
               />
             </div>

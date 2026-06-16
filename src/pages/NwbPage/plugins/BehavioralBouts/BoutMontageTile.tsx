@@ -8,12 +8,11 @@ type Props = {
   letter: string;
   subLabel: string;
   color: string;
-  // Feature readout, present only when a sort column is active: the column name,
-  // the bout's formatted value, and a 0..1 gauge fill (null when value missing).
+  // Prominent value readout (the primary feature column), present only when a
+  // value column is selected: the column name and the bout's formatted value.
   // Color is deliberately not used here (it stays reserved for behavior identity).
   featureName?: string;
   featureValueText?: string;
-  featureFrac?: number | null;
   // When false, this is a pose-only tile (no video element; pose draws on black).
   hasVideo: boolean;
   videoUrl?: string;
@@ -43,7 +42,6 @@ const BoutMontageTile: FunctionComponent<Props> = ({
   color,
   featureName,
   featureValueText,
-  featureFrac,
   hasVideo,
   videoUrl,
   resetSignal,
@@ -191,27 +189,30 @@ const BoutMontageTile: FunctionComponent<Props> = ({
           <div
             style={{
               position: "absolute",
-              left: 3,
-              right: 3,
-              bottom: 3,
+              left: 5,
+              right: 5,
+              bottom: 4,
               pointerEvents: "none",
-              background: "rgba(0,0,0,0.55)",
-              borderRadius: 2,
-              padding: "1px 3px",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 4,
-                fontSize: 9,
-                color: "#fff",
-                fontVariantNumeric: "tabular-nums",
-              }}
-            >
+            <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
               <span
                 style={{
+                  fontSize: 19,
+                  fontWeight: 800,
+                  lineHeight: 1,
+                  color: "#fff",
+                  textShadow: "0 1px 3px rgba(0,0,0,0.95)",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {featureValueText ?? "—"}
+              </span>
+              <span
+                style={{
+                  fontSize: 9,
+                  color: "rgba(255,255,255,0.9)",
+                  textShadow: "0 1px 2px rgba(0,0,0,0.95)",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
@@ -219,24 +220,6 @@ const BoutMontageTile: FunctionComponent<Props> = ({
               >
                 {featureName}
               </span>
-              <span style={{ fontWeight: 700 }}>{featureValueText ?? "—"}</span>
-            </div>
-            <div
-              style={{
-                height: 3,
-                marginTop: 1,
-                background: "rgba(255,255,255,0.25)",
-                borderRadius: 2,
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  height: "100%",
-                  width: `${Math.round((featureFrac ?? 0) * 100)}%`,
-                  background: "#fff",
-                }}
-              />
             </div>
           </div>
         )}
