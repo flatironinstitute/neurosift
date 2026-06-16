@@ -1,5 +1,13 @@
 import { FunctionComponent, useEffect, useMemo, useRef } from "react";
-import { Bout, BoutLabel, ClipMark, formatTime } from "./behavioralBoutsUtils";
+import {
+  Bout,
+  BoutLabel,
+  ClipMark,
+  DEEMPHASIS_ALPHA,
+  drawObservedTrack,
+  formatTime,
+  ObservationInterval,
+} from "./behavioralBoutsUtils";
 
 type Props = {
   width: number;
@@ -11,14 +19,19 @@ type Props = {
   selectedLabelId: number | null;
   // The bouts currently shown as montage clips (drawn full color + lettered).
   clipMarks?: ClipMark[];
+  // Observed (scored) spans; shown as a thin near-black "observed" coverage track
+  // below the row when present (shared grammar with the inset).
+  observed?: ObservationInterval[] | null;
 };
 
 const AXIS_H = 22;
 const TOP = 4;
 const PAD_LEFT = 8;
+// The thin "observed" coverage track (and its gap above) when observed is present.
+const TRACK_H = 9;
+const TRACK_GAP = 3;
 // Selected behavior's non-sampled bouts (shown faded, mirroring the VAME raster).
 const NONCLIP_ALPHA = 0.35;
-const OTHER_GREY = "#e8e8e8";
 
 const clamp = (v: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, v));
@@ -37,11 +50,14 @@ const BoutsTimeline: FunctionComponent<Props> = ({
   domEnd,
   selectedLabelId,
   clipMarks,
+  observed,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const plotW = Math.max(40, width - PAD_LEFT * 2);
-  const rowH = Math.max(10, height - AXIS_H - TOP);
+  const hasObs = !!(observed && observed.length);
+  const trackBlock = hasObs ? TRACK_H + TRACK_GAP : 0;
+  const rowH = Math.max(10, height - AXIS_H - TOP - trackBlock);
 
   const selectedColor =
     (selectedLabelId !== null &&
@@ -69,7 +85,9 @@ const BoutsTimeline: FunctionComponent<Props> = ({
 
     const span = domEnd - domStart;
     const timeToX = (t: number) => ((t - domStart) / span) * plotW;
+    const obsList = observed ?? [];
     const rowBottom = TOP + rowH;
+    const axisY = rowBottom + (obsList.length ? TRACK_H + TRACK_GAP : 0);
     const rectFor = (b: Bout) => {
       const x1 = timeToX(b.startTime);
       const x2 = timeToX(b.stopTime);
@@ -81,8 +99,12 @@ const BoutsTimeline: FunctionComponent<Props> = ({
     ctx.fillStyle = "#fafafa";
     ctx.fillRect(0, TOP, plotW, rowH);
 
-    // Tier 1: every other behavior, greyed for context.
-    ctx.fillStyle = OTHER_GREY;
+    // Tier 1: every other behavior as one faint alpha-grey density track. The low
+    // alpha is additive, so overlapping other-behavior bouts stack darker and the
+    // row reads as "how much other activity is around" without competing with the
+    // selected behavior's color.
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = `rgba(0,0,0,${DEEMPHASIS_ALPHA})`;
     for (const b of bouts) {
       if (b.labelId === selectedLabelId) continue;
       const r = rectFor(b);
@@ -107,6 +129,21 @@ const BoutsTimeline: FunctionComponent<Props> = ({
         const r = rectFor(b);
         if (r) ctx.fillRect(r[0], TOP, r[1], rowH);
       }
+    }
+    ctx.globalAlpha = 1;
+
+    // Observed (scored) coverage as a dedicated track below the row, its own line
+    // so the bouts above keep a clean backdrop. Faint bg = full extent; near-black
+    // = observed spans; gaps = not observed.
+    if (obsList.length) {
+      drawObservedTrack(
+        ctx,
+        obsList,
+        timeToX,
+        plotW,
+        TOP + rowH + TRACK_GAP,
+        TRACK_H,
+      );
     }
 
     // Letters on the sampled bouts.
@@ -139,11 +176,11 @@ const BoutsTimeline: FunctionComponent<Props> = ({
       const frac = i / nTicks;
       const x = clamp(frac * plotW, 0, plotW - 1);
       ctx.beginPath();
-      ctx.moveTo(x + 0.5, rowBottom);
-      ctx.lineTo(x + 0.5, rowBottom + 5);
+      ctx.moveTo(x + 0.5, axisY);
+      ctx.lineTo(x + 0.5, axisY + 5);
       ctx.stroke();
       ctx.textAlign = i === 0 ? "left" : i === nTicks ? "right" : "center";
-      ctx.fillText(formatTime(domStart + frac * span), x, rowBottom + 7);
+      ctx.fillText(formatTime(domStart + frac * span), x, axisY + 7);
     }
   }, [
     labels,
@@ -157,6 +194,7 @@ const BoutsTimeline: FunctionComponent<Props> = ({
     selectedColor,
     clipStarts,
     clipMarks,
+    observed,
   ]);
 
   return (

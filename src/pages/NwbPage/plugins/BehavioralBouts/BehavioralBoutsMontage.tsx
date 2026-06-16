@@ -13,7 +13,14 @@ const PAD = 8;
 const MIN_TILE = 80;
 const TOL = 0.34;
 
-export type DisplayedClip = { bout: Bout; label: string };
+export type DisplayedClip = {
+  bout: Bout;
+  label: string;
+  // Set only when a feature sort is active: the bout's value for the sort column,
+  // pre-formatted, and its 0..1 position on the behavior's range (the gauge fill).
+  featureValueText?: string;
+  featureFrac?: number | null;
+};
 
 type Props = {
   hasVideo: boolean;
@@ -25,6 +32,8 @@ type Props = {
   poseSrcExtent: SourceRect | null;
   displayedClips: DisplayedClip[];
   color: string;
+  // The active sort column's name, shown on each tile next to its value+gauge.
+  featureName?: string;
   padSec: number;
   playing: boolean;
   showPose: boolean;
@@ -50,6 +59,7 @@ const BehavioralBoutsMontage: FunctionComponent<Props> = ({
   poseSrcExtent,
   displayedClips,
   color,
+  featureName,
   padSec,
   playing,
   showPose,
@@ -284,16 +294,20 @@ const BehavioralBoutsMontage: FunctionComponent<Props> = ({
           alignContent: "start",
         }}
       >
-        {displayedClips.map(({ bout, label }, index) => (
-          <BoutMontageTile
-            key={`${bout.labelId}-${bout.startTime}-${index}`}
-            size={size}
-            letter={label}
-            subLabel={`@ ${formatTime(bout.startTime)} (${(
-              bout.stopTime - bout.startTime
-            ).toFixed(1)}s)`}
-            color={color}
-            hasVideo={hasVideo}
+        {displayedClips.map(
+          ({ bout, label, featureValueText, featureFrac }, index) => (
+            <BoutMontageTile
+              key={`${bout.labelId}-${bout.startTime}-${index}`}
+              size={size}
+              letter={label}
+              subLabel={`@ ${formatTime(bout.startTime)} (${(
+                bout.stopTime - bout.startTime
+              ).toFixed(1)}s)`}
+              color={color}
+              featureName={featureName}
+              featureValueText={featureValueText}
+              featureFrac={featureFrac}
+              hasVideo={hasVideo}
             videoUrl={videoUrl}
             resetSignal={resetSignal}
             windowEndFrac={windows[index].windowEndFrac}
@@ -308,11 +322,12 @@ const BehavioralBoutsMontage: FunctionComponent<Props> = ({
             setPlayheadEl={(el) => {
               playheadEls.current[index] = el;
             }}
-            setPoseCanvasEl={(el) => {
-              poseCanvasEls.current[index] = el;
-            }}
-          />
-        ))}
+              setPoseCanvasEl={(el) => {
+                poseCanvasEls.current[index] = el;
+              }}
+            />
+          ),
+        )}
       </div>
     );
   }

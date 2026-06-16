@@ -2,6 +2,7 @@ import { FunctionComponent, useEffect, useMemo, useRef } from "react";
 import {
   Bout,
   BoutLabel,
+  drawObservedTrack,
   formatTime,
   ObservationInterval,
 } from "./behavioralBoutsUtils";
@@ -17,8 +18,8 @@ type Props = {
   domEnd: number;
   selectedLabelId: number | null;
   onSelectLabel?: (labelId: number) => void;
-  // Shade the complement of observation_intervals ("not assessed") in the
-  // background, behind the lanes.
+  // observation_intervals; drawn as a near-black "observed" coverage track in a
+  // dedicated bottom lane when present (shared grammar with the bottom timeline).
   observed?: ObservationInterval[] | null;
   // Fade non-selected lanes so the selected one stands out (the sidebar inset);
   // when false, every lane is full color (the full-screen view).
@@ -28,6 +29,9 @@ type Props = {
 };
 
 const FADED_ALPHA = 0.4;
+// The "observed" coverage track (one extra bottom lane) when observed is present.
+const TRACK_H = 9;
+const TRACK_GAP = 2;
 
 const AXIS_H = 18;
 const TOP = 2;
@@ -56,7 +60,9 @@ const BoutsDistributionStrip: FunctionComponent<Props> = ({
 
   const nRows = labels.length || 1;
   const axisH = showAxis ? AXIS_H : 0;
-  const rowsAreaH = Math.max(8, height - TOP - axisH);
+  const hasObs = !!(observed && observed.length);
+  const trackBlock = hasObs ? TRACK_H + TRACK_GAP : 0;
+  const rowsAreaH = Math.max(8, height - TOP - axisH - trackBlock);
   const rowHeight = clamp(rowsAreaH / nRows, 2, 18);
 
   const idToRow = useMemo(() => {
@@ -81,23 +87,7 @@ const BoutsDistributionStrip: FunctionComponent<Props> = ({
     const span = domEnd - domStart;
     const timeToX = (t: number) => ((t - domStart) / span) * width;
     const rowsBottom = TOP + nRows * rowHeight;
-
-    // "Not assessed": gray the complement of observation_intervals, behind lanes.
-    if (observed) {
-      ctx.fillStyle = "rgba(110,110,120,0.22)";
-      const sorted = [...observed].sort((a, b) => a.start - b.start);
-      let cursor = domStart;
-      const gaps: [number, number][] = [];
-      for (const o of sorted) {
-        if (o.start > cursor) gaps.push([cursor, Math.min(o.start, domEnd)]);
-        cursor = Math.max(cursor, o.stop);
-      }
-      if (cursor < domEnd) gaps.push([cursor, domEnd]);
-      for (const [g0, g1] of gaps) {
-        const x = timeToX(g0);
-        ctx.fillRect(x, TOP, Math.max(1, timeToX(g1) - x), rowsBottom - TOP);
-      }
-    }
+    const axisY = rowsBottom + trackBlock;
 
     // Lanes: non-selected faded (when `fade`), selected full color.
     for (const b of bouts) {
@@ -114,6 +104,19 @@ const BoutsDistributionStrip: FunctionComponent<Props> = ({
     }
     ctx.globalAlpha = 1;
 
+    // Observed (scored) coverage as a dedicated bottom lane (its own line, so the
+    // behavior lanes above stay on a clean backdrop). Only when present.
+    if (hasObs) {
+      drawObservedTrack(
+        ctx,
+        observed!,
+        timeToX,
+        width,
+        rowsBottom + TRACK_GAP,
+        TRACK_H,
+      );
+    }
+
     if (showAxis) {
       ctx.fillStyle = "#777";
       ctx.strokeStyle = "rgba(0,0,0,0.2)";
@@ -124,11 +127,11 @@ const BoutsDistributionStrip: FunctionComponent<Props> = ({
         const frac = i / nTicks;
         const x = clamp(frac * width, 0, width - 1);
         ctx.beginPath();
-        ctx.moveTo(x + 0.5, rowsBottom);
-        ctx.lineTo(x + 0.5, rowsBottom + 4);
+        ctx.moveTo(x + 0.5, axisY);
+        ctx.lineTo(x + 0.5, axisY + 4);
         ctx.stroke();
         ctx.textAlign = i === 0 ? "left" : i === nTicks ? "right" : "center";
-        ctx.fillText(formatTime(domStart + frac * span), x, rowsBottom + 5);
+        ctx.fillText(formatTime(domStart + frac * span), x, axisY + 5);
       }
     }
   }, [
@@ -143,6 +146,8 @@ const BoutsDistributionStrip: FunctionComponent<Props> = ({
     idToRow,
     selectedLabelId,
     observed,
+    hasObs,
+    trackBlock,
     fade,
     showAxis,
   ]);

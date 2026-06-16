@@ -31,7 +31,6 @@ export type BehavioralBoutsData = {
   labelingMethod?: string;
   sourceSoftware?: string;
   annotator?: string;
-  hasLabelColumn: boolean;
   // Extra per-row column names (beyond the structural ones), in table order.
   extraColumns: string[];
 };
@@ -97,9 +96,121 @@ export const buildBoutColorMap = (labelIds: number[]): Map<number, string> => {
   return colorMap;
 };
 
-// Read the bout rows (start_time, stop_time, label_id, optional label) and build
-// the distinct-label rows with colors. label_id is always present; the label
-// text column is optional, so a row with no name falls back to "Label <id>".
+// ----- Feature (kinematic-column) coloring + sorting -----
+
+// A value mapping over one numeric extra column, used to sort the montage clips
+// and the per-bout table and to fill each tile's magnitude gauge. Color is NOT
+// part of this: color stays reserved for behavior identity, so the feature is
+// shown by sort order, a number, and a bar gauge instead.
+export type FeatureScale = {
+  column: string;
+  // Raw numeric value of the column for a bout, or null when missing / NaN.
+  value: (b: Bout) => number | null;
+  // value clipped to the 5th-95th percentile and mapped to 0..1 (null when value
+  // is null). Clipping keeps a single outlier from washing out the gauge scale.
+  norm: (b: Bout) => number | null;
+  // The clipped range, for a tooltip / readout.
+  lo: number;
+  hi: number;
+};
+
+// The numeric value of an extra column for a bout, or null when absent / NaN.
+const extraNumber = (b: Bout, column: string): number | null => {
+  const v = b.extra?.[column];
+  if (v === undefined || v === null) return null;
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+
+// Which extra columns are numeric (most sampled values parse as finite numbers),
+// so the picker offers only sortable/colorable columns. extraColumns already
+// excludes the structural start/stop/label.
+export const numericExtraColumns = (
+  bouts: Bout[],
+  extraColumns: string[],
+): string[] =>
+  extraColumns.filter((col) => {
+    let finite = 0;
+    let total = 0;
+    for (const b of bouts) {
+      const v = b.extra?.[col];
+      if (v === undefined || v === null) continue;
+      total += 1;
+      if (Number.isFinite(typeof v === "number" ? v : Number(v))) finite += 1;
+      if (total >= 60) break;
+    }
+    return total > 0 && finite / total >= 0.5;
+  });
+
+// Build a FeatureScale over a set of bouts (typically the selected behavior's, so
+// the gradient spans that behavior's range). Returns null when no bout has a
+// finite value for the column.
+export const buildFeatureScale = (
+  bouts: Bout[],
+  column: string,
+): FeatureScale | null => {
+  const value = (b: Bout) => extraNumber(b, column);
+  const vals = bouts
+    .map(value)
+    .filter((v): v is number => v !== null)
+    .sort((a, b) => a - b);
+  if (vals.length === 0) return null;
+  const pct = (p: number) =>
+    vals[Math.max(0, Math.min(vals.length - 1, Math.round(p * (vals.length - 1))))];
+  let lo = pct(0.05);
+  let hi = pct(0.95);
+  if (hi <= lo) {
+    lo = vals[0];
+    hi = vals[vals.length - 1];
+  }
+  const span = hi - lo;
+  const norm = (b: Bout): number | null => {
+    const v = value(b);
+    if (v === null) return null;
+    if (span <= 0) return 0.5;
+    return Math.max(0, Math.min(1, (v - lo) / span));
+  };
+  return { column, value, norm, lo, hi };
+};
+
+// Compact numeric formatting for the feature value (tile sub-label + legend).
+export const formatFeatureValue = (v: number | null): string => {
+  if (v === null || !Number.isFinite(v)) return "—";
+  const a = Math.abs(v);
+  if (a >= 100) return v.toFixed(0);
+  if (a >= 1) return v.toFixed(1);
+  return v.toFixed(2);
+};
+
+// Compare two bouts by a feature value in a direction, NaN/missing always last.
+export const compareByFeature = (
+  scale: FeatureScale,
+  dir: "asc" | "desc",
+): ((a: Bout, b: Bout) => number) => {
+  return (a, b) => {
+    const av = scale.value(a);
+    const bv = scale.value(b);
+    if (av === null && bv === null) return 0;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    return dir === "desc" ? bv - av : av - bv;
+  };
+};
+
+// Order distinct label strings sensibly: numerically when they are all numeric
+// (unsupervised cluster ids like "7"), lexically otherwise (behavior names).
+const compareLabels = (a: string, b: string): number => {
+  const na = Number(a);
+  const nb = Number(b);
+  if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+  return a.localeCompare(b);
+};
+
+// Read the bout rows (start_time, stop_time, label) and build the distinct-label
+// rows with colors. `label` is a single required text column: a behavior name, or
+// the tool's own cluster id as text (e.g. "7") for unsupervised output. The widget
+// keys internally on a numeric id, so each distinct label string is assigned a
+// stable synthetic index here; the label string itself is the display name.
 export const loadBehavioralBouts = async (
   nwbUrl: string,
   path: string,
@@ -108,11 +219,9 @@ export const loadBehavioralBouts = async (
   const startDs = group.datasets.find((ds) => ds.name === "start_time");
   const n = startDs?.shape?.[0] ?? 0;
 
-  const hasLabelColumn = group.datasets.some((ds) => ds.name === "label");
-
   // Any per-row column beyond the structural ones (e.g. the kinematic
-  // mean_speed / peak_speed / distance enrichment), in table (colnames) order.
-  const structural = new Set(["start_time", "stop_time", "label_id", "label"]);
+  // mean_speed / peak_speed / path_length enrichment), in table (colnames) order.
+  const structural = new Set(["start_time", "stop_time", "label"]);
   const colnames: string[] = Array.isArray(group.attrs?.colnames)
     ? group.attrs.colnames.map((c: unknown) => String(c))
     : [];
@@ -120,13 +229,10 @@ export const loadBehavioralBouts = async (
     (c) => !structural.has(c) && group.datasets.some((ds) => ds.name === c),
   );
 
-  const [startTimes, stopTimes, labelIds, labelTexts] = await Promise.all([
+  const [startTimes, stopTimes, labelTexts] = await Promise.all([
     readNumberColumn(nwbUrl, `${path}/start_time`, n),
     readNumberColumn(nwbUrl, `${path}/stop_time`, n),
-    readNumberColumn(nwbUrl, `${path}/label_id`, n),
-    hasLabelColumn
-      ? readStringColumn(nwbUrl, `${path}/label`, n)
-      : Promise.resolve<string[]>([]),
+    readStringColumn(nwbUrl, `${path}/label`, n),
   ]);
 
   const extraData: Record<string, (number | string)[]> = {};
@@ -139,12 +245,16 @@ export const loadBehavioralBouts = async (
     }),
   );
 
+  // Map each distinct label string to a stable synthetic numeric id (sorted order),
+  // so the rest of the widget can keep keying on a number while `label` stays text.
+  const distinctLabels = [...new Set(labelTexts)].sort(compareLabels);
+  const idByName = new Map<string, number>();
+  distinctLabels.forEach((label, index) => idByName.set(label, index));
+
   const bouts: Bout[] = [];
-  const nameById = new Map<number, string>();
   for (let i = 0; i < n; i++) {
-    const labelId = labelIds[i];
-    const label = hasLabelColumn ? labelTexts[i] : undefined;
-    if (label && !nameById.has(labelId)) nameById.set(labelId, label);
+    const label = labelTexts[i];
+    const labelId = idByName.get(label) ?? 0;
     let extra: Record<string, number | string> | undefined;
     if (extraColumns.length) {
       extra = {};
@@ -159,12 +269,12 @@ export const loadBehavioralBouts = async (
     });
   }
 
-  const distinctIds = [...new Set(labelIds)].sort((a, b) => a - b);
+  const distinctIds = distinctLabels.map((_, index) => index);
   const colorMap = buildBoutColorMap(distinctIds);
-  const labels: BoutLabel[] = distinctIds.map((labelId) => ({
-    labelId,
-    name: nameById.get(labelId) ?? `Label ${labelId}`,
-    color: colorMap.get(labelId) ?? "#888",
+  const labels: BoutLabel[] = distinctLabels.map((label, index) => ({
+    labelId: index,
+    name: label,
+    color: colorMap.get(index) ?? "#888",
   }));
 
   return {
@@ -173,7 +283,6 @@ export const loadBehavioralBouts = async (
     labelingMethod: attrString(group, "labeling_method"),
     sourceSoftware: attrString(group, "source_software"),
     annotator: attrString(group, "annotator"),
-    hasLabelColumn,
     extraColumns,
   };
 };
@@ -265,6 +374,48 @@ export const seededShuffle = <T>(items: T[], seed: number): T[] => {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+};
+
+// ----- Shared timeline visual grammar -----
+// Both timeline strips share one legend: solid color = whatever the strip puts
+// in focus, alpha 0.15 = the de-emphasis level for other-behavior context, and a
+// dedicated near-black COVERAGE TRACK marks the `observation_intervals`
+// ("observed") spans (gaps = not observed). The track is its own line rather than
+// a background shading so the bouts keep a clean (white) backdrop and read
+// clearly. The two strips differ only in PURPOSE: the bottom BoutsTimeline is a
+// category-focus view, the sidebar BoutsDistributionStrip is a session overview.
+
+// The de-emphasis opacity for anything not in focus (other-behavior context).
+export const DEEMPHASIS_ALPHA = 0.15;
+
+// Near-black for the "observed" coverage-track segments.
+export const OBSERVED_INK = "#1a1a1a";
+
+// Draw the coverage track into [0, trackWidth] x [y, y+h]: a faint full-width
+// background (so the not-observed part reads as an empty track) with near-black
+// segments over the observed spans. No inline label (it would shift the track out
+// of alignment with the bouts); the legend lives in the behavior selector as an
+// "observed" row. timeToX maps session time to the same x the strip's bouts use.
+export const drawObservedTrack = (
+  ctx: CanvasRenderingContext2D,
+  observed: ObservationInterval[],
+  timeToX: (t: number) => number,
+  trackWidth: number,
+  y: number,
+  h: number,
+): void => {
+  if (h <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "rgba(0,0,0,0.06)";
+  ctx.fillRect(0, y, trackWidth, h);
+  ctx.fillStyle = OBSERVED_INK;
+  for (const o of observed) {
+    const x = Math.max(0, timeToX(o.start));
+    const w = Math.min(trackWidth, timeToX(o.stop)) - x;
+    if (w > 0) ctx.fillRect(x, y, Math.max(1, w), h);
+  }
+  ctx.restore();
 };
 
 // mm:ss formatting for the time axis and readouts.

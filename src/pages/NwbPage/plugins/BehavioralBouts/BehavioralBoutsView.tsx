@@ -1,8 +1,10 @@
 import { getHdf5Group } from "@hdf5Interface";
 import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Tooltip } from "@mui/material";
+import { IconButton, Tooltip } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import {
   getSeriesTimeRange,
   resolveExternalVideoUrl,
@@ -19,12 +21,17 @@ import BoutsTimeline from "./BoutsTimeline";
 import {
   BehavioralBoutsData,
   Bout,
+  buildFeatureScale,
   ClipMark,
   clipLabel,
+  compareByFeature,
+  formatFeatureValue,
   formatTime,
   loadBehavioralBouts,
   loadObservationIntervals,
+  numericExtraColumns,
   ObservationInterval,
+  OBSERVED_INK,
   resolveSourcePosePath,
   resolveSourceVideoSeriesPath,
   seededShuffle,
@@ -86,12 +93,33 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
   const [minBoutMs, setMinBoutMs] = useState(() => num("bbMinBout", 0));
   const [padSec, setPadSec] = useState(() => num("bbPad", 0.5));
   const [seed, setSeed] = useState(() => num("bbSeed", 1));
+  // How the behavior selector list is ordered (sidebar control, above the list).
+  const [behaviorOrder, setBehaviorOrder] = useState<
+    "mean" | "count" | "total" | "name"
+  >(() => {
+    const v = searchParams.get("bbOrder");
+    return v === "count" || v === "total" || v === "name" ? v : "mean";
+  });
+  // A numeric extra column (kinematic feature) whose value is shown on each
+  // montage tile + the per-bout table. null = none. Color is NOT used for this;
+  // the value shows as a number + a bar gauge. Sorting by it is opt-in (sortOn).
+  const [featureColumn, setFeatureColumn] = useState<string | null>(
+    () => searchParams.get("bbValue") || null,
+  );
+  const [sortOn, setSortOn] = useState<boolean>(
+    () => searchParams.get("bbSort") === "1",
+  );
+  const [sortDir, setSortDir] = useState<"asc" | "desc">(() =>
+    searchParams.get("bbSortDir") === "asc" ? "asc" : "desc",
+  );
   const [playing, setPlaying] = useState(true);
   const [showPose, setShowPose] = useState(() => bool("bbPose", true));
   const [showEdges, setShowEdges] = useState(() => bool("bbEdges", true));
   const [showTrails, setShowTrails] = useState(() => bool("bbTrails", false));
   const [trailSec, setTrailSec] = useState(() => num("bbTrailSec", 1));
   const [resetSignal, setResetSignal] = useState(0);
+  // Collapse the left sidebar to give the montage + bottom timeline full width.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   // Guards the one-shot skeleton default (on for pose-only, off when a video).
   const edgesAutoRef = useRef(false);
 
@@ -187,6 +215,33 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
     );
   }, [data, minBoutMs]);
 
+  // Numeric extra columns the sort picker offers (empty for files with no
+  // kinematics, e.g. asoid / deepethogram / mlost).
+  const numericColumns = useMemo(
+    () => numericExtraColumns(data?.bouts || [], data?.extraColumns || []),
+    [data],
+  );
+
+  // Each BehavioralBouts table has its own columns, so drop a sort column that
+  // does not exist on the newly loaded object (but only once data is in, so a
+  // column pinned in the URL survives the initial empty-numericColumns render).
+  useEffect(() => {
+    if (!data) return;
+    if (featureColumn && !numericColumns.includes(featureColumn)) {
+      setFeatureColumn(null);
+      setSortOn(false);
+    }
+  }, [data, numericColumns, featureColumn]);
+
+  // The active feature scale, built over the SELECTED behavior's bouts so the
+  // gauge spans that behavior's own range. null when no column is picked, no
+  // selection, or the column has no finite values for this behavior.
+  const featureScale = useMemo(() => {
+    if (!featureColumn || selectedLabelId === null) return null;
+    const sel = filteredBouts.filter((b) => b.labelId === selectedLabelId);
+    return buildFeatureScale(sel, featureColumn);
+  }, [featureColumn, selectedLabelId, filteredBouts]);
+
   // Default the selection to the longest-mean-duration behavior.
   useEffect(() => {
     if (!data) return;
@@ -219,10 +274,38 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
       (b) =>
         b.labelId === selectedLabelId && b.stopTime - b.startTime >= minSec,
     );
-    const picked = seededShuffle(sel, seed).slice(0, clipCount);
-    picked.sort((a, b) => a.startTime - b.startTime);
-    return picked.map((bout, index) => ({ bout, label: clipLabel(index) }));
-  }, [data, selectedLabelId, minBoutMs, seed, clipCount]);
+    let picked: Bout[];
+    if (featureScale && sortOn) {
+      // Sorting on: top-N most-extreme bouts by the feature (A = most extreme),
+      // kept in ranked order rather than re-sorted by time.
+      picked = [...sel]
+        .sort(compareByFeature(featureScale, sortDir))
+        .slice(0, clipCount);
+    } else {
+      // Sorting off: the usual random sample in time order (values still shown).
+      picked = seededShuffle(sel, seed).slice(0, clipCount);
+      picked.sort((a, b) => a.startTime - b.startTime);
+    }
+    // Show the chosen column's value on every tile whenever a column is picked,
+    // independent of whether sorting is on.
+    return picked.map((bout, index) => ({
+      bout,
+      label: clipLabel(index),
+      featureValueText: featureScale
+        ? formatFeatureValue(featureScale.value(bout))
+        : undefined,
+      featureFrac: featureScale ? featureScale.norm(bout) : undefined,
+    }));
+  }, [
+    data,
+    selectedLabelId,
+    minBoutMs,
+    seed,
+    clipCount,
+    featureScale,
+    sortOn,
+    sortDir,
+  ]);
 
   const clipMarks: ClipMark[] = useMemo(
     () =>
@@ -279,10 +362,13 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
   // Stats + bout list for the currently selected behavior (the selection table).
   const selectedStats = useMemo(() => {
     if (selectedLabelId === null) return null;
-    const bouts = filteredBouts
-      .filter((b) => b.labelId === selectedLabelId)
-      .sort((a, b) => a.startTime - b.startTime);
+    const bouts = filteredBouts.filter((b) => b.labelId === selectedLabelId);
     if (!bouts.length) return null;
+    // Display order matches the montage: by the active feature, else by time.
+    const ordered =
+      featureScale && sortOn
+        ? [...bouts].sort(compareByFeature(featureScale, sortDir))
+        : [...bouts].sort((a, b) => a.startTime - b.startTime);
     let total = 0;
     let min = Infinity;
     let max = 0;
@@ -293,7 +379,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
       if (d > max) max = d;
     }
     return {
-      bouts,
+      bouts: ordered,
       count: bouts.length,
       total,
       min,
@@ -301,7 +387,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
       mean: total / bouts.length,
       pct: sessionDur ? (total / sessionDur) * 100 : 0,
     };
-  }, [filteredBouts, selectedLabelId, sessionDur]);
+  }, [filteredBouts, selectedLabelId, sessionDur, featureScale, sortOn, sortDir]);
 
   // Persist controls in the URL.
   useEffect(() => {
@@ -319,6 +405,10 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
     sync("bbEdges", "0", showEdges);
     sync("bbTrails", "1", !showTrails);
     sync("bbTrailSec", String(trailSec), trailSec === 1);
+    sync("bbOrder", behaviorOrder, behaviorOrder === "mean");
+    sync("bbValue", featureColumn || "", !featureColumn);
+    sync("bbSort", "1", !sortOn);
+    sync("bbSortDir", sortDir, sortDir === "desc");
     window.history.replaceState(null, "", url.toString());
   }, [
     selectedLabelId,
@@ -330,6 +420,10 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
     showEdges,
     showTrails,
     trailSec,
+    behaviorOrder,
+    featureColumn,
+    sortOn,
+    sortDir,
   ]);
 
   if (loading)
@@ -352,10 +446,20 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
   const selectedBoutCount = selectedStats?.count || 0;
 
   const bottomH = canMontage ? clamp(Math.round(height * 0.17), 80, 130) : 0;
+  // The montage + bottom timeline span the area right of the sidebar (so the
+  // timeline does not run under the left menu); full width when it is collapsed.
+  const montageW = Math.max(40, width - (sidebarCollapsed ? 0 : SIDEBAR_W));
 
   const visibleLabels = data.labels
     .filter((l) => (summary.get(l.labelId)?.count || 0) > 0)
-    .sort((a, b) => meanDur(b.labelId) - meanDur(a.labelId));
+    .sort((a, b) => {
+      if (behaviorOrder === "name") return a.name.localeCompare(b.name);
+      if (behaviorOrder === "count")
+        return (summary.get(b.labelId)?.count || 0) - (summary.get(a.labelId)?.count || 0);
+      if (behaviorOrder === "total")
+        return (summary.get(b.labelId)?.total || 0) - (summary.get(a.labelId)?.total || 0);
+      return meanDur(b.labelId) - meanDur(a.labelId); // "mean" (default)
+    });
 
   // ⓘ detail for the Summary section.
   const summaryInfo = [
@@ -451,13 +555,15 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
               min={1}
               max={MAX_CLIPS}
             />
-            <button
-              onClick={() => setSeed((s) => s + 1)}
-              style={{ cursor: "pointer", padding: "1px 8px" }}
-              title="New random set of example bouts"
-            >
-              Resample
-            </button>
+            {!sortOn && (
+              <button
+                onClick={() => setSeed((s) => s + 1)}
+                style={{ cursor: "pointer", padding: "1px 8px" }}
+                title="New random set of example bouts"
+              >
+                Resample
+              </button>
+            )}
             <NumInput
               label="min bout (ms):"
               value={minBoutMs}
@@ -525,6 +631,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
           </div>
 
           <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+            {!sidebarCollapsed && (
             <div
               style={{
                 width: SIDEBAR_W,
@@ -538,7 +645,23 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
               <div
                 style={{ padding: "6px 8px", borderBottom: "1px solid #eee" }}
               >
-                <SectionTitle text="Summary" info={summaryInfo} />
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <SectionTitle text="Summary" info={summaryInfo} />
+                  <IconButton
+                    size="small"
+                    onClick={() => setSidebarCollapsed(true)}
+                    title="Collapse panel"
+                    sx={{ p: 0.25 }}
+                  >
+                    <ChevronLeftIcon fontSize="small" />
+                  </IconButton>
+                </div>
                 <div style={{ color: "#444" }}>
                   {data.bouts.length} bouts · {data.labels.length} behaviors
                 </div>
@@ -574,6 +697,41 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
                     />
                   )}
                 </div>
+              </div>
+
+              {/* Behavior ordering: how the selector list below is sorted. */}
+              <div
+                style={{
+                  padding: "5px 8px",
+                  borderBottom: "1px solid #eee",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                }}
+              >
+                <SectionTitle
+                  text="order behaviors"
+                  small
+                  info={
+                    "How the behavior list below is sorted. Mean duration (default) " +
+                    "surfaces the most sustained behaviors first; count and total " +
+                    "rank by how often / how long each occurs; name is alphabetical."
+                  }
+                />
+                <select
+                  value={behaviorOrder}
+                  onChange={(e) =>
+                    setBehaviorOrder(
+                      e.target.value as "mean" | "count" | "total" | "name",
+                    )
+                  }
+                  style={{ fontSize: 11 }}
+                >
+                  <option value="mean">mean duration</option>
+                  <option value="count">bout count</option>
+                  <option value="total">total duration</option>
+                  <option value="name">name</option>
+                </select>
               </div>
 
               {/* Behavior selector */}
@@ -632,6 +790,47 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
                     </button>
                   );
                 })}
+
+                {/* "observed" legend row: labels the near-black coverage track on
+                    both timelines. Not a behavior, so not selectable. */}
+                {coverage && (
+                  <div
+                    title={
+                      "The near-black track on the timelines marks the scored " +
+                      "spans (observation_intervals). " +
+                      `${coverage.pct.toFixed(0)}% of the session was assessed` +
+                      (coverage.hasGap ? "." : " (full).")
+                    }
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      width: "100%",
+                      padding: "3px 6px",
+                      marginTop: 4,
+                      borderTop: "1px solid #eee",
+                      fontSize: 12,
+                      color: "#777",
+                      cursor: "default",
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: 3,
+                        background: OBSERVED_INK,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span style={{ flex: 1, fontStyle: "italic" }}>observed</span>
+                    <span
+                      style={{ color: "#999", fontSize: 11, whiteSpace: "nowrap" }}
+                    >
+                      {coverage.pct.toFixed(0)}%
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Session timeline strip */}
@@ -686,7 +885,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
                     {selectedLabel.name}
                   </div>
                   <div style={{ color: "#888", fontSize: 11, marginBottom: 4 }}>
-                    id {selectedLabel.labelId} · {selectedStats.count} bouts ·{" "}
+                    {selectedStats.count} bouts ·{" "}
                     {selectedStats.total.toFixed(1)}s total · mean{" "}
                     {selectedStats.mean.toFixed(1)}s (
                     {selectedStats.min.toFixed(1)}–
@@ -705,13 +904,52 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
                       <thead>
                         <tr>
                           <th style={thStyle}></th>
-                          <th style={thStyle}>start</th>
+                          <th
+                            style={{ ...thStyle, cursor: "pointer" }}
+                            onClick={() => setSortOn(false)}
+                            title="Sort by start time"
+                          >
+                            start{!sortOn ? " ↑" : ""}
+                          </th>
                           <th style={thStyle}>dur (s)</th>
-                          {data.extraColumns.map((c) => (
-                            <th key={c} style={thStyle}>
-                              {c}
-                            </th>
-                          ))}
+                          {data.extraColumns.map((c) => {
+                            const sortable = numericColumns.includes(c);
+                            const shown = featureColumn === c;
+                            const sorted = shown && sortOn;
+                            return (
+                              <th
+                                key={c}
+                                style={{
+                                  ...thStyle,
+                                  cursor: sortable ? "pointer" : "default",
+                                  color: shown ? "#2c5aa0" : thStyle.color,
+                                  fontWeight: sorted ? 700 : 600,
+                                }}
+                                onClick={
+                                  sortable
+                                    ? () => {
+                                        if (featureColumn === c && sortOn)
+                                          setSortDir((d) =>
+                                            d === "desc" ? "asc" : "desc",
+                                          );
+                                        else {
+                                          setFeatureColumn(c);
+                                          setSortOn(true);
+                                        }
+                                      }
+                                    : undefined
+                                }
+                                title={
+                                  sortable
+                                    ? "Click to show this value on the montage and sort by it"
+                                    : undefined
+                                }
+                              >
+                                {c}
+                                {sorted ? (sortDir === "desc" ? " ↓" : " ↑") : ""}
+                              </th>
+                            );
+                          })}
                         </tr>
                       </thead>
                       <tbody>
@@ -757,41 +995,145 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
                       first {MAX_TABLE_ROWS} of {selectedStats.bouts.length}
                     </div>
                   )}
+
+                  {/* Value-on-montage control: show one column's value on every
+                      tile (+ bar gauge); optionally sort the montage by it. */}
+                  {numericColumns.length > 0 && (
+                    <div
+                      style={{
+                        marginTop: 6,
+                        paddingTop: 6,
+                        borderTop: "1px dashed #eee",
+                        display: "flex",
+                        flexWrap: "wrap",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
+                      <SectionTitle
+                        text="value on montage"
+                        small
+                        info={
+                          "Show one column's value (and a bar gauge) on every " +
+                          "montage tile. Tick 'sort' to also order the montage by " +
+                          "it (highest or lowest first); left unsorted, the montage " +
+                          "keeps its usual random sample."
+                        }
+                      />
+                      <select
+                        value={featureColumn ?? ""}
+                        onChange={(e) => {
+                          const v = e.target.value || null;
+                          setFeatureColumn(v);
+                          if (!v) setSortOn(false);
+                        }}
+                        style={{ fontSize: 11 }}
+                      >
+                        <option value="">none</option>
+                        {numericColumns.map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </select>
+                      {featureColumn && (
+                        <label
+                          style={{
+                            whiteSpace: "nowrap",
+                            cursor: "pointer",
+                            fontSize: 11,
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={sortOn}
+                            onChange={(e) => setSortOn(e.target.checked)}
+                          />{" "}
+                          sort
+                        </label>
+                      )}
+                      {featureColumn && sortOn && (
+                        <button
+                          onClick={() =>
+                            setSortDir((d) => (d === "desc" ? "asc" : "desc"))
+                          }
+                          style={{
+                            cursor: "pointer",
+                            padding: "1px 8px",
+                            fontSize: 11,
+                          }}
+                          title="Toggle sort direction"
+                        >
+                          {sortDir === "desc" ? "highest first" : "lowest first"}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
+            )}
 
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <BehavioralBoutsMontage
-                hasVideo={hasVideo}
-                videoUrl={videoUrl}
-                videoStartTime={videoStartTime}
-                poseData={poseData}
-                poseSrcExtent={poseSrcExtent}
-                displayedClips={displayedClips}
-                color={selectedColor}
-                padSec={padSec}
-                playing={playing}
-                showPose={showPose}
-                showEdges={showEdges}
-                showTrails={showTrails}
-                trailSec={trailSec}
-                resetSignal={resetSignal}
-                cols={cols}
+            {/* Right column: montage on top, the bottom timeline beneath it, so
+                the timeline spans only the video area (not under the sidebar). */}
+            <div
+              style={{
+                flex: 1,
+                minWidth: 0,
+                minHeight: 0,
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              {sidebarCollapsed && (
+                <div
+                  style={{ padding: "2px 4px", borderBottom: "1px solid #eee" }}
+                >
+                  <IconButton
+                    size="small"
+                    onClick={() => setSidebarCollapsed(false)}
+                    title="Expand panel"
+                    sx={{ p: 0.25 }}
+                  >
+                    <ChevronRightIcon fontSize="small" />
+                  </IconButton>
+                </div>
+              )}
+              <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
+                <BehavioralBoutsMontage
+                  hasVideo={hasVideo}
+                  videoUrl={videoUrl}
+                  videoStartTime={videoStartTime}
+                  poseData={poseData}
+                  poseSrcExtent={poseSrcExtent}
+                  displayedClips={displayedClips}
+                  color={selectedColor}
+                  featureName={
+                    featureScale ? (featureColumn ?? undefined) : undefined
+                  }
+                  padSec={padSec}
+                  playing={playing}
+                  showPose={showPose}
+                  showEdges={showEdges}
+                  showTrails={showTrails}
+                  trailSec={trailSec}
+                  resetSignal={resetSignal}
+                  cols={cols}
+                />
+              </div>
+              <BoutsTimeline
+                width={montageW}
+                height={bottomH}
+                labels={data.labels}
+                bouts={filteredBouts}
+                domStart={domain.domStart}
+                domEnd={domain.domEnd}
+                selectedLabelId={selectedLabelId}
+                clipMarks={clipMarks}
+                observed={observed}
               />
             </div>
           </div>
-
-          <BoutsTimeline
-            width={width}
-            height={bottomH}
-            labels={data.labels}
-            bouts={filteredBouts}
-            domStart={domain.domStart}
-            domEnd={domain.domEnd}
-            selectedLabelId={selectedLabelId}
-            clipMarks={clipMarks}
-          />
         </>
       )}
 

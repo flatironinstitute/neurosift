@@ -8,6 +8,12 @@ type Props = {
   letter: string;
   subLabel: string;
   color: string;
+  // Feature readout, present only when a sort column is active: the column name,
+  // the bout's formatted value, and a 0..1 gauge fill (null when value missing).
+  // Color is deliberately not used here (it stays reserved for behavior identity).
+  featureName?: string;
+  featureValueText?: string;
+  featureFrac?: number | null;
   // When false, this is a pose-only tile (no video element; pose draws on black).
   hasVideo: boolean;
   videoUrl?: string;
@@ -35,6 +41,9 @@ const BoutMontageTile: FunctionComponent<Props> = ({
   letter,
   subLabel,
   color,
+  featureName,
+  featureValueText,
+  featureFrac,
   hasVideo,
   videoUrl,
   resetSignal,
@@ -175,6 +184,62 @@ const BoutMontageTile: FunctionComponent<Props> = ({
             />
           ) : null}
         </div>
+        {/* Feature readout (active sort column): name + value + a magnitude bar
+            gauge. No color, the gauge length carries the magnitude. Sits over the
+            frame bottom and ignores pointer events so it never blocks dragging. */}
+        {featureName && (
+          <div
+            style={{
+              position: "absolute",
+              left: 3,
+              right: 3,
+              bottom: 3,
+              pointerEvents: "none",
+              background: "rgba(0,0,0,0.55)",
+              borderRadius: 2,
+              padding: "1px 3px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 4,
+                fontSize: 9,
+                color: "#fff",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              <span
+                style={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {featureName}
+              </span>
+              <span style={{ fontWeight: 700 }}>{featureValueText ?? "—"}</span>
+            </div>
+            <div
+              style={{
+                height: 3,
+                marginTop: 1,
+                background: "rgba(255,255,255,0.25)",
+                borderRadius: 2,
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${Math.round((featureFrac ?? 0) * 100)}%`,
+                  background: "#fff",
+                }}
+              />
+            </div>
+          </div>
+        )}
       </div>
       <div
         ref={setTimeEl}
