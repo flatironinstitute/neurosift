@@ -33,6 +33,10 @@ type Props = {
   color: string;
   // The active sort column's name, shown on each tile next to its value+gauge.
   featureName?: string;
+  // Pose/video alignment: the video is seeked `offsetSec` later than the bout's
+  // (label-clock) time, and the pose is drawn at the video time minus the offset.
+  // 0 for well-formed BehavioralBouts files; the VAME adapter passes ~0.5 s.
+  offsetSec?: number;
   padSec: number;
   playing: boolean;
   showPose: boolean;
@@ -59,6 +63,7 @@ const BehavioralBoutsMontage: FunctionComponent<Props> = ({
   displayedClips,
   color,
   featureName,
+  offsetSec = 0,
   padSec,
   playing,
   showPose,
@@ -163,14 +168,14 @@ const BehavioralBoutsMontage: FunctionComponent<Props> = ({
           if (hasVideo && v) {
             v.style.opacity = "1";
             if (!v.paused) v.pause();
-            drawPose(i, videoStartTime + v.currentTime);
+            drawPose(i, videoStartTime + v.currentTime - offsetSec);
           } else {
             drawPose(i, w.start);
           }
           const t = timeEls.current[i];
           if (t)
             t.textContent = formatTime(
-              hasVideo && v ? videoStartTime + v.currentTime : w.start,
+              hasVideo && v ? videoStartTime + v.currentTime - offsetSec : w.start,
             );
         }
       });
@@ -198,7 +203,7 @@ const BehavioralBoutsMontage: FunctionComponent<Props> = ({
         if (hasVideo) {
           const v = videoEls.current[i];
           if (!v) continue;
-          const videoStart = w.start - videoStartTime;
+          const videoStart = w.start + offsetSec - videoStartTime;
           if (reset) {
             try {
               v.currentTime = videoStart;
@@ -262,6 +267,7 @@ const BehavioralBoutsMontage: FunctionComponent<Props> = ({
     poseSrcExtent,
     showPose,
     drawOpts,
+    offsetSec,
   ]);
 
   const rows = Math.ceil(Math.max(1, displayedClips.length) / cols);

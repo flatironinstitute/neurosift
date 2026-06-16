@@ -37,11 +37,30 @@ import {
   seededShuffle,
 } from "./behavioralBoutsUtils";
 
+// A pre-built table the view can render instead of loading it from HDF5. The
+// VAME adapter uses this: run-length-encoded motifs + the resolved pose/video,
+// so the VAME viewer IS this viewer, fed a different way.
+export type PreloadedBouts = {
+  title: string;
+  data: BehavioralBoutsData;
+  observed: ObservationInterval[] | null;
+  hasVideo: boolean;
+  videoUrl?: string;
+  videoStartTime: number;
+  poseData: PoseData | null;
+  poseSrcExtent: SourceRect | null;
+  // Default pose/video alignment offset (VAME ≈ 0.5 s; BehavioralBouts 0).
+  defaultOffsetSec?: number;
+};
+
 type Props = {
   width?: number;
   height?: number;
   nwbUrl: string;
   path: string;
+  // When set (the VAME adapter), render this pre-built table instead of loading
+  // from nwbUrl/path; nwbUrl/path are then ignored (but still passed by callers).
+  preloaded?: PreloadedBouts;
 };
 
 const HEADER_H = 38;
@@ -58,6 +77,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
   height = 600,
   nwbUrl,
   path,
+  preloaded,
 }) => {
   const [searchParams] = useSearchParams();
   const num = (key: string, def: number) => {
@@ -92,6 +112,11 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
   );
   const [minBoutMs, setMinBoutMs] = useState(() => num("bbMinBout", 0));
   const [padSec, setPadSec] = useState(() => num("bbPad", 0.5));
+  // Pose/video alignment offset (s). 0 for well-formed BehavioralBouts files; the
+  // VAME adapter seeds it from preloaded.defaultOffsetSec (≈0.5 on the OFT data).
+  const [offsetSec, setOffsetSec] = useState(() =>
+    num("bbOffset", preloaded?.defaultOffsetSec ?? 0),
+  );
   const [seed, setSeed] = useState(() => num("bbSeed", 1));
   // How the behavior selector list is ordered (sidebar control, above the list):
   // a structural key ("mean" duration / "count" / "total" / "name") or a numeric
@@ -123,8 +148,23 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
   // Guards the one-shot skeleton default (on for pose-only, off when a video).
   const edgesAutoRef = useRef(false);
 
-  // ----- Load bouts + links -----
+  // ----- Load bouts + links (or accept a preloaded table) -----
   useEffect(() => {
+    // Preloaded mode (VAME adapter): adopt the supplied table directly, no HDF5.
+    if (preloaded) {
+      setLoading(false);
+      setLoadError(undefined);
+      setData(preloaded.data);
+      setObserved(preloaded.observed);
+      setHasVideo(preloaded.hasVideo);
+      setVideoUrl(preloaded.videoUrl);
+      setVideoStartTime(preloaded.videoStartTime);
+      setPoseData(preloaded.poseData);
+      setPoseSrcExtent(preloaded.poseSrcExtent);
+      edgesAutoRef.current = false;
+      return;
+    }
+    if (!nwbUrl || !path) return;
     let canceled = false;
     const load = async () => {
       setLoading(true);
@@ -186,7 +226,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
     return () => {
       canceled = true;
     };
-  }, [nwbUrl, path, searchParams]);
+  }, [nwbUrl, path, searchParams, preloaded]);
 
   // Per-behavior bout count + total duration (after the min-length filter).
   const summary = useMemo(() => {
@@ -430,6 +470,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
     sync("bbSeed", String(seed), seed === 1);
     sync("bbMinBout", String(minBoutMs), minBoutMs === 0);
     sync("bbPad", String(padSec), padSec === 0.5);
+    sync("bbOffset", String(offsetSec), offsetSec === 0);
     sync("bbPose", "0", showPose);
     sync("bbEdges", "0", showEdges);
     sync("bbTrails", "1", !showTrails);
@@ -445,6 +486,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
     seed,
     minBoutMs,
     padSec,
+    offsetSec,
     showPose,
     showEdges,
     showTrails,
@@ -465,7 +507,8 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
     );
   if (!data) return null;
 
-  const title = path.split("/").pop() || path;
+  const title =
+    preloaded?.title ?? (path ? path.split("/").pop() || path : "");
   const cols = Math.max(1, Math.ceil(Math.sqrt(clipCount)));
   const selectedLabel =
     selectedLabelId === null
@@ -622,6 +665,14 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
               min={0}
               step={0.1}
             />
+            {hasVideo && (
+              <NumInput
+                label="offset (s):"
+                value={offsetSec}
+                onChange={setOffsetSec}
+                step={0.1}
+              />
+            )}
             <button
               onClick={() => setResetSignal((s) => s + 1)}
               style={{ cursor: "pointer", padding: "1px 8px" }}
@@ -1167,6 +1218,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
                   featureName={
                     featureScale ? (featureColumn ?? undefined) : undefined
                   }
+                  offsetSec={offsetSec}
                   padSec={padSec}
                   playing={playing}
                   showPose={showPose}

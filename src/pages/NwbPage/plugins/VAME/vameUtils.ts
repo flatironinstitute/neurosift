@@ -93,20 +93,6 @@ export const runLengthEncodeMotifs = (
   return bouts;
 };
 
-// A categorical color per motif. Hues are spread evenly across the distinct
-// motifs (sorted, so the mapping is stable) and lightness alternates so that
-// adjacent hues stay distinguishable even with many motifs.
-export const buildMotifColorMap = (motifs: number[]): Map<number, string> => {
-  const sorted = [...motifs].sort((a, b) => a - b);
-  const colorMap = new Map<number, string>();
-  sorted.forEach((motif, index) => {
-    const hue = (index * 360) / Math.max(sorted.length, 1);
-    const lightness = index % 2 === 0 ? 58 : 44;
-    colorMap.set(motif, `hsl(${hue.toFixed(1)}, 70%, ${lightness}%)`);
-  });
-  return colorMap;
-};
-
 // Walk the usual data roots and return the path of the first external-file
 // ImageSeries (the behavioral video the montage crops). Mirrors hasExternalVideos
 // in externalVideoUtils but returns the path instead of a boolean.
@@ -135,30 +121,44 @@ export const findBehavioralVideoSeries = async (
   return null;
 };
 
-// mm:ss formatting for clip labels and the legend.
-export const formatTime = (seconds: number): string => {
-  const total = Math.max(0, Math.floor(seconds));
-  const minutes = Math.floor(total / 60);
-  const secs = total % 60;
-  return `${minutes}:${secs.toString().padStart(2, "0")}`;
-};
-
-// Per-clip label: A, B, C, ... then a numeric fallback past Z.
-export const clipLabel = (index: number): string =>
-  index < 26 ? String.fromCharCode(65 + index) : `#${index + 1}`;
-
-// Deterministic Fisher-Yates shuffle (linear-congruential PRNG) so a given seed
-// always yields the same pick; the Resample button just advances the seed.
-export const seededShuffle = <T>(items: T[], seed: number): T[] => {
-  const a = items.slice();
-  let s = seed >>> 0 || 1;
-  const rand = () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 4294967296;
-  };
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+// Find the PoseEstimation group VAME was built from: the VAMEProject's
+// `pose_estimation` link if present, else a scan of the usual data roots. The
+// shared loadPoseEstimation then reads it (so VAME uses the same pose machinery).
+export const findPoseEstimationPath = async (
+  nwbUrl: string,
+  vameProjectPath: string,
+): Promise<string | null> => {
+  const project = await getHdf5Group(nwbUrl, vameProjectPath);
+  if (project) {
+    const sub = project.subgroups.find(
+      (sg) =>
+        sg.name === "pose_estimation" ||
+        sg.attrs?.neurodata_type === "PoseEstimation",
+    );
+    if (sub) {
+      const g = await getHdf5Group(nwbUrl, sub.path);
+      if (
+        g &&
+        g.subgroups.some(
+          (s) => s.attrs?.neurodata_type === "PoseEstimationSeries",
+        )
+      )
+        return sub.path;
+    }
   }
-  return a;
+  const visit = async (p: string): Promise<string | null> => {
+    const g = await getHdf5Group(nwbUrl, p);
+    if (!g) return null;
+    if (g.attrs?.neurodata_type === "PoseEstimation") return g.path;
+    for (const s of g.subgroups || []) {
+      const found = await visit(s.path);
+      if (found) return found;
+    }
+    return null;
+  };
+  for (const root of VIDEO_DISCOVERY_ROOTS) {
+    const found = await visit(root);
+    if (found) return found;
+  }
+  return null;
 };
