@@ -43,6 +43,9 @@ export const useCategoricalOptions = (
         if (canceled) return;
         const stringValues = [...dd].map((x) => x.toString());
         const uniqueValues: string[] = [...new Set(stringValues)];
+        // Skip columns that have only a single unique value -- grouping by
+        // them is meaningless.
+        if (uniqueValues.length < 2) continue;
         if (uniqueValues.length <= dd.length / 2) {
           result.push({
             variableName: option,
