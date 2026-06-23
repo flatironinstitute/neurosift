@@ -1,6 +1,7 @@
-import { getHdf5Group } from "@hdf5Interface";
+import { getHdf5Group, getRedirectUrl } from "@hdf5Interface";
 import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import getAuthorizationHeaderForUrl from "../../../util/getAuthorizationHeaderForUrl";
 import { IconButton, Tooltip } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
@@ -191,15 +192,23 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
         if (!canceled && seriesPath) {
           try {
             const range = await getSeriesTimeRange(nwbUrl, seriesPath);
-            const url = await resolveExternalVideoUrl(
+            const downloadUrl = await resolveExternalVideoUrl(
               nwbUrl,
               seriesPath,
               searchParams.get("dandisetId"),
               searchParams.get("dandisetVersion") || "draft",
             );
+            // A native <video> cannot send the DANDI auth header, so for an
+            // embargoed asset the /download/ URL 401s. Pre-resolve the presigned
+            // S3 URL (with auth) and play that; a no-op for public assets.
+            const auth = getAuthorizationHeaderForUrl(downloadUrl);
+            const redirected = await getRedirectUrl(
+              downloadUrl,
+              auth ? { Authorization: auth } : undefined,
+            );
             if (!canceled) {
               setVideoStartTime(range.startTime || 0);
-              setVideoUrl(url);
+              setVideoUrl(redirected || downloadUrl);
               setHasVideo(true);
             }
           } catch (err) {

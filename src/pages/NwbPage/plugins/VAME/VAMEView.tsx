@@ -1,10 +1,11 @@
-import { getHdf5DatasetData } from "@hdf5Interface";
+import { getHdf5DatasetData, getRedirectUrl } from "@hdf5Interface";
 import { FunctionComponent, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   getSeriesTimeRange,
   resolveExternalVideoUrl,
 } from "../../externalVideoUtils";
+import getAuthorizationHeaderForUrl from "../../../util/getAuthorizationHeaderForUrl";
 import BehavioralBoutsView, {
   PreloadedBouts,
 } from "../BehavioralBouts/BehavioralBoutsView";
@@ -97,14 +98,22 @@ const VAMEView: FunctionComponent<Props> = ({
         if (videoPath) {
           try {
             const range = await getSeriesTimeRange(nwbUrl, videoPath);
-            const url = await resolveExternalVideoUrl(
+            const downloadUrl = await resolveExternalVideoUrl(
               nwbUrl,
               videoPath,
               searchParams.get("dandisetId"),
               searchParams.get("dandisetVersion") || "draft",
             );
+            // A native <video> cannot send the DANDI auth header, so for an
+            // embargoed asset the /download/ URL 401s. Pre-resolve the presigned
+            // S3 URL (with auth) and play that; a no-op for public assets.
+            const auth = getAuthorizationHeaderForUrl(downloadUrl);
+            const redirected = await getRedirectUrl(
+              downloadUrl,
+              auth ? { Authorization: auth } : undefined,
+            );
             hasVideo = true;
-            videoUrl = url;
+            videoUrl = redirected || downloadUrl;
             videoStartTime = range.startTime || 0;
           } catch {
             /* leave hasVideo false (pose-only / ethogram-only) */
