@@ -400,7 +400,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
             )}
           </div>
         </td>
-        <td style={{ maxWidth: "400px" }}>
+        <td style={{ width: "100%" }}>
           {truncateDescription(obj.attrs.description || "", obj.path)}
         </td>
       </tr>
