@@ -994,6 +994,42 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                 const ovStart = Math.max(pose.timeRange.start, vStart);
                 const ovEnd = Math.min(pose.timeRange.end, vEnd);
                 const hasOverlap = hasV && ovEnd > ovStart;
+                // Distinguish the alignment-status states explicitly so the
+                // "still fetching" case is not mistaken for "no timing".
+                // - resolving: the video URL/range is still being fetched; show
+                //   nothing until it lands (a blank is honest, "unknown" is not).
+                // - videoError: resolution failed outright.
+                // - !hasV (resolved, degenerate range): the ImageSeries carries
+                //   no usable timing metadata, surfaced as a real warning.
+                const resolving = !v && !videoError && !codecError;
+                const status: {
+                  text: string;
+                  color: string;
+                  title?: string;
+                } | null = resolving
+                  ? null
+                  : videoError
+                    ? {
+                        text: "video could not be loaded",
+                        color: "#b26a00",
+                        title: videoError,
+                      }
+                    : !hasV
+                      ? {
+                          text: "no timing metadata in this video",
+                          color: "#b26a00",
+                          title:
+                            "This video's ImageSeries stores neither per-frame timestamps nor a starting_time + rate, so it cannot be placed on the session clock. The overlay is still drawn (assuming the video starts at session time 0), but the pose/video alignment cannot be verified and may be off. Try another video if the keypoints do not sit on the animal.",
+                        }
+                      : hasOverlap
+                        ? {
+                            text: `aligned ${ovStart.toFixed(0)}-${ovEnd.toFixed(0)} s`,
+                            color: "#2e7d32",
+                          }
+                        : {
+                            text: "no overlap - pick another video",
+                            color: "#b26a00",
+                          };
                 const t0 = Math.min(pose.timeRange.start, vStart);
                 const t1 = Math.max(pose.timeRange.end, vEnd);
                 const span = t1 - t0 || 1;
@@ -1053,36 +1089,32 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                         {hasV && <div style={seg(vStart, vEnd)} />}
                       </div>
                     </div>
-                    <span
-                      style={{
-                        fontSize: 10,
-                        paddingLeft: 46,
-                        color: !hasV
-                          ? INK.faint
-                          : hasOverlap
-                            ? "#2e7d32"
-                            : "#b26a00",
-                      }}
-                    >
-                      {!hasV
-                        ? "video timing unknown"
-                        : hasOverlap
-                          ? `aligned ${ovStart.toFixed(0)}-${ovEnd.toFixed(0)} s`
-                          : "no overlap - pick another video"}
-                    </span>
-                    <span
-                      style={{
-                        color: INK.faint,
-                        fontSize: 10,
-                        paddingLeft: 46,
-                      }}
-                    >
-                      {video
-                        ? video.timestamps
+                    {status && (
+                      <span
+                        style={{
+                          fontSize: 10,
+                          paddingLeft: 46,
+                          color: status.color,
+                          cursor: status.title ? "help" : undefined,
+                        }}
+                        title={status.title}
+                      >
+                        {status.text}
+                      </span>
+                    )}
+                    {hasV && (
+                      <span
+                        style={{
+                          color: INK.faint,
+                          fontSize: 10,
+                          paddingLeft: 46,
+                        }}
+                      >
+                        {video?.timestamps
                           ? "timestamp-aligned"
-                          : "linear-aligned"
-                        : ""}
-                    </span>
+                          : "linear-aligned"}
+                      </span>
+                    )}
                   </div>
                 );
               })()}
