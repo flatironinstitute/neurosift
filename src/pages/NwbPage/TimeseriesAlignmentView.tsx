@@ -367,6 +367,7 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
             display: "flex",
             alignItems: "center",
             gap: 8,
+            marginTop: 12,
             marginBottom: 10,
             fontSize: 13,
           }}
