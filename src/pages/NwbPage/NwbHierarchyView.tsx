@@ -128,7 +128,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
         return (
           <span>
             {text}
-            <span
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 setExpandedDescriptions((prev) => {
@@ -138,14 +138,17 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
                 });
               }}
               style={{
-                marginLeft: "5px",
-                color: "#007bff",
+                marginLeft: 8,
+                background: "none",
+                border: "none",
+                color: "#0066cc",
                 cursor: "pointer",
+                padding: "2px 4px",
                 fontSize: "0.9em",
               }}
             >
               show less
-            </span>
+            </button>
           </span>
         );
       }
@@ -153,7 +156,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
       return (
         <span>
           {text.slice(0, maxLength)}...
-          <span
+          <button
             onClick={(e) => {
               e.stopPropagation();
               setExpandedDescriptions((prev) => {
@@ -163,14 +166,17 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
               });
             }}
             style={{
-              marginLeft: "5px",
-              color: "#007bff",
+              marginLeft: 8,
+              background: "none",
+              border: "none",
+              color: "#0066cc",
               cursor: "pointer",
+              padding: "2px 4px",
               fontSize: "0.9em",
             }}
           >
             read more
-          </span>
+          </button>
         </span>
       );
     },
