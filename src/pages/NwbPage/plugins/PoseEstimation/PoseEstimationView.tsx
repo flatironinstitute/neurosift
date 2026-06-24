@@ -128,7 +128,9 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   // Fade shown keypoints by their confidence (off by default).
   const [fadeByConfidence, setFadeByConfidence] = useState(false);
   // Manual session-time nudge (seconds) for imprecise / skewed video timing.
-  const [offset, setOffset] = useState(0);
+  // The control is temporarily removed pending a full alignment panel; the time
+  // mapping still takes an offset, so keep it fixed at 0 for now.
+  const offset = 0;
   // Cross-file sibling-asset scan state (the pose's videos may live in another
   // asset of the same session, e.g. IBL).
   const [scanning, setScanning] = useState(false);
@@ -221,8 +223,6 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   useEffect(() => {
     if (!pose || hydrated) return;
     const g = (k: string) => searchParams.get(k);
-    const off = g("poseOffset");
-    if (off !== null) setOffset(Number(off) || 0);
     if (g("poseEdges") === "1") setShowEdges(true);
     // 3D pose defaults to pose-only (overlaying world coordinates on a 2D camera
     // is meaningless); an explicit poseOnly param or a chosen poseVideo wins.
@@ -272,7 +272,6 @@ const PoseEstimationView: FunctionComponent<Props> = ({
         const next = new URLSearchParams(prev);
         const setDel = (k: string, v: string | null) =>
           v ? next.set(k, v) : next.delete(k);
-        setDel("poseOffset", offset !== 0 ? String(offset) : null);
         setDel(
           "poseHidden",
           hidden.size ? [...hidden].map(shortName).sort().join(",") : null,
@@ -885,7 +884,8 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                           ? "#1f3b57"
                           : INK.muted,
                     fontWeight: !poseOnlyMode ? 600 : 400,
-                    cursor: !scanning && noPlayableVideo ? "default" : "pointer",
+                    cursor:
+                      !scanning && noPlayableVideo ? "default" : "pointer",
                   }}
                 >
                   Overlay
@@ -907,8 +907,8 @@ const PoseEstimationView: FunctionComponent<Props> = ({
               </div>
               {pose.is3D && (
                 <span style={{ color: INK.faint, fontSize: FS.small }}>
-                  3D pose: shown on its own; an overlay would not register on a 2D
-                  camera.
+                  3D pose: shown on its own; an overlay would not register on a
+                  2D camera.
                 </span>
               )}
             </div>
@@ -1039,23 +1039,6 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                     <span style={{ color: INK.muted, fontSize: FS.small }}>
                       Video alignment
                     </span>
-                    <label
-                      style={{ display: "flex", alignItems: "center", gap: 6 }}
-                      title={
-                        video?.timestamps
-                          ? "Aligned through the video's per-frame timestamps. Nudge if the keypoints lead/lag the animal."
-                          : "No per-frame timestamps; alignment is linear. Nudge to correct a constant shift."
-                      }
-                    >
-                      <span style={{ color: INK.muted }}>offset (s)</span>
-                      <input
-                        type="number"
-                        step={0.1}
-                        value={offset}
-                        onChange={(e) => setOffset(Number(e.target.value) || 0)}
-                        style={{ width: 70 }}
-                      />
-                    </label>
                     <div style={rowStyle}>
                       <span style={labelStyle}>pose</span>
                       <div style={trackStyle}>
