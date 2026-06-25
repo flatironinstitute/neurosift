@@ -6,15 +6,15 @@ import {
   resolveExternalVideoUrl,
 } from "../../externalVideoUtils";
 import getAuthorizationHeaderForUrl from "../../../util/getAuthorizationHeaderForUrl";
-import BehavioralBoutsView, {
+import EthogramBoutsView, {
   PreloadedBouts,
-} from "../BehavioralBouts/BehavioralBoutsView";
+} from "../EthogramBouts/EthogramBoutsView";
 import {
-  BehavioralBoutsData,
+  EthogramBoutsData,
   Bout,
   BoutLabel,
   buildBoutColorMap,
-} from "../BehavioralBouts/behavioralBoutsUtils";
+} from "../EthogramBouts/ethogramBoutsUtils";
 import {
   getPoseExtent,
   loadPoseEstimation,
@@ -35,12 +35,12 @@ type Props = {
   path: string;
 };
 
-// VAME is now a thin ADAPTER over the BehavioralBouts viewer: it reads the
+// VAME is now a thin ADAPTER over the EthogramBouts viewer: it reads the
 // per-frame ndx-vame MotifSeries, run-length-encodes it into bouts in the
-// browser (no NWB change), wraps that as a BehavioralBouts table (motif id =
+// browser (no NWB change), wraps that as a EthogramBouts table (motif id =
 // label id, "Motif N" names), resolves the behavioral video and the linked pose
-// through the SHARED loaders, and hands the whole thing to BehavioralBoutsView as
-// a preloaded table. So the VAME view IS the BehavioralBouts view, fed by RLE
+// through the SHARED loaders, and hands the whole thing to EthogramBoutsView as
+// a preloaded table. So the VAME view IS the EthogramBouts view, fed by RLE
 // rather than a stored table. No kinematics are computed here (the table is
 // passed as-is), so VAME has no per-bout value columns.
 const VAMEView: FunctionComponent<Props> = ({
@@ -65,7 +65,7 @@ const VAMEView: FunctionComponent<Props> = ({
         if (!raw) throw new Error("Could not load MotifSeries data.");
 
         // Run-length-encode the per-frame motif labels into bouts, then express
-        // them in the BehavioralBouts shape (motif id -> labelId, "Motif N" name).
+        // them in the EthogramBouts shape (motif id -> labelId, "Motif N" name).
         const motifBouts = runLengthEncodeMotifs(raw as ArrayLike<number>, info);
         const distinct = Array.from(
           new Set(motifBouts.map((b) => b.motif)),
@@ -82,7 +82,7 @@ const VAMEView: FunctionComponent<Props> = ({
           labelId: b.motif,
           label: `Motif ${b.motif}`,
         }));
-        const data: BehavioralBoutsData = {
+        const data: EthogramBoutsData = {
           bouts,
           labels,
           labelingMethod: "automated",
@@ -167,7 +167,7 @@ const VAMEView: FunctionComponent<Props> = ({
     return <div style={{ padding: 20 }}>Loading VAME data...</div>;
   }
   return (
-    <BehavioralBoutsView
+    <EthogramBoutsView
       width={width}
       height={height}
       nwbUrl={nwbUrl}

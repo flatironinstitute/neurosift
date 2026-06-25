@@ -552,7 +552,7 @@ export const findVideoCandidates = async (
     }
     for (const sub of group.subgroups || []) {
       // Skip the ndx soft links that point AT a video or pose (ndx-pose 0.3.0
-      // `source_video`, ndx-behavioral-bouts `source_video` / `source_pose` /
+      // `source_video`, ndx-ethogram `source_video` / `source_pose` /
       // `source`): each resolves to a group that the walk already reaches at its
       // own canonical path, so following the link only yields duplicate
       // candidates for the same underlying ImageSeries (one per linking object,

@@ -5,7 +5,7 @@ import {
   drawObservedTrack,
   formatTime,
   ObservationInterval,
-} from "./behavioralBoutsUtils";
+} from "./ethogramBoutsUtils";
 
 type Props = {
   width: number;

@@ -31,8 +31,8 @@ export type ClipMark = {
   extra?: Record<string, number | string>;
 };
 
-// Everything the view needs from a BehavioralBouts group.
-export type BehavioralBoutsData = {
+// Everything the view needs from a EthogramBouts group.
+export type EthogramBoutsData = {
   bouts: Bout[];
   labels: BoutLabel[];
   // Group attributes (always present: labeling_method; others optional).
@@ -219,11 +219,11 @@ const compareLabels = (a: string, b: string): number => {
 // the tool's own cluster id as text (e.g. "7") for unsupervised output. The widget
 // keys internally on a numeric id, so each distinct label string is assigned a
 // stable synthetic index here; the label string itself is the display name.
-export const loadBehavioralBouts = async (
+export const loadEthogramBouts = async (
   nwbUrl: string,
   path: string,
   group: Hdf5Group,
-): Promise<BehavioralBoutsData> => {
+): Promise<EthogramBoutsData> => {
   const startDs = group.datasets.find((ds) => ds.name === "start_time");
   const n = startDs?.shape?.[0] ?? 0;
 

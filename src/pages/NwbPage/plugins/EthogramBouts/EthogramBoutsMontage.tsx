@@ -4,7 +4,7 @@ import {
   PoseData,
   SourceRect,
 } from "../PoseEstimation/poseEstimationUtils";
-import { Bout, formatTime } from "./behavioralBoutsUtils";
+import { Bout, formatTime } from "./ethogramBoutsUtils";
 import BoutMontageTile from "./BoutMontageTile";
 
 const GAP = 4;
@@ -35,7 +35,7 @@ type Props = {
   featureName?: string;
   // Pose/video alignment: the video is seeked `offsetSec` later than the bout's
   // (label-clock) time, and the pose is drawn at the video time minus the offset.
-  // 0 for well-formed BehavioralBouts files; the VAME adapter passes ~0.5 s.
+  // 0 for well-formed EthogramBouts files; the VAME adapter passes ~0.5 s.
   offsetSec?: number;
   padSec: number;
   playing: boolean;
@@ -54,7 +54,7 @@ type Props = {
 // tiles it seeks each <video>; on pose-only tiles it advances a virtual clock.
 // Either way it draws the pose for the current session time with the
 // pose-estimation widget's renderer (skeleton edges, confidence-ready).
-const BehavioralBoutsMontage: FunctionComponent<Props> = ({
+const EthogramBoutsMontage: FunctionComponent<Props> = ({
   hasVideo,
   videoUrl,
   videoStartTime,
@@ -346,4 +346,4 @@ const BehavioralBoutsMontage: FunctionComponent<Props> = ({
   );
 };
 
-export default BehavioralBoutsMontage;
+export default EthogramBoutsMontage;

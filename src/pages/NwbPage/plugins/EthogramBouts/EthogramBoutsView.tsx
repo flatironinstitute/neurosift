@@ -16,11 +16,11 @@ import {
   PoseData,
   SourceRect,
 } from "../PoseEstimation/poseEstimationUtils";
-import BehavioralBoutsMontage from "./BehavioralBoutsMontage";
+import EthogramBoutsMontage from "./EthogramBoutsMontage";
 import BoutsDistributionStrip from "./BoutsDistributionStrip";
 import BoutsTimeline from "./BoutsTimeline";
 import {
-  BehavioralBoutsData,
+  EthogramBoutsData,
   Bout,
   buildFeatureScale,
   ClipMark,
@@ -28,7 +28,7 @@ import {
   compareByFeature,
   formatFeatureValue,
   formatTime,
-  loadBehavioralBouts,
+  loadEthogramBouts,
   loadObservationIntervals,
   numericExtraColumns,
   ObservationInterval,
@@ -36,21 +36,21 @@ import {
   resolveSourcePosePath,
   resolveSourceVideoSeriesPath,
   seededShuffle,
-} from "./behavioralBoutsUtils";
+} from "./ethogramBoutsUtils";
 
 // A pre-built table the view can render instead of loading it from HDF5. The
 // VAME adapter uses this: run-length-encoded motifs + the resolved pose/video,
 // so the VAME viewer IS this viewer, fed a different way.
 export type PreloadedBouts = {
   title: string;
-  data: BehavioralBoutsData;
+  data: EthogramBoutsData;
   observed: ObservationInterval[] | null;
   hasVideo: boolean;
   videoUrl?: string;
   videoStartTime: number;
   poseData: PoseData | null;
   poseSrcExtent: SourceRect | null;
-  // Default pose/video alignment offset (VAME ≈ 0.5 s; BehavioralBouts 0).
+  // Default pose/video alignment offset (VAME ≈ 0.5 s; EthogramBouts 0).
   defaultOffsetSec?: number;
 };
 
@@ -73,7 +73,7 @@ const MAX_TABLE_ROWS = 200;
 const clamp = (v: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, v));
 
-const BehavioralBoutsView: FunctionComponent<Props> = ({
+const EthogramBoutsView: FunctionComponent<Props> = ({
   width = 900,
   height = 600,
   nwbUrl,
@@ -91,7 +91,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
     return v === null ? def : v === "1";
   };
 
-  const [data, setData] = useState<BehavioralBoutsData>();
+  const [data, setData] = useState<EthogramBoutsData>();
   const [observed, setObserved] = useState<ObservationInterval[] | null>(null);
   const [loadError, setLoadError] = useState<string>();
   const [loading, setLoading] = useState(true);
@@ -113,7 +113,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
   );
   const [minBoutMs, setMinBoutMs] = useState(() => num("bbMinBout", 0));
   const [padSec, setPadSec] = useState(() => num("bbPad", 0.5));
-  // Pose/video alignment offset (s). 0 for well-formed BehavioralBouts files; the
+  // Pose/video alignment offset (s). 0 for well-formed EthogramBouts files; the
   // VAME adapter seeds it from preloaded.defaultOffsetSec (≈0.5 on the OFT data).
   const [offsetSec, setOffsetSec] = useState(() =>
     num("bbOffset", preloaded?.defaultOffsetSec ?? 0),
@@ -181,7 +181,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
       try {
         const group = await getHdf5Group(nwbUrl, path);
         if (!group) throw new Error(`Unable to load group at ${path}.`);
-        const boutsData = await loadBehavioralBouts(nwbUrl, path, group);
+        const boutsData = await loadEthogramBouts(nwbUrl, path, group);
         if (canceled) return;
         setData(boutsData);
         const obs = await loadObservationIntervals(nwbUrl, group);
@@ -212,7 +212,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
               setHasVideo(true);
             }
           } catch (err) {
-            console.warn("BehavioralBouts: could not resolve video", err);
+            console.warn("EthogramBouts: could not resolve video", err);
           }
         }
 
@@ -271,7 +271,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
     [data],
   );
 
-  // Each BehavioralBouts table has its own columns, so drop any selected value
+  // Each EthogramBouts table has its own columns, so drop any selected value
   // column that does not exist on the newly loaded object (only once data is in,
   // so columns pinned in the URL survive the initial empty-numericColumns render).
   useEffect(() => {
@@ -511,7 +511,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
   if (loadError)
     return (
       <div style={{ padding: 20, color: "#a33" }}>
-        Could not load BehavioralBouts: {loadError}
+        Could not load EthogramBouts: {loadError}
       </div>
     );
   if (!data) return null;
@@ -559,7 +559,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
   // ⓘ detail for the Summary section.
   const summaryInfo = [
     path,
-    "namespace: ndx-behavioral-bouts",
+    "namespace: ndx-ethogram",
     `session length: ${formatTime(sessionDur)}`,
     data.annotator ? `annotator: ${data.annotator}` : null,
     hasPose && poseData
@@ -1216,7 +1216,7 @@ const BehavioralBoutsView: FunctionComponent<Props> = ({
                 </div>
               )}
               <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
-                <BehavioralBoutsMontage
+                <EthogramBoutsMontage
                   hasVideo={hasVideo}
                   videoUrl={videoUrl}
                   videoStartTime={videoStartTime}
@@ -1375,4 +1375,4 @@ const Chip: FunctionComponent<{ text: string; muted?: boolean }> = ({
   </span>
 );
 
-export default BehavioralBoutsView;
+export default EthogramBoutsView;
