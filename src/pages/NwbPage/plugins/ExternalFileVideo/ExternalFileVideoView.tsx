@@ -1,6 +1,9 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { resolveExternalVideoUrl } from "../../externalVideoUtils";
+import {
+  describeVideoPlaybackError,
+  resolveExternalVideoUrl,
+} from "../../externalVideoUtils";
 
 type Props = {
   width?: number;
@@ -22,8 +25,9 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
   const [videoUrl, setVideoUrl] = useState<string>();
   const [urlResolutionError, setUrlResolutionError] = useState<string>();
   const [loading, setLoading] = useState(true);
-  // Tracks whether the browser failed to play the video (unsupported codec/container)
-  const [codecError, setCodecError] = useState(false);
+  // Message describing why the <video> element failed to load, classified as a
+  // network/access failure vs. a genuine decode error (set in the onError handler).
+  const [playbackError, setPlaybackError] = useState<string>();
 
   // Resolve the playable video URL from the ImageSeries external_file.
   // If external_file is an absolute URL it is used directly; if it is a
@@ -38,6 +42,7 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
       // Reset state before starting (handles re-resolution when dependencies change)
       setLoading(true);
       setUrlResolutionError(undefined);
+      setPlaybackError(undefined);
       setVideoUrl(undefined);
       try {
         const resolvedVideoUrl = await resolveExternalVideoUrl(
@@ -75,19 +80,13 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
     return <div style={{ padding: "20px" }}>Resolving external video...</div>;
   }
 
-  // Both error types (URL resolution failure and browser codec failure) share
+  // Both error types (URL resolution failure and browser playback failure) share
   // the same "Video Unavailable" panel. urlResolutionError is set during the
-  // useEffect when the async URL resolution fails. codecError is set later,
-  // when the <video> element's onError fires because the browser can't decode
-  // the video. On that re-render, codecError is true, so we return the error
-  // panel instead of the <video> element.
-  const errorMessage = urlResolutionError
-    ? urlResolutionError
-    : codecError
-      ? "This video could not be played because its container or codec is not " +
-        "supported by the browser. Most likely, the uploaded video uses a format " +
-        "like AVI with a non-browser-friendly codec."
-      : null;
+  // useEffect when the async URL resolution fails. playbackError is set later,
+  // when the <video> element's onError fires; its message is classified (network/
+  // access vs. decode error) by describeVideoPlaybackError. On that re-render,
+  // playbackError is set, so we return the error panel instead of the <video>.
+  const errorMessage = urlResolutionError ?? playbackError ?? null;
 
   if (errorMessage) {
     return (
@@ -133,7 +132,11 @@ const ExternalFileVideoView: FunctionComponent<Props> = ({
         <video
           controls
           src={videoUrl}
-          onError={() => setCodecError(true)}
+          onError={() => {
+            if (videoUrl) {
+              describeVideoPlaybackError(videoUrl).then(setPlaybackError);
+            }
+          }}
           style={{
             width: "100%",
             height: "100%",

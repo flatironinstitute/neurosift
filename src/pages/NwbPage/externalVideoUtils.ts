@@ -51,6 +51,36 @@ const getAssetIdFromNwbUrl = (nwbUrl: string) => {
   return match?.[1];
 };
 
+/**
+ * Resolves a DANDI `/download/` URL to its presigned S3 URL by following the 302
+ * redirect with the auth header. A plain `<video>` element cannot send custom
+ * headers, so for embargoed dandisets the unauthenticated `/download/` request
+ * returns 401 and never reaches S3. Resolving the presigned URL here (with the
+ * same key used to load the NWB) lets the browser play embargoed assets.
+ *
+ * DANDI's S3 CORS blocks HEAD, so we use an aborted GET (see headRequest in
+ * hdf5Interface.ts). Unlike getRedirectUrl, this surfaces a non-2xx response as a
+ * clear error instead of silently returning the un-redirected `/download/` URL.
+ */
+const resolveDandiDownloadRedirect = async (
+  downloadUrl: string,
+  headers: { Authorization: string } | undefined,
+): Promise<string> => {
+  const controller = new AbortController();
+  const response = await fetch(downloadUrl, {
+    headers,
+    signal: controller.signal,
+  });
+  controller.abort(); // status/url already settled; we only wanted the redirect target
+  if (!response.ok) {
+    throw new Error(
+      `Could not access the external video on DANDI (status ${response.status}). ` +
+        `If this is an embargoed dandiset, set your DANDI API key in Settings.`,
+    );
+  }
+  return response.url; // presigned S3 URL after the followed 302
+};
+
 const dirnamePosix = (path: string) => {
   const parts = path.split("/");
   parts.pop();
@@ -139,48 +169,51 @@ export const resolveExternalVideoFromFile = async (
     );
   }
 
+  const apiBaseUrl = getDandiApiBaseUrl(nwbUrl);
+  const authHeader = getAuthorizationHeaderForUrl(
+    `${apiBaseUrl}/api/dandisets/${dandisetId}`,
+  );
+  const headers = authHeader ? { Authorization: authHeader } : undefined;
+
+  // The cache stores the stable `/download/` URL (the expensive asset-path lookup +
+  // asset search). The presigned S3 URL is resolved fresh on every call below, since
+  // presigned URLs expire and must never be cached and served stale.
   const cacheKey = [nwbUrl, externalFile, dandisetId, dandisetVersion].join(
     "||",
   );
-  if (resolvedVideoUrlCache.has(cacheKey)) {
-    return resolvedVideoUrlCache.get(cacheKey)!;
+  let downloadPromise = resolvedVideoUrlCache.get(cacheKey);
+  if (!downloadPromise) {
+    downloadPromise = (async () => {
+      const assetPath = await getNwbAssetPath(nwbUrl);
+      const cleanRelativePath = externalFile
+        .replace(/\\/g, "/")
+        .replace(/^[./]+/, "");
+      const fullVideoAssetPath = joinPosix(
+        dirnamePosix(assetPath),
+        cleanRelativePath,
+      );
+      const searchUrl =
+        `${apiBaseUrl}/api/dandisets/${dandisetId}/versions/${dandisetVersion}` +
+        `/assets/?path=${encodeURIComponent(fullVideoAssetPath)}`;
+      const searchResponse = await fetch(searchUrl, { headers });
+      if (!searchResponse.ok) {
+        throw new Error("Failed to resolve the external video asset on DANDI.");
+      }
+      const searchData = await searchResponse.json();
+      const videoAssetId = searchData.results?.[0]?.asset_id;
+      if (!videoAssetId) {
+        throw new Error(
+          `Could not find the external video asset at ${fullVideoAssetPath}.`,
+        );
+      }
+
+      return `${apiBaseUrl}/api/assets/${videoAssetId}/download/`;
+    })();
+    resolvedVideoUrlCache.set(cacheKey, downloadPromise);
   }
 
-  const promise = (async () => {
-    const apiBaseUrl = getDandiApiBaseUrl(nwbUrl);
-    const authHeader = getAuthorizationHeaderForUrl(
-      `${apiBaseUrl}/api/dandisets/${dandisetId}`,
-    );
-    const headers = authHeader ? { Authorization: authHeader } : undefined;
-
-    const assetPath = await getNwbAssetPath(nwbUrl);
-    const cleanRelativePath = externalFile
-      .replace(/\\/g, "/")
-      .replace(/^[./]+/, "");
-    const fullVideoAssetPath = joinPosix(
-      dirnamePosix(assetPath),
-      cleanRelativePath,
-    );
-    const searchUrl =
-      `${apiBaseUrl}/api/dandisets/${dandisetId}/versions/${dandisetVersion}` +
-      `/assets/?path=${encodeURIComponent(fullVideoAssetPath)}`;
-    const searchResponse = await fetch(searchUrl, { headers });
-    if (!searchResponse.ok) {
-      throw new Error("Failed to resolve the external video asset on DANDI.");
-    }
-    const searchData = await searchResponse.json();
-    const videoAssetId = searchData.results?.[0]?.asset_id;
-    if (!videoAssetId) {
-      throw new Error(
-        `Could not find the external video asset at ${fullVideoAssetPath}.`,
-      );
-    }
-
-    return `${apiBaseUrl}/api/assets/${videoAssetId}/download/`;
-  })();
-
-  resolvedVideoUrlCache.set(cacheKey, promise);
-  return promise;
+  const downloadUrl = await downloadPromise;
+  return resolveDandiDownloadRedirect(downloadUrl, headers);
 };
 
 /** Convenience wrapper: reads external_file from a series, then resolves its URL. */
@@ -215,6 +248,35 @@ export const getExternalFileForSeries = async (
     throw new Error("Could not read external_file from the NWB ImageSeries.");
   }
   return externalFile;
+};
+
+/**
+ * Classifies a `<video>` load failure: probes the URL to tell a network/access
+ * failure (e.g. an expired presigned URL, an auth failure, or a transient 5xx)
+ * apart from a genuine decode error, so the UI can show the right message instead
+ * of always blaming the codec/container.
+ */
+export const describeVideoPlaybackError = async (
+  videoUrl: string,
+): Promise<string> => {
+  try {
+    const controller = new AbortController();
+    const response = await fetch(videoUrl, { signal: controller.signal });
+    controller.abort();
+    if (!response.ok) {
+      return (
+        `This video could not be retrieved (HTTP ${response.status}). ` +
+        `The link may have expired or the asset may require a DANDI API key set in Settings.`
+      );
+    }
+  } catch {
+    return "This video could not be retrieved due to a network or access error.";
+  }
+  return (
+    "This video could not be played because its container or codec is not " +
+    "supported by the browser. Most likely, the uploaded video uses a format " +
+    "like AVI with a non-browser-friendly codec."
+  );
 };
 
 /** Reads the start and end session time for an ImageSeries from timestamps or starting_time + rate. */
