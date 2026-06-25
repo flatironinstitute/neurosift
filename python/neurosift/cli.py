@@ -23,7 +23,16 @@ def neurosift():
     default="https://neurosift.app",
     help="Neurosift server URL (default: https://neurosift.app)",
 )
-def view_nwb(file: str, neurosift_url: str):
+@click.option(
+    "--video",
+    "videos",
+    multiple=True,
+    type=click.Path(exists=True),
+    help="External video file referenced by an ImageSeries external_file. "
+    "Repeatable. Placed next to the NWB so it can be played locally. "
+    "The filename must match the external_file basename in the NWB.",
+)
+def view_nwb(file: str, neurosift_url: str, videos: tuple[str, ...]):
     abs_fname = os.path.abspath(file)
     base_fname = os.path.basename(abs_fname)
     with TemporaryDirectory(prefix="view_nwb") as tmpdir:
@@ -33,6 +42,25 @@ def view_nwb(file: str, neurosift_url: str):
         else:
             # create a symbolic link to the file (or zarr folder)
             os.symlink(abs_fname, f"{tmpdir}/{base_fname}")
+
+        # Place any --video files next to the NWB by basename, so an ImageSeries
+        # external_file (which neurosift resolves to its basename for local files)
+        # is served at /files/<basename> alongside the NWB.
+        seen = {base_fname}
+        for video in videos:
+            video_abs = os.path.abspath(video)
+            video_base = os.path.basename(video_abs)
+            if video_base in seen:
+                raise click.ClickException(
+                    f"Duplicate video filename '{video_base}'. "
+                    "Each --video must have a unique filename."
+                )
+            seen.add(video_base)
+            target = f"{tmpdir}/{video_base}"
+            if sys.platform == "win32":
+                shutil.copy2(video_abs, target)
+            else:
+                os.symlink(video_abs, target)
 
         # this directory
         this_directory = os.path.dirname(os.path.realpath(__file__))

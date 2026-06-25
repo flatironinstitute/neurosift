@@ -142,7 +142,7 @@ export const TabBar = <T extends BaseTab>({
       <div
         style={{
           position: "absolute",
-          width,
+          width: width - 20,
           left: 10,
           top: 12,
         }}

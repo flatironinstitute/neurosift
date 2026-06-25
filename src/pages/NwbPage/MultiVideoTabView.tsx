@@ -11,6 +11,7 @@ import ShareIcon from "@mui/icons-material/Share";
 import { getHdf5Dataset, getHdf5Group } from "./hdf5Interface";
 import { IrregularTimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
 import {
+  describeVideoPlaybackError,
   ExternalVideoCandidate,
   getExternalFileForSeries,
   getSeriesTimeRange,
@@ -1289,11 +1290,14 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
                                 }
                               }}
                               onError={() => {
-                                setPlaybackErrors((prev) => ({
-                                  ...prev,
-                                  [video.path]:
-                                    "This video could not be played by the browser because its container or codec is not supported. Most likely, the uploaded video uses a non-browser-supported codec or container.",
-                                }));
+                                if (!resolvedUrl) return;
+                                describeVideoPlaybackError(resolvedUrl).then(
+                                  (message) =>
+                                    setPlaybackErrors((prev) => ({
+                                      ...prev,
+                                      [video.path]: message,
+                                    })),
+                                );
                               }}
                               style={{
                                 width: "100%",
