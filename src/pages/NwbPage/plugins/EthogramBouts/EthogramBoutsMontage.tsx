@@ -37,7 +37,6 @@ type Props = {
   // (label-clock) time, and the pose is drawn at the video time minus the offset.
   // 0 for well-formed EthogramBouts files; the VAME adapter passes ~0.5 s.
   offsetSec?: number;
-  padSec: number;
   playing: boolean;
   showPose: boolean;
   showEdges: boolean;
@@ -68,7 +67,6 @@ const EthogramBoutsMontage: FunctionComponent<Props> = ({
   color,
   featureName,
   offsetSec = 0,
-  padSec,
   playing,
   showPose,
   showEdges,
@@ -95,12 +93,12 @@ const EthogramBoutsMontage: FunctionComponent<Props> = ({
     return () => ro.disconnect();
   }, []);
 
-  // Each clip's padded [start, stop] window in SESSION seconds, plus position-bar
-  // fractions on the shared cycle (= the longest clip).
+  // Each clip's [start, stop] window in SESSION seconds (= the bout itself), plus
+  // position-bar fractions on the shared cycle (= the longest clip).
   const windows = useMemo(() => {
     const raw = displayedClips.map(({ bout }) => {
-      const start = Math.max(0, bout.startTime - padSec);
-      const stop = Math.max(bout.stopTime + padSec, start + 0.1);
+      const start = Math.max(0, bout.startTime);
+      const stop = Math.max(bout.stopTime, start + 0.1);
       return {
         start,
         stop,
@@ -118,7 +116,7 @@ const EthogramBoutsMontage: FunctionComponent<Props> = ({
       boutStartFrac: (r.boutStart - r.start) / cycleLen,
       boutStopFrac: (r.boutStop - r.start) / cycleLen,
     }));
-  }, [displayedClips, padSec]);
+  }, [displayedClips]);
 
   const drawOpts = useMemo(
     () => ({

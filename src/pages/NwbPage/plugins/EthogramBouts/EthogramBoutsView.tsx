@@ -112,10 +112,10 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
     num("bbTiles", DEFAULT_CLIPS),
   );
   const [minBoutMs, setMinBoutMs] = useState(() => num("bbMinBout", 0));
-  const [padSec, setPadSec] = useState(() => num("bbPad", 0.5));
   // Pose/video alignment offset (s). 0 for well-formed EthogramBouts files; the
   // VAME adapter seeds it from preloaded.defaultOffsetSec (≈0.5 on the OFT data).
-  const [offsetSec, setOffsetSec] = useState(() =>
+  // No longer user-adjustable; it just carries the adapter's value through.
+  const [offsetSec] = useState(() =>
     num("bbOffset", preloaded?.defaultOffsetSec ?? 0),
   );
   const [seed, setSeed] = useState(() => num("bbSeed", 1));
@@ -481,8 +481,6 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
     sync("bbTiles", String(clipCount), clipCount === DEFAULT_CLIPS);
     sync("bbSeed", String(seed), seed === 1);
     sync("bbMinBout", String(minBoutMs), minBoutMs === 0);
-    sync("bbPad", String(padSec), padSec === 0.5);
-    sync("bbOffset", String(offsetSec), offsetSec === 0);
     sync("bbPose", "0", showPose);
     sync("bbEdges", "0", showEdges);
     sync("bbTrails", "1", !showTrails);
@@ -498,8 +496,6 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
     clipCount,
     seed,
     minBoutMs,
-    padSec,
-    offsetSec,
     showPose,
     showEdges,
     showTrails,
@@ -672,21 +668,6 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
               step={50}
               width={60}
             />
-            <NumInput
-              label="pad (s):"
-              value={padSec}
-              onChange={setPadSec}
-              min={0}
-              step={0.1}
-            />
-            {hasVideo && (
-              <NumInput
-                label="offset (s):"
-                value={offsetSec}
-                onChange={setOffsetSec}
-                step={0.1}
-              />
-            )}
             <button
               onClick={() => setResetSignal((s) => s + 1)}
               style={{ cursor: "pointer", padding: "1px 8px" }}
@@ -1244,7 +1225,6 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
                     featureScale ? (featureColumn ?? undefined) : undefined
                   }
                   offsetSec={offsetSec}
-                  padSec={padSec}
                   playing={playing}
                   showPose={showPose}
                   showEdges={showEdges}
