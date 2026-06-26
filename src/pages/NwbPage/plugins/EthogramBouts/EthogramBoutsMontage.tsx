@@ -33,10 +33,6 @@ type Props = {
   color: string;
   // The active sort column's name, shown on each tile next to its value+gauge.
   featureName?: string;
-  // Pose/video alignment: the video is seeked `offsetSec` later than the bout's
-  // (label-clock) time, and the pose is drawn at the video time minus the offset.
-  // 0 for well-formed EthogramBouts files; the VAME adapter passes ~0.5 s.
-  offsetSec?: number;
   playing: boolean;
   showPose: boolean;
   showEdges: boolean;
@@ -66,7 +62,6 @@ const EthogramBoutsMontage: FunctionComponent<Props> = ({
   displayedClips,
   color,
   featureName,
-  offsetSec = 0,
   playing,
   showPose,
   showEdges,
@@ -173,14 +168,14 @@ const EthogramBoutsMontage: FunctionComponent<Props> = ({
           if (hasVideo && v) {
             v.style.opacity = "1";
             if (!v.paused) v.pause();
-            drawPose(i, videoStartTime + v.currentTime - offsetSec);
+            drawPose(i, videoStartTime + v.currentTime);
           } else {
             drawPose(i, w.start);
           }
           const t = timeEls.current[i];
           if (t)
             t.textContent = formatTime(
-              hasVideo && v ? videoStartTime + v.currentTime - offsetSec : w.start,
+              hasVideo && v ? videoStartTime + v.currentTime : w.start,
             );
         }
       });
@@ -208,7 +203,7 @@ const EthogramBoutsMontage: FunctionComponent<Props> = ({
         if (hasVideo) {
           const v = videoEls.current[i];
           if (!v) continue;
-          const videoStart = w.start + offsetSec - videoStartTime;
+          const videoStart = w.start - videoStartTime;
           if (reset) {
             try {
               v.currentTime = videoStart;
@@ -286,7 +281,6 @@ const EthogramBoutsMontage: FunctionComponent<Props> = ({
     poseSrcExtent,
     showPose,
     drawOpts,
-    offsetSec,
     blankTail,
   ]);
 

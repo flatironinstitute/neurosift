@@ -142,8 +142,6 @@ const VAMEView: FunctionComponent<Props> = ({
           videoStartTime,
           poseData,
           poseSrcExtent,
-          // The OFT VAME data needs ~0.5 s pose/video alignment; user-adjustable.
-          defaultOffsetSec: 0.5,
         });
       } catch (err) {
         if (!canceled) {

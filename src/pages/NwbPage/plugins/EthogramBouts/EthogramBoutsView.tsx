@@ -50,8 +50,6 @@ export type PreloadedBouts = {
   videoStartTime: number;
   poseData: PoseData | null;
   poseSrcExtent: SourceRect | null;
-  // Default pose/video alignment offset (VAME ≈ 0.5 s; EthogramBouts 0).
-  defaultOffsetSec?: number;
 };
 
 type Props = {
@@ -112,12 +110,6 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
     num("bbTiles", DEFAULT_CLIPS),
   );
   const [minBoutMs, setMinBoutMs] = useState(() => num("bbMinBout", 0));
-  // Pose/video alignment offset (s). 0 for well-formed EthogramBouts files; the
-  // VAME adapter seeds it from preloaded.defaultOffsetSec (≈0.5 on the OFT data).
-  // No longer user-adjustable; it just carries the adapter's value through.
-  const [offsetSec] = useState(() =>
-    num("bbOffset", preloaded?.defaultOffsetSec ?? 0),
-  );
   const [seed, setSeed] = useState(() => num("bbSeed", 1));
   // How the behavior selector list is ordered (sidebar control, above the list):
   // a structural key ("mean" duration / "count" / "total" / "name") or a numeric
@@ -1224,7 +1216,6 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
                   featureName={
                     featureScale ? (featureColumn ?? undefined) : undefined
                   }
-                  offsetSec={offsetSec}
                   playing={playing}
                   showPose={showPose}
                   showEdges={showEdges}
