@@ -47,6 +47,10 @@ type Props = {
   // Bumping this resets every tile's pan/zoom.
   resetSignal: number;
   cols: number;
+  // How to fill a clip's tail once it ends before the synced cycle (= the longest
+  // clip) restarts. false (default): keep the real video rolling, dimmed, so
+  // nothing blanks out. true: black out the tail, showing only the bout itself.
+  blankTail: boolean;
 };
 
 // The per-behavior montage grid. Plays each displayed bout as a clip, all driven
@@ -72,6 +76,7 @@ const EthogramBoutsMontage: FunctionComponent<Props> = ({
   trailSec,
   resetSignal,
   cols,
+  blankTail,
 }) => {
   const videoEls = useRef<(HTMLVideoElement | null)[]>([]);
   const timeEls = useRef<(HTMLDivElement | null)[]>([]);
@@ -165,6 +170,8 @@ const EthogramBoutsMontage: FunctionComponent<Props> = ({
         for (let i = 0; i < windows.length; i++) {
           const w = windows[i];
           const v = videoEls.current[i];
+          const c = poseCanvasEls.current[i];
+          if (c) c.style.opacity = "1";
           if (hasVideo && v) {
             v.style.opacity = "1";
             if (!v.paused) v.pause();
@@ -212,13 +219,20 @@ const EthogramBoutsMontage: FunctionComponent<Props> = ({
             }
             if (v.paused) v.play().catch(() => {});
           }
-          if (finished) {
+          const c = poseCanvasEls.current[i];
+          if (finished && blankTail) {
+            // Hard blank: stop the clip and clear until the synced cycle restarts.
             if (!v.paused) v.pause();
             v.style.opacity = "0";
-            const c = poseCanvasEls.current[i];
-            if (c) c.getContext("2d")?.clearRect(0, 0, c.width, c.height);
+            if (c) {
+              c.style.opacity = "1";
+              c.getContext("2d")?.clearRect(0, 0, c.width, c.height);
+            }
           } else {
-            v.style.opacity = "1";
+            // In the bout window play at full opacity; past it (real tail) keep the
+            // real video rolling but dimmed so it reads as context, not the motif.
+            v.style.opacity = finished ? "0.4" : "1";
+            if (c) c.style.opacity = finished ? "0.4" : "1";
             if (v.paused) v.play().catch(() => {});
             const target = videoStart + elapsed;
             if (Math.abs(v.currentTime - target) > TOL) {
@@ -234,15 +248,22 @@ const EthogramBoutsMontage: FunctionComponent<Props> = ({
           if (t) t.textContent = formatTime(videoStartTime + v.currentTime);
         } else {
           // Pose-only: virtual clock.
-          const sessionTime = w.start + Math.min(elapsed, w.len);
-          if (finished) {
-            const c = poseCanvasEls.current[i];
-            if (c) c.getContext("2d")?.clearRect(0, 0, c.width, c.height);
+          const c = poseCanvasEls.current[i];
+          if (finished && blankTail) {
+            if (c) {
+              c.style.opacity = "1";
+              c.getContext("2d")?.clearRect(0, 0, c.width, c.height);
+            }
+            const t = timeEls.current[i];
+            if (t) t.textContent = formatTime(w.start + w.len);
           } else {
+            // Past the bout window, advance into the real surrounding pose, dimmed.
+            const sessionTime = w.start + elapsed;
+            if (c) c.style.opacity = finished ? "0.4" : "1";
             drawPose(i, sessionTime);
+            const t = timeEls.current[i];
+            if (t) t.textContent = formatTime(sessionTime);
           }
-          const t = timeEls.current[i];
-          if (t) t.textContent = formatTime(sessionTime);
         }
         const ph = playheadEls.current[i];
         if (ph) {
@@ -268,6 +289,7 @@ const EthogramBoutsMontage: FunctionComponent<Props> = ({
     showPose,
     drawOpts,
     offsetSec,
+    blankTail,
   ]);
 
   const rows = Math.ceil(Math.max(1, displayedClips.length) / cols);

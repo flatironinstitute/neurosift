@@ -143,6 +143,9 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
   const [showEdges, setShowEdges] = useState(() => bool("bbEdges", true));
   const [showTrails, setShowTrails] = useState(() => bool("bbTrails", false));
   const [trailSec, setTrailSec] = useState(() => num("bbTrailSec", 1));
+  // Tail fill for clips shorter than the synced cycle: false (default) keeps the
+  // real video rolling dimmed; true blanks the tail to show only the bout.
+  const [blankTail, setBlankTail] = useState(() => bool("bbBlankTail", false));
   const [resetSignal, setResetSignal] = useState(0);
   // Collapse the left sidebar to give the montage + bottom timeline full width.
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -484,6 +487,7 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
     sync("bbEdges", "0", showEdges);
     sync("bbTrails", "1", !showTrails);
     sync("bbTrailSec", String(trailSec), trailSec === 1);
+    sync("bbBlankTail", "1", !blankTail);
     sync("bbOrder", behaviorOrder, behaviorOrder === "mean");
     sync("bbValue", featureColumn || "", !featureColumn);
     sync("bbSort", "1", !sortOn);
@@ -500,6 +504,7 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
     showEdges,
     showTrails,
     trailSec,
+    blankTail,
     behaviorOrder,
     featureColumn,
     sortOn,
@@ -689,6 +694,17 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
             >
               Reset zoom
             </button>
+            <label
+              style={{ whiteSpace: "nowrap", cursor: "pointer" }}
+              title="Off (default): when a clip is shorter than the longest, keep its real video rolling (dimmed) to fill the tail. On: blank the tail so only the bout shows."
+            >
+              <input
+                type="checkbox"
+                checked={blankTail}
+                onChange={(e) => setBlankTail(e.target.checked)}
+              />{" "}
+              blank tails
+            </label>
             {hasPose && (
               <label style={{ whiteSpace: "nowrap", cursor: "pointer" }}>
                 <input
@@ -1236,6 +1252,7 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
                   trailSec={trailSec}
                   resetSignal={resetSignal}
                   cols={cols}
+                  blankTail={blankTail}
                 />
               </div>
               <BoutsTimeline
