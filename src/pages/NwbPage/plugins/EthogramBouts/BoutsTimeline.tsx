@@ -66,7 +66,11 @@ const BoutsTimeline: FunctionComponent<Props> = ({
   const plotW = Math.max(40, width - PAD_LEFT * 2);
   const hasObs = !!(observed && observed.length);
   const trackBlock = hasObs ? TRACK_H + TRACK_GAP : 0;
-  const hasClips = !!(clipMarks && clipMarks.length && selectedLabelId !== null);
+  const hasClips = !!(
+    clipMarks &&
+    clipMarks.length &&
+    selectedLabelId !== null
+  );
   const cols = valueColumn ? [valueColumn] : [];
   const labelBlock = hasClips ? LABEL_H : 0;
   const valuesBlock = hasClips ? cols.length * VALUE_H : 0;

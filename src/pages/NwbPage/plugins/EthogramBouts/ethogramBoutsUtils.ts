@@ -164,7 +164,9 @@ export const buildFeatureScale = (
     .sort((a, b) => a - b);
   if (vals.length === 0) return null;
   const pct = (p: number) =>
-    vals[Math.max(0, Math.min(vals.length - 1, Math.round(p * (vals.length - 1))))];
+    vals[
+      Math.max(0, Math.min(vals.length - 1, Math.round(p * (vals.length - 1))))
+    ];
   let lo = pct(0.05);
   let hi = pct(0.95);
   if (hi <= lo) {

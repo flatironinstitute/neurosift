@@ -895,7 +895,8 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                           ? "#1f3b57"
                           : INK.muted,
                     fontWeight: !poseOnlyMode ? 600 : 400,
-                    cursor: !scanning && noPlayableVideo ? "default" : "pointer",
+                    cursor:
+                      !scanning && noPlayableVideo ? "default" : "pointer",
                   }}
                 >
                   Overlay
@@ -917,8 +918,8 @@ const PoseEstimationView: FunctionComponent<Props> = ({
               </div>
               {pose.is3D && (
                 <span style={{ color: INK.faint, fontSize: FS.small }}>
-                  3D pose: shown on its own; an overlay would not register on a 2D
-                  camera.
+                  3D pose: shown on its own; an overlay would not register on a
+                  2D camera.
                 </span>
               )}
             </div>

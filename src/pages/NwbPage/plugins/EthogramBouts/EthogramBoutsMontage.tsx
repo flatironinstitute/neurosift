@@ -313,19 +313,18 @@ const EthogramBoutsMontage: FunctionComponent<Props> = ({
           alignContent: "start",
         }}
       >
-        {displayedClips.map(
-          ({ bout, label, featureValueText }, index) => (
-            <BoutMontageTile
-              key={`${bout.labelId}-${bout.startTime}-${index}`}
-              size={size}
-              letter={label}
-              subLabel={`@ ${formatTime(bout.startTime)} (${(
-                bout.stopTime - bout.startTime
-              ).toFixed(1)}s)`}
-              color={color}
-              featureName={featureName}
-              featureValueText={featureValueText}
-              hasVideo={hasVideo}
+        {displayedClips.map(({ bout, label, featureValueText }, index) => (
+          <BoutMontageTile
+            key={`${bout.labelId}-${bout.startTime}-${index}`}
+            size={size}
+            letter={label}
+            subLabel={`@ ${formatTime(bout.startTime)} (${(
+              bout.stopTime - bout.startTime
+            ).toFixed(1)}s)`}
+            color={color}
+            featureName={featureName}
+            featureValueText={featureValueText}
+            hasVideo={hasVideo}
             videoUrl={videoUrl}
             resetSignal={resetSignal}
             windowEndFrac={windows[index].windowEndFrac}
@@ -340,12 +339,11 @@ const EthogramBoutsMontage: FunctionComponent<Props> = ({
             setPlayheadEl={(el) => {
               playheadEls.current[index] = el;
             }}
-              setPoseCanvasEl={(el) => {
-                poseCanvasEls.current[index] = el;
-              }}
-            />
-          ),
-        )}
+            setPoseCanvasEl={(el) => {
+              poseCanvasEls.current[index] = el;
+            }}
+          />
+        ))}
       </div>
     );
   }

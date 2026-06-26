@@ -460,7 +460,14 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
       mean: total / bouts.length,
       pct: sessionDur ? (total / sessionDur) * 100 : 0,
     };
-  }, [filteredBouts, selectedLabelId, sessionDur, featureScale, sortOn, sortDir]);
+  }, [
+    filteredBouts,
+    selectedLabelId,
+    sessionDur,
+    featureScale,
+    sortOn,
+    sortDir,
+  ]);
 
   // Persist controls in the URL.
   useEffect(() => {
@@ -509,8 +516,7 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
     );
   if (!data) return null;
 
-  const title =
-    preloaded?.title ?? (path ? path.split("/").pop() || path : "");
+  const title = preloaded?.title ?? (path ? path.split("/").pop() || path : "");
   const cols = Math.max(1, Math.ceil(Math.sqrt(clipCount)));
   const selectedLabel =
     selectedLabelId === null
@@ -543,9 +549,15 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
       }
       if (behaviorOrder === "name") return a.name.localeCompare(b.name);
       if (behaviorOrder === "count")
-        return (summary.get(b.labelId)?.count || 0) - (summary.get(a.labelId)?.count || 0);
+        return (
+          (summary.get(b.labelId)?.count || 0) -
+          (summary.get(a.labelId)?.count || 0)
+        );
       if (behaviorOrder === "total")
-        return (summary.get(b.labelId)?.total || 0) - (summary.get(a.labelId)?.total || 0);
+        return (
+          (summary.get(b.labelId)?.total || 0) -
+          (summary.get(a.labelId)?.total || 0)
+        );
       return meanDur(b.labelId) - meanDur(a.labelId); // "mean" (default)
     });
 
@@ -724,132 +736,203 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
 
           <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
             {!sidebarCollapsed && (
-            <div
-              style={{
-                width: SIDEBAR_W,
-                borderRight: "1px solid #eee",
-                flexShrink: 0,
-                overflowY: "auto",
-                fontSize: 12,
-              }}
-            >
-              {/* Summary (orientation; the old header chips live here now) */}
-              <div
-                style={{ padding: "6px 8px", borderBottom: "1px solid #eee" }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <SectionTitle text="Summary" info={summaryInfo} />
-                  <IconButton
-                    size="small"
-                    onClick={() => setSidebarCollapsed(true)}
-                    title="Collapse panel"
-                    sx={{ p: 0.25 }}
-                  >
-                    <ChevronLeftIcon fontSize="small" />
-                  </IconButton>
-                </div>
-                <div style={{ color: "#444" }}>
-                  {data.bouts.length} bouts · {data.labels.length} behaviors
-                </div>
-                {(data.labelingMethod ||
-                  data.sourceSoftware ||
-                  data.annotator) && (
-                  <div style={{ color: "#888", fontSize: 11 }}>
-                    {[data.labelingMethod, data.sourceSoftware, data.annotator]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </div>
-                )}
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 4,
-                    flexWrap: "wrap",
-                    marginTop: 4,
-                  }}
-                >
-                  <Chip
-                    text={hasVideo ? "video" : "no video"}
-                    muted={!hasVideo}
-                  />
-                  {hasPose && <Chip text="pose" />}
-                  {coverage && (
-                    <Chip
-                      text={
-                        coverage.hasGap
-                          ? `partial · ${coverage.pct.toFixed(0)}% assessed`
-                          : "fully observed"
-                      }
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Behavior ordering: how the selector list below is sorted. */}
               <div
                 style={{
-                  padding: "5px 8px",
-                  borderBottom: "1px solid #eee",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
+                  width: SIDEBAR_W,
+                  borderRight: "1px solid #eee",
+                  flexShrink: 0,
+                  overflowY: "auto",
+                  fontSize: 12,
                 }}
               >
-                <SectionTitle
-                  text="order behaviors"
-                  small
-                  info={
-                    "How the behavior list below is sorted. Mean duration (default) " +
-                    "surfaces the most sustained behaviors first; count and total " +
-                    "rank by how often / how long each occurs; name is alphabetical. " +
-                    "Each kinematic column also ranks behaviors by its per-behavior " +
-                    "mean (highest first), e.g. fastest behaviors by mean mean_speed."
-                  }
-                />
-                <select
-                  value={behaviorOrder}
-                  onChange={(e) => setBehaviorOrder(e.target.value)}
-                  style={{ fontSize: 11 }}
+                {/* Summary (orientation; the old header chips live here now) */}
+                <div
+                  style={{ padding: "6px 8px", borderBottom: "1px solid #eee" }}
                 >
-                  <option value="mean">mean duration</option>
-                  <option value="count">bout count</option>
-                  <option value="total">total duration</option>
-                  <option value="name">name</option>
-                  {numericColumns.map((c) => (
-                    <option key={c} value={c}>
-                      mean {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <SectionTitle text="Summary" info={summaryInfo} />
+                    <IconButton
+                      size="small"
+                      onClick={() => setSidebarCollapsed(true)}
+                      title="Collapse panel"
+                      sx={{ p: 0.25 }}
+                    >
+                      <ChevronLeftIcon fontSize="small" />
+                    </IconButton>
+                  </div>
+                  <div style={{ color: "#444" }}>
+                    {data.bouts.length} bouts · {data.labels.length} behaviors
+                  </div>
+                  {(data.labelingMethod ||
+                    data.sourceSoftware ||
+                    data.annotator) && (
+                    <div style={{ color: "#888", fontSize: 11 }}>
+                      {[
+                        data.labelingMethod,
+                        data.sourceSoftware,
+                        data.annotator,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </div>
+                  )}
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 4,
+                      flexWrap: "wrap",
+                      marginTop: 4,
+                    }}
+                  >
+                    <Chip
+                      text={hasVideo ? "video" : "no video"}
+                      muted={!hasVideo}
+                    />
+                    {hasPose && <Chip text="pose" />}
+                    {coverage && (
+                      <Chip
+                        text={
+                          coverage.hasGap
+                            ? `partial · ${coverage.pct.toFixed(0)}% assessed`
+                            : "fully observed"
+                        }
+                      />
+                    )}
+                  </div>
+                </div>
 
-              {/* Behavior selector */}
-              <div style={{ padding: 6 }}>
-                {visibleLabels.map((l) => {
-                  const selected = l.labelId === selectedLabelId;
-                  return (
-                    <button
-                      key={l.labelId}
-                      onClick={() => setSelectedLabelId(l.labelId)}
+                {/* Behavior ordering: how the selector list below is sorted. */}
+                <div
+                  style={{
+                    padding: "5px 8px",
+                    borderBottom: "1px solid #eee",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                  }}
+                >
+                  <SectionTitle
+                    text="order behaviors"
+                    small
+                    info={
+                      "How the behavior list below is sorted. Mean duration (default) " +
+                      "surfaces the most sustained behaviors first; count and total " +
+                      "rank by how often / how long each occurs; name is alphabetical. " +
+                      "Each kinematic column also ranks behaviors by its per-behavior " +
+                      "mean (highest first), e.g. fastest behaviors by mean mean_speed."
+                    }
+                  />
+                  <select
+                    value={behaviorOrder}
+                    onChange={(e) => setBehaviorOrder(e.target.value)}
+                    style={{ fontSize: 11 }}
+                  >
+                    <option value="mean">mean duration</option>
+                    <option value="count">bout count</option>
+                    <option value="total">total duration</option>
+                    <option value="name">name</option>
+                    {numericColumns.map((c) => (
+                      <option key={c} value={c}>
+                        mean {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Behavior selector */}
+                <div style={{ padding: 6 }}>
+                  {visibleLabels.map((l) => {
+                    const selected = l.labelId === selectedLabelId;
+                    return (
+                      <button
+                        key={l.labelId}
+                        onClick={() => setSelectedLabelId(l.labelId)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          width: "100%",
+                          padding: "3px 6px",
+                          marginBottom: 3,
+                          border: selected
+                            ? "2px solid #333"
+                            : "1px solid #ddd",
+                          borderRadius: 6,
+                          background: selected ? "#f0f0f0" : "#fff",
+                          cursor: "pointer",
+                          fontSize: 12,
+                          textAlign: "left",
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: 3,
+                            background: l.color,
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span
+                          style={{
+                            flex: 1,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {l.name}
+                        </span>
+                        <span
+                          style={{
+                            color: "#999",
+                            fontSize: 11,
+                            whiteSpace: "nowrap",
+                          }}
+                          title={
+                            orderColumn
+                              ? `bouts · mean ${orderColumn}`
+                              : "bouts · mean duration"
+                          }
+                        >
+                          {summary.get(l.labelId)?.count || 0} ·{" "}
+                          {orderColumn && behaviorColMean
+                            ? formatFeatureValue(
+                                behaviorColMean.get(l.labelId) ?? null,
+                              )
+                            : `${meanDur(l.labelId).toFixed(1)}s`}
+                        </span>
+                      </button>
+                    );
+                  })}
+
+                  {/* "observed" legend row: labels the near-black coverage track on
+                    both timelines. Not a behavior, so not selectable. */}
+                  {coverage && (
+                    <div
+                      title={
+                        "The near-black track on the timelines marks the scored " +
+                        "spans (observation_intervals). " +
+                        `${coverage.pct.toFixed(0)}% of the session was assessed` +
+                        (coverage.hasGap ? "." : " (full).")
+                      }
                       style={{
                         display: "flex",
                         alignItems: "center",
                         gap: 8,
                         width: "100%",
                         padding: "3px 6px",
-                        marginBottom: 3,
-                        border: selected ? "2px solid #333" : "1px solid #ddd",
-                        borderRadius: 6,
-                        background: selected ? "#f0f0f0" : "#fff",
-                        cursor: "pointer",
+                        marginTop: 4,
+                        borderTop: "1px solid #eee",
                         fontSize: 12,
-                        textAlign: "left",
+                        color: "#777",
+                        cursor: "default",
                       }}
                     >
                       <span
@@ -857,19 +940,12 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
                           width: 12,
                           height: 12,
                           borderRadius: 3,
-                          background: l.color,
+                          background: OBSERVED_INK,
                           flexShrink: 0,
                         }}
                       />
-                      <span
-                        style={{
-                          flex: 1,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {l.name}
+                      <span style={{ flex: 1, fontStyle: "italic" }}>
+                        observed
                       </span>
                       <span
                         style={{
@@ -877,306 +953,264 @@ const EthogramBoutsView: FunctionComponent<Props> = ({
                           fontSize: 11,
                           whiteSpace: "nowrap",
                         }}
-                        title={
-                          orderColumn
-                            ? `bouts · mean ${orderColumn}`
-                            : "bouts · mean duration"
-                        }
                       >
-                        {summary.get(l.labelId)?.count || 0} ·{" "}
-                        {orderColumn && behaviorColMean
-                          ? formatFeatureValue(
-                              behaviorColMean.get(l.labelId) ?? null,
-                            )
-                          : `${meanDur(l.labelId).toFixed(1)}s`}
+                        {coverage.pct.toFixed(0)}%
                       </span>
-                    </button>
-                  );
-                })}
-
-                {/* "observed" legend row: labels the near-black coverage track on
-                    both timelines. Not a behavior, so not selectable. */}
-                {coverage && (
-                  <div
-                    title={
-                      "The near-black track on the timelines marks the scored " +
-                      "spans (observation_intervals). " +
-                      `${coverage.pct.toFixed(0)}% of the session was assessed` +
-                      (coverage.hasGap ? "." : " (full).")
-                    }
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      width: "100%",
-                      padding: "3px 6px",
-                      marginTop: 4,
-                      borderTop: "1px solid #eee",
-                      fontSize: 12,
-                      color: "#777",
-                      cursor: "default",
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: 3,
-                        background: OBSERVED_INK,
-                        flexShrink: 0,
-                      }}
-                    />
-                    <span style={{ flex: 1, fontStyle: "italic" }}>observed</span>
-                    <span
-                      style={{ color: "#999", fontSize: 11, whiteSpace: "nowrap" }}
-                    >
-                      {coverage.pct.toFixed(0)}%
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Session timeline strip */}
-              <div style={{ padding: 6, borderTop: "1px solid #eee" }}>
-                <SectionTitle
-                  text="session timeline"
-                  small
-                  info={
-                    "One lane per behavior, colored by behavior and ordered by mean " +
-                    "bout duration. Bouts shorter than 'min bout (ms)' are hidden here " +
-                    "and in the montage. Click a lane (or a behavior above) to select " +
-                    "it; the selected lane is highlighted."
-                  }
-                />
-                <BoutsDistributionStrip
-                  width={SIDEBAR_W - 12}
-                  height={clamp(visibleLabels.length * 5 + 6, 44, 160)}
-                  labels={visibleLabels}
-                  bouts={filteredBouts}
-                  domStart={domain.domStart}
-                  domEnd={domain.domEnd}
-                  selectedLabelId={selectedLabelId}
-                  onSelectLabel={setSelectedLabelId}
-                  observed={observed}
-                  fade
-                />
-              </div>
-
-              {/* Selected-behavior stats + bouts table (filtered to selection) */}
-              {selectedStats && selectedLabel && (
-                <div
-                  style={{ padding: "6px 8px", borderTop: "1px solid #eee" }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      fontWeight: 600,
-                      color: "#444",
-                      marginBottom: 2,
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 11,
-                        height: 11,
-                        borderRadius: 3,
-                        background: selectedLabel.color,
-                      }}
-                    />
-                    {selectedLabel.name}
-                  </div>
-                  <div style={{ color: "#888", fontSize: 11, marginBottom: 4 }}>
-                    {selectedStats.count} bouts ·{" "}
-                    {selectedStats.total.toFixed(1)}s total · mean{" "}
-                    {selectedStats.mean.toFixed(1)}s (
-                    {selectedStats.min.toFixed(1)}–
-                    {selectedStats.max.toFixed(1)}s) ·{" "}
-                    {selectedStats.pct.toFixed(1)}% of session
-                  </div>
-                  <div style={{ maxHeight: 180, overflow: "auto" }}>
-                    <table
-                      style={{
-                        borderCollapse: "collapse",
-                        fontSize: 11,
-                        color: "#444",
-                        width: "100%",
-                      }}
-                    >
-                      <thead>
-                        <tr>
-                          <th style={thStyle}></th>
-                          <th
-                            style={{ ...thStyle, cursor: "pointer" }}
-                            onClick={() => setSortOn(false)}
-                            title="Sort by start time"
-                          >
-                            start{!sortOn ? " ↑" : ""}
-                          </th>
-                          <th style={thStyle}>dur (s)</th>
-                          {data.extraColumns.map((c) => {
-                            const sortable = numericColumns.includes(c);
-                            const shown = featureColumn === c;
-                            const sorted = shown && sortOn;
-                            return (
-                              <th
-                                key={c}
-                                style={{
-                                  ...thStyle,
-                                  cursor: sortable ? "pointer" : "default",
-                                  color: shown ? "#2c5aa0" : thStyle.color,
-                                  fontWeight: sorted ? 700 : 600,
-                                }}
-                                onClick={
-                                  sortable
-                                    ? () => {
-                                        if (featureColumn === c && sortOn)
-                                          setSortDir((d) =>
-                                            d === "desc" ? "asc" : "desc",
-                                          );
-                                        else {
-                                          setFeatureColumn(c);
-                                          setSortOn(true);
-                                        }
-                                      }
-                                    : undefined
-                                }
-                                title={
-                                  sortable
-                                    ? "Click to show this value and sort by it"
-                                    : undefined
-                                }
-                              >
-                                {c}
-                                {sorted ? (sortDir === "desc" ? " ↓" : " ↑") : ""}
-                              </th>
-                            );
-                          })}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedStats.bouts
-                          .slice(0, MAX_TABLE_ROWS)
-                          .map((b: Bout, i: number) => {
-                            const letter = clipLetterByStart.get(b.startTime);
-                            return (
-                              <tr
-                                key={i}
-                                style={{
-                                  background: letter ? "#eef3fb" : undefined,
-                                }}
-                              >
-                                <td style={tdStyle}>
-                                  {letter ? (
-                                    <strong style={{ color: "#2c5aa0" }}>
-                                      {letter}
-                                    </strong>
-                                  ) : (
-                                    i + 1
-                                  )}
-                                </td>
-                                <td style={tdStyle}>
-                                  {formatTime(b.startTime)}
-                                </td>
-                                <td style={tdStyle}>
-                                  {(b.stopTime - b.startTime).toFixed(2)}
-                                </td>
-                                {data.extraColumns.map((c) => (
-                                  <td key={c} style={tdStyle}>
-                                    {fmtCell(b.extra?.[c])}
-                                  </td>
-                                ))}
-                              </tr>
-                            );
-                          })}
-                      </tbody>
-                    </table>
-                  </div>
-                  {selectedStats.bouts.length > MAX_TABLE_ROWS && (
-                    <div style={{ color: "#aaa", fontSize: 10, marginTop: 2 }}>
-                      first {MAX_TABLE_ROWS} of {selectedStats.bouts.length}
-                    </div>
-                  )}
-
-                  {/* Value control: pick one numeric column to show. It is the big
-                      number on each tile + a "column = value" line under the
-                      timeline clip letters. Optional sort by it. None by default. */}
-                  {numericColumns.length > 0 && (
-                    <div
-                      style={{
-                        marginTop: 6,
-                        paddingTop: 6,
-                        borderTop: "1px dashed #eee",
-                        display: "flex",
-                        flexWrap: "wrap",
-                        alignItems: "center",
-                        gap: 6,
-                      }}
-                    >
-                      <SectionTitle
-                        text="value"
-                        small
-                        info={
-                          "Pick one numeric column to show. It appears as the big " +
-                          "value on each montage tile and as a 'column = value' line " +
-                          "under the clip letters on the bottom timeline. Tick 'sort' " +
-                          "to order the montage by it. Click a column header in the " +
-                          "table above to pick it here."
-                        }
-                      />
-                      <select
-                        value={featureColumn ?? ""}
-                        onChange={(e) => {
-                          const v = e.target.value || null;
-                          setFeatureColumn(v);
-                          if (!v) setSortOn(false);
-                        }}
-                        style={{ fontSize: 11 }}
-                      >
-                        <option value="">none</option>
-                        {numericColumns.map((c) => (
-                          <option key={c} value={c}>
-                            {c}
-                          </option>
-                        ))}
-                      </select>
-                      {featureColumn && (
-                        <label
-                          style={{
-                            whiteSpace: "nowrap",
-                            cursor: "pointer",
-                            fontSize: 11,
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={sortOn}
-                            onChange={(e) => setSortOn(e.target.checked)}
-                          />{" "}
-                          sort
-                        </label>
-                      )}
-                      {featureColumn && sortOn && (
-                        <button
-                          onClick={() =>
-                            setSortDir((d) => (d === "desc" ? "asc" : "desc"))
-                          }
-                          style={{
-                            cursor: "pointer",
-                            padding: "1px 8px",
-                            fontSize: 11,
-                          }}
-                          title="Toggle sort direction"
-                        >
-                          {sortDir === "desc" ? "highest first" : "lowest first"}
-                        </button>
-                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
+
+                {/* Session timeline strip */}
+                <div style={{ padding: 6, borderTop: "1px solid #eee" }}>
+                  <SectionTitle
+                    text="session timeline"
+                    small
+                    info={
+                      "One lane per behavior, colored by behavior and ordered by mean " +
+                      "bout duration. Bouts shorter than 'min bout (ms)' are hidden here " +
+                      "and in the montage. Click a lane (or a behavior above) to select " +
+                      "it; the selected lane is highlighted."
+                    }
+                  />
+                  <BoutsDistributionStrip
+                    width={SIDEBAR_W - 12}
+                    height={clamp(visibleLabels.length * 5 + 6, 44, 160)}
+                    labels={visibleLabels}
+                    bouts={filteredBouts}
+                    domStart={domain.domStart}
+                    domEnd={domain.domEnd}
+                    selectedLabelId={selectedLabelId}
+                    onSelectLabel={setSelectedLabelId}
+                    observed={observed}
+                    fade
+                  />
+                </div>
+
+                {/* Selected-behavior stats + bouts table (filtered to selection) */}
+                {selectedStats && selectedLabel && (
+                  <div
+                    style={{ padding: "6px 8px", borderTop: "1px solid #eee" }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        fontWeight: 600,
+                        color: "#444",
+                        marginBottom: 2,
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 11,
+                          height: 11,
+                          borderRadius: 3,
+                          background: selectedLabel.color,
+                        }}
+                      />
+                      {selectedLabel.name}
+                    </div>
+                    <div
+                      style={{ color: "#888", fontSize: 11, marginBottom: 4 }}
+                    >
+                      {selectedStats.count} bouts ·{" "}
+                      {selectedStats.total.toFixed(1)}s total · mean{" "}
+                      {selectedStats.mean.toFixed(1)}s (
+                      {selectedStats.min.toFixed(1)}–
+                      {selectedStats.max.toFixed(1)}s) ·{" "}
+                      {selectedStats.pct.toFixed(1)}% of session
+                    </div>
+                    <div style={{ maxHeight: 180, overflow: "auto" }}>
+                      <table
+                        style={{
+                          borderCollapse: "collapse",
+                          fontSize: 11,
+                          color: "#444",
+                          width: "100%",
+                        }}
+                      >
+                        <thead>
+                          <tr>
+                            <th style={thStyle}></th>
+                            <th
+                              style={{ ...thStyle, cursor: "pointer" }}
+                              onClick={() => setSortOn(false)}
+                              title="Sort by start time"
+                            >
+                              start{!sortOn ? " ↑" : ""}
+                            </th>
+                            <th style={thStyle}>dur (s)</th>
+                            {data.extraColumns.map((c) => {
+                              const sortable = numericColumns.includes(c);
+                              const shown = featureColumn === c;
+                              const sorted = shown && sortOn;
+                              return (
+                                <th
+                                  key={c}
+                                  style={{
+                                    ...thStyle,
+                                    cursor: sortable ? "pointer" : "default",
+                                    color: shown ? "#2c5aa0" : thStyle.color,
+                                    fontWeight: sorted ? 700 : 600,
+                                  }}
+                                  onClick={
+                                    sortable
+                                      ? () => {
+                                          if (featureColumn === c && sortOn)
+                                            setSortDir((d) =>
+                                              d === "desc" ? "asc" : "desc",
+                                            );
+                                          else {
+                                            setFeatureColumn(c);
+                                            setSortOn(true);
+                                          }
+                                        }
+                                      : undefined
+                                  }
+                                  title={
+                                    sortable
+                                      ? "Click to show this value and sort by it"
+                                      : undefined
+                                  }
+                                >
+                                  {c}
+                                  {sorted
+                                    ? sortDir === "desc"
+                                      ? " ↓"
+                                      : " ↑"
+                                    : ""}
+                                </th>
+                              );
+                            })}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedStats.bouts
+                            .slice(0, MAX_TABLE_ROWS)
+                            .map((b: Bout, i: number) => {
+                              const letter = clipLetterByStart.get(b.startTime);
+                              return (
+                                <tr
+                                  key={i}
+                                  style={{
+                                    background: letter ? "#eef3fb" : undefined,
+                                  }}
+                                >
+                                  <td style={tdStyle}>
+                                    {letter ? (
+                                      <strong style={{ color: "#2c5aa0" }}>
+                                        {letter}
+                                      </strong>
+                                    ) : (
+                                      i + 1
+                                    )}
+                                  </td>
+                                  <td style={tdStyle}>
+                                    {formatTime(b.startTime)}
+                                  </td>
+                                  <td style={tdStyle}>
+                                    {(b.stopTime - b.startTime).toFixed(2)}
+                                  </td>
+                                  {data.extraColumns.map((c) => (
+                                    <td key={c} style={tdStyle}>
+                                      {fmtCell(b.extra?.[c])}
+                                    </td>
+                                  ))}
+                                </tr>
+                              );
+                            })}
+                        </tbody>
+                      </table>
+                    </div>
+                    {selectedStats.bouts.length > MAX_TABLE_ROWS && (
+                      <div
+                        style={{ color: "#aaa", fontSize: 10, marginTop: 2 }}
+                      >
+                        first {MAX_TABLE_ROWS} of {selectedStats.bouts.length}
+                      </div>
+                    )}
+
+                    {/* Value control: pick one numeric column to show. It is the big
+                      number on each tile + a "column = value" line under the
+                      timeline clip letters. Optional sort by it. None by default. */}
+                    {numericColumns.length > 0 && (
+                      <div
+                        style={{
+                          marginTop: 6,
+                          paddingTop: 6,
+                          borderTop: "1px dashed #eee",
+                          display: "flex",
+                          flexWrap: "wrap",
+                          alignItems: "center",
+                          gap: 6,
+                        }}
+                      >
+                        <SectionTitle
+                          text="value"
+                          small
+                          info={
+                            "Pick one numeric column to show. It appears as the big " +
+                            "value on each montage tile and as a 'column = value' line " +
+                            "under the clip letters on the bottom timeline. Tick 'sort' " +
+                            "to order the montage by it. Click a column header in the " +
+                            "table above to pick it here."
+                          }
+                        />
+                        <select
+                          value={featureColumn ?? ""}
+                          onChange={(e) => {
+                            const v = e.target.value || null;
+                            setFeatureColumn(v);
+                            if (!v) setSortOn(false);
+                          }}
+                          style={{ fontSize: 11 }}
+                        >
+                          <option value="">none</option>
+                          {numericColumns.map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
+                        </select>
+                        {featureColumn && (
+                          <label
+                            style={{
+                              whiteSpace: "nowrap",
+                              cursor: "pointer",
+                              fontSize: 11,
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={sortOn}
+                              onChange={(e) => setSortOn(e.target.checked)}
+                            />{" "}
+                            sort
+                          </label>
+                        )}
+                        {featureColumn && sortOn && (
+                          <button
+                            onClick={() =>
+                              setSortDir((d) => (d === "desc" ? "asc" : "desc"))
+                            }
+                            style={{
+                              cursor: "pointer",
+                              padding: "1px 8px",
+                              fontSize: 11,
+                            }}
+                            title="Toggle sort direction"
+                          >
+                            {sortDir === "desc"
+                              ? "highest first"
+                              : "lowest first"}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Right column: montage on top, the bottom timeline beneath it, so

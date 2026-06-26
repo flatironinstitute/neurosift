@@ -66,7 +66,10 @@ const VAMEView: FunctionComponent<Props> = ({
 
         // Run-length-encode the per-frame motif labels into bouts, then express
         // them in the EthogramBouts shape (motif id -> labelId, "Motif N" name).
-        const motifBouts = runLengthEncodeMotifs(raw as ArrayLike<number>, info);
+        const motifBouts = runLengthEncodeMotifs(
+          raw as ArrayLike<number>,
+          info,
+        );
         const distinct = Array.from(
           new Set(motifBouts.map((b) => b.motif)),
         ).sort((a, b) => a - b);
