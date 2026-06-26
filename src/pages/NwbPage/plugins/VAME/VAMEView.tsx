@@ -1,0 +1,181 @@
+import { getHdf5DatasetData, getRedirectUrl } from "@hdf5Interface";
+import { FunctionComponent, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import {
+  getSeriesTimeRange,
+  resolveExternalVideoUrl,
+} from "../../externalVideoUtils";
+import getAuthorizationHeaderForUrl from "../../../util/getAuthorizationHeaderForUrl";
+import EthogramBoutsView, {
+  PreloadedBouts,
+} from "../EthogramBouts/EthogramBoutsView";
+import {
+  EthogramBoutsData,
+  Bout,
+  BoutLabel,
+  buildBoutColorMap,
+} from "../EthogramBouts/ethogramBoutsUtils";
+import {
+  getPoseExtent,
+  loadPoseEstimation,
+  PoseData,
+  SourceRect,
+} from "../PoseEstimation/poseEstimationUtils";
+import {
+  findBehavioralVideoSeries,
+  findMotifSeries,
+  findPoseEstimationPath,
+  runLengthEncodeMotifs,
+} from "./vameUtils";
+
+type Props = {
+  width?: number;
+  height?: number;
+  nwbUrl: string;
+  path: string;
+};
+
+// VAME is now a thin ADAPTER over the EthogramBouts viewer: it reads the
+// per-frame ndx-vame MotifSeries, run-length-encodes it into bouts in the
+// browser (no NWB change), wraps that as a EthogramBouts table (motif id =
+// label id, "Motif N" names), resolves the behavioral video and the linked pose
+// through the SHARED loaders, and hands the whole thing to EthogramBoutsView as
+// a preloaded table. So the VAME view IS the EthogramBouts view, fed by RLE
+// rather than a stored table. No kinematics are computed here (the table is
+// passed as-is), so VAME has no per-bout value columns.
+const VAMEView: FunctionComponent<Props> = ({
+  width = 900,
+  height = 600,
+  nwbUrl,
+  path,
+}) => {
+  const [searchParams] = useSearchParams();
+  const [preloaded, setPreloaded] = useState<PreloadedBouts>();
+  const [error, setError] = useState<string>();
+
+  useEffect(() => {
+    let canceled = false;
+    setPreloaded(undefined);
+    setError(undefined);
+    (async () => {
+      try {
+        const info = await findMotifSeries(nwbUrl, path);
+        if (!info) throw new Error("No MotifSeries found in this VAMEProject.");
+        const raw = await getHdf5DatasetData(nwbUrl, `${info.path}/data`, {});
+        if (!raw) throw new Error("Could not load MotifSeries data.");
+
+        // Run-length-encode the per-frame motif labels into bouts, then express
+        // them in the EthogramBouts shape (motif id -> labelId, "Motif N" name).
+        const motifBouts = runLengthEncodeMotifs(
+          raw as ArrayLike<number>,
+          info,
+        );
+        const distinct = Array.from(
+          new Set(motifBouts.map((b) => b.motif)),
+        ).sort((a, b) => a - b);
+        const colorMap = buildBoutColorMap(distinct);
+        const labels: BoutLabel[] = distinct.map((m) => ({
+          labelId: m,
+          name: `Motif ${m}`,
+          color: colorMap.get(m) ?? "#888",
+        }));
+        const bouts: Bout[] = motifBouts.map((b) => ({
+          startTime: b.startTime,
+          stopTime: b.stopTime,
+          labelId: b.motif,
+          label: `Motif ${b.motif}`,
+        }));
+        const data: EthogramBoutsData = {
+          bouts,
+          labels,
+          labelingMethod: "automated",
+          sourceSoftware: "VAME",
+          extraColumns: [],
+        };
+
+        // Behavioral video (best-effort; some VAME exports have none).
+        let hasVideo = false;
+        let videoUrl: string | undefined;
+        let videoStartTime = 0;
+        const videoPath = await findBehavioralVideoSeries(nwbUrl);
+        if (videoPath) {
+          try {
+            const range = await getSeriesTimeRange(nwbUrl, videoPath);
+            const downloadUrl = await resolveExternalVideoUrl(
+              nwbUrl,
+              videoPath,
+              searchParams.get("dandisetId"),
+              searchParams.get("dandisetVersion") || "draft",
+            );
+            // A native <video> cannot send the DANDI auth header, so for an
+            // embargoed asset the /download/ URL 401s. Pre-resolve the presigned
+            // S3 URL (with auth) and play that; a no-op for public assets.
+            const auth = getAuthorizationHeaderForUrl(downloadUrl);
+            const redirected = await getRedirectUrl(
+              downloadUrl,
+              auth ? { Authorization: auth } : undefined,
+            );
+            hasVideo = true;
+            videoUrl = redirected || downloadUrl;
+            videoStartTime = range.startTime || 0;
+          } catch {
+            /* leave hasVideo false (pose-only / ethogram-only) */
+          }
+        }
+
+        // Linked pose, loaded through the shared pose machinery.
+        let poseData: PoseData | null = null;
+        let poseSrcExtent: SourceRect | null = null;
+        const posePath = await findPoseEstimationPath(nwbUrl, path);
+        if (posePath) {
+          const pose = await loadPoseEstimation(nwbUrl, posePath);
+          if (pose) {
+            poseData = pose;
+            poseSrcExtent = getPoseExtent(pose);
+          }
+        }
+
+        if (canceled) return;
+        setPreloaded({
+          title: path.split("/").pop() || path,
+          data,
+          observed: null,
+          hasVideo,
+          videoUrl,
+          videoStartTime,
+          poseData,
+          poseSrcExtent,
+        });
+      } catch (err) {
+        if (!canceled) {
+          setError(err instanceof Error ? err.message : String(err));
+        }
+      }
+    })();
+    return () => {
+      canceled = true;
+    };
+  }, [nwbUrl, path, searchParams]);
+
+  if (error) {
+    return (
+      <div style={{ padding: 20, color: "#a33" }}>
+        Unable to render VAME view: {error}
+      </div>
+    );
+  }
+  if (!preloaded) {
+    return <div style={{ padding: 20 }}>Loading VAME data...</div>;
+  }
+  return (
+    <EthogramBoutsView
+      width={width}
+      height={height}
+      nwbUrl={nwbUrl}
+      path={path}
+      preloaded={preloaded}
+    />
+  );
+};
+
+export default VAMEView;

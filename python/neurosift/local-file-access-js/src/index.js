@@ -12,8 +12,15 @@ console.info('Serving files in', dir)
 // Allowed CORS origins. Exact-match list plus a pattern for Cloudflare Pages
 // preview deploys of this repo (every branch is published as
 // <branch>.neurosift.pages.dev), so `view-nwb --neurosift-url <preview>` works
-// without an allowlist edit per branch.
-const allowedOrigins = ['https://neurosift.app', 'https://flatironinstitute.github.io', 'http://localhost:3000', 'http://localhost:4200']
+// without an allowlist edit per branch. The origin the user actually pointed at
+// (NEUROSIFT_ORIGIN, set by the CLI from --neurosift-url) and any comma-separated
+// ALLOWED_ORIGINS are merged in, so a local dev build (e.g. localhost:5173) works.
+const baseAllowedOrigins = ['https://neurosift.app', 'https://flatironinstitute.github.io', 'http://localhost:3000', 'http://localhost:4200']
+const envOrigins = [
+    process.env.NEUROSIFT_ORIGIN,
+    ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : []),
+].map((s) => (s || '').trim()).filter(Boolean)
+const allowedOrigins = [...new Set([...baseAllowedOrigins, ...envOrigins])]
 const allowedOriginPatterns = [/^https:\/\/[a-z0-9-]+\.neurosift\.pages\.dev$/]
 app.use((req, resp, next) => {
     const origin = req.get('origin')

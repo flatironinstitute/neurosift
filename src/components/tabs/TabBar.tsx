@@ -105,6 +105,12 @@ const tabStyle: SxProps = {
   textTransform: "none",
 };
 
+// Spacer between fixed-tab groups. It must be a component (not a raw <div>) so
+// the props MUI Tabs injects into its children (fullWidth, textColor,
+// selectionFollowsFocus, indicator, ...) are absorbed here rather than leaking
+// onto a DOM element, which otherwise triggers React "unrecognized prop" warnings.
+const TabGroupSpacer = () => <div style={{ flex: 1 }} />;
+
 export const TabBar = <T extends BaseTab>({
   tabs,
   activeTabId,
@@ -126,9 +132,7 @@ export const TabBar = <T extends BaseTab>({
     let lastGroup: string | undefined;
     fixedTabs.forEach((ft, i) => {
       if (i > 0 && ft.group !== lastGroup) {
-        fixedTabElements.push(
-          <div key={`spacer-${ft.id}`} style={{ flex: 1 }} />,
-        );
+        fixedTabElements.push(<TabGroupSpacer key={`spacer-${ft.id}`} />);
       }
       fixedTabElements.push(<Tab key={ft.id} label={ft.label} value={ft.id} />);
       lastGroup = ft.group;

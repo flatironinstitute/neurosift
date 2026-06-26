@@ -13,6 +13,10 @@ export const timeIntervalsPlugin: NwbObjectViewPlugin = {
     const isTimeIntervals = [
       "TimeIntervals",
       "OptogeneticPulsesTable",
+      // EthogramBouts (ndx-ethogram) is a TimeIntervals subclass, so
+      // it renders fine here as a fallback. The dedicated EthogramBouts plugin
+      // is registered before this one and wins as the default view.
+      "EthogramBouts",
     ].includes(nt);
     if (!isTimeIntervals) return false;
 

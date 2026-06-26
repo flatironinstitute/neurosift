@@ -13,6 +13,8 @@ import {
   planeSegmentationPlugin,
 } from "./ImageSegmentation";
 import { timeIntervalsPlugin } from "./TimeIntervals";
+import { ethogramBoutsPlugin } from "./EthogramBouts";
+import { poseEstimationPlugin } from "./PoseEstimation";
 import { trialAlignedSeriesPlugin } from "./TrialAlignedSeries";
 import { pythonScriptPlugin } from "./PythonScript";
 // import spikeDensityPlugin from "./SpikeDensity";
@@ -20,6 +22,7 @@ import { intervalSeriesPlugin } from "./IntervalSeries";
 import { eventsPlugin } from "./Events";
 import { imageSeriesMp4Plugin } from "./ImageSeriesMp4";
 import { externalFileVideoPlugin } from "./ExternalFileVideo/index";
+import { vamePlugin } from "./VAME";
 import { NwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
 import {
   FigpackPoseEstimationPlugin,
@@ -33,6 +36,9 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   intervalSeriesPlugin,
 
   behavioralEventsPlugin,
+  // Before dynamicTablePlugin and timeIntervalsPlugin so the dedicated
+  // video-synced ethogram wins over the generic table/interval views.
+  ethogramBoutsPlugin,
   dynamicTablePlugin,
   twoPhotonSeriesPlugin,
   spatialSeriesPlugin,
@@ -44,6 +50,8 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   timeIntervalsPlugin,
   trialAlignedSeriesPlugin,
 
+  vamePlugin,
+  poseEstimationPlugin,
   externalFileVideoPlugin,
   imageSeriesMp4Plugin,
 

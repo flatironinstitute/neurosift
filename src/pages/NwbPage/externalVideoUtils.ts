@@ -158,9 +158,7 @@ export const resolveExternalVideoFromFile = async (
   }
 
   if (!isDandiAssetUrl(nwbUrl)) {
-    throw new Error(
-      "Only absolute URLs and DANDI-hosted relative external_file paths are supported in this first version.",
-    );
+    return new URL(externalFile.replace(/\\/g, "/"), nwbUrl).href;
   }
 
   if (!dandisetId) {
