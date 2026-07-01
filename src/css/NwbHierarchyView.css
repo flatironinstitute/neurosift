@@ -39,6 +39,17 @@
     font-size: 0.8rem;
 }
 
+/* Neurodata type with an interactive data view */
+.neurodata-type-interactive {
+    color: #1565c0;
+    font-weight: 500;
+}
+
+/* Neurodata type with only the generic fallback view */
+.neurodata-type-generic {
+    color: #aaa;
+}
+
 /* Checkbox styling */
 .nwb-hierarchy-table input[type="checkbox"] {
     margin: 0;
