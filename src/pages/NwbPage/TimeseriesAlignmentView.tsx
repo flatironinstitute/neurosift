@@ -2,6 +2,7 @@
 import { SmallIconButton } from "@fi-sci/misc";
 import {
   FunctionComponent,
+  useCallback,
   useEffect,
   useMemo,
   useReducer,
@@ -122,11 +123,24 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
     { timeseries: [] },
   );
   const [loadingMessage, setLoadingMessage] = useState("");
+  // Paths the user has toggled off. Hidden items are dimmed, their bar is not
+  // drawn, and they are excluded from the overall start/end time range so the
+  // remaining items rescale to fill the width.
+  const [hiddenPaths, setHiddenPaths] = useState<Set<string>>(new Set());
+  const toggleVisible = useCallback((path: string) => {
+    setHiddenPaths((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (!isExpanded) return;
     if (!typeSets) return;
     timeseriesAlignmentDispatch({ type: "reset" });
+    setHiddenPaths(new Set());
     setLoadingMessage("Loading...");
     let canceled = false;
     const handleGroup = async (path: string) => {
@@ -332,18 +346,47 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
     let startTime: number | undefined = undefined;
     let endTime: number | undefined = undefined;
     for (const item of timeseriesAlignment.timeseries) {
+      if (hiddenPaths.has(item.path)) continue;
       if (startTime === undefined || item.startTime < startTime)
         startTime = item.startTime;
       if (endTime === undefined || item.endTime > endTime)
         endTime = item.endTime;
     }
     return { startTime, endTime };
-  }, [timeseriesAlignment]);
+  }, [timeseriesAlignment, hiddenPaths]);
+
+  const items = timeseriesAlignment.timeseries;
+  const anyHidden = items.some((item) => hiddenPaths.has(item.path));
 
   return (
     <div style={{ position: "relative", width }}>
       {loadingMessage && <div>{loadingMessage}</div>}
-      {timeseriesAlignment.timeseries.map((item) => (
+      {items.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginTop: 12,
+            marginBottom: 10,
+            fontSize: 13,
+          }}
+        >
+          <button
+            onClick={() =>
+              setHiddenPaths(
+                anyHidden ? new Set() : new Set(items.map((item) => item.path)),
+              )
+            }
+          >
+            {anyHidden ? "Show all" : "Hide all"}
+          </button>
+          <span style={{ color: "#666" }}>
+            {items.length - hiddenPaths.size} of {items.length} shown
+          </span>
+        </div>
+      )}
+      {items.map((item) => (
         <div key={item.path} title={item.neurodataType}>
           <TAItemView
             key={item.path}
@@ -351,6 +394,8 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
             startTime={startTime}
             endTime={endTime}
             width={width - 4}
+            visible={!hiddenPaths.has(item.path)}
+            onToggleVisible={toggleVisible}
             onOpenTimeseriesItem={onOpenTimeseriesItem}
           />
         </div>
@@ -364,6 +409,8 @@ type TAItemViewProps = {
   startTime?: number;
   endTime?: number;
   width: number;
+  visible: boolean;
+  onToggleVisible: (path: string) => void;
   onOpenTimeseriesItem: (path: string) => void;
 };
 
@@ -388,7 +435,7 @@ const getColorForNeurodataType = (nt: string) => {
     case "AbstractFeatureSeries":
       return "yellow";
     case "AnnotationSeries":
-      return "cyan";
+      return "slateblue";
     case "IntervalSeries":
       return "magenta";
     case "DecompositionSeries":
@@ -413,11 +460,13 @@ const TAItemView: FunctionComponent<TAItemViewProps> = ({
   startTime,
   endTime,
   width,
+  visible,
+  onToggleVisible,
   onOpenTimeseriesItem,
 }) => {
-  const h1 = 18;
-  const h2 = 7;
-  const h3 = 15;
+  const barHeight = 8;
+  const gapAboveBar = 5; // space between the text and the bar
+  const gapBelowBar = 14; // space separating this item from the next
   const rawP1 =
     ((item.startTime - (startTime || 0)) /
       ((endTime || 1) - (startTime || 0))) *
@@ -436,30 +485,59 @@ const TAItemView: FunctionComponent<TAItemViewProps> = ({
   if (typeof item.endTime !== "number")
     return <div>item.endTime is not a number</div>;
   return (
-    <div style={{ position: "relative", width, height: h1 + h2 + h3 }}>
-      <div
-        style={{ position: "absolute", width, height: h1, color, fontSize: 14 }}
-      >
-        <SmallIconButton
-          icon={<FaEye />}
-          onClick={() => {
-            onOpenTimeseriesItem(item.path);
-          }}
-        />
-        &nbsp;
-        {item.path} ({item.neurodataType}) [{item.startTime.toFixed(1)} -{" "}
-        {item.endTime.toFixed(1)} sec]
-      </div>
+    <div style={{ width, marginBottom: gapBelowBar }}>
+      {/* Text in normal flow so it can wrap to multiple lines without
+          overlapping the bar, which is rendered below it */}
       <div
         style={{
-          position: "absolute",
-          left: p1,
-          width: Math.max(p2 - p1, 2),
-          height: h2,
-          top: h1,
-          background: color,
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 4,
+          color: visible ? color : "#999",
+          fontSize: 14,
         }}
-      />
+      >
+        <input
+          type="checkbox"
+          checked={visible}
+          onChange={() => onToggleVisible(item.path)}
+          title="Toggle this item in the alignment view"
+          style={{ marginTop: 3, cursor: "pointer", flexShrink: 0 }}
+        />
+        <span style={{ flexShrink: 0 }} title="Open this item">
+          <SmallIconButton
+            icon={<FaEye />}
+            onClick={() => {
+              onOpenTimeseriesItem(item.path);
+            }}
+          />
+        </span>
+        <span>
+          {item.path} ({item.neurodataType}) [{item.startTime.toFixed(1)} -{" "}
+          {item.endTime.toFixed(1)} sec]
+        </span>
+      </div>
+      {visible && (
+        <div
+          style={{
+            position: "relative",
+            width,
+            height: barHeight,
+            marginTop: gapAboveBar,
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              left: p1,
+              width: Math.max(p2 - p1, 2),
+              height: barHeight,
+              background: color,
+              borderRadius: 2,
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };
