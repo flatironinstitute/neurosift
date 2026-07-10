@@ -1,0 +1,24 @@
+[Unit]
+Description=Neurosift DANDI-index job runner (PubNub script executor for chat.neurosift.app)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# --- EDIT THESE for your droplet ---
+User=neurosift
+WorkingDirectory=/home/neurosift/neurosift/python/dandi-index/dandi-index-query-job-runner
+# Absolute path to node. With a NodeSource system install this is /usr/bin/node.
+# (systemd does NOT source nvm/conda, so a version-manager node must be given by
+# its absolute path here, e.g. /home/neurosift/.nvm/versions/node/vXX/bin/node.)
+ExecStart=/usr/bin/node dist/index.js
+# -----------------------------------
+
+# Env (PUBNUB_*, OPENAI_API_KEY) is loaded by the app from the .env file in
+# WorkingDirectory via dotenv, so no EnvironmentFile is needed here.
+Restart=always
+RestartSec=5
+# Logs go to the journal: journalctl -u neurosift-job-runner -f
+
+[Install]
+WantedBy=multi-user.target
