@@ -10,37 +10,43 @@ This directory holds the artifacts for running it as an always-on systemd
 service on a fresh Ubuntu droplet, with cron-refreshed index data. It supersedes
 the older `../instructions.txt` (which used tmux).
 
-## 1. Droplet + user
+**Privilege model:** system packages and the systemd service are installed as
+**root**; the app files, index data, and the running service belong to an
+unprivileged **`neurosift`** user, which never needs sudo. Verified on Ubuntu
+24.04 (x86_64).
 
-Create an Ubuntu 24.04 droplet (the basic $6/mo tier is plenty). Then, as root:
+## 1. Droplet
+
+Create an Ubuntu 24.04 (LTS) x86_64 droplet. The basic tier works; more RAM
+gives headroom for the optional `--assets` data build. SSH-key auth is
+preferred, but password + the DigitalOcean web console is fine. Log in as root.
+
+```bash
+apt-get update && apt-get -y upgrade
+```
+
+## 2. (root) System packages: Node, Python, git
+
+Node system-wide via NodeSource, so systemd finds it at `/usr/bin/node`:
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt-get install -y nodejs git python3-venv
+node -v && which node   # expect v20.x at /usr/bin/node
+```
+
+## 3. (root) Create the unprivileged service user
 
 ```bash
 adduser --disabled-password --gecos "" neurosift
-usermod -aG sudo neurosift
 ```
 
-Do the rest as `neurosift` (`su - neurosift`).
+No sudo group needed — root handles everything privileged below.
 
-## 2. Install Node (system-wide, so systemd finds it at /usr/bin/node)
-
-```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
-node -v   # expect v20.x -> /usr/bin/node
-```
-
-## 3. Install Python + data-build deps
+## 4. (as neurosift) Clone, build, configure
 
 ```bash
-sudo apt-get install -y python3-venv
-python3 -m venv ~/neurosift-venv
-~/neurosift-venv/bin/pip install --upgrade pip
-~/neurosift-venv/bin/pip install openai requests h5py lindi   # add pynwb remfile for --assets
-```
-
-## 4. Clone and build the runner
-
-```bash
+su - neurosift
 git clone https://github.com/flatironinstitute/neurosift ~/neurosift
 cd ~/neurosift/python/dandi-index/dandi-index-query-job-runner
 npm install
@@ -55,53 +61,58 @@ PUBNUB_SUBSCRIBE_KEY="sub-c-..."
 OPENAI_API_KEY="sk-..."
 ```
 
-## 5. Build the initial index data
+## 5. (as neurosift) Python env + initial index data
 
 ```bash
+python3 -m venv ~/neurosift-venv
+~/neurosift-venv/bin/pip install --upgrade pip
+~/neurosift-venv/bin/pip install openai requests h5py lindi   # add pynwb remfile for --assets
+
 cd ~/neurosift/python/dandi-index
 ~/neurosift-venv/bin/python scripts/update_data.py               # base (~2-3 min, 600+ dandisets)
 ~/neurosift-venv/bin/python scripts/update_data.py --embeddings  # optional: enables semanticSortDandisets
 ~/neurosift-venv/bin/python scripts/update_data.py --assets      # optional: slow, per-asset NWB metadata
 ```
 
-## 6. Install the systemd service
+Then return to root: `exit`.
+
+## 6. (root) Install the systemd service
 
 ```bash
-# Edit User / WorkingDirectory / ExecStart in the unit if your username or paths differ:
-sudo cp ~/neurosift/python/dandi-index/deploy/neurosift-job-runner.service \
-        /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now neurosift-job-runner
-systemctl status neurosift-job-runner
+# Edit User / WorkingDirectory / ExecStart in the unit only if your username or
+# paths differ from the defaults (neurosift, /usr/bin/node):
+cp /home/neurosift/neurosift/python/dandi-index/deploy/neurosift-job-runner.service \
+   /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now neurosift-job-runner
+systemctl status neurosift-job-runner --no-pager
 journalctl -u neurosift-job-runner -f    # expect "Job runner started ... PNConnectedCategory"
 ```
 
 `Restart=always` + `enable` means it comes back after crashes and reboots — the
 thing the old tmux setup lacked.
 
-## 7. Cron the data refresh
+## 7. (as neurosift) Cron the data refresh
 
-The runner picks up refreshed data with no restart. Make the wrapper executable
-and add crontab entries:
+The runner picks up refreshed data with no restart. As the `neurosift` user
+(`su - neurosift`), install the entries non-interactively (a single line, which
+pastes reliably into the DigitalOcean web console — unlike `crontab -e` or
+backslash-continued blocks):
 
 ```bash
-chmod +x ~/neurosift/python/dandi-index/deploy/update-index-data.sh
-crontab -e
+printf '%s\n%s\n' '0 */6 * * * /home/neurosift/neurosift/python/dandi-index/deploy/update-index-data.sh >> ~/update-index-data.log 2>&1' '30 4 * * * /home/neurosift/neurosift/python/dandi-index/deploy/update-index-data.sh --embeddings >> ~/update-index-data.log 2>&1' | crontab -
+crontab -l
 ```
 
-```cron
-# Base refresh every 6 hours (update_data.py self-skips work that is still fresh)
-0 */6 * * * /home/neurosift/neurosift/python/dandi-index/deploy/update-index-data.sh >> ~/update-index-data.log 2>&1
-# Embeddings once a day
-30 4 * * *  /home/neurosift/neurosift/python/dandi-index/deploy/update-index-data.sh --embeddings >> ~/update-index-data.log 2>&1
-```
+That refreshes the base index every 6 hours (`update_data.py` self-skips work
+that is still fresh) and embeddings daily at 04:30 UTC. The wrapper uses
+`~/neurosift-venv/bin/python` by default; override with `DANDI_INDEX_PYTHON`.
 
 ## Updating the runner code later
 
 ```bash
-cd ~/neurosift && git pull
-cd python/dandi-index/dandi-index-query-job-runner && npm install && npm run build
-sudo systemctl restart neurosift-job-runner
+sudo -u neurosift bash -c 'cd ~/neurosift && git pull && cd python/dandi-index/dandi-index-query-job-runner && npm install && npm run build'
+systemctl restart neurosift-job-runner
 ```
 
 ## Sanity check
