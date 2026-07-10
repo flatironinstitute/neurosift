@@ -16,6 +16,14 @@ set -euo pipefail
 # cd to <repo>/python/dandi-index (this script lives in deploy/ one level down)
 cd "$(dirname "$(readlink -f "$0")")/.."
 
+# The embeddings build reads OPENAI_API_KEY from the environment. Load it (and
+# the PubNub keys) from the runner's .env so this works under cron, which does
+# NOT source ~/.bashrc. Harmless for the base/--assets refreshes.
+ENV_FILE="dandi-index-query-job-runner/.env"
+if [ -f "$ENV_FILE" ]; then
+  set -a; . "./$ENV_FILE"; set +a
+fi
+
 PYTHON="${DANDI_INDEX_PYTHON:-$HOME/neurosift-venv/bin/python}"
 
 echo "[$(date -u +%FT%TZ)] update-index-data.sh $* (python=$PYTHON, cwd=$(pwd))"
