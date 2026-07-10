@@ -1,8 +1,7 @@
-import { config } from 'dotenv';
+// Load environment variables from .env file BEFORE importing ./jobRunner,
+// which transitively constructs the OpenAI client at module-load time.
+import 'dotenv/config';
 import { JobRunner } from './jobRunner';
-
-// Load environment variables from .env file
-config();
 
 const {
   PUBNUB_SUBSCRIBE_KEY,
