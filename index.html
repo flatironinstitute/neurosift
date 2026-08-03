@@ -5,6 +5,29 @@
     <link rel="icon" type="image/png" href="/neurosift-logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Neurosift</title>
+    <script>
+      // Restores the real path/query after the GitHub Pages 404 redirect
+      // (see devel/gh-pages-root/404.html) bounces a deep link here. Must
+      // run before React Router mounts. No-op outside of that redirect
+      // (e.g. production, or any host with real SPA fallback support).
+      // Adapted from https://github.com/rafgraph/spa-github-pages
+      (function (l) {
+        if (l.search[1] === "/") {
+          var decoded = l.search
+            .slice(1)
+            .split("&")
+            .map(function (s) {
+              return s.replace(/~and~/g, "&");
+            })
+            .join("?");
+          window.history.replaceState(
+            null,
+            "",
+            l.pathname.slice(0, -1) + decoded + l.hash,
+          );
+        }
+      })(window.location);
+    </script>
   </head>
   <body>
     <div id="root"></div>

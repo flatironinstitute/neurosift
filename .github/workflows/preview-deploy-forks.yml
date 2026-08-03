@@ -1,0 +1,155 @@
+name: Preview Deploy for Forks (GitHub Pages)
+
+# Manually-triggered preview deploy to GitHub Pages, published under
+# previews/<branch-slug>/. This is workflow_dispatch only (not
+# `on: pull_request`) because pull_request-triggered workflows on a fork PR
+# don't get write access to secrets or a write-scoped GITHUB_TOKEN against
+# the upstream repo, so they can't push a preview build anywhere the
+# upstream repo hosts it. Non-core contributors instead run this manually,
+# from their own fork, to publish the preview to their own fork's Pages
+# site.
+#
+# ---------------------------------------------------------------------------
+# One-time setup, in YOUR FORK (not upstream):
+#
+#   1. Settings -> Actions -> General -> Workflow permissions:
+#      select "Read and write permissions". This lets the workflow push the
+#      build to the gh-pages branch.
+#   2. Settings -> Pages -> Source: "Deploy from a branch" -> Branch:
+#      gh-pages / (root). The gh-pages branch is created automatically the
+#      first time this workflow runs, so you may need to come back and pick
+#      it after that first run if it isn't selectable yet.
+#   3. Actions tab -> "Preview Deploy for Forks (GitHub Pages)" -> Run workflow ->
+#      pick the branch you want to preview and run it. No inputs needed -
+#      the preview path is derived from the branch name.
+#   4. Your preview is served at:
+#      https://<your-username>.github.io/<repo>/previews/<branch-slug>/
+#
+# To take a preview down, use the separate "Preview Cleanup for Forks"
+# workflow.
+#
+# If the dispatched branch has an open PR within THIS SAME repository (e.g.
+# you opened a PR against your own fork rather than upstream), the URL is
+# also commented on that PR. A fork-scoped GITHUB_TOKEN can't write to a
+# cross-repo PR against upstream, so in the common fork -> upstream case
+# this step just finds nothing and does nothing - check the job summary
+# above for the URL instead.
+# ---------------------------------------------------------------------------
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency: preview-fork-${{ github.ref_name }}
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Compute preview slug
+        id: slug
+        run: |
+          SLUG=$(echo "${{ github.ref_name }}" | tr -c 'a-zA-Z0-9' '-' | sed 's/-\+/-/g; s/^-//; s/-$//')
+          echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
+
+      - name: Update submodules
+        run: git submodule update --init --recursive
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Build with the base path pointing at this branch's preview
+      # sub-directory so assets and the client-side router resolve under
+      # /<repo>/previews/<branch-slug>/.
+      - name: Build project
+        run: |
+          ./devel/generate_build_info.sh
+          npx tsc -b
+          npx vite build \
+            --base="/${{ github.event.repository.name }}/previews/${{ steps.slug.outputs.slug }}/"
+
+      # Publishes the generic redirect-dispatcher 404.html (see
+      # devel/gh-pages-root/404.html) at the Pages *root*, since GitHub
+      # Pages only ever serves one custom 404.html for the whole site (the
+      # one at the branch root) - a per-preview copy is never actually used
+      # as a fallback. keep_files preserves other previews already deployed.
+      - name: Deploy Pages-root 404 redirect
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./devel/gh-pages-root
+          destination_dir: .
+          keep_files: true
+          commit_message: "Add SPA redirect 404.html at Pages root"
+
+      - name: Deploy preview
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          destination_dir: previews/${{ steps.slug.outputs.slug }}
+          keep_files: true
+          commit_message: "Deploy preview for ${{ github.ref_name }}"
+
+      - name: Print preview URL
+        run: |
+          echo "Preview: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/previews/${{ steps.slug.outputs.slug }}/" >> "$GITHUB_STEP_SUMMARY"
+
+      # Best-effort: comment the URL on an open PR for this branch, but only
+      # if that PR lives in this same repo (see note above).
+      - name: Comment preview URL on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const previewUrl = `https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/previews/${{ steps.slug.outputs.slug }}/`;
+
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${{ github.ref_name }}`,
+              state: "open",
+            });
+            if (prs.length === 0) {
+              console.log("No open PR for this branch in this repo, skipping comment.");
+              return;
+            }
+
+            const issue_number = prs[0].number;
+            const body = `**Preview deployment ready!**\n\n${previewUrl}\n\n<sub>Built from ${context.sha.substring(0, 7)}</sub>`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+            });
+            const botComment = comments.find(
+              (c) => c.user.type === "Bot" && c.body.includes("Preview deployment ready"),
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body,
+              });
+            }

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting…</title>
+    <script>
+      // GitHub Pages only ever serves a single custom 404.html for an
+      // entire Pages site - always the one at the branch root - so any
+      // 404.html published alongside a preview build itself is never
+      // actually reached; this is the only 404.html GitHub uses. It runs
+      // whenever a deep link doesn't match a real file, works out which
+      // preview (if any) the link belongs to, and redirects to that
+      // preview's real index.html, stashing the original path+query in a
+      // query param so index.html can restore it via history.replaceState
+      // before React Router mounts.
+      // Adapted from https://github.com/rafgraph/spa-github-pages
+      (function (l) {
+        var segments = l.pathname.split("/").filter(Boolean);
+        // segments[0] is the repo (Pages project path). Preview URLs look
+        // like /<repo>/previews/<branch-slug>/... or /<repo>/pr-preview/pr-<N>/...,
+        // so keep those extra two segments as part of the real directory
+        // prefix; everything else is served from the site root.
+        var previewDirs = ["previews", "pr-preview"];
+        var segmentCount =
+          previewDirs.indexOf(segments[1]) !== -1 && segments[2] ? 3 : 1;
+        l.replace(
+          l.protocol +
+            "//" +
+            l.host +
+            "/" +
+            segments.slice(0, segmentCount).join("/") +
+            "/?/" +
+            segments.slice(segmentCount).join("/").replace(/&/g, "~and~") +
+            (l.search ? "&" + l.search.slice(1).replace(/&/g, "~and~") : "") +
+            l.hash,
+        );
+      })(window.location);
+    </script>
+  </head>
+  <body></body>
+</html>
