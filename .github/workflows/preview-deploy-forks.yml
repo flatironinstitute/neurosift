@@ -27,6 +27,13 @@ name: Preview Deploy for Forks (GitHub Pages)
 #
 # To take a preview down, use the separate "Preview Cleanup for Forks"
 # workflow.
+#
+# If the dispatched branch has an open PR within THIS SAME repository (e.g.
+# you opened a PR against your own fork rather than upstream), the URL is
+# also commented on that PR. A fork-scoped GITHUB_TOKEN can't write to a
+# cross-repo PR against upstream, so in the common fork -> upstream case
+# this step just finds nothing and does nothing - check the job summary
+# above for the URL instead.
 # ---------------------------------------------------------------------------
 
 on:
@@ -34,6 +41,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency: preview-fork-${{ github.ref_name }}
 
@@ -98,3 +106,50 @@ jobs:
       - name: Print preview URL
         run: |
           echo "Preview: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/previews/${{ steps.slug.outputs.slug }}/" >> "$GITHUB_STEP_SUMMARY"
+
+      # Best-effort: comment the URL on an open PR for this branch, but only
+      # if that PR lives in this same repo (see note above).
+      - name: Comment preview URL on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const previewUrl = `https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/previews/${{ steps.slug.outputs.slug }}/`;
+
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${{ github.ref_name }}`,
+              state: "open",
+            });
+            if (prs.length === 0) {
+              console.log("No open PR for this branch in this repo, skipping comment.");
+              return;
+            }
+
+            const issue_number = prs[0].number;
+            const body = `**Preview deployment ready!**\n\n${previewUrl}\n\n<sub>Built from ${context.sha.substring(0, 7)}</sub>`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+            });
+            const botComment = comments.find(
+              (c) => c.user.type === "Bot" && c.body.includes("Preview deployment ready"),
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body,
+              });
+            }
