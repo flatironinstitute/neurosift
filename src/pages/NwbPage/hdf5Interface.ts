@@ -188,6 +188,31 @@ const getRemoteH5FileForUrl = async (url: string) => {
   return hdf5Files[url];
 };
 
+// Direct (non-LINDI) HDF5 readers, used as a fallback when a LINDI-backed read
+// fails. LINDI sidecars (e.g. hosted by Flatiron) can reference dataset data as
+// an external array link rather than inlining it; in that case the underlying
+// blob (e.g. the actual HDF5 object on DANDI's S3) is read directly instead.
+// Keyed by the original (pre-resolution) url.
+const directBlobH5Files: { [url: string]: RemoteH5File } = {};
+
+const getDirectBlobRemoteH5File = async (
+  url: string,
+): Promise<RemoteH5File> => {
+  if (!directBlobH5Files[url]) {
+    // Resolve straight to the underlying blob, bypassing any LINDI sidecar.
+    let blobUrl = url;
+    if (isDandiAssetUrl(url)) {
+      const authorizationHeader = getAuthorizationHeaderForUrl(url);
+      const headers = authorizationHeader
+        ? { Authorization: authorizationHeader }
+        : undefined;
+      blobUrl = (await getRedirectUrl(url, headers)) || url;
+    }
+    directBlobH5Files[url] = new RemoteH5File(blobUrl, {});
+  }
+  return directBlobH5Files[url];
+};
+
 // Whether the asset resolves to a LINDI sidecar (.lindi.json / .lindi.tar).
 // Icephys requires dereferencing object references, which only the LINDI path
 // supports today, so a non-LINDI asset can be rejected up front (before the
@@ -280,7 +305,13 @@ export const getHdf5DatasetData = async (
   globalStats.numDatasetDatas += 1;
   globalStatsUpdated();
 
-  const f = (await getRemoteH5FileForUrl(url)).remoteH5File;
+  const fileInfo = await getRemoteH5FileForUrl(url);
+  const f = fileInfo.remoteH5File;
+  const usingLindi =
+    fileInfo.resolvedUrl.endsWith(".lindi.json") ||
+    fileInfo.resolvedUrl.endsWith(".lindi.tar");
+  const originalIsLindi =
+    url.endsWith(".lindi.json") || url.endsWith(".lindi.tar");
   const itemName = `getHdf5DatasetData-${url}-${path}-${JSON.stringify(o.slice)}`;
   setStatusItem(itemName, {
     type: "text",
@@ -311,7 +342,24 @@ export const getHdf5DatasetData = async (
         `The dataset "${path}" is too large to load (${formatSize(totalSize)}). Maximum allowed size is ${formatSize(maxNumElements)}.`,
       );
     }
-    return await f.getDatasetData(path, o);
+    try {
+      return await f.getDatasetData(path, o);
+    } catch (err) {
+      // A LINDI sidecar may reference the data as an external array link that it
+      // cannot serve. When that happens, fall back to reading the same path
+      // directly from the underlying blob (e.g. the actual HDF5 object on
+      // DANDI's S3). Only attempt this when we were reading via a LINDI sidecar
+      // for an asset that has a separate underlying blob.
+      if (usingLindi && !originalIsLindi) {
+        console.warn(
+          `LINDI read failed for ${path}; falling back to a direct read from the blob.`,
+          err,
+        );
+        const direct = await getDirectBlobRemoteH5File(url);
+        return await direct.getDatasetData(path, o);
+      }
+      throw err;
+    }
   } finally {
     removeStatusItem(itemName);
   }
