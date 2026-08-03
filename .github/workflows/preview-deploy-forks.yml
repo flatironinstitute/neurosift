@@ -1,12 +1,13 @@
-name: Preview Deploy (GitHub Pages)
+name: Preview Deploy for Forks (GitHub Pages)
 
-# Manually-triggered per-PR preview deploy to GitHub Pages, published under
-# pr-preview/pr-<N>/ via rossjrw/pr-preview-action. This is workflow_dispatch
-# only (not `on: pull_request`) because pull_request-triggered workflows on
-# a fork PR don't get write access to secrets or a write-scoped GITHUB_TOKEN
-# against the upstream repo, so they can't push a preview build anywhere the
+# Manually-triggered preview deploy to GitHub Pages, published under
+# previews/<branch-slug>/. This is workflow_dispatch only (not
+# `on: pull_request`) because pull_request-triggered workflows on a fork PR
+# don't get write access to secrets or a write-scoped GITHUB_TOKEN against
+# the upstream repo, so they can't push a preview build anywhere the
 # upstream repo hosts it. Non-core contributors instead run this manually,
-# from their own fork, to publish the preview to their own fork's Pages site.
+# from their own fork, to publish the preview to their own fork's Pages
+# site.
 #
 # ---------------------------------------------------------------------------
 # One-time setup, in YOUR FORK (not upstream):
@@ -18,33 +19,22 @@ name: Preview Deploy (GitHub Pages)
 #      gh-pages / (root). The gh-pages branch is created automatically the
 #      first time this workflow runs, so you may need to come back and pick
 #      it after that first run if it isn't selectable yet.
-#   3. Actions tab -> "Preview Deploy (GitHub Pages)" -> Run workflow ->
-#      pick the branch you want to preview and fill in a `pr_number`
-#      (any short label works, e.g. your PR number against upstream, or
-#      just "1" - it's only used to namespace the preview URL).
+#   3. Actions tab -> "Preview Deploy for Forks (GitHub Pages)" -> Run workflow ->
+#      pick the branch you want to preview and run it. No inputs needed -
+#      the preview path is derived from the branch name.
 #   4. Your preview is served at:
-#      https://<your-username>.github.io/<repo>/pr-preview/pr-<N>/
+#      https://<your-username>.github.io/<repo>/previews/<branch-slug>/
 #
-# To take a preview down again, re-run the workflow with the same
-# `pr_number` and `cleanup` set to true.
+# To take a preview down, use the separate "Preview Cleanup" workflow.
 # ---------------------------------------------------------------------------
 
 on:
   workflow_dispatch:
-    inputs:
-      pr_number:
-        description: "Label for the preview path (pr-preview/pr-<this>/), e.g. your PR number"
-        required: true
-      cleanup:
-        description: "Remove this preview instead of (re)deploying it"
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: write
 
-concurrency: preview-${{ github.event.inputs.pr_number }}
+concurrency: preview-fork-${{ github.ref_name }}
 
 jobs:
   preview:
@@ -53,47 +43,40 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Compute preview slug
+        id: slug
+        run: |
+          SLUG=$(echo "${{ github.ref_name }}" | tr -c 'a-zA-Z0-9' '-' | sed 's/-\+/-/g; s/^-//; s/-$//')
+          echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
+
       - name: Update submodules
-        if: ${{ !inputs.cleanup }}
         run: git submodule update --init --recursive
 
       - name: Set up Node.js
-        if: ${{ !inputs.cleanup }}
         uses: actions/setup-node@v6
         with:
           node-version: lts/*
           cache: "npm"
 
       - name: Install dependencies
-        if: ${{ !inputs.cleanup }}
         run: npm ci
 
-      # Build with the base path pointing at the PR preview sub-directory so
-      # assets and the client-side router resolve under
-      # /<repo>/pr-preview/pr-<N>/.
+      # Build with the base path pointing at this branch's preview
+      # sub-directory so assets and the client-side router resolve under
+      # /<repo>/previews/<branch-slug>/.
       - name: Build project
-        if: ${{ !inputs.cleanup }}
         run: |
           ./devel/generate_build_info.sh
           npx tsc -b
           npx vite build \
-            --base="/${{ github.event.repository.name }}/pr-preview/pr-${{ inputs.pr_number }}/"
-
-      # GitHub Pages has no server-side SPA fallback and only ever serves a
-      # single custom 404.html for the whole site (the one at the branch
-      # root, deployed below) - this per-preview copy is not itself used as
-      # a 404 fallback, but pr-preview-action still expects dist/404.html to
-      # exist to publish alongside the preview.
-      - name: Add SPA fallback
-        if: ${{ !inputs.cleanup }}
-        run: cp dist/index.html dist/404.html
+            --base="/${{ github.event.repository.name }}/previews/${{ steps.slug.outputs.slug }}/"
 
       # Publishes the generic redirect-dispatcher 404.html (see
-      # devel/gh-pages-root/404.html) at the Pages *root*, since that's the
-      # only 404.html GitHub Pages actually serves. keep_files preserves the
-      # other previews already published under pr-preview/.
+      # devel/gh-pages-root/404.html) at the Pages *root*, since GitHub
+      # Pages only ever serves one custom 404.html for the whole site (the
+      # one at the branch root) - a per-preview copy is never actually used
+      # as a fallback. keep_files preserves other previews already deployed.
       - name: Deploy Pages-root 404 redirect
-        if: ${{ !inputs.cleanup }}
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -103,16 +86,14 @@ jobs:
           commit_message: "Add SPA redirect 404.html at Pages root"
 
       - name: Deploy preview
-        uses: rossjrw/pr-preview-action@v1
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          source-dir: dist
-          preview-branch: gh-pages
-          umbrella-dir: pr-preview
-          pr-number: ${{ inputs.pr_number }}
-          comment: false
-          action: ${{ inputs.cleanup && 'remove' || 'deploy' }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          destination_dir: previews/${{ steps.slug.outputs.slug }}
+          keep_files: true
+          commit_message: "Deploy preview for ${{ github.ref_name }}"
 
       - name: Print preview URL
-        if: ${{ !inputs.cleanup }}
         run: |
-          echo "Preview: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-preview/pr-${{ inputs.pr_number }}/" >> "$GITHUB_STEP_SUMMARY"
+          echo "Preview: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/previews/${{ steps.slug.outputs.slug }}/" >> "$GITHUB_STEP_SUMMARY"
