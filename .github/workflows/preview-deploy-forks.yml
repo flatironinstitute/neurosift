@@ -1,0 +1,54 @@
+name: Preview Deploy (GitHub Pages)
+
+# Manually-triggered per-PR preview deploy to GitHub Pages, published under
+# pr-preview/pr-<N>/ via rossjrw/pr-preview-action. This is workflow_dispatch
+# only (not `on: pull_request`) because pull_request-triggered workflows on
+# a fork PR don't get write access to secrets or a write-scoped GITHUB_TOKEN
+# against the upstream repo, so they can't push a preview build anywhere the
+# upstream repo hosts it. Non-core contributors instead run this manually,
+# from their own fork, to publish the preview to their own fork's Pages site.
+#
+# ---------------------------------------------------------------------------
+# One-time setup, in YOUR FORK (not upstream):
+#
+#   1. Settings -> Actions -> General -> Workflow permissions:
+#      select "Read and write permissions". This lets the workflow push the
+#      build to the gh-pages branch.
+#   2. Settings -> Pages -> Source: "Deploy from a branch" -> Branch:
+#      gh-pages / (root). The gh-pages branch is created automatically the
+#      first time this workflow runs, so you may need to come back and pick
+#      it after that first run if it isn't selectable yet.
+#   3. Actions tab -> "Preview Deploy (GitHub Pages)" -> Run workflow ->
+#      pick the branch you want to preview and fill in a `pr_number`
+#      (any short label works, e.g. your PR number against upstream, or
+#      just "1" - it's only used to namespace the preview URL).
+#   4. Your preview is served at:
+#      https://<your-username>.github.io/<repo>/pr-preview/pr-<N>/
+#
+# To take a preview down again, re-run the workflow with the same
+# `pr_number` and `cleanup` set to true.
+# ---------------------------------------------------------------------------
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Label for the preview path (pr-preview/pr-<this>/), e.g. your PR number"
+        required: true
+      cleanup:
+        description: "Remove this preview instead of (re)deploying it"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency: preview-${{ github.event.inputs.pr_number }}
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
