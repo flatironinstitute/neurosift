@@ -416,6 +416,7 @@ const AppContent = () => {
             path="/experimental-neurotile"
             element={<Navigate to="/experimental-neurosift-tiles" replace />}
           />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
 
@@ -438,7 +439,7 @@ const AppContent = () => {
 function App() {
   return (
     <ThemeProvider theme={theme}>
-      <Router>
+      <Router basename={import.meta.env.BASE_URL}>
         <AIComponentRegistryProvider>
           <LegacyUrlHandler />
           <AppContent />
