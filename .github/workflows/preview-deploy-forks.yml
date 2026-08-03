@@ -25,7 +25,8 @@ name: Preview Deploy for Forks (GitHub Pages)
 #   4. Your preview is served at:
 #      https://<your-username>.github.io/<repo>/previews/<branch-slug>/
 #
-# To take a preview down, use the separate "Preview Cleanup" workflow.
+# To take a preview down, use the separate "Preview Cleanup for Forks"
+# workflow.
 # ---------------------------------------------------------------------------
 
 on:

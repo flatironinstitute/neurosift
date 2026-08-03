@@ -1,8 +1,8 @@
-name: Preview Cleanup (GitHub Pages)
+name: Preview Cleanup for Forks (GitHub Pages)
 
-# Removes preview deploys published by preview-deploy.yml. Run with no
-# input to wipe every preview under previews/ on your gh-pages branch, or
-# fill in `branch` to remove just that one branch's preview.
+# Removes preview deploys published by preview-deploy-forks.yml. Run with
+# no input to wipe every preview under previews/ on your gh-pages branch,
+# or fill in `branch` to remove just that one branch's preview.
 
 on:
   workflow_dispatch:
