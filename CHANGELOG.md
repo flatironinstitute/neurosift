@@ -1,5 +1,9 @@
 # Changes
 
+## August 5, 2026
+
+- Show a relative time axis instead of an empty plot when a TimeSeries has a NaN `starting_time`
+
 ## March 13, 2026
 
 - Show dataset chunking and compression in HDF5 view

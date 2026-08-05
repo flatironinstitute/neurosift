@@ -128,6 +128,19 @@ export class RegularTimeseriesTimestampsClient {
         `Problem getting starting_time dataset: ${this.objectPath}/starting_time`,
       );
     }
+    if (isNaN(startingTime)) {
+      // A NaN starting_time means the absolute timing of this series is not
+      // known (some conversions write NaN when the relative timing between
+      // series is unavailable). Previously the NaN flowed into startTime and
+      // endTime, every downstream time comparison came out false, and
+      // getDataIndexForTime returned NaN, so the data layer rejected the slice
+      // and the user got an empty plot with no explanation. Fall back to a
+      // relative time axis starting at zero instead.
+      console.warn(
+        `starting_time is NaN for ${this.objectPath}; treating it as 0 and showing a relative time axis.`,
+      );
+      startingTime = 0;
+    }
     const dataDataset = await getHdf5Dataset(
       this.nwbUrl,
       `${this.objectPath}/data`,
