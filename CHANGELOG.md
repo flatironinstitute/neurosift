@@ -1,5 +1,9 @@
 # Changes
 
+## August 5, 2026
+
+- PSTH group legend now labels boolean and bigint group values instead of showing "?"
+
 ## March 13, 2026
 
 - Show dataset chunking and compression in HDF5 view
