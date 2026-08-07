@@ -6,5 +6,5 @@ import { sharedConfig } from "./playwright.shared";
 // separate directory from the functional integration tests.
 export default defineConfig({
   ...sharedConfig,
-  testDir: "./tests/chromatic",
+  testDir: "../tests/chromatic",
 });

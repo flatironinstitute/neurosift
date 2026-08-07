@@ -1,8 +1,8 @@
 import { defineConfig, mergeConfig } from "vitest/config";
 import viteConfig from "./vite.config";
 
-// Inherits the path aliases (@components, @shared, ...) from vite.config.ts so
-// unit tests import modules exactly the way the app does.
+// Inherits `root` and the path aliases (@components, @shared, ...) from
+// vite.config.ts so unit tests import modules exactly the way the app does.
 export default mergeConfig(
   viteConfig,
   defineConfig({

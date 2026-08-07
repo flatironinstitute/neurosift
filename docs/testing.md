@@ -7,6 +7,27 @@
 | Page snapshots       | `tests/chromatic/`   | Chromatic  | Whole pages of the real, built app    |
 | Integration tests    | `tests/integration/` | Playwright | App behavior, end to end              |
 
+All tool configuration lives in `configs/`:
+
+```
+configs/
+  aliases.ts                       shared path aliases (vite + vitest + storybook)
+  eslint.config.js
+  playwright.config.ts             integration suite
+  playwright.chromatic.config.ts   visual suite
+  playwright.shared.ts             settings common to both
+  storybook/{main.ts,preview.tsx}
+  tsconfig.app.json                src/
+  tsconfig.node.json               configs/*.ts
+  tsconfig.test.json               stories/, tests/, configs/storybook/
+  vite.config.ts
+  vitest.config.ts
+```
+
+The root `tsconfig.json` is a thin shim that references the three projects under
+`configs/`, so editors and a bare `tsc -b` still work from the repo root. Every
+npm script passes the relevant `--config` / `--config-dir` explicitly.
+
 ```bash
 npm test                  # unit tests
 npm run test:integration  # functional browser tests
@@ -22,8 +43,8 @@ npm run test:watch     # watch mode
 npm run test:coverage  # v8 coverage into coverage/
 ```
 
-Vitest is configured in `vitest.config.ts`, which merges `vite.config.ts` so
-the `@components` / `@shared` / ... path aliases work in tests. It only collects
+Vitest is configured in `configs/vitest.config.ts`, which merges
+`configs/vite.config.ts` so the `@components` / `@shared` / ... path aliases work in tests. It only collects
 `tests/unit/**/*.test.{ts,tsx}` — `tests/integration/` and `tests/chromatic/`
 are Playwright suites and must stay out of Vitest's `include`.
 
@@ -50,12 +71,13 @@ npm run build-storybook  # static build into storybook-static/
 ```
 
 Stories live in `stories/` and use
-[CSF3](https://storybook.js.org/docs/api/csf). `@storybook/react-vite` reuses the
-project's `vite.config.ts`, so the `@components` / `@shared` / ... path aliases
-work in stories exactly as they do in `src/`.
+[CSF3](https://storybook.js.org/docs/api/csf). Because the Vite config lives in
+`configs/` rather than the repo root, Storybook cannot auto-discover it; the
+`@components` / `@shared` / ... aliases are injected instead from
+`configs/aliases.ts`, the single source shared by Vite, Vitest, and Storybook.
 
-`.storybook/preview.tsx` wraps every story in the app's `ThemeProvider` (see
-`src/theme.ts`) so components pick up the same MUI palette they get in the
+`configs/storybook/preview.tsx` wraps every story in the app's `ThemeProvider`
+(see `src/theme.ts`) so components pick up the same MUI palette they get in the
 running app.
 
 To add a story, create `stories/<Component>.stories.tsx`:
@@ -86,7 +108,7 @@ npm run test:integration  # functional tests   (tests/integration/)
 npm run test:chromatic    # visual archives    (tests/chromatic/)
 ```
 
-Both configs share `playwright.shared.ts`, which runs `npm run build` and serves
+Both configs share `configs/playwright.shared.ts`, which runs `npm run build` and serves
 the result with `vite preview` on port 4173 — so tests exercise the production
 bundle, not the dev server.
 
@@ -107,9 +129,26 @@ and diffs them against the accepted baselines.
 
 Anything that changes between runs will diff on every build. Mark such elements
 with `data-chromatic="ignore"` in the component — for example the build-time
-footer on the home page (`src/pages/HomePage/HomePage.tsx`). Network calls that
-are not part of what is being captured should be stubbed; `stubTelemetry()` in
-`tests/helpers/network.ts` does that for the page-load logging worker.
+footer on the home page (`src/pages/HomePage/HomePage.tsx`).
+
+Remote data must be stubbed, not fetched. `tests/helpers/` holds the stubs:
+
+- `network.ts` — `stubTelemetry()` neutralizes the fire-and-forget page-load
+  logging worker.
+- `dandi.ts` — `mockDandiset000409()` serves a fixture for the three DANDI API
+  endpoints the dandiset page uses. The values are a fixture, not a mirror of
+  the live archive: querying the real API would rebaseline the snapshot every
+  time the dandiset is edited, and fail whenever the API is unreachable.
+
+Two further traps are worth knowing about, because a test can pass while
+capturing nothing useful:
+
+- **Scroll position is not preserved.** Chromatic re-renders the archived DOM
+  from the top, so state that is only reachable by scrolling (anything below the
+  fold inside a `ScrollY` container) will not appear in the snapshot, and the
+  archive comes out identical to the unscrolled page.
+- **Passing assertions are not proof.** After adding a snapshot, look at the
+  captured page before trusting it.
 
 ## CI
 

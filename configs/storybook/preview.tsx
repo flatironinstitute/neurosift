@@ -1,9 +1,9 @@
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
 import type { Preview } from "@storybook/react-vite";
-import "../src/css/index.css";
-import "../src/css/App.css";
-import { appTheme } from "../src/theme";
+import "../../src/css/index.css";
+import "../../src/css/App.css";
+import { appTheme } from "../../src/theme";
 
 const preview: Preview = {
   // Every story renders inside the app's ThemeProvider so that MUI components

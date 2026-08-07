@@ -1,7 +1,5 @@
 import { devices, type PlaywrightTestConfig } from "@playwright/test";
-import { fileURLToPath } from "node:url";
-
-const rootDir = fileURLToPath(new URL(".", import.meta.url));
+import { rootDir } from "./aliases";
 
 const PORT = 4173;
 
