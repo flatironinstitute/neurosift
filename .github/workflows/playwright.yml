@@ -2,10 +2,18 @@ name: Playwright integration tests
 
 on:
   push:
+    branches: [main-v2]
   pull_request:
 
 permissions:
   contents: read
+
+# A pull request from a branch in this repo would otherwise run twice (once for
+# `push`, once for `pull_request`); the branch filter above handles that, and
+# this cancels superseded runs when commits land in quick succession.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   integration:
@@ -20,7 +28,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
