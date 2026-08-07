@@ -1,15 +1,46 @@
-# Visual testing: Storybook, Playwright, and Chromatic
+# Testing
 
-Neurosift uses two complementary visual-regression setups, both published to
-[Chromatic](https://www.chromatic.com/):
+| Suite                | Where                | Runner     | Checks                                |
+| -------------------- | -------------------- | ---------- | ------------------------------------- |
+| Unit tests           | `tests/unit/`        | Vitest     | Individual modules, in isolation      |
+| Storybook stories    | `stories/`           | Chromatic  | Individual components, visually       |
+| Page snapshots       | `tests/chromatic/`   | Chromatic  | Whole pages of the real, built app    |
+| Integration tests    | `tests/integration/` | Playwright | App behavior, end to end              |
 
-| What                | Where                | Captures                              |
-| ------------------- | -------------------- | ------------------------------------- |
-| Storybook stories   | `stories/`           | Individual components, in isolation   |
-| Playwright snapshots| `tests/chromatic/`   | Whole pages of the real, built app    |
+```bash
+npm test                  # unit tests
+npm run test:integration  # functional browser tests
+npm run test:chromatic    # visual page archives
+npm run storybook         # component workbench
+```
 
-A third, non-visual Playwright suite lives in `tests/integration/` and asserts on
-behavior rather than pixels.
+## Unit tests
+
+```bash
+npm test               # single run
+npm run test:watch     # watch mode
+npm run test:coverage  # v8 coverage into coverage/
+```
+
+Vitest is configured in `vitest.config.ts`, which merges `vite.config.ts` so
+the `@components` / `@shared` / ... path aliases work in tests. It only collects
+`tests/unit/**/*.test.{ts,tsx}` — `tests/integration/` and `tests/chromatic/`
+are Playwright suites and must stay out of Vitest's `include`.
+
+Tests run in the `jsdom` environment, so modules that touch `localStorage`,
+`document`, or other browser globals can be tested directly — see
+`tests/unit/sendLog.test.ts`, which drives the localStorage-backed rate limiting
+in `src/util/sendLog.ts`. Pure modules need nothing special; see
+`tests/unit/formatBytes.test.ts` and `tests/unit/tabsReducer.test.ts`.
+
+Mocks and global stubs are reset between tests (`restoreMocks`,
+`unstubGlobals`), so individual tests do not need to clean up after themselves.
+
+## Visual testing with Chromatic
+
+The Storybook and page-snapshot suites are both published to
+[Chromatic](https://www.chromatic.com/), which renders them and diffs the result
+against accepted baselines.
 
 ## Storybook
 
@@ -82,8 +113,9 @@ are not part of what is being captured should be stubbed; `stubTelemetry()` in
 
 ## CI
 
-Three workflows cover this:
+Four workflows cover this:
 
+- `.github/workflows/test.yml` — runs the Vitest unit tests.
 - `.github/workflows/chromatic-storybook.yml` — builds Storybook and uploads it
   to Chromatic on every push.
 - `.github/workflows/chromatic-playwright.yml` — runs `npm run test:chromatic`
@@ -99,5 +131,5 @@ builds and Playwright archives under one project):
 | `CHROMATIC_STORYBOOK_PROJECT_TOKEN`   | the one created for the Storybook build  |
 | `CHROMATIC_PLAYWRIGHT_PROJECT_TOKEN`  | the one created for the Playwright build |
 
-Until those secrets are set the two Chromatic jobs will fail; the Playwright
-integration workflow needs no secrets and works as-is.
+Until those secrets are set the two Chromatic jobs will fail; the unit-test and
+Playwright integration workflows need no secrets and work as-is.

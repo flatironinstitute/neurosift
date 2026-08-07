@@ -12,6 +12,7 @@ export default tseslint.config(
       'test-results',
       'playwright-report',
       'blob-report',
+      'coverage',
     ],
   },
   {

@@ -32,6 +32,9 @@ src/build-info.json
 .vite/**
 .codex
 
+# Vitest
+coverage
+
 # Storybook
 storybook-static
 
