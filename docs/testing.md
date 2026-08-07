@@ -101,6 +101,15 @@ Components that lay themselves out with `position: absolute` and take explicit
 wrapped in the `Frame` helper from `stories/utils.tsx` so the snapshot does not
 depend on the size of the Storybook canvas.
 
+Components that read from a React context need that provider in the story's
+decorators — `stories/TimeseriesControls.stories.tsx` wraps its stories in
+`ProvideTimeseriesSelection` for exactly this reason.
+
+Note what is *not* storied: the timeseries plot canvas itself. It is painted by
+a web worker into an `OffscreenCanvas`, which does not survive being re-rendered
+from an archived DOM, so it would be an unreliable baseline. The story covers
+the control strip around it, which is plain DOM driven by props.
+
 ## Playwright
 
 ```bash
