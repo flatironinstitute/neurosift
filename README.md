@@ -9,7 +9,6 @@
 <p align="center">
   <a href="https://doi.org/10.21105/joss.06590"><img src="https://joss.theoj.org/papers/10.21105/joss.06590/status.svg" alt="DOI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License: Apache 2.0"></a>
-  <a href="https://github.com/prettier/prettier"><img src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat" alt="code style: prettier"></a>
 </p>
 <p align="center">
   <a href="https://github.com/CodyCBakerPhD/neurosift/actions/workflows/test.yml"><img src="https://github.com/CodyCBakerPhD/neurosift/actions/workflows/test.yml/badge.svg?branch=main-v2" alt="Unit tests"></a>
@@ -18,6 +17,9 @@
 <p align="center">
   <a href="https://www.chromatic.com/library?appId=6a75d7130ce28c4ae5ebd265"><img src="https://github.com/CodyCBakerPhD/neurosift/actions/workflows/chromatic-storybook.yml/badge.svg?branch=main-v2" alt="Chromatic (Storybook)"></a>
   <a href="https://www.chromatic.com/library?appId=6a75d687f93bde1a4a66ea35"><img src="https://github.com/CodyCBakerPhD/neurosift/actions/workflows/chromatic-playwright.yml/badge.svg?branch=main-v2" alt="Chromatic (Playwright)"></a>
+</p>
+<p align="center">
+  <a href="https://github.com/prettier/prettier"><img src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat" alt="code style: prettier"></a>
 </p>
 
 Neurosift is a browser-based tool designed for the visualization of neuroscience data with a focus on NWB (Neurodata Without Borders) files, and enables interactive exploration of the [DANDI Archive](https://dandiarchive.org/), [EMBER Archive](https://emberarchive.org/), and [OpenNeuro](https://openneuro.org/) online repositories.
