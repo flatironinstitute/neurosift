@@ -4,7 +4,7 @@
   </picture>
 </p>
 
-# neurosift (v2)
+<h1 align="center">neurosift (v2)</h1>
 
 <p align="center">
   <a href="https://doi.org/10.21105/joss.06590"><img src="https://joss.theoj.org/papers/10.21105/joss.06590/status.svg" alt="DOI"></a>
