@@ -31,3 +31,12 @@ src/build-info.json
 
 .vite/**
 .codex
+
+# Storybook
+storybook-static
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
