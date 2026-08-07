@@ -1,12 +1,16 @@
 import type { Page } from "@playwright/test";
 
 /**
- * Stubs the DANDI Archive API with a fixed payload for dandiset 000409.
+ * Stubs the DANDI Archive API with a fixed payload for a synthetic dandiset.
  *
- * The values below are a FIXTURE, not a mirror of the live archive — the point
- * is that the rendered page is byte-identical on every run. Snapshotting the
- * real API would make the baseline churn whenever the dandiset is edited, and
- * would fail whenever api.dandiarchive.org is slow or unreachable.
+ * Everything below is invented — identifier, title, version, description,
+ * contributors, counts. Nothing here mirrors a real dandiset, deliberately: a
+ * fixture carrying a real dandiset's identity would read as archive content and
+ * invite someone to trust numbers that were never fetched.
+ *
+ * It is a fixture rather than a live query so the rendered page is identical on
+ * every run. Snapshotting the real API would rebaseline whenever the dandiset is
+ * edited, and would fail whenever api.dandiarchive.org is slow or unreachable.
  *
  * Three endpoints are involved (see src/pages/DandisetPage/):
  *   /api/dandisets/{id}                              -> useQueryDandiset
@@ -14,23 +18,23 @@ import type { Page } from "@playwright/test";
  *   /api/dandisets/{id}/versions/{v}/assets/paths/   -> useLazyDandisetPaths
  */
 
-const DANDISET_ID = "000409";
-const VERSION = "0.231021.2035";
+const DANDISET_ID = "000000";
+const VERSION = "0.000000.0000";
 
 const VERSION_STUB = {
   version: VERSION,
-  name: "IBL Brain Wide Map",
+  name: "Example Dandiset (visual test fixture)",
   asset_count: 12,
   size: 1234567890,
   status: "Valid",
-  created: "2023-10-21T20:35:00.000000Z",
-  modified: "2023-10-21T20:35:00.000000Z",
+  created: "2020-01-01T00:00:00.000000Z",
+  modified: "2020-01-02T00:00:00.000000Z",
 };
 
 const dandisetResponse = {
   identifier: DANDISET_ID,
-  created: "2023-05-01T00:00:00.000000Z",
-  modified: "2023-10-21T20:35:00.000000Z",
+  created: "2020-01-01T00:00:00.000000Z",
+  modified: "2020-01-02T00:00:00.000000Z",
   contact_person: "Example, Contact",
   embargo_status: "OPEN",
   most_recent_published_version: VERSION_STUB,
@@ -41,8 +45,8 @@ const versionInfo = {
   ...VERSION_STUB,
   dandiset: {
     identifier: DANDISET_ID,
-    created: "2023-05-01T00:00:00.000000Z",
-    modified: "2023-10-21T20:35:00.000000Z",
+    created: "2020-01-01T00:00:00.000000Z",
+    modified: "2020-01-02T00:00:00.000000Z",
     contact_person: "Example, Contact",
     embargo_status: "OPEN",
   },
@@ -52,14 +56,14 @@ const versionInfo = {
   metadata: {
     id: `DANDI:${DANDISET_ID}/${VERSION}`,
     url: `https://dandiarchive.org/dandiset/${DANDISET_ID}/${VERSION}`,
-    name: "IBL Brain Wide Map",
+    name: "Example Dandiset (visual test fixture)",
     about: [],
     access: [{ status: "dandi:OpenAccess", schemaKey: "AccessRequirements" }],
     license: ["spdx:CC-BY-4.0"],
     version: VERSION,
     "@context":
       "https://raw.githubusercontent.com/dandi/schema/master/releases/0.6.4/context.json",
-    citation: "Example fixture citation for dandiset 000409.",
+    citation: "Example Dandiset (visual test fixture). Not a real citation.",
     keywords: ["electrophysiology", "Neuropixels", "decision-making"],
     protocol: [],
     schemaKey: "Dandiset",
@@ -83,11 +87,11 @@ const versionInfo = {
         includeInCitation: true,
       },
     ],
-    dateCreated: "2023-05-01T00:00:00.000000Z",
+    dateCreated: "2020-01-01T00:00:00.000000Z",
     description:
-      "Fixture description used by the visual snapshot test. It is long enough " +
-      "to exercise the overview panel's truncation and the 'read more' control, " +
-      "without depending on the live contents of the DANDI Archive.",
+      "Invented description for the visual snapshot test — this dandiset does " +
+      "not exist. It is long enough to exercise the overview panel's truncation " +
+      "and its 'read more' control.",
     studyTarget: [],
     assetsSummary: {
       species: [
@@ -163,7 +167,7 @@ const json = (body: unknown) => ({
   body: JSON.stringify(body),
 });
 
-export async function mockDandiset000409(page: Page): Promise<void> {
+export async function mockDandisetPage(page: Page): Promise<void> {
   // Playwright checks route handlers in REVERSE registration order, so the
   // broadest pattern is registered first and the most specific ones last —
   // otherwise the catch-all would swallow the info/ and paths/ requests.

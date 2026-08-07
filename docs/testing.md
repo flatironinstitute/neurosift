@@ -135,8 +135,9 @@ Remote data must be stubbed, not fetched. `tests/helpers/` holds the stubs:
 
 - `network.ts` — `stubTelemetry()` neutralizes the fire-and-forget page-load
   logging worker.
-- `dandi.ts` — `mockDandiset000409()` serves a fixture for the three DANDI API
-  endpoints the dandiset page uses. The values are a fixture, not a mirror of
+- `dandi.ts` — `mockDandisetPage()` serves a wholly synthetic dandiset across
+  the three DANDI API endpoints the dandiset page uses. Identifier, title,
+  version and description are all invented, not a mirror of
   the live archive: querying the real API would rebaseline the snapshot every
   time the dandiset is edited, and fail whenever the API is unreachable.
 

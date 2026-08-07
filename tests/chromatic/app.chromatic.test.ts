@@ -1,5 +1,5 @@
 import { expect, test } from "@chromatic-com/playwright";
-import { mockDandiset000409 } from "../helpers/dandi";
+import { mockDandisetPage } from "../helpers/dandi";
 import { stubTelemetry } from "../helpers/network";
 
 // Each test archives the page it ends on; Chromatic then renders those archives
@@ -29,15 +29,18 @@ test("Settings page", async ({ page }) => {
   await expect(page.getByLabel("Neurosift API Key")).toHaveValue("");
 });
 
-test("Dandiset page - 000409", async ({ page }) => {
+test("Dandiset page", async ({ page }) => {
   await stubTelemetry(page);
-  // The DANDI API is stubbed with a fixture (tests/helpers/dandi.ts) so the
-  // snapshot is stable — a live query would rebaseline whenever the archive
-  // changes, and fail whenever the API is unreachable.
-  await mockDandiset000409(page);
-  await page.goto("/dandiset/000409");
+  // The DANDI API is stubbed with a wholly synthetic dandiset
+  // (tests/helpers/dandi.ts) so the snapshot is stable — a live query would
+  // rebaseline whenever the archive changes, and fail whenever the API is
+  // unreachable.
+  await mockDandisetPage(page);
+  await page.goto("/dandiset/000000");
   await expect(
-    page.getByRole("heading", { name: "IBL Brain Wide Map" }),
+    page.getByRole("heading", {
+      name: "Example Dandiset (visual test fixture)",
+    }),
   ).toBeVisible();
   // Wait for the lazy file listing too, so the archive is not taken mid-load.
   await expect(page.getByText("sub-example-01")).toBeVisible();
