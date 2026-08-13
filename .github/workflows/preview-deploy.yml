@@ -10,6 +10,12 @@ name: Preview Deploy
 # workflow_run-triggered workflow runs in the base repository's context
 # (from the workflow file on main) with access to secrets.
 #
+# It can also be run manually via workflow_dispatch with the run id of a
+# "Preview Build" run, to re-deploy a preview or to test changes to this
+# workflow from a branch (workflow_run only triggers from the workflow
+# file on the default branch, but a manual dispatch runs the file from
+# the branch you dispatch it on).
+#
 # Security: this workflow must never check out or execute code from the
 # PR. It only downloads the built static site artifact and pushes it to
 # Cloudflare Pages. The artifact content is untrusted, which is inherent
@@ -20,27 +26,63 @@ on:
   workflow_run:
     workflows: ["Preview Build"]
     types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Run id of the Preview Build run whose artifact to deploy"
+        required: true
 
 permissions:
   actions: read
   pull-requests: write
 
-concurrency: preview-deploy-${{ github.event.workflow_run.head_branch }}
+concurrency: preview-deploy-${{ github.event.workflow_run.head_branch || inputs.run_id }}
 
 jobs:
   deploy:
     if: >
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'pull_request'
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'pull_request')
     runs-on: ubuntu-latest
 
     steps:
+      # Resolve the build run to deploy: from the workflow_run payload, or
+      # from the run_id input on manual dispatch.
+      - name: Resolve build run
+        id: run
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let run;
+            if (context.eventName === "workflow_run") {
+              run = context.payload.workflow_run;
+            } else {
+              const runId = Number("${{ inputs.run_id }}");
+              const { data } = await github.rest.actions.getWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: runId,
+              });
+              run = data;
+              if (run.name !== "Preview Build" || run.conclusion !== "success") {
+                core.setFailed(
+                  `Run ${runId} is not a successful Preview Build run ` +
+                    `(name: ${run.name}, conclusion: ${run.conclusion})`,
+                );
+                return;
+              }
+            }
+            core.setOutput("run_id", run.id);
+            core.setOutput("head_branch", run.head_branch);
+            core.setOutput("head_sha", run.head_sha);
+
       - name: Download built site
         uses: actions/download-artifact@v4
         with:
           name: preview-dist
           path: dist
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ steps.run.outputs.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       # shell: bash enables pipefail, so a failed wrangler deploy (or a
@@ -53,7 +95,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_BRANCH: ${{ steps.run.outputs.head_branch }}
         run: |
           npx wrangler pages deploy dist --project-name neurosift --branch "$HEAD_BRANCH" 2>&1 | tee /tmp/deploy-output.txt
           PREVIEW_URL=$(grep 'Deployment alias URL' /tmp/deploy-output.txt | grep -oP 'https://[^\s]+')
@@ -66,7 +108,7 @@ jobs:
         with:
           script: |
             const previewUrl = '${{ steps.deploy.outputs.preview_url }}';
-            const headSha = context.payload.workflow_run.head_sha;
+            const headSha = '${{ steps.run.outputs.head_sha }}';
 
             const { data: prs } =
               await github.rest.repos.listPullRequestsAssociatedWithCommit({
