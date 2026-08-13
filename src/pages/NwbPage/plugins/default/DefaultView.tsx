@@ -27,6 +27,22 @@ const product = (shape: number[]): number => {
   return shape.reduce((acc, val) => acc * val, 1);
 };
 
+const formatScalarValue = (data: DatasetDataType | null): string => {
+  if (data === null || data === undefined) return "";
+  // Single-element datasets (shape [1]) come back as a one-element array
+  let value: unknown = data;
+  if (
+    (Array.isArray(value) || ArrayBuffer.isView(value)) &&
+    (value as { length: number }).length === 1
+  ) {
+    value = (value as unknown[])[0];
+  }
+  if (typeof value === "object") {
+    return JSON.stringify(value);
+  }
+  return String(value);
+};
+
 const TreeNode: React.FC<TreeNodeProps> = ({
   name,
   path,
@@ -40,6 +56,12 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   const group = useHdf5Group(nwbUrl, type === "group" ? path : "");
   const dataset = useHdf5Dataset(nwbUrl, type === "dataset" ? path : "");
 
+  // Scalar and single-element datasets (e.g. the fields of /general/subject,
+  // which may be stored with shape [] or [1]) show their value inline next to
+  // the name rather than hiding it under the accordion
+  const isScalar =
+    type === "dataset" && !!dataset && product(dataset.shape) === 1;
+
   const viewDatasetInConsole = useCallback(async () => {
     if (type === "dataset" && dataset) {
       console.info("Loading dataset data for " + path);
@@ -51,7 +73,12 @@ const TreeNode: React.FC<TreeNodeProps> = ({
 
   useEffect(() => {
     const loadDatasetInfo = async () => {
-      if (type === "dataset" && expanded && dataset && !datasetInfo) {
+      if (
+        type === "dataset" &&
+        (expanded || isScalar) &&
+        dataset &&
+        !datasetInfo
+      ) {
         if (product(dataset.shape) <= 100) {
           try {
             const data = await getHdf5DatasetData(nwbUrl, path, {});
@@ -69,7 +96,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
       }
     };
     loadDatasetInfo();
-  }, [type, expanded, dataset, datasetInfo, nwbUrl, path]);
+  }, [type, expanded, isScalar, dataset, datasetInfo, nwbUrl, path]);
 
   const handleClick = () => {
     setExpanded(!expanded);
@@ -88,7 +115,12 @@ const TreeNode: React.FC<TreeNodeProps> = ({
       >
         <span style={{ marginRight: "5px" }}>{expanded ? "▼" : "►"}</span>
         {name}
-        {type === "dataset" && dataset && !expanded && (
+        {isScalar && (
+          <span style={{ color: "#333", marginLeft: "5px" }}>
+            : {formatScalarValue(datasetInfo?.data ?? null)}
+          </span>
+        )}
+        {type === "dataset" && dataset && !expanded && !isScalar && (
           <span
             style={{ color: "#666", marginLeft: "10px", fontSize: "0.9em" }}
           >
@@ -144,7 +176,8 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                 )}
               </div>
               <div>
-                {datasetInfo?.data !== undefined && (
+                {/* For scalars the value is already shown inline next to the name */}
+                {!isScalar && datasetInfo?.data !== undefined && (
                   <div>VALUE: {JSON.stringify(datasetInfo.data, null, 2)}</div>
                 )}
               </div>
