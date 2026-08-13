@@ -613,17 +613,23 @@ type GroupLabelProps = {
 
 const GroupLabel: FunctionComponent<GroupLabelProps> = ({ group }) => {
   if (!group) return <></>;
-  else if (typeof group.group === "number") {
-    return <>{group.group}</>;
-  } else if (typeof group.group === "string") {
-    return <>{group.group}</>;
-  } else if (typeof group.group === "object") {
-    if (group.group._REFERENCE) {
+  const value = group.group;
+  if (typeof value === "number" || typeof value === "string") {
+    return <>{value}</>;
+  } else if (typeof value === "boolean" || typeof value === "bigint") {
+    // A boolean trials column (e.g. "rewarded") comes back as JS booleans, and a
+    // 64-bit integer column can come back as bigints. React renders neither of
+    // those directly, so they have to be stringified. Without this the legend
+    // fell through to the "?" case below.
+    return <>{value.toString()}</>;
+  } else if (value && typeof value === "object") {
+    if (value._REFERENCE) {
       return <>_REF</>;
     } else {
       return <>_OBJ</>;
     }
   } else {
+    // null / undefined / anything else we have no sensible label for
     return <>?</>;
   }
 };
