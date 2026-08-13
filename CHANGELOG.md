@@ -1,8 +1,12 @@
 # Changes
 
-## August 5, 2026
+## August 13, 2026
 
 - Show a relative time axis instead of an empty plot when a TimeSeries has a NaN `starting_time`
+
+## August 5, 2026
+
+- PSTH group legend now labels boolean and bigint group values instead of showing "?"
 
 ## March 13, 2026
 
