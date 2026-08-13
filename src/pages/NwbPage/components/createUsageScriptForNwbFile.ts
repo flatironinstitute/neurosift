@@ -5,8 +5,16 @@ import {
   getHdf5Group,
 } from "@hdf5Interface";
 import { RemoteH5Group } from "@remote-h5-file";
+import {
+  neurodataTypeInheritsFrom,
+  neurodataTypeInheritsFromAny,
+} from "../neurodataTypeInheritance";
+import { NwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
 
-const createUsageScriptForNwbFile = async (nwbUrl: string) => {
+const createUsageScriptForNwbFile = async (
+  nwbUrl: string,
+  specifications?: NwbFileSpecifications,
+) => {
   let s = "";
 
   // session_description
@@ -185,14 +193,18 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
           group,
         });
         if (
-          [
-            "ProcessingModule",
-            "LFP",
-            "Fluorescence",
-            "ImageSegmentation",
-            "PupilTracking",
-            "EyeTracking",
-          ].includes(neurodataType)
+          neurodataTypeInheritsFromAny(
+            neurodataType,
+            [
+              "ProcessingModule",
+              "LFP",
+              "Fluorescence",
+              "ImageSegmentation",
+              "PupilTracking",
+              "EyeTracking",
+            ],
+            specifications,
+          )
         ) {
           await processContainerGroup(group, objectExpression);
         }
@@ -259,15 +271,19 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
     s += `\n`;
     s += `${obj.variableName} = ${obj.objectExpression} # (${obj.neurodataType}) ${obj.description}\n`;
 
-    // TimeSeries or ElectricalSeries or RoiResponseSeries or SpatialSeries
+    // Generic TimeSeries data line. Excludes OnePhotonSeries/TwoPhotonSeries,
+    // which print their own more detailed data line below.
     if (
-      [
+      neurodataTypeInheritsFrom(
+        obj.neurodataType,
         "TimeSeries",
-        "ElectricalSeries",
-        "RoiResponseSeries",
-        "SpatialSeries",
-        "PoseEstimationSeries",
-      ].includes(obj.neurodataType)
+        specifications,
+      ) &&
+      !neurodataTypeInheritsFromAny(
+        obj.neurodataType,
+        ["OnePhotonSeries", "TwoPhotonSeries"],
+        specifications,
+      )
     ) {
       const dataDataset = obj.group.datasets.find((x) => x.name === "data");
 
@@ -276,7 +292,13 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
       }
     }
 
-    if (obj.neurodataType === "ElectricalSeries") {
+    if (
+      neurodataTypeInheritsFrom(
+        obj.neurodataType,
+        "ElectricalSeries",
+        specifications,
+      )
+    ) {
       const electrodesDataset = obj.group.datasets.find(
         (x) => x.name === "electrodes",
       );
@@ -294,7 +316,13 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
     }
 
     // ImageSeries
-    if (["ImageSeries"].includes(obj.neurodataType)) {
+    if (
+      neurodataTypeInheritsFrom(
+        obj.neurodataType,
+        "ImageSeries",
+        specifications,
+      )
+    ) {
       const externalFileDataset = obj.group.datasets.find(
         (x) => x.name === "external_file",
       );
@@ -304,13 +332,25 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
     }
 
     // TimeIntervals
-    if (obj.neurodataType === "TimeIntervals") {
+    if (
+      neurodataTypeInheritsFrom(
+        obj.neurodataType,
+        "TimeIntervals",
+        specifications,
+      )
+    ) {
       for (const ds of obj.group.datasets) {
         s += `${obj.variableName}["${ds.name}"] # (h5py.Dataset) shape ${shapeToString(ds.shape)}; dtype ${ds.dtype} ${ds.attrs.description}\n`;
       }
     }
 
-    if (["OnePhotonSeries", "TwoPhotonSeries"].includes(obj.neurodataType)) {
+    if (
+      neurodataTypeInheritsFromAny(
+        obj.neurodataType,
+        ["OnePhotonSeries", "TwoPhotonSeries"],
+        specifications,
+      )
+    ) {
       // TODO: handle imaging plane more thoroughly. Example: https://neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/193fee16-550e-4a8f-aab8-2383f6d57a03/download/&dandisetId=001174&dandisetVersion=draft
       s += `${obj.variableName}.imaging_plane # (ImagingPlane)\n`;
       const dataDataset = obj.group.datasets.find((x) => x.name === "data");
@@ -323,7 +363,13 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
       }
     }
 
-    if (["PlaneSegmentation"].includes(obj.neurodataType)) {
+    if (
+      neurodataTypeInheritsFrom(
+        obj.neurodataType,
+        "PlaneSegmentation",
+        specifications,
+      )
+    ) {
       const imageMaskDataset = await getHdf5Dataset(
         nwbUrl,
         `${obj.group.path}/image_mask`,
@@ -334,23 +380,31 @@ const createUsageScriptForNwbFile = async (nwbUrl: string) => {
     }
 
     // Units
-    if (obj.neurodataType === "Units") {
+    if (neurodataTypeInheritsFrom(obj.neurodataType, "Units", specifications)) {
       handleUnits(obj.group, `${obj.objectExpression}`);
     }
 
     // Images
-    if (obj.neurodataType === "Images") {
+    if (
+      neurodataTypeInheritsFrom(obj.neurodataType, "Images", specifications)
+    ) {
       for (const ds of obj.group.datasets) {
         const nt = ds.attrs.neurodata_type;
         const description = ds.attrs.description || "";
-        if (nt === "GrayscaleImage") {
+        if (neurodataTypeInheritsFrom(nt, "Image", specifications)) {
           s += `${obj.variableName}["${ds.name}"].data # (h5py.Dataset) shape ${shapeToString(ds.shape)}; dtype ${ds.dtype}; ${description}\n`;
         }
       }
     }
 
     // IndexSeries
-    if (obj.neurodataType === "IndexSeries") {
+    if (
+      neurodataTypeInheritsFrom(
+        obj.neurodataType,
+        "IndexSeries",
+        specifications,
+      )
+    ) {
       const dataDataset = obj.group.datasets.find((x) => x.name === "data");
       if (dataDataset) {
         s += `${obj.variableName}.data # (h5py.Dataset) shape ${shapeToString(dataDataset.shape)}; dtype ${dataDataset.dtype}\n`;

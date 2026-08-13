@@ -5,6 +5,7 @@ import {
   isDandiAssetUrl,
 } from "./hdf5Interface";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
+import { neurodataTypeInheritsFrom } from "./neurodataTypeInheritance";
 
 export type ExternalVideoCandidate = {
   path: string;
@@ -350,7 +351,8 @@ export const hasExternalVideos = async (nwbUrl: string): Promise<boolean> => {
     const group = await getHdf5Group(nwbUrl, path);
     if (!group) return false;
     if (
-      group.attrs?.neurodata_type === "ImageSeries" &&
+      // No specifications available here; falls back to core relationships
+      neurodataTypeInheritsFrom(group.attrs?.neurodata_type, "ImageSeries") &&
       group.datasets.some((ds) => ds.name === "external_file")
     ) {
       return true;

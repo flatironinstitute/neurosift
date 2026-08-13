@@ -7,6 +7,8 @@ import {
   useHdf5Group,
 } from "@hdf5Interface";
 import { DatasetDataType } from "@remote-h5-file";
+import { getNeurodataTypeAncestry } from "../../neurodataTypeInheritance";
+import { useNwbFileSpecifications } from "../../SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 type Props = {
   width: number;
@@ -72,6 +74,8 @@ type ImageItemProps = {
   neurodataType: string;
 };
 
+const coreImageTypes = ["GrayscaleImage", "RGBImage", "RGBAImage", "Image"];
+
 export const ImageItem: FunctionComponent<ImageItemProps> = ({
   nwbUrl,
   path,
@@ -79,22 +83,29 @@ export const ImageItem: FunctionComponent<ImageItemProps> = ({
 }) => {
   const dataset = useHdf5Dataset(nwbUrl, path);
   const { data, errorMessage } = useHdf5DatasetData(nwbUrl, path);
+  const specifications = useNwbFileSpecifications();
+  // Resolve to the nearest core image type in the inheritance chain, so that
+  // extension subtypes (e.g. a type extending RGBImage) get the visualization
+  // of their closest supported ancestor.
+  const resolvedType = useMemo(() => {
+    const ancestry = getNeurodataTypeAncestry(neurodataType, specifications);
+    return ancestry.find((t) => coreImageTypes.includes(t));
+  }, [neurodataType, specifications]);
   if (errorMessage) {
     return <div>Error loading data: {errorMessage}</div>;
   }
   if (!dataset) return <div>Loading dataset...</div>;
   if (!data) return <div>Loading data (ImageItem)...</div>;
 
-  if (neurodataType === "GrayscaleImage") {
+  if (resolvedType === "GrayscaleImage") {
     return <GrayscaleImageItem dataset={dataset} data={data} />;
-  } else if (neurodataType === "Image") {
-    return <RegularImageItem dataset={dataset} data={data} />;
-  } else if (neurodataType === "RGBImage") {
+  } else if (resolvedType === "RGBImage") {
     return <RGBImageItem dataset={dataset} data={data} />;
-  } else if (neurodataType === "RGBAImage") {
+  } else if (resolvedType === "RGBAImage") {
     return <RGBAImageItem dataset={dataset} data={data} />;
   } else {
-    return <div>Unexpected neurodata_type: {neurodataType}</div>;
+    // "Image" or unknown: infer from the dataset shape
+    return <RegularImageItem dataset={dataset} data={data} />;
   }
 };
 
@@ -186,6 +197,9 @@ const RegularImageItem: FunctionComponent<RegularImageItemProps> = ({
   } else if (dataset.shape.length === 3 && dataset.shape[2] === 3) {
     // I guess this is an RGB image
     return <RGBImageItem dataset={dataset} data={data} />;
+  } else if (dataset.shape.length === 3 && dataset.shape[2] === 4) {
+    // I guess this is an RGBA image
+    return <RGBAImageItem dataset={dataset} data={data} />;
   } else {
     return (
       <div>Image not supported with shape: {dataset.shape.join(", ")}</div>

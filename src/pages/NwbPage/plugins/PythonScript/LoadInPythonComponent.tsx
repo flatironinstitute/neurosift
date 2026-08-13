@@ -8,6 +8,8 @@ import {
   getCustomPythonCodeForTimeSeries,
   getCustomPythonCodeForUnits,
 } from "./customPythonCode";
+import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
+import { useNwbFileSpecifications } from "../../SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 type Props = {
   nwbUrl: string;
@@ -16,19 +18,21 @@ type Props = {
 
 const LoadInPythonWindow: FunctionComponent<Props> = ({ nwbUrl, path }) => {
   const group = useHdf5Group(nwbUrl, path);
+  const specifications = useNwbFileSpecifications();
 
   const customCode = useMemo(() => {
     if (!group) return "";
+    const nt = group.attrs.neurodata_type;
     if (isTimeSeriesGroup(group)) {
       return getCustomPythonCodeForTimeSeries(group);
-    } else if (group.attrs.neurodata_type === "TimeIntervals") {
+    } else if (neurodataTypeInheritsFrom(nt, "TimeIntervals", specifications)) {
       return getCustomPythonCodeForTimeIntervals(group);
-    } else if (group.attrs.neurodata_type === "Units") {
+    } else if (neurodataTypeInheritsFrom(nt, "Units", specifications)) {
       return getCustomPythonCodeForUnits(group);
     } else {
       return "";
     }
-  }, [group]);
+  }, [group, specifications]);
 
   const source: string = useMemo(() => {
     if (!group) return "";

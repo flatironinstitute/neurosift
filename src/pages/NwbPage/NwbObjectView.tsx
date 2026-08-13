@@ -79,7 +79,7 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
       }
     };
     loadPlugin();
-  }, [path, objectType, nwbUrl, plugin, inMultiView]);
+  }, [path, objectType, nwbUrl, plugin, inMultiView, specifications]);
 
   if (loading) {
     return <CircularProgress />;

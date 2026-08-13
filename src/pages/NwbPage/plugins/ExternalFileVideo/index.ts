@@ -1,5 +1,6 @@
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
+import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
 import ExternalFileVideoView from "./ExternalFileVideoView";
 
 export const externalFileVideoPlugin: NwbObjectViewPlugin = {
@@ -9,11 +10,17 @@ export const externalFileVideoPlugin: NwbObjectViewPlugin = {
   label: "Video",
   // Determines whether this plugin can render a given NWB object.
   // Called by findSuitablePlugins() for every object in the hierarchy.
-  canHandle: async ({ nwbUrl, path }: { nwbUrl: string; path: string }) => {
+  canHandle: async ({ nwbUrl, path, specifications }) => {
     const group = await getHdf5Group(nwbUrl, path);
     if (!group) return false;
 
-    if (group.attrs.neurodata_type !== "ImageSeries") {
+    if (
+      !neurodataTypeInheritsFrom(
+        group.attrs.neurodata_type,
+        "ImageSeries",
+        specifications,
+      )
+    ) {
       return false;
     }
 

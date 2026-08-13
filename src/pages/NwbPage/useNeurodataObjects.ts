@@ -110,7 +110,7 @@ export const useNeurodataObjects = (nwbUrl: string) => {
         const node = queue.shift();
         if (!node) continue;
         const group = node.group;
-        let subgroups = group.subgroups.slice(0, 200);
+        const subgroups = group.subgroups.slice(0, 200);
         if (subgroups.length < group.subgroups.length) {
           partialLoad = true;
         }

@@ -1,5 +1,6 @@
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
+import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
 import EventsPluginView from "./EventsPluginView";
 
 export const eventsPlugin: NwbObjectViewPlugin = {
@@ -11,7 +12,14 @@ export const eventsPlugin: NwbObjectViewPlugin = {
     if (o.objectType !== "group") return false;
     const group = await getHdf5Group(o.nwbUrl, o.path);
     if (!group) return false;
-    if (group.attrs.neurodata_type !== "Events") return false;
+    if (
+      !neurodataTypeInheritsFrom(
+        group.attrs.neurodata_type,
+        "Events",
+        o.specifications,
+      )
+    )
+      return false;
     const timestampsDataset = group.datasets.find(
       (ds) => ds.name === "timestamps",
     );
