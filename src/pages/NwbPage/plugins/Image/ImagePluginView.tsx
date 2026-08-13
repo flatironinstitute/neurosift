@@ -1,5 +1,6 @@
 import { useHdf5Dataset, useHdf5Group } from "@hdf5Interface";
 import ImagesItemView, { ImageItem } from "./ImagesItemView";
+import { imageDatasetNeurodataTypes } from "./imageNeurodataTypes";
 
 type Props = {
   nwbUrl: string;
@@ -43,9 +44,7 @@ const ImagePluginViewDataset: React.FC<Props> = ({ nwbUrl, path }) => {
   const dataset = useHdf5Dataset(nwbUrl, path);
   if (!dataset) return <div>Loading dataset...</div>;
   const neurodataType = dataset.attrs.neurodata_type;
-  if (
-    ["Image", "GrayscaleImage", "RGBImage", "RGBAImage"].includes(neurodataType)
-  ) {
+  if (imageDatasetNeurodataTypes.includes(neurodataType)) {
     return (
       <ImageItem nwbUrl={nwbUrl} path={path} neurodataType={neurodataType} />
     );

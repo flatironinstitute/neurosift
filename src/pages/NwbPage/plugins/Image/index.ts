@@ -1,6 +1,7 @@
 import { getHdf5Dataset, getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import ImagePluginView from "./ImagePluginView";
+import { imageDatasetNeurodataTypes } from "./imageNeurodataTypes";
 
 export const imagePlugin: NwbObjectViewPlugin = {
   name: "Image",
@@ -15,7 +16,8 @@ export const imagePlugin: NwbObjectViewPlugin = {
   }) => {
     if (objectType === "dataset") {
       const ds = await getHdf5Dataset(nwbUrl, path);
-      if (ds?.attrs.neurodata_type === "Image") return true;
+      if (ds && imageDatasetNeurodataTypes.includes(ds.attrs.neurodata_type))
+        return true;
     } else {
       // objectType === "group"
       const grp = await getHdf5Group(nwbUrl, path);
