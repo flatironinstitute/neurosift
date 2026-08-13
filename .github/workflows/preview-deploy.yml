@@ -1,60 +1,101 @@
 name: Preview Deploy
 
+# Deploys the preview built by the secretless "Preview Build" workflow and
+# comments the URL on the PR.
+#
+# This is split into two workflows so that fork PRs get previews.
+# pull_request-triggered runs of fork code never receive repository
+# secrets, so the Cloudflare deploy used to silently do nothing on
+# external PRs. The build now runs without secrets, and this
+# workflow_run-triggered workflow runs in the base repository's context
+# (from the workflow file on main) with access to secrets.
+#
+# Security: this workflow must never check out or execute code from the
+# PR. It only downloads the built static site artifact and pushes it to
+# Cloudflare Pages. The artifact content is untrusted, which is inherent
+# to preview deployments; the Cloudflare token is never exposed to the
+# PR's code.
+
 on:
-  pull_request:
-    branches: [main]
+  workflow_run:
+    workflows: ["Preview Build"]
+    types: [completed]
+
+permissions:
+  actions: read
+  pull-requests: write
+
+concurrency: preview-deploy-${{ github.event.workflow_run.head_branch }}
 
 jobs:
-  preview:
+  deploy:
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Update submodules
-        run: git submodule update --init --recursive
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Download built site
+        uses: actions/download-artifact@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          name: preview-dist
+          path: dist
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build project
-        run: npm run build
-
+      # shell: bash enables pipefail, so a failed wrangler deploy (or a
+      # missing alias URL) fails this step instead of passing silently.
+      # The branch name comes from a fork, so it is passed through the
+      # environment rather than interpolated into the script.
       - name: Deploy preview to Cloudflare Pages
         id: deploy
+        shell: bash
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
-          npx wrangler pages deploy dist --project-name neurosift --branch "${{ github.head_ref }}" 2>&1 | tee /tmp/deploy-output.txt
-          PREVIEW_URL=$(grep 'Deployment alias URL' /tmp/deploy-output.txt | grep -oP 'https://[^\s]+' || true)
+          npx wrangler pages deploy dist --project-name neurosift --branch "$HEAD_BRANCH" 2>&1 | tee /tmp/deploy-output.txt
+          PREVIEW_URL=$(grep 'Deployment alias URL' /tmp/deploy-output.txt | grep -oP 'https://[^\s]+')
           echo "preview_url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
 
+      # The workflow_run payload's pull_requests array is empty for fork
+      # PRs, so the PR is resolved from the head commit instead.
       - name: Comment preview URL on PR
-        if: steps.deploy.outputs.preview_url != ''
         uses: actions/github-script@v7
         with:
           script: |
             const previewUrl = '${{ steps.deploy.outputs.preview_url }}';
-            const body = `**Preview deployment ready!**\n\n${previewUrl}\n\n<sub>Built from ${context.sha.substring(0, 7)}</sub>`;
+            const headSha = context.payload.workflow_run.head_sha;
 
-            // Find existing bot comment to update
+            const { data: prs } =
+              await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: headSha,
+              });
+            const pr = prs.find(
+              (p) =>
+                p.state === "open" &&
+                p.base.repo.full_name ===
+                  `${context.repo.owner}/${context.repo.repo}`,
+            );
+            if (!pr) {
+              console.log("No open PR found for head sha, skipping comment.");
+              return;
+            }
+
+            const body = `**Preview deployment ready!**\n\n${previewUrl}\n\n<sub>Built from ${headSha.substring(0, 7)}</sub>`;
+
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: pr.number,
             });
-
-            const botComment = comments.find(c =>
-              c.user.type === 'Bot' && c.body.includes('Preview deployment ready')
+            const botComment = comments.find(
+              (c) =>
+                c.user.type === "Bot" &&
+                c.body.includes("Preview deployment ready"),
             );
 
             if (botComment) {
@@ -68,7 +109,7 @@ jobs:
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
+                issue_number: pr.number,
                 body,
               });
             }
