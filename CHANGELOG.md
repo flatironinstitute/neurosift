@@ -1,5 +1,9 @@
 # Changes
 
+## August 13, 2026
+
+- Added CONTRIBUTING.md with issue reporting and development guidelines
+
 ## August 5, 2026
 
 - PSTH group legend now labels boolean and bigint group values instead of showing "?"

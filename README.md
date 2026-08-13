@@ -33,6 +33,10 @@ If you want to run neurosift on a local file, you can install it via pip and run
    ```
    
 
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to report problems (please include a link to the visualization and a screenshot) and how to set up a development environment.
+
 ## For developers
 
 Follow these steps to install and run the app locally in development mode:
