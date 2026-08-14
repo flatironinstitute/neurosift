@@ -2,6 +2,7 @@
 
 ## August 13, 2026
 
+- Show a relative time axis instead of an empty plot when a TimeSeries has a NaN `starting_time`
 - Added CONTRIBUTING.md with issue reporting and development guidelines
 
 ## August 5, 2026
