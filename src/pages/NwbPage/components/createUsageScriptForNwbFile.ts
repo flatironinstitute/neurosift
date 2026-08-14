@@ -405,10 +405,7 @@ const createUsageScriptForNwbFile = async (
         specifications,
       )
     ) {
-      const dataDataset = obj.group.datasets.find((x) => x.name === "data");
-      if (dataDataset) {
-        s += `${obj.variableName}.data # (h5py.Dataset) shape ${shapeToString(dataDataset.shape)}; dtype ${dataDataset.dtype}\n`;
-      }
+      // The .data line is covered by the generic TimeSeries block above
       const indexedImages = obj.group.subgroups.find(
         (x) => x.name === "indexed_images",
       );
