@@ -47,5 +47,6 @@ The repository also has pre-commit hooks (formatting and codespell) that you can
 ## Pull Requests
 
 - Update `CHANGELOG.md` with a brief entry describing your change.
-- Every pull request, including from forks, gets an automatic preview deployment. The build runs without secrets, and a separate workflow deploys the result and comments the preview URL on the PR. If your change affects a visualization, please include links demonstrating the before (production) and after (your preview) behavior on real data.
+- Every pull request, including from forks, gets an automatic preview deployment. The build runs without secrets, and a separate workflow deploys the result and comments the preview URL on the PR.
+- If your change fixes or modifies a visualization, the PR description should contain a link to the fixed widget on your preview deployment and a screenshot of it, ideally alongside a link showing the before behavior on production. Use real, publicly accessible data where possible, for the same reasons as in the issue guidelines above.
 - Keep changes minimal and focused. Small, reviewable diffs that fix one thing are much easier to merge than broad refactors.
