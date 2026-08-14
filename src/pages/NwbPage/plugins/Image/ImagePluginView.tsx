@@ -1,4 +1,6 @@
 import { useHdf5Dataset, useHdf5Group } from "@hdf5Interface";
+import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
+import { useNwbFileSpecifications } from "../../SpecificationsView/SetupNwbFileSpecificationsProvider";
 import ImagesItemView, { ImageItem } from "./ImagesItemView";
 
 type Props = {
@@ -41,11 +43,10 @@ const ImagePluginView: React.FC<Props> = ({
 
 const ImagePluginViewDataset: React.FC<Props> = ({ nwbUrl, path }) => {
   const dataset = useHdf5Dataset(nwbUrl, path);
+  const specifications = useNwbFileSpecifications();
   if (!dataset) return <div>Loading dataset...</div>;
   const neurodataType = dataset.attrs.neurodata_type;
-  if (
-    ["Image", "GrayscaleImage", "RGBImage", "RGBAImage"].includes(neurodataType)
-  ) {
+  if (neurodataTypeInheritsFrom(neurodataType, "Image", specifications)) {
     return (
       <ImageItem nwbUrl={nwbUrl} path={path} neurodataType={neurodataType} />
     );
@@ -61,9 +62,10 @@ const ImagePluginViewGroup: React.FC<Props> = ({
   height,
 }) => {
   const group = useHdf5Group(nwbUrl, path);
+  const specifications = useNwbFileSpecifications();
   if (!group) return <div>Loading group...</div>;
   const neurodataType = group.attrs.neurodata_type;
-  if (["Images"].includes(neurodataType)) {
+  if (neurodataTypeInheritsFrom(neurodataType, "Images", specifications)) {
     return (
       <ImagesItemView
         nwbUrl={nwbUrl}

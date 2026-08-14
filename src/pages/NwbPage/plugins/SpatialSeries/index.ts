@@ -1,34 +1,23 @@
 import { getHdf5Group } from "@hdf5Interface";
+import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import SpatialSeriesPluginView from "./SpatialSeriesPluginView";
-import { NwbFileSpecifications } from "../../SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 export const spatialSeriesPlugin: NwbObjectViewPlugin = {
   name: "SpatialSeriesXY",
   label: "XY",
-  canHandle: async ({
-    nwbUrl,
-    path,
-    specifications,
-  }: {
-    nwbUrl: string;
-    path: string;
-    specifications?: NwbFileSpecifications;
-  }) => {
+  canHandle: async ({ nwbUrl, path, specifications }) => {
     const group = await getHdf5Group(nwbUrl, path);
     if (!group) return false;
 
-    const spatialSeriesTypes: string[] = ["SpatialSeries"];
-    if (specifications) {
-      for (const a of specifications.allGroups) {
-        if (a.neurodata_type_inc === "SpatialSeries") {
-          spatialSeriesTypes.push(a.neurodata_type_def);
-        }
-      }
-    }
-
-    // Check if this is a SpatialSeries or PoseEstimationSeries neurodata_type
-    if (!spatialSeriesTypes.includes(group.attrs.neurodata_type)) {
+    // Check if this is a SpatialSeries (or a subtype, e.g. PoseEstimationSeries)
+    if (
+      !neurodataTypeInheritsFrom(
+        group.attrs.neurodata_type,
+        "SpatialSeries",
+        specifications,
+      )
+    ) {
       return false;
     }
 

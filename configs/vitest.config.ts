@@ -7,9 +7,11 @@ export default mergeConfig(
   viteConfig,
   defineConfig({
     test: {
-      // Only tests/unit — tests/integration and tests/chromatic are Playwright
-      // suites and must not be picked up by Vitest.
-      include: ["tests/unit/**/*.test.{ts,tsx}"],
+      // Both the standalone suite under tests/unit and tests colocated next to
+      // the source they cover. Listed explicitly rather than left to Vitest's
+      // default glob because that default would also sweep up tests/integration
+      // and tests/chromatic, which are Playwright suites.
+      include: ["tests/unit/**/*.test.{ts,tsx}", "src/**/*.test.{ts,tsx}"],
       environment: "jsdom",
       restoreMocks: true,
       unstubGlobals: true,

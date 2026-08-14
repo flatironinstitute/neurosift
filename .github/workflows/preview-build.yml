@@ -1,0 +1,45 @@
+name: Preview Build
+
+# Builds the site for PR previews. This workflow deliberately uses no
+# secrets, so it runs identically for same-repo branches and fork PRs
+# (GitHub withholds repository secrets from pull_request-triggered runs
+# of fork code). The built site is uploaded as an artifact, and the
+# separate "Preview Deploy" workflow (workflow_run-triggered, running in
+# this repository's context with secrets) picks it up and deploys it to
+# Cloudflare Pages.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update submodules
+        run: git submodule update --init --recursive
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Upload built site
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-dist
+          path: dist
+          retention-days: 3

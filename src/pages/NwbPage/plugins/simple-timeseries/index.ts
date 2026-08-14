@@ -1,10 +1,11 @@
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
+import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
 import { SimpleTimeseriesView } from "./SimpleTimeseriesView";
 
 export const simpleTimeseriesPlugin: NwbObjectViewPlugin = {
   name: "SimpleTimeseries",
-  canHandle: async ({ nwbUrl, path }: { nwbUrl: string; path: string }) => {
+  canHandle: async ({ nwbUrl, path, specifications }) => {
     const group = await getHdf5Group(nwbUrl, path);
     if (!group) return false;
 
@@ -13,8 +14,11 @@ export const simpleTimeseriesPlugin: NwbObjectViewPlugin = {
     if (!dataDataset) return false;
 
     // Check if this is a LabeledEvents neurodata type
-    const isLabeledEvents =
-      dataDataset.attrs?.neurodata_type === "LabeledEvents";
+    const isLabeledEvents = neurodataTypeInheritsFrom(
+      dataDataset.attrs?.neurodata_type,
+      "LabeledEvents",
+      specifications,
+    );
 
     // For LabeledEvents, require timestamps and labels
     if (isLabeledEvents) {

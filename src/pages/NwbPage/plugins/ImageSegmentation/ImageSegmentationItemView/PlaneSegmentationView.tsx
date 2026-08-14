@@ -10,6 +10,7 @@ import {
   Hdf5Dataset,
   Hdf5Group,
 } from "@hdf5Interface";
+import { neurodataTypeInheritsFrom } from "../../../neurodataTypeInheritance";
 
 type Props = {
   width: number;
@@ -164,7 +165,13 @@ const determineImageSizeFromNwbFileContext = async (
   let parentGroup = await getHdf5Group(nwbUrl, parentPath);
   if (!parentGroup)
     throw Error(`Unable to get parent group for determining image size`);
-  if (parentGroup.attrs["neurodata_type"] === "ImageSegmentation") {
+  // No specifications available in this helper; falls back to core relationships
+  if (
+    neurodataTypeInheritsFrom(
+      parentGroup.attrs["neurodata_type"],
+      "ImageSegmentation",
+    )
+  ) {
     // need to go up one more level
     parentPath = parentPath.split("/").slice(0, -1).join("/");
     parentGroup = await getHdf5Group(nwbUrl, parentPath);
@@ -172,7 +179,7 @@ const determineImageSizeFromNwbFileContext = async (
       throw Error(`Unable to get parent group for determining image size`);
   }
   for (const sg of parentGroup.subgroups) {
-    if (sg.attrs["neurodata_type"] === "Images") {
+    if (neurodataTypeInheritsFrom(sg.attrs["neurodata_type"], "Images")) {
       const imagesGroup = await getHdf5Group(
         nwbUrl,
         `${parentPath}/${sg.name}`,
@@ -181,10 +188,7 @@ const determineImageSizeFromNwbFileContext = async (
         continue;
       }
       for (const ds of imagesGroup.datasets) {
-        if (
-          ds.attrs["neurodata_type"] === "Image" ||
-          ds.attrs["neurodata_type"] === "GrayscaleImage"
-        ) {
+        if (neurodataTypeInheritsFrom(ds.attrs["neurodata_type"], "Image")) {
           if (ds.shape.length === 2) {
             return ds.shape;
           }
