@@ -10,6 +10,7 @@ import { NeurodataObject, useNeurodataObjects } from "./useNeurodataObjects";
 import { findSuitablePlugins } from "./plugins/registry";
 import { NwbObjectViewPlugin } from "./plugins/pluginInterface";
 import { useNwbFileSpecifications } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
+import { neurodataTypeInheritsFrom } from "./neurodataTypeInheritance";
 
 type Props = {
   nwbUrl: string;
@@ -118,7 +119,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
       );
     };
     loadLaunchablePlugins();
-  }, [nwbUrl, neurodataObjects, defaultUnitsPath]);
+  }, [nwbUrl, neurodataObjects, defaultUnitsPath, specifications]);
 
   useEffect(() => {
     const checkInteractiveViews = async () => {
@@ -425,7 +426,11 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
             >
               {obj.attrs.neurodata_type || "-"}
             </span>
-            {obj.attrs.neurodata_type === "Units" && (
+            {neurodataTypeInheritsFrom(
+              obj.attrs.neurodata_type,
+              "Units",
+              specifications,
+            ) && (
               <span
                 onClick={(e) => {
                   e.stopPropagation();

@@ -1,18 +1,22 @@
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
+import { neurodataTypeInheritsFromAny } from "../../neurodataTypeInheritance";
 import ImageSeriesMp4View from "./ImageSeriesMp4View";
 
 export const imageSeriesMp4Plugin: NwbObjectViewPlugin = {
   name: "ImageSeriesMp4",
   label: "MP4 Video",
-  canHandle: async ({ nwbUrl, path }: { nwbUrl: string; path: string }) => {
+  canHandle: async ({ nwbUrl, path, specifications }) => {
     const group = await getHdf5Group(nwbUrl, path);
     if (!group) return false;
 
     // Check if this is a TwoPhotonSeries or OnePhotonSeries neurodata_type
     if (
-      group.attrs.neurodata_type !== "TwoPhotonSeries" &&
-      group.attrs.neurodata_type !== "OnePhotonSeries"
+      !neurodataTypeInheritsFromAny(
+        group.attrs.neurodata_type,
+        ["TwoPhotonSeries", "OnePhotonSeries"],
+        specifications,
+      )
     ) {
       return false;
     }

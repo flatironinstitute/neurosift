@@ -1,5 +1,6 @@
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
+import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
 import PoseEstimationView from "./PoseEstimationView";
 
 export const poseEstimationPlugin: NwbObjectViewPlugin = {
@@ -7,12 +8,23 @@ export const poseEstimationPlugin: NwbObjectViewPlugin = {
   label: "Pose overlay",
   // Activates on an ndx-pose PoseEstimation container that holds at least one
   // PoseEstimationSeries.
-  canHandle: async ({ nwbUrl, path }: { nwbUrl: string; path: string }) => {
+  canHandle: async ({ nwbUrl, path, specifications }) => {
     const group = await getHdf5Group(nwbUrl, path);
     if (!group) return false;
-    if (group.attrs?.neurodata_type !== "PoseEstimation") return false;
-    return group.subgroups.some(
-      (sg) => sg.attrs?.neurodata_type === "PoseEstimationSeries",
+    if (
+      !neurodataTypeInheritsFrom(
+        group.attrs?.neurodata_type,
+        "PoseEstimation",
+        specifications,
+      )
+    )
+      return false;
+    return group.subgroups.some((sg) =>
+      neurodataTypeInheritsFrom(
+        sg.attrs?.neurodata_type,
+        "PoseEstimationSeries",
+        specifications,
+      ),
     );
   },
   component: PoseEstimationView,

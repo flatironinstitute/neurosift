@@ -19,6 +19,7 @@ import AuthErrorNotification from "./components/AuthErrorNotification";
 import { DynamicTab } from "./Types/index";
 import { getHdf5Group, hasAuthError, isDandiAssetUrl } from "./hdf5Interface";
 import { SetupNwbFileSpecificationsProvider } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
+import { neurodataTypeInheritsFrom } from "./neurodataTypeInheritance";
 import ScrollY from "@components/ScrollY";
 import NwbHierarchyView from "./NwbHierarchyView";
 import Hdf5View from "./Hdf5View";
@@ -146,7 +147,12 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
   useEffect(() => {
     const checkUnits = async () => {
       const group = await getHdf5Group(nwbUrl, "/units");
-      if (group && group.attrs.neurodata_type === "Units") {
+      // No specifications available here (the provider is set up below this
+      // component), so this falls back to the known core type relationships
+      if (
+        group &&
+        neurodataTypeInheritsFrom(group.attrs.neurodata_type, "Units")
+      ) {
         setDefaultUnitsPath("/units");
       }
     };

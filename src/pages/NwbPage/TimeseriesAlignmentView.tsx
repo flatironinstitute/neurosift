@@ -14,6 +14,10 @@ import {
   useNwbFileSpecifications,
   NwbFileSpecifications,
 } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
+import {
+  neurodataTypeInheritsFrom,
+  neurodataTypeInheritsFromAny,
+} from "./neurodataTypeInheritance";
 
 type Props = {
   nwbUrl: string;
@@ -73,33 +77,24 @@ const timeseriesRootPaths = new Set([
 const buildTypeSets = (
   specs: NwbFileSpecifications,
 ): { relevantTypes: Set<string>; containerTypes: Set<string> } => {
-  const parentOf: Record<string, string> = {};
-  for (const g of specs.allGroups) {
-    if (g.neurodata_type_inc) {
-      parentOf[g.neurodata_type_def] = g.neurodata_type_inc;
-    }
-  }
-  const descendsFrom = (type: string, ancestor: string): boolean => {
-    let current: string | undefined = type;
-    while (current) {
-      if (current === ancestor) return true;
-      current = parentOf[current];
-    }
-    return false;
-  };
   const relevantTypes = new Set<string>();
   const containerTypes = new Set<string>();
   for (const g of specs.allGroups) {
     const def = g.neurodata_type_def;
     if (
-      descendsFrom(def, "TimeSeries") ||
-      descendsFrom(def, "TimeIntervals") ||
-      descendsFrom(def, "Events")
+      neurodataTypeInheritsFromAny(
+        def,
+        ["TimeSeries", "TimeIntervals", "Events"],
+        specs,
+      )
     ) {
       relevantTypes.add(def);
     } else if (
-      descendsFrom(def, "NWBDataInterface") ||
-      descendsFrom(def, "ProcessingModule")
+      neurodataTypeInheritsFromAny(
+        def,
+        ["NWBDataInterface", "ProcessingModule"],
+        specs,
+      )
     ) {
       containerTypes.add(def);
     }
@@ -222,7 +217,9 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
               });
             }
           }
-        } else if (nt === "TimeIntervals") {
+        } else if (
+          neurodataTypeInheritsFrom(nt, "TimeIntervals", specifications)
+        ) {
           const startTimeDataset = gr.datasets?.find(
             (ds: any) => ds.name === "start_time",
           );
@@ -340,7 +337,7 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
     return () => {
       canceled = true;
     };
-  }, [nwbUrl, isExpanded, typeSets]);
+  }, [nwbUrl, isExpanded, typeSets, specifications]);
 
   const { startTime, endTime } = useMemo(() => {
     let startTime: number | undefined = undefined;

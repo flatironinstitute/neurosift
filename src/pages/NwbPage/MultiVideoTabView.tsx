@@ -20,6 +20,8 @@ import {
 } from "./externalVideoUtils";
 
 import { useSearchParams } from "react-router-dom";
+import { neurodataTypeInheritsFrom } from "./neurodataTypeInheritance";
+import { useNwbFileSpecifications } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 type Props = {
   nwbUrl: string;
@@ -27,8 +29,6 @@ type Props = {
   height: number;
   isExpanded?: boolean;
 };
-
-const SUPPORTED_TYPES = new Set(["ImageSeries"]);
 
 const START_TOLERANCE_SEC = 0.25;
 const DRIFT_TOLERANCE_SEC = 0.1;
@@ -290,6 +290,7 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   isExpanded,
 }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const specifications = useNwbFileSpecifications();
   const [candidates, setCandidates] = useState<ExternalVideoCandidate[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
@@ -408,7 +409,11 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
 
       const neurodataType = group.attrs?.neurodata_type;
       if (
-        SUPPORTED_TYPES.has(neurodataType) &&
+        neurodataTypeInheritsFrom(
+          neurodataType,
+          "ImageSeries",
+          specifications,
+        ) &&
         group.datasets.some((ds) => ds.name === "external_file")
       ) {
         try {
@@ -464,7 +469,7 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
     return () => {
       canceled = true;
     };
-  }, [nwbUrl, isExpanded]);
+  }, [nwbUrl, isExpanded, specifications]);
 
   const labelMap = useMemo(() => {
     const map = new Map<string, string>();

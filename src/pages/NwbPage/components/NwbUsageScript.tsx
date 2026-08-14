@@ -10,6 +10,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vs } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { getLindiUrl } from "../hdf5Interface";
 import createUsageScriptForNwbFile from "./createUsageScriptForNwbFile";
+import { useNwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
 
 type Props = {
   nwbUrl: string;
@@ -17,6 +18,7 @@ type Props = {
 };
 
 const NwbUsageScript: FunctionComponent<Props> = ({ nwbUrl, onNwbUsage }) => {
+  const specifications = useNwbFileSpecifications();
   const [scriptContent, setScriptContent] = useState<string | undefined>(
     undefined,
   );
@@ -73,14 +75,14 @@ nwb = pynwb.NWBHDF5IO(file=f, mode='r').read()
     const getUsageScript = async () => {
       if (!nwbUrl) return;
       try {
-        const x = await createUsageScriptForNwbFile(nwbUrl);
+        const x = await createUsageScriptForNwbFile(nwbUrl, specifications);
         setScriptContent(x);
       } catch (error) {
         setError(`Error creating usage script: ${error}`);
       }
     };
     getUsageScript();
-  }, [nwbUrl]);
+  }, [nwbUrl, specifications]);
 
   const handleCopyClick = useCallback(() => {
     if (!headerContent || !scriptContent) return;
