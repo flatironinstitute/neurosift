@@ -31,3 +31,15 @@ src/build-info.json
 
 .vite/**
 .codex
+
+# Vitest
+coverage
+
+# Storybook
+storybook-static
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

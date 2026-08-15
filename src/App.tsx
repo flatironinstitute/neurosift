@@ -10,7 +10,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { ThemeProvider } from "@mui/material/styles";
 import { useEffect } from "react";
 import {
   Navigate,
@@ -38,32 +38,7 @@ import SettingsPage from "./pages/SettingsPage/SettingsPage";
 import VideoPage from "./pages/VideoPage/VideoPage";
 import { logPageLoad } from "./util/sendLog";
 import SlpPage from "./pages/SlpPage/SlpPage";
-
-const theme = createTheme({
-  palette: {
-    mode: "light",
-    primary: {
-      main: "#2c3e50",
-      dark: "#1a2530",
-      light: "#3e5771",
-      contrastText: "#ffffff",
-    },
-    secondary: {
-      main: "#9c27b0",
-      dark: "#7b1fa2",
-      light: "#ba68c8",
-      contrastText: "#ffffff",
-    },
-    text: {
-      primary: "rgb(33, 33, 33)",
-      secondary: "rgb(66, 66, 66)",
-    },
-    background: {
-      default: "rgb(250, 250, 250)",
-      paper: "#ffffff",
-    },
-  },
-});
+import { appTheme } from "./theme";
 
 const LegacyUrlHandler = () => {
   const navigate = useNavigate();
@@ -438,7 +413,7 @@ const AppContent = () => {
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={appTheme}>
       <Router basename={import.meta.env.BASE_URL}>
         <AIComponentRegistryProvider>
           <LegacyUrlHandler />

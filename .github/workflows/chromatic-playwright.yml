@@ -1,0 +1,42 @@
+name: Chromatic (Playwright)
+
+on: push
+
+permissions:
+  contents: read
+
+jobs:
+  chromatic-playwright:
+    name: Run Chromatic (Playwright)
+    # Dependabot-triggered runs cannot read Actions secrets, so the
+    # Chromatic project token is unavailable; skip instead of failing.
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Chromatic needs the full history to work out the baseline commit.
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: npm run test:chromatic
+
+      - name: Run Chromatic
+        uses: chromaui/action@latest
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PLAYWRIGHT_PROJECT_TOKEN }}
+          playwright: true

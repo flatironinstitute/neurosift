@@ -303,7 +303,11 @@ const BuildTimeFooter: FunctionComponent = () => {
       });
   }, []);
 
-  return buildTime ? <span>Built: {buildTime}</span> : null;
+  // The build timestamp changes on every build, so exclude it from Chromatic
+  // snapshots — otherwise the home page would diff on every single run.
+  return buildTime ? (
+    <span data-chromatic="ignore">Built: {buildTime}</span>
+  ) : null;
 };
 
 const useRegisterAIComponent = () => {
