@@ -170,6 +170,10 @@ export class ZarrFileSystemClient {
   }
 }
 
+// A soft link may point at another soft link, but a chain this long means the
+// file is malformed, most likely a cycle.
+const maxSoftLinkHops = 10;
+
 class RemoteH5FileLindi {
   #cacheDisabled = false; // just for benchmarking
   #sourceUrls: string[] | undefined = undefined;
@@ -223,12 +227,35 @@ class RemoteH5FileLindi {
   get dataIsRemote() {
     return !this.url.startsWith("http://localhost");
   }
+  // LINDI represents an HDF5 soft link as a zarr group whose .zattrs contains a
+  // _SOFT_LINK entry naming the target path. Such a link stands in for whatever
+  // it points at, so every read needs to follow it to the target before looking
+  // for .zgroup, .zarray or chunk data. This is common in NWB files: pynwb
+  // writes a soft link whenever the same timestamps dataset or rois
+  // DynamicTableRegion is shared by more than one TimeSeries.
+  async resolveSoftLink(pathWithoutBeginningSlash: string): Promise<string> {
+    let p = pathWithoutBeginningSlash;
+    // guard against a link cycle in a malformed file
+    for (let i = 0; i < maxSoftLinkHops; i++) {
+      if (p === "") return p; // the root group is never a link
+      const zattrs = (await this.lindiFileSystemClient.readJson(
+        p + "/.zattrs",
+      )) as ZMetaDataZAttrs | undefined;
+      const target = zattrs?.["_SOFT_LINK"]?.["path"];
+      if (typeof target !== "string") return p;
+      p = target.startsWith("/") ? target.slice(1) : target;
+    }
+    console.warn(
+      `Too many soft link hops while resolving ${pathWithoutBeginningSlash}`,
+    );
+    return p;
+  }
   async getGroup(path: string): Promise<RemoteH5Group | undefined> {
     if (path === "") path = "/";
     let group: RemoteH5Group | undefined;
-    const pathWithoutBeginningSlash = path.startsWith("/")
-      ? path.slice(1)
-      : path;
+    const pathWithoutBeginningSlash = await this.resolveSoftLink(
+      path.startsWith("/") ? path.slice(1) : path,
+    );
     let zgroup: ZMetaDataZGroup | undefined;
     let zattrs: ZMetaDataZAttrs | undefined;
     if (path === "/") {
@@ -252,22 +279,35 @@ class RemoteH5FileLindi {
       const childPaths: string[] =
         this.pathsByParentPath[pathWithoutBeginningSlash] || [];
       for (const childPath of childPaths) {
+        // A soft-linked child is reported as the kind of object it points at,
+        // with the attributes of that object, but under its own name and path.
+        // If the link is broken we fall back to the link itself, which LINDI
+        // stores as an empty group.
+        let resolvedChildPath = await this.resolveSoftLink(childPath);
+        if (
+          resolvedChildPath !== childPath &&
+          !(await this.lindiFileSystemClient.readJson(
+            resolvedChildPath + "/.zgroup",
+          )) &&
+          !(await this.lindiFileSystemClient.readJson(
+            resolvedChildPath + "/.zarray",
+          ))
+        ) {
+          console.warn(
+            `Soft link ${childPath} points at ${resolvedChildPath}, which was not found`,
+          );
+          resolvedChildPath = childPath;
+        }
         const childZgroup = await this.lindiFileSystemClient.readJson(
-          childPath + "/.zgroup",
+          resolvedChildPath + "/.zgroup",
         );
         const childZarray = await this.lindiFileSystemClient.readJson(
-          childPath + "/.zarray",
+          resolvedChildPath + "/.zarray",
         );
         const childZattrs = await this.lindiFileSystemClient.readJson(
-          childPath + "/.zattrs",
+          resolvedChildPath + "/.zattrs",
         );
-        if (childZgroup) {
-          subgroups.push({
-            name: getNameFromPath(childPath),
-            path: "/" + childPath,
-            attrs: childZattrs || {},
-          });
-        } else if (childZarray) {
+        if (childZarray) {
           const shape = childZarray.shape;
           const dtype = childZarray.dtype;
           if (shape && dtype) {
@@ -282,8 +322,18 @@ class RemoteH5FileLindi {
               filters: formatFilters(childZarray.filters),
             });
           } else {
-            console.warn("Unexpected .zarray item", childPath, childZarray);
+            console.warn(
+              "Unexpected .zarray item",
+              resolvedChildPath,
+              childZarray,
+            );
           }
+        } else if (childZgroup) {
+          subgroups.push({
+            name: getNameFromPath(childPath),
+            path: "/" + childPath,
+            attrs: childZattrs || {},
+          });
         }
       }
       group = {
@@ -297,9 +347,9 @@ class RemoteH5FileLindi {
     return group;
   }
   async getDataset(path: string): Promise<RemoteH5Dataset | undefined> {
-    const pathWithoutBeginningSlash = path.startsWith("/")
-      ? path.slice(1)
-      : path;
+    const pathWithoutBeginningSlash = await this.resolveSoftLink(
+      path.startsWith("/") ? path.slice(1) : path,
+    );
     const zarray = (await this.lindiFileSystemClient.readJson(
       pathWithoutBeginningSlash + "/.zarray",
     )) as ZMetaDataZArray;
@@ -352,9 +402,9 @@ class RemoteH5FileLindi {
       );
     }
 
-    const pathWithoutBeginningSlash = path.startsWith("/")
-      ? path.slice(1)
-      : path;
+    const pathWithoutBeginningSlash = await this.resolveSoftLink(
+      path.startsWith("/") ? path.slice(1) : path,
+    );
     const zarray = (await this.lindiFileSystemClient.readJson(
       pathWithoutBeginningSlash + "/.zarray",
     )) as ZMetaDataZArray | undefined;

@@ -6,7 +6,10 @@ interface CachedItem {
 }
 
 const DB_NAME = "neurosift-hdf5-cache";
-const DB_VERSION = 1;
+// Bump this whenever a change to the readers means that a previously cached
+// group or dataset listing is no longer what we would produce today. Version 2
+// discards listings made before soft links were resolved in LINDI files.
+const DB_VERSION = 2;
 const STORE_NAME = "hdf5-objects";
 const MAX_CACHED_ITEMS = 1000; // Clear cache when this many items are stored
 
@@ -30,6 +33,11 @@ const initializeDb = async () => {
     request.onupgradeneeded = (event: Event) => {
       const target = event.target as IDBOpenDBRequest;
       const database = target.result;
+      // Cached items are only ever a copy of what the readers produce, so on a
+      // version change we drop the store and start over rather than migrate.
+      if (database.objectStoreNames.contains(STORE_NAME)) {
+        database.deleteObjectStore(STORE_NAME);
+      }
       database.createObjectStore(STORE_NAME, { keyPath: "key" });
     };
   });
