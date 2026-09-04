@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 import requests
 import json
 import logging
@@ -6,7 +6,7 @@ from ...job_utils import update_job_status, upload_job_output_json
 
 
 def process_text_letter_count_job(
-    job: Dict[str, Any], api_base_url: Optional[str] = None
+    job: Dict[str, Any], api_base_url: str | None = None
 ) -> None:
     """Process a text-letter-count job.
 

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 import os
 import json
 import logging
@@ -6,9 +6,7 @@ from ...job_utils import update_job_status, InputFile, OutputFile
 from .RastermapProcessor import RastermapProcessor, RastermapContext
 
 
-def process_rastermap_job(
-    job: Dict[str, Any], api_base_url: Optional[str] = None
-) -> None:
+def process_rastermap_job(job: Dict[str, Any], api_base_url: str | None = None) -> None:
     """Process a rastermap job.
 
     Args:

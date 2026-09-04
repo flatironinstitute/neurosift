@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 import json
 import logging
 from ...job_utils import update_job_status, InputFile, OutputFile
@@ -9,7 +9,7 @@ from .ImageSeriesToMp4Processor import (
 
 
 def process_image_series_to_mp4_job(
-    job: Dict[str, Any], api_base_url: Optional[str] = None
+    job: Dict[str, Any], api_base_url: str | None = None
 ) -> None:
     """Process a image_series_to_mp4 job.
 
