@@ -1,5 +1,9 @@
 # Changes
 
+## September 4, 2026
+
+- Released neurosift 0.2.16 on PyPI. The local file server started by `neurosift view-nwb` no longer exits on a request for a forbidden path or a directory, handles byte ranges correctly (clamped ranges, suffix ranges, 416 for unsatisfiable ones), answers HEAD requests, and listens on localhost only. `view-nwb` refuses zarr directories with a clear message and installs the server's npm dependencies only once.
+
 ## August 13, 2026
 
 - Show a relative time axis instead of an empty plot when a TimeSeries has a NaN `starting_time`
