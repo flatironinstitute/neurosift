@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { ColumnSortState, RowItem, sortRowItems } from "./sortRowItems";
 import {
   FunctionComponent,
   useCallback,
@@ -42,17 +43,6 @@ const dataReducer = (state: DataState, action: DataAction) => {
       [action.key]: action.data,
     };
   } else return state;
-};
-
-type ColumnSortState = {
-  primary?: {
-    column: string;
-    ascending: boolean;
-  };
-  secondary?: {
-    column: string;
-    ascending: boolean;
-  };
 };
 
 type ColumnSortAction = {
@@ -120,11 +110,6 @@ const columnDescriptionReducer = (
       [action.column]: action.description,
     };
   } else return state;
-};
-
-type RowItem = {
-  id: string | number;
-  columnValues: any[];
 };
 
 const DynamicTable: FunctionComponent<Props> = ({
@@ -322,35 +307,7 @@ const DynamicTable: FunctionComponent<Props> = ({
 
   const sortedRowItems = useMemo(() => {
     if (!validColumnNames) return rowItems;
-    const primary = columnSortState.primary;
-    const secondary = columnSortState.secondary;
-    if (!primary) return rowItems;
-    const primaryColIndex = validColumnNames.indexOf(primary.column);
-    if (primaryColIndex < 0) return rowItems;
-    const secondaryColIndex = secondary
-      ? validColumnNames.indexOf(secondary.column)
-      : -1;
-    const ret = [...rowItems];
-    ret.sort((a, b) => {
-      const valA = a.columnValues[primaryColIndex];
-      const valB = b.columnValues[primaryColIndex];
-      if (valA === undefined) return 1;
-      if (valB === undefined) return -1;
-      if (isNaN(valA)) return 1;
-      if (isNaN(valB)) return -1;
-      if (valA < valB) return primary.ascending ? -1 : 1;
-      if (valA > valB) return primary.ascending ? 1 : -1;
-      if (secondaryColIndex >= 0 && secondary) {
-        const valA2 = a.columnValues[secondaryColIndex];
-        const valB2 = b.columnValues[secondaryColIndex];
-        if (valA2 === undefined) return 1;
-        if (valB2 === undefined) return -1;
-        if (valA2 < valB2) return secondary.ascending ? -1 : 1;
-        if (valA2 > valB2) return secondary.ascending ? 1 : -1;
-      }
-      return 0;
-    });
-    return ret;
+    return sortRowItems(rowItems, validColumnNames, columnSortState);
   }, [validColumnNames, rowItems, columnSortState]);
 
   const [columnDescriptions, columnDescriptionDispatch] = useReducer(
