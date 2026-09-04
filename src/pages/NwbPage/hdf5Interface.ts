@@ -559,7 +559,14 @@ export const tryGetLindiUrl = async (url: string, dandisetId: string) => {
   if (!assetId) return undefined;
   const aa = staging ? "dandi-staging" : "dandi";
   const tryUrl = `https://lindi.neurosift.org/${aa}/dandisets/${dandisetId}/assets/${assetId}/nwb.lindi.json`;
-  const resp = await fetch(tryUrl, { method: "HEAD" });
-  if (resp.ok) return tryUrl;
+  // The LINDI index is an optimization. If it cannot be reached (network
+  // error, CORS failure, outage), fall back to the HDF5 file itself rather
+  // than failing the whole load.
+  try {
+    const resp = await fetch(tryUrl, { method: "HEAD" });
+    if (resp.ok) return tryUrl;
+  } catch (err) {
+    console.warn(`Unable to check for a LINDI file at ${tryUrl}:`, err);
+  }
   return undefined;
 };
