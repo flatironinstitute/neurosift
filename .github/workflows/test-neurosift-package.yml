@@ -183,7 +183,7 @@ jobs:
 
     - name: Run neurosift CLI test with timeout
       run: |
-        timeout 15s python test_neurosift.py || true
+        timeout 15s python test_neurosift.py
 
     # Test that neurosift can be imported
     - name: Test neurosift import

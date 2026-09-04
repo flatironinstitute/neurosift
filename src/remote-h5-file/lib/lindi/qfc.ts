@@ -11,9 +11,10 @@ type QfcCompressionOpts = {
   zstd_level: number;
 };
 
-const isQfcCompressionOpts = (x: any): x is QfcCompressionOpts => {
-  if (!x) return false;
-  if (typeof x !== "object") return false;
+const isQfcCompressionOpts = (x0: unknown): x0 is QfcCompressionOpts => {
+  if (!x0) return false;
+  if (typeof x0 !== "object") return false;
+  const x = x0 as { [key: string]: unknown };
   if (x.compression_method !== "zlib" && x.compression_method !== "zstd")
     return false;
   if (x.dtype !== "float32" && x.dtype !== "int16") return false;
@@ -29,7 +30,7 @@ export const qfcDecompress = async (
   buf: ArrayBuffer,
   shape: number[],
   compressor: QfcCompressionOpts,
-): Promise<any> => {
+): Promise<ArrayBuffer> => {
   if (!isQfcCompressionOpts(compressor)) {
     console.warn(compressor);
     throw Error("Invalid qfc compressor");
