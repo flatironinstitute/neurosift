@@ -38,7 +38,7 @@ Before opening a pull request, please make sure the following pass:
 ```bash
 npm run format:check   # prettier (npm run format to fix)
 npm run lint           # eslint
-npx tsc --noEmit       # type checking
+npx tsc -b --noEmit    # type checking (the root tsconfig is a solution file, so -b is needed)
 npm test               # unit tests (vitest)
 ```
 
