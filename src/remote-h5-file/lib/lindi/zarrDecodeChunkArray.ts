@@ -201,20 +201,40 @@ const applyFilter = async (chunk: ArrayBuffer, filter: any) => {
   } else if (filter.id === "blosc") {
     return new Blosc().decode(chunk);
   } else if (filter.id === "shuffle") {
-    const elementSize = filter.elementsize;
-    const view = new DataView(chunk);
-    const ret = new Uint8Array(chunk.byteLength);
-    const a = chunk.byteLength / elementSize;
-    for (let i = 0; i < chunk.byteLength; i++) {
-      const b = i % elementSize;
-      const c = Math.floor(i / elementSize) * elementSize;
-      const j = b * a + c;
-      ret[j] = view.getUint8(i);
-    }
-    return ret.buffer;
+    return unshuffle(chunk, filter.elementsize);
   }
   console.warn("Filter not yet implemented", filter);
   throw Error("Filter not yet implemented");
+};
+
+// Inverse of the HDF5 / numcodecs byte shuffle filter. The shuffled buffer
+// stores byte 0 of every element, then byte 1 of every element, and so on, so
+// element k occupies bytes src[b * count + k] for b in 0..elementSize-1.
+// Trailing bytes that do not fill a whole element are left in place, matching
+// the HDF5 filter.
+export const unshuffle = (
+  chunk: ArrayBuffer,
+  elementSize: number,
+): ArrayBuffer => {
+  if (!Number.isInteger(elementSize) || elementSize <= 0) {
+    throw Error(`Invalid shuffle elementsize: ${elementSize}`);
+  }
+  const src = new Uint8Array(chunk);
+  if (elementSize === 1) {
+    return src.slice().buffer;
+  }
+  const count = Math.floor(src.length / elementSize);
+  const ret = new Uint8Array(src.length);
+  for (let b = 0; b < elementSize; b++) {
+    const srcOffset = b * count;
+    for (let k = 0; k < count; k++) {
+      ret[k * elementSize + b] = src[srcOffset + k];
+    }
+  }
+  for (let i = count * elementSize; i < src.length; i++) {
+    ret[i] = src[i];
+  }
+  return ret.buffer;
 };
 
 const sameShape = (a: number[], b: number[]): boolean => {
