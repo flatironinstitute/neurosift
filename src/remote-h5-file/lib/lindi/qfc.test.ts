@@ -45,9 +45,7 @@ describe("qfcDecompress", () => {
       compressor("int16", 0),
     );
     expect(out.byteLength).toBe(8 * 2 * 2);
-    expect(Array.from(new Int16Array(out.buffer ?? out))).toEqual(
-      new Array(16).fill(0),
-    );
+    expect(Array.from(new Int16Array(out))).toEqual(new Array(16).fill(0));
   });
 
   it("decodes a segmented int16 chunk", async () => {
@@ -66,9 +64,7 @@ describe("qfcDecompress", () => {
       compressor("float32", 0),
     );
     expect(out.byteLength).toBe(8 * 2 * 4);
-    expect(Array.from(new Float32Array(out.buffer ?? out))).toEqual(
-      new Array(16).fill(0),
-    );
+    expect(Array.from(new Float32Array(out))).toEqual(new Array(16).fill(0));
   });
 
   it("rejects a chunk whose header disagrees with the shape", async () => {
