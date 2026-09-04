@@ -2,6 +2,7 @@ import { Splitter } from "@fi-sci/splitter";
 import { TimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import EDFReader from "./EDFReader";
+import { channelStdev, computeMedian } from "./edfStats";
 import {
   DatasetChunkingClientInterface,
   NwbTimeseriesViewChild,
@@ -464,7 +465,7 @@ const useDatasetChunkingClientForEdfReader = (
               "Skipping channel because it has a different sampling rate than the first channel: " +
                 iChannel,
             );
-            break;
+            continue;
           }
           const xx = await edfReader.readSamples(iChannel, jj1, jj2);
           for (let j = 0; j < xx.length; j++) {
@@ -501,14 +502,7 @@ const useDatasetChunkingClientForEdfReader = (
         { onCancel: [] },
       );
       const concatenatedChunk = initialChunk.concatenatedChunk;
-      const channelStdevs = concatenatedChunk.map((x) => {
-        if (!x.length) return 0;
-        const sum = x.reduce((a, b) => a + b, 0);
-        const mean = sum / x.length;
-        const sum2 = x.reduce((a, b) => a + (b - mean) ** 2, 0);
-        return Math.sqrt(sum2 / x.length);
-      });
-      setEstimatedChannelStdevs(channelStdevs);
+      setEstimatedChannelStdevs(concatenatedChunk.map(channelStdev));
     })();
   }, [datasetChunkingClient]);
   const datasetChunkingClient2 = useMemo(() => {
@@ -603,15 +597,6 @@ const useOpenNeuroInfo = (url: string): OpenNeuroEDFInfo | null => {
     }
   }
   return null;
-};
-
-const computeMedian = (x: number[]) => {
-  if (x.length === 0) return 0;
-  const y = x.slice().sort((a, b) => a - b);
-  if (y.length % 2 === 1) {
-    return y[Math.floor(y.length / 2)];
-  }
-  return (y[y.length / 2 - 1] + y[y.length / 2]) / 2;
 };
 
 export default EdfViewer;
