@@ -242,7 +242,9 @@ const qfc_inv_pre_compress = async (o: {
     x_fft[i] = x_fft[i] * Math.sqrt(num_samples);
   }
   if (dtype === "int16") {
-    const ret = new Int16Array(x_fft.byteLength);
+    // One int16 per sample: sizing this by byteLength allocated four times
+    // too many elements and made every int16 decode fail its length check.
+    const ret = new Int16Array(x_fft.length);
     for (let i = 0; i < x_fft.length; i++) {
       ret[i] = Math.round(x_fft[i]);
     }
