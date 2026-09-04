@@ -365,14 +365,25 @@ export const getHdf5DatasetData = async (
   }
 };
 
+// The hooks below clear their state when the url or path changes and ignore
+// the result of a load that was superseded, so a slow response for a
+// previous object cannot be shown for the current one.
 export const useHdf5Group = (url: string, path: string) => {
   const [group, setGroup] = useState<Hdf5Group | undefined>(undefined);
   useEffect(() => {
+    setGroup(undefined);
+    let canceled = false;
     const load = async () => {
       const g = await getHdf5Group(url, path);
+      if (canceled) return;
       setGroup(g);
     };
-    load();
+    load().catch((err) => {
+      if (!canceled) console.error(`Error loading group ${path}:`, err);
+    });
+    return () => {
+      canceled = true;
+    };
   }, [url, path]);
   return group;
 };
@@ -380,11 +391,19 @@ export const useHdf5Group = (url: string, path: string) => {
 export const useHdf5Dataset = (url: string, path: string) => {
   const [dataset, setDataset] = useState<Hdf5Dataset | undefined>(undefined);
   useEffect(() => {
+    setDataset(undefined);
+    let canceled = false;
     const load = async () => {
       const d = await getHdf5Dataset(url, path);
+      if (canceled) return;
       setDataset(d);
     };
-    load();
+    load().catch((err) => {
+      if (!canceled) console.error(`Error loading dataset ${path}:`, err);
+    });
+    return () => {
+      canceled = true;
+    };
   }, [url, path]);
   return dataset;
 };
@@ -395,19 +414,26 @@ export const useHdf5DatasetData = (url: string, path: string) => {
     undefined,
   );
   useEffect(() => {
+    setData(undefined);
+    setErrorMessage(undefined);
+    let canceled = false;
     const load = async () => {
-      setData(undefined);
       let d;
       try {
         d = await getHdf5DatasetData(url, path, {});
       } catch (err: any) {
+        if (canceled) return;
         console.error(`Error loading dataset data: ${err.message}`);
         setErrorMessage(err.message);
         return;
       }
+      if (canceled) return;
       setData(d);
     };
     load();
+    return () => {
+      canceled = true;
+    };
   }, [url, path]);
   return { data, errorMessage };
 };
@@ -559,7 +585,14 @@ export const tryGetLindiUrl = async (url: string, dandisetId: string) => {
   if (!assetId) return undefined;
   const aa = staging ? "dandi-staging" : "dandi";
   const tryUrl = `https://lindi.neurosift.org/${aa}/dandisets/${dandisetId}/assets/${assetId}/nwb.lindi.json`;
-  const resp = await fetch(tryUrl, { method: "HEAD" });
-  if (resp.ok) return tryUrl;
+  // The LINDI index is an optimization. If it cannot be reached (network
+  // error, CORS failure, outage), fall back to the HDF5 file itself rather
+  // than failing the whole load.
+  try {
+    const resp = await fetch(tryUrl, { method: "HEAD" });
+    if (resp.ok) return tryUrl;
+  } catch (err) {
+    console.warn(`Unable to check for a LINDI file at ${tryUrl}:`, err);
+  }
   return undefined;
 };

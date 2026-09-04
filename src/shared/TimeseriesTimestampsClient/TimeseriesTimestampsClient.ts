@@ -30,14 +30,20 @@ export class IrregularTimeseriesTimestampsClient {
       throw Error(
         `Unable to get timestamps dataset: ${this.objectPath}/timestamps`,
       );
-    const numInitialTimestamps = Math.min(10000, timestampsDataset.shape[0]);
+    const numTimestamps = timestampsDataset.shape[0];
+    if (!numTimestamps) {
+      throw Error(`Timestamps dataset is empty: ${this.objectPath}/timestamps`);
+    }
+    const numInitialTimestamps = Math.min(10000, numTimestamps);
     const initialTimestamps = await this.getTimestampsForDataIndices(
       0,
       numInitialTimestamps,
     );
+    // The last few timestamps; a series may have fewer than ten samples, so
+    // the slice start is clamped at zero.
     const finalTimestamps = await this.getTimestampsForDataIndices(
-      timestampsDataset.shape[0] - 10,
-      timestampsDataset.shape[0],
+      Math.max(0, numTimestamps - 10),
+      numTimestamps,
     );
     if (!initialTimestamps)
       throw Error(
@@ -50,12 +56,16 @@ export class IrregularTimeseriesTimestampsClient {
     this.#estimatedSamplingFrequency =
       getEstimatedSamplingFrequencyFromTimestamps(initialTimestamps);
     this.#startTime = initialTimestamps[0];
-    let endTime = finalTimestamps[finalTimestamps.length - 1];
-    if (isNaN(endTime)) {
-      // sometimes the final timestamp is NaN, in that case use the second-to-last timestamp
-      // this happens in a Frank Lab dataset: http://localhost:3000/neurosift/?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/645/10d/64510d67-fab1-45ab-abc3-b18c9738412c
-      endTime = finalTimestamps[finalTimestamps.length - 2];
+    // Sometimes the final timestamp is NaN (seen in a Frank Lab dataset,
+    // dandiset 000059); walk back to the last finite one.
+    let endTime = NaN;
+    for (let i = finalTimestamps.length - 1; i >= 0; i--) {
+      if (!isNaN(finalTimestamps[i])) {
+        endTime = finalTimestamps[i];
+        break;
+      }
     }
+    if (isNaN(endTime)) endTime = this.#startTime;
     this.#endTime = endTime;
     this.#timestampFinder = new TimestampFinder(
       this.nwbUrl,
@@ -188,10 +198,14 @@ const getEstimatedSamplingFrequencyFromTimestamps = (
   timestamps: DatasetDataType,
 ): number => {
   if (timestamps.length < 2) return 1;
+  // Only positive, finite gaps count: repeated or NaN timestamps would
+  // otherwise give an infinite or NaN rate.
   const deltas: number[] = [];
   for (let i = 1; i < timestamps.length; i++) {
-    deltas.push(timestamps[i] - timestamps[i - 1]);
+    const d = timestamps[i] - timestamps[i - 1];
+    if (d > 0 && isFinite(d)) deltas.push(d);
   }
+  if (deltas.length === 0) return 1;
   const sortedDeltas = deltas.sort((a, b) => a - b);
   const medianDelta = sortedDeltas[Math.floor(sortedDeltas.length / 2)];
   return 1 / medianDelta;
@@ -224,12 +238,17 @@ class TimestampFinder {
       if (time > tUpper) {
         return iUpper;
       }
+      // Interpolate when the bracket has a positive span; otherwise (repeated
+      // timestamps, or a NaN in the bracket) fall back to bisection so the
+      // estimate is always a valid index.
       let estimatedIndex =
-        iLower +
-        Math.floor(((iUpper - iLower) * (time - tLower)) / (tUpper - tLower));
-      if (estimatedIndex <= iLower)
-        estimatedIndex = Math.floor((iUpper + iLower) / 2);
-      if (estimatedIndex >= iUpper)
+        tUpper > tLower
+          ? iLower +
+            Math.floor(
+              ((iUpper - iLower) * (time - tLower)) / (tUpper - tLower),
+            )
+          : Math.floor((iUpper + iLower) / 2);
+      if (!(estimatedIndex > iLower && estimatedIndex < iUpper))
         estimatedIndex = Math.floor((iUpper + iLower) / 2);
       const estimatedT = await this._get(estimatedIndex);
       if (estimatedT === time) {

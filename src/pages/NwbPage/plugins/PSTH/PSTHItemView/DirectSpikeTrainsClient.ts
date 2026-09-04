@@ -139,11 +139,17 @@ export class DirectSpikeTrainsClient {
       this._createTimestampFinder(ii);
     }
     const finder = this.#timestampFinders[ii];
+    // getDataIndexForTime returns the nearest spike, which may lie on either
+    // side of the requested time. Load through the spike after the one
+    // nearest t2 and keep exactly the spikes in [t1, t2).
     const index1 = await finder.getDataIndexForTime(t1);
     const index2 = await finder.getDataIndexForTime(t2);
     if (index1 > index2) throw Error("Unexpected: index1 > index2");
-    const tt = await finder.getDataForIndices(index1, index2);
-    return tt;
+    const tt = await finder.getDataForIndices(
+      index1,
+      Math.min(index2 + 1, finder.length),
+    );
+    return tt.filter((t) => t >= t1 && t < t2);
   }
 }
 
@@ -231,6 +237,9 @@ class TimestampFinder {
     private timestampsModel: TimestampsModel,
     // private estimatedSamplingFrequency: number,
   ) {}
+  get length() {
+    return this.timestampsModel.length;
+  }
   async getDataIndexForTime(time: number): Promise<number> {
     let iLower = 0;
     let iUpper = this.timestampsModel.length - 1;

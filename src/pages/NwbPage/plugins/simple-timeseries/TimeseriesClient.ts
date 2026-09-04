@@ -140,6 +140,10 @@ class TimeseriesClient {
     channelEnd: number,
   ) {
     if (tStart > tEnd) throw new Error("tStart must be <= tEnd");
+    // getDataIndexForTime returns the index of the sample nearest to the
+    // requested time, which may lie on either side of it. Load one sample
+    // past the nearest-to-tEnd index (it may itself be before tEnd) and then
+    // keep exactly the samples whose timestamps fall in [tStart, tEnd).
     const iStart = await this.timestampsClient.getDataIndexForTime(tStart);
     const iEnd = await this.timestampsClient.getDataIndexForTime(tEnd);
     if (iStart > iEnd) {
@@ -157,9 +161,34 @@ class TimeseriesClient {
         data: [],
       };
     }
-    return this.getDataForIndices(iStart, iEnd, channelStart, channelEnd);
+    const iEndInclusive = Math.min(iEnd + 1, this.numSamples);
+    const loaded = await this.getDataForIndices(
+      iStart,
+      iEndInclusive,
+      channelStart,
+      channelEnd,
+    );
+    return trimToTimeRange(loaded, tStart, tEnd);
   }
 }
+
+// Keep only the samples whose timestamp lies in [tStart, tEnd).
+export const trimToTimeRange = (
+  loaded: { timestamps: number[]; data: number[][] },
+  tStart: number,
+  tEnd: number,
+): { timestamps: number[]; data: number[][] } => {
+  const keep: number[] = [];
+  for (let k = 0; k < loaded.timestamps.length; k++) {
+    const t = loaded.timestamps[k];
+    if (t >= tStart && t < tEnd) keep.push(k);
+  }
+  if (keep.length === loaded.timestamps.length) return loaded;
+  return {
+    timestamps: keep.map((k) => loaded.timestamps[k]),
+    data: loaded.data.map((channel) => keep.map((k) => channel[k])),
+  };
+};
 
 interface TimeseriesChunk {
   startTime: number;
@@ -216,8 +245,28 @@ export class ChunkedTimeseriesClient {
     return Math.floor(time / this.chunkSizeSec);
   }
 
+  // Index of the last chunk touched by a half-open range ending at tEnd. A
+  // range that ends exactly on a chunk boundary does not touch the chunk
+  // that starts there.
+  private getLastChunkTimeIndex(tStart: number, tEnd: number): number {
+    return Math.max(
+      this.getChunkTimeIndex(tStart),
+      Math.ceil(tEnd / this.chunkSizeSec) - 1,
+    );
+  }
+
   private getChunkChannelIndex(channel: number): number {
     return Math.floor(channel / this.chunkSizeNumChannels);
+  }
+
+  private getLastChunkChannelIndex(
+    channelStart: number,
+    channelEnd: number,
+  ): number {
+    return Math.max(
+      this.getChunkChannelIndex(channelStart),
+      this.getChunkChannelIndex(channelEnd - 1),
+    );
   }
 
   private async loadChunk(
@@ -284,9 +333,12 @@ export class ChunkedTimeseriesClient {
     channelEnd: number,
   ) {
     const startChunkIndex = this.getChunkTimeIndex(tStart);
-    const endChunkIndex = this.getChunkTimeIndex(tEnd);
+    const endChunkIndex = this.getLastChunkTimeIndex(tStart, tEnd);
     const startChannelIndex = this.getChunkChannelIndex(channelStart);
-    const endChannelIndex = this.getChunkChannelIndex(channelEnd);
+    const endChannelIndex = this.getLastChunkChannelIndex(
+      channelStart,
+      channelEnd,
+    );
 
     await this.ensureChunksLoaded(
       startChunkIndex,
@@ -306,9 +358,16 @@ export class ChunkedTimeseriesClient {
       for (let j = startChannelIndex; j <= endChannelIndex; j++) {
         const chunkKey = `${i}-${j}`;
         const chunk = this.chunks.get(chunkKey)!;
+        // Each sample belongs to exactly one chunk by its timestamp, so
+        // restrict to this chunk's own interval as well as the request.
+        const tStartChunk = Math.max(tStart, chunk.startTime);
+        const tEndChunk = Math.min(tEnd, chunk.endTime);
         const timeIndsToUse = [];
         for (let k = 0; k < chunk.timestamps.length; k++) {
-          if (chunk.timestamps[k] >= tStart && chunk.timestamps[k] < tEnd) {
+          if (
+            chunk.timestamps[k] >= tStartChunk &&
+            chunk.timestamps[k] < tEndChunk
+          ) {
             timeIndsToUse.push(k);
           }
         }

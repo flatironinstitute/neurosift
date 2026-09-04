@@ -1,41 +1,23 @@
 import { PlotOpts, PlotData } from "./types";
+import {
+  channelOffset,
+  computeAvgStdDev,
+  computeChannelRanges,
+  computeYRange,
+} from "./timeseriesPlotMath";
 
 let canvas: OffscreenCanvas | undefined = undefined;
 let plotOpts: PlotOpts | undefined = undefined;
 let plotData: PlotData | undefined = undefined;
 
+// Derived from plotData alone. The channel separation offset depends on
+// plotOpts and is applied at draw time, so changing the separation does not
+// require recomputing these.
 let avgStdDev = 0;
-let yMins: number[] = [];
-let yMaxs: number[] = [];
+let channelRanges: { mins: number[]; maxs: number[] } = { mins: [], maxs: [] };
 const doPlotDataCalculations = () => {
-  avgStdDev =
-    plotData!.data.length === 0
-      ? 0
-      : plotData!.data.reduce((sum, channel) => {
-          const channelWithoutNaN = channel.filter((val) => !isNaN(val));
-          if (channelWithoutNaN.length === 0) return sum;
-          const mean =
-            channelWithoutNaN.reduce((sum, val) => sum + val, 0) /
-            channelWithoutNaN.length;
-          const squaredDiffs = channelWithoutNaN.map((val) =>
-            Math.pow(val - mean, 2),
-          );
-          const variance =
-            squaredDiffs.reduce((sum, val) => sum + val, 0) /
-            channelWithoutNaN.length;
-          return sum + Math.sqrt(variance);
-        }, 0) / plotData!.data.length;
-
-  yMins = [];
-  yMaxs = [];
-  for (let i = 0; i < plotData!.data.length; i++) {
-    const offset =
-      (plotData!.data.length - 1 - i) * plotOpts!.channelSeparation * avgStdDev;
-    const channelMin = compute_min(plotData!.data[i]) + offset;
-    const channelMax = compute_max(plotData!.data[i]) + offset;
-    yMins[i] = channelMin;
-    yMaxs[i] = channelMax;
-  }
+  avgStdDev = computeAvgStdDev(plotData!.data);
+  channelRanges = computeChannelRanges(plotData!.data);
 };
 
 const draw = async () => {
@@ -59,29 +41,11 @@ const draw = async () => {
     return;
   }
 
-  let yMin = compute_min(
-    yMins.map(
-      (val, i) =>
-        val +
-        (plotData!.data.length - 1 - i) *
-          plotOpts!.channelSeparation *
-          avgStdDev,
-    ),
+  const { yMin, yMax } = computeYRange(
+    channelRanges,
+    plotOpts.channelSeparation,
+    avgStdDev,
   );
-  let yMax = compute_max(
-    yMaxs.map(
-      (val, i) =>
-        val +
-        (plotData!.data.length - 1 - i) *
-          plotOpts!.channelSeparation *
-          avgStdDev,
-    ),
-  );
-
-  // Add padding to value range
-  const yPadding = (yMax - yMin) * 0.05;
-  yMin -= yPadding;
-  yMax += yPadding;
 
   // Post yMin and yMax back to main thread
   postMessage({
@@ -139,8 +103,12 @@ const draw = async () => {
   let timer = Date.now();
   for (let i = 0; i < plotData.data.length; i++) {
     const channel = plotData.data[i];
-    const offset =
-      (plotData.data.length - 1 - i) * plotOpts.channelSeparation * avgStdDev;
+    const offset = channelOffset(
+      plotData.data.length,
+      i,
+      plotOpts.channelSeparation,
+      avgStdDev,
+    );
 
     ctx.strokeStyle = colors[i % colors.length];
     ctx.beginPath();
@@ -204,21 +172,3 @@ onmessage = (e: MessageEvent) => {
     throttledDraw();
   }
 };
-
-function compute_min(arr: number[]) {
-  let min = Infinity;
-  for (let i = 0; i < arr.length; i++) {
-    if (isNaN(arr[i])) continue;
-    min = Math.min(min, arr[i]);
-  }
-  return min;
-}
-
-function compute_max(arr: number[]) {
-  let max = -Infinity;
-  for (let i = 0; i < arr.length; i++) {
-    if (isNaN(arr[i])) continue;
-    max = Math.max(max, arr[i]);
-  }
-  return max;
-}
