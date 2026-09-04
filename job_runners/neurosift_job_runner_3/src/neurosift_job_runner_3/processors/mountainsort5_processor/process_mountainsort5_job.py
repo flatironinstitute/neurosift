@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 import json
 import logging
 from ...job_utils import update_job_status, OutputFile
@@ -9,7 +9,7 @@ from .Mountainsort5Processor import (
 
 
 def process_mountainsort5_job(
-    job: Dict[str, Any], api_base_url: str | None = None
+    job: Dict[str, Any], api_base_url: Optional[str] = None
 ) -> None:
     """Process a mountainsort5 job.
 

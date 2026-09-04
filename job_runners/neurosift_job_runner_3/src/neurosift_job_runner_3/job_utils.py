@@ -101,7 +101,7 @@ def upload_job_output_bytes(
     return download_url
 
 
-def get_job(job_id: str, api_base_url: str | None = None) -> Dict[str, Any]:
+def get_job(job_id: str, api_base_url: Optional[str] = None) -> Dict[str, Any]:
     """Retrieve job information by ID.
 
     Args:
@@ -124,7 +124,7 @@ def get_job(job_id: str, api_base_url: str | None = None) -> Dict[str, Any]:
 
 
 def update_job_status(
-    job_id: str, updates: Dict[str, Any], api_base_url: str | None = None
+    job_id: str, updates: Dict[str, Any], api_base_url: Optional[str] = None
 ) -> None:
     """Update job status and other fields.
 
