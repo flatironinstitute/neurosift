@@ -62,9 +62,14 @@ class RemoteFile {
         break;
       }
     }
+    // The count is captured here because a concurrent call (another channel,
+    // or a new view while this one is still loading) may change the instance
+    // field while this call awaits; marking, fetching, caching and clearing
+    // must all agree, or a chunk can be left marked in progress forever.
+    const numChunksToLoad = this.#smartLoadNumChunksToLoad;
     while (true) {
       let somethingInProgress = false;
-      for (let i = 0; i < this.#smartLoadNumChunksToLoad; i++) {
+      for (let i = 0; i < numChunksToLoad; i++) {
         if (this.#inProgressChunks[chunkIndex + i]) {
           somethingInProgress = true;
         }
@@ -74,19 +79,23 @@ class RemoteFile {
       }
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    for (let i = 0; i < this.#smartLoadNumChunksToLoad; i++) {
+    if (this.#blockCache[chunkIndex]) {
+      // loaded by another call while we were waiting
+      return this.#blockCache[chunkIndex];
+    }
+    for (let i = 0; i < numChunksToLoad; i++) {
       if (!this.#blockCache[chunkIndex + i]) {
         this.#inProgressChunks[chunkIndex + i] = true;
       }
     }
     try {
       const offset = chunkIndex * this.#chunkSizeBytes;
-      const length = this.#chunkSizeBytes * this.#smartLoadNumChunksToLoad;
+      const length = this.#chunkSizeBytes * numChunksToLoad;
       const buf = await this._readBytes(offset, length);
       // now update the cache
       for (
         let chunkIndex2 = chunkIndex;
-        chunkIndex2 < chunkIndex + this.#smartLoadNumChunksToLoad;
+        chunkIndex2 < chunkIndex + numChunksToLoad;
         chunkIndex2++
       ) {
         const offset2 = (chunkIndex2 - chunkIndex) * this.#chunkSizeBytes;
@@ -98,7 +107,7 @@ class RemoteFile {
       }
       return buf.slice(0, this.#chunkSizeBytes);
     } finally {
-      for (let i = 0; i < this.#smartLoadNumChunksToLoad; i++) {
+      for (let i = 0; i < numChunksToLoad; i++) {
         this.#inProgressChunks[chunkIndex + i] = false;
       }
     }
@@ -394,6 +403,11 @@ class EDFReader {
     if (meas_info === null || chan_info === null) {
       throw new Error("No meas_info or chan_info has been read");
     }
+    if (block >= meas_info["n_records"]) {
+      throw new Error(
+        `Block ${block} is past the end of the file (${meas_info["n_records"]} records)`,
+      );
+    }
     if (this.#offset === null || this.#calibrate === null) {
       throw new Error("No offset or calibrate has been calculated");
     }
@@ -462,6 +476,10 @@ class EDFReader {
     return raw;
   }
 
+  // Samples [begsample, endsample) of a channel, in physical units. The end
+  // is exclusive, like Array.slice; it is clamped to the length of the
+  // signal, so a request that runs to the end of the recording reads only
+  // the records that exist.
   async readSamples(
     channel: number,
     begsample: number,
@@ -476,8 +494,12 @@ class EDFReader {
       throw new Error("No chan_info or meas_info has been read");
     }
     const n_samps = chan_info["n_samps"][channel];
-    const begblock = Math.floor(begsample / n_samps);
-    const endblock = Math.floor(endsample / n_samps);
+    const totalSamples = n_samps * meas_info["n_records"];
+    const beg = Math.max(0, begsample);
+    const end = Math.min(endsample, totalSamples);
+    if (end <= beg) return new Float32Array(0);
+    const begblock = Math.floor(beg / n_samps);
+    const endblock = Math.floor((end - 1) / n_samps);
 
     const data_blocks: Float32Array[] = [];
     for (let block = begblock; block <= endblock; block++) {
@@ -486,10 +508,7 @@ class EDFReader {
     }
     const data = concatFloat32Arrays(data_blocks);
 
-    begsample -= begblock * n_samps;
-    endsample -= begblock * n_samps;
-
-    return data.slice(begsample, endsample + 1);
+    return data.slice(beg - begblock * n_samps, end - begblock * n_samps);
   }
 
   getSignalTextLabels(): string[] {
@@ -538,7 +557,7 @@ class EDFReader {
     }
     const begsample = 0;
     const endsample =
-      this.#chan_info["n_samps"][chanindx] * this.#meas_info["n_records"] - 1;
+      this.#chan_info["n_samps"][chanindx] * this.#meas_info["n_records"];
     return await this.readSamples(chanindx, begsample, endsample);
   }
 
