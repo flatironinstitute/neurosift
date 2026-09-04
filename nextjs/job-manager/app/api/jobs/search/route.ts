@@ -9,6 +9,7 @@
 import { FilterQuery } from 'mongoose';
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB, { IJob, Job } from '../../../../lib/db';
+import { validateApiKey } from '../../../../middleware/auth';
 
 /**
  * Handle CORS preflight requests
@@ -35,19 +36,21 @@ export async function OPTIONS() {
  *   - input: Filter by exact input match
  *   - status: Filter by job status
  * @returns
- *   - Success: Array of matching jobs (limited to 100, sorted by creation date)
- *   - Error: 500 for server errors
+ *   - Success: Array of the caller's matching jobs (limited to 100, sorted by creation date)
+ *   - Error: 401 without a valid API key, 500 for server errors
  *
  * The endpoint will:
  * 1. Build a query based on provided filters
  * 2. Return the most recent 100 matching jobs
  */
 export async function POST(request: NextRequest) {
-  // no auth needed for searching jobs
-  // const authResult = await validateApiKey(request);
-  // if (authResult instanceof NextResponse) {
-  //   return authResult;
-  // }
+  // Job IDs act as the credential for reading, updating, and deleting a job,
+  // so listing jobs must be restricted to the caller's own jobs: an
+  // unauthenticated listing would hand out every ID.
+  const auth = await validateApiKey(request);
+  if (auth instanceof NextResponse) {
+    return auth;
+  }
 
   try {
     const body = await request.json();
@@ -55,7 +58,7 @@ export async function POST(request: NextRequest) {
 
     await connectDB();
 
-    const query: FilterQuery<IJob> = {};
+    const query: FilterQuery<IJob> = { userId: auth.userId };
     if (type) query.type = type;
     if (input) query.input = typeof input === 'object' ? JSON.stringify(input) : input.toString();
     if (status) query.status = status;
