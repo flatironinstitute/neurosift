@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { GeneralLabelMapItem } from "./types";
+import { GeneralLabelMapItem } from "./Types";
 
 export const generalLabelMap: GeneralLabelMapItem[] = [
   { name: "session_id", newName: "Session ID" },

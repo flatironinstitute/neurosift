@@ -5,7 +5,7 @@ import { DandisetVersionInfo } from "../DandiPage/dandi-types";
 import DatasetDataView from "./DatasetDataView";
 import { isUsingLindi, getLindiUrl } from "./hdf5Interface";
 
-import { NwbFileOverview } from "./types";
+import { NwbFileOverview } from "./Types";
 import NwbAnnotations from "./components/NwbAnnotations";
 
 type NwbFileOverviewResult = NwbFileOverview | { error: string } | null;

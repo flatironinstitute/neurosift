@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { getHdf5Group } from "./hdf5Interface";
 import { generalLabelMap } from "./nwbConfig";
-import { NwbFileOverview, GeneralLabelMapItem } from "./types";
+import { NwbFileOverview, GeneralLabelMapItem } from "./Types";
 
 type NwbFileOverviewResult = NwbFileOverview | null;
 
