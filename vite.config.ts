@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
@@ -14,5 +14,11 @@ export default defineConfig({
       '@hdf5Interface': path.resolve(__dirname, './src/pages/NwbPage/hdf5Interface'),
       "@jobManager": path.resolve(__dirname, "./src/jobManager")
     }
-  }
+  },
+  test: {
+    // Only the front end's tests run here. The Python package's file server
+    // and the job runners carry their own node:test suites, which vitest
+    // would otherwise pick up and report as empty.
+    include: ['src/**/*.test.{ts,tsx}'],
+  },
 })

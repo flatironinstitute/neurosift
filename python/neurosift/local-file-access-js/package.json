@@ -10,6 +10,7 @@
   },
   "scripts": {
     "start": "node src/index.js",
-    "start2": "node src/index.js --jupyter-url $JUPYTER_URL --allow-origin $ALLOW_ORIGIN --port $PORT"
+    "start2": "node src/index.js --jupyter-url $JUPYTER_URL --allow-origin $ALLOW_ORIGIN --port $PORT",
+    "test": "node --test spec/*.test.js"
   }
 }

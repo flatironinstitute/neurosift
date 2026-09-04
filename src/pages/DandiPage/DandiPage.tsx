@@ -1,3 +1,4 @@
+import { buildDandisetsSearchUrl } from "../util/dandisetsSearchUrl";
 import ScrollY from "@components/ScrollY";
 import HistoryIcon from "@mui/icons-material/History";
 import LaunchIcon from "@mui/icons-material/Launch";
@@ -110,12 +111,14 @@ const DandiPage: FunctionComponent<DandiPageProps> = ({ width, height }) => {
           searchResultDandisetIds = await doDandiSemanticSearch(searchQuery);
         } else if (searchMode === "basic") {
           const { headers, apiKeyProvided } = getDandiApiHeaders(staging);
-          const embargoedStr = apiKeyProvided ? "true" : "false";
           const stagingStr = staging ? ".sandbox" : "";
-          const emptyStr = !searchQuery ? "false" : "true";
 
           const response = await fetch(
-            `https://api${stagingStr}.dandiarchive.org/api/dandisets/?page=1&page_size=50&ordering=-modified&search=${searchQuery}&draft=true&empty=${emptyStr}&embargoed=${embargoedStr}`,
+            buildDandisetsSearchUrl({
+              apiBaseUrl: `https://api${stagingStr}.dandiarchive.org`,
+              searchQuery,
+              embargoed: apiKeyProvided,
+            }),
             { headers },
           );
           if (response.status === 200) {

@@ -31,27 +31,34 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
   height,
   inMultiView,
 }) => {
-  const [plugins, setPlugins] = useState<NwbObjectViewPlugin[] | undefined>();
-  const [loading, setLoading] = useState(true);
+  // The plugins resolved so far, tagged with the object they were resolved
+  // for. When only the specifications change (they arrive after the first
+  // render) the previously resolved plugins stay mounted while the new
+  // resolution runs, so open views keep their state instead of remounting.
+  const objectKey = `${nwbUrl}|${path}|${objectType}|${plugin?.name ?? ""}|${
+    inMultiView ? 1 : 0
+  }`;
+  const [resolved, setResolved] = useState<{
+    key: string;
+    plugins: NwbObjectViewPlugin[];
+  }>();
 
   const specifications = useNwbFileSpecifications();
 
   useEffect(() => {
     if (plugin) {
-      setPlugins([plugin]);
-      setLoading(false);
+      setResolved({ key: objectKey, plugins: [plugin] });
       return;
     }
+    let canceled = false;
     const loadPlugin = async () => {
-      setLoading(true);
       try {
-        if (plugin) {
-          setPlugins([plugin]);
-        } else {
+        {
           let suitable = await findSuitablePlugins(nwbUrl, path, objectType, {
             specifications,
             launchableFromTable: false,
           });
+          if (canceled) return;
           {
             // only include plugins that do not have hideFromObjectView set to true
             const suitable2 = suitable.filter(
@@ -70,24 +77,32 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
             }
             suitable = suitable2;
           }
-          setPlugins(suitable);
+          setResolved({ key: objectKey, plugins: suitable });
         }
       } catch (err) {
+        if (canceled) return;
         console.error("Error finding suitable plugin:", err);
-      } finally {
-        setLoading(false);
+        setResolved({ key: objectKey, plugins: [] });
       }
     };
     loadPlugin();
-  }, [path, objectType, nwbUrl, plugin, inMultiView, specifications]);
+    return () => {
+      canceled = true;
+    };
+  }, [
+    path,
+    objectType,
+    nwbUrl,
+    plugin,
+    inMultiView,
+    specifications,
+    objectKey,
+  ]);
 
-  if (loading) {
+  if (!resolved || resolved.key !== objectKey) {
     return <CircularProgress />;
   }
-
-  if (!plugins) {
-    throw new Error("Plugins is undefined");
-  }
+  const plugins = resolved.plugins;
 
   if (plugins.length === 0) {
     return <div>Error: No suitable plugin found</div>;

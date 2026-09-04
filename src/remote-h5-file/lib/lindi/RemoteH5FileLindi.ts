@@ -233,17 +233,37 @@ class RemoteH5FileLindi {
   // for .zgroup, .zarray or chunk data. This is common in NWB files: pynwb
   // writes a soft link whenever the same timestamps dataset or rois
   // DynamicTableRegion is shared by more than one TimeSeries.
+  //
+  // A link can sit anywhere in a path, not only at its end: for a linked
+  // group G, the path G/timestamps must resolve to <target of G>/timestamps.
+  // Every prefix is therefore checked, shortest first, and the remainder of
+  // the path is re-attached to the link target. This repeats until no
+  // component is a link, which also follows a link to a group whose own
+  // children are links.
   async resolveSoftLink(pathWithoutBeginningSlash: string): Promise<string> {
     let p = pathWithoutBeginningSlash;
     // guard against a link cycle in a malformed file
-    for (let i = 0; i < maxSoftLinkHops; i++) {
+    for (let hop = 0; hop < maxSoftLinkHops; hop++) {
       if (p === "") return p; // the root group is never a link
-      const zattrs = (await this.lindiFileSystemClient.readJson(
-        p + "/.zattrs",
-      )) as ZMetaDataZAttrs | undefined;
-      const target = zattrs?.["_SOFT_LINK"]?.["path"];
-      if (typeof target !== "string") return p;
-      p = target.startsWith("/") ? target.slice(1) : target;
+      const parts = p.split("/");
+      let redirected = false;
+      for (let i = 1; i <= parts.length; i++) {
+        const prefix = parts.slice(0, i).join("/");
+        const zattrs = (await this.lindiFileSystemClient.readJson(
+          prefix + "/.zattrs",
+        )) as ZMetaDataZAttrs | undefined;
+        const target = zattrs?.["_SOFT_LINK"]?.["path"];
+        if (typeof target !== "string") continue;
+        const targetWithoutSlash = target.startsWith("/")
+          ? target.slice(1)
+          : target;
+        p = [targetWithoutSlash, ...parts.slice(i)]
+          .filter((x) => x !== "")
+          .join("/");
+        redirected = true;
+        break;
+      }
+      if (!redirected) return p;
     }
     console.warn(
       `Too many soft link hops while resolving ${pathWithoutBeginningSlash}`,
@@ -278,6 +298,16 @@ class RemoteH5FileLindi {
       const subdatasets: RemoteH5Subdataset[] = [];
       const childPaths: string[] =
         this.pathsByParentPath[pathWithoutBeginningSlash] || [];
+      // Children are reported under the path that was asked for, so that a
+      // linked group's children carry the link's path (as HDF5 does) and can
+      // be read back through resolveSoftLink.
+      const requestedWithoutSlash =
+        path === "/" ? "" : path.startsWith("/") ? path.slice(1) : path;
+      const childPathUnderRequested = (childPath: string) =>
+        "/" +
+        (requestedWithoutSlash === ""
+          ? getNameFromPath(childPath)
+          : requestedWithoutSlash + "/" + getNameFromPath(childPath));
       for (const childPath of childPaths) {
         // A soft-linked child is reported as the kind of object it points at,
         // with the attributes of that object, but under its own name and path.
@@ -313,7 +343,7 @@ class RemoteH5FileLindi {
           if (shape && dtype) {
             subdatasets.push({
               name: getNameFromPath(childPath),
-              path: "/" + childPath,
+              path: childPathUnderRequested(childPath),
               shape,
               dtype,
               attrs: childZattrs || {},
@@ -331,7 +361,7 @@ class RemoteH5FileLindi {
         } else if (childZgroup) {
           subgroups.push({
             name: getNameFromPath(childPath),
-            path: "/" + childPath,
+            path: childPathUnderRequested(childPath),
             attrs: childZattrs || {},
           });
         }
