@@ -1,10 +1,12 @@
+import { idToNum } from "./idToNum";
+
 let offset = 0; // so that we change which is the 0th unit
 let stride = 1;
 let num: number | undefined = undefined; // so that we change the periodicity
 
-export const getUnitColor = (unitId: any) => {
+export const getUnitColor = (unitId: number | string) => {
   if (num === undefined) num = colors.length;
-  const i = (offset + unitId * stride) % num;
+  const i = (offset + idToNum(unitId) * stride) % num;
   return colors[i];
 };
 

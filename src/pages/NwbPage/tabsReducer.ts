@@ -1,6 +1,7 @@
 import { BaseTab } from "@components/tabs/tabsReducer";
 import { NwbObjectViewPlugin } from "./plugins/pluginInterface";
 import { findPluginByName } from "./plugins/registry";
+import { parseMultiTabItems } from "./multiTabItems";
 
 type MainTab = BaseTab & {
   type: "main";
@@ -140,23 +141,20 @@ const tabsReducer = (state: TabsState, action: TabsAction): TabsState => {
   }
 };
 
-const getPathsAndPlugins = (itemStrings: string[]) => {
+// The three arrays are index-aligned with the item strings, so a plain path
+// contributes an undefined plugin and undefined secondary paths.
+export const getPathsAndPlugins = (itemStrings: string[]) => {
   const paths: string[] = [];
   const plugins: (NwbObjectViewPlugin | undefined)[] = [];
   const secondaryPathsList: (string[] | undefined)[] = [];
-  for (const itemString of itemStrings) {
-    const a = itemString.split("|");
-    if (a.length <= 1) {
-      paths.push(itemString);
-      plugins.push(undefined);
-    } else {
-      const b = a[1].split("^");
-      paths.push(b[0]);
-      const s = b.slice(1); // todo: use this
-      const p = findPluginByName(a[0]);
-      plugins.push(p);
-      secondaryPathsList.push(s);
-    }
+  for (const item of parseMultiTabItems(itemStrings)) {
+    paths.push(item.path);
+    plugins.push(
+      item.pluginName !== undefined
+        ? findPluginByName(item.pluginName)
+        : undefined,
+    );
+    secondaryPathsList.push(item.secondaryPaths);
   }
   return { paths, plugins, secondaryPathsList };
 };

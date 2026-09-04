@@ -45,6 +45,12 @@ jobs:
     - name: Check TypeScript/JavaScript formatting
       run: npm run format:check
 
+    - name: Lint
+      run: npm run lint
+
+    - name: Unit tests
+      run: npm test
+
     # Build check
     - name: Build
       run: npm run build

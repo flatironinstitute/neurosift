@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Canceler, postRemoteH5WorkerRequest } from "./helpers";
+import { bigIntArrayToFloat64, isBigIntArray } from "./bigIntArrayToFloat64";
 import RemoteH5FileLindi, {
   getRemoteH5FileLindi,
 } from "./lindi/RemoteH5FileLindi";
@@ -193,25 +194,8 @@ export class RemoteH5File {
     }
     const { data } = resp;
     let x = data;
-    if (!allowBigInt) {
-      // check if x is a BigInt64Array
-      if (x && x.constructor && x.constructor.name === "BigInt64Array") {
-        // convert to Int32Array
-        const y = new Int32Array(x.length);
-        for (let i = 0; i < x.length; i++) {
-          y[i] = Number(x[i]);
-        }
-        x = y;
-      }
-      // check if x is a BigUint64Array
-      if (x && x.constructor && x.constructor.name === "BigUint64Array") {
-        // convert to Uint32Array
-        const y = new Uint32Array(x.length);
-        for (let i = 0; i < x.length; i++) {
-          y[i] = Number(x[i]);
-        }
-        x = y;
-      }
+    if (!allowBigInt && isBigIntArray(x)) {
+      x = bigIntArrayToFloat64(x);
     }
     globalRemoteH5FileStats.getDatasetDataCount++;
     return x;

@@ -1,5 +1,6 @@
 import PubNub from 'pubnub';
 import { createScriptInterface } from './scriptInterface';
+import { runScriptInSandbox } from './sandbox/runInSandbox';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -25,6 +26,7 @@ type PubNubMessageObject = {
 }
 
 const MAX_CONCURRENT_JOBS = 3;
+const JOB_TIMEOUT_MS = Number(process.env.JOB_TIMEOUT_MS) || 5 * 60 * 1000;
 let currentJobs = 0;
 
 export class JobRunner {
@@ -165,20 +167,17 @@ export class JobRunner {
 
   private async executeJob(jobMessage: JobMessage): Promise<string> {
     console.info(`Setting up execution environment for job ${jobMessage.jobId}`);
-    return new Promise((resolve, reject) => {
-      const scriptInterface = createScriptInterface((status) => {
-        console.info(`Job ${jobMessage.jobId} status update:`, status);
-      });
-
-      console.info('Creating async function from script');
-      const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
-      const scriptFn = new AsyncFunction('interface', jobMessage.script);
-
-      console.info(`Beginning script execution for job ${jobMessage.jobId}`);
-      scriptFn(scriptInterface)
-        .then(() => resolve(scriptInterface._getOutput()))
-        .catch(reject);
+    const scriptInterface = createScriptInterface((status) => {
+      console.info(`Job ${jobMessage.jobId} status update:`, status);
     });
+
+    // The script runs in a separate process with no file system, process,
+    // or environment access. Its interface calls are forwarded back here.
+    console.info(`Beginning sandboxed execution of job ${jobMessage.jobId}`);
+    await runScriptInSandbox(jobMessage.script, scriptInterface, {
+      timeoutMs: JOB_TIMEOUT_MS
+    });
+    return scriptInterface._getOutput();
   }
 
   private async sendResponse(message: PubNubMessageObject & { jobId: string }) {
