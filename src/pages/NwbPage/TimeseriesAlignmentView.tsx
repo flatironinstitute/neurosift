@@ -150,9 +150,13 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
       if (!gr) return;
       try {
         const nt = gr.attrs?.["neurodata_type"];
+        // A series is recognized by its type, not by having no subgroups:
+        // TwoPhotonSeries, PatchClampSeries, OptogeneticSeries, and ImageSeries
+        // carry links to an imaging plane, electrode, site, or device, which
+        // the reader lists as subgroups.
         const isTimeseries =
           nt &&
-          !gr.subgroups?.length &&
+          neurodataTypeInheritsFrom(nt, "TimeSeries", specifications) &&
           gr.datasets?.find((ds: any) => ds.name === "data") &&
           (gr.datasets.find((ds: any) => ds.name === "timestamps") ||
             gr.datasets.find((ds: any) => ds.name === "starting_time"));
@@ -305,6 +309,9 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
             });
           }
         }
+        // A series' subgroups are links to metadata (imaging plane,
+        // electrode, device), never further series, so stop here.
+        if (isTimeseries) return;
         // Recurse into subgroups in parallel, only visiting groups
         // that are relevant data types or containers that hold them
         const { relevantTypes, containerTypes } = typeSets;
