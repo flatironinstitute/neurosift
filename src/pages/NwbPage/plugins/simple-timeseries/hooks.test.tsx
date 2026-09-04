@@ -176,17 +176,19 @@ describe("useTimeseriesClient", () => {
     await flush();
     expect(creates.map((c) => c.path)).toEqual(["/a", "/b"]);
 
-    const clientB = makeClient("/b");
-    const clientA = makeClient("/a");
+    const clientForB = makeClient("/b");
+    const clientForA = makeClient("/a");
     await act(async () => {
-      creates[1].d.resolve(clientB);
+      creates[1].d.resolve(clientForB);
     });
-    await waitFor(() => expect(result.current.timeseriesClient).toBe(clientB));
+    await waitFor(() =>
+      expect(result.current.timeseriesClient).toBe(clientForB),
+    );
     await act(async () => {
-      creates[0].d.resolve(clientA);
+      creates[0].d.resolve(clientForA);
     });
     await flush();
-    expect(result.current.timeseriesClient).toBe(clientB);
+    expect(result.current.timeseriesClient).toBe(clientForB);
   });
 
   it("clears the previous client while the next one is created", async () => {
