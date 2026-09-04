@@ -176,18 +176,27 @@ const lindiDatasetDataLoader = async (o: {
   const i2StartChunk = ndims > 1 ? Math.floor(i2Start / chunkShape[1]) : 0;
   const i2EndChunk = ndims > 1 ? Math.floor((i2End - 1) / chunkShape[1]) : 0;
   if (i1StartChunk === i1EndChunk && i2StartChunk === i2EndChunk) {
-    // With respect to the first two dimensions,
-    // we are entirely within a single chunk.
+    // With respect to the first two dimensions, we are entirely within a
+    // single chunk. There may still be several chunks along the remaining
+    // dimensions, and the last chunk along each of those dimensions may be
+    // padded beyond the array shape, so each chunk is copied into its own
+    // region of the output using the array's strides rather than the chunk's.
+    const n1 = i1End - i1Start;
+    const n2 = i2End - i2Start;
+    const j1Start = i1Start - i1StartChunk * chunkShape[0];
+    const j2Start = i2Start - i2StartChunk * chunkShape2;
+    const trailingShape = shape.slice(2);
+    const trailingChunkShape = chunkShape.slice(2);
+    const trailingMacroChunkShape = macroChunkShape.slice(2);
+    const numTrailingDims = trailingShape.length;
+    const outStrides = rowMajorStrides(trailingShape);
+    const chunkStrides = rowMajorStrides(trailingChunkShape);
 
-    if (prodMacroChunkShapeAllButFirstTwoDimensions === 1) {
-      // in this case we are truly in a single chunk because there is only one chunk in the other dimensions
-      let chunkPath = path + "/" + i1StartChunk;
-      if (ndims > 1) {
-        chunkPath += "." + i2StartChunk;
-      }
-      for (let d = 2; d < ndims; d++) {
-        chunkPath += ".0";
-      }
+    const chunkPathPrefix =
+      path + "/" + i1StartChunk + (ndims > 1 ? "." + i2StartChunk : "");
+    const readChunk = async (trailingChunkIndex: number[]) => {
+      const chunkPath =
+        chunkPathPrefix + trailingChunkIndex.map((c) => "." + c).join("");
       const x = await client.readBinary(chunkPath, {
         decodeArray: true,
         disableCache: o.disableCache,
@@ -207,157 +216,84 @@ const lindiDatasetDataLoader = async (o: {
         });
         throw Error("Unable to read chunk: " + chunkPath);
       }
-      const j1Start = i1Start - i1StartChunk * chunkShape[0];
-      const j1End = i1End - i1StartChunk * chunkShape[0];
-      const j2Start = i2Start - i2StartChunk * chunkShape2;
-      const j2End = i2End - i2StartChunk * chunkShape2;
-      const slicingInSecondDimension =
-        ndims > 1 && (j2Start > 0 || j2End < chunkShape2);
-      if (!slicingInSecondDimension) {
-        // we are not slicing in second dimension. In this case we don't need to make a copy of the data
-        const ret = x.slice(
-          j1Start * prodChunkSizeOfAllButFirstDimension,
-          j1End * prodChunkSizeOfAllButFirstDimension,
-        );
-        return ret;
-      } else {
-        // we are slicing in second dimension, so we need to make a copy of the data
-        const ret = allocateArrayWithDtype(
-          (i1End - i1Start) *
-            (i2End - i2Start) *
-            prodShapeSizeOfAllButFirstTwoDimensions,
-          dtype,
-        );
-        let iRet = 0;
-        for (let j1 = j1Start; j1 < j1End; j1++) {
-          for (let j2 = j2Start; j2 < j2End; j2++) {
-            for (
-              let j3 = 0;
-              j3 < prodShapeSizeOfAllButFirstTwoDimensions;
-              j3++
-            ) {
-              ret[iRet] =
-                x[
-                  (j1 * chunkShape2 + j2) *
-                    prodChunkSizeOfAllButFirstTwoDimensions +
-                    j3
-                ];
-              iRet++;
-            }
-          }
-        }
-        return ret;
-      }
-    } else {
-      // there is more than one chunk in the other dimensions, and we need to concatenate them
-      if (ndims > 4) {
-        throw Error("Case not yet supported: C2");
-      }
-      while (macroChunkShape.length < 4) {
-        macroChunkShape.push(1);
-      }
-      const retList = [];
-      for (let iii3 = 0; iii3 < macroChunkShape[2]; iii3++) {
-        for (let iii4 = 0; iii4 < macroChunkShape[3]; iii4++) {
-          let chunkPath = path + "/" + i1StartChunk;
-          chunkPath += "." + i2StartChunk;
-          chunkPath += "." + iii3;
-          if (ndims === 4) {
-            chunkPath += "." + iii4;
-          }
-          const x = await client.readBinary(chunkPath, {
-            decodeArray: true,
-            disableCache: o.disableCache,
-          });
-          if (!x) {
-            console.log({
-              i1StartChunk,
-              i1EndChunk,
-              i2StartChunk,
-              i2EndChunk,
-              i1Start,
-              i1End,
-              i2Start,
-              i2End,
-              shape,
-              chunkShape,
-            });
-            throw Error("Unable to read chunk: " + chunkPath);
-          }
-          const j1Start = i1Start - i1StartChunk * chunkShape[0];
-          const j1End = i1End - i1StartChunk * chunkShape[0];
-          const j2Start = i2Start - i2StartChunk * chunkShape2;
-          const j2End = i2End - i2StartChunk * chunkShape2;
-          const slicingInSecondDimension =
-            ndims > 1 && (j2Start > 0 || j2End < chunkShape2);
-          if (!slicingInSecondDimension) {
-            // we are not slicing in second dimension. In this case we don't need to make a copy of the data
-            const ret0 = x.slice(
-              j1Start * prodChunkSizeOfAllButFirstDimension,
-              j1End * prodChunkSizeOfAllButFirstDimension,
-            );
-            retList.push(ret0);
-          } else {
-            // we are slicing in second dimension, so we need to make a copy of the data
-            const ret0 = allocateArrayWithDtype(
-              (i1End - i1Start) *
-                (i2End - i2Start) *
-                prodChunkSizeOfAllButFirstTwoDimensions,
-              dtype,
-            );
-            let iRet0 = 0;
-            for (let j1 = j1Start; j1 < j1End; j1++) {
-              for (let j2 = j2Start; j2 < j2End; j2++) {
-                for (
-                  let j3 = 0;
-                  j3 < prodChunkSizeOfAllButFirstTwoDimensions;
-                  j3++
-                ) {
-                  ret0[iRet0] =
-                    x[
-                      (j1 * chunkShape2 + j2) *
-                        prodChunkSizeOfAllButFirstTwoDimensions +
-                        j3
-                    ];
-                  iRet0++;
-                }
-              }
-            }
-            retList.push(ret0);
-          }
-        }
-      }
-      // now concatenate the ret0s
-      const ret = allocateArrayWithDtype(
-        (i1End - i1Start) *
-          (i2End - i2Start) *
-          prodShapeSizeOfAllButFirstTwoDimensions,
-        dtype,
+      return x;
+    };
+
+    const chunkLayoutMatchesArray =
+      j2Start === 0 &&
+      n2 === chunkShape2 &&
+      prodMacroChunkShapeAllButFirstTwoDimensions === 1 &&
+      trailingChunkShape.every((cs, d) => cs === trailingShape[d]);
+    if (chunkLayoutMatchesArray) {
+      // Every row of the chunk along the first dimension is laid out exactly
+      // like a row of the output, so a contiguous slice is enough.
+      const x = await readChunk(trailingChunkShape.map(() => 0));
+      return x.slice(
+        j1Start * prodChunkSizeOfAllButFirstDimension,
+        (j1Start + n1) * prodChunkSizeOfAllButFirstDimension,
       );
-      let iRet = 0;
-      for (let i1 = 0; i1 < i1End - i1Start; i1++) {
-        for (let i2 = 0; i2 < i2End - i2Start; i2++) {
-          for (let i = 0; i < retList.length; i++) {
-            for (
-              let i3 = 0;
-              i3 < prodChunkSizeOfAllButFirstTwoDimensions;
-              i3++
-            ) {
-              ret[iRet] =
-                retList[i][
-                  i1 *
-                    (i2End - i2Start) *
-                    prodChunkSizeOfAllButFirstTwoDimensions +
-                    i2 * prodChunkSizeOfAllButFirstTwoDimensions +
-                    i3
-                ];
-              iRet++;
+    }
+
+    const ret = allocateArrayWithDtype(
+      n1 * n2 * prodShapeSizeOfAllButFirstTwoDimensions,
+      dtype,
+    );
+    const numTrailingChunks = prodMacroChunkShapeAllButFirstTwoDimensions;
+    for (let ci = 0; ci < numTrailingChunks; ci++) {
+      const trailingChunkIndex = unravelIndex(ci, trailingMacroChunkShape);
+      const x = await readChunk(trailingChunkIndex);
+      // The extent of this chunk that lies inside the array, and where it
+      // starts along each trailing dimension.
+      const validExtent = trailingChunkIndex.map((c, d) =>
+        Math.min(
+          trailingChunkShape[d],
+          trailingShape[d] - c * trailingChunkShape[d],
+        ),
+      );
+      const trailingOffset = trailingChunkIndex.map(
+        (c, d) => c * trailingChunkShape[d],
+      );
+      if (numTrailingDims === 0) {
+        for (let j1 = 0; j1 < n1; j1++) {
+          for (let j2 = 0; j2 < n2; j2++) {
+            ret[j1 * n2 + j2] =
+              x[(j1Start + j1) * chunkShape2 + (j2Start + j2)];
+          }
+        }
+        continue;
+      }
+      // The last trailing dimension is contiguous in both the chunk and the
+      // output, so copy it as runs; walk every combination of the other
+      // trailing indices.
+      const runLength = validExtent[numTrailingDims - 1];
+      const outerExtent = validExtent.slice(0, numTrailingDims - 1);
+      const numRuns = outerExtent.reduce((a, b) => a * b, 1);
+      const lastOffset = trailingOffset[numTrailingDims - 1];
+      for (let r = 0; r < numRuns; r++) {
+        const outerIndex = unravelIndex(r, outerExtent);
+        let inOffset = 0;
+        let outOffset = lastOffset;
+        for (let d = 0; d < numTrailingDims - 1; d++) {
+          inOffset += outerIndex[d] * chunkStrides[d];
+          outOffset += (outerIndex[d] + trailingOffset[d]) * outStrides[d];
+        }
+        for (let j1 = 0; j1 < n1; j1++) {
+          for (let j2 = 0; j2 < n2; j2++) {
+            const inBase =
+              ((j1Start + j1) * chunkShape2 + (j2Start + j2)) *
+                prodChunkSizeOfAllButFirstTwoDimensions +
+              inOffset;
+            const outBase =
+              (j1 * n2 + j2) * prodShapeSizeOfAllButFirstTwoDimensions +
+              outOffset;
+            for (let k = 0; k < runLength; k++) {
+              ret[outBase + k] = x[inBase + k];
             }
           }
         }
       }
-      return ret;
     }
+    return ret;
   }
 
   if (assertSingleChunkInFirstTwoDimensions)
@@ -436,6 +372,26 @@ const lindiDatasetDataLoader = async (o: {
   }
   await Promise.all(promises);
   return ret;
+};
+
+// Strides of a row-major (C order) array with the given shape.
+const rowMajorStrides = (shape: number[]): number[] => {
+  const strides = new Array(shape.length).fill(1);
+  for (let d = shape.length - 2; d >= 0; d--) {
+    strides[d] = strides[d + 1] * shape[d + 1];
+  }
+  return strides;
+};
+
+// Multi-index of flat position i in a row-major array with the given shape.
+const unravelIndex = (i: number, shape: number[]): number[] => {
+  const index = new Array(shape.length).fill(0);
+  let rem = i;
+  for (let d = shape.length - 1; d >= 0; d--) {
+    index[d] = rem % shape[d];
+    rem = Math.floor(rem / shape[d]);
+  }
+  return index;
 };
 
 const allocateArrayWithDtype = (size: number, dtype: string) => {
