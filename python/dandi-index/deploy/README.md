@@ -35,6 +35,14 @@ apt-get install -y nodejs git python3-venv
 node -v && which node   # expect v20.x at /usr/bin/node
 ```
 
+Node 20 or later is required. Each submitted script runs in a child process
+under Node's permission model (`--experimental-permission` on Node 20,
+`--permission` on Node 22.13 and later), which denies it file system, child
+process, and worker access and gives it an empty environment. Index data and
+the OpenAI key stay in the parent process, which serves the script's
+`interface` calls over IPC. Scripts are killed after five minutes by default;
+set `JOB_TIMEOUT_MS` in `.env` to change that.
+
 ## 3. (root) Create the unprivileged service user
 
 ```bash

@@ -1,6 +1,7 @@
 import { FunctionComponent, useEffect, useRef, useState } from "react";
 import Plot from "react-plotly.js";
 import { Data } from "plotly.js";
+import { distinctLabelValues, labeledEventPoints } from "./labeledEventsPoints";
 
 type Props = {
   timestamps?: number[];
@@ -62,10 +63,8 @@ const LabeledEventsPlot: FunctionComponent<Props> = ({
   // For labeled events, we want to create scatter plots where each unique value (label)
   // gets its own color and appears in the legend
   // Create a single trace with all points
-  const points = data.map((d, i) => ({
-    timestamp: timestamps[i],
-    value: d[0],
-  }));
+  const points = labeledEventPoints(timestamps, data);
+  const labelValues = distinctLabelValues(points);
 
   const trace: Data = {
     x: points.map((p) => p.timestamp),
@@ -112,13 +111,9 @@ const LabeledEventsPlot: FunctionComponent<Props> = ({
             showticklabels: true,
             showgrid: true,
             tickmode: "array",
-            tickvals: Array.from(new Set(points.map((p) => p.value))).sort(
-              (a, b) => a - b,
-            ),
-            ticktext: Array.from(new Set(points.map((p) => p.value)))
-              .sort((a, b) => a - b)
-              .map((v) => labels[v] || `Value ${v}`),
-            range: [-1, Array.from(new Set(points.map((p) => p.value))).length],
+            tickvals: labelValues,
+            ticktext: labelValues.map((v) => labels[v] || `Value ${v}`),
+            range: [-1, labelValues.length],
           },
           showlegend: false,
           hovermode: "closest",

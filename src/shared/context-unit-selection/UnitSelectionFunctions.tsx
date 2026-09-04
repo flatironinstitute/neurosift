@@ -126,9 +126,11 @@ export const toggleSelectedUnit = (
   if (a.targetUnit === undefined)
     throw new Error(`Attempt to toggle unit with unset unitid.`);
   const newSelectedUnitIds = new Set([...s.selectedUnitIds]);
-  newSelectedUnitIds.has(a.targetUnit)
-    ? newSelectedUnitIds.delete(a.targetUnit)
-    : newSelectedUnitIds.add(a.targetUnit);
+  if (newSelectedUnitIds.has(a.targetUnit)) {
+    newSelectedUnitIds.delete(a.targetUnit);
+  } else {
+    newSelectedUnitIds.add(a.targetUnit);
+  }
   let newCurrentUnitId = s.currentUnitId;
   if (a.targetUnit === s.currentUnitId) {
     newCurrentUnitId = [...newSelectedUnitIds][0];
@@ -172,9 +174,11 @@ export const toggleSelectedRange = (
     Math.min(lastClickedIndex, targetIndex),
     Math.max(lastClickedIndex, targetIndex) + 1,
   );
-  selectedUnitIds.has(targetUnit)
-    ? toggledIds.forEach((id) => selectedUnitIds.delete(id))
-    : toggledIds.forEach((id) => selectedUnitIds.add(id));
+  if (selectedUnitIds.has(targetUnit)) {
+    toggledIds.forEach((id) => selectedUnitIds.delete(id));
+  } else {
+    toggledIds.forEach((id) => selectedUnitIds.add(id));
+  }
 
   if (s.currentUnitId) {
     if (!selectedUnitIds.has(s.currentUnitId)) {
