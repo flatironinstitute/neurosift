@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import getAuthorizationHeaderForUrl from "../../util/getAuthorizationHeaderForUrl";
 import { DatasetFile } from "../../common/DatasetWorkspace/plugins/pluginInterface";
 import { DandisetVersionInfo } from "../../DandiPage/dandi-types";
+import { fetchAllPages } from "../../util/fetchAllPages";
 
 // Cache for storing loaded directories
 interface CachedDirectory {
@@ -96,11 +97,12 @@ export const useLazyDandisetPaths = (
       const url = `${baseUrl}/${dandisetId}/versions/${dandisetVersionInfo.version}/assets/paths/?page=1&page_size=1000&path_prefix=${encodedPrefix}${globFilter}`;
 
       try {
-        const response = await fetch(url, { headers });
-        if (!response.ok) throw new Error("Failed to fetch directory contents");
-
-        const data: DandiPathResponse = await response.json();
-        return data.results;
+        // Follow every page: a directory can hold more entries than one
+        // page of the listing.
+        return await fetchAllPages<DandiPathResponse["results"][0]>(
+          url,
+          headers,
+        );
       } catch (err) {
         console.error("Error fetching directory:", err);
         return [];
