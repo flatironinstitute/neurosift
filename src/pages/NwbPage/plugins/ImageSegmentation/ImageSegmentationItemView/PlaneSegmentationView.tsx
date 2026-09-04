@@ -330,6 +330,7 @@ const Test1: FunctionComponent<{
           );
         } else if (client.hasPixelMask) {
           const aa = await client.getPixelMask(j);
+          if (canceled) return;
           if (!aa) throw Error(`Unable to load pixel mask data`);
           const values: { x: number; y: number; v: number }[] = [];
           for (let i = 0; i < aa.length; i++) {

@@ -365,14 +365,25 @@ export const getHdf5DatasetData = async (
   }
 };
 
+// The hooks below clear their state when the url or path changes and ignore
+// the result of a load that was superseded, so a slow response for a
+// previous object cannot be shown for the current one.
 export const useHdf5Group = (url: string, path: string) => {
   const [group, setGroup] = useState<Hdf5Group | undefined>(undefined);
   useEffect(() => {
+    setGroup(undefined);
+    let canceled = false;
     const load = async () => {
       const g = await getHdf5Group(url, path);
+      if (canceled) return;
       setGroup(g);
     };
-    load();
+    load().catch((err) => {
+      if (!canceled) console.error(`Error loading group ${path}:`, err);
+    });
+    return () => {
+      canceled = true;
+    };
   }, [url, path]);
   return group;
 };
@@ -380,11 +391,19 @@ export const useHdf5Group = (url: string, path: string) => {
 export const useHdf5Dataset = (url: string, path: string) => {
   const [dataset, setDataset] = useState<Hdf5Dataset | undefined>(undefined);
   useEffect(() => {
+    setDataset(undefined);
+    let canceled = false;
     const load = async () => {
       const d = await getHdf5Dataset(url, path);
+      if (canceled) return;
       setDataset(d);
     };
-    load();
+    load().catch((err) => {
+      if (!canceled) console.error(`Error loading dataset ${path}:`, err);
+    });
+    return () => {
+      canceled = true;
+    };
   }, [url, path]);
   return dataset;
 };
@@ -395,19 +414,26 @@ export const useHdf5DatasetData = (url: string, path: string) => {
     undefined,
   );
   useEffect(() => {
+    setData(undefined);
+    setErrorMessage(undefined);
+    let canceled = false;
     const load = async () => {
-      setData(undefined);
       let d;
       try {
         d = await getHdf5DatasetData(url, path, {});
       } catch (err: any) {
+        if (canceled) return;
         console.error(`Error loading dataset data: ${err.message}`);
         setErrorMessage(err.message);
         return;
       }
+      if (canceled) return;
       setData(d);
     };
     load();
+    return () => {
+      canceled = true;
+    };
   }, [url, path]);
   return { data, errorMessage };
 };
