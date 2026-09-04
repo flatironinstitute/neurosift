@@ -381,7 +381,7 @@ const createUsageScriptForNwbFile = async (
 
     // Units
     if (neurodataTypeInheritsFrom(obj.neurodataType, "Units", specifications)) {
-      handleUnits(obj.group, `${obj.objectExpression}`);
+      await handleUnits(obj.group, `${obj.objectExpression}`);
     }
 
     // Images
@@ -509,9 +509,58 @@ const shapeToString = (shape: number[]) => {
   return `[${shape.join(", ")}]`;
 };
 
-const makeValidVariableName = (name: string) => {
-  // replace spaces and dashes with underscores
-  return name.replace(/[\s-]/g, "_");
+// Python keywords and a few builtins that would be shadowed or produce a
+// syntax error if used as a variable name.
+const pythonReservedNames = new Set([
+  "False",
+  "None",
+  "True",
+  "and",
+  "as",
+  "assert",
+  "async",
+  "await",
+  "break",
+  "class",
+  "continue",
+  "def",
+  "del",
+  "elif",
+  "else",
+  "except",
+  "finally",
+  "for",
+  "from",
+  "global",
+  "if",
+  "import",
+  "in",
+  "is",
+  "lambda",
+  "match",
+  "nonlocal",
+  "not",
+  "or",
+  "pass",
+  "raise",
+  "return",
+  "try",
+  "while",
+  "with",
+  "yield",
+  "nwb",
+  "units",
+  "electrodes",
+]);
+
+// Turn an NWB object name into a valid Python identifier: every character
+// that is not a letter, digit, or underscore becomes an underscore, a
+// leading digit gets an underscore in front, and keywords get one after.
+export const makeValidVariableName = (name: string) => {
+  let v = name.replace(/[^A-Za-z0-9_]/g, "_");
+  if (v === "" || /^[0-9]/.test(v)) v = "_" + v;
+  if (pythonReservedNames.has(v)) v = v + "_";
+  return v;
 };
 
 const getDatasetValueString = async (nwbUrl: string, datasetPath: string) => {

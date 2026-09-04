@@ -1,3 +1,4 @@
+import { buildDandisetsSearchUrl } from "../util/dandisetsSearchUrl";
 import ScrollY from "@components/ScrollY";
 import HistoryIcon from "@mui/icons-material/History";
 import LaunchIcon from "@mui/icons-material/Launch";
@@ -96,13 +97,14 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
     try {
       if (searchMode === "basic") {
         const { headers, apiKeyProvided } = getEmberApiHeaders();
-        const embargoedStr = apiKeyProvided ? "true" : "false";
-        // const stagingStr = staging ? "-staging" : "";
-        const emptyStr = !searchQuery ? "false" : "true";
 
         // TODO - should we support sandbox at all? Doesn't seem to be working as well there
         const response = await fetch(
-          `https://api-dandi.emberarchive.org/api/dandisets/?page=1&page_size=50&ordering=-modified&search=${searchQuery}&draft=true&empty=${emptyStr}&embargoed=${embargoedStr}`,
+          buildDandisetsSearchUrl({
+            apiBaseUrl: "https://api-dandi.emberarchive.org",
+            searchQuery,
+            embargoed: apiKeyProvided,
+          }),
           { headers },
         );
         if (response.status === 200) {

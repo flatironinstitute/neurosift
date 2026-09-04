@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
 
+// Shape of an annotation record returned by the annotation manager API.
+type NotebookAnnotation = {
+  tags: string[];
+  data: { content: string };
+};
+
 const ANNOTATION_API_BASE_URL =
   "https://neurosift-annotation-manager.vercel.app/api";
 
@@ -41,7 +47,7 @@ export const useOpenNeuroNotebooks = () => {
         const notebooksMap: NotebookUrls = {};
 
         // Group notebook URLs by dataset ID
-        data.annotations.forEach((annotation: any) => {
+        data.annotations.forEach((annotation: NotebookAnnotation) => {
           const datasetTag = annotation.tags.find((tag: string) =>
             tag.startsWith("openneuro:"),
           );
