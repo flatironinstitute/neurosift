@@ -1,3 +1,4 @@
+import { canStepFrame, steppedFrameIndex } from "./frameStepping";
 import { SmallIconButton } from "@fi-sci/misc";
 import { ArrowLeft, ArrowRight } from "@mui/icons-material";
 import { getHdf5DatasetData, useHdf5Dataset } from "@hdf5Interface";
@@ -178,13 +179,14 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
 
   const bottomBarHeight = 30;
 
+  const numFrames = dataDataset?.shape[0];
+
   const incrementFrame = useMemo(
     () => (inc: number) => {
       (async () => {
         if (!timeseriesTimestampsClient) return;
-        if (frameIndex === undefined) return;
-        const i1 = frameIndex;
-        const i2 = i1 + inc;
+        const i2 = steppedFrameIndex(frameIndex, inc, numFrames);
+        if (i2 === undefined) return;
         const tt = await timeseriesTimestampsClient.getTimestampsForDataIndices(
           i2,
           i2 + 1,
@@ -193,9 +195,11 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
           throw Error("Unexpected: unable to get timestamps for data indices");
         }
         setCurrentTime(tt[0]);
-      })();
+      })().catch((err) => {
+        console.error("Unable to step to the next frame:", err);
+      });
     },
-    [timeseriesTimestampsClient, frameIndex, setCurrentTime],
+    [timeseriesTimestampsClient, frameIndex, numFrames, setCurrentTime],
   );
 
   useEffect(() => {
@@ -248,17 +252,13 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
       >
         <div style={{ position: "relative", top: 3 }}>
           <SmallIconButton
-            disabled={
-              (currentTime || 0) <= (timeseriesTimestampsClient?.startTime || 0)
-            }
+            disabled={!canStepFrame(frameIndex, -1, numFrames)}
             title="Previous frame"
             onClick={() => incrementFrame(-1)}
             icon={<ArrowLeft />}
           />
           <SmallIconButton
-            disabled={
-              (currentTime || 0) >= (timeseriesTimestampsClient?.endTime || 0)
-            }
+            disabled={!canStepFrame(frameIndex, 1, numFrames)}
             title="Next frame"
             onClick={() => incrementFrame(1)}
             icon={<ArrowRight />}
