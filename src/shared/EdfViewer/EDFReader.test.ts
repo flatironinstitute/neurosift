@@ -121,7 +121,8 @@ describe("EDFReader.readSamples", () => {
   it("reads a half-open sample range across records with calibration applied", async () => {
     const r = await EDFReader.fromURL("http://x/f.edf");
     const x = await r.readSamples(1, 8, 13);
-    expect(Array.from(x)).toEqual(
+    expectSamples(
+      x,
       [8, 9, 10, 11, 12].map((i) => physicalValue(1, i)),
     );
   });
