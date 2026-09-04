@@ -40,17 +40,6 @@ const NwbTimeIntervalsWidget: FunctionComponent<Props> = ({
     HTMLCanvasElement | undefined
   >();
 
-  // Calculate min/max times for reference, but don't use them to initialize the time range
-  useMemo(() => {
-    let startTime = Number.MAX_VALUE;
-    let endTime = Number.MIN_VALUE;
-    for (let i = 0; i < startTimes.length; i++) {
-      if (!isNaN(startTimes[i])) startTime = Math.min(startTime, startTimes[i]);
-      if (!isNaN(stopTimes[i])) endTime = Math.max(endTime, stopTimes[i]);
-    }
-    return { startTime, endTime };
-  }, [startTimes, stopTimes]);
-
   // We don't need to initialize the time range here as it's already initialized in the parent component
   // and we want to maintain the same time range when switching between views
   const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();

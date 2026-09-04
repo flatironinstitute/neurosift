@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { intervalsTimeRange } from "./intervalsTimeRange";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import {
   getHdf5DatasetData,
@@ -75,10 +76,19 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
     return result;
   }, [availableColumns, startTimeData]);
 
+  // Overall range of the intervals, ignoring NaN start or stop times.
+  const timeRange = useMemo(
+    () =>
+      startTimeData && stopTimeData
+        ? intervalsTimeRange(startTimeData, stopTimeData)
+        : undefined,
+    [startTimeData, stopTimeData],
+  );
+
   useEffect(() => {
-    if (!startTimeData || !stopTimeData) return;
-    const t1 = compute_min(startTimeData);
-    const t2 = compute_max(stopTimeData);
+    if (!timeRange) return;
+    const t1 = timeRange.startTime;
+    const t2 = timeRange.endTime;
     const t2b = Math.min(t1 + 100, t2);
     initializeTimeseriesSelection({
       startTimeSec: t1,
@@ -86,15 +96,17 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
       initialVisibleStartTimeSec: t1,
       initialVisibleEndTimeSec: t2b,
     });
-  }, [
-    startTimeData,
-    stopTimeData,
-    initializeTimeseriesSelection,
-    setVisibleTimeRange,
-  ]);
+  }, [timeRange, initializeTimeseriesSelection, setVisibleTimeRange]);
 
   if (!startTimeData || !stopTimeData) {
     return <div>loading data (NwbTimeIntervalsView)...</div>;
+  }
+  if (!timeRange) {
+    return (
+      <div style={{ padding: 10 }}>
+        This table has no finite start or stop times to display.
+      </div>
+    );
   }
 
   const handleDecreaseVisibleDuration = () => {
@@ -151,14 +163,11 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
           >
             <div>
               <span style={{ fontWeight: "bold" }}>Start:</span>{" "}
-              {compute_min(startTimeData).toFixed(2)}s
+              {timeRange.startTime.toFixed(2)}s
             </div>
             <div>
               <span style={{ fontWeight: "bold" }}>Duration:</span>{" "}
-              {(compute_max(stopTimeData) - compute_min(startTimeData)).toFixed(
-                2,
-              )}
-              s
+              {(timeRange.endTime - timeRange.startTime).toFixed(2)}s
             </div>
             <div>
               <span style={{ fontWeight: "bold" }}>Intervals:</span>{" "}
@@ -174,10 +183,8 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
                   ? visibleEndTimeSec - visibleStartTimeSec
                   : undefined
               }
-              timeseriesStartTime={compute_min(startTimeData)}
-              timeseriesDuration={
-                compute_max(stopTimeData) - compute_min(startTimeData)
-              }
+              timeseriesStartTime={timeRange.startTime}
+              timeseriesDuration={timeRange.endTime - timeRange.startTime}
               onDecreaseVisibleDuration={handleDecreaseVisibleDuration}
               onIncreaseVisibleDuration={handleIncreaseVisibleDuration}
               onShiftTimeLeft={handleShiftTimeLeft}
@@ -380,22 +387,6 @@ const getDistinctValues = (values: string[]) => {
     ret.add(val);
   }
   return Array.from(ret).sort();
-};
-
-const compute_min = (data: Float32Array) => {
-  let min = data[0];
-  for (let i = 1; i < data.length; i++) {
-    if (data[i] < min) min = data[i];
-  }
-  return min;
-};
-
-const compute_max = (data: Float32Array) => {
-  let max = data[0];
-  for (let i = 1; i < data.length; i++) {
-    if (data[i] > max) max = data[i];
-  }
-  return max;
 };
 
 export default NwbTimeIntervalsView;
