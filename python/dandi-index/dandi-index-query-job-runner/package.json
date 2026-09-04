@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && cp src/systemMessage.txt dist/",
+    "test": "npm run build && node --test dist/sandbox/*.test.js",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "watch": "tsc -w"
