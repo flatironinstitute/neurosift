@@ -51,3 +51,22 @@ export type TabsAction =
     }
   | { type: "CLOSE_TAB"; id: string }
   | { type: "SWITCH_TO_TAB"; id: string };
+
+// Overview types (previously in NwbPage/types.ts, which collided with this
+// directory's name on case-insensitive filesystems and broke the build on
+// macOS and Windows).
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export type NwbFileOverview = {
+  items: {
+    name: string;
+    path: string;
+    renderer?: (val: any) => string;
+  }[];
+  nwbVersion: string;
+};
+
+export type GeneralLabelMapItem = {
+  name: string;
+  newName: string;
+  renderer?: (val: any) => string;
+};
