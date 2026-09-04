@@ -13,18 +13,26 @@ export const useTimeseriesClient = (nwbUrl: string, path: string) => {
   const group = useHdf5Group(nwbUrl, path);
 
   useEffect(() => {
+    setTimeseriesClient(undefined);
+    setError(undefined);
     if (!group) return;
+    let canceled = false;
     const load = async () => {
       try {
         const client = await ChunkedTimeseriesClient.create(nwbUrl, group, {
           chunkSizeSec: 1,
         });
+        if (canceled) return;
         setTimeseriesClient(client);
       } catch (err: any) {
+        if (canceled) return;
         setError(err.message);
       }
     };
     load();
+    return () => {
+      canceled = true;
+    };
   }, [nwbUrl, group]);
 
   return { timeseriesClient, error };
@@ -173,10 +181,13 @@ export const useTimeseriesData = (
     numVisibleChannels,
   ]);
 
-  // Load data when view parameters change
+  // Load data when view parameters change. A load that is superseded by a
+  // newer one (the user zooms twice quickly) must not overwrite the newer
+  // result when it eventually resolves, so each run is canceled on cleanup.
   useEffect(() => {
     if (!timeseriesClient) return;
     if (zoomInRequired) return;
+    let canceled = false;
     setIsLoading(true);
     const load = async () => {
       if (bufferedVisibleStartTimeSec === undefined) return;
@@ -192,15 +203,20 @@ export const useTimeseriesData = (
         visibleChannelsStart,
         visibleChannelsEnd,
       );
+      if (canceled) return;
       setLoadedTimestamps(timestamps);
       setLoadedData(data);
       setIsLoading(false);
     };
     load().catch((err) => {
+      if (canceled) return;
       console.error(err);
       setError(err.message);
       setIsLoading(false);
     });
+    return () => {
+      canceled = true;
+    };
   }, [
     timeseriesClient,
     bufferedVisibleStartTimeSec,
