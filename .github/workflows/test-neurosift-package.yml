@@ -174,13 +174,19 @@ jobs:
             test_neurosift_cli()
         EOF
 
+    - name: Test the local file server
+      run: |
+        cd python/neurosift/local-file-access-js
+        npm install
+        npm test
+
     - name: Test neurosift CLI help
       run: |
         neurosift --help
 
     - name: Run neurosift CLI test with timeout
       run: |
-        timeout 15s python test_neurosift.py || true
+        timeout 15s python test_neurosift.py
 
     # Test that neurosift can be imported
     - name: Test neurosift import

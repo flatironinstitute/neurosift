@@ -1,10 +1,11 @@
 import React from "react";
 import ResourceAnnotations from "../../common/ResourceAnnotations";
+import { ResourceAnnotation } from "../../common/annotationTypes";
 import { isInNeurosiftChat } from "../../../ai-integration/messaging/windowMessaging";
 
 interface DandisetAnnotationsProps {
   dandisetId: string;
-  onNoteAnnotationsUpdate?: (annotations: any[]) => void;
+  onNoteAnnotationsUpdate?: (annotations: ResourceAnnotation[]) => void;
 }
 
 const DandisetAnnotations: React.FC<DandisetAnnotationsProps> = ({

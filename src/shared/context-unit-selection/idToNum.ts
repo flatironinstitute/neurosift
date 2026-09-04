@@ -1,4 +1,4 @@
-export const idToNum = (a: any): number => {
+export const idToNum = (a: unknown): number => {
   if (typeof a === "number") return a;
   else if (typeof a === "string") {
     const b = stripLeadingNonNumeric(a);
