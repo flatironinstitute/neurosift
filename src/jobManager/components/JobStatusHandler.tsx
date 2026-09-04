@@ -187,7 +187,7 @@ export const JobStatusHandler: FunctionComponent<Props> = ({
             color: "#d32f2f",
           }}
         >
-          `${jobLabel} failed: ${error}`
+          {`${jobLabel} failed: ${error || job.error || "unknown error"}`}
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
           <button onClick={onSubmit}>Resubmit Job</button>
