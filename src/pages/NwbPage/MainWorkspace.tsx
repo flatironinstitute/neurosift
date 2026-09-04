@@ -145,8 +145,11 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
 
   // Check if /units exists
   useEffect(() => {
+    setDefaultUnitsPath(undefined);
+    let canceled = false;
     const checkUnits = async () => {
       const group = await getHdf5Group(nwbUrl, "/units");
+      if (canceled) return;
       // No specifications available here (the provider is set up below this
       // component), so this falls back to the known core type relationships
       if (
@@ -156,7 +159,12 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
         setDefaultUnitsPath("/units");
       }
     };
-    checkUnits();
+    checkUnits().catch((err) => {
+      if (!canceled) console.error(err);
+    });
+    return () => {
+      canceled = true;
+    };
   }, [nwbUrl]);
 
   // Check for authentication errors

@@ -1,3 +1,4 @@
+import { ResourceAnnotation } from "../common/annotationTypes";
 import { Box, Typography, Divider, IconButton, Tooltip } from "@mui/material";
 import { FunctionComponent, useCallback, useState } from "react";
 import { MenuBook } from "@mui/icons-material";
@@ -13,7 +14,7 @@ interface OpenNeuroDatasetOverviewProps {
   datasetInfo: OpenNeuroDatasetInfo;
 }
 
-const findNotebookUrls = (annotations: any[]): string[] => {
+const findNotebookUrls = (annotations: ResourceAnnotation[]): string[] => {
   const notebookNotes =
     annotations?.filter((note) => note.tags?.includes("notebook")) || [];
 
@@ -30,13 +31,16 @@ const OpenNeuroDatasetOverview: FunctionComponent<
 > = ({ width, height, datasetInfo }) => {
   const { snapshot } = datasetInfo;
   const [notebookUrls, setNotebookUrls] = useState<string[]>([]);
-  const [, setAnnotations] = useState<any[]>([]);
+  const [, setAnnotations] = useState<ResourceAnnotation[]>([]);
 
-  const handleAnnotationsUpdate = useCallback((annotations: any[]) => {
-    setAnnotations(annotations);
-    const urls = findNotebookUrls(annotations);
-    setNotebookUrls(urls);
-  }, []);
+  const handleAnnotationsUpdate = useCallback(
+    (annotations: ResourceAnnotation[]) => {
+      setAnnotations(annotations);
+      const urls = findNotebookUrls(annotations);
+      setNotebookUrls(urls);
+    },
+    [],
+  );
 
   // Register AI overview component
   useRegisterOpenNeuroDatasetOverviewAIComponent({

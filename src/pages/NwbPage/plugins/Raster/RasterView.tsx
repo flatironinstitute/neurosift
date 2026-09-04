@@ -76,21 +76,23 @@ const RasterViewChild = ({
     if (!spikeTrainsClient) return;
     if (visibleStartTimeSec === undefined || visibleDuration === undefined)
       return;
+    let canceled = false;
     setIsLoading(true);
     const load = async () => {
       const unitIds = spikeTrainsClient.unitIds.slice(
         visibleUnitsStart,
         visibleUnitsStart + numVisibleUnits,
       );
-      const spikeTimes: number[][] = [];
-      for (const unitId of unitIds) {
-        const spikes = await spikeTrainsClient.getUnitSpikeTrainForTimeRange(
-          unitId,
-          visibleStartTimeSec,
-          visibleStartTimeSec + visibleDuration,
-        );
-        spikeTimes.push(spikes);
-      }
+      const spikeTimes = await Promise.all(
+        unitIds.map((unitId) =>
+          spikeTrainsClient.getUnitSpikeTrainForTimeRange(
+            unitId,
+            visibleStartTimeSec,
+            visibleStartTimeSec + visibleDuration,
+          ),
+        ),
+      );
+      if (canceled) return;
       setPlotData({
         unitIds: unitIds.map((id) => id.toString()),
         spikeTimes,
@@ -100,7 +102,14 @@ const RasterViewChild = ({
       });
       setIsLoading(false);
     };
-    load();
+    load().catch((err) => {
+      if (canceled) return;
+      console.error(err);
+      setIsLoading(false);
+    });
+    return () => {
+      canceled = true;
+    };
   }, [
     visibleStartTimeSec,
     visibleDuration,
@@ -274,15 +283,24 @@ const useDirectSpikeTrainsClient = (nwbUrl: string, path: string) => {
     useState<ChunkedDirectSpikeTrainsClient | null>(null);
 
   useEffect(() => {
+    setSpikeTrainsClient(null);
+    let canceled = false;
     const create = async () => {
       const client = await ChunkedDirectSpikeTrainsClient.create(
         nwbUrl,
         path,
         blockSizeSec,
       );
+      if (canceled) return;
       setSpikeTrainsClient(client);
     };
-    create();
+    create().catch((err) => {
+      if (canceled) return;
+      console.error(err);
+    });
+    return () => {
+      canceled = true;
+    };
   }, [nwbUrl, path]);
 
   return spikeTrainsClient;

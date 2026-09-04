@@ -60,6 +60,10 @@ const metadata: { [key: string]: unknown } = {
   "LinkedSeries/.zgroup": { zarr_format: 2 },
   "LinkedSeries/.zattrs": { _SOFT_LINK: { path: "/Corrected" } },
 
+  // A link to a group whose own timestamps child is itself a link.
+  "LinkedDfOverF/.zgroup": { zarr_format: 2 },
+  "LinkedDfOverF/.zattrs": { _SOFT_LINK: { path: "/DfOverF" } },
+
   "BrokenLink/.zgroup": { zarr_format: 2 },
   "BrokenLink/.zattrs": { _SOFT_LINK: { path: "/does/not/exist" } },
 
@@ -74,6 +78,7 @@ const pathsByParentPath: { [key: string]: string[] } = {
     "Corrected",
     "DfOverF",
     "LinkedSeries",
+    "LinkedDfOverF",
     "BrokenLink",
     "CycleA",
     "CycleB",
@@ -146,6 +151,50 @@ describe("RemoteH5FileLindi soft links", () => {
       "data",
       "timestamps",
     ]);
+  });
+
+  it("reports a linked group's children under the link's own path", async () => {
+    const f = createFile();
+    const group = await f.getGroup("/LinkedSeries");
+    expect(group!.path).toBe("/LinkedSeries");
+    expect(group!.datasets.map((ds) => ds.path).sort()).toEqual([
+      "/LinkedSeries/data",
+      "/LinkedSeries/timestamps",
+    ]);
+  });
+
+  it("resolves a link in the middle of a path", async () => {
+    const f = createFile();
+    // LinkedSeries is the link; the dataset below it is a plain dataset of
+    // the target group.
+    const ds = await f.getDataset("/LinkedSeries/timestamps");
+    expect(ds).toBeDefined();
+    expect(ds!.shape).toEqual([10]);
+    expect(ds!.attrs).toEqual({ unit: "seconds", interval: 1 });
+    expect(ds!.path).toBe("/LinkedSeries/timestamps");
+    expect(await f.resolveSoftLink("LinkedSeries/timestamps")).toBe(
+      "Corrected/timestamps",
+    );
+  });
+
+  it("follows a link to a group whose child is itself a link", async () => {
+    const f = createFile();
+    expect(await f.resolveSoftLink("LinkedDfOverF/timestamps")).toBe(
+      "Corrected/timestamps",
+    );
+    const ds = await f.getDataset("/LinkedDfOverF/timestamps");
+    expect(ds!.shape).toEqual([10]);
+    const group = await f.getGroup("/LinkedDfOverF");
+    expect(group!.datasets.map((ds) => ds.name).sort()).toEqual([
+      "data",
+      "timestamps",
+    ]);
+  });
+
+  it("leaves a path with no links unchanged", async () => {
+    const f = createFile();
+    expect(await f.resolveSoftLink("Corrected/data")).toBe("Corrected/data");
+    expect(await f.resolveSoftLink("")).toBe("");
   });
 
   it("falls back to the link itself when the target is missing", async () => {
