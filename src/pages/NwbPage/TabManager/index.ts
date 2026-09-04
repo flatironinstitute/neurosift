@@ -3,6 +3,7 @@ import { determineObjectType } from "../ObjectTypeUtils";
 import { NwbObjectViewPlugin } from "../plugins/pluginInterface";
 import { findPluginByName } from "../plugins/registry";
 import tabsReducer from "../tabsReducer";
+import { parseMultiTabItem } from "../multiTabItems";
 import { TabsState } from "../Types";
 
 interface UseTabManagerProps {
@@ -72,12 +73,14 @@ export const useTabManager = ({
             secondaryPaths,
           });
         } else if (initialTabId.startsWith("[")) {
-          const paths = JSON.parse(initialTabId);
+          const items: string[] = JSON.parse(initialTabId);
           const objectTypes = await Promise.all(
-            paths.map((path: string) => determineObjectType(nwbUrl, path)),
+            items.map((item) =>
+              determineObjectType(nwbUrl, parseMultiTabItem(item).path),
+            ),
           );
           if (canceled) return;
-          dispatch({ type: "OPEN_MULTI_TAB", paths, objectTypes });
+          dispatch({ type: "OPEN_MULTI_TAB", paths: items, objectTypes });
         } else {
           const objectType = await determineObjectType(nwbUrl, initialTabId);
           if (canceled) return;
@@ -96,15 +99,21 @@ export const useTabManager = ({
     };
   }, [initialTabId, nwbUrl]);
 
-  const handleOpenObjectsInNewTab = async (paths: string[]) => {
-    if (paths.length === 1) {
-      const objectType = await determineObjectType(nwbUrl, paths[0]);
-      dispatch({ type: "OPEN_TAB", id: paths[0], path: paths[0], objectType });
+  // Items are the strings collected by the hierarchy view: plain paths or
+  // "plugin|path^secondary" entries. Object types are resolved for the path
+  // inside each item, not for the raw string.
+  const handleOpenObjectsInNewTab = async (items: string[]) => {
+    if (items.length === 1) {
+      const path = parseMultiTabItem(items[0]).path;
+      const objectType = await determineObjectType(nwbUrl, path);
+      dispatch({ type: "OPEN_TAB", id: path, path, objectType });
     } else {
       const objectTypes = await Promise.all(
-        paths.map((path) => determineObjectType(nwbUrl, path)),
+        items.map((item) =>
+          determineObjectType(nwbUrl, parseMultiTabItem(item).path),
+        ),
       );
-      dispatch({ type: "OPEN_MULTI_TAB", paths, objectTypes });
+      dispatch({ type: "OPEN_MULTI_TAB", paths: items, objectTypes });
     }
   };
 

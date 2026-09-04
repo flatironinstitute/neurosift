@@ -11,9 +11,10 @@ type QfcCompressionOpts = {
   zstd_level: number;
 };
 
-const isQfcCompressionOpts = (x: any): x is QfcCompressionOpts => {
-  if (!x) return false;
-  if (typeof x !== "object") return false;
+const isQfcCompressionOpts = (x0: unknown): x0 is QfcCompressionOpts => {
+  if (!x0) return false;
+  if (typeof x0 !== "object") return false;
+  const x = x0 as { [key: string]: unknown };
   if (x.compression_method !== "zlib" && x.compression_method !== "zstd")
     return false;
   if (x.dtype !== "float32" && x.dtype !== "int16") return false;
@@ -29,7 +30,7 @@ export const qfcDecompress = async (
   buf: ArrayBuffer,
   shape: number[],
   compressor: QfcCompressionOpts,
-): Promise<any> => {
+): Promise<ArrayBuffer> => {
   if (!isQfcCompressionOpts(compressor)) {
     console.warn(compressor);
     throw Error("Invalid qfc compressor");
@@ -242,7 +243,9 @@ const qfc_inv_pre_compress = async (o: {
     x_fft[i] = x_fft[i] * Math.sqrt(num_samples);
   }
   if (dtype === "int16") {
-    const ret = new Int16Array(x_fft.byteLength);
+    // One int16 per sample: sizing this by byteLength allocated four times
+    // too many elements and made every int16 decode fail its length check.
+    const ret = new Int16Array(x_fft.length);
     for (let i = 0; i < x_fft.length; i++) {
       ret[i] = Math.round(x_fft[i]);
     }

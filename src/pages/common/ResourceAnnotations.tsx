@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { ResourceAnnotation } from "./annotationTypes";
 import React, { useState, useEffect } from "react";
 import { Box, Typography, Button, Link } from "@mui/material";
 import { Add as AddIcon } from "@mui/icons-material";
@@ -15,7 +16,7 @@ interface ResourceAnnotationsProps {
   annotationType: string;
   targetType: string;
   tags: string[];
-  onAnnotationsUpdate?: (annotations: any[]) => void;
+  onAnnotationsUpdate?: (annotations: ResourceAnnotation[]) => void;
   expandBlobs: boolean;
 }
 
