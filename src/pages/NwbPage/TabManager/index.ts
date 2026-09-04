@@ -1,4 +1,4 @@
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import { determineObjectType } from "../ObjectTypeUtils";
 import { NwbObjectViewPlugin } from "../plugins/pluginInterface";
 import { findPluginByName } from "../plugins/registry";
@@ -31,11 +31,22 @@ export const useTabManager = ({
     tabs: [],
     activeTabId: "widgets",
   });
+  // The tab list as of the latest render, so the effect below can check for
+  // an already open tab without re-running on every state change.
+  const tabsRef = useRef(tabsState.tabs);
+  tabsRef.current = tabsState.tabs;
 
+  // Open the tab named by the URL. The URL is kept in sync with the active
+  // tab, so this also runs when the user switches tabs; a tab that is
+  // already open is simply activated without any lookups.
   useEffect(() => {
     let canceled = false;
     const load = async () => {
       if (initialTabId) {
+        if (tabsRef.current.some((t) => t.id === initialTabId)) {
+          dispatch({ type: "SWITCH_TO_TAB", id: initialTabId });
+          return;
+        }
         if (initialTabId.startsWith("view:")) {
           const a = initialTabId.split("|");
           if (a.length !== 2) {
