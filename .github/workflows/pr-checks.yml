@@ -25,7 +25,9 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        # vitest 4 needs Node 20 or later and jsdom 30 needs 22.22 or later;
+        # Node 18 cannot require() the ESM-only modules jsdom depends on.
+        node-version: '22'
         cache: 'npm'
 
     # Install Python dependencies

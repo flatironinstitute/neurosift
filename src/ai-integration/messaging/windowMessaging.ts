@@ -79,6 +79,29 @@ export function sendUrlUpdate(url: string): void {
   window.parent.postMessage(message, "*");
 }
 
+// Origins that are allowed to drive neurosift through window messages: the
+// Neurosift chat app, and local development servers.
+export const allowedAIMessageOrigins = ["https://chat.neurosift.app"];
+
+export const isAllowedAIMessageOrigin = (origin: string): boolean => {
+  if (allowedAIMessageOrigins.includes(origin)) return true;
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+};
+
+// A message is acted on only when it comes from the window that embeds
+// neurosift and that window has an allowed origin. Without this check any
+// page that opened or framed neurosift could invoke a registered callback
+// with arbitrary parameters.
+export const isTrustedAIMessageEvent = (
+  event: { origin: string; source: unknown },
+  parentWindow: unknown = window.parent,
+  selfWindow: unknown = window,
+): boolean => {
+  if (parentWindow === selfWindow) return false; // not embedded
+  if (event.source !== parentWindow) return false;
+  return isAllowedAIMessageOrigin(event.origin);
+};
+
 /**
  * Handles incoming AI messages from the parent window
  */
@@ -86,6 +109,8 @@ export function handleAIMessage(
   event: MessageEvent<AIMessage>,
   registeredComponents: Map<string, AIRegisteredComponent>,
 ): void {
+  if (!event.data || typeof event.data !== "object") return;
+  if (!isTrustedAIMessageEvent(event)) return;
   if (event.data.type === "aiCallback") {
     const { componentId, callbackId, parameters } = event.data;
     const component = registeredComponents.get(componentId);
