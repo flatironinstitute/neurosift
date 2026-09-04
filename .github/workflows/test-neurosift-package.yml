@@ -171,6 +171,12 @@ jobs:
             test_neurosift_cli()
         EOF
 
+    - name: Test the local file server
+      run: |
+        cd python/neurosift/local-file-access-js
+        npm install
+        npm test
+
     - name: Test neurosift CLI help
       run: |
         neurosift --help
