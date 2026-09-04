@@ -43,8 +43,10 @@ export async function validateJobState(job: IJobDocument, newStatus?: string) {
 
   if (newStatus) {
     // Validate state transitions
+    // A runner may fail before it ever reports running (for example when
+    // downloading the input fails), so pending can also go straight to failed.
     const validTransitions: { [key: string]: string[] } = {
-      'pending': ['running'],
+      'pending': ['running', 'failed'],
       'running': ['completed', 'failed'],
       'completed': [],
       'failed': []

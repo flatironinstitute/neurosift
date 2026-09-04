@@ -8,7 +8,8 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run"
   },
   "dependencies": {
     "@types/mongodb": "^4.0.7",
@@ -16,13 +17,16 @@
     "@types/react": "^18.2.61",
     "@types/react-dom": "^18.2.19",
     "axios": "^1.7.9",
+    "dotenv": "^16.4.5",
     "mongodb": "^6.3.0",
     "mongoose": "^8.2.0",
     "next": "^14.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "typescript": "^5.3.3",
-    "dotenv": "^16.4.5",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.11"
   }
 }
