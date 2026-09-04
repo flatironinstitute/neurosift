@@ -1,6 +1,7 @@
 import { Blosc } from "numcodecs";
 import pako from "pako";
 import { qfcDecompress } from "./qfc";
+import { bigIntArrayToFloat64 } from "../bigIntArrayToFloat64";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const zarrDecodeChunkArray = async (
@@ -69,12 +70,7 @@ const zarrDecodeChunkArray = async (
     } else if (dtype === "<i4") {
       ret = new Int32Array(ret);
     } else if (dtype === "<i8") {
-      const ret0 = new BigInt64Array(ret);
-      // convert to Int32Array because javascript has trouble mixing BigInt64Array with other types
-      ret = new Int32Array(ret0.length);
-      for (let i = 0; i < ret0.length; i++) {
-        ret[i] = Number(ret0[i]);
-      }
+      ret = bigIntArrayToFloat64(new BigInt64Array(ret));
     } else if (dtype === "<u1" || dtype === "|u1") {
       ret = new Uint8Array(ret);
     } else if (dtype === "<u2") {
@@ -82,12 +78,7 @@ const zarrDecodeChunkArray = async (
     } else if (dtype === "<u4") {
       ret = new Uint32Array(ret);
     } else if (dtype === "<u8") {
-      const ret0 = new BigUint64Array(ret);
-      // convert to Uint32Array because javascript has trouble mixing BigUint64Array with other types
-      ret = new Uint32Array(ret0.length);
-      for (let i = 0; i < ret0.length; i++) {
-        ret[i] = Number(ret0[i]);
-      }
+      ret = bigIntArrayToFloat64(new BigUint64Array(ret));
     } else if (dtype === "|b1") {
       ret = new Uint8Array(ret);
     } else if (dtype.startsWith("<U")) {

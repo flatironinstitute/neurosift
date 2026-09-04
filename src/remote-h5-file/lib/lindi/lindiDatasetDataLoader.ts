@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { bigIntArrayToFloat64 } from "../bigIntArrayToFloat64";
 import ReferenceFileSystemClient from "./ReferenceFileSystemClient";
 import { ZarrFileSystemClient, ZMetaDataZArray } from "./RemoteH5FileLindi";
 
@@ -400,27 +401,12 @@ const allocateArrayWithDtype = (size: number, dtype: string) => {
   if (dtype === "<i1" || dtype === "|i1") return new Int8Array(size);
   if (dtype === "<i2") return new Int16Array(size);
   if (dtype === "<i4") return new Int32Array(size);
-  if (dtype === "<i8") {
-    const a = new BigInt64Array(size);
-    // convert to regular Int32Array because js has trouble mixing BigInt64Array with other numbers
-    const ret = new Int32Array(size);
-    for (let i = 0; i < size; i++) {
-      ret[i] = Number(a[i]);
-    }
-    return ret;
-  }
+  // 64-bit integers are carried as Float64Array, see bigIntArrayToFloat64.
+  if (dtype === "<i8") return new Float64Array(size);
   if (dtype === "<u1" || dtype === "|u1") return new Uint8Array(size);
   if (dtype === "<u2") return new Uint16Array(size);
   if (dtype === "<u4") return new Uint32Array(size);
-  if (dtype === "<u8") {
-    const a = new BigUint64Array(size);
-    // convert to regular Uint32Array because js has trouble mixing BigUint64Array with other numbers
-    const ret = new Uint32Array(size);
-    for (let i = 0; i < size; i++) {
-      ret[i] = Number(a[i]);
-    }
-    return ret;
-  }
+  if (dtype === "<u8") return new Float64Array(size);
   if (dtype === "|O") return new Array(size);
   throw Error(`Unsupported dtype: ${dtype}`);
 };
@@ -431,11 +417,11 @@ const createDataView = (dd: ArrayBuffer, dtype: string) => {
   if (dtype === "<i1" || dtype === "|i1") return new Int8Array(dd);
   if (dtype === "<i2") return new Int16Array(dd);
   if (dtype === "<i4") return new Int32Array(dd);
-  if (dtype === "<i8") return new BigInt64Array(dd);
+  if (dtype === "<i8") return bigIntArrayToFloat64(new BigInt64Array(dd));
   if (dtype === "<u1" || dtype === "|u1") return new Uint8Array(dd);
   if (dtype === "<u2") return new Uint16Array(dd);
   if (dtype === "<u4") return new Uint32Array(dd);
-  if (dtype === "<u8") return new BigUint64Array(dd);
+  if (dtype === "<u8") return bigIntArrayToFloat64(new BigUint64Array(dd));
   throw Error(`Unsupported dtype: ${dtype}`);
 };
 
