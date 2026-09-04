@@ -34,6 +34,15 @@ def neurosift():
 def view_nwb(file: str, neurosift_url: str, videos: tuple[str, ...]):
     abs_fname = os.path.abspath(file)
     base_fname = os.path.basename(abs_fname)
+    if os.path.isdir(abs_fname):
+        # Earlier versions accepted a zarr directory and passed zarr=1 in the
+        # URL, but the current web app has no zarr reader and dropped that
+        # parameter, so the page could never load. Say so up front.
+        raise click.ClickException(
+            f"{abs_fname} is a directory. Zarr-backed NWB stores are not "
+            "supported by this version of neurosift; pass an HDF5 (.nwb) "
+            "or LINDI (.lindi.json, .lindi.tar) file."
+        )
     with TemporaryDirectory(prefix="view_nwb") as tmpdir:
         if sys.platform == "win32":
             # symlinks require admin privilege on Windows - do a copy instead
@@ -104,13 +113,16 @@ def view_nwb(file: str, neurosift_url: str, videos: tuple[str, ...]):
         if node_major_version < 16:
             raise Exception("node version must be >= 16.0.0")
 
-        # run the command npm install in the js directory
-        subprocess.run(
-            ["npm", "install"],
-            cwd=f"{this_directory}/local-file-access-js",
-            shell=shell,
-            env=env,
-        )
+        # install the file server's dependencies once; the directory lives
+        # inside site-packages, so this only happens on first use after
+        # installing or upgrading the package
+        if not os.path.exists(f"{this_directory}/local-file-access-js/node_modules"):
+            subprocess.run(
+                ["npm", "install"],
+                cwd=f"{this_directory}/local-file-access-js",
+                shell=shell,
+                env=env,
+            )
 
         # find an open port
         port = find_free_port()
@@ -124,19 +136,11 @@ def view_nwb(file: str, neurosift_url: str, videos: tuple[str, ...]):
             env=env,
         )
 
-        zarr_param = ""
-        if os.path.isdir(abs_fname):
-            if not os.path.exists(f"{abs_fname}/.zmetadata"):
-                raise Exception(
-                    f"{abs_fname} is a directory but does not contain a .zmetadata file."
-                )
-            zarr_param = "&zarr=1"
-
         # it's important to wait a bit before opening the browser
         time.sleep(3)
 
         # open the browser
-        url = f"{neurosift_url}/?p=/nwb&url=http://localhost:{port}/files/{base_fname}{zarr_param}"
+        url = f"{neurosift_url}/?p=/nwb&url=http://localhost:{port}/files/{base_fname}"
         if (
             file.endswith(".lindi")
             or file.endswith(".lindi.tar")

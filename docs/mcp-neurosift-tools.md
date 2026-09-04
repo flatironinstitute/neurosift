@@ -50,7 +50,7 @@ The Neurosift Tools MCP server provides access to DANDI archive functionality an
 
 3. To register the MCP in Claude Code, run the following command on the command line:
 ```bash
-claude mcp add --transport stdio neurosift-tools -- node PATH/neurosift-tools/build/index.j
+claude mcp add --transport stdio neurosift-tools -- node PATH/neurosift-tools/build/index.js
 ```
 
 ## Available Tools

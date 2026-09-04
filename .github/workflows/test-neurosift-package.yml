@@ -38,7 +38,10 @@ jobs:
     - name: Install neurosift package with test dependencies
       run: |
         cd python
-        pip install -e ".[test]"
+        pip install -e ".[test]" pytest
+
+    - name: Run CLI checks
+      run: pytest python/checks/cli_checks.py
 
     # Create a test NWB file using pynwb
     - name: Create test NWB file

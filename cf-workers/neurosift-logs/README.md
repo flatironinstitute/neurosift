@@ -57,9 +57,9 @@ curl -X POST https://neurosift-logs.your-subdomain.workers.dev/ \
 ### Fields
 
 - `message` (required): The log message
-- `level` (optional): Log level (e.g., "info", "warn", "error"). Defaults to "info"
-- `timestamp` (optional): ISO 8601 timestamp. Defaults to current time
 - `metadata` (optional): Additional data to include with the log
+
+The worker records these together with the client IP and the time Cloudflare received the request. Any other fields in the payload are ignored.
 
 ## Viewing Logs
 
@@ -71,7 +71,7 @@ Logs can be viewed in:
 ## CORS
 
 The worker accepts requests from:
-- `https://localhost:5173` (local development)
+- `http://localhost:5173` (local development)
 - `https://neurosift.app` (production)
 
 To add more origins, edit the `ALLOWED_ORIGINS` array in `src/index.ts`.
