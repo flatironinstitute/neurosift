@@ -7,7 +7,7 @@ import {
 } from "react";
 import "@css/NwbHierarchyView.css";
 import { NeurodataObject, useNeurodataObjects } from "./useNeurodataObjects";
-import { findSuitablePlugins } from "./plugins/registry";
+import { findSuitablePlugins, nwbObjectViewPlugins } from "./plugins/registry";
 import { NwbObjectViewPlugin } from "./plugins/pluginInterface";
 import { useNwbFileSpecifications } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
 import { neurodataTypeInheritsFrom } from "./neurodataTypeInheritance";
@@ -94,6 +94,11 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
       } = {};
       for (const obj of neurodataObjects) {
         const objectType = obj.group ? "group" : "dataset";
+        const entries: {
+          plugin: NwbObjectViewPlugin;
+          secondaryPaths: string[];
+        }[] = [];
+
         const plugins = await findSuitablePlugins(
           nwbUrl,
           obj.path,
@@ -105,15 +110,45 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
           },
         );
         if (canceled) return;
-        if (plugins.length > 0) {
-          newLaunchablePluginsWithSecondaryPaths[obj.path] = plugins.map(
-            (plugin) => ({
-              plugin,
-              secondaryPaths: plugin.requiredDefaultUnits
-                ? [defaultUnitsPath!]
-                : [],
-            }),
-          );
+        for (const plugin of plugins) {
+          entries.push({
+            plugin,
+            secondaryPaths: plugin.requiredDefaultUnits
+              ? [defaultUnitsPath!]
+              : [],
+          });
+        }
+
+        // Plugins whose secondary object is derived from the full file (e.g.
+        // aligning a TimeSeries against this TimeIntervals table). A button is
+        // only shown when a compatible partner exists and canHandle confirms it.
+        for (const plugin of nwbObjectViewPlugins) {
+          if (!plugin.launchableFromTable) continue;
+          if (!plugin.getLaunchSecondaryPaths) continue;
+          const candidateList = await plugin.getLaunchSecondaryPaths({
+            nwbUrl,
+            path: obj.path,
+            objectType,
+            neurodataObjects,
+          });
+          if (canceled) return;
+          for (const secondaryPaths of candidateList) {
+            const ok = await plugin.canHandle({
+              nwbUrl,
+              path: obj.path,
+              objectType,
+              secondaryPaths,
+              specifications,
+            });
+            if (ok) {
+              entries.push({ plugin, secondaryPaths });
+            }
+          }
+        }
+
+        if (canceled) return;
+        if (entries.length > 0) {
+          newLaunchablePluginsWithSecondaryPaths[obj.path] = entries;
         }
       }
       if (canceled) return;
@@ -370,7 +405,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
                   const pluginString = `${plugin.name}|${[obj.path, ...secondaryPaths].join("^")}`;
                   return (
                     <div
-                      key={plugin.name}
+                      key={pluginString}
                       style={{
                         display: "flex",
                         alignItems: "center",

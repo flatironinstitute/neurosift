@@ -189,7 +189,21 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
     ? tabsState.activeTabId
     : activeFixedTab;
 
-  useSyncTabToUrl(effectiveActiveTab);
+  // A dynamic tab named by the URL is opened asynchronously (its object type
+  // has to be looked up first), and until it is open the active tab is still
+  // Widgets. Writing that out would delete the link's own ?tab= before the
+  // restore has read it -- and, since the restore re-runs on every change to
+  // that parameter, would cancel the lookup it is waiting on. So hold back
+  // only that write; switching to any other tab is a deliberate move away
+  // from the link's tab and still syncs.
+  const initialDynamicTabPending =
+    !!initialTabId &&
+    !isFixedTabInitial &&
+    !tabsState.tabs.some((t: DynamicTab) => t.id === initialTabId);
+
+  useSyncTabToUrl(effectiveActiveTab, {
+    enabled: !(initialDynamicTabPending && effectiveActiveTab === "widgets"),
+  });
 
   const handleFixedTabSwitch = (id: string) => {
     setActiveFixedTab(id);

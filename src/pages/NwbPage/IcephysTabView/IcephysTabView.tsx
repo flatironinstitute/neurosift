@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { toWithCurrentHash } from "../urlHash";
 import { getHdf5Group } from "../hdf5Interface";
 import ConditionSelector from "./ConditionSelector";
 import FacetLegend, { facetColors } from "./FacetLegend";
@@ -305,7 +306,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     put("icephysWindowEnd", xWindowStr.end || undefined);
     put("icephysLockY", lockY ? "1" : undefined);
     if (p.toString() !== searchParams.toString()) {
-      navigate(`?${p.toString()}`, { replace: true });
+      navigate(toWithCurrentHash(p), { replace: true });
     }
   }, [
     scope.protoRow,

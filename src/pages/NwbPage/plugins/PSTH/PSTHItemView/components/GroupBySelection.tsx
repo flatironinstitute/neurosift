@@ -6,6 +6,7 @@ type GroupBySelectionProps = {
   setGroupByVariable: (x: string) => void;
   nwbUrl: string;
   path: string;
+  label?: string;
 };
 
 const GroupBySelectionComponent: FunctionComponent<GroupBySelectionProps> = ({
@@ -13,12 +14,13 @@ const GroupBySelectionComponent: FunctionComponent<GroupBySelectionProps> = ({
   setGroupByVariable,
   nwbUrl,
   path,
+  label = "Group trials by:",
 }) => {
   const categoricalOptions = useCategoricalOptions(nwbUrl, path);
 
   return (
     <>
-      Group trials by:&nbsp;
+      {label}&nbsp;
       <select
         value={groupByVariable}
         onChange={(evt) => {

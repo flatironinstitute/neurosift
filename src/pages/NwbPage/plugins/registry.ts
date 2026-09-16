@@ -3,6 +3,7 @@ import { defaultPlugin } from "./default";
 import { dynamicTablePlugin } from "./dynamic-table";
 import { twoPhotonSeriesPlugin } from "./TwoPhotonSeries";
 import { NwbObjectViewPlugin } from "./pluginInterface";
+import { resolvePluginName } from "./pluginNameAliases";
 import { simpleTimeseriesPlugin } from "./simple-timeseries";
 import { psthPlugin } from "./PSTH";
 import { rasterPlugin } from "./Raster";
@@ -14,6 +15,7 @@ import {
 } from "./ImageSegmentation";
 import { timeIntervalsPlugin } from "./TimeIntervals";
 import { trialAlignedSeriesPlugin } from "./TrialAlignedSeries";
+import { eventRelatedSignalPlugin } from "./EventRelatedSignal";
 import { pythonScriptPlugin } from "./PythonScript";
 // import spikeDensityPlugin from "./SpikeDensity";
 import { intervalSeriesPlugin } from "./IntervalSeries";
@@ -44,6 +46,7 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   planeSegmentationPlugin,
   timeIntervalsPlugin,
   trialAlignedSeriesPlugin,
+  eventRelatedSignalPlugin,
 
   poseEstimationPlugin,
   externalFileVideoPlugin,
@@ -99,5 +102,7 @@ export const findSuitablePlugins = async (
 export const findPluginByName = (
   name: string,
 ): NwbObjectViewPlugin | undefined => {
-  return nwbObjectViewPlugins.find((plugin) => plugin.name === name);
+  // Links shared before a plugin was renamed carry its old name.
+  const resolved = resolvePluginName(name);
+  return nwbObjectViewPlugins.find((plugin) => plugin.name === resolved);
 };
