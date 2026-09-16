@@ -159,8 +159,13 @@ const windowPsd = (
   return psd;
 };
 
+// How often (in analysis windows) the STFT loop reports progress. The callback
+// itself throttles by time; this just keeps the check cheap.
+const PROGRESS_STRIDE = 32;
+
 export const computeSpectrogram = (
   input: SpectrogramInput,
+  onProgress?: (fraction: number) => void,
 ): SpectrogramResult => {
   const {
     signals: raw,
@@ -174,6 +179,7 @@ export const computeSpectrogram = (
   }
 
   // 1. Preprocess each channel; decimation sets the effective sampling rate.
+  onProgress?.(0);
   const pre = raw.map((s) => preprocessChannel(s, fsNative, c));
   const effFs = pre[0].fs;
   const effSignals = pre.map((p) => p.data);
@@ -238,6 +244,7 @@ export const computeSpectrogram = (
   const win = new Float64Array(windowSize);
 
   for (let a = 0; a < numAnalysis; a++) {
+    if (onProgress && a % PROGRESS_STRIDE === 0) onProgress(a / numAnalysis);
     const offset = a * analysisStep;
     const col = Math.floor((a * numColumns) / numAnalysis);
     const base = col * numFreqs;
