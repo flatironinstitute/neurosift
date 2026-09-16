@@ -10,6 +10,24 @@ export type AlignedTrial = {
   roiValues: number[];
 };
 
+// The rows of the intervals table that a panel actually plots for one
+// alignment column: the first maxIntervals rows whose alignment time is finite.
+// A NaN alignment time is allowed in the table and simply excludes that row for
+// this alignment -- e.g. a `reward_start_time` column is NaN on every
+// unrewarded trial, so grouping by `rewarded` leaves the "0" group empty. The
+// legend counts and the snippet loader both go through this, so what is counted
+// is exactly what is drawn.
+export const plottedRowIndexes = (
+  alignTimes: ArrayLike<number>,
+  maxIntervals: number,
+): number[] => {
+  const indexes: number[] = [];
+  for (let i = 0; i < alignTimes.length && indexes.length < maxIntervals; i++) {
+    if (isFinite(alignTimes[i])) indexes.push(i);
+  }
+  return indexes;
+};
+
 // Extract short snippets of a single channel of a TimeSeries around each
 // alignment time. Each snippet spans [alignTime + windowStart, alignTime +
 // windowEnd] and its timestamps are shifted so that the alignment event sits at
@@ -27,19 +45,11 @@ export const loadEventRelatedSnippets = async (
     onProgress?: (loaded: number, total: number) => void;
   },
 ): Promise<AlignedTrial[]> => {
-  // Build the list of rows to load, keeping each row's original index (so
-  // group-by values still line up) and skipping rows whose alignment time is
-  // not finite (NaN alignment times are allowed in the table -- those rows are
-  // simply excluded for this alignment). The cap applies to valid rows.
-  const entries: { index: number; t: number }[] = [];
-  for (
-    let i = 0;
-    i < alignTimes.length && entries.length < opts.maxIntervals;
-    i++
-  ) {
-    const t = alignTimes[i];
-    if (isFinite(t)) entries.push({ index: i, t });
-  }
+  // Rows to load, keeping each row's original index so group-by values still
+  // line up.
+  const entries = plottedRowIndexes(alignTimes, opts.maxIntervals).map(
+    (index) => ({ index, t: alignTimes[index] }),
+  );
 
   const trials: (AlignedTrial | undefined)[] = new Array(entries.length);
   const concurrency = Math.max(
