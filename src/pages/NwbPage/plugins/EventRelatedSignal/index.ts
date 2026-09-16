@@ -4,15 +4,15 @@ import {
   isTimeSeriesLikeGroup,
   timeSeriesSamplesPerChannel,
 } from "./detection";
-import TimeAlignedSeriesView from "./TimeAlignedSeriesView";
+import EventRelatedSignalView from "./EventRelatedSignalView";
 
-// A time-aligned view of any TimeSeries relative to the events of a
+// An event-related view of any TimeSeries relative to the events of a
 // TimeIntervals table. Like the PSTH, it extracts short snippets of the series
 // before and after each `_time` column of the table, overlaid across
 // repetitions, plus the trial-averaged trace.
-export const timeAlignedSeriesPlugin: NwbObjectViewPlugin = {
-  name: "TimeAlignedSeries",
-  label: "Time-aligned",
+export const eventRelatedSignalPlugin: NwbObjectViewPlugin = {
+  name: "EventRelatedSignal",
+  label: "Event Related Signal",
   canHandle: async ({
     nwbUrl,
     path,
@@ -38,7 +38,7 @@ export const timeAlignedSeriesPlugin: NwbObjectViewPlugin = {
     if (!secondaryGroup) return false;
     return isTimeSeriesLikeGroup(secondaryGroup.datasets);
   },
-  // Show a "Time-aligned" button on a TimeIntervals table only when the file
+  // Show an "Event Related Signal" button on a TimeIntervals table only when the file
   // also contains at least one compatible TimeSeries. The button opens the view
   // defaulting to the lightest series (fewest samples per channel, so it renders
   // fastest); the view offers a picker to switch between the available series.
@@ -58,11 +58,11 @@ export const timeAlignedSeriesPlugin: NwbObjectViewPlugin = {
     );
     return [[seriesObjs[0].path]];
   },
-  component: TimeAlignedSeriesView,
+  component: EventRelatedSignalView,
   // Launch from a dedicated button next to the object (like PSTH) rather than
   // rendering inline alongside the main timeseries view.
   launchableFromTable: true,
   requiresWindowDimensions: true,
 };
 
-export default timeAlignedSeriesPlugin;
+export default eventRelatedSignalPlugin;

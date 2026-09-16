@@ -14,7 +14,7 @@ import {
 } from "./ImageSegmentation";
 import { timeIntervalsPlugin } from "./TimeIntervals";
 import { trialAlignedSeriesPlugin } from "./TrialAlignedSeries";
-import { timeAlignedSeriesPlugin } from "./TimeAlignedSeries";
+import { eventRelatedSignalPlugin } from "./EventRelatedSignal";
 import { pythonScriptPlugin } from "./PythonScript";
 // import spikeDensityPlugin from "./SpikeDensity";
 import { intervalSeriesPlugin } from "./IntervalSeries";
@@ -45,7 +45,7 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   planeSegmentationPlugin,
   timeIntervalsPlugin,
   trialAlignedSeriesPlugin,
-  timeAlignedSeriesPlugin,
+  eventRelatedSignalPlugin,
 
   poseEstimationPlugin,
   externalFileVideoPlugin,

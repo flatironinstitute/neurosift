@@ -19,8 +19,8 @@ import {
 } from "./detection";
 import {
   AlignedTrial,
-  loadTimeAlignedSnippets,
-} from "./loadTimeAlignedSnippets";
+  loadEventRelatedSnippets,
+} from "./loadEventRelatedSnippets";
 
 type Props = {
   nwbUrl: string;
@@ -89,7 +89,7 @@ const readHashParams = (): URLSearchParams => {
   return new URLSearchParams(h.startsWith("#") ? h.slice(1) : h);
 };
 
-const TimeAlignedSeriesView: FunctionComponent<Props> = ({
+const EventRelatedSignalView: FunctionComponent<Props> = ({
   nwbUrl,
   path,
   secondaryPaths,
@@ -144,7 +144,7 @@ const TimeAlignedSeriesView: FunctionComponent<Props> = ({
   }
 
   return (
-    <TimeAlignedSeriesInner
+    <EventRelatedSignalInner
       nwbUrl={nwbUrl}
       intervalsPath={path}
       seriesPath={selectedSeriesPath}
@@ -173,7 +173,7 @@ type CommittedParams = {
 
 type Group = { group: string; color: string };
 
-const TimeAlignedSeriesInner: FunctionComponent<InnerProps> = ({
+const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
   nwbUrl,
   intervalsPath,
   seriesPath,
@@ -875,7 +875,7 @@ const AlignBlock: FunctionComponent<AlignBlockProps> = ({
         const alignTimes = Array.from(rawTimes as ArrayLike<number>);
         if (canceled) return;
         setNumAlignTimes(alignTimes.length);
-        const loaded = await loadTimeAlignedSnippets(
+        const loaded = await loadEventRelatedSnippets(
           client,
           alignTimes,
           channel,
@@ -1097,4 +1097,4 @@ const TrialPlot: FunctionComponent<TrialPlotProps> = ({
   );
 };
 
-export default TimeAlignedSeriesView;
+export default EventRelatedSignalView;

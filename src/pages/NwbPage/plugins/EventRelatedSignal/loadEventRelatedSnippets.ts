@@ -15,7 +15,7 @@ export type AlignedTrial = {
 // windowEnd] and its timestamps are shifted so that the alignment event sits at
 // t = 0. Reads are issued with a small amount of concurrency to stay responsive
 // without overwhelming the remote HDF5 reader.
-export const loadTimeAlignedSnippets = async (
+export const loadEventRelatedSnippets = async (
   client: TimeseriesClient,
   alignTimes: number[],
   channel: number,
