@@ -243,7 +243,9 @@ const AppContent = () => {
           <AppBar position="static">
             <Toolbar>
               <img
-                src="/neurosift-logo.png"
+                // Base-relative: under a preview deployed at a sub-path, a
+                // root-absolute "/neurosift-logo.png" is a 404.
+                src={`${import.meta.env.BASE_URL}neurosift-logo.png`}
                 alt="Neurosift Logo"
                 style={{
                   height: "32px",
