@@ -102,7 +102,11 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({
     dandiApiBaseUrl,
   ]);
 
-  const initialTabId = searchParams.get("tab");
+  // Capture the tab to open exactly once, at mount. Reading it live would let
+  // useSyncTabToUrl (which clears ?tab= while the default Widgets tab is still
+  // active on first render) feed back in and cancel the initial tab's async
+  // open before it finishes — so a deep link to a plugin view never opened.
+  const [initialTabId] = useState(() => searchParams.get("tab"));
 
   // for looking up lindi files
   setCurrentDandisetId(dandisetId || "");
