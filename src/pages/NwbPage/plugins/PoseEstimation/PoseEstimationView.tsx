@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useSetSearchParamsKeepingHash } from "../../urlHash";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 import { IconButton } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
@@ -102,7 +103,8 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   nwbUrl,
   path,
 }) => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const setSearchParams = useSetSearchParamsKeepingHash();
   // Extract the DANDI identifiers as stable strings. Effects key off these rather
   // than the whole `searchParams` object, so writing `pose*` params (which mutates
   // searchParams) does not re-trigger candidate discovery or video resolution.

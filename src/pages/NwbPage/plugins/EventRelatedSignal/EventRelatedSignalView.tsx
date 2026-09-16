@@ -20,6 +20,7 @@ import {
 import {
   AlignedTrial,
   loadEventRelatedSnippets,
+  plottedRowIndexes,
 } from "./loadEventRelatedSnippets";
 
 type Props = {
@@ -361,16 +362,58 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
     return cats.map((c, i) => ({ group: c, color: colorForGroupIndex(i) }));
   }, [groupByVariable, categoricalOptions, groupByValues]);
 
-  // Number of intervals (traces) per group that go into each average, capped at
-  // maxIntervals to match what is actually loaded.
+  // Alignment times for each selected align-to column, so the legend can count
+  // the rows that are actually plotted rather than every row of the table.
+  const [alignTimesByVariable, setAlignTimesByVariable] = useState<{
+    [variable: string]: number[];
+  }>({});
+  useEffect(() => {
+    setAlignTimesByVariable({});
+    let canceled = false;
+    (async () => {
+      for (const variable of alignToVariables) {
+        const dd = await getHdf5DatasetData(
+          nwbUrl,
+          intervalsPath + "/" + variable,
+          {},
+        );
+        if (canceled) return;
+        if (!dd) continue;
+        const times = Array.from(dd as ArrayLike<number>);
+        setAlignTimesByVariable((prev) => ({ ...prev, [variable]: times }));
+      }
+    })();
+    return () => {
+      canceled = true;
+    };
+  }, [nwbUrl, intervalsPath, alignToVariables]);
+
+  // Number of traces per group that actually go into the plots: the rows with a
+  // finite alignment time, capped at maxIntervals, counted once per selected
+  // align-to column. Counting every row instead would claim traces for a group
+  // that has none -- aligning to a column that is NaN for a whole condition
+  // (e.g. `reward_start_time` on unrewarded trials) plots nothing for it.
   const groupCounts = useMemo(() => {
     if (!groupByValues) return undefined;
+    if (alignToVariables.some((v) => !alignTimesByVariable[v]))
+      return undefined;
     const counts: { [k: string]: number } = {};
-    for (const v of groupByValues.slice(0, committed.maxIntervals)) {
-      counts[v] = (counts[v] || 0) + 1;
+    for (const variable of alignToVariables) {
+      for (const i of plottedRowIndexes(
+        alignTimesByVariable[variable],
+        committed.maxIntervals,
+      )) {
+        const v = groupByValues[i] ?? "?";
+        counts[v] = (counts[v] || 0) + 1;
+      }
     }
     return counts;
-  }, [groupByValues, committed.maxIntervals]);
+  }, [
+    groupByValues,
+    committed.maxIntervals,
+    alignToVariables,
+    alignTimesByVariable,
+  ]);
 
   // Persist the main selections in the URL hash.
   useEffect(() => {
@@ -851,6 +894,8 @@ const AlignBlock: FunctionComponent<AlignBlockProps> = ({
 }) => {
   const [rawTrials, setRawTrials] = useState<AlignedTrial[] | null>(null);
   const [numAlignTimes, setNumAlignTimes] = useState<number | null>(null);
+  // Rows whose alignment time is NaN, so they are not plotted at all.
+  const [numMissingAlignTimes, setNumMissingAlignTimes] = useState(0);
   const [progress, setProgress] = useState<{ loaded: number; total: number }>({
     loaded: 0,
     total: 0,
@@ -875,6 +920,7 @@ const AlignBlock: FunctionComponent<AlignBlockProps> = ({
         const alignTimes = Array.from(rawTimes as ArrayLike<number>);
         if (canceled) return;
         setNumAlignTimes(alignTimes.length);
+        setNumMissingAlignTimes(alignTimes.filter((t) => !isFinite(t)).length);
         const loaded = await loadEventRelatedSnippets(
           client,
           alignTimes,
@@ -925,13 +971,20 @@ const AlignBlock: FunctionComponent<AlignBlockProps> = ({
   }, [rawTrials, grouping, groupByValues]);
 
   // Actual number of intervals plotted (rows with a valid alignment time,
-  // capped at maxIntervals) out of the table's total rows.
+  // capped at maxIntervals) out of the table's total rows, naming the missing
+  // alignment times when there are any: a column that is NaN for a whole
+  // condition (e.g. `reward_start_time` on unrewarded trials) is why that
+  // condition can come out empty.
   const countLabel = allTrials
     ? ` (${allTrials.length}${
         numAlignTimes !== null && allTrials.length < numAlignTimes
           ? ` of ${numAlignTimes}`
           : ""
-      } intervals)`
+      } intervals${
+        numMissingAlignTimes > 0
+          ? `; ${numMissingAlignTimes} without ${alignToVariable}`
+          : ""
+      })`
     : "";
 
   // Memoize the per-cell trial arrays so their references stay stable across
@@ -1007,6 +1060,7 @@ const AlignBlock: FunctionComponent<AlignBlockProps> = ({
           perGroupStats={cell.perGroupStats}
           windowRange={windowRange}
           alignToVariable={alignToVariable}
+          numMissingAlignTimes={numMissingAlignTimes}
           rawTraceAlpha={rawTraceAlpha}
           showStdBand={showStdBand}
           stdMultiple={stdMultiple}
@@ -1026,6 +1080,7 @@ type TrialPlotProps = {
   perGroupStats: boolean;
   windowRange: { start: number; end: number };
   alignToVariable: string;
+  numMissingAlignTimes: number;
   rawTraceAlpha: number;
   showStdBand: boolean;
   stdMultiple: number;
@@ -1041,6 +1096,7 @@ const TrialPlot: FunctionComponent<TrialPlotProps> = ({
   perGroupStats,
   windowRange,
   alignToVariable,
+  numMissingAlignTimes,
   rawTraceAlpha,
   showStdBand,
   stdMultiple,
@@ -1075,7 +1131,10 @@ const TrialPlot: FunctionComponent<TrialPlotProps> = ({
         }}
       >
         {trials.length === 0 ? (
-          <div style={{ padding: 12, color: "#555" }}>No intervals.</div>
+          <div style={{ padding: 12, color: "#555" }}>
+            No intervals
+            {numMissingAlignTimes > 0 ? ` (no ${alignToVariable})` : ""}.
+          </div>
         ) : (
           <TrialAlignedSeriesWidget
             width={width}

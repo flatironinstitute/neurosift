@@ -19,6 +19,7 @@ import "@css/NwbPage.css";
 import { TAB_BAR_HEIGHT, tabsStyle, tabStyle } from "./tabStyles";
 import { useNwbFileOverview } from "./useNwbFileOverview";
 import { setCurrentDandisetId, setTryUsingLindi } from "@hdf5Interface";
+import { toWithCurrentHash } from "./urlHash";
 
 type NwbPageProps = {
   width: number;
@@ -77,7 +78,7 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({
           const assetId = data.results[0].asset_id;
           const constructedUrl = `${dandiApiBaseUrl}/api/assets/${assetId}/download/`;
 
-          navigate(`?url=${constructedUrl}&${searchParams}`);
+          navigate(toWithCurrentHash(`url=${constructedUrl}&${searchParams}`));
         }
       } catch (error) {
         console.error("Error fetching asset URL:", error);
@@ -208,7 +209,7 @@ const LeftArea: FunctionComponent<LeftAreaProps> = ({
     (version: string) => {
       const newParams = new URLSearchParams(searchParams);
       newParams.set("dandisetVersion", version);
-      navigate(`?${newParams.toString()}`, { replace: true });
+      navigate(toWithCurrentHash(newParams), { replace: true });
     },
     [navigate, searchParams],
   );

@@ -20,6 +20,7 @@ import {
 } from "./externalVideoUtils";
 
 import { useSearchParams } from "react-router-dom";
+import { useSetSearchParamsKeepingHash } from "./urlHash";
 import { neurodataTypeInheritsFrom } from "./neurodataTypeInheritance";
 import { useNwbFileSpecifications } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
 
@@ -289,7 +290,8 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   height,
   isExpanded,
 }) => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const setSearchParams = useSetSearchParamsKeepingHash();
   const specifications = useNwbFileSpecifications();
   const [candidates, setCandidates] = useState<ExternalVideoCandidate[]>([]);
   const [loading, setLoading] = useState(false);
