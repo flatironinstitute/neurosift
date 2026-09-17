@@ -1,4 +1,5 @@
 import { FunctionComponent, useEffect, useMemo, useRef } from "react";
+import "./spectrogramBusy.css";
 import { applyColormap, ColormapName } from "./colormap";
 import { plotMargins } from "./plotConstants";
 import { NormalizationMode } from "./spectralConfig";
@@ -28,7 +29,18 @@ type Props = {
   nyquistHz: number;
   highPassHz: number | null;
   lowPassHz: number | null;
+  // A computation is in flight (drives the placeholder text when there is
+  // nothing to draw yet).
   loading?: boolean;
+  // Show the non-blocking corner badge. Held back for a moment by the caller so
+  // fast recomputations don't flash it.
+  showBusyIndicator?: boolean;
+  // Progress of the in-flight computation in [0, 1], or null while the data is
+  // still being fetched (or the worker hasn't reported yet).
+  progress?: number | null;
+  // True when the displayed image was computed with settings that have since
+  // changed, so the view is knowingly showing a stale result while recomputing.
+  stale?: boolean;
 };
 
 const margins = plotMargins;
@@ -66,6 +78,9 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
   highPassHz,
   lowPassHz,
   loading,
+  showBusyIndicator,
+  progress,
+  stale,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -304,7 +319,11 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
       ctx.fillStyle = "#888";
       ctx.font = "14px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText(loading ? "Computing…" : "No data", width / 2, height / 2);
+      const computingText =
+        progress != null && progress > 0
+          ? `Computing… ${Math.round(progress * 100)}%`
+          : "Computing…";
+      ctx.fillText(loading ? computingText : "No data", width / 2, height / 2);
     }
 
     // Filter transition-band and anti-alias rolloff shading on the y-axis.
@@ -454,9 +473,40 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
     vMin,
     vMax,
     loading,
+    progress,
   ]);
 
-  return <canvas ref={canvasRef} width={width} height={height} />;
+  // The badge sits inside the plot frame rather than over its middle, so the
+  // image underneath stays readable while a new one is being computed.
+  const busyLabel = stale ? "Updating" : "Computing";
+  const pct =
+    progress != null && progress > 0 && progress < 1
+      ? ` ${Math.round(progress * 100)}%`
+      : "";
+
+  return (
+    <div style={{ position: "relative", width, height }}>
+      <canvas
+        ref={canvasRef}
+        width={width}
+        height={height}
+        style={{ display: "block" }}
+      />
+      {showBusyIndicator && result && (
+        <div
+          className="spectrogramBusyBadge"
+          style={{ top: margins.top + 4, right: margins.right + 4 }}
+          title="A new spectrogram is being computed; the image shown is the previous one."
+        >
+          <span className="spectrogramBusySpinner" />
+          <span>
+            {busyLabel}
+            {pct}
+          </span>
+        </div>
+      )}
+    </div>
+  );
 };
 
 const colorbarLabel = (n: NormalizationMode): string => {

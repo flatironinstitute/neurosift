@@ -2,7 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Redirecting…</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Page not found</title>
     <script>
       // GitHub Pages only ever serves a single custom 404.html for an
       // entire Pages site - always the one at the branch root - so any
@@ -23,19 +24,112 @@
         var previewDirs = ["previews", "pr-preview"];
         var segmentCount =
           previewDirs.indexOf(segments[1]) !== -1 && segments[2] ? 3 : 1;
+        var appRoot = "/" + segments.slice(0, segmentCount).join("/") + "/";
+        var rest = segments.slice(segmentCount).join("/");
+        var query = l.search.slice(1);
+
+        // Two cases where redirecting cannot possibly help, and where doing
+        // it anyway is actively harmful: the redirect lands on the app root,
+        // and if THAT is missing too (a preview that was never deployed, is
+        // still building, or was cleaned up) this page just bounces to
+        // itself. Each bounce re-encodes the query - "&" becomes "~and~" and
+        // a fresh "&" is prepended - so the URL grows without bound and the
+        // tab spins forever instead of saying anything useful.
+        //   1. The marker query this script itself writes is already present,
+        //      i.e. we have been here before and the app root 404'd as well.
+        //   2. There is no path remainder and no query to carry over, so the
+        //      redirect target is the very directory that just failed.
+        var alreadyRedirected = l.search.slice(0, 2) === "?/";
+        var nothingToRestore = !rest && !query;
+        if (alreadyRedirected || nothingToRestore) {
+          // Fall through to the static message in <body>.
+          window.__notFoundAppRoot = appRoot;
+          return;
+        }
+
         l.replace(
           l.protocol +
             "//" +
             l.host +
-            "/" +
-            segments.slice(0, segmentCount).join("/") +
-            "/?/" +
-            segments.slice(segmentCount).join("/").replace(/&/g, "~and~") +
-            (l.search ? "&" + l.search.slice(1).replace(/&/g, "~and~") : "") +
+            appRoot +
+            "?/" +
+            rest.replace(/&/g, "~and~") +
+            (query ? "&" + query.replace(/&/g, "~and~") : "") +
             l.hash,
         );
       })(window.location);
     </script>
+    <style>
+      body {
+        margin: 0;
+        padding: 48px 24px;
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+        color: #2c3e50;
+        background: #fafafa;
+      }
+      main {
+        max-width: 620px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 12px;
+      }
+      p {
+        font-size: 14px;
+        line-height: 1.6;
+        margin: 0 0 12px;
+      }
+      code {
+        font-family: ui-monospace, monospace;
+        font-size: 13px;
+        background: #eef1f4;
+        border-radius: 3px;
+        padding: 1px 5px;
+        word-break: break-all;
+      }
+      ul {
+        font-size: 14px;
+        line-height: 1.6;
+        padding-left: 20px;
+      }
+      a {
+        color: #3573b1;
+      }
+    </style>
   </head>
-  <body></body>
+  <body>
+    <main>
+      <h1>Page not found</h1>
+      <p>Nothing is published at <code id="requested"></code>.</p>
+      <p>If this is a preview build, the likely reasons are:</p>
+      <ul>
+        <li>
+          the preview deploy hasn't finished yet — GitHub Pages can take a
+          minute or two to publish after the workflow succeeds, so wait and
+          reload;
+        </li>
+        <li>
+          the preview was taken down by the "Preview Cleanup for Forks"
+          workflow;
+        </li>
+        <li>the branch slug in the URL doesn't match a deployed preview.</li>
+      </ul>
+      <p><a id="approot" href="/">Go to the app root</a></p>
+    </main>
+    <script>
+      (function (l) {
+        document.getElementById("requested").textContent =
+          l.pathname + l.search;
+        var appRoot = window.__notFoundAppRoot || "/";
+        var link = document.getElementById("approot");
+        link.href = appRoot;
+        link.textContent = "Go to " + appRoot;
+      })(window.location);
+    </script>
+  </body>
 </html>
