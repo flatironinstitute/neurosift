@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useMemo, useRef } from "react";
 import { applyColormap, ColormapName } from "./colormap";
-import { plotMargins } from "./plotConstants";
+import { plotMargins, PlotMargins } from "./plotConstants";
 import { NormalizationMode } from "./spectralConfig";
 import { SpectrogramResult } from "./WorkerTypes";
 
@@ -29,9 +29,10 @@ type Props = {
   highPassHz: number | null;
   lowPassHz: number | null;
   loading?: boolean;
+  // Defaults to the shared margins; the view widens the sides in split mode.
+  margins?: PlotMargins;
 };
 
-const margins = plotMargins;
 const GAP_RGB: [number, number, number] = [70, 70, 76];
 
 const percentile = (sorted: Float64Array, p: number): number => {
@@ -66,6 +67,7 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
   highPassHz,
   lowPassHz,
   loading,
+  margins = plotMargins,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -454,6 +456,7 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
     vMin,
     vMax,
     loading,
+    margins,
   ]);
 
   return <canvas ref={canvasRef} width={width} height={height} />;
