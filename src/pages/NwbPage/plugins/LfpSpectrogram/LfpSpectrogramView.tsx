@@ -8,8 +8,10 @@ import {
   useState,
 } from "react";
 import "../common/loadingState.css";
+import "./spectrogramBusy.css";
 import { ControlButton } from "../common/components/ControlButton";
 import TimeseriesClient from "../simple-timeseries/TimeseriesClient";
+import SpectrogramBlockCache from "./blockCache";
 import ChannelSelector from "./ChannelSelector";
 import { colormapNames } from "./colormap";
 import { computeDerived, computeWarnings } from "./derived";
@@ -18,6 +20,7 @@ import { clampRange as clampRangeTo, zoomRangeAtAnchor } from "./zoomRange";
 import SpectrogramDataClient, {
   limitChannels,
   MAX_AVG_CHANNELS,
+  SpectrogramRequest,
 } from "./SpectrogramDataClient";
 import SpectrogramWidget from "./SpectrogramWidget";
 import {
@@ -30,6 +33,10 @@ import {
   TaperMethod,
 } from "./spectralConfig";
 import { useSpectrogramUrlState } from "./urlState";
+import SpectrogramWorkerClient, {
+  ComputeStatus,
+  isComputeCanceled,
+} from "./workerClient";
 import { SpectrogramResult } from "./WorkerTypes";
 
 type Props = {
@@ -44,6 +51,8 @@ const windowSizeOptions = [128, 256, 512, 1024, 2048, 4096];
 const MAX_BLOCK_SAMPLES = 4_000_000;
 const PER_CHANNEL_PANEL_HEIGHT = 220;
 const COMPUTE_DEBOUNCE_MS = 200;
+// Don't flash a spinner for work that finishes almost immediately (cache hits).
+const BUSY_INDICATOR_DELAY_MS = 150;
 
 const LfpSpectrogramView: FunctionComponent<Props> = ({
   nwbUrl,
@@ -93,7 +102,8 @@ const LfpSpectrogramView: FunctionComponent<Props> = ({
 // --- Panel: owns fetch/cache for its channel set and renders the widget ---
 type PanelProps = {
   client: TimeseriesClient;
-  worker: Worker;
+  worker: SpectrogramWorkerClient;
+  cache: SpectrogramBlockCache;
   channels: number[];
   computeConfig: ComputeConfig;
   display: DisplayProps;
@@ -126,6 +136,7 @@ type DisplayProps = {
 const SpectrogramPanel: FunctionComponent<PanelProps> = ({
   client,
   worker,
+  cache,
   channels,
   computeConfig,
   display,
@@ -136,44 +147,104 @@ const SpectrogramPanel: FunctionComponent<PanelProps> = ({
   onAutoLimits,
   margins,
 }) => {
-  const [result, setResult] = useState<SpectrogramResult | null>(null);
-  const [loading, setLoading] = useState(false);
+  // The last image we managed to compute, together with the data client that
+  // produced it. Keeping it on screen while the next one is computed is what
+  // makes a settings change non-blocking; comparing the client identity tells
+  // us whether what is shown is stale.
+  const [shown, setShown] = useState<{
+    result: SpectrogramResult;
+    source: SpectrogramDataClient;
+  } | null>(null);
+  // inFlight: a request exists right now. busy: it has been running long enough
+  // that showing an indicator is worthwhile.
+  const [inFlight, setInFlight] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const channelsKey = channels.join(",");
   const dataClient = useMemo(
     () =>
-      new SpectrogramDataClient(client, worker, {
+      new SpectrogramDataClient(client, worker, cache, {
         channels,
         config: computeConfig,
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [client, worker, channelsKey, computeConfig],
+    [client, worker, cache, channelsKey, computeConfig],
   );
 
-  const reqRef = useRef(0);
   useEffect(() => {
     if (channels.length === 0) {
-      setResult(null);
-      setLoading(false);
+      setShown(null);
+      setInFlight(false);
+      setBusy(false);
       return;
     }
-    const handle = setTimeout(() => {
-      const reqId = ++reqRef.current;
-      setLoading(true);
-      dataClient
-        .getSpectrogram(visRange[0], visRange[1])
+    let canceled = false;
+    let request: SpectrogramRequest | null = null;
+    let busyTimer: ReturnType<typeof setTimeout> | null = null;
+
+    // A cached block resolves without touching the worker, so settle it first
+    // and skip the indicator entirely.
+    const cached = dataClient.peek(visRange[0], visRange[1]);
+    if (cached) {
+      setShown({ result: cached, source: dataClient });
+      setInFlight(false);
+      setBusy(false);
+      setProgress(null);
+      setError(null);
+      return;
+    }
+
+    setInFlight(true);
+    const startTimer = setTimeout(() => {
+      request = dataClient.getSpectrogram(
+        visRange[0],
+        visRange[1],
+        (fraction) => {
+          if (!canceled) setProgress(fraction);
+        },
+      );
+      setProgress(null);
+      setError(null);
+      busyTimer = setTimeout(() => {
+        if (!canceled) setBusy(true);
+      }, BUSY_INDICATOR_DELAY_MS);
+      request.promise
         .then((r) => {
-          if (reqId !== reqRef.current) return;
-          setResult(r);
-          setLoading(false);
+          if (canceled) return;
+          setShown({ result: r, source: dataClient });
+          setInFlight(false);
+          setBusy(false);
+          setProgress(null);
         })
-        .catch(() => {
-          if (reqId !== reqRef.current) return;
-          setLoading(false);
+        .catch((err) => {
+          if (canceled) return;
+          setInFlight(false);
+          setBusy(false);
+          setProgress(null);
+          // A canceled compute was superseded on purpose; not an error.
+          if (!isComputeCanceled(err)) {
+            setError(err instanceof Error ? err.message : String(err));
+          }
+        })
+        .finally(() => {
+          if (busyTimer) clearTimeout(busyTimer);
         });
     }, 30);
-    return () => clearTimeout(handle);
+
+    return () => {
+      canceled = true;
+      clearTimeout(startTimer);
+      if (busyTimer) clearTimeout(busyTimer);
+      // Superseded: free the worker right away so the new settings are computed
+      // instead of waiting behind this one.
+      request?.cancel();
+    };
   }, [dataClient, visRange, channels.length]);
+
+  const result = shown?.result ?? null;
+  const stale = !!shown && shown.source !== dataClient;
 
   const nyquist = result
     ? result.effectiveSamplingFrequency / 2
@@ -181,16 +252,20 @@ const SpectrogramPanel: FunctionComponent<PanelProps> = ({
 
   return (
     <div>
-      {label !== undefined && (
+      {(label !== undefined || error) && (
         <div
           style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
             fontSize: 11,
             color: "#495057",
             padding: "2px 0 0 6px",
             fontWeight: 500,
           }}
         >
-          {label}
+          {label !== undefined && <span>{label}</span>}
+          {error && <span style={{ color: "#c0392b" }}>⚠ {error}</span>}
         </div>
       )}
       <SpectrogramWidget
@@ -215,7 +290,10 @@ const SpectrogramPanel: FunctionComponent<PanelProps> = ({
         nyquistHz={nyquist}
         highPassHz={display.highPassHz}
         lowPassHz={display.lowPassHz}
-        loading={loading}
+        loading={inFlight}
+        showBusyIndicator={busy}
+        progress={progress}
+        stale={stale}
         margins={margins}
       />
     </div>
@@ -340,17 +418,30 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
     defaultVisRange,
   ]);
 
-  const [worker, setWorker] = useState<Worker | null>(null);
+  // One worker client and one block cache per view. The client serializes jobs
+  // and can abandon a running one, so changing a setting doesn't have to wait
+  // out the computation it replaces. The cache is shared across panels and
+  // across settings, so returning to a previous setting is instant.
+  const [worker, setWorker] = useState<SpectrogramWorkerClient | null>(null);
+  const [cache] = useState(() => new SpectrogramBlockCache());
   useEffect(() => {
-    const w = new Worker(new URL("./worker", import.meta.url), {
-      type: "module",
-    });
+    const w = new SpectrogramWorkerClient();
     setWorker(w);
     return () => {
-      w.terminate();
+      w.dispose();
       setWorker(null);
     };
   }, []);
+
+  // Aggregate activity across panels, for the toolbar indicator.
+  const [computeStatus, setComputeStatus] = useState<ComputeStatus>({
+    pending: 0,
+    progress: null,
+  });
+  useEffect(() => {
+    if (!worker) return;
+    return worker.onStatusChange(setComputeStatus);
+  }, [worker]);
 
   const sidebarWidth = 250;
   const plotAreaWidth = Math.max(240, width - sidebarWidth - 12);
@@ -597,6 +688,13 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
 
   const visSpan = visRange[1] - visRange[0];
   const eps = 1e-6;
+
+  // Hold the toolbar indicator back briefly so quick recomputations (cache hits
+  // while panning) don't make it blink.
+  const showComputing = useDelayedFlag(
+    computeStatus.pending > 0,
+    BUSY_INDICATOR_DELAY_MS,
+  );
 
   return (
     <div
@@ -1179,6 +1277,23 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
             window {visSpan.toFixed(2)} s · {derived.effectiveFs.toFixed(0)} Hz
             · drag / scroll over plot / buttons
           </span>
+          {showComputing && (
+            <span
+              className="spectrogramBusyChip"
+              title="Spectrograms are being computed in the background. Changing a setting cancels the work it replaces."
+            >
+              <span className="spectrogramBusySpinner" />
+              <span>
+                Computing
+                {computeStatus.progress != null && computeStatus.progress > 0
+                  ? ` ${Math.round(computeStatus.progress * 100)}%`
+                  : "…"}
+                {computeStatus.pending > 1
+                  ? ` · ${computeStatus.pending - 1} queued`
+                  : ""}
+              </span>
+            </span>
+          )}
         </div>
 
         {diagFlip && (
@@ -1242,6 +1357,7 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
               <SpectrogramPanel
                 client={client}
                 worker={worker}
+                cache={cache}
                 channels={selectedChannels}
                 computeConfig={effectiveCompute}
                 display={display}
@@ -1257,6 +1373,7 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
                   key={ch}
                   client={client}
                   worker={worker}
+                  cache={cache}
                   channels={[ch]}
                   computeConfig={effectiveCompute}
                   display={display}
@@ -1277,6 +1394,22 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
 };
 
 // --- small UI helpers ---
+
+// Report `active` only once it has stayed true for `delayMs`, so short-lived
+// work doesn't flash an indicator on screen.
+const useDelayedFlag = (active: boolean, delayMs: number): boolean => {
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    if (!active) {
+      setShown(false);
+      return;
+    }
+    const h = setTimeout(() => setShown(true), delayMs);
+    return () => clearTimeout(h);
+  }, [active, delayMs]);
+  return shown;
+};
+
 const btn: React.CSSProperties = {
   padding: "5px 8px",
   border: "1px solid #dee2e6",

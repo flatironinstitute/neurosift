@@ -1,14 +1,16 @@
+import SpectrogramBlockCache from "./blockCache";
 import TimeseriesClient from "../simple-timeseries/TimeseriesClient";
 import { ComputeConfig, computeConfigKey } from "./spectralConfig";
 import { SpectrogramInput, SpectrogramResult } from "./WorkerTypes";
+import SpectrogramWorkerClient, {
+  ComputeCanceledError,
+  ComputeHandle,
+} from "./workerClient";
 
 // Target number of STFT columns computed per cached block. The visible window
 // covers a quarter-to-eighth of a block, so this yields a few hundred columns
 // across the view — plenty for a canvas that is then smoothly scaled.
 const TARGET_COLUMNS_PER_BLOCK = 3000;
-
-// Number of computed blocks to keep in memory (LRU).
-const MAX_CACHED_BLOCKS = 8;
 
 // Cap on how many channels are actually loaded and averaged, to bound compute
 // and memory. If more are selected, an evenly-spaced subset is used.
@@ -54,13 +56,18 @@ const computeBlock = (
   return { blockT1, blockT2 };
 };
 
-export class SpectrogramDataClient {
-  private cache = new Map<BlockKey, SpectrogramResult>();
-  private requestIdCounter = 0;
+export type SpectrogramRequest = {
+  promise: Promise<SpectrogramResult>;
+  // Abandon the request: drops the fetch result and, if the worker is already
+  // running this job, stops it so a newer request starts immediately.
+  cancel: () => void;
+};
 
+export class SpectrogramDataClient {
   constructor(
     private client: TimeseriesClient,
-    private worker: Worker,
+    private worker: SpectrogramWorkerClient,
+    private cache: SpectrogramBlockCache,
     private params: { channels: number[]; config: ComputeConfig },
   ) {}
 
@@ -77,76 +84,78 @@ export class SpectrogramDataClient {
     return `${chans}|${computeConfigKey(config)}|${blockT1.toFixed(4)}|${blockT2.toFixed(4)}`;
   }
 
-  // Return the spectrogram block covering the given visible range, computing and
-  // caching it if necessary. Repeated/adjacent calls hit the cache.
-  async getSpectrogram(
-    visStartSec: number,
-    visEndSec: number,
-  ): Promise<SpectrogramResult> {
+  // Look up the block covering the given range without fetching or computing.
+  peek(visStartSec: number, visEndSec: number): SpectrogramResult | undefined {
     const { blockT1, blockT2 } = computeBlock(
       this.client,
       visStartSec,
       visEndSec,
     );
-    const key = this.keyFor(blockT1, blockT2);
-
-    const cached = this.cache.get(key);
-    if (cached) {
-      // Refresh LRU order.
-      this.cache.delete(key);
-      this.cache.set(key, cached);
-      return cached;
-    }
-
-    const fs = this.client.samplingFrequency;
-    const { channels, config } = this.params;
-
-    // Load each selected channel (capped) and average their power spectra.
-    const useChannels = limitChannels(channels, MAX_AVG_CHANNELS);
-    const signals = await Promise.all(
-      useChannels.map(async (ch) => {
-        const { data } = await this.client.getDataForTimeRange(
-          blockT1,
-          blockT2,
-          ch,
-          ch + 1,
-        );
-        return data[0] || [];
-      }),
-    );
-
-    // The worker computes the STFT at a fine analysis step over all samples and
-    // averages power into this many columns (anti-aliasing the time axis).
-    const input: SpectrogramInput = {
-      signals,
-      samplingFrequency: fs,
-      signalStartTimeSec: blockT1,
-      targetColumns: TARGET_COLUMNS_PER_BLOCK,
-      config,
-    };
-
-    const result = await this.computeInWorker(input);
-    this.cache.set(key, result);
-    while (this.cache.size > MAX_CACHED_BLOCKS) {
-      const oldest = this.cache.keys().next().value;
-      if (oldest === undefined) break;
-      this.cache.delete(oldest);
-    }
-    return result;
+    return this.cache.get(this.keyFor(blockT1, blockT2));
   }
 
-  private computeInWorker(input: SpectrogramInput): Promise<SpectrogramResult> {
-    const requestId = ++this.requestIdCounter;
-    return new Promise<SpectrogramResult>((resolve, reject) => {
-      const onMessage = (evt: MessageEvent) => {
-        if (evt.data.requestId !== requestId) return;
-        this.worker.removeEventListener("message", onMessage);
-        if (evt.data.error) reject(new Error(evt.data.error));
-        else resolve(evt.data.result);
+  // Return the spectrogram block covering the given visible range, computing and
+  // caching it if necessary. Repeated/adjacent calls hit the cache. The returned
+  // request can be canceled while the data is loading or the worker is running.
+  getSpectrogram(
+    visStartSec: number,
+    visEndSec: number,
+    onProgress?: (fraction: number) => void,
+  ): SpectrogramRequest {
+    let canceled = false;
+    let handle: ComputeHandle | null = null;
+    const cancel = () => {
+      if (canceled) return;
+      canceled = true;
+      handle?.cancel();
+    };
+
+    const promise = (async (): Promise<SpectrogramResult> => {
+      const { blockT1, blockT2 } = computeBlock(
+        this.client,
+        visStartSec,
+        visEndSec,
+      );
+      const key = this.keyFor(blockT1, blockT2);
+
+      const cached = this.cache.get(key);
+      if (cached) return cached;
+
+      const fs = this.client.samplingFrequency;
+      const { channels, config } = this.params;
+
+      // Load each selected channel (capped) and average their power spectra.
+      const useChannels = limitChannels(channels, MAX_AVG_CHANNELS);
+      const signals = await Promise.all(
+        useChannels.map(async (ch) => {
+          const { data } = await this.client.getDataForTimeRange(
+            blockT1,
+            blockT2,
+            ch,
+            ch + 1,
+          );
+          return data[0] || [];
+        }),
+      );
+      if (canceled) throw new ComputeCanceledError();
+
+      // The worker computes the STFT at a fine analysis step over all samples and
+      // averages power into this many columns (anti-aliasing the time axis).
+      const input: SpectrogramInput = {
+        signals,
+        samplingFrequency: fs,
+        signalStartTimeSec: blockT1,
+        targetColumns: TARGET_COLUMNS_PER_BLOCK,
+        config,
       };
-      this.worker.addEventListener("message", onMessage);
-      this.worker.postMessage({ requestId, input });
-    });
+
+      handle = this.worker.submit(input, onProgress);
+      const result = await handle.promise;
+      this.cache.set(key, result);
+      return result;
+    })();
+
+    return { promise, cancel };
   }
 }
 
