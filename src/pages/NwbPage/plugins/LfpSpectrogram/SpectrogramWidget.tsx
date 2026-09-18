@@ -1,7 +1,7 @@
 import { FunctionComponent, useEffect, useMemo, useRef } from "react";
 import "./spectrogramBusy.css";
 import { applyColormap, ColormapName } from "./colormap";
-import { plotMargins } from "./plotConstants";
+import { plotMargins, PlotMargins } from "./plotConstants";
 import { NormalizationMode } from "./spectralConfig";
 import { SpectrogramResult } from "./WorkerTypes";
 
@@ -41,9 +41,10 @@ type Props = {
   // True when the displayed image was computed with settings that have since
   // changed, so the view is knowingly showing a stale result while recomputing.
   stale?: boolean;
+  // Defaults to the shared margins; the view widens the sides in split mode.
+  margins?: PlotMargins;
 };
 
-const margins = plotMargins;
 const GAP_RGB: [number, number, number] = [70, 70, 76];
 
 const percentile = (sorted: Float64Array, p: number): number => {
@@ -81,6 +82,7 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
   showBusyIndicator,
   progress,
   stale,
+  margins = plotMargins,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -474,6 +476,7 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
     vMax,
     loading,
     progress,
+    margins,
   ]);
 
   // The badge sits inside the plot frame rather than over its middle, so the

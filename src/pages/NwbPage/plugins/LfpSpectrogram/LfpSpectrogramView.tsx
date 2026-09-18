@@ -15,7 +15,8 @@ import SpectrogramBlockCache from "./blockCache";
 import ChannelSelector from "./ChannelSelector";
 import { colormapNames } from "./colormap";
 import { computeDerived, computeWarnings } from "./derived";
-import { plotMargins } from "./plotConstants";
+import { marginsForChannelMode, PlotMargins } from "./plotConstants";
+import { clampRange as clampRangeTo, zoomRangeAtAnchor } from "./zoomRange";
 import SpectrogramDataClient, {
   limitChannels,
   MAX_AVG_CHANNELS,
@@ -111,6 +112,7 @@ type PanelProps = {
   height: number;
   label?: string;
   onAutoLimits?: (lo: number, hi: number) => void;
+  margins: PlotMargins;
 };
 
 type DisplayProps = {
@@ -143,6 +145,7 @@ const SpectrogramPanel: FunctionComponent<PanelProps> = ({
   height,
   label,
   onAutoLimits,
+  margins,
 }) => {
   // The last image we managed to compute, together with the data client that
   // produced it. Keeping it on screen while the next one is computed is what
@@ -291,6 +294,7 @@ const SpectrogramPanel: FunctionComponent<PanelProps> = ({
         showBusyIndicator={busy}
         progress={progress}
         stale={stale}
+        margins={margins}
       />
     </div>
   );
@@ -445,7 +449,11 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
     200,
     Math.round((height - (condensed ? 8 : 12)) * 0.8),
   );
-  const plotW = plotAreaWidth - plotMargins.left - plotMargins.right;
+  const margins = useMemo(
+    () => marginsForChannelMode(config.channelMode),
+    [config.channelMode],
+  );
+  const plotW = plotAreaWidth - margins.left - margins.right;
 
   const shownChannels = useMemo(
     () => limitChannels(selectedChannels, MAX_AVG_CHANNELS),
@@ -466,22 +474,15 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
     [config.windowSizeSamples, derived.effectiveFs],
   );
 
+  const rangeBounds = useMemo(
+    () => ({ dataStart, dataEnd, minSpan, maxSpan }),
+    [dataStart, dataEnd, minSpan, maxSpan],
+  );
+
   const clampRange = useCallback(
-    (start: number, end: number): [number, number] => {
-      const span = Math.min(Math.max(end - start, minSpan), maxSpan || minSpan);
-      let s = start;
-      let e = s + span;
-      if (e > dataEnd) {
-        e = dataEnd;
-        s = e - span;
-      }
-      if (s < dataStart) {
-        s = dataStart;
-        e = Math.min(s + span, dataEnd);
-      }
-      return [s, e];
-    },
-    [dataStart, dataEnd, maxSpan, minSpan],
+    (start: number, end: number): [number, number] =>
+      clampRangeTo(start, end, rangeBounds),
+    [rangeBounds],
   );
 
   const zoomByFactor = useCallback(
@@ -510,16 +511,29 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return range[0];
       const x = clientX - rect.left;
-      const frac = Math.min(Math.max((x - plotMargins.left) / plotW, 0), 1);
+      const frac = Math.min(Math.max((x - margins.left) / plotW, 0), 1);
       return range[0] + frac * (range[1] - range[0]);
     },
-    [plotW],
+    [plotW, margins],
   );
 
-  // Wheeling over a spectrogram canvas zooms the time axis (in both mean and
-  // split modes); wheeling anywhere else in the view is left alone so the page
-  // scrolls normally to reach more channels. A non-passive listener is needed
-  // so preventDefault can suppress the page scroll only while over a plot.
+  // True only over the drawn plot area, so the side margins (widened in split
+  // mode) stay a place where the wheel scrolls the page instead of zooming.
+  const isOverPlotArea = useCallback(
+    (clientX: number) => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return false;
+      const x = clientX - rect.left;
+      return x >= margins.left && x <= margins.left + plotW;
+    },
+    [plotW, margins],
+  );
+
+  // Wheeling over the plot area zooms the time axis (in both mean and split
+  // modes); wheeling over the side margins, the gutters between panels, or
+  // anywhere else in the view is left alone so the page scrolls normally to
+  // reach more channels. A non-passive listener is needed so preventDefault can
+  // suppress the page scroll only while over a plot.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -527,19 +541,24 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
       if (e.deltaY === 0) return;
       const overPlot = (e.target as HTMLElement | null)?.closest?.("canvas");
       if (!overPlot) return; // let the page scroll to reveal more channels
+      if (!isOverPlotArea(e.clientX)) return; // side margins scroll the page
       e.preventDefault();
       const factor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
       setVisRange((prev) => {
-        const tc = timeAtClientX(e.clientX, prev);
-        const span = prev[1] - prev[0];
-        const ns = span * factor;
-        const frac = span > 0 ? (tc - prev[0]) / span : 0.5;
-        return clampRange(tc - frac * ns, tc - frac * ns + ns);
+        // Returns null at a zoom limit, where the wheel must not move the
+        // window at all; see zoomRangeAtAnchor.
+        const next = zoomRangeAtAnchor(
+          prev,
+          factor,
+          timeAtClientX(e.clientX, prev),
+          rangeBounds,
+        );
+        return next ?? prev;
       });
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [timeAtClientX, clampRange]);
+  }, [timeAtClientX, isOverPlotArea, rangeBounds]);
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
@@ -1346,6 +1365,7 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
                 width={plotAreaWidth}
                 height={plotHeight}
                 onAutoLimits={onAutoLimits}
+                margins={margins}
               />
             ) : (
               shownChannels.map((ch) => (
@@ -1362,6 +1382,7 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
                   height={PER_CHANNEL_PANEL_HEIGHT}
                   label={`Channel ${ch}`}
                   onAutoLimits={onAutoLimits}
+                  margins={margins}
                 />
               ))
             )}
