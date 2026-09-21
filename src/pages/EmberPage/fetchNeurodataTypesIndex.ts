@@ -1,5 +1,4 @@
 import pako from "pako";
-import { addRequestWatermark } from "../../util/requestWatermark";
 
 export type NeurodataTypesIndex = {
   files: {
@@ -19,9 +18,7 @@ export const fetchNeurodataTypesIndex = async () => {
     // See https://github.com/magland/neurosift-kerchunker/blob/main/workflow_scripts/create_neurodata_types_index.py
     const url =
       "https://lindi.neurosift.org/dandi/neurodata_types_index.json.gz";
-    const response = await fetch(
-      addRequestWatermark(url) + "&cb=" + Date.now(),
-    );
+    const response = await fetch(url + "?cb=" + Date.now());
     const bufferGz = await response.arrayBuffer();
     const buffer = pako.inflate(bufferGz);
     const text = new TextDecoder().decode(buffer);
