@@ -33,7 +33,7 @@ const presigned =
   "?response-content-disposition=attachment%3B%20filename%3D%22a.nwb%22" +
   "&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA%2Fus-east-2%2Fs3%2Faws4_request" +
   "&X-Amz-Date=20250101T000000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=abc";
-const bareWatermarked = `${blob}?neurosift=1`;
+const bareWatermarked = `${blob}?source=neurosift`;
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -90,7 +90,7 @@ describe("watermarkRedirectTarget", () => {
     });
     const target = "https://example-bucket.s3.amazonaws.com/x/y.nwb";
     expect(await watermarkRedirectTarget(downloadUrl, target)).toBe(
-      `${target}?neurosift=1`,
+      `${target}?source=neurosift`,
     );
   });
 

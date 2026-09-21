@@ -7,8 +7,8 @@
  * attribute that traffic to neurosift. Object stores ignore query parameters
  * they do not recognize, so the tag does not change what is served.
  */
-export const REQUEST_WATERMARK_PARAM = "neurosift";
-export const REQUEST_WATERMARK_VALUE = "1";
+export const REQUEST_WATERMARK_PARAM = "source";
+export const REQUEST_WATERMARK_VALUE = "neurosift";
 export const REQUEST_WATERMARK = `${REQUEST_WATERMARK_PARAM}=${REQUEST_WATERMARK_VALUE}`;
 
 // Parameter names that only make sense on a presigned url: the signature

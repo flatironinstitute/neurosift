@@ -44,7 +44,7 @@ describe("tryGetLindiUrl", () => {
     // The probe carries the request watermark; the returned url does not,
     // since further urls are derived from it.
     expect(calls).toEqual([
-      [`${expectedLindiUrl}?neurosift=1`, { method: "HEAD" }],
+      [`${expectedLindiUrl}?source=neurosift`, { method: "HEAD" }],
     ]);
   });
 
