@@ -9,6 +9,7 @@ import { FunctionComponent, useEffect, useState } from "react";
 import { DatasetPluginProps } from "../pluginInterface";
 import AudioPlayer from "./AudioPlayer";
 import WaveformCanvas from "./WaveformCanvas";
+import { addRequestWatermark } from "../../../../../util/requestWatermark";
 
 type WaveformData = {
   data: Float32Array;
@@ -37,7 +38,7 @@ const WavFileView: FunctionComponent<DatasetPluginProps> = ({
         setIsLoading(true);
         setError(undefined);
 
-        const response = await fetch(file.urls[0]);
+        const response = await fetch(addRequestWatermark(file.urls[0]));
         const arrayBuffer = await response.arrayBuffer();
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 

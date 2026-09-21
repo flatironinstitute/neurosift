@@ -10,6 +10,11 @@ import {
 import { getCachedObject, setCachedObject } from "./hdf5Cache";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 import { removeStatusItem, setStatusItem } from "@components/StatusBarContext";
+import {
+  addRequestWatermark,
+  isPresignedUrl,
+  stripPresignParams,
+} from "../../util/requestWatermark";
 
 const hdf5Files: {
   [url: string]: {
@@ -176,9 +181,13 @@ const getRemoteH5FileForUrl = async (url: string) => {
           remoteH5File: await RemoteH5FileLindi.create(urlResolved),
         };
       } else {
+        // The worker behind RemoteH5File issues the range requests itself, so
+        // the watermark has to be part of the url handed to it. (LINDI reads
+        // above apply it at fetch time instead, since they derive further urls
+        // from this one.)
         hdf5Files[url] = {
           resolvedUrl: urlResolved,
-          remoteH5File: new RemoteH5File(urlResolved, {}),
+          remoteH5File: new RemoteH5File(addRequestWatermark(urlResolved), {}),
         };
       }
     } finally {
@@ -208,7 +217,7 @@ const getDirectBlobRemoteH5File = async (
         : undefined;
       blobUrl = (await getRedirectUrl(url, headers)) || url;
     }
-    directBlobH5Files[url] = new RemoteH5File(blobUrl, {});
+    directBlobH5Files[url] = new RemoteH5File(addRequestWatermark(blobUrl), {});
   }
   return directBlobH5Files[url];
 };
@@ -492,6 +501,44 @@ const headRequest = async (url: string, headers?: any) => {
   return response;
 };
 
+// Whether the bare (unsigned) object url can be read anonymously, probed at
+// most once per object per page load.
+const anonymousReadProbes: { [bareUrl: string]: Promise<boolean> } = {};
+
+/**
+ * The url neurosift should read a redirected asset from, carrying the request
+ * watermark wherever possible.
+ *
+ * DANDI's /download/ endpoint redirects to a presigned S3 url. Its signature
+ * covers the query string, so the watermark cannot simply be appended to it.
+ * A public asset can be read anonymously from the bare blob url instead, so
+ * that url (watermarked) is probed and used when the probe succeeds. When it
+ * does not (embargoed asset, bucket without anonymous reads, network error),
+ * the presigned url is kept as is, unmarked, so the asset still loads.
+ *
+ * A non-presigned redirect target is watermarked directly. When no redirect
+ * happened (e.g. a 401 from the API), the url is returned unchanged.
+ */
+export const watermarkRedirectTarget = async (
+  requestUrl: string,
+  redirectUrl: string,
+): Promise<string> => {
+  if (redirectUrl === requestUrl) return redirectUrl;
+  if (!isPresignedUrl(redirectUrl)) return addRequestWatermark(redirectUrl);
+  const bareUrl = addRequestWatermark(stripPresignParams(redirectUrl));
+  if (!anonymousReadProbes[bareUrl]) {
+    anonymousReadProbes[bareUrl] = (async () => {
+      try {
+        const response = await headRequest(bareUrl);
+        return response.ok;
+      } catch {
+        return false;
+      }
+    })();
+  }
+  return (await anonymousReadProbes[bareUrl]) ? bareUrl : redirectUrl;
+};
+
 export const getRedirectUrl = async (url: string, headers: any) => {
   // const response = await fetch(url, {
   //   method: "HEAD",
@@ -524,8 +571,7 @@ export const getRedirectUrl = async (url: string, headers: any) => {
     }
 
     if (response.url) {
-      const redirectUrl = response.url;
-      return redirectUrl;
+      return await watermarkRedirectTarget(url, response.url);
     } else {
       console.warn(`No redirect for ${url}`);
       return null;
@@ -589,7 +635,7 @@ export const tryGetLindiUrl = async (url: string, dandisetId: string) => {
   // error, CORS failure, outage), fall back to the HDF5 file itself rather
   // than failing the whole load.
   try {
-    const resp = await fetch(tryUrl, { method: "HEAD" });
+    const resp = await fetch(addRequestWatermark(tryUrl), { method: "HEAD" });
     if (resp.ok) return tryUrl;
   } catch (err) {
     console.warn(`Unable to check for a LINDI file at ${tryUrl}:`, err);

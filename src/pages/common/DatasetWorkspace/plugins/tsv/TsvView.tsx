@@ -3,6 +3,7 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { FunctionComponent, useEffect, useState, useMemo } from "react";
 import { DatasetPluginProps } from "../pluginInterface";
 import TsvTable from "./components/Table";
+import { addRequestWatermark } from "../../../../../util/requestWatermark";
 
 const TsvView: FunctionComponent<DatasetPluginProps> = ({ file }) => {
   const [content, setContent] = useState<string | null>(null);
@@ -14,7 +15,7 @@ const TsvView: FunctionComponent<DatasetPluginProps> = ({ file }) => {
     const fetchTsv = async () => {
       try {
         setLoading(true);
-        const response = await fetch(file.urls[0]);
+        const response = await fetch(addRequestWatermark(file.urls[0]));
         if (!response.ok) {
           throw new Error("Failed to fetch TSV content");
         }

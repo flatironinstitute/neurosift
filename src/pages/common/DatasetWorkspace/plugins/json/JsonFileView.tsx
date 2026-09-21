@@ -3,6 +3,7 @@ import { FunctionComponent, useEffect, useState } from "react";
 import { DatasetPluginProps } from "../pluginInterface";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { addRequestWatermark } from "../../../../../util/requestWatermark";
 
 type JsonValue =
   | string
@@ -21,7 +22,7 @@ const JsonFileView: FunctionComponent<DatasetPluginProps> = ({ file }) => {
     const fetchJson = async () => {
       try {
         setLoading(true);
-        const response = await fetch(file.urls[0]);
+        const response = await fetch(addRequestWatermark(file.urls[0]));
         if (!response.ok) {
           throw new Error("Failed to fetch JSON content");
         }

@@ -3,6 +3,7 @@ import { FunctionComponent } from "react";
 import { formatBytes } from "@shared/util/formatBytes";
 import { DatasetPluginProps } from "../pluginInterface";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import { addRequestWatermark } from "../../../../../util/requestWatermark";
 
 const DefaultFileView: FunctionComponent<DatasetPluginProps> = ({ file }) => {
   return (
@@ -58,7 +59,7 @@ const DefaultFileView: FunctionComponent<DatasetPluginProps> = ({ file }) => {
           </Typography>
           <Box sx={{ mt: 1 }}>
             <img
-              src={file.urls[0]}
+              src={addRequestWatermark(file.urls[0])}
               alt={file.filename}
               style={{
                 maxWidth: "100%",

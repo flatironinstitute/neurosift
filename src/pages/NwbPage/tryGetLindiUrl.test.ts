@@ -41,7 +41,11 @@ describe("tryGetLindiUrl", () => {
       return { ok: true };
     });
     expect(await tryGetLindiUrl(assetUrl, "000001")).toBe(expectedLindiUrl);
-    expect(calls).toEqual([[expectedLindiUrl, { method: "HEAD" }]]);
+    // The probe carries the request watermark; the returned url does not,
+    // since further urls are derived from it.
+    expect(calls).toEqual([
+      [`${expectedLindiUrl}?neurosift=1`, { method: "HEAD" }],
+    ]);
   });
 
   it("returns undefined when the index has no file", async () => {
