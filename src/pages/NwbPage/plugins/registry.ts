@@ -19,6 +19,7 @@ import { eventRelatedSignalPlugin } from "./EventRelatedSignal";
 import { pythonScriptPlugin } from "./PythonScript";
 // import spikeDensityPlugin from "./SpikeDensity";
 import { intervalSeriesPlugin } from "./IntervalSeries";
+import { lfpSpectrogramPlugin } from "./LfpSpectrogram";
 import { eventsPlugin } from "./Events";
 import { imageSeriesMp4Plugin } from "./ImageSeriesMp4";
 import { externalFileVideoPlugin } from "./ExternalFileVideo/index";
@@ -39,6 +40,7 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
   dynamicTablePlugin,
   twoPhotonSeriesPlugin,
   spatialSeriesPlugin,
+  lfpSpectrogramPlugin,
   simpleTimeseriesPlugin,
   psthPlugin,
   imagePlugin,
