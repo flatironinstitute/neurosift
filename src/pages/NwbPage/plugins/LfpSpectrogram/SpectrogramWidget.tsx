@@ -41,7 +41,7 @@ type Props = {
   // True when the displayed image was computed with settings that have since
   // changed, so the view is knowingly showing a stale result while recomputing.
   stale?: boolean;
-  // Defaults to the shared margins; the view widens the sides in split mode.
+  // Defaults to the shared margins.
   margins?: PlotMargins;
 };
 
@@ -428,7 +428,7 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
 
     // Colorbar
     if (result && bitmap) {
-      const barX = width - margins.right + 24;
+      const barX = width - margins.right + 10;
       const barW = 14;
       const barTop = margins.top;
       const barH = plotH;

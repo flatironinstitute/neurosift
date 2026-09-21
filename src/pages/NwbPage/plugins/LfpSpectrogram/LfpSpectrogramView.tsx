@@ -15,7 +15,7 @@ import SpectrogramBlockCache from "./blockCache";
 import ChannelSelector from "./ChannelSelector";
 import { colormapNames } from "./colormap";
 import { computeDerived, computeWarnings } from "./derived";
-import { marginsForChannelMode, PlotMargins } from "./plotConstants";
+import { plotMargins, PlotMargins } from "./plotConstants";
 import { clampRange as clampRangeTo, zoomRangeAtAnchor } from "./zoomRange";
 import SpectrogramDataClient, {
   limitChannels,
@@ -449,10 +449,7 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
     200,
     Math.round((height - (condensed ? 8 : 12)) * 0.8),
   );
-  const margins = useMemo(
-    () => marginsForChannelMode(config.channelMode),
-    [config.channelMode],
-  );
+  const margins = plotMargins;
   const plotW = plotAreaWidth - margins.left - margins.right;
 
   const shownChannels = useMemo(
@@ -517,8 +514,8 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
     [plotW, margins],
   );
 
-  // True only over the drawn plot area, so the side margins (widened in split
-  // mode) stay a place where the wheel scrolls the page instead of zooming.
+  // True only over the drawn plot area, so the side margins stay a place where
+  // the wheel scrolls the page instead of zooming.
   const isOverPlotArea = useCallback(
     (clientX: number) => {
       const rect = containerRef.current?.getBoundingClientRect();
