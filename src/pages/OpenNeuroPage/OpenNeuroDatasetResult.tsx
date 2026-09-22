@@ -1,5 +1,5 @@
 import { Paper, Typography, Box } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import { OpenNeuroDataset } from "./OpenNeuroPage";
 import { formatBytes } from "@shared/util/formatBytes";
 
@@ -12,26 +12,36 @@ const formatDate = (dateString: string) => {
 };
 
 const OpenNeuroDatasetResult = ({ dataset }: Props) => {
-  const navigate = useNavigate();
+  const name = dataset.latestSnapshot?.description?.Name || "Untitled Dataset";
 
   return (
     <Paper
       sx={{
+        position: "relative",
         p: 3,
         mb: 2.5,
         borderRadius: 3,
         boxShadow: "0 3px 10px rgba(0,0,0,0.08)",
-        cursor: "pointer",
         "&:hover": {
           boxShadow: "0 4px 15px rgba(0,0,0,0.15)",
           transform: "translateY(-2px)",
           transition: "all 0.2s ease-in-out",
         },
       }}
-      onClick={() => navigate(`/openneuro-dataset/${dataset.id}`)}
     >
+      <Box
+        component={RouterLink}
+        to={`/openneuro-dataset/${dataset.id}`}
+        aria-label={name}
+        sx={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 1,
+          borderRadius: "inherit",
+        }}
+      />
       <Typography variant="h6" gutterBottom>
-        {dataset.latestSnapshot?.description?.Name || "Untitled Dataset"}
+        {name}
       </Typography>
       <Box sx={{ display: "flex", gap: 4, mb: 1 }}>
         <Typography variant="body2" color="text.secondary">

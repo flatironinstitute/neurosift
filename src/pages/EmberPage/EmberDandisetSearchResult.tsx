@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import { MenuBook } from "@mui/icons-material";
 import { DandisetNeurodataTypesSearchResult } from "./dandi-types";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString();
@@ -22,26 +22,35 @@ type Props = {
 };
 
 const EmberDandisetSearchResult = ({ dandiset, notebookUrls }: Props) => {
-  const navigate = useNavigate();
   const version =
     dandiset.most_recent_published_version || dandiset.draft_version;
 
   return (
     <Paper
       sx={{
+        position: "relative",
         p: 3,
         mb: 2.5,
         borderRadius: 3,
         boxShadow: "0 3px 10px rgba(0,0,0,0.08)",
-        cursor: "pointer",
         "&:hover": {
           boxShadow: "0 4px 15px rgba(0,0,0,0.15)",
           transform: "translateY(-2px)",
           transition: "all 0.2s ease-in-out",
         },
       }}
-      onClick={() => navigate(`/ember-dandiset/${dandiset.identifier}`)}
     >
+      <Box
+        component={RouterLink}
+        to={`/ember-dandiset/${dandiset.identifier}`}
+        aria-label={version?.name || "Untitled Dataset"}
+        sx={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 1,
+          borderRadius: "inherit",
+        }}
+      />
       <Typography variant="h6" gutterBottom>
         {version?.name || "Untitled Dataset"}
       </Typography>
@@ -87,7 +96,7 @@ const EmberDandisetSearchResult = ({ dandiset, notebookUrls }: Props) => {
                 rel="noopener noreferrer"
                 size="small"
                 color="primary"
-                onClick={(e) => e.stopPropagation()}
+                sx={{ position: "relative", zIndex: 2 }}
               >
                 <MenuBook />
               </IconButton>
