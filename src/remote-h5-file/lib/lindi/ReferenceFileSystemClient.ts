@@ -1,5 +1,6 @@
 import { ZMetaDataZArray } from "./RemoteH5FileLindi";
 import zarrDecodeChunkArray from "./zarrDecodeChunkArray";
+import { addRequestWatermark } from "../../../util/requestWatermark";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type ReferenceFileSystemObject = {
@@ -153,9 +154,9 @@ export class ReferenceFileSystemClient {
           start += o.startByte;
           numBytes = o.endByte! - o.startByte;
         }
-        let url0 = refUrl;
+        let url0 = addRequestWatermark(refUrl);
         if (o.disableCache) {
-          url0 += `?cacheBust=${Date.now()}`;
+          url0 += `${url0.includes("?") ? "&" : "?"}cacheBust=${Date.now()}`;
         }
         const r = await fetch(url0, {
           headers: {

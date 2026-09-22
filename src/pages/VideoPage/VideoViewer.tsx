@@ -1,5 +1,7 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
+import { watermarkRedirectTarget } from "@hdf5Interface";
+import { addRequestWatermark } from "../../util/requestWatermark";
 
 type Props = {
   videoUrl: string;
@@ -42,13 +44,15 @@ const VideoViewer: FunctionComponent<Props> = ({ videoUrl, width, height }) => {
           controller.abort();
 
           if (response.url) {
-            setResolvedUrl(response.url);
+            setResolvedUrl(
+              await watermarkRedirectTarget(videoUrl, response.url),
+            );
           } else {
             setError("Failed to resolve video URL");
           }
         } else {
           // Direct URL, no redirect needed
-          setResolvedUrl(videoUrl);
+          setResolvedUrl(addRequestWatermark(videoUrl));
         }
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : String(err);

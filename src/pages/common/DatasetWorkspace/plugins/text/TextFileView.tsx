@@ -1,6 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { FunctionComponent, useEffect, useState } from "react";
 import { DatasetPluginProps } from "../pluginInterface";
+import { addRequestWatermark } from "../../../../../util/requestWatermark";
 
 const TextFileView: FunctionComponent<DatasetPluginProps> = ({ file }) => {
   const [textContent, setTextContent] = useState<string | null>(null);
@@ -11,7 +12,7 @@ const TextFileView: FunctionComponent<DatasetPluginProps> = ({ file }) => {
     const fetchText = async () => {
       try {
         setLoading(true);
-        const response = await fetch(file.urls[0]);
+        const response = await fetch(addRequestWatermark(file.urls[0]));
         if (!response.ok) {
           throw new Error("Failed to fetch JSON content");
         }

@@ -18,6 +18,7 @@ import ReferenceFileSystemClient, {
   RemoteTarInterface,
   isReferenceFileSystemObject,
 } from "./ReferenceFileSystemClient";
+import { addRequestWatermark } from "../../../util/requestWatermark";
 import lindiDatasetDataLoader from "./lindiDatasetDataLoader";
 import zarrDecodeChunkArray from "./zarrDecodeChunkArray";
 
@@ -127,7 +128,7 @@ export class ZarrFileSystemClient {
       if (o.startByte !== undefined && o.endByte !== undefined) {
         buf = await fetchByteRange(url, o.startByte, o.endByte - o.startByte);
       } else {
-        const r = await fetch(url);
+        const r = await fetch(addRequestWatermark(url));
         if (!r.ok) {
           if (r.status === 404) {
             this.#fileContentCache[kk] = { content: undefined, found: false };
@@ -216,7 +217,7 @@ class RemoteH5FileLindi {
   }
   static async createFromZarr(url: string) {
     const zmetadataUrl = `${url}/.zmetadata`;
-    const zmetadataResponse = await fetch(zmetadataUrl);
+    const zmetadataResponse = await fetch(addRequestWatermark(zmetadataUrl));
     if (!zmetadataResponse.ok) {
       throw new Error(`Failed to fetch Zarr metadata from ${zmetadataUrl}`);
     }
@@ -560,7 +561,7 @@ const fetchRfsFromRemoteLindi = async (
       remoteTar,
     };
   } else {
-    const r = await fetch(url);
+    const r = await fetch(addRequestWatermark(url));
     if (!r.ok) throw Error("Failed to fetch LINDI file" + url);
     const rfs = await r.json();
     if (!isReferenceFileSystemObject(rfs)) {
@@ -575,7 +576,7 @@ const fetchRfsFromRemoteLindi = async (
 };
 
 const fetchByteRange = async (url: string, startByte: number, size: number) => {
-  const r = await fetch(url, {
+  const r = await fetch(addRequestWatermark(url), {
     headers: {
       Range: `bytes=${startByte}-${startByte + size - 1}`,
     },

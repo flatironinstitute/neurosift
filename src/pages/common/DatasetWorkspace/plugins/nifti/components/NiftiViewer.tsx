@@ -20,6 +20,7 @@ import React, {
   useState,
 } from "react";
 import getAuthorizationHeaderForUrl from "../../../../../util/getAuthorizationHeaderForUrl";
+import { addRequestWatermark } from "../../../../../../util/requestWatermark";
 
 interface NiftiViewerProps {
   fileUrl: string;
@@ -84,7 +85,9 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
         setError(null);
         niivueRef.current = null;
 
-        let redirectUrl: string | null = fileUrl;
+        // Niivue fetches the volume itself, so the watermark has to be in the
+        // url handed to it (getRedirectUrl already applies it).
+        let redirectUrl: string | null = addRequestWatermark(fileUrl);
         if (isDandiAssetUrl(fileUrl)) {
           const authorizationHeader = getAuthorizationHeaderForUrl(fileUrl);
           const headers = authorizationHeader

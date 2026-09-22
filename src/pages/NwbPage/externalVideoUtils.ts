@@ -3,6 +3,7 @@ import {
   getHdf5Group,
   Hdf5Group,
   isDandiAssetUrl,
+  watermarkRedirectTarget,
 } from "./hdf5Interface";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 import { neurodataTypeInheritsFrom } from "./neurodataTypeInheritance";
@@ -79,7 +80,8 @@ const resolveDandiDownloadRedirect = async (
         `If this is an embargoed dandiset, set your DANDI API key in Settings.`,
     );
   }
-  return response.url; // presigned S3 URL after the followed 302
+  // presigned S3 URL after the followed 302, watermarked where possible
+  return watermarkRedirectTarget(downloadUrl, response.url);
 };
 
 const dirnamePosix = (path: string) => {

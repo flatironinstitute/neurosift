@@ -2,6 +2,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Converted from https://github.com/bids-standard/pyedf
 
+import { addRequestWatermark } from "../../util/requestWatermark";
+
 class RemoteFile {
   #chunkSizeBytes = 1024 * 1024 * 1;
   #blockCache: { [key: number]: ArrayBuffer } = {};
@@ -113,7 +115,7 @@ class RemoteFile {
     }
   }
   async _readBytes(offset: number, length: number): Promise<ArrayBuffer> {
-    const response = await fetch(this.url, {
+    const response = await fetch(addRequestWatermark(this.url), {
       headers: {
         Range: `bytes=${offset}-${offset + length - 1}`,
       },
