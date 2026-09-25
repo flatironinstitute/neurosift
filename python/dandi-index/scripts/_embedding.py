@@ -24,14 +24,12 @@ def _names(items) -> list:
     return names
 
 
-def _metadata_summary(dandiset_data) -> str:
-    """Title plus the structured metadata that the title and description often
-    leave out: keywords, species, anatomy, approaches, techniques, and measured
-    variables. The title is included to anchor the text to this dandiset, since
-    the structured fields alone are shared by many dandisets."""
+def _metadata_fields(dandiset_data) -> list:
+    """(label, values) pairs for the structured metadata that the title and
+    description often leave out."""
     metadata = dandiset_data["metadata"]
     assets_summary = metadata.get("assetsSummary") or {}
-    fields = [
+    return [
         ("Keywords", _names(metadata.get("keywords"))),
         ("Species", _names(assets_summary.get("species"))),
         ("Anatomy", _names(metadata.get("about"))),
@@ -39,11 +37,58 @@ def _metadata_summary(dandiset_data) -> str:
         ("Measurement techniques", _names(assets_summary.get("measurementTechnique"))),
         ("Variables measured", _names(assets_summary.get("variableMeasured"))),
     ]
-    lines = [dandiset_data["name"]]
+
+
+def _format(title: str, fields: list) -> str:
+    lines = [title]
     for label, values in fields:
         if values:
             lines.append(f"{label}: {', '.join(values)}")
     return "\n".join(lines)
+
+
+def _metadata_summary(dandiset_data) -> str:
+    """Title plus the structured metadata fields. The title is included to
+    anchor the text to this dandiset, since the structured fields alone are
+    shared by many dandisets."""
+    return _format(dandiset_data["name"], _metadata_fields(dandiset_data))
+
+
+MAX_CONTRIBUTORS = 10
+MAX_FULL_SUMMARY_CHARS = 20000  # well under the embedding model's input limit
+
+
+def _full_summary(dandiset_data) -> str:
+    """Everything useful for search in one text: the metadata summary fields,
+    plus contributors, funders, projects, related resources, and the
+    description. Queries that combine a topic with, say, a species or method
+    can only match a text that contains both."""
+    metadata = dandiset_data["metadata"]
+    contributors, funders = [], []
+    # Organizations (labs, consortia) first: they are more likely to be
+    # searched for than individual names, and the list is truncated.
+    ordered = sorted(
+        metadata.get("contributor") or [],
+        key=lambda c: c.get("schemaKey") != "Organization",
+    )
+    for c in ordered:
+        name = c.get("name")
+        if not name:
+            continue
+        target = funders if "dcite:Funder" in (c.get("roleName") or []) else contributors
+        if name not in target:
+            target.append(name)
+    fields = _metadata_fields(dandiset_data) + [
+        ("Contributors", contributors[:MAX_CONTRIBUTORS]),
+        ("Funders", funders),
+        ("Projects", _names(metadata.get("wasGeneratedBy"))),
+        ("Related resources", _names(metadata.get("relatedResource"))),
+    ]
+    text = _format(dandiset_data["name"], fields)
+    description = metadata.get("description") or ""
+    if description:
+        text += "\n\n" + description
+    return text[:MAX_FULL_SUMMARY_CHARS]
 
 
 def _generate_embeddings_if_needed(*, dandiset_data, embeddings_fname: str):
@@ -54,6 +99,7 @@ def _generate_embeddings_if_needed(*, dandiset_data, embeddings_fname: str):
         ("title", dandiset_data["name"]),
         ("description", dandiset_data["metadata"].get("description", "")),
         ("metadata", _metadata_summary(dandiset_data)),
+        ("full", _full_summary(dandiset_data)),
     ]
 
     embeddings = []
