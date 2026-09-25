@@ -1,5 +1,10 @@
 # Changes
 
+## September 25, 2026
+
+- Fixed the DANDI-index job runner's script sandbox, which made every interface call other than `print` hang until the time limit. The interface now runs inside the sandbox with read access to the index data only.
+- The job runner can serve HTTP (`HTTP_PORT`) with the same endpoints as neurosift-search, so clients no longer need PubNub. PubNub is now optional.
+
 ## September 4, 2026
 
 - Released neurosift 0.2.16 on PyPI. The local file server started by `neurosift view-nwb` no longer exits on a request for a forbidden path or a directory, handles byte ranges correctly (clamped ranges, suffix ranges, 416 for unsatisfiable ones), answers HEAD requests, and listens on localhost only. `view-nwb` refuses zarr directories with a clear message and installs the server's npm dependencies only once.
