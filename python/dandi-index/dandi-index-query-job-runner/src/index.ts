@@ -1,44 +1,55 @@
 // Load environment variables from .env file BEFORE importing ./jobRunner,
 // which transitively constructs the OpenAI client at module-load time.
 import 'dotenv/config';
+import { Server } from 'http';
 import { JobRunner } from './jobRunner';
+import { startHttpServer } from './httpServer';
 
+// Either transport can be enabled on its own:
+//   PubNub: set PUBNUB_SUBSCRIBE_KEY and PUBNUB_PUBLISH_KEY
+//   HTTP:   set HTTP_PORT (and optionally HTTP_HOST, default 127.0.0.1)
 const {
   PUBNUB_SUBSCRIBE_KEY,
   PUBNUB_PUBLISH_KEY,
   JOB_CHANNEL = 'dandi-index-query-job-requests',
-  RESPONSE_CHANNEL = 'dandi-index-query-job-responses'
+  RESPONSE_CHANNEL = 'dandi-index-query-job-responses',
+  HTTP_PORT,
+  HTTP_HOST = '127.0.0.1'
 } = process.env;
 
-if (!PUBNUB_SUBSCRIBE_KEY || !PUBNUB_PUBLISH_KEY) {
-  console.error('Error: PUBNUB_SUBSCRIBE_KEY and PUBNUB_PUBLISH_KEY must be set in environment variables');
+const usePubNub = !!(PUBNUB_SUBSCRIBE_KEY && PUBNUB_PUBLISH_KEY);
+const httpPort = HTTP_PORT ? Number(HTTP_PORT) : undefined;
+
+if (!usePubNub && !httpPort) {
+  console.error('Error: set PUBNUB_SUBSCRIBE_KEY and PUBNUB_PUBLISH_KEY, or HTTP_PORT, in environment variables');
   process.exit(1);
 }
 
 async function main() {
-  // Cast to string since we've verified they exist above
-  const jobRunner = new JobRunner(
-    PUBNUB_SUBSCRIBE_KEY as string,
-    PUBNUB_PUBLISH_KEY as string,
-    JOB_CHANNEL,
-    RESPONSE_CHANNEL
-  );
+  const jobRunner = usePubNub
+    ? new JobRunner(
+      PUBNUB_SUBSCRIBE_KEY as string,
+      PUBNUB_PUBLISH_KEY as string,
+      JOB_CHANNEL,
+      RESPONSE_CHANNEL
+    )
+    : undefined;
+  let httpServer: Server | undefined;
+
+  const shutdown = async (signal: string) => {
+    console.log(`\nReceived ${signal}. Shutting down...`);
+    httpServer?.close();
+    await jobRunner?.stop();
+    process.exit(0);
+  };
 
   // Handle graceful shutdown
-  process.on('SIGINT', async () => {
-    console.log('\nReceived SIGINT. Shutting down...');
-    await jobRunner.stop();
-    process.exit(0);
-  });
-
-  process.on('SIGTERM', async () => {
-    console.log('\nReceived SIGTERM. Shutting down...');
-    await jobRunner.stop();
-    process.exit(0);
-  });
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
 
   try {
-    await jobRunner.start();
+    if (jobRunner) await jobRunner.start();
+    if (httpPort) httpServer = await startHttpServer(httpPort, HTTP_HOST);
   } catch (error) {
     console.error('Error starting job runner:', error);
     process.exit(1);

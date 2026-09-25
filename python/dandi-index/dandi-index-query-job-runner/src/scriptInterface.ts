@@ -1,10 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import fs from "fs";
+import { resolve } from "path";
 import { fetchDandisetsFromApi } from "./dandi";
-import OpenAI from "openai";
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import type OpenAI from "openai";
+
+// The OpenAI client is created on first use so that this module can also be
+// loaded inside the script sandbox, which has no API key and no access to
+// node_modules. There, embeddings are requested from the parent process
+// instead (see createSandboxedInterface).
+let openai: OpenAI | undefined;
+const getOpenAI = (): OpenAI => {
+  if (!openai) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { OpenAI: OpenAIClient } = require("openai");
+    openai = new OpenAIClient({ apiKey: process.env.OPENAI_API_KEY }) as OpenAI;
+  }
+  return openai;
+};
 
 // interface FetchDandisetsParams {
 //   search?: string;
@@ -258,11 +270,11 @@ const computeCosineSimilarity = (vec1: number[], vec2: number[]): number => {
   return dotProduct / (magnitude1 * magnitude2);
 };
 
-const computeSemanticEmbedding = async (
+export const computeOpenAIEmbedding = async (
   query: string
-): Promise<number[] | undefined> => {
+): Promise<number[]> => {
   const model = "text-embedding-3-large";
-  const response = await openai.embeddings.create({
+  const response = await getOpenAI().embeddings.create({
     input: query,
     model: model,
     encoding_format: "float",
@@ -278,6 +290,15 @@ const computeSemanticEmbedding = async (
   } else {
     throw new Error("No embedding data returned from OpenAI API");
   }
+};
+
+let embeddingProvider: (query: string) => Promise<number[]> =
+  computeOpenAIEmbedding;
+
+const computeSemanticEmbedding = async (
+  query: string
+): Promise<number[] | undefined> => {
+  return await embeddingProvider(query);
 };
 
 const getEmbeddingsForDandiset = (
@@ -612,6 +633,39 @@ class DandiInterfaceNeurodataObject {
   }
 }
 
+const formatPrintValue = (text: string | any): string => {
+  if (typeof text === "string") return text;
+  try {
+    return JSON.stringify(text, null, 2);
+  } catch (e) {
+    return `Error stringifying object: ${e}`;
+  }
+};
+
+// Directories the sandboxed interface needs to read (see
+// createSandboxedInterface). The relative base dirs are resolved against the
+// working directory, as they are when the interface reads them.
+export const sandboxedInterfaceReadPaths = (): string[] =>
+  [dandiBaseDir, openNeuroBaseDir, ebrainsBaseDir].map((d) => resolve(d));
+
+// Builds the script interface inside the sandboxed child process, so that
+// scripts get the full object API (getters and methods on dandisets, NWB
+// files, and so on). Only printing and embedding computation, which needs the
+// API key, are delegated to the parent process through `host`.
+export function createSandboxedInterface(host: {
+  print: (text: string) => Promise<unknown> | void;
+  computeSemanticEmbedding: (query: string) => Promise<number[]>;
+}): Omit<ScriptInterface, "_getOutput"> {
+  embeddingProvider = (query) => host.computeSemanticEmbedding(query);
+  const { _getOutput, ...iface } = createScriptInterface(() => {});
+  return {
+    ...iface,
+    print: (text: string | any) => {
+      host.print(formatPrintValue(text));
+    },
+  };
+}
+
 export function createScriptInterface(
   onStatusUpdate: (status: string) => void
 ): ScriptInterface {
@@ -622,16 +676,7 @@ export function createScriptInterface(
 
   return {
     print: (text: string | any) => {
-      let v = "";
-      if (typeof text === "string") {
-        v = text;
-      } else {
-        try {
-          v = JSON.stringify(text, null, 2);
-        } catch (e) {
-          v = `Error stringifying object: ${e}`;
-        }
-      }
+      const v = formatPrintValue(text);
       outputBuffer += v + "\n";
       onStatusUpdate(text);
     },
