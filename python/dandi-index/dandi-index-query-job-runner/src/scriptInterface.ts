@@ -288,10 +288,16 @@ const getEmbeddingsForDandiset = (
     return undefined;
   }
   const fileContent = fs.readFileSync(fname, "utf8");
-  const content = JSON.parse(fileContent);
-  return content.map(
-    (a: { text: string; embedding: number[]; model: string }) => a.embedding
-  );
+  const content: { text: string; embedding: number[]; model: string; label?: string }[] =
+    JSON.parse(fileContent);
+  // Prefer the single embedding of the full metadata text (title, structured
+  // metadata, contributors, related resources, description) when the index
+  // has one. The dandiset is scored by its best-matching embedding, and a
+  // long text always scores below a short title, so the full embedding would
+  // never win if it were mixed with the others.
+  const full = content.find((a) => a.label === "full");
+  if (full) return [full.embedding];
+  return content.map((a) => a.embedding);
 };
 
 type DandisetMetadata = {

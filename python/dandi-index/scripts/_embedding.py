@@ -47,13 +47,6 @@ def _format(title: str, fields: list) -> str:
     return "\n".join(lines)
 
 
-def _metadata_summary(dandiset_data) -> str:
-    """Title plus the structured metadata fields. The title is included to
-    anchor the text to this dandiset, since the structured fields alone are
-    shared by many dandisets."""
-    return _format(dandiset_data["name"], _metadata_fields(dandiset_data))
-
-
 MAX_CONTRIBUTORS = 10
 MAX_FULL_SUMMARY_CHARS = 20000  # well under the embedding model's input limit
 
@@ -93,12 +86,12 @@ def _full_summary(dandiset_data) -> str:
 
 def _generate_embeddings_if_needed(*, dandiset_data, embeddings_fname: str):
     model = "text-embedding-3-large"
-    # One embedding per text, in this order. Semantic search scores a dandiset
-    # by its best-matching embedding, so each text can match a query on its own.
+    # Semantic search ranks by the "full" embedding when present (see
+    # getEmbeddingsForDandiset in the job runner); the title and description
+    # embeddings are kept for runners that predate it.
     texts = [
         ("title", dandiset_data["name"]),
         ("description", dandiset_data["metadata"].get("description", "")),
-        ("metadata", _metadata_summary(dandiset_data)),
         ("full", _full_summary(dandiset_data)),
     ]
 
@@ -107,20 +100,22 @@ def _generate_embeddings_if_needed(*, dandiset_data, embeddings_fname: str):
         with open(embeddings_fname, "r") as f:
             embeddings = json.load(f)
 
-    need_update = len(embeddings) != len(texts)
     new_embeddings = []
-    for i, (label, text) in enumerate(texts):
-        entry = embeddings[i] if i < len(embeddings) else None
-        if not entry or entry["text"] != text or entry["model"] != model:
+    for label, text in texts:
+        # Reuse an existing embedding of the same text, wherever it is stored.
+        entry = next(
+            (e for e in embeddings if e["text"] == text and e["model"] == model),
+            None,
+        )
+        if entry is None:
             print(f"Generating {label} embedding for {dandiset_data['dandiset_id']}")
             entry = {
                 "text": text,
                 "embedding": _create_embedding_for_summary(text, model=model),
                 "model": model,
             }
-            need_update = True
-        new_embeddings.append(entry)
+        new_embeddings.append({"label": label, **entry})
 
-    if need_update:
+    if new_embeddings != embeddings:
         with open(embeddings_fname, "w") as f:
             json.dump(new_embeddings, f, indent=2)

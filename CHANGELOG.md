@@ -2,7 +2,7 @@
 
 ## September 25, 2026
 
-- DANDI semantic search now also embeds each dandiset's keywords, species, anatomy, approaches, measurement techniques, and measured variables, so queries like "mouse Neuropixels" or "C. elegans whole-brain imaging" return datasets of the right species and method.
+- DANDI semantic search now ranks dandisets by an embedding of all their searchable metadata (title, description, keywords, species, anatomy, approaches, measurement techniques, measured variables, contributors, funders, and related resources), so queries that combine a topic with a species or method, like "rat hippocampus tetrode recordings", return matching datasets.
 
 ## September 4, 2026
 
