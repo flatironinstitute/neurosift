@@ -1,11 +1,5 @@
 import PubNub from 'pubnub';
-import { createScriptInterface } from './scriptInterface';
-import { runScriptInSandbox } from './sandbox/runInSandbox';
-import { readFileSync } from 'fs';
-import { join } from 'path';
-
-const systemMessageText = readFileSync(join(__dirname, 'systemMessage.txt'), 'utf8');
-
+import { executeJob, releaseJobSlot, systemMessageText, tryAcquireJobSlot } from './jobExecution';
 
 interface JobMessage {
   jobId: string;
@@ -24,10 +18,6 @@ type PubNubMessageObject = {
   status: 'alive';
   systemMessage: string;
 }
-
-const MAX_CONCURRENT_JOBS = 3;
-const JOB_TIMEOUT_MS = Number(process.env.JOB_TIMEOUT_MS) || 5 * 60 * 1000;
-let currentJobs = 0;
 
 export class JobRunner {
   private pubnub: PubNub;
@@ -114,8 +104,7 @@ export class JobRunner {
 
   private async handleJobMessage(jobMessage: JobMessage) {
     console.info(`Processing job ${jobMessage.jobId}`);
-    console.info(`Current concurrent jobs: ${currentJobs}/${MAX_CONCURRENT_JOBS}`);
-    if (currentJobs >= MAX_CONCURRENT_JOBS) {
+    if (!tryAcquireJobSlot()) {
       console.info('Maximum concurrent jobs reached, rejecting job');
       await this.sendResponse({
         jobId: jobMessage.jobId,
@@ -125,8 +114,6 @@ export class JobRunner {
       return;
     }
 
-    currentJobs++;
-    console.info(`Incremented concurrent jobs count to ${currentJobs}`);
     await this.sendResponse({
       jobId: jobMessage.jobId,
       status: 'accepted'
@@ -134,11 +121,8 @@ export class JobRunner {
 
     try {
       console.info(`Starting execution of job ${jobMessage.jobId}`);
-      const result = await this.executeJob(jobMessage);
+      const result = await executeJob(jobMessage.jobId, jobMessage.script);
       console.info(`Job ${jobMessage.jobId} completed successfully`);
-      if (result.length > 1000_000) {
-        throw new Error(`Job ${jobMessage.jobId} output is too large (${result.length} characters)`);
-      }
       const parts = Math.max(1, Math.ceil(result.length / 10000));
       for (let i = 0; i < parts; i++) {
         const start = i * 10000;
@@ -160,24 +144,8 @@ export class JobRunner {
         error: error instanceof Error ? error.message : String(error)
       });
     } finally {
-      currentJobs--;
-      console.info(`Decremented concurrent jobs count to ${currentJobs}`);
+      releaseJobSlot();
     }
-  }
-
-  private async executeJob(jobMessage: JobMessage): Promise<string> {
-    console.info(`Setting up execution environment for job ${jobMessage.jobId}`);
-    const scriptInterface = createScriptInterface((status) => {
-      console.info(`Job ${jobMessage.jobId} status update:`, status);
-    });
-
-    // The script runs in a separate process with no file system, process,
-    // or environment access. Its interface calls are forwarded back here.
-    console.info(`Beginning sandboxed execution of job ${jobMessage.jobId}`);
-    await runScriptInSandbox(jobMessage.script, scriptInterface, {
-      timeoutMs: JOB_TIMEOUT_MS
-    });
-    return scriptInterface._getOutput();
   }
 
   private async sendResponse(message: PubNubMessageObject & { jobId: string }) {

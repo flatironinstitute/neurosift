@@ -3,8 +3,16 @@
 // process's environment. The script sees a single `interface` object; each
 // of its methods is forwarded here over IPC and executed against the real
 // interface, so the index data and API keys stay in this process.
+//
+// With `interfaceModule`, the child instead builds the script's interface
+// itself by loading that module (see child.ts), and the object passed here
+// becomes the host side that the in-child interface can call back into. This
+// lets scripts use objects with getters and methods, which cannot be sent
+// over IPC. The child is then also allowed to read the module's directory
+// and `readPaths`.
 import { ChildProcess, fork } from "child_process";
-import { join } from "path";
+import { realpathSync } from "fs";
+import { dirname, join } from "path";
 
 // Any object whose function-valued properties (other than those starting
 // with an underscore) should be callable from the script.
@@ -14,6 +22,10 @@ export type RunInSandboxOptions = {
   timeoutMs?: number;
   maxOldSpaceSizeMb?: number;
   childPath?: string;
+  // Absolute path of a module exporting createSandboxedInterface(host).
+  interfaceModule?: string;
+  // Absolute paths the child may read, in addition to its own code.
+  readPaths?: string[];
 };
 
 type ChildMessage =
@@ -42,7 +54,10 @@ export class SandboxScriptError extends Error {
 // Node 20 spells the flag --experimental-permission; Node 22.13 and later
 // accept --permission. Both require the child's own entry point to be
 // readable explicitly.
-export const permissionExecArgv = (childPath: string): string[] => {
+export const permissionExecArgv = (
+  childPath: string,
+  readPaths: string[] = [],
+): string[] => {
   const flags = process.allowedNodeEnvironmentFlags;
   const permissionFlag = flags.has("--permission")
     ? "--permission"
@@ -52,7 +67,20 @@ export const permissionExecArgv = (childPath: string): string[] => {
       `This version of Node (${process.version}) does not support the permission model needed to sandbox scripts`,
     );
   }
-  return [permissionFlag, `--allow-fs-read=${childPath}`];
+  return [
+    permissionFlag,
+    ...[childPath, ...readPaths].map((p) => `--allow-fs-read=${p}`),
+  ];
+};
+
+// Permissions are checked against real paths, so grants must not go through
+// symlinks (on macOS, for example, /var is a symlink to /private/var).
+const realPath = (p: string): string => {
+  try {
+    return realpathSync(p);
+  } catch {
+    return p;
+  }
 };
 
 const callableMethods = (iface: SandboxInterface): string[] => {
@@ -72,6 +100,14 @@ export const runScriptInSandbox = (
     options.maxOldSpaceSizeMb ?? DEFAULT_MAX_OLD_SPACE_SIZE_MB;
   const childPath = options.childPath ?? join(__dirname, "child.js");
   const methods = callableMethods(iface);
+  const interfaceModule = options.interfaceModule
+    ? realPath(options.interfaceModule)
+    : undefined;
+  // Directories need a trailing wildcard to be readable recursively.
+  const readPaths = [
+    ...(interfaceModule ? [join(dirname(interfaceModule), "*")] : []),
+    ...(options.readPaths ?? []).map((p) => join(realPath(p), "*")),
+  ];
 
   return new Promise<void>((resolve, reject) => {
     let settled = false;
@@ -96,7 +132,7 @@ export const runScriptInSandbox = (
     try {
       child = fork(childPath, [], {
         execArgv: [
-          ...permissionExecArgv(childPath),
+          ...permissionExecArgv(childPath, readPaths),
           `--max-old-space-size=${maxOldSpaceSizeMb}`,
         ],
         // No environment at all: the script must not see API keys.
@@ -119,7 +155,7 @@ export const runScriptInSandbox = (
     child.on("message", (message: ChildMessage) => {
       if (settled) return;
       if (message.type === "ready") {
-        child.send({ type: "run", script, methods });
+        child.send({ type: "run", script, methods, interfaceModule });
       } else if (message.type === "call") {
         handleCall(message);
       } else if (message.type === "done") {
@@ -155,8 +191,21 @@ export const runScriptInSandbox = (
         if (settled || !child.connected) return;
         try {
           child.send({ type: "result", id: message.id, ...body });
-        } catch {
-          // The child went away; the exit handler reports it.
+        } catch (error) {
+          // A value that cannot be serialized (for example one holding
+          // functions) must fail the call rather than leave the script
+          // waiting until the time limit. If the child went away instead,
+          // this send fails too and the exit handler reports it.
+          try {
+            child.send({
+              type: "result",
+              id: message.id,
+              ok: false,
+              error: `interface.${message.method} returned a value that cannot be passed to the script: ${error instanceof Error ? error.message : String(error)}`,
+            });
+          } catch {
+            // The child went away; the exit handler reports it.
+          }
         }
       };
       if (!methods.includes(message.method)) {

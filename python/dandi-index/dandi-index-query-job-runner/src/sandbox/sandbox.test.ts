@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it, before, after } from "node:test";
@@ -235,6 +235,25 @@ describe("runScriptInSandbox", () => {
     );
   });
 
+  it("fails a call whose return value cannot be sent, rather than hanging", async () => {
+    const iface = {
+      ...makeInterface(),
+      unsendable: async () => ({ f: () => 1 }),
+    };
+    await runScriptInSandbox(
+      `
+      try {
+        await interface.unsendable();
+      } catch (e) {
+        interface.print("error: " + /cannot be passed/.test(e.message));
+      }
+      `,
+      iface,
+      { timeoutMs: 5000 },
+    );
+    assert.equal(iface._getOutput(), "error: true\n");
+  });
+
   it("runs several scripts concurrently without mixing their output", async () => {
     const a = makeInterface();
     const b = makeInterface();
@@ -252,5 +271,113 @@ describe("runScriptInSandbox", () => {
     const expectedB = Array.from({ length: 20 }, (_, i) => `b${i + 100}`).join("\n") + "\n";
     assert.equal(a._getOutput(), expectedA);
     assert.equal(b._getOutput(), expectedB);
+  });
+});
+
+// With interfaceModule, the interface is built inside the child. The fixture
+// module returns class instances (which cannot cross IPC), reads a file from
+// a granted directory, and calls back into the host.
+const fixtureModuleSource = `
+const fs = require("fs");
+const path = require("path");
+class Item {
+  constructor(id) { this.id = id; }
+  get label() { return "item-" + this.id; }
+}
+exports.createSandboxedInterface = (host) => ({
+  print: (text) => host.print(text),
+  getItems: async () => [new Item(1), new Item(2)],
+  readData: async (dir) => fs.readFileSync(path.join(dir, "data.txt"), "utf8"),
+  hostDouble: async (x) => await host.double(x),
+});
+`;
+
+describe("runScriptInSandbox with an interface module", () => {
+  let moduleDir: string;
+  let dataDir: string;
+  let secretDir: string;
+  let secretPath: string;
+  let interfaceModule: string;
+
+  const makeHost = () => {
+    let output = "";
+    return {
+      print: (text: string) => {
+        output += text + "\n";
+      },
+      double: async (x: number) => 2 * x,
+      _getOutput: () => output,
+    };
+  };
+
+  before(() => {
+    moduleDir = mkdtempSync(join(tmpdir(), "sandbox-module-"));
+    // Real path, since the module reads it directly (tmpdir is a symlink on macOS).
+    dataDir = realpathSync(mkdtempSync(join(tmpdir(), "sandbox-data-")));
+    secretDir = mkdtempSync(join(tmpdir(), "sandbox-secret-"));
+    interfaceModule = join(moduleDir, "iface.js");
+    writeFileSync(interfaceModule, fixtureModuleSource);
+    writeFileSync(join(dataDir, "data.txt"), "public data");
+    secretPath = join(secretDir, ".env");
+    writeFileSync(secretPath, 'OPENAI_API_KEY="sk-secret-value"\n');
+  });
+
+  after(() => {
+    for (const d of [moduleDir, dataDir, secretDir]) {
+      rmSync(d, { recursive: true, force: true });
+    }
+  });
+
+  it("gives the script objects with getters", async () => {
+    const host = makeHost();
+    await runScriptInSandbox(
+      `
+      const items = await interface.getItems();
+      interface.print(items.map(i => i.label).join(","));
+      `,
+      host,
+      { interfaceModule },
+    );
+    assert.equal(host._getOutput(), "item-1,item-2\n");
+  });
+
+  it("forwards host calls to the parent", async () => {
+    const host = makeHost();
+    await runScriptInSandbox(
+      `interface.print(String(await interface.hostDouble(21)));`,
+      host,
+      { interfaceModule },
+    );
+    assert.equal(host._getOutput(), "42\n");
+  });
+
+  it("can read granted paths but nothing else", async () => {
+    const host = makeHost();
+    await runScriptInSandbox(
+      `
+      interface.print(await interface.readData(${JSON.stringify(dataDir)}));
+      const fs = await import("node:fs");
+      try {
+        interface.print(fs.readFileSync(${JSON.stringify(secretPath)}, "utf8"));
+      } catch (e) {
+        interface.print("denied: " + e.code);
+      }
+      `,
+      host,
+      { interfaceModule, readPaths: [dataDir] },
+    );
+    const out = host._getOutput();
+    assert.ok(!out.includes("sk-secret-value"), out);
+    assert.equal(out, "public data\ndenied: ERR_ACCESS_DENIED\n");
+  });
+
+  it("does not expose host-only methods directly to the script", async () => {
+    const host = makeHost();
+    await runScriptInSandbox(
+      `interface.print(typeof interface.double);`,
+      host,
+      { interfaceModule },
+    );
+    assert.equal(host._getOutput(), "undefined\n");
   });
 });
