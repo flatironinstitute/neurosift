@@ -5,9 +5,19 @@
 // access, and with an empty environment. Everything the script is allowed to
 // do goes through the `interface` object, whose methods are forwarded to the
 // parent process over IPC and executed there.
+//
+// If the parent names an interface module, the child loads it (with read
+// access limited to that module's directory and the paths the parent
+// granted) and gives the script the interface it builds instead; the
+// forwarded methods are then only reachable through that module.
 
 type ParentMessage =
-  | { type: "run"; script: string; methods: string[] }
+  | {
+      type: "run";
+      script: string;
+      methods: string[];
+      interfaceModule?: string;
+    }
   | { type: "result"; id: number; ok: true; value: unknown }
   | { type: "result"; id: number; ok: false; error: string };
 
@@ -73,9 +83,19 @@ const harden = () => {
   }
 };
 
-const run = async (script: string, methods: string[]) => {
+const run = async (
+  script: string,
+  methods: string[],
+  interfaceModule?: string,
+) => {
+  const host = buildInterface(methods);
+  let iface: object = host;
+  if (interfaceModule) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const mod = require(interfaceModule);
+    iface = Object.freeze(mod.createSandboxedInterface(host));
+  }
   harden();
-  const iface = buildInterface(methods);
   const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
   const scriptFn = new AsyncFunction("interface", script);
   await scriptFn(iface);
@@ -83,7 +103,7 @@ const run = async (script: string, methods: string[]) => {
 
 process.on("message", (message: ParentMessage) => {
   if (message.type === "run") {
-    run(message.script, message.methods)
+    run(message.script, message.methods, message.interfaceModule)
       .then(() => send({ type: "done" }))
       .catch((error) => send({ type: "failed", error: errorToString(error) }));
   } else if (message.type === "result") {
