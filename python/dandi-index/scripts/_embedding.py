@@ -14,49 +14,108 @@ def _create_embedding_for_summary(summary: str, *, model: str):
     return response.data[0].embedding
 
 
+def _names(items) -> list:
+    """Names of a list of DANDI metadata entries (dicts with a "name", or strings)."""
+    names = []
+    for item in items or []:
+        name = item.get("name") if isinstance(item, dict) else item
+        if name and name not in names:
+            names.append(str(name))
+    return names
+
+
+def _metadata_fields(dandiset_data) -> list:
+    """(label, values) pairs for the structured metadata that the title and
+    description often leave out."""
+    metadata = dandiset_data["metadata"]
+    assets_summary = metadata.get("assetsSummary") or {}
+    return [
+        ("Keywords", _names(metadata.get("keywords"))),
+        ("Species", _names(assets_summary.get("species"))),
+        ("Anatomy", _names(metadata.get("about"))),
+        ("Approaches", _names(assets_summary.get("approach"))),
+        ("Measurement techniques", _names(assets_summary.get("measurementTechnique"))),
+        ("Variables measured", _names(assets_summary.get("variableMeasured"))),
+    ]
+
+
+def _format(title: str, fields: list) -> str:
+    lines = [title]
+    for label, values in fields:
+        if values:
+            lines.append(f"{label}: {', '.join(values)}")
+    return "\n".join(lines)
+
+
+MAX_CONTRIBUTORS = 10
+MAX_FULL_SUMMARY_CHARS = 20000  # well under the embedding model's input limit
+
+
+def _full_summary(dandiset_data) -> str:
+    """Everything useful for search in one text: the metadata summary fields,
+    plus contributors, funders, projects, related resources, and the
+    description. Queries that combine a topic with, say, a species or method
+    can only match a text that contains both."""
+    metadata = dandiset_data["metadata"]
+    contributors, funders = [], []
+    # Organizations (labs, consortia) first: they are more likely to be
+    # searched for than individual names, and the list is truncated.
+    ordered = sorted(
+        metadata.get("contributor") or [],
+        key=lambda c: c.get("schemaKey") != "Organization",
+    )
+    for c in ordered:
+        name = c.get("name")
+        if not name:
+            continue
+        target = funders if "dcite:Funder" in (c.get("roleName") or []) else contributors
+        if name not in target:
+            target.append(name)
+    fields = _metadata_fields(dandiset_data) + [
+        ("Contributors", contributors[:MAX_CONTRIBUTORS]),
+        ("Funders", funders),
+        ("Projects", _names(metadata.get("wasGeneratedBy"))),
+        ("Related resources", _names(metadata.get("relatedResource"))),
+    ]
+    text = _format(dandiset_data["name"], fields)
+    description = metadata.get("description") or ""
+    if description:
+        text += "\n\n" + description
+    return text[:MAX_FULL_SUMMARY_CHARS]
+
+
 def _generate_embeddings_if_needed(*, dandiset_data, embeddings_fname: str):
     model = "text-embedding-3-large"
-    current_title = dandiset_data["name"]
-    current_description = dandiset_data["metadata"].get("description", "")
+    # Semantic search ranks by the "full" embedding when present (see
+    # getEmbeddingsForDandiset in the job runner); the title and description
+    # embeddings are kept for runners that predate it.
+    texts = [
+        ("title", dandiset_data["name"]),
+        ("description", dandiset_data["metadata"].get("description", "")),
+        ("full", _full_summary(dandiset_data)),
+    ]
 
-    # Initialize with empty embeddings
     embeddings = []
     if os.path.exists(embeddings_fname):
         with open(embeddings_fname, "r") as f:
             embeddings = json.load(f)
 
-    need_update = False
+    new_embeddings = []
+    for label, text in texts:
+        # Reuse an existing embedding of the same text, wherever it is stored.
+        entry = next(
+            (e for e in embeddings if e["text"] == text and e["model"] == model),
+            None,
+        )
+        if entry is None:
+            print(f"Generating {label} embedding for {dandiset_data['dandiset_id']}")
+            entry = {
+                "text": text,
+                "embedding": _create_embedding_for_summary(text, model=model),
+                "model": model,
+            }
+        new_embeddings.append({"label": label, **entry})
 
-    # Check and update title embedding if needed
-    title_entry = embeddings[0] if len(embeddings) > 0 else None
-    if (
-        not title_entry
-        or title_entry["text"] != current_title
-        or title_entry["model"] != model
-    ):
-        print(f"Generating title embedding for {dandiset_data['dandiset_id']}")
-        title_embedding = _create_embedding_for_summary(current_title, model=model)
-        embeddings = [
-            {"text": current_title, "embedding": title_embedding, "model": model}
-        ] + (embeddings[1:] if len(embeddings) > 1 else [])
-        need_update = True
-
-    # Check and update description embedding if needed
-    desc_entry = embeddings[1] if len(embeddings) > 1 else None
-    if (
-        not desc_entry
-        or desc_entry["text"] != current_description
-        or desc_entry["model"] != model
-    ):
-        print(f"Generating description embedding for {dandiset_data['dandiset_id']}")
-        desc_embedding = _create_embedding_for_summary(current_description, model=model)
-        embeddings = [
-            embeddings[0],
-            {"text": current_description, "embedding": desc_embedding, "model": model},
-        ]
-        need_update = True
-
-    # Save if any updates were made
-    if need_update:
+    if new_embeddings != embeddings:
         with open(embeddings_fname, "w") as f:
-            json.dump(embeddings, f, indent=2)
+            json.dump(new_embeddings, f, indent=2)

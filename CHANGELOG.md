@@ -2,6 +2,7 @@
 
 ## September 25, 2026
 
+- DANDI semantic search now ranks dandisets by an embedding of all their searchable metadata (title, description, keywords, species, anatomy, approaches, measurement techniques, measured variables, contributors, funders, and related resources), so queries that combine a topic with a species or method, like "rat hippocampus tetrode recordings", return matching datasets.
 - Fixed the DANDI-index job runner's script sandbox, which made every interface call other than `print` hang until the time limit. The interface now runs inside the sandbox with read access to the index data only.
 - The job runner can serve HTTP (`HTTP_PORT`) with the same endpoints as neurosift-search, so clients no longer need PubNub. PubNub is now optional.
 
