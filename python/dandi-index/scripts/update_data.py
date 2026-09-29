@@ -3,6 +3,7 @@
 import os
 import json
 import time
+import signal
 import argparse
 from _embedding import _generate_embeddings_if_needed
 
@@ -13,8 +14,58 @@ from _load_dandi_data import (
 )
 from _load_asset_info import _load_asset_info
 
+# How long to wait before retrying an asset whose info could not be loaded.
+FAILED_ASSET_RETRY_SECONDS = 7 * 24 * 60 * 60
 
-def update_data(*, update_assets: bool, generate_embeddings: bool):
+
+class AssetLoadTimeout(BaseException):
+    # A BaseException, so the `except Exception` handlers inside
+    # _load_asset_info do not swallow it.
+    pass
+
+
+def _on_asset_load_timeout(signum, frame):
+    # _load_asset_info also has a bare `except:` around the lindi load, which
+    # would swallow this. Re-arm so the HDF5 fallback is interrupted too.
+    signal.alarm(10)
+    raise AssetLoadTimeout()
+
+
+def _load_asset_info_with_timeout(*, timeout: int, **kwargs):
+    """Run _load_asset_info, giving up after `timeout` seconds. Remote reads
+    have no timeout of their own, and a stalled one can hang forever."""
+    previous_handler = signal.signal(signal.SIGALRM, _on_asset_load_timeout)
+    signal.alarm(timeout)
+    try:
+        return _load_asset_info(**kwargs)
+    except AssetLoadTimeout:
+        raise TimeoutError(f"Loading asset info took more than {timeout} seconds")
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, previous_handler)
+
+
+def _write_json(fname: str, data):
+    """Write atomically, so readers (the job runner, or other workers) never
+    see a partially written file."""
+    tmp_fname = f"{fname}.tmp.{os.getpid()}"
+    with open(tmp_fname, "w") as f:
+        json.dump(data, f, indent=2)
+    os.replace(tmp_fname, fname)
+
+
+def update_data(
+    *,
+    update_assets: bool,
+    generate_embeddings: bool,
+    asset_time_limit: float = 15,
+    asset_load_timeout: int = 600,
+    shard: tuple = (0, 1),
+):
+    """Update the index. With shard=(i, n), only every n-th dandiset starting
+    at i is processed, and only shard 0 refreshes dandi.json, so that n
+    workers can split the work."""
+    shard_index, num_shards = shard
     data_dir = "data"
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
@@ -26,11 +77,10 @@ def update_data(*, update_assets: bool, generate_embeddings: bool):
     else:
         timestamp = None
     elapsed = time.time() - (timestamp or 0)
-    if elapsed > 60 * 60:
+    if elapsed > 60 * 60 and shard_index == 0:
         print("Updating dandi.json")
         dandi_data = _load_dandi_data()
-        with open(dandi_fname, "w") as f:
-            json.dump(dandi_data, f, indent=2)
+        _write_json(dandi_fname, dandi_data)
     else:
         print("Skipping dandi.json update")
         with open(dandi_fname, "r") as f:
@@ -38,7 +88,7 @@ def update_data(*, update_assets: bool, generate_embeddings: bool):
     dandisets = dandi_data["dandisets"]
     # sort by dandiset id:
     dandisets.sort(key=lambda x: x["dandiset_id"])
-    for dandiset in dandisets:
+    for dandiset in dandisets[shard_index::num_shards]:
         dandiset_id = dandiset["dandiset_id"]
         dandiset_data_dir = f"{data_dir}/dandisets/{dandiset_id}"
         if not os.path.exists(dandiset_data_dir):
@@ -76,8 +126,7 @@ def update_data(*, update_assets: bool, generate_embeddings: bool):
                 dandiset_id=dandiset_id, version=dandiset["version"]
             )
 
-            with open(dandiset_fname, "w") as f:
-                json.dump(dandiset_data, f, indent=2)
+            _write_json(dandiset_fname, dandiset_data)
         else:
             print(f"Skipping {dandiset_id} update")
             with open(dandiset_fname, "r") as f:
@@ -104,6 +153,7 @@ def update_data(*, update_assets: bool, generate_embeddings: bool):
             for nwb_file in dandiset_data["nwb_files"][:200]:
                 asset_id = nwb_file["asset_id"]
                 asset_fname = f"{dandiset_data_dir}/assets.{vvv}/{asset_id}.json"
+                failed_fname = f"{dandiset_data_dir}/assets.{vvv}/{asset_id}.failed.json"
                 asset_path = nwb_file["path"]
                 need_to_create = True
                 if os.path.exists(asset_fname):
@@ -111,23 +161,50 @@ def update_data(*, update_assets: bool, generate_embeddings: bool):
                         asset_info = json.load(f)
                     if asset_info.get("dandi_index_asset_version", None) == vvv2:
                         need_to_create = False
+                if need_to_create and os.path.exists(failed_fname):
+                    with open(failed_fname, "r") as f:
+                        failure = json.load(f)
+                    if (
+                        failure.get("dandi_index_asset_version") == vvv2
+                        and time.time() - failure.get("timestamp", 0)
+                        < FAILED_ASSET_RETRY_SECONDS
+                    ):
+                        print(f"{dandiset_id}: Skipping {asset_path}, which failed recently")
+                        need_to_create = False
                 if need_to_create:
                     print(f"{dandiset_id}: Updating asset info for {asset_path}")
                     if not os.path.exists(f"{dandiset_data_dir}/assets.{vvv}"):
                         os.makedirs(f"{dandiset_data_dir}/assets.{vvv}")
-                    asset_info = _load_asset_info(
-                        dandiset_id=dandiset_id,
-                        asset_id=asset_id,
-                        dandi_index_asset_version=vvv2,
-                    )
+                    try:
+                        asset_info = _load_asset_info_with_timeout(
+                            timeout=asset_load_timeout,
+                            dandiset_id=dandiset_id,
+                            asset_id=asset_id,
+                            dandi_index_asset_version=vvv2,
+                        )
+                    except Exception as e:
+                        # One unreadable file must not stop the update. Record
+                        # the failure so it is not retried on every run.
+                        print(f"{dandiset_id}: Failed to load asset info for {asset_path}: {e!r}")
+                        _write_json(
+                            failed_fname,
+                            {
+                                "dandi_index_asset_version": vvv2,
+                                "asset_path": asset_path,
+                                "error": repr(e),
+                                "timestamp": time.time(),
+                            },
+                        )
+                        continue
                     assert asset_info["dandi_index_asset_version"] == vvv2
-                    with open(asset_fname, "w") as f:
-                        json.dump(asset_info, f, indent=2)
+                    _write_json(asset_fname, asset_info)
+                    if os.path.exists(failed_fname):
+                        os.remove(failed_fname)
                 else:
                     print(
                         f"{dandiset_id}: Asset info for {asset_path} already up to date"
                     )
-                if time.time() - start_time > 15:
+                if time.time() - start_time > asset_time_limit:
                     print(
                         f"Time limit reached for dandiset {dandiset_id}, moving to next"
                     )
@@ -146,5 +223,31 @@ if __name__ == "__main__":
         action="store_true",
         help="Generate semantic embeddings for dandiset titles and descriptions",
     )
+    parser.add_argument(
+        "--asset-time-limit",
+        type=float,
+        default=15,
+        help="Seconds to spend on asset updates per dandiset before moving on (default 15)",
+    )
+    parser.add_argument(
+        "--asset-load-timeout",
+        type=int,
+        default=600,
+        help="Seconds to allow for loading one asset before recording it as failed (default 600)",
+    )
+    parser.add_argument(
+        "--shard",
+        default="0/1",
+        help="Process only shard i of n dandisets, as i/n, to split the work across workers (default 0/1)",
+    )
     args = parser.parse_args()
-    update_data(update_assets=args.assets, generate_embeddings=args.embeddings)
+    shard_index, num_shards = (int(x) for x in args.shard.split("/"))
+    if not 0 <= shard_index < num_shards:
+        parser.error("--shard must be i/n with 0 <= i < n")
+    update_data(
+        update_assets=args.assets,
+        generate_embeddings=args.embeddings,
+        asset_time_limit=args.asset_time_limit,
+        asset_load_timeout=args.asset_load_timeout,
+        shard=(shard_index, num_shards),
+    )
