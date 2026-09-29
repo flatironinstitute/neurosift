@@ -3,6 +3,7 @@
 import os
 import json
 import time
+import signal
 import argparse
 from _embedding import _generate_embeddings_if_needed
 
@@ -15,6 +16,33 @@ from _load_asset_info import _load_asset_info
 
 # How long to wait before retrying an asset whose info could not be loaded.
 FAILED_ASSET_RETRY_SECONDS = 7 * 24 * 60 * 60
+
+
+class AssetLoadTimeout(BaseException):
+    # A BaseException, so the `except Exception` handlers inside
+    # _load_asset_info do not swallow it.
+    pass
+
+
+def _on_asset_load_timeout(signum, frame):
+    # _load_asset_info also has a bare `except:` around the lindi load, which
+    # would swallow this. Re-arm so the HDF5 fallback is interrupted too.
+    signal.alarm(10)
+    raise AssetLoadTimeout()
+
+
+def _load_asset_info_with_timeout(*, timeout: int, **kwargs):
+    """Run _load_asset_info, giving up after `timeout` seconds. Remote reads
+    have no timeout of their own, and a stalled one can hang forever."""
+    previous_handler = signal.signal(signal.SIGALRM, _on_asset_load_timeout)
+    signal.alarm(timeout)
+    try:
+        return _load_asset_info(**kwargs)
+    except AssetLoadTimeout:
+        raise TimeoutError(f"Loading asset info took more than {timeout} seconds")
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, previous_handler)
 
 
 def _write_json(fname: str, data):
@@ -31,6 +59,7 @@ def update_data(
     update_assets: bool,
     generate_embeddings: bool,
     asset_time_limit: float = 15,
+    asset_load_timeout: int = 600,
     shard: tuple = (0, 1),
 ):
     """Update the index. With shard=(i, n), only every n-th dandiset starting
@@ -147,7 +176,8 @@ def update_data(
                     if not os.path.exists(f"{dandiset_data_dir}/assets.{vvv}"):
                         os.makedirs(f"{dandiset_data_dir}/assets.{vvv}")
                     try:
-                        asset_info = _load_asset_info(
+                        asset_info = _load_asset_info_with_timeout(
+                            timeout=asset_load_timeout,
                             dandiset_id=dandiset_id,
                             asset_id=asset_id,
                             dandi_index_asset_version=vvv2,
@@ -200,6 +230,12 @@ if __name__ == "__main__":
         help="Seconds to spend on asset updates per dandiset before moving on (default 15)",
     )
     parser.add_argument(
+        "--asset-load-timeout",
+        type=int,
+        default=600,
+        help="Seconds to allow for loading one asset before recording it as failed (default 600)",
+    )
+    parser.add_argument(
         "--shard",
         default="0/1",
         help="Process only shard i of n dandisets, as i/n, to split the work across workers (default 0/1)",
@@ -212,5 +248,6 @@ if __name__ == "__main__":
         update_assets=args.assets,
         generate_embeddings=args.embeddings,
         asset_time_limit=args.asset_time_limit,
+        asset_load_timeout=args.asset_load_timeout,
         shard=(shard_index, num_shards),
     )
