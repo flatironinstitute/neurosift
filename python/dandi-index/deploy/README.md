@@ -135,15 +135,25 @@ pastes reliably into the DigitalOcean web console — unlike `crontab -e` or
 backslash-continued blocks):
 
 ```bash
-printf '%s\n%s\n' '0 */6 * * * /home/neurosift/neurosift/python/dandi-index/deploy/update-index-data.sh >> ~/update-index-data.log 2>&1' '30 4 * * * /home/neurosift/neurosift/python/dandi-index/deploy/update-index-data.sh --embeddings >> ~/update-index-data.log 2>&1' | crontab -
+S=/home/neurosift/neurosift/python/dandi-index/deploy/update-index-data.sh; printf '%s\n%s\n' "0 */6 * * * flock -n /tmp/dandi-index-update.lock $S >> ~/update-index-data.log 2>&1" "30 4 * * * flock /tmp/dandi-index-update.lock $S --embeddings --assets >> ~/update-index-data.log 2>&1" | crontab -
 crontab -l
 ```
 
 That refreshes the base indexes (both DANDI and OpenNeuro) every 6 hours
-(`update_data.py` self-skips work that is still fresh) and embeddings daily at
-04:30 UTC. `--assets` applies to DANDI only; the OpenNeuro build has no asset
-pass. The wrapper uses `~/neurosift-venv/bin/python` by default; override with
-`DANDI_INDEX_PYTHON`.
+(`update_data.py` self-skips work that is still fresh), and daily at 04:30 UTC
+also refreshes embeddings and the per-file NWB index for new or changed files.
+`flock` keeps runs from overlapping: a 6-hourly run is skipped while another
+run holds the lock, and the daily run waits for it. `--assets` applies to DANDI
+only; the OpenNeuro build has no asset pass. The wrapper uses
+`~/neurosift-venv/bin/python` by default; override with `DANDI_INDEX_PYTHON`.
+
+The daily asset pass spends at most 15 seconds per dandiset, which keeps up with
+new uploads but is far too slow for a first build of the per-file index (about
+31,000 files). For that, run `scripts/update_data.py --assets` in several
+parallel workers with `--shard i/n --asset-time-limit 900`, repeating each until
+a pass reports no updates, and add the cron entries afterwards. A file that
+fails to load, or takes longer than `--asset-load-timeout` (default 600 s), is
+recorded in `<asset_id>.failed.json` and retried after a week.
 
 ## Updating the runner code later
 
