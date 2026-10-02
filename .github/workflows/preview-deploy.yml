@@ -88,7 +88,9 @@ jobs:
       # shell: bash enables pipefail, so a failed wrangler deploy (or a
       # missing alias URL) fails this step instead of passing silently.
       # The branch name comes from a fork, so it is passed through the
-      # environment rather than interpolated into the script.
+      # environment rather than interpolated into the script. It is also
+      # prefixed with "pr-": otherwise a PR from a branch named after the
+      # Pages production branch (main-v2) would deploy to production.
       - name: Deploy preview to Cloudflare Pages
         id: deploy
         shell: bash
@@ -97,7 +99,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           HEAD_BRANCH: ${{ steps.run.outputs.head_branch }}
         run: |
-          npx wrangler pages deploy dist --project-name neurosift --branch "$HEAD_BRANCH" 2>&1 | tee /tmp/deploy-output.txt
+          npx wrangler pages deploy dist --project-name neurosift --branch "pr-$HEAD_BRANCH" 2>&1 | tee /tmp/deploy-output.txt
           PREVIEW_URL=$(grep 'Deployment alias URL' /tmp/deploy-output.txt | grep -oP 'https://[^\s]+')
           echo "preview_url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
 
