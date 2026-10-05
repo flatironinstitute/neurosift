@@ -465,6 +465,22 @@ const getResolvedUrl = async (url: string): Promise<{ url: string }> => {
   return { url };
 };
 
+/**
+ * The url to read a dataset file from directly (fetch, <img>, <audio>, range
+ * requests). A DANDI /download/ url is resolved to its redirect target using
+ * the stored API key, since an embargoed asset 401s without the auth header
+ * and the readers that consume the url cannot send it themselves. Any other
+ * url is just watermarked.
+ */
+export const resolveDatasetFileUrl = async (url: string): Promise<string> => {
+  if (!isDandiAssetUrl(url)) return addRequestWatermark(url);
+  const authorizationHeader = getAuthorizationHeaderForUrl(url);
+  const headers = authorizationHeader
+    ? { Authorization: authorizationHeader }
+    : undefined;
+  return (await getRedirectUrl(url, headers)) || addRequestWatermark(url);
+};
+
 export const isDandiAssetUrl = (url: string) => {
   if (url.startsWith("https://api.sandbox.dandiarchive.org/")) {
     return true;

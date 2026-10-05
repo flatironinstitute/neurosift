@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { FunctionComponent, useEffect, useState } from "react";
 import { DatasetPluginProps } from "../pluginInterface";
-import { addRequestWatermark } from "../../../../../util/requestWatermark";
+import { resolveDatasetFileUrl } from "@hdf5Interface";
 
 const TextFileView: FunctionComponent<DatasetPluginProps> = ({ file }) => {
   const [textContent, setTextContent] = useState<string | null>(null);
@@ -12,9 +12,9 @@ const TextFileView: FunctionComponent<DatasetPluginProps> = ({ file }) => {
     const fetchText = async () => {
       try {
         setLoading(true);
-        const response = await fetch(addRequestWatermark(file.urls[0]));
+        const response = await fetch(await resolveDatasetFileUrl(file.urls[0]));
         if (!response.ok) {
-          throw new Error("Failed to fetch JSON content");
+          throw new Error("Failed to fetch text content");
         }
         const data = await response.text();
         setTextContent(data);
