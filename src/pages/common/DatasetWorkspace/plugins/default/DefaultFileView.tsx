@@ -3,9 +3,13 @@ import { FunctionComponent } from "react";
 import { formatBytes } from "@shared/util/formatBytes";
 import { DatasetPluginProps } from "../pluginInterface";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import { addRequestWatermark } from "../../../../../util/requestWatermark";
+import useResolvedDatasetFileUrl from "../useResolvedDatasetFileUrl";
 
 const DefaultFileView: FunctionComponent<DatasetPluginProps> = ({ file }) => {
+  const isImage = !!file.filename.match(/\.(jpg|jpeg|png|gif)$/i);
+  const imageUrl = useResolvedDatasetFileUrl(
+    isImage ? file.urls[0] : undefined,
+  );
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h5" gutterBottom>
@@ -52,14 +56,14 @@ const DefaultFileView: FunctionComponent<DatasetPluginProps> = ({ file }) => {
         </Box>
       </Box>
 
-      {file.filename.match(/\.(jpg|jpeg|png|gif)$/i) && (
+      {isImage && imageUrl && (
         <Box sx={{ mt: 3 }}>
           <Typography variant="subtitle2" color="text.secondary" gutterBottom>
             Preview
           </Typography>
           <Box sx={{ mt: 1 }}>
             <img
-              src={addRequestWatermark(file.urls[0])}
+              src={imageUrl}
               alt={file.filename}
               style={{
                 maxWidth: "100%",

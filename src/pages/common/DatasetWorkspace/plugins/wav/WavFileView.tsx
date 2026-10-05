@@ -9,7 +9,7 @@ import { FunctionComponent, useEffect, useState } from "react";
 import { DatasetPluginProps } from "../pluginInterface";
 import AudioPlayer from "./AudioPlayer";
 import WaveformCanvas from "./WaveformCanvas";
-import { addRequestWatermark } from "../../../../../util/requestWatermark";
+import { resolveDatasetFileUrl } from "@hdf5Interface";
 
 type WaveformData = {
   data: Float32Array;
@@ -26,6 +26,7 @@ const WavFileView: FunctionComponent<DatasetPluginProps> = ({
   height = 600,
 }) => {
   const [waveformData, setWaveformData] = useState<WaveformData | undefined>();
+  const [audioUrl, setAudioUrl] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
   const { setVisibleTimeRange } = useTimeRange();
@@ -38,7 +39,9 @@ const WavFileView: FunctionComponent<DatasetPluginProps> = ({
         setIsLoading(true);
         setError(undefined);
 
-        const response = await fetch(addRequestWatermark(file.urls[0]));
+        const url = await resolveDatasetFileUrl(file.urls[0]);
+        setAudioUrl(url);
+        const response = await fetch(url);
         const arrayBuffer = await response.arrayBuffer();
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
@@ -140,14 +143,14 @@ const WavFileView: FunctionComponent<DatasetPluginProps> = ({
     return <div>Loading audio file...</div>;
   }
 
-  if (error || !waveformData) {
+  if (error || !waveformData || !audioUrl) {
     return <div>Error: {error || "Failed to load audio file"}</div>;
   }
 
   return (
     <div style={{ width, height, display: "flex", flexDirection: "column" }}>
       <AudioPlayer
-        audioUrl={file.urls[0]}
+        audioUrl={audioUrl}
         duration={waveformData.duration}
         height={50}
       />
