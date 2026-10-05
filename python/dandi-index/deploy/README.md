@@ -148,7 +148,7 @@ pastes reliably into the DigitalOcean web console — unlike `crontab -e` or
 backslash-continued blocks):
 
 ```bash
-S=/home/neurosift/neurosift/python/dandi-index/deploy/update-index-data.sh; printf '%s\n%s\n' "0 */6 * * * flock -n /tmp/dandi-index-update.lock $S >> ~/update-index-data.log 2>&1" "30 4 * * * flock /tmp/dandi-index-update.lock $S --embeddings --assets >> ~/update-index-data.log 2>&1" | crontab -
+S=/home/neurosift/neurosift/python/dandi-index/deploy/update-index-data.sh; printf '%s\n%s\n' "0 */6 * * * flock -n /tmp/dandi-index-update.lock $S >> ~/update-index-data.log 2>&1" "30 4 * * * flock /tmp/dandi-index-update.lock $S --embeddings --assets --asset-time-limit 600 >> ~/update-index-data.log 2>&1" | crontab -
 crontab -l
 ```
 
@@ -160,9 +160,10 @@ run holds the lock, and the daily run waits for it. `--assets` applies to DANDI
 only; the OpenNeuro build has no asset pass. The wrapper uses
 `~/neurosift-venv/bin/python` by default; override with `DANDI_INDEX_PYTHON`.
 
-The daily asset pass spends at most 15 seconds per dandiset, which keeps up with
-new uploads but is far too slow for a first build of the per-file index (about
-31,000 files). For that, run `scripts/update_data.py --assets` in several
+The daily asset pass spends up to 10 minutes on each dandiset that has new
+files (the default of 15 seconds indexes only a file or two per day when a file
+has to be read directly from DANDI). That keeps up with new uploads but is too
+slow for a first build of the per-file index (about 31,000 files). For that, run `scripts/update_data.py --assets` in several
 parallel workers with `--shard i/n --asset-time-limit 900`, repeating each until
 a pass reports no updates, and add the cron entries afterwards. A file that
 fails to load, or takes longer than `--asset-load-timeout` (default 600 s), is
