@@ -68,7 +68,9 @@ def _full_summary(dandiset_data) -> str:
         name = c.get("name")
         if not name:
             continue
-        target = funders if "dcite:Funder" in (c.get("roleName") or []) else contributors
+        target = (
+            funders if "dcite:Funder" in (c.get("roleName") or []) else contributors
+        )
         if name not in target:
             target.append(name)
     fields = _metadata_fields(dandiset_data) + [
