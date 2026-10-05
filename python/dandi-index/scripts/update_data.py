@@ -153,7 +153,9 @@ def update_data(
             for nwb_file in dandiset_data["nwb_files"][:200]:
                 asset_id = nwb_file["asset_id"]
                 asset_fname = f"{dandiset_data_dir}/assets.{vvv}/{asset_id}.json"
-                failed_fname = f"{dandiset_data_dir}/assets.{vvv}/{asset_id}.failed.json"
+                failed_fname = (
+                    f"{dandiset_data_dir}/assets.{vvv}/{asset_id}.failed.json"
+                )
                 asset_path = nwb_file["path"]
                 need_to_create = True
                 if os.path.exists(asset_fname):
@@ -169,7 +171,9 @@ def update_data(
                         and time.time() - failure.get("timestamp", 0)
                         < FAILED_ASSET_RETRY_SECONDS
                     ):
-                        print(f"{dandiset_id}: Skipping {asset_path}, which failed recently")
+                        print(
+                            f"{dandiset_id}: Skipping {asset_path}, which failed recently"
+                        )
                         need_to_create = False
                 if need_to_create:
                     print(f"{dandiset_id}: Updating asset info for {asset_path}")
@@ -185,7 +189,9 @@ def update_data(
                     except Exception as e:
                         # One unreadable file must not stop the update. Record
                         # the failure so it is not retried on every run.
-                        print(f"{dandiset_id}: Failed to load asset info for {asset_path}: {e!r}")
+                        print(
+                            f"{dandiset_id}: Failed to load asset info for {asset_path}: {e!r}"
+                        )
                         _write_json(
                             failed_fname,
                             {
