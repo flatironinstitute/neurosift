@@ -273,7 +273,10 @@ const computeCosineSimilarity = (vec1: number[], vec2: number[]): number => {
 export const computeOpenAIEmbedding = async (
   query: string
 ): Promise<number[]> => {
-  const model = "text-embedding-3-large";
+  // OPENAI_BASE_URL (read by the client) and OPENAI_EMBEDDING_MODEL allow an
+  // OpenAI-compatible provider that serves the same model under another
+  // name, e.g. openai/text-embedding-3-large on OpenRouter.
+  const model = process.env.OPENAI_EMBEDDING_MODEL || "text-embedding-3-large";
   const response = await getOpenAI().embeddings.create({
     input: query,
     model: model,

@@ -69,6 +69,19 @@ PUBNUB_SUBSCRIBE_KEY="sub-c-..."
 OPENAI_API_KEY="sk-..."
 ```
 
+Embeddings (index builds and search queries) use OpenAI's
+`text-embedding-3-large`. To get it from another OpenAI-compatible provider,
+add that provider's address and its name for the same model, and put its key
+in `OPENAI_API_KEY`. For OpenRouter:
+
+```
+OPENAI_BASE_URL="https://openrouter.ai/api/v1"
+OPENAI_EMBEDDING_MODEL="openai/text-embedding-3-large"
+```
+
+Keep it the same model: stored embeddings are only comparable with query
+embeddings from the model that produced them.
+
 ## 5. (as neurosift) Python env + initial index data
 
 ```bash
