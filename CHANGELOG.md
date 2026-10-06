@@ -1,5 +1,9 @@
 # Changes
 
+## October 6, 2026
+
+- The DANDI-index job runner and index builders can get embeddings from another OpenAI-compatible provider that serves `text-embedding-3-large`, such as OpenRouter, by setting `OPENAI_BASE_URL` and `OPENAI_EMBEDDING_MODEL`. Defaults are unchanged.
+
 ## September 25, 2026
 
 - DANDI semantic search now ranks dandisets by an embedding of all their searchable metadata (title, description, keywords, species, anatomy, approaches, measurement techniques, measured variables, contributors, funders, and related resources), so queries that combine a topic with a species or method, like "rat hippocampus tetrode recordings", return matching datasets.
