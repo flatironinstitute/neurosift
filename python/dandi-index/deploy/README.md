@@ -97,10 +97,10 @@ those tokens are short-lived it is deliberately kept out of cron. EBRAINS
 datasets change slowly, so refresh by hand every few months:
 
 ```bash
-~/neurosift-venv/bin/pip install kg-core           # one time
+~/neurosift-venv/bin/pip install ebrains-kg-core   # one time (provides kg_core)
 cd ~/neurosift/python/ebrains-index
 # Get a fresh EBRAINS bearer token, then:
-TOKEN="<ebrains-token>" ~/neurosift-venv/bin/python scripts/update_data.py             # base (~1100 datasets)
+TOKEN="<ebrains-token>" ~/neurosift-venv/bin/python scripts/update_data.py             # base (~1200 datasets)
 TOKEN="<ebrains-token>" ~/neurosift-venv/bin/python scripts/update_data.py --embeddings # enables semanticSortEbrainsDatasets
 ```
 
