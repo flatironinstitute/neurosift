@@ -18,7 +18,11 @@ def _create_embedding_for_summary(summary: str, *, model: str):
     client = openai.Client(
         api_key=OPENAI_API_KEY,
     )
-    response = client.embeddings.create(input=summary, model=model)
+    # OPENAI_BASE_URL (read by the client) and OPENAI_EMBEDDING_MODEL allow an
+    # OpenAI-compatible provider that serves the same model under another
+    # name, e.g. openai/text-embedding-3-large on OpenRouter.
+    api_model = os.environ.get("OPENAI_EMBEDDING_MODEL") or model
+    response = client.embeddings.create(input=summary, model=api_model)
     return response.data[0].embedding
 
 
