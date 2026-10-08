@@ -1,11 +1,23 @@
-import React, { useState } from "react";
-import { Card, CardContent, Typography, IconButton, Box } from "@mui/material";
+import React, { lazy, Suspense, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CircularProgress,
+  Typography,
+  IconButton,
+  Box,
+} from "@mui/material";
 import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import { Annotation } from "../../common/useResourceAnnotations";
-import DandisetPage from "../../../pages/DandisetPage";
 import { Link } from "react-router";
-import OpenNeuroDatasetPage from "../../../pages/OpenNeuroDatasetPage/OpenNeuroDatasetPage";
-import NwbPage from "../../../pages/NwbPage/NwbPage";
+
+// The embedded pages are fetched when a card is first expanded, so the home
+// page does not download them up front.
+const DandisetPage = lazy(() => import("../../../pages/DandisetPage"));
+const OpenNeuroDatasetPage = lazy(
+  () => import("../../../pages/OpenNeuroDatasetPage/OpenNeuroDatasetPage"),
+);
+const NwbPage = lazy(() => import("../../../pages/NwbPage/NwbPage"));
 
 interface Props {
   annotation: Annotation;
@@ -52,33 +64,35 @@ const ExpandableAnnotationCard: React.FC<Props> = ({ annotation, width }) => {
         </Box>
         {expanded && (
           <Box sx={{ mt: 2 }}>
-            {annotation.targetType === "dandiset" && (
-              <DandisetPage
-                width={width}
-                height={500}
-                dandisetId={
-                  getDandisetIdFromTags(annotation.tags) || "no-such-tag"
-                }
-              />
-            )}
-            {annotation.targetType === "openneuro_dataset" && (
-              <OpenNeuroDatasetPage
-                width={width}
-                height={500}
-                datasetId={
-                  getOpenNeuroDatasetIdFromTags(annotation.tags) ||
-                  "no-such-tag"
-                }
-              />
-            )}
-            {annotation.targetType === "nwb_file" && (
-              <NwbPage
-                width={width}
-                height={800}
-                dandisetId={getDandisetIdFromTags(annotation.tags)}
-                nwbUrl={getUrlFromTags(annotation.tags) || "no-such-tag"}
-              />
-            )}
+            <Suspense fallback={<CircularProgress />}>
+              {annotation.targetType === "dandiset" && (
+                <DandisetPage
+                  width={width}
+                  height={500}
+                  dandisetId={
+                    getDandisetIdFromTags(annotation.tags) || "no-such-tag"
+                  }
+                />
+              )}
+              {annotation.targetType === "openneuro_dataset" && (
+                <OpenNeuroDatasetPage
+                  width={width}
+                  height={500}
+                  datasetId={
+                    getOpenNeuroDatasetIdFromTags(annotation.tags) ||
+                    "no-such-tag"
+                  }
+                />
+              )}
+              {annotation.targetType === "nwb_file" && (
+                <NwbPage
+                  width={width}
+                  height={800}
+                  dandisetId={getDandisetIdFromTags(annotation.tags)}
+                  nwbUrl={getUrlFromTags(annotation.tags) || "no-such-tag"}
+                />
+              )}
+            </Suspense>
           </Box>
         )}
       </CardContent>

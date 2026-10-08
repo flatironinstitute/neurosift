@@ -1,10 +1,12 @@
+import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import {
   isTimeSeriesLikeGroup,
   timeSeriesSamplesPerChannel,
 } from "./detection";
-import EventRelatedSignalView from "./EventRelatedSignalView";
+
+const EventRelatedSignalView = lazy(() => import("./EventRelatedSignalView"));
 
 // An event-related view of any TimeSeries relative to the events of a
 // TimeIntervals table. Like the PSTH, it extracts short snippets of the series

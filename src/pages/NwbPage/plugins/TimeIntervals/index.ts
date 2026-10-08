@@ -1,7 +1,9 @@
+import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
-import TimeIntervalsPluginView from "./TimeIntervalsPluginView";
+
+const TimeIntervalsPluginView = lazy(() => import("./TimeIntervalsPluginView"));
 
 export const timeIntervalsPlugin: NwbObjectViewPlugin = {
   name: "TimeIntervals",

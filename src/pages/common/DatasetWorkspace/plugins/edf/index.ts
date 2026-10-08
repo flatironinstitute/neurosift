@@ -1,5 +1,7 @@
+import { lazy } from "react";
 import { DatasetPlugin } from "../pluginInterface";
-import EdfFileView from "./EdfFileView";
+
+const EdfFileView = lazy(() => import("./EdfFileView"));
 
 const edfPlugin: DatasetPlugin = {
   name: "edf",

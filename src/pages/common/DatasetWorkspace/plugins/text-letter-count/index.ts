@@ -1,5 +1,11 @@
+import { lazy } from "react";
 import { DatasetPlugin } from "../pluginInterface";
-import { TextLetterCountView } from "./TextLetterCountView";
+
+const TextLetterCountView = lazy(() =>
+  import("./TextLetterCountView").then((m) => ({
+    default: m.TextLetterCountView,
+  })),
+);
 
 const plugin: DatasetPlugin = {
   name: "text-letter-count",

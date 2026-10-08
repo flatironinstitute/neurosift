@@ -1,5 +1,7 @@
+import { lazy } from "react";
 import { DatasetPlugin } from "../pluginInterface";
-import JsonFileView from "./JsonFileView";
+
+const JsonFileView = lazy(() => import("./JsonFileView"));
 
 const jsonPlugin: DatasetPlugin = {
   name: "json",

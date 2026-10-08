@@ -1,10 +1,12 @@
+import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import {
   neurodataTypeInheritsFrom,
   neurodataTypeInheritsFromAny,
 } from "../../neurodataTypeInheritance";
-import TrialAlignedPluginView from "./TrialAlignedPluginView";
+
+const TrialAlignedPluginView = lazy(() => import("./TrialAlignedPluginView"));
 
 export const trialAlignedSeriesPlugin: NwbObjectViewPlugin = {
   name: "TrialAlignedSeries",

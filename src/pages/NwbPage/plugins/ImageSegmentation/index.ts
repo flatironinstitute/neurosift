@@ -1,9 +1,16 @@
+import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
-import ImageSegmentationPluginView, {
-  PlaneSegmentationPluginView,
-} from "./ImageSegmentationPluginView";
+
+const ImageSegmentationPluginView = lazy(
+  () => import("./ImageSegmentationPluginView"),
+);
+const PlaneSegmentationPluginView = lazy(() =>
+  import("./ImageSegmentationPluginView").then((m) => ({
+    default: m.PlaneSegmentationPluginView,
+  })),
+);
 
 export const imageSegmentationPlugin: NwbObjectViewPlugin = {
   name: "ImageSegmentation",

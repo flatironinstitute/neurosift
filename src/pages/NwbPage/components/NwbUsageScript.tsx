@@ -6,11 +6,14 @@ import {
   useMemo,
 } from "react";
 import Markdown from "react-markdown";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import SyntaxHighlighter from "react-syntax-highlighter/dist/esm/prism-light";
+import python from "react-syntax-highlighter/dist/esm/languages/prism/python";
 import { vs } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { getLindiUrl } from "../hdf5Interface";
 import createUsageScriptForNwbFile from "./createUsageScriptForNwbFile";
 import { useNwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
+
+SyntaxHighlighter.registerLanguage("python", python);
 
 type Props = {
   nwbUrl: string;

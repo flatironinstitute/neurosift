@@ -1,5 +1,7 @@
+import { lazy } from "react";
 import { DatasetPlugin } from "../pluginInterface";
-import NiftiView from "./NiftiView";
+
+const NiftiView = lazy(() => import("./NiftiView"));
 
 const niftiPlugin: DatasetPlugin = {
   name: "nifti",

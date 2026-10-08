@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useMemo } from "react";
-import Plot from "react-plotly.js";
+import Plot from "@components/LazyPlot";
 import { internId, shadesOf } from "./palette";
 import { LoadedSweep } from "./useSweepData";
 

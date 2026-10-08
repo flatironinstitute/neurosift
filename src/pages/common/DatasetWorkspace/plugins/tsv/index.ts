@@ -1,5 +1,7 @@
+import { lazy } from "react";
 import { DatasetPlugin } from "../pluginInterface";
-import TsvView from "./TsvView";
+
+const TsvView = lazy(() => import("./TsvView"));
 
 const tsvPlugin: DatasetPlugin = {
   name: "tsv",

@@ -1,6 +1,8 @@
+import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
-import DynamicTableView from "./DynamicTableView";
+
+const DynamicTableView = lazy(() => import("./DynamicTableView"));
 
 export const dynamicTablePlugin: NwbObjectViewPlugin = {
   name: "dynamic-table",

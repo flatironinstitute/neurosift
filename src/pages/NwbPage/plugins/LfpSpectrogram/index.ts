@@ -1,6 +1,8 @@
+import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
-import LfpSpectrogramView from "./LfpSpectrogramView";
+
+const LfpSpectrogramView = lazy(() => import("./LfpSpectrogramView"));
 
 // True if the object lives under a processing module named "LFP", e.g.
 //   /processing/LFP/ElectricalSeries

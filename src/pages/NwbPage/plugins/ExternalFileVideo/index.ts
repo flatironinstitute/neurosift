@@ -1,7 +1,9 @@
+import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
-import ExternalFileVideoView from "./ExternalFileVideoView";
+
+const ExternalFileVideoView = lazy(() => import("./ExternalFileVideoView"));
 
 export const externalFileVideoPlugin: NwbObjectViewPlugin = {
   // Internal identifier used by the plugin system
