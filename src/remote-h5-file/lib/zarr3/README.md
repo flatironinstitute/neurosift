@@ -1,0 +1,34 @@
+# Reading NWB Files as Zarr v3
+
+A prototype reader, `RemoteH5FileZarr3`, that presents an NWB file stored as Zarr v3 through the same interface as the HDF5 and LINDI readers, so the rest of neurosift does not change. The arrays are read with [zarrita](https://github.com/manzt/zarrita.js). It reads two kinds of file:
+
+- **A Zarr store written by hdmf-zarr** (0.14 or later, which writes Zarr v3). The store's consolidated metadata, in its root `zarr.json`, gives the whole tree in one request. A url is read this way when it ends in `.zarr` or is a Zarr asset in a DANDI bucket (`/zarr/<id>/`).
+- **A [zarrshadow](https://github.com/bendichter/zarrshadow) reference file** for an HDF5 NWB file: Zarr v3 metadata plus, for every chunk, where its bytes are in the original file. A url is read this way when it ends in `.zarrshadow`, `.zarrshadow.json`, or `/refs.json`.
+
+One reader serves both because both mark what Zarr lacks the same way: soft links in a group's `_LINKS` attribute, object references as `{_REFERENCE: {path}}` in attributes and as the target's path in datasets, and compound types as the `struct` data type.
+
+`store/` is a copy of the zarrshadow JavaScript store (`js/src` at commit 482174d), which is not on npm yet. It is to be replaced by the package once that is published.
+
+## Trying It
+
+Write references for an NWB file with the Python package:
+
+```python
+from zarrshadow import generate_rfs, write_rfs
+
+url = "https://api.dandiarchive.org/api/assets/<asset id>/download/"
+write_rfs(generate_rfs(url), "example.nwb.zarrshadow")
+```
+
+Serve the folder from something that answers 404 for a missing file and allows requests from other origins, then open `/nwb?url=<url of the folder>`. Vite's own server is not suitable for the data: it answers a missing file with the app's index page, and Zarr leaves out chunks that hold only the fill value, so those chunks would read as garbage.
+
+In the dev server (`npm run dev`) the default time series plot stays blank, for every reader: React's strict mode runs the effect that hands the canvas to a worker twice, and the second time fails. Use a production build (`npm run build && npx vite preview`), or switch the plot to Plotly with the button at the top right of the view.
+
+## Compound Datasets
+
+zarrita does not read the `struct` data type yet (https://github.com/manzt/zarrita.js/pull/464). Until it does, the reader opens a compound array as bytes, with the bytes of a record as one more axis, and reads the fields itself. A row comes back as the values of its fields in order, which is how the LINDI reader returns it.
+
+## What Is Not Handled
+
+- Zarr v2 stores, and Zarr v3 stores without consolidated metadata.
+- A chunk of a compound dataset that was never written reads as zeros, not as the dataset's fill value.

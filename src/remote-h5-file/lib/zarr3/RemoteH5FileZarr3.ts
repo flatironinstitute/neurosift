@@ -1,15 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
- * Reads an NWB file through a zarrshadow reference file: Zarr v3 metadata plus,
- * for every chunk, where its bytes are in the original file. The arrays are
- * read with zarrita, and the store from the zarrshadow package fetches the
- * bytes with range requests.
+ * Reads an NWB file as Zarr v3, with zarrita. The file is one of two things:
  *
- * This presents the references the way the rest of neurosift expects an HDF5
- * file: groups with attributes and children, datasets with numpy-style dtypes,
- * soft links followed, and object references as {_REFERENCE: {path}}.
+ *  - A Zarr store that hdmf-zarr wrote, read through its consolidated
+ *    metadata.
+ *  - A zarrshadow reference file: Zarr v3 metadata plus, for every chunk,
+ *    where its bytes are in the original HDF5 file. The store from the
+ *    zarrshadow package fetches those bytes with range requests.
+ *
+ * Both mark what Zarr lacks the same way: soft links in a group's _LINKS
+ * attribute, object references as {_REFERENCE: {path}} in attributes and as
+ * the target's path in datasets, and compound types as the struct data type.
+ * This presents them the way the rest of neurosift expects an HDF5 file.
  */
 import * as zarr from "zarrita";
+import type { AsyncReadable } from "zarrita";
 import { ReferenceStore } from "./store";
 import { addRequestWatermark } from "../../../util/requestWatermark";
 import { bigIntArrayToFloat64, isBigIntArray } from "../bigIntArrayToFloat64";
@@ -34,6 +39,20 @@ type NodeMetadata = {
 
 type SoftLink = { name: string; source: string; path: string };
 
+/** Where the nodes and chunks of the file come from. */
+type Source = {
+  store: AsyncReadable;
+  /** The names of the groups and arrays directly inside the group at path. */
+  children: (path: string) => string[];
+};
+
+type StructType = {
+  name: string;
+  configuration: {
+    fields: ({ name: string; data_type: any } | [string, any])[];
+  };
+};
+
 const maxSoftLinkHops = 20;
 
 // The numpy-style dtype strings that the HDF5 and LINDI readers report
@@ -53,11 +72,13 @@ const numpyDtypes: { [dataType: string]: string } = {
   string: "|O",
 };
 
+/** A compound type. It was named structured, with fields as pairs, before struct was registered. */
+const isStruct = (dataType: any): dataType is StructType =>
+  dataType?.name === "struct" || dataType?.name === "structured";
+
 const toNumpyDtype = (dataType: any): string => {
   if (typeof dataType === "string") return numpyDtypes[dataType] ?? dataType;
-  // a compound type: a record of named fields
-  if (dataType?.name === "struct" || dataType?.name === "structured")
-    return "|V";
+  if (isStruct(dataType)) return "|V";
   return String(dataType?.name ?? "");
 };
 
@@ -67,24 +88,66 @@ const nameOf = (path: string) => path.split("/").slice(-1)[0];
 
 const product = (x: number[]) => x.reduce((a, b) => a * b, 1);
 
-class RemoteH5FileZarrShadow {
+class RemoteH5FileZarr3 {
   #sourceUrls: string[] | undefined = undefined;
   #metadata = new Map<string, Promise<NodeMetadata | undefined>>();
   #arrays = new Map<
     string,
-    Promise<zarr.Array<zarr.DataType, ReferenceStore>>
+    Promise<zarr.Array<zarr.DataType, AsyncReadable>>
   >();
   constructor(
     public url: string,
-    private store: ReferenceStore,
+    private source: Source,
   ) {}
 
   static async create(url: string) {
+    return isZarrShadowUrl(url)
+      ? RemoteH5FileZarr3.createFromReferences(url)
+      : RemoteH5FileZarr3.createFromZarr(url);
+  }
+
+  /** A zarrshadow reference file, or the folder that holds one. */
+  static async createFromReferences(url: string) {
     const store = await ReferenceStore.fromUrl(url, {
       // Tag the requests to the object stores, as the other readers do
       fetch: (input, init) => fetch(addRequestWatermark(input), init),
     });
-    return new RemoteH5FileZarrShadow(url, store);
+    return new RemoteH5FileZarr3(url, {
+      store,
+      children: (path) => store.children(path),
+    });
+  }
+
+  /** A Zarr v3 store, as hdmf-zarr writes it, with consolidated metadata. */
+  static async createFromZarr(url: string) {
+    const base = url.split("?")[0].replace(/\/+$/, "");
+    const fetchStore = new zarr.FetchStore(base, {
+      fetch: (request) => fetch(addRequestWatermark(request.url), request),
+    });
+    let store;
+    try {
+      store = await zarr.withConsolidatedMetadata(fetchStore, {
+        format: "v3",
+      });
+    } catch (err) {
+      throw new Error(
+        `${base} is not a Zarr v3 store with consolidated metadata, which is what this reader needs: ${err}`,
+      );
+    }
+    // The consolidated metadata lists every node, which gives each group's children
+    const childrenOf = new Map<string, string[]>();
+    for (const { path } of store.contents()) {
+      const node = withoutSlashes(path);
+      if (node === "") continue;
+      const cut = node.lastIndexOf("/");
+      const parent = cut < 0 ? "" : node.slice(0, cut);
+      if (!childrenOf.has(parent)) childrenOf.set(parent, []);
+      childrenOf.get(parent)?.push(node.slice(cut + 1));
+    }
+    return new RemoteH5FileZarr3(url, {
+      store: store as AsyncReadable,
+      children: (path) => [...(childrenOf.get(path) ?? [])].sort(),
+    });
   }
 
   get dataIsRemote() {
@@ -98,11 +161,9 @@ class RemoteH5FileZarrShadow {
       const key = (
         path === "" ? "/zarr.json" : `/${path}/zarr.json`
       ) as `/${string}`;
-      meta = this.store
-        .get(key)
-        .then((bytes) =>
-          bytes ? JSON.parse(new TextDecoder().decode(bytes)) : undefined,
-        );
+      meta = Promise.resolve(this.source.store.get(key)).then((bytes) =>
+        bytes ? JSON.parse(new TextDecoder().decode(bytes)) : undefined,
+      );
       this.#metadata.set(path, meta);
     }
     return meta;
@@ -171,7 +232,7 @@ class RemoteH5FileZarrShadow {
       "/" + (requested === "" ? name : `${requested}/${name}`);
     const links: SoftLink[] = meta.attributes?._LINKS ?? [];
     const names = [
-      ...this.store.children(resolved),
+      ...this.source.children(resolved),
       ...links.map((link) => link.name),
     ];
     const subgroups: RemoteH5Subgroup[] = [];
@@ -226,11 +287,14 @@ class RemoteH5FileZarrShadow {
     }
     globalRemoteH5FileStats.getDatasetDataCount++;
 
+    const compound = isStruct(meta.data_type);
     let array = this.#arrays.get(resolved);
     if (!array) {
-      array = zarr.open.v3(zarr.root(this.store).resolve(resolved), {
-        kind: "array",
-      });
+      array = compound
+        ? Promise.resolve(recordBytesArray(this.source.store, resolved, meta))
+        : zarr.open.v3(zarr.root(this.source.store).resolve(resolved), {
+            kind: "array",
+          });
       this.#arrays.set(resolved, array);
       array.catch(() => this.#arrays.delete(resolved));
     }
@@ -241,6 +305,16 @@ class RemoteH5FileZarrShadow {
     const shape = meta.shape ?? [];
     const isReference = meta.attributes?._DTYPE === "object_reference";
     const convert = (values: any): any => {
+      if (compound) {
+        const endian = meta.codecs?.find((codec) => codec.name === "bytes")
+          ?.configuration?.endian;
+        return decodeRecords(
+          values,
+          meta.data_type,
+          endian !== "big",
+          meta.attributes?._REFERENCE_FIELDS ?? [],
+        );
+      }
       if (isReference) {
         // An object reference is stored as the path of its target
         return globalThis.Array.from(values as string[], (target) => ({
@@ -252,20 +326,23 @@ class RemoteH5FileZarrShadow {
       return values;
     };
 
-    if (shape.length === 0) {
+    if (shape.length === 0 && !compound) {
       // A scalar dataset: the value itself
       const chunk = await arr.getChunk([], { signal: controller.signal });
       const values = convert(toPlainArray(chunk.data));
       return values[0];
     }
-    const selection = shape.map((_, i) => {
+    const selection: (zarr.Slice | null)[] = shape.map((_, i) => {
       const ss = o.slice?.[i];
       return ss ? zarr.slice(ss[0], ss[1]) : null;
     });
+    // The bytes of a record are one more axis, which is read whole
+    if (compound) selection.push(null);
     const result = await zarr.get(arr, selection, {
       opts: { signal: controller.signal },
     });
-    return convert(inCOrder(result as any));
+    const values = convert(inCOrder(result as any));
+    return shape.length === 0 ? values[0] : values;
   }
 
   getUrls() {
@@ -278,6 +355,127 @@ class RemoteH5FileZarrShadow {
     this.#sourceUrls = v;
   }
 }
+
+const fieldsOf = (dataType: StructType): { name: string; dataType: any }[] =>
+  dataType.configuration.fields.map((field) =>
+    globalThis.Array.isArray(field)
+      ? { name: field[0], dataType: field[1] }
+      : { name: field.name, dataType: field.data_type },
+  );
+
+const numberFields: {
+  [dataType: string]: [number, (v: DataView, at: number, le: boolean) => any];
+} = {
+  int8: [1, (v, at) => v.getInt8(at)],
+  uint8: [1, (v, at) => v.getUint8(at)],
+  bool: [1, (v, at) => v.getUint8(at) !== 0],
+  int16: [2, (v, at, le) => v.getInt16(at, le)],
+  uint16: [2, (v, at, le) => v.getUint16(at, le)],
+  int32: [4, (v, at, le) => v.getInt32(at, le)],
+  uint32: [4, (v, at, le) => v.getUint32(at, le)],
+  int64: [8, (v, at, le) => Number(v.getBigInt64(at, le))],
+  uint64: [8, (v, at, le) => Number(v.getBigUint64(at, le))],
+  float32: [4, (v, at, le) => v.getFloat32(at, le)],
+  float64: [8, (v, at, le) => v.getFloat64(at, le)],
+};
+
+/** The size in bytes of one value of a field. The fields of a record are packed, with no padding. */
+const fieldSize = (dataType: any): number => {
+  if (typeof dataType === "string" && dataType in numberFields)
+    return numberFields[dataType][0];
+  if (isStruct(dataType))
+    return fieldsOf(dataType).reduce((n, f) => n + fieldSize(f.dataType), 0);
+  const size = dataType?.configuration?.length_bytes;
+  const isText = ["fixed_length_utf32", "null_terminated_bytes"].includes(
+    dataType?.name,
+  );
+  if (isText && typeof size === "number") return size;
+  throw Error(
+    `Unsupported field type in a compound dataset: ${JSON.stringify(dataType)}`,
+  );
+};
+
+/**
+ * zarrita does not read the struct data type yet
+ * (https://github.com/manzt/zarrita.js/pull/464). Until it does, a compound
+ * array is opened as bytes: the same chunks and codecs, with the bytes of a
+ * record as one more axis. decodeRecords then reads the fields.
+ *
+ * The extra axis adds a coordinate to every chunk key, always 0, which the
+ * store given to zarrita takes off again.
+ */
+const recordBytesArray = (
+  store: AsyncReadable,
+  path: string,
+  meta: NodeMetadata,
+): zarr.Array<zarr.DataType, AsyncReadable> => {
+  const size = fieldSize(meta.data_type);
+  const chunkShape = meta.chunk_grid?.configuration?.chunk_shape ?? [];
+  const chunks = `/${path}/c`;
+  const stored = (key: string) =>
+    (key.startsWith(chunks) ? key.replace(/\/0$/, "") : key) as `/${string}`;
+  const asBytes: AsyncReadable = {
+    get: (key, opts) => store.get(stored(key), opts),
+    getRange: store.getRange
+      ? (key, range, opts) => store.getRange!(stored(key), range, opts)
+      : undefined,
+  };
+  return new zarr.Array(asBytes, `/${path}`, {
+    ...(meta as any),
+    data_type: "uint8",
+    shape: [...(meta.shape ?? []), size],
+    chunk_grid: {
+      name: "regular",
+      configuration: { chunk_shape: [...chunkShape, size] },
+    },
+    fill_value: 0,
+  });
+};
+
+/**
+ * The rows of a compound dataset from their bytes, each row as the values of
+ * its fields in order, which is how the LINDI reader returns them. A field
+ * that holds an object reference becomes {_REFERENCE: {path}}.
+ */
+const decodeRecords = (
+  bytes: Uint8Array,
+  dataType: StructType,
+  littleEndian: boolean,
+  referenceFields: string[],
+): any[] => {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const read = (type: any, at: number, isReference: boolean): any => {
+    if (typeof type === "string")
+      return numberFields[type][1](view, at, littleEndian);
+    if (isStruct(type)) return readRecord(type, at, []);
+    const size = type.configuration.length_bytes;
+    let text = "";
+    if (type.name === "fixed_length_utf32") {
+      for (let i = 0; i < size; i += 4) {
+        const point = view.getUint32(at + i, littleEndian);
+        if (point !== 0) text += String.fromCodePoint(point);
+      }
+    } else {
+      const raw = bytes.subarray(at, at + size);
+      const end = raw.indexOf(0);
+      text = new TextDecoder().decode(end < 0 ? raw : raw.subarray(0, end));
+    }
+    return isReference ? { _REFERENCE: { source: ".", path: text } } : text;
+  };
+  const readRecord = (type: StructType, at: number, references: string[]) => {
+    const row: any[] = [];
+    for (const field of fieldsOf(type)) {
+      row.push(read(field.dataType, at, references.includes(field.name)));
+      at += fieldSize(field.dataType);
+    }
+    return row;
+  };
+  const size = fieldSize(dataType);
+  const rows = [];
+  for (let at = 0; at + size <= bytes.length; at += size)
+    rows.push(readRecord(dataType, at, referenceFields));
+  return rows;
+};
 
 /** zarrita's own array classes (booleans, fixed-length strings) as plain arrays. */
 const toPlainArray = (data: any): any => {
@@ -321,12 +519,21 @@ const inCOrder = (result: {
   return out;
 };
 
-const globalZarrShadowFiles: { [url: string]: RemoteH5FileZarrShadow } = {};
-export const getRemoteH5FileZarrShadow = async (url: string) => {
-  if (!globalZarrShadowFiles[url]) {
-    globalZarrShadowFiles[url] = await RemoteH5FileZarrShadow.create(url);
+const globalZarr3Files: { [url: string]: RemoteH5FileZarr3 } = {};
+export const getRemoteH5FileZarr3 = async (url: string) => {
+  if (!globalZarr3Files[url]) {
+    globalZarr3Files[url] = await RemoteH5FileZarr3.create(url);
   }
-  return globalZarrShadowFiles[url];
+  return globalZarr3Files[url];
+};
+
+/**
+ * Whether a url names a Zarr store: a folder whose name ends in .zarr, or a
+ * Zarr asset in a DANDI bucket, which is at /zarr/<id>/.
+ */
+export const isZarrUrl = (url: string) => {
+  const u = url.split("?")[0].replace(/\/+$/, "");
+  return u.endsWith(".zarr") || /\/zarr\/[0-9a-f-]{36}$/.test(u);
 };
 
 /** Whether a url names a zarrshadow reference file or the folder that holds one. */
@@ -339,4 +546,4 @@ export const isZarrShadowUrl = (url: string) => {
   );
 };
 
-export default RemoteH5FileZarrShadow;
+export default RemoteH5FileZarr3;

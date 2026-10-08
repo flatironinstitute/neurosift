@@ -14,8 +14,11 @@ vi.stubGlobal(
 if (typeof URL.createObjectURL !== "function") {
   URL.createObjectURL = () => "blob:stub";
 }
-const { default: RemoteH5FileZarrShadow, isZarrShadowUrl } =
-  await import("./RemoteH5FileZarrShadow");
+const {
+  default: RemoteH5FileZarr3,
+  isZarrShadowUrl,
+  isZarrUrl,
+} = await import("./RemoteH5FileZarr3");
 const { ReferenceStore } = await import("./store");
 
 const base64 = (bytes: Uint8Array) =>
@@ -66,6 +69,40 @@ const group = (attributes: object = {}) => ({
 });
 
 const strings = [{ name: "vlen-utf8", configuration: {} }];
+
+// A compound type as hdmf-zarr and zarrshadow write a column of
+// TimeSeriesReferenceVectorData: two integers and the path of a series, as
+// fixed-length UTF-32. The fields of a record are packed.
+const referenceChars = 24;
+const timeseriesReference = {
+  name: "struct",
+  configuration: {
+    fields: [
+      { name: "idx_start", data_type: "int32" },
+      { name: "count", data_type: "int32" },
+      {
+        name: "timeseries",
+        data_type: {
+          name: "fixed_length_utf32",
+          configuration: { length_bytes: 4 * referenceChars },
+        },
+      },
+    ],
+  },
+};
+const records = (rows: [number, number, string][]) => {
+  const size = 8 + 4 * referenceChars;
+  const out = new Uint8Array(rows.length * size);
+  const view = new DataView(out.buffer);
+  rows.forEach(([start, count, path], i) => {
+    view.setInt32(i * size, start, true);
+    view.setInt32(i * size + 4, count, true);
+    Array.from(path).forEach((c, k) =>
+      view.setUint32(i * size + 8 + 4 * k, c.codePointAt(0) ?? 0, true),
+    );
+  });
+  return out;
+};
 const data = Float32Array.from({ length: 30 }, (_, i) => i / 2);
 const timestamps = Float64Array.from({ length: 10 }, (_, i) => i * 0.1);
 
@@ -117,15 +154,66 @@ const refs: { [key: string]: unknown } = {
   "table/valid/c/0": base64(Uint8Array.from([1, 0, 1])),
   "table/id/zarr.json": array([3], "int64"),
   "table/id/c/0": base64(bytesOf(BigInt64Array.from([5n, 6n, 7n]))),
+  "table/timeseries/zarr.json": {
+    ...array([3], "int8", { _REFERENCE_FIELDS: ["timeseries"] }),
+    data_type: timeseriesReference,
+  },
+  "table/timeseries/c/0": base64(
+    records([
+      [0, 5, "/acquisition/Corrected"],
+      [5, 5, "/acquisition/DfOverF"],
+      [-1, -1, "/acquisition/Corrected"],
+    ]),
+  ),
 };
 
-const open = () =>
-  new RemoteH5FileZarrShadow(
-    "http://localhost/test.nwb.zarrshadow",
-    new ReferenceStore({ version: 2, refs } as never),
-  );
+// The same file as a Zarr store that hdmf-zarr could have written: every
+// zarr.json and chunk at its own url, and the metadata of every node also in
+// the root zarr.json.
+const zarrUrl = "http://example.test/data/session.nwb.zarr";
+const served = new Map<string, Uint8Array>();
+{
+  const consolidated: { [path: string]: unknown } = {};
+  for (const [key, value] of Object.entries(refs)) {
+    if (typeof value === "string") {
+      const binary = atob(value.slice("base64:".length));
+      served.set(
+        key,
+        Uint8Array.from(binary, (c) => c.charCodeAt(0)),
+      );
+    } else if (key !== "zarr.json") {
+      consolidated[key.slice(0, -"/zarr.json".length)] = value;
+      served.set(key, new TextEncoder().encode(JSON.stringify(value)));
+    }
+  }
+  const root = {
+    ...(refs["zarr.json"] as object),
+    consolidated_metadata: {
+      kind: "inline",
+      must_understand: false,
+      metadata: consolidated,
+    },
+  };
+  served.set("zarr.json", new TextEncoder().encode(JSON.stringify(root)));
+}
+const serve = async (input: RequestInfo | URL) => {
+  const url = typeof input === "string" ? input : (input as Request).url;
+  const key = url.split("?")[0].slice(zarrUrl.length + 1);
+  const body = served.get(key);
+  return body
+    ? new Response(body, { status: 200 })
+    : new Response(null, { status: 404 });
+};
 
-describe("RemoteH5FileZarrShadow", () => {
+const open = () => {
+  const store = new ReferenceStore({ version: 2, refs } as never);
+  return new RemoteH5FileZarr3("http://localhost/test.nwb.zarrshadow", {
+    store,
+    children: (path) => store.children(path),
+  });
+};
+
+describe("RemoteH5FileZarr3", () => {
   it("lists a group's children with their attributes", async () => {
     const f = open();
     const root = await f.getGroup("/");
@@ -237,6 +325,118 @@ describe("RemoteH5FileZarrShadow", () => {
       { _REFERENCE: { source: ".", path: "/acquisition/Corrected" } },
       { _REFERENCE: { source: ".", path: "/acquisition/DfOverF" } },
     ]);
+  });
+});
+
+describe("a compound dataset", () => {
+  it("is read as rows, with an object reference as the path it points at", async () => {
+    const f = open();
+    expect((await f.getDataset("/table/timeseries"))?.dtype).toBe("|V");
+    const corrected = {
+      _REFERENCE: { source: ".", path: "/acquisition/Corrected" },
+    };
+    const dfOverF = {
+      _REFERENCE: { source: ".", path: "/acquisition/DfOverF" },
+    };
+    expect(await f.getDatasetData("/table/timeseries", {})).toEqual([
+      [0, 5, corrected],
+      [5, 5, dfOverF],
+      [-1, -1, corrected],
+    ]);
+    expect(
+      await f.getDatasetData("/table/timeseries", { slice: [[1, 2]] }),
+    ).toEqual([[5, 5, dfOverF]]);
+  });
+});
+
+describe("a Zarr store written by hdmf-zarr", () => {
+  it("reads the same as the references do", async () => {
+    vi.stubGlobal("fetch", vi.fn(serve));
+    try {
+      const fromZarr = await RemoteH5FileZarr3.create(zarrUrl);
+      const fromReferences = open();
+      for (const path of [
+        "/",
+        "/acquisition",
+        "/acquisition/Corrected",
+        "/acquisition/DfOverF",
+        "/processing",
+        "/processing/Linked",
+        "/table",
+      ]) {
+        expect(await fromZarr.getGroup(path), path).toEqual(
+          await fromReferences.getGroup(path),
+        );
+      }
+      for (const path of [
+        "/acquisition/Corrected/data",
+        "/acquisition/DfOverF/timestamps",
+        "/processing/Linked/rate",
+        "/table/label",
+        "/table/group",
+        "/table/valid",
+        "/table/timeseries",
+      ]) {
+        expect(await fromZarr.getDatasetData(path, {}), path).toEqual(
+          await fromReferences.getDatasetData(path, {}),
+        );
+      }
+      // The metadata came with the root, so only it and the chunks were fetched
+      const fetched = vi
+        .mocked(fetch)
+        .mock.calls.map(([input]) =>
+          (typeof input === "string" ? input : (input as Request).url)
+            .split("?")[0]
+            .slice(zarrUrl.length + 1),
+        );
+      expect(fetched.filter((key) => key.endsWith("zarr.json"))).toEqual([
+        "zarr.json",
+      ]);
+    } finally {
+      vi.unstubAllGlobals();
+      vi.stubGlobal(
+        "Worker",
+        class {
+          postMessage() {}
+          addEventListener() {}
+          removeEventListener() {}
+          terminate() {}
+        },
+      );
+    }
+  });
+
+  it("says what is wrong when the store has no consolidated metadata", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(null, { status: 404 })),
+    );
+    try {
+      await expect(
+        RemoteH5FileZarr3.create("http://example.test/other.nwb.zarr"),
+      ).rejects.toThrow(/not a Zarr v3 store with consolidated metadata/);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
+
+describe("isZarrUrl", () => {
+  it("recognizes a Zarr folder and a Zarr asset in a DANDI bucket", () => {
+    for (const url of [
+      "https://example.org/data/session.nwb.zarr",
+      "https://example.org/data/session.nwb.zarr/",
+      "https://dandiarchive.s3.amazonaws.com/zarr/0d6ee8a3-4a2b-4d8c-9e5f-0123456789ab/",
+    ]) {
+      expect(isZarrUrl(url), url).toBe(true);
+    }
+    for (const url of [
+      "https://example.org/a.nwb",
+      "https://example.org/a.nwb.zarrshadow",
+      "https://dandiarchive.s3.amazonaws.com/blobs/0d6/ee8/0d6ee8a3-4a2b-4d8c-9e5f-0123456789ab",
+    ]) {
+      expect(isZarrUrl(url), url).toBe(false);
+    }
   });
 });
 

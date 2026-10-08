@@ -4,13 +4,13 @@ import { bigIntArrayToFloat64, isBigIntArray } from "./bigIntArrayToFloat64";
 import RemoteH5FileLindi, {
   getRemoteH5FileLindi,
 } from "./lindi/RemoteH5FileLindi";
-import type RemoteH5FileZarrShadow from "./zarrshadow/RemoteH5FileZarrShadow";
+import type RemoteH5FileZarr3 from "./zarr3/RemoteH5FileZarr3";
 
 export type RemoteH5FileX =
   | RemoteH5File
   | MergedRemoteH5File
   | RemoteH5FileLindi
-  | RemoteH5FileZarrShadow;
+  | RemoteH5FileZarr3;
 
 export type RemoteH5Group = {
   path: string;
