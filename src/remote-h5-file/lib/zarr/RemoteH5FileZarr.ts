@@ -100,7 +100,7 @@ const nameOf = (path: string) => path.split("/").slice(-1)[0];
 
 const product = (x: number[]) => x.reduce((a, b) => a * b, 1);
 
-class RemoteH5FileZarr3 {
+class RemoteH5FileZarr {
   #sourceUrls: string[] | undefined = undefined;
   #metadata = new Map<string, Promise<NodeMetadata | undefined>>();
   #arrays = new Map<
@@ -114,8 +114,8 @@ class RemoteH5FileZarr3 {
 
   static async create(url: string) {
     return isZarrShadowUrl(url)
-      ? RemoteH5FileZarr3.createFromReferences(url)
-      : RemoteH5FileZarr3.createFromZarr(url);
+      ? RemoteH5FileZarr.createFromReferences(url)
+      : RemoteH5FileZarr.createFromZarr(url);
   }
 
   /** A zarrshadow reference file, or the folder that holds one. */
@@ -124,7 +124,7 @@ class RemoteH5FileZarr3 {
       // Tag the requests to the object stores, as the other readers do
       fetch: (input, init) => fetch(addRequestWatermark(input), init),
     });
-    return new RemoteH5FileZarr3(url, {
+    return new RemoteH5FileZarr(url, {
       store,
       children: (path) => store.children(path),
     });
@@ -154,7 +154,7 @@ class RemoteH5FileZarr3 {
           `${base} is not a Zarr store with consolidated metadata, which is what this reader needs. As Zarr v3: ${noZarr3}. As Zarr v2: ${noZarr2}`,
         );
       }
-      return new RemoteH5FileZarr3(url, {
+      return new RemoteH5FileZarr(url, {
         store: zarr2.store,
         children: zarr2.children,
         zarr2,
@@ -170,7 +170,7 @@ class RemoteH5FileZarr3 {
       if (!childrenOf.has(parent)) childrenOf.set(parent, []);
       childrenOf.get(parent)?.push(node.slice(cut + 1));
     }
-    return new RemoteH5FileZarr3(url, {
+    return new RemoteH5FileZarr(url, {
       store: store as AsyncReadable,
       children: (path) => [...(childrenOf.get(path) ?? [])].sort(),
     });
@@ -590,12 +590,12 @@ const inCOrder = (result: {
   return out;
 };
 
-const globalZarr3Files: { [url: string]: RemoteH5FileZarr3 } = {};
-export const getRemoteH5FileZarr3 = async (url: string) => {
-  if (!globalZarr3Files[url]) {
-    globalZarr3Files[url] = await RemoteH5FileZarr3.create(url);
+const globalZarrFiles: { [url: string]: RemoteH5FileZarr } = {};
+export const getRemoteH5FileZarr = async (url: string) => {
+  if (!globalZarrFiles[url]) {
+    globalZarrFiles[url] = await RemoteH5FileZarr.create(url);
   }
-  return globalZarr3Files[url];
+  return globalZarrFiles[url];
 };
 
 /**
@@ -617,4 +617,4 @@ export const isZarrShadowUrl = (url: string) => {
   );
 };
 
-export default RemoteH5FileZarr3;
+export default RemoteH5FileZarr;

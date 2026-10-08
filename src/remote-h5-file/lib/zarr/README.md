@@ -1,6 +1,6 @@
-# Reading NWB Files as Zarr v3
+# Reading NWB Files as Zarr
 
-A prototype reader, `RemoteH5FileZarr3`, that presents an NWB file stored as Zarr v3 through the same interface as the HDF5 and LINDI readers, so the rest of neurosift does not change. The arrays are read with [zarrita](https://github.com/manzt/zarrita.js). It reads two kinds of file:
+`RemoteH5FileZarr` presents an NWB file stored as Zarr through the same interface as the HDF5 and LINDI readers, so the rest of neurosift does not change. The arrays are read with [zarrita](https://github.com/manzt/zarrita.js). It reads two kinds of file:
 
 - **A Zarr store written by hdmf-zarr.** The store's consolidated metadata gives the whole tree in one request. A url is read this way when it ends in `.zarr` or is a Zarr asset in a DANDI bucket (`/zarr/<id>/`). Both Zarr v3, which hdmf-zarr writes from version 0.14, and Zarr v2, which it wrote before, are read.
 - **A [zarrshadow](https://github.com/bendichter/zarrshadow) reference file** for an HDF5 NWB file: Zarr v3 metadata plus, for every chunk, where its bytes are in the original file. A url is read this way when it ends in `.zarrshadow`, `.zarrshadow.json`, or `/refs.json`.
@@ -9,7 +9,7 @@ One reader serves all of these because hdmf-zarr 0.14 and zarrshadow mark what Z
 
 As of October 2026 every NWB Zarr asset on DANDI is Zarr v2: all 524 complete ones, in seven dandisets.
 
-`store/` is a copy of the zarrshadow JavaScript store (`js/src` at commit 482174d), which is not on npm yet. It is to be replaced by the package once that is published.
+`store/` is a copy of the zarrshadow JavaScript store (`js/src` at commit 91c4cdb), which is not on npm yet. It is to be replaced by the package once that is published.
 
 ## Trying It
 

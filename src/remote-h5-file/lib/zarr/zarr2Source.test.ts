@@ -16,7 +16,7 @@ stubWorker();
 if (typeof URL.createObjectURL !== "function") {
   URL.createObjectURL = () => "blob:stub";
 }
-const { default: RemoteH5FileZarr3 } = await import("./RemoteH5FileZarr3");
+const { default: RemoteH5FileZarr } = await import("./RemoteH5FileZarr");
 const { parsePythonJson, translateArray, translateAttributes } =
   await import("./zarr2Source");
 
@@ -203,7 +203,7 @@ describe("a Zarr v2 store written by hdmf-zarr", () => {
   it("reads through the same interface", async () => {
     vi.stubGlobal("fetch", vi.fn(serve));
     try {
-      const f = await RemoteH5FileZarr3.create(base);
+      const f = await RemoteH5FileZarr.create(base);
       const root = await f.getGroup("/");
       expect(root?.attrs).toEqual({ nwb_version: "2.7.0" });
       expect(root?.subgroups.map((g) => g.path)).toEqual([

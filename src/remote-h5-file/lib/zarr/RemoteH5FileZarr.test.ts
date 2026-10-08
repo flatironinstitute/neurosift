@@ -15,10 +15,10 @@ if (typeof URL.createObjectURL !== "function") {
   URL.createObjectURL = () => "blob:stub";
 }
 const {
-  default: RemoteH5FileZarr3,
+  default: RemoteH5FileZarr,
   isZarrShadowUrl,
   isZarrUrl,
-} = await import("./RemoteH5FileZarr3");
+} = await import("./RemoteH5FileZarr");
 const { ReferenceStore } = await import("./store");
 
 const base64 = (bytes: Uint8Array) =>
@@ -207,13 +207,13 @@ const serve = async (input: RequestInfo | URL) => {
 
 const open = () => {
   const store = new ReferenceStore({ version: 2, refs } as never);
-  return new RemoteH5FileZarr3("http://localhost/test.nwb.zarrshadow", {
+  return new RemoteH5FileZarr("http://localhost/test.nwb.zarrshadow", {
     store,
     children: (path) => store.children(path),
   });
 };
 
-describe("RemoteH5FileZarr3", () => {
+describe("RemoteH5FileZarr", () => {
   it("lists a group's children with their attributes", async () => {
     const f = open();
     const root = await f.getGroup("/");
@@ -353,7 +353,7 @@ describe("a Zarr store written by hdmf-zarr", () => {
   it("reads the same as the references do", async () => {
     vi.stubGlobal("fetch", vi.fn(serve));
     try {
-      const fromZarr = await RemoteH5FileZarr3.create(zarrUrl);
+      const fromZarr = await RemoteH5FileZarr.create(zarrUrl);
       const fromReferences = open();
       for (const path of [
         "/",
@@ -413,7 +413,7 @@ describe("a Zarr store written by hdmf-zarr", () => {
     );
     try {
       await expect(
-        RemoteH5FileZarr3.create("http://example.test/other.nwb.zarr"),
+        RemoteH5FileZarr.create("http://example.test/other.nwb.zarr"),
       ).rejects.toThrow(/not a Zarr store with consolidated metadata/);
     } finally {
       vi.unstubAllGlobals();

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
   Canceler,
   DatasetDataType,
-  getRemoteH5FileZarr3,
+  getRemoteH5FileZarr,
   isZarrShadowUrl,
   isZarrUrl,
   RemoteH5File,
@@ -176,7 +176,7 @@ const getRemoteH5FileForUrl = async (url: string) => {
       if (isZarrShadowUrl(urlResolved) || isZarrUrl(urlResolved)) {
         hdf5Files[url] = {
           resolvedUrl: urlResolved,
-          remoteH5File: await getRemoteH5FileZarr3(urlResolved),
+          remoteH5File: await getRemoteH5FileZarr(urlResolved),
         };
       } else if (urlResolved.endsWith(".lindi.json")) {
         hdf5Files[url] = {
