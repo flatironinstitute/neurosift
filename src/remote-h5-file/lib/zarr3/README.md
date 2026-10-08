@@ -33,7 +33,7 @@ zarrita does not read the `struct` data type yet (https://github.com/manzt/zarri
 ## What Is Not Handled
 
 - A store without consolidated metadata.
-- In Zarr v2 stores, datasets that hdmf-zarr stored as Python pickles, which older versions did for some scalars, references, and compound columns, and compound datasets. These are listed, and their values come back undefined with a warning. In six assets from six dandisets, 18 of 2,116 datasets were of these kinds.
+- In Zarr v2 stores, datasets that hdmf-zarr stored as Python pickles, which older versions did for some scalars, references, and compound columns, and compound datasets. These are listed, and their values come back undefined with a warning. In six assets from six dandisets, 18 of the 2,002 datasets walked were of these kinds.
 - A link from a Zarr v2 store into another file.
 - A chunk of a compound dataset that was never written reads as zeros, not as the dataset's fill value.
 - Opening a Zarr asset from a dandiset's file list. The reader takes the url of the store, and neurosift's asset listing leaves Zarr assets out (`zarr=false`).
