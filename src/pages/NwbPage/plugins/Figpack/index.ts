@@ -1,9 +1,13 @@
+import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
-import FigpackRasterPlotView from "./FigpackRasterPlotView";
-import FigpackVideoPreviewView from "./FigpackVideoPreviewView";
-import FigpackPoseEstimationView from "./FigpackPoseEstimationView";
+
+const FigpackRasterPlotView = lazy(() => import("./FigpackRasterPlotView"));
+const FigpackVideoPreviewView = lazy(() => import("./FigpackVideoPreviewView"));
+const FigpackPoseEstimationView = lazy(
+  () => import("./FigpackPoseEstimationView"),
+);
 
 export const figpackRasterPlotPlugin: NwbObjectViewPlugin = {
   name: "FigpackRasterPlot",

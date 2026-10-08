@@ -1,7 +1,9 @@
+import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
-import RasterView from "./RasterView";
+
+const RasterView = lazy(() => import("./RasterView"));
 
 export const rasterPlugin: NwbObjectViewPlugin = {
   name: "Raster",

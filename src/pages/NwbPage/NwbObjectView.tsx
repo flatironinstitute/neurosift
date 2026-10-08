@@ -1,5 +1,5 @@
 import { CircularProgress } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { NwbObjectViewPlugin } from "./plugins/pluginInterface";
 import { findSuitablePlugins } from "./plugins/registry";
 import { useNwbFileSpecifications } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
@@ -120,16 +120,18 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
         const PluginComponent = plugin.component;
         return (
           <div key={plugin.name}>
-            <PluginComponent
-              nwbUrl={nwbUrl}
-              path={path}
-              objectType={objectType}
-              onOpenObjectInNewTab={onOpenObjectInNewTab}
-              secondaryPaths={secondaryPaths}
-              width={componentWidth}
-              height={componentHeight || 300}
-              condensed={inMultiView}
-            />
+            <Suspense fallback={<CircularProgress />}>
+              <PluginComponent
+                nwbUrl={nwbUrl}
+                path={path}
+                objectType={objectType}
+                onOpenObjectInNewTab={onOpenObjectInNewTab}
+                secondaryPaths={secondaryPaths}
+                width={componentWidth}
+                height={componentHeight || 300}
+                condensed={inMultiView}
+              />
+            </Suspense>
             {!inMultiView && <hr />}
           </div>
         );

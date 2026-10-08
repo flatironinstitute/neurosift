@@ -1,5 +1,7 @@
+import { lazy } from "react";
 import { DatasetPlugin } from "../pluginInterface";
-import SnirfView from "./SnirfView";
+
+const SnirfView = lazy(() => import("./SnirfView"));
 
 export const snirfPlugin: DatasetPlugin = {
   name: "snirf",

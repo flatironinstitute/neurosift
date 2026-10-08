@@ -1,5 +1,10 @@
 # Changes
 
+## October 8, 2026
+
+- Pages and views now load on demand. The app used to ship as a single 8.6 MB JavaScript file that every page downloaded. Each page is now its own chunk, NWB and dataset file views load when they are opened, and Plotly, the NIfTI viewer, and the Blosc decoder load the first time they are needed. The home page downloads about 0.4 MB and the NWB page about 0.9 MB before rendering.
+- A tab left open across a deploy reloads itself when it asks for a chunk from the previous build.
+
 ## October 6, 2026
 
 - The DANDI-index job runner and index builders can get embeddings from another OpenAI-compatible provider that serves `text-embedding-3-large`, such as OpenRouter, by setting `OPENAI_BASE_URL` and `OPENAI_EMBEDDING_MODEL`. Defaults are unchanged.

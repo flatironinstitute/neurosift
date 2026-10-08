@@ -1,5 +1,7 @@
+import { lazy } from "react";
 import { DatasetPlugin } from "../pluginInterface";
-import WavFileView from "./WavFileView";
+
+const WavFileView = lazy(() => import("./WavFileView"));
 
 const plugin: DatasetPlugin = {
   name: "wav-viewer",

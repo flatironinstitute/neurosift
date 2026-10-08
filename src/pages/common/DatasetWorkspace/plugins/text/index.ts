@@ -1,5 +1,7 @@
+import { lazy } from "react";
 import { DatasetPlugin } from "../pluginInterface";
-import TextFileView from "./TextFileView";
+
+const TextFileView = lazy(() => import("./TextFileView"));
 
 const textPlugin: DatasetPlugin = {
   name: "text",
