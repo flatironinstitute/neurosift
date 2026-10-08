@@ -1,3 +1,4 @@
+import ErrorBoundary from "@components/ErrorBoundary";
 import { CircularProgress } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { NwbObjectViewPlugin } from "./plugins/pluginInterface";
@@ -120,16 +121,20 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
         const PluginComponent = plugin.component;
         return (
           <div key={plugin.name}>
-            <PluginComponent
-              nwbUrl={nwbUrl}
-              path={path}
-              objectType={objectType}
-              onOpenObjectInNewTab={onOpenObjectInNewTab}
-              secondaryPaths={secondaryPaths}
-              width={componentWidth}
-              height={componentHeight || 300}
-              condensed={inMultiView}
-            />
+            <ErrorBoundary
+              what={`the ${plugin.label ?? plugin.name} view of ${path}`}
+            >
+              <PluginComponent
+                nwbUrl={nwbUrl}
+                path={path}
+                objectType={objectType}
+                onOpenObjectInNewTab={onOpenObjectInNewTab}
+                secondaryPaths={secondaryPaths}
+                width={componentWidth}
+                height={componentHeight || 300}
+                condensed={inMultiView}
+              />
+            </ErrorBoundary>
             {!inMultiView && <hr />}
           </div>
         );
