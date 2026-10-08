@@ -17,4 +17,9 @@ export {
   default as RemoteH5FileLindi,
   getRemoteH5FileLindi,
 } from "./lib/lindi/RemoteH5FileLindi";
+export {
+  default as RemoteH5FileZarrShadow,
+  getRemoteH5FileZarrShadow,
+  isZarrShadowUrl,
+} from "./lib/zarrshadow/RemoteH5FileZarrShadow";
 export type { Canceler } from "./lib/helpers";
