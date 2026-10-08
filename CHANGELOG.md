@@ -1,5 +1,10 @@
 # Changes
 
+## October 8, 2026
+
+- An error in one view no longer blanks the whole app. Each page, each NWB tab and view, and each dataset file view is now inside an error boundary that shows the error in place with a "Try again" button and a "Report this" link, which opens a GitHub issue with the page URL and the error filled in.
+- Errors are sent to the logging endpoint: render errors caught by a boundary, uncaught errors, and unhandled promise rejections. Each distinct error is sent once per page load, and presigned URL signatures are removed from the logged page URL.
+
 ## October 6, 2026
 
 - The DANDI-index job runner and index builders can get embeddings from another OpenAI-compatible provider that serves `text-embedding-3-large`, such as OpenRouter, by setting `OPENAI_BASE_URL` and `OPENAI_EMBEDDING_MODEL`. Defaults are unchanged.

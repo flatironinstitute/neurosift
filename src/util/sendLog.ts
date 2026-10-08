@@ -9,9 +9,9 @@ interface LogPayload {
   metadata?: Record<string, unknown>;
 }
 
-function canSendLog(): boolean {
+function canSendLog(rateLimitKey: string): boolean {
   try {
-    const lastSent = localStorage.getItem(RATE_LIMIT_KEY);
+    const lastSent = localStorage.getItem(rateLimitKey);
     if (!lastSent) return true;
 
     const timeSinceLastLog = Date.now() - parseInt(lastSent, 10);
@@ -22,17 +22,22 @@ function canSendLog(): boolean {
   }
 }
 
-function updateLastSent(): void {
+function updateLastSent(rateLimitKey: string): void {
   try {
-    localStorage.setItem(RATE_LIMIT_KEY, Date.now().toString());
+    localStorage.setItem(rateLimitKey, Date.now().toString());
   } catch {
     // Ignore localStorage errors
   }
 }
 
-export async function sendLog(payload: LogPayload): Promise<void> {
+// Logs that share a rateLimitKey are limited together. Give a kind of log its
+// own key when it must not be dropped because another kind was just sent.
+export async function sendLog(
+  payload: LogPayload,
+  rateLimitKey: string = RATE_LIMIT_KEY,
+): Promise<void> {
   // Check rate limit
-  if (!canSendLog()) {
+  if (!canSendLog(rateLimitKey)) {
     return;
   }
 
@@ -46,7 +51,7 @@ export async function sendLog(payload: LogPayload): Promise<void> {
     });
 
     if (response.ok) {
-      updateLastSent();
+      updateLastSent(rateLimitKey);
     } else {
       console.warn("Failed to send log:", response.status);
     }

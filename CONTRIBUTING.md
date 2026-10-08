@@ -14,6 +14,8 @@ If you are reporting an error with an existing visualization, please include bot
 
 2. **A screenshot of the problem.** A picture of what you see, ideally with a note about what you expected instead.
 
+When a view fails with an error, Neurosift shows the error in place with a "Report this" link. That link opens a new issue with the link to the visualization and the error already filled in, so you only need to add the screenshot and what you expected.
+
 A few notes on choosing the example:
 
 - Prefer a published dandiset version over `draft` when possible. Draft assets can be replaced or removed, and dandisets can become embargoed, which makes the report impossible to reproduce later. We have had fixes become unverifiable because the only known example lived in a draft dandiset that was later embargoed.

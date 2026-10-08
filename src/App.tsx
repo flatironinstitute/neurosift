@@ -1,3 +1,4 @@
+import ErrorBoundary from "@components/ErrorBoundary";
 import StatusBar from "@components/StatusBar";
 import "@css/App.css";
 import { useWindowDimensions } from "@fi-sci/misc";
@@ -353,73 +354,77 @@ const AppContent = () => {
           top: appBarHeight,
         }}
       >
-        <Routes>
-          <Route
-            path="/"
-            element={<HomePage width={width} height={mainHeight} />}
-          />
-          <Route
-            path="/dandi"
-            element={<DandiPage width={width} height={mainHeight} />}
-          />
-          <Route
-            path="/dandiset/:dandisetId"
-            element={
-              <DandisetPageContainer width={width} height={mainHeight} />
-            }
-          />
-          <Route
-            path="/ember"
-            element={<EmberDandiPage width={width} height={mainHeight} />}
-          />
-          <Route
-            path="/ember-dandiset/:dandisetId"
-            element={
-              <EmberDandisetPageContainer width={width} height={mainHeight} />
-            }
-          />
-          <Route
-            path="/openneuro"
-            element={<OpenNeuroPage width={width} height={mainHeight} />}
-          />
-          <Route
-            path="/openneuro-dataset/:datasetId"
-            element={<OpenNeuroDatasetPage width={width} height={mainHeight} />}
-          />
-          <Route
-            path="/nwb"
-            element={<NwbPage width={width} height={mainHeight} />}
-          />
-          <Route
-            path="/settings"
-            element={<SettingsPage width={width} height={mainHeight} />}
-          />
-          <Route
-            path="/guide"
-            element={<GuidePage width={width} height={mainHeight} />}
-          />
-          <Route
-            path="/edf"
-            element={<EdfPage width={width} height={mainHeight} />}
-          />
-          <Route
-            path="/annotations"
-            element={<AnnotationsPage width={width} height={mainHeight} />}
-          />
-          <Route
-            path="/video"
-            element={<VideoPage width={width} height={mainHeight} />}
-          />
-          <Route
-            path="/slp"
-            element={<SlpPage width={width} height={mainHeight} />}
-          />
-          <Route
-            path="/experimental-neurotile"
-            element={<Navigate to="/experimental-neurosift-tiles" replace />}
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <ErrorBoundary what="this page" resetKey={location.key}>
+          <Routes>
+            <Route
+              path="/"
+              element={<HomePage width={width} height={mainHeight} />}
+            />
+            <Route
+              path="/dandi"
+              element={<DandiPage width={width} height={mainHeight} />}
+            />
+            <Route
+              path="/dandiset/:dandisetId"
+              element={
+                <DandisetPageContainer width={width} height={mainHeight} />
+              }
+            />
+            <Route
+              path="/ember"
+              element={<EmberDandiPage width={width} height={mainHeight} />}
+            />
+            <Route
+              path="/ember-dandiset/:dandisetId"
+              element={
+                <EmberDandisetPageContainer width={width} height={mainHeight} />
+              }
+            />
+            <Route
+              path="/openneuro"
+              element={<OpenNeuroPage width={width} height={mainHeight} />}
+            />
+            <Route
+              path="/openneuro-dataset/:datasetId"
+              element={
+                <OpenNeuroDatasetPage width={width} height={mainHeight} />
+              }
+            />
+            <Route
+              path="/nwb"
+              element={<NwbPage width={width} height={mainHeight} />}
+            />
+            <Route
+              path="/settings"
+              element={<SettingsPage width={width} height={mainHeight} />}
+            />
+            <Route
+              path="/guide"
+              element={<GuidePage width={width} height={mainHeight} />}
+            />
+            <Route
+              path="/edf"
+              element={<EdfPage width={width} height={mainHeight} />}
+            />
+            <Route
+              path="/annotations"
+              element={<AnnotationsPage width={width} height={mainHeight} />}
+            />
+            <Route
+              path="/video"
+              element={<VideoPage width={width} height={mainHeight} />}
+            />
+            <Route
+              path="/slp"
+              element={<SlpPage width={width} height={mainHeight} />}
+            />
+            <Route
+              path="/experimental-neurotile"
+              element={<Navigate to="/experimental-neurosift-tiles" replace />}
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </ErrorBoundary>
       </div>
 
       <div
