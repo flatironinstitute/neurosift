@@ -1,48 +1,21 @@
-interface OpenNeuroDataset {
-  id: string;
-  created: string;
-  uploader: {
-    id: string;
-    name: string;
-    orcid: string | null;
-  };
-  public: boolean;
-  latestSnapshot: {
-    size: number;
-    summary: {
-      modalities: string[];
-      sessions: string[];
-      subjects: string[];
-      totalFiles: number;
-    };
-    description: {
-      Name: string;
-      Authors: string[];
-    };
-  };
-  analytics: {
-    views: number;
-    downloads: number;
-  };
-}
+import type { OpenNeuroDataset } from "./OpenNeuroPage";
 
-interface GraphQLResponse {
-  data: {
-    datasets: {
-      edges: Array<{
-        node: OpenNeuroDataset;
-      }>;
-    };
-  };
-}
-
-export async function openNeuroSearch(query: string, limit: number = 25): Promise<OpenNeuroDataset[]> {
-  const keywords = query
+// Lists public OpenNeuro datasets, newest first. With search text, only the
+// datasets that match every word are returned.
+//
+// The query follows OpenNeuro's DatasetSearchInput type: the search words go
+// in `keywords` and the sort order in `sortBy`. Earlier versions of their API
+// took an Elasticsearch query object and a separate sortBy argument, and now
+// reject both.
+const fetchOpenNeuroDatasets = async (
+  searchText: string,
+): Promise<OpenNeuroDataset[]> => {
+  const keywords = searchText
     .split(" ")
     .map((keyword) => keyword.trim())
     .filter((keyword) => keyword.length > 0);
 
-  const graphqlQuery = `query advancedSearchDatasets(
+  const query = `query advancedSearchDatasets(
     $query: DatasetSearchInput!,
     $cursor: String,
     $allDatasets: Boolean,
@@ -54,7 +27,7 @@ export async function openNeuroSearch(query: string, limit: number = 25): Promis
       allDatasets: $allDatasets,
       datasetType: $datasetType,
       datasetStatus: $datasetStatus,
-      first: ${limit},
+      first: 25,
       after: $cursor
     ) {
       edges {
@@ -87,35 +60,43 @@ export async function openNeuroSearch(query: string, limit: number = 25): Promis
         }
       }
     }
-  }`.split("\n").join(" ");
-
-  // OpenNeuro's DatasetSearchInput: datasets must match every keyword.
-  const queryBody = {
-    sortBy: "newest",
-    ...(keywords.length > 0 ? { keywords } : {}),
-  };
+  }`;
 
   const resp = await fetch("https://openneuro.org/crn/graphql", {
-    method: "POST",
     headers: {
       "content-type": "application/json",
     },
     body: JSON.stringify({
       operationName: "advancedSearchDatasets",
       variables: {
-        query: queryBody,
+        query: {
+          sortBy: "newest",
+          ...(keywords.length > 0 ? { keywords } : {}),
+        },
         allDatasets: false,
         datasetType: "All Public",
         datasetStatus: null,
       },
-      query: graphqlQuery,
+      query,
     }),
+    method: "POST",
   });
 
   if (!resp.ok) {
     throw new Error("Failed to fetch OpenNeuro datasets");
   }
+  interface GraphQLResponse {
+    data: {
+      datasets: {
+        edges: Array<{
+          node: OpenNeuroDataset;
+        }>;
+      };
+    };
+  }
 
-  const graphQLResponse = await resp.json() as GraphQLResponse;
+  const graphQLResponse = (await resp.json()) as GraphQLResponse;
   return graphQLResponse.data.datasets.edges.map((edge) => edge.node);
-}
+};
+
+export default fetchOpenNeuroDatasets;
