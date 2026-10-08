@@ -414,7 +414,7 @@ describe("a Zarr store written by hdmf-zarr", () => {
     try {
       await expect(
         RemoteH5FileZarr3.create("http://example.test/other.nwb.zarr"),
-      ).rejects.toThrow(/not a Zarr v3 store with consolidated metadata/);
+      ).rejects.toThrow(/not a Zarr store with consolidated metadata/);
     } finally {
       vi.unstubAllGlobals();
     }

@@ -3,7 +3,8 @@
  * Reads an NWB file as Zarr v3, with zarrita. The file is one of two things:
  *
  *  - A Zarr store that hdmf-zarr wrote, read through its consolidated
- *    metadata.
+ *    metadata. A Zarr v2 store, from hdmf-zarr before 0.14, marks links and
+ *    references in an earlier way, which zarr2Source describes in the v3 form.
  *  - A zarrshadow reference file: Zarr v3 metadata plus, for every chunk,
  *    where its bytes are in the original HDF5 file. The store from the
  *    zarrshadow package fetches those bytes with range requests.
@@ -16,6 +17,7 @@
 import * as zarr from "zarrita";
 import type { AsyncReadable } from "zarrita";
 import { ReferenceStore } from "./store";
+import { openZarr2Source, toReferences, Zarr2Source } from "./zarr2Source";
 import { addRequestWatermark } from "../../../util/requestWatermark";
 import { bigIntArrayToFloat64, isBigIntArray } from "../bigIntArrayToFloat64";
 import { Canceler } from "../helpers";
@@ -35,6 +37,14 @@ type NodeMetadata = {
   data_type?: any;
   chunk_grid?: { configuration?: { chunk_shape?: number[] } };
   codecs?: { name: string; configuration?: any }[];
+  // For an array of a Zarr v2 store, described by zarr2Source
+  dtype?: string;
+  chunks?: number[];
+  compressor?: string;
+  filters?: string[];
+  scalar?: boolean;
+  references?: boolean;
+  unreadable?: string;
 };
 
 type SoftLink = { name: string; source: string; path: string };
@@ -44,6 +54,8 @@ type Source = {
   store: AsyncReadable;
   /** The names of the groups and arrays directly inside the group at path. */
   children: (path: string) => string[];
+  /** For a Zarr v2 store: the metadata of a node, and its array, in place of zarr.json. */
+  zarr2?: Zarr2Source;
 };
 
 type StructType = {
@@ -118,7 +130,10 @@ class RemoteH5FileZarr3 {
     });
   }
 
-  /** A Zarr v3 store, as hdmf-zarr writes it, with consolidated metadata. */
+  /**
+   * A Zarr store that hdmf-zarr wrote, with consolidated metadata: Zarr v3
+   * from version 0.14, and Zarr v2 before it.
+   */
   static async createFromZarr(url: string) {
     const base = url.split("?")[0].replace(/\/+$/, "");
     const fetchStore = new zarr.FetchStore(base, {
@@ -129,10 +144,21 @@ class RemoteH5FileZarr3 {
       store = await zarr.withConsolidatedMetadata(fetchStore, {
         format: "v3",
       });
-    } catch (err) {
-      throw new Error(
-        `${base} is not a Zarr v3 store with consolidated metadata, which is what this reader needs: ${err}`,
-      );
+    } catch (noZarr3) {
+      // No zarr.json with consolidated metadata: a Zarr v2 store, if anything
+      let zarr2;
+      try {
+        zarr2 = await openZarr2Source(base);
+      } catch (noZarr2) {
+        throw new Error(
+          `${base} is not a Zarr store with consolidated metadata, which is what this reader needs. As Zarr v3: ${noZarr3}. As Zarr v2: ${noZarr2}`,
+        );
+      }
+      return new RemoteH5FileZarr3(url, {
+        store: zarr2.store,
+        children: zarr2.children,
+        zarr2,
+      });
     }
     // The consolidated metadata lists every node, which gives each group's children
     const childrenOf = new Map<string, string[]>();
@@ -157,6 +183,10 @@ class RemoteH5FileZarr3 {
   /** The zarr.json of a group or array, or undefined if there is none at path. */
   #meta(path: string): Promise<NodeMetadata | undefined> {
     let meta = this.#metadata.get(path);
+    if (!meta && this.source.zarr2) {
+      meta = this.source.zarr2.meta(path);
+      this.#metadata.set(path, meta);
+    }
     if (!meta) {
       const key = (
         path === "" ? "/zarr.json" : `/${path}/zarr.json`
@@ -207,6 +237,19 @@ class RemoteH5FileZarr3 {
       .map((codec) => codec.name.replace(/^numcodecs\./, ""))
       .filter((n) => !["bytes", "transpose", "vlen-utf8"].includes(n));
     const { _LINKS: _, ...attrs } = meta.attributes ?? {};
+    if (meta.dtype !== undefined) {
+      // A Zarr v2 array, which names these things as the HDF5 reader does
+      return {
+        name,
+        path,
+        shape: meta.shape ?? [],
+        dtype: meta.dtype,
+        attrs,
+        chunks: meta.chunks,
+        compressor: meta.compressor,
+        filters: meta.filters,
+      };
+    }
     return {
       name,
       path,
@@ -286,15 +329,29 @@ class RemoteH5FileZarr3 {
       return undefined;
     }
     globalRemoteH5FileStats.getDatasetDataCount++;
+    if (meta.unreadable) {
+      console.warn(`${path} cannot be read: ${meta.unreadable}`);
+      return undefined;
+    }
 
+    if ((meta.shape ?? []).some((n) => n === 0)) {
+      // Nothing is stored for an empty dataset, and zarrita refuses an empty selection
+      return [] as unknown as DatasetDataType;
+    }
+
+    const zarr2 = this.source.zarr2;
     const compound = isStruct(meta.data_type);
     let array = this.#arrays.get(resolved);
     if (!array) {
-      array = compound
-        ? Promise.resolve(recordBytesArray(this.source.store, resolved, meta))
-        : zarr.open.v3(zarr.root(this.source.store).resolve(resolved), {
-            kind: "array",
-          });
+      if (zarr2) array = zarr2.openArray(resolved);
+      else if (compound)
+        array = Promise.resolve(
+          recordBytesArray(this.source.store, resolved, meta),
+        );
+      else
+        array = zarr.open.v3(zarr.root(this.source.store).resolve(resolved), {
+          kind: "array",
+        });
       this.#arrays.set(resolved, array);
       array.catch(() => this.#arrays.delete(resolved));
     }
@@ -304,6 +361,20 @@ class RemoteH5FileZarr3 {
     o.canceler?.onCancel.push(() => controller.abort());
     const shape = meta.shape ?? [];
     const isReference = meta.attributes?._DTYPE === "object_reference";
+    if (meta.scalar || meta.references) {
+      // Zarr v2: a scalar is an array of one, and references are objects
+      const result = await zarr.get(arr, null, {
+        opts: { signal: controller.signal },
+      });
+      let values = toPlainArray(result.data);
+      if (meta.references) values = toReferences(values);
+      else if (!o.allowBigInt && isBigIntArray(values))
+        values = bigIntArrayToFloat64(values);
+      if (meta.scalar) return values[0];
+      const start = o.slice?.[0]?.[0] ?? 0;
+      const stop = o.slice?.[0]?.[1] ?? values.length;
+      return values.slice(start, stop);
+    }
     const convert = (values: any): any => {
       if (compound) {
         const endian = meta.codecs?.find((codec) => codec.name === "bytes")
