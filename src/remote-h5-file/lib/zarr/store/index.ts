@@ -8,6 +8,7 @@ export {
   Generator,
   render,
 } from "./gen";
+export { parseJson, toStrictJson } from "./json";
 export { Selection } from "./selection";
 export {
   arrayPath,

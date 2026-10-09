@@ -109,6 +109,19 @@ const timestamps = Float64Array.from({ length: 10 }, (_, i) => i * 0.1);
 // A small stand-in for the references zarrshadow makes from an NWB file: a
 // series that owns its timestamps, a second one that soft links to them, a
 // link to a whole group, and a table with a column of object references.
+// Stand-ins for the numbers JSON does not have, and the JSON Python writes for them
+const NAN = "@NaN@";
+const INFINITY = "@Infinity@";
+const pythonJson = (value: unknown) =>
+  JSON.stringify(value).replace(/"(-?)@(NaN|Infinity)@"/g, "$1$2");
+const withStandIns = (text: string) =>
+  JSON.parse(
+    text.replace(
+      /"(?:[^"\\]|\\.)*"|(-?)(NaN|Infinity)/g,
+      (token, sign, word) => (word ? `"${sign}@${word}@"` : token),
+    ),
+  );
+
 const refs: { [key: string]: unknown } = {
   "zarr.json": group({ nwb_version: "2.7.0" }),
   "acquisition/zarr.json": group(),
@@ -150,7 +163,11 @@ const refs: { [key: string]: unknown } = {
   "table/group/c/0": base64(
     vlenUtf8(["/acquisition/Corrected", "/acquisition/DfOverF"]),
   ),
-  "table/valid/zarr.json": array([3], "bool"),
+  // Python writes an attribute that is not a number as a bare NaN, which
+  // JSON.parse refuses, so this metadata is text and not an object
+  "table/valid/zarr.json": pythonJson(
+    array([3], "bool", { resolution: NAN, limits: [`-${INFINITY}`, INFINITY] }),
+  ),
   "table/valid/c/0": base64(Uint8Array.from([1, 0, 1])),
   "table/id/zarr.json": array([3], "int64"),
   "table/id/c/0": base64(bytesOf(BigInt64Array.from([5n, 6n, 7n]))),
@@ -175,15 +192,17 @@ const served = new Map<string, Uint8Array>();
 {
   const consolidated: { [path: string]: unknown } = {};
   for (const [key, value] of Object.entries(refs)) {
-    if (typeof value === "string") {
-      const binary = atob(value.slice("base64:".length));
+    if (key.endsWith("zarr.json")) {
+      if (key === "zarr.json") continue;
+      const node = typeof value === "string" ? withStandIns(value) : value;
+      consolidated[key.slice(0, -"/zarr.json".length)] = node;
+      served.set(key, new TextEncoder().encode(pythonJson(node)));
+    } else {
+      const binary = atob((value as string).slice("base64:".length));
       served.set(
         key,
         Uint8Array.from(binary, (c) => c.charCodeAt(0)),
       );
-    } else if (key !== "zarr.json") {
-      consolidated[key.slice(0, -"/zarr.json".length)] = value;
-      served.set(key, new TextEncoder().encode(JSON.stringify(value)));
     }
   }
   const root = {
@@ -194,7 +213,7 @@ const served = new Map<string, Uint8Array>();
       metadata: consolidated,
     },
   };
-  served.set("zarr.json", new TextEncoder().encode(JSON.stringify(root)));
+  served.set("zarr.json", new TextEncoder().encode(pythonJson(root)));
 }
 const serve = async (input: RequestInfo | URL) => {
   const url = typeof input === "string" ? input : (input as Request).url;
@@ -207,10 +226,10 @@ const serve = async (input: RequestInfo | URL) => {
 
 const open = () => {
   const store = new ReferenceStore({ version: 2, refs } as never);
-  return new RemoteH5FileZarr("http://localhost/test.nwb.zarrshadow", {
+  return RemoteH5FileZarr.fromReferenceStore(
+    "http://localhost/test.nwb.zarrshadow",
     store,
-    children: (path) => store.children(path),
-  });
+  );
 };
 
 describe("RemoteH5FileZarr", () => {
@@ -311,6 +330,11 @@ describe("RemoteH5FileZarr", () => {
       false,
       true,
     ]);
+    // its attributes are the numbers Python wrote, which JSON cannot hold
+    expect((await f.getDataset("/table/valid"))?.attrs).toEqual({
+      resolution: NaN,
+      limits: [-Infinity, Infinity],
+    });
     expect(await f.getDatasetData("/table/id", {})).toEqual(
       Float64Array.from([5, 6, 7]),
     );

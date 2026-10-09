@@ -9,7 +9,7 @@ One reader serves all of these because hdmf-zarr 0.14 and zarrshadow mark what Z
 
 As of October 2026 every NWB Zarr asset on DANDI is Zarr v2: 68 assets, in dandisets 000719, 001546, 001778, and 002015.
 
-`store/` is a copy of the zarrshadow JavaScript store (`js/src` at commit 91c4cdb), which is not on npm yet. It is to be replaced by the package once that is published.
+`store/` is a copy of the zarrshadow JavaScript store (`js/src` of https://github.com/bendichter/zarrshadow/pull/40), which is not on npm yet. It is to be replaced by the package once that is published.
 
 ## Trying It
 

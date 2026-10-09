@@ -16,6 +16,7 @@
 import * as zarr from "zarrita";
 import type { AsyncReadable } from "zarrita";
 import { addRequestWatermark } from "../../../util/requestWatermark";
+import { parseJson } from "./store";
 
 export type Zarr2NodeMetadata = {
   node_type: "group" | "array";
@@ -142,32 +143,8 @@ const registerCodecs = () => {
     codecs.set("numcodecs.vlen-bytes", () => VLenBytes);
 };
 
-const nonFinite: { [token: string]: number } = {
-  NaN: NaN,
-  Infinity: Infinity,
-  "-Infinity": -Infinity,
-};
-const sentinel = "@@non-finite@@";
-
-/**
- * Parse JSON that Python wrote. Python writes NaN and the infinities as bare
- * words, which JSON does not have and JSON.parse refuses. Zarr v2 metadata
- * holds them wherever an attribute is not a number.
- */
-export const parsePythonJson = (text: string): any => {
-  // A string is matched whole, so that the words are only replaced outside of one
-  const quoted = text.replace(/"(?:[^"\\]|\\.)*"|-?Infinity|NaN/g, (token) =>
-    token.startsWith('"') ? token : `"${sentinel}${token}"`,
-  );
-  return JSON.parse(quoted, (_, value) =>
-    typeof value === "string" && value.startsWith(sentinel)
-      ? nonFinite[value.slice(sentinel.length)]
-      : value,
-  );
-};
-
-/** JSON with NaN and the infinities as strings, which is how Zarr v2 writes a fill value. */
-const toJson = (value: unknown) =>
+/** JSON with NaN and the infinities as strings, which is how Zarr writes a fill value. */
+export const stringifyStrict = (value: unknown) =>
   JSON.stringify(value, (_, x) =>
     typeof x === "number" && !Number.isFinite(x) ? String(x) : x,
   );
@@ -178,8 +155,8 @@ export const openZarr2Source = async (base: string): Promise<Zarr2Source> => {
   const response = await fetch(addRequestWatermark(`${base}/.zmetadata`));
   if (!response.ok)
     throw new Error(`HTTP ${response.status} for its .zmetadata`);
-  const metadata: { [key: string]: any } = parsePythonJson(
-    await response.text(),
+  const metadata: { [key: string]: any } = (
+    parseJson(await response.text()) as { metadata: { [key: string]: any } }
   ).metadata;
 
   // zarrita reads each array's metadata from the store, so the store answers
@@ -191,7 +168,7 @@ export const openZarr2Source = async (base: string): Promise<Zarr2Source> => {
   const store: AsyncReadable = {
     get: async (key, opts) => {
       const node = metadata[key.replace(/^\/+/, "")];
-      if (node !== undefined) return encoder.encode(toJson(node));
+      if (node !== undefined) return encoder.encode(stringifyStrict(node));
       return fetchStore.get(key, opts);
     },
     getRange: (key, range, opts) => fetchStore.getRange(key, range, opts),
