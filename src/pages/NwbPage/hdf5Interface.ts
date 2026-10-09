@@ -3,11 +3,15 @@ import { useEffect, useState } from "react";
 import {
   Canceler,
   DatasetDataType,
+  getRemoteH5FileZarr,
+  isZarrShadowUrl,
+  isZarrUrl,
   RemoteH5File,
   RemoteH5FileLindi,
   RemoteH5FileX,
 } from "@remote-h5-file";
 import { getCachedObject, setCachedObject } from "./hdf5Cache";
+import { getDandiZarrStoreUrl } from "./dandiZarrStoreUrl";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 import { removeStatusItem, setStatusItem } from "@components/StatusBarContext";
 import {
@@ -170,7 +174,12 @@ const getRemoteH5FileForUrl = async (url: string) => {
     try {
       inProgressGetRemoteH5Files[url] = true;
       const { url: urlResolved } = await getResolvedUrl(url);
-      if (urlResolved.endsWith(".lindi.json")) {
+      if (isZarrShadowUrl(urlResolved) || isZarrUrl(urlResolved)) {
+        hdf5Files[url] = {
+          resolvedUrl: urlResolved,
+          remoteH5File: await getRemoteH5FileZarr(urlResolved),
+        };
+      } else if (urlResolved.endsWith(".lindi.json")) {
         hdf5Files[url] = {
           resolvedUrl: urlResolved,
           remoteH5File: await RemoteH5FileLindi.create(urlResolved),
@@ -460,6 +469,12 @@ const getResolvedUrl = async (url: string): Promise<{ url: string }> => {
       ? { Authorization: authorizationHeader }
       : undefined;
     const redirectUrl = (await getRedirectUrl(url, headers)) || url;
+    if (redirectUrl === url) {
+      // No redirect. DANDI does not serve a Zarr asset at its download url,
+      // so see whether this is one, and if so where its store is.
+      const zarrStoreUrl = await getDandiZarrStoreUrl(url, headers);
+      if (zarrStoreUrl) return { url: zarrStoreUrl };
+    }
     return { url: redirectUrl };
   }
   return { url };

@@ -20,6 +20,7 @@ import { useDandisetVersionInfo } from "./useDandisetVersionInfo";
 import useQueryAssets from "./useQueryAssets";
 import useQueryDandiset from "./useQueryDandiset";
 import useRegisterAIComponent from "./useRegisterAIComponent";
+import { isNwbAssetPath } from "../NwbPage/dandiZarrStoreUrl";
 
 type DandisetPageProps = {
   width: number;
@@ -195,7 +196,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
 
   const specialOpenFileHandler = useCallback(
     (file: DatasetFile) => {
-      if (file.filepath.endsWith(".nwb")) {
+      if (isNwbAssetPath(file.filepath)) {
         navigate(
           `/nwb?url=${file.urls[0]}&dandisetId=${effectiveDandisetId}&dandisetVersion=${dandisetVersionInfo?.version}`,
         );
