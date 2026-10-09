@@ -66,7 +66,7 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({
       try {
         const encodedPath = encodeURIComponent(path);
         const response = await fetch(
-          `${dandiApiBaseUrl}/api/dandisets/${dandisetId}/versions/${dandisetVersion}/assets/?glob=${encodedPath}&metadata=false`,
+          `${dandiApiBaseUrl}/api/dandisets/${dandisetId}/versions/${dandisetVersion}/assets/?glob=${encodedPath}&metadata=false&zarr=false`,
         );
 
         if (!response.ok) {
