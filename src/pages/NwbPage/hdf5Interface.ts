@@ -11,6 +11,7 @@ import {
   RemoteH5FileX,
 } from "@remote-h5-file";
 import { getCachedObject, setCachedObject } from "./hdf5Cache";
+import { getDandiZarrStoreUrl } from "./dandiZarrStoreUrl";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 import { removeStatusItem, setStatusItem } from "@components/StatusBarContext";
 import {
@@ -468,6 +469,12 @@ const getResolvedUrl = async (url: string): Promise<{ url: string }> => {
       ? { Authorization: authorizationHeader }
       : undefined;
     const redirectUrl = (await getRedirectUrl(url, headers)) || url;
+    if (redirectUrl === url) {
+      // No redirect. DANDI does not serve a Zarr asset at its download url,
+      // so see whether this is one, and if so where its store is.
+      const zarrStoreUrl = await getDandiZarrStoreUrl(url, headers);
+      if (zarrStoreUrl) return { url: zarrStoreUrl };
+    }
     return { url: redirectUrl };
   }
   return { url };

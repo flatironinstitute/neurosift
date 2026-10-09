@@ -9,6 +9,8 @@ One reader serves all of these because hdmf-zarr 0.14 and zarrshadow mark what Z
 
 As of October 2026 every NWB Zarr asset on DANDI is Zarr v2: 68 assets, in dandisets 000719, 001546, 001778, and 002015.
 
+A Zarr asset on DANDI opens from its dandiset's file list like an HDF5 one, by the asset's `/download/` url. DANDI redirects that url to the file for an HDF5 asset and answers 400 for a Zarr asset, so when there is no redirect, `getDandiZarrStoreUrl` (in `src/pages/NwbPage`) looks up the url of the store in the asset's metadata.
+
 `store/` is a copy of the zarrshadow JavaScript store (`js/src` at commit 91c4cdb), which is not on npm yet. It is to be replaced by the package once that is published.
 
 ## Trying It
@@ -36,4 +38,4 @@ zarrita does not read the `struct` data type yet (https://github.com/manzt/zarri
 - In Zarr v2 stores, datasets that hdmf-zarr stored as Python pickles, which older versions did for some scalars, references, and compound columns, and compound datasets. These are listed, and their values come back undefined with a warning. Of the 23,179 arrays in the 68 assets on DANDI, 3 are pickled, all in dandiset 000719, and none is compound. Both kinds are more common in Zarr archives that are still in DANDI's bucket but are no longer an asset of a dandiset.
 - A link from a Zarr v2 store into another file.
 - A chunk of a compound dataset that was never written reads as zeros, not as the dataset's fill value.
-- Opening a Zarr asset from a dandiset's file list. The reader takes the url of the store in DANDI's bucket, and the file list opens only paths that end in `.nwb`, by a download url that DANDI does not serve for a Zarr asset.
+- The Python Usage tab writes code that loads the file with LINDI, which does not open a Zarr store.
