@@ -17,12 +17,12 @@ if (typeof URL.createObjectURL !== "function") {
   URL.createObjectURL = () => "blob:stub";
 }
 const { default: RemoteH5FileZarr } = await import("./RemoteH5FileZarr");
-const { parsePythonJson, translateArray, translateAttributes } =
-  await import("./zarr2Source");
+const { translateArray, translateAttributes } = await import("./zarr2Source");
+const { parseJson } = await import("./store");
 
-describe("parsePythonJson", () => {
+describe("parseJson", () => {
   it("reads the bare words Python writes for values that are not numbers", () => {
-    const parsed = parsePythonJson(
+    const parsed = parseJson(
       '{"resolution": NaN, "max": Infinity, "min": -Infinity, "n": 2,' +
         ' "text": "NaN and Infinity stay in a \\"string\\"", "list": [NaN, 1.5]}',
     );

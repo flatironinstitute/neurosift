@@ -16,8 +16,9 @@
  */
 import * as zarr from "zarrita";
 import type { AsyncReadable } from "zarrita";
-import { ReferenceStore } from "./store";
+import { parseJson, ReferenceStore } from "./store";
 import { openZarr2Source, toReferences, Zarr2Source } from "./zarr2Source";
+import { openZarr3Source } from "./zarr3Source";
 import { addRequestWatermark } from "../../../util/requestWatermark";
 import { bigIntArrayToFloat64, isBigIntArray } from "../bigIntArrayToFloat64";
 import { Canceler } from "../helpers";
@@ -54,7 +55,12 @@ type Source = {
   store: AsyncReadable;
   /** The names of the groups and arrays directly inside the group at path. */
   children: (path: string) => string[];
-  /** For a Zarr v2 store: the metadata of a node, and its array, in place of zarr.json. */
+  /**
+   * The metadata of the group or array at path, in the Zarr v3 form, with
+   * attributes that are not finite numbers as NaN and the infinities.
+   */
+  meta: (path: string) => Promise<NodeMetadata | undefined>;
+  /** For a Zarr v2 store: its arrays, which are opened as Zarr v2. */
   zarr2?: Zarr2Source;
 };
 
@@ -124,9 +130,28 @@ class RemoteH5FileZarr {
       // Tag the requests to the object stores, as the other readers do
       fetch: (input, init) => fetch(addRequestWatermark(input), init),
     });
+    return RemoteH5FileZarr.fromReferenceStore(url, store);
+  }
+
+  /** References that are already loaded. */
+  static fromReferenceStore(url: string, store: ReferenceStore) {
     return new RemoteH5FileZarr(url, {
       store,
       children: (path) => store.children(path),
+      meta: async (path) => {
+        // The store gives zarrita metadata with NaN as a string. The
+        // reference itself has it as Python wrote it.
+        const key = path === "" ? "zarr.json" : `${path}/zarr.json`;
+        const ref = await store.resolve(key);
+        if (typeof ref === "string" && !ref.startsWith("base64:"))
+          return parseJson(ref) as NodeMetadata;
+        if (ref !== undefined && !Array.isArray(ref))
+          return ref as NodeMetadata;
+        const bytes = await store.get(`/${key}`);
+        return bytes
+          ? (parseJson(new TextDecoder().decode(bytes)) as NodeMetadata)
+          : undefined;
+      },
     });
   }
 
@@ -136,43 +161,22 @@ class RemoteH5FileZarr {
    */
   static async createFromZarr(url: string) {
     const base = url.split("?")[0].replace(/\/+$/, "");
-    const fetchStore = new zarr.FetchStore(base, {
-      fetch: (request) => fetch(addRequestWatermark(request.url), request),
-    });
-    let store;
+    const zarr3 = await openZarr3Source(base);
+    if (zarr3) return new RemoteH5FileZarr(url, zarr3 as Source);
+    // No root zarr.json: a Zarr v2 store, if anything
+    let zarr2;
     try {
-      store = await zarr.withConsolidatedMetadata(fetchStore, {
-        format: "v3",
-      });
-    } catch (noZarr3) {
-      // No zarr.json with consolidated metadata: a Zarr v2 store, if anything
-      let zarr2;
-      try {
-        zarr2 = await openZarr2Source(base);
-      } catch (noZarr2) {
-        throw new Error(
-          `${base} is not a Zarr store with consolidated metadata, which is what this reader needs. As Zarr v3: ${noZarr3}. As Zarr v2: ${noZarr2}`,
-        );
-      }
-      return new RemoteH5FileZarr(url, {
-        store: zarr2.store,
-        children: zarr2.children,
-        zarr2,
-      });
-    }
-    // The consolidated metadata lists every node, which gives each group's children
-    const childrenOf = new Map<string, string[]>();
-    for (const { path } of store.contents()) {
-      const node = withoutSlashes(path);
-      if (node === "") continue;
-      const cut = node.lastIndexOf("/");
-      const parent = cut < 0 ? "" : node.slice(0, cut);
-      if (!childrenOf.has(parent)) childrenOf.set(parent, []);
-      childrenOf.get(parent)?.push(node.slice(cut + 1));
+      zarr2 = await openZarr2Source(base);
+    } catch (err) {
+      throw new Error(
+        `${base} is not a Zarr store with consolidated metadata, which is what this reader needs. It has no zarr.json, and as Zarr v2: ${err}`,
+      );
     }
     return new RemoteH5FileZarr(url, {
-      store: store as AsyncReadable,
-      children: (path) => [...(childrenOf.get(path) ?? [])].sort(),
+      store: zarr2.store,
+      children: zarr2.children,
+      meta: zarr2.meta,
+      zarr2,
     });
   }
 
@@ -183,17 +187,8 @@ class RemoteH5FileZarr {
   /** The zarr.json of a group or array, or undefined if there is none at path. */
   #meta(path: string): Promise<NodeMetadata | undefined> {
     let meta = this.#metadata.get(path);
-    if (!meta && this.source.zarr2) {
-      meta = this.source.zarr2.meta(path);
-      this.#metadata.set(path, meta);
-    }
     if (!meta) {
-      const key = (
-        path === "" ? "/zarr.json" : `/${path}/zarr.json`
-      ) as `/${string}`;
-      meta = Promise.resolve(this.source.store.get(key)).then((bytes) =>
-        bytes ? JSON.parse(new TextDecoder().decode(bytes)) : undefined,
-      );
+      meta = this.source.meta(path);
       this.#metadata.set(path, meta);
     }
     return meta;

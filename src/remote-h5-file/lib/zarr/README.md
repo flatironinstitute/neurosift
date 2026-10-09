@@ -11,7 +11,7 @@ As of October 2026 every NWB Zarr asset on DANDI is Zarr v2: 68 assets, in dandi
 
 A Zarr asset on DANDI opens from its dandiset's file list like an HDF5 one, by the asset's `/download/` url. DANDI redirects that url to the file for an HDF5 asset and answers 400 for a Zarr asset, so when there is no redirect, `getDandiZarrStoreUrl` (in `src/pages/NwbPage`) looks up the url of the store in the asset's metadata.
 
-`store/` is a copy of the zarrshadow JavaScript store (`js/src` at commit 91c4cdb), which is not on npm yet. It is to be replaced by the package once that is published.
+`store/` is a copy of the zarrshadow JavaScript store (`js/src` of https://github.com/bendichter/zarrshadow/pull/40), which is not on npm yet. It is to be replaced by the package once that is published.
 
 ## Trying It
 

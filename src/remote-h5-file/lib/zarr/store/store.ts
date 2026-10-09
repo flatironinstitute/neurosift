@@ -11,6 +11,7 @@ import { ChunkIndex } from "./chunk-index";
 import { registerCodecs } from "./codecs";
 import { dandiUrlResolver } from "./dandi";
 import { type FileRef, type GenEntry, Generator } from "./gen";
+import { parseJson, toStrictJson } from "./json";
 import { Selection } from "./selection";
 
 /** A reference: inline text or base64, inline JSON, or a place in a file. */
@@ -259,7 +260,7 @@ export class ReferenceStore implements AsyncReadable {
     const response = await fetch_(jsonUrl);
     if (!response.ok)
       throw new Error(`Could not read ${jsonUrl}: HTTP ${response.status}`);
-    const rfs = (await response.json()) as ReferenceFileSystem;
+    const rfs = parseJson(await response.text()) as ReferenceFileSystem;
     const folder = jsonUrl.slice(0, jsonUrl.lastIndexOf("/"));
     const indexStore = new zarr.FetchStore(
       folder,
@@ -337,7 +338,10 @@ export class ReferenceStore implements AsyncReadable {
         data = new TextEncoder().encode(JSON.stringify(ref));
       else if (ref.startsWith("base64:"))
         data = decodeBase64(ref.slice("base64:".length));
-      else data = new TextEncoder().encode(ref);
+      else if (key === "zarr.json" || key.endsWith("/zarr.json")) {
+        // zarrita reads metadata with JSON.parse, which refuses the NaN that Python writes in attributes
+        data = new TextEncoder().encode(toStrictJson(ref));
+      } else data = new TextEncoder().encode(ref);
       return range ? data.subarray(...bounds(range, data.length)) : data;
     }
     const location = this.#expandTemplates(ref[0]);
@@ -436,11 +440,15 @@ export class ReferenceStore implements AsyncReadable {
       {},
     );
     if (bytes) {
-      const meta = JSON.parse(new TextDecoder().decode(bytes));
-      const chunkShape: number[] | undefined =
-        meta.chunk_grid?.configuration?.chunk_shape;
+      const meta = parseJson(new TextDecoder().decode(bytes)) as {
+        node_type?: string;
+        data_type?: unknown;
+        chunk_grid?: { configuration?: { chunk_shape?: number[] } };
+        codecs?: { name?: string }[];
+      };
+      const chunkShape = meta.chunk_grid?.configuration?.chunk_shape;
       const uncompressed = (meta.codecs ?? []).every(
-        (codec: { name?: string }) => codec.name === "bytes",
+        (codec) => codec.name === "bytes",
       );
       const item = itemSize(meta.data_type);
       if (
