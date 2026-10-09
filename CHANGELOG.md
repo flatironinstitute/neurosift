@@ -1,5 +1,9 @@
 # Changes
 
+## October 8, 2026
+
+- NWB files stored as Zarr can be opened by url. A Zarr store written by hdmf-zarr is read through its consolidated metadata, both Zarr v2, which every NWB Zarr asset on DANDI is today, and Zarr v3. A [zarrshadow](https://github.com/bendichter/zarrshadow) reference file for an HDF5 NWB file is read the same way, with range requests into the original file. Datasets that older versions of hdmf-zarr stored as Python pickles, and compound datasets of Zarr v2 stores, are listed but not read. Opening a Zarr asset from a dandiset's file list is not part of this change.
+
 ## October 6, 2026
 
 - The DANDI-index job runner and index builders can get embeddings from another OpenAI-compatible provider that serves `text-embedding-3-large`, such as OpenRouter, by setting `OPENAI_BASE_URL` and `OPENAI_EMBEDDING_MODEL`. Defaults are unchanged.
