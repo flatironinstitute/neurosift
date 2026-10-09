@@ -7,7 +7,7 @@
 
 One reader serves all of these because hdmf-zarr 0.14 and zarrshadow mark what Zarr lacks the same way: soft links in a group's `_LINKS` attribute, object references as `{_REFERENCE: {path}}` in attributes and as the target's path in datasets, and compound types as the `struct` data type. A Zarr v2 store marks them in an earlier way (`zarr_link`, `zarr_dtype`), which `zarr2Source.ts` describes in the v3 form when the store is opened.
 
-As of October 2026 every NWB Zarr asset on DANDI is Zarr v2: all 524 complete ones, in seven dandisets.
+As of October 2026 every NWB Zarr asset on DANDI is Zarr v2: 68 assets, in dandisets 000719, 001546, 001778, and 002015.
 
 `store/` is a copy of the zarrshadow JavaScript store (`js/src` at commit 91c4cdb), which is not on npm yet. It is to be replaced by the package once that is published.
 
@@ -33,7 +33,7 @@ zarrita does not read the `struct` data type yet (https://github.com/manzt/zarri
 ## What Is Not Handled
 
 - A store without consolidated metadata.
-- In Zarr v2 stores, datasets that hdmf-zarr stored as Python pickles, which older versions did for some scalars, references, and compound columns, and compound datasets. These are listed, and their values come back undefined with a warning. In six assets from six dandisets, 18 of the 2,002 datasets walked were of these kinds.
+- In Zarr v2 stores, datasets that hdmf-zarr stored as Python pickles, which older versions did for some scalars, references, and compound columns, and compound datasets. These are listed, and their values come back undefined with a warning. Of the 23,179 arrays in the 68 assets on DANDI, 3 are pickled, all in dandiset 000719, and none is compound. Both kinds are more common in Zarr archives that are still in DANDI's bucket but are no longer an asset of a dandiset.
 - A link from a Zarr v2 store into another file.
 - A chunk of a compound dataset that was never written reads as zeros, not as the dataset's fill value.
-- Opening a Zarr asset from a dandiset's file list. The reader takes the url of the store, and neurosift's asset listing leaves Zarr assets out (`zarr=false`).
+- Opening a Zarr asset from a dandiset's file list. The reader takes the url of the store in DANDI's bucket, and the file list opens only paths that end in `.nwb`, by a download url that DANDI does not serve for a Zarr asset.
