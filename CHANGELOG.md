@@ -1,5 +1,9 @@
 # Changes
 
+## October 12, 2026
+
+- Browsers now revalidate the app's JavaScript chunks on each load. A chunk requested in the moments after a deploy could be answered with `index.html`, which browsers then reused for up to 4 hours, so the page that needed it failed to load until then.
+
 ## October 11, 2026
 
 - DANDI semantic search on the DANDI page now queries the CatalystNeuro-hosted index service (`dandi-index.catalystneuro.com`) instead of the `neurosift-search` Vercel proxy, which is being retired.
