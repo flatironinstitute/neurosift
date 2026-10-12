@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Layout, PlotData } from "plotly.js";
 import { FunctionComponent, useMemo } from "react";
-import Plot from "react-plotly.js";
+import Plot from "@components/LazyPlot";
 
 type Props = {
   data: {

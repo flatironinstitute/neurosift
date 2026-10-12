@@ -1,7 +1,9 @@
+import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
-import PoseEstimationView from "./PoseEstimationView";
+
+const PoseEstimationView = lazy(() => import("./PoseEstimationView"));
 
 export const poseEstimationPlugin: NwbObjectViewPlugin = {
   name: "PoseEstimation",

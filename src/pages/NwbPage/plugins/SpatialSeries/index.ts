@@ -1,7 +1,9 @@
+import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
 import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
 import { NwbObjectViewPlugin } from "../pluginInterface";
-import SpatialSeriesPluginView from "./SpatialSeriesPluginView";
+
+const SpatialSeriesPluginView = lazy(() => import("./SpatialSeriesPluginView"));
 
 export const spatialSeriesPlugin: NwbObjectViewPlugin = {
   name: "SpatialSeriesXY",

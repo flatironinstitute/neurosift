@@ -12,6 +12,7 @@ npm run format:check                   # prettier, all of src/ (npm run format t
 npm run lint                           # eslint
 npx tsc -b --noEmit                    # type checking
 npm test                               # unit tests (vitest)
+npm run build && npm run check:bundle  # per-page JavaScript budget
 ```
 
 Notes:
