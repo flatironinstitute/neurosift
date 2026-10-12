@@ -17,10 +17,9 @@ export {
   default as RemoteH5FileLindi,
   getRemoteH5FileLindi,
 } from "./lib/lindi/RemoteH5FileLindi";
-export {
-  default as RemoteH5FileZarr,
-  getRemoteH5FileZarr,
-  isZarrShadowUrl,
-  isZarrUrl,
-} from "./lib/zarr/RemoteH5FileZarr";
+// The Zarr reader is imported dynamically (it brings in zarrita), so only its
+// type and the url checks are exported here. Load it with
+// import("@remote-h5-file/lib/zarr/RemoteH5FileZarr").
+export type { default as RemoteH5FileZarr } from "./lib/zarr/RemoteH5FileZarr";
+export { isZarrShadowUrl, isZarrUrl } from "./lib/zarr/zarrUrls";
 export type { Canceler } from "./lib/helpers";
