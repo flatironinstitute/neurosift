@@ -1,5 +1,9 @@
 # Changes
 
+## October 11, 2026
+
+- DANDI semantic search on the DANDI page now queries the CatalystNeuro-hosted index service (`dandi-index.catalystneuro.com`) instead of the `neurosift-search` Vercel proxy, which is being retired.
+
 ## October 8, 2026
 
 - Fixed the OpenNeuro dataset page and the OpenNeuro browser, which both failed to load after OpenNeuro changed its GraphQL API. Dataset file queries no longer ask for the removed `key` field, and dataset search uses the new `DatasetSearchInput` format. The same search fix is applied to the chat agent's OpenNeuro search tool.
