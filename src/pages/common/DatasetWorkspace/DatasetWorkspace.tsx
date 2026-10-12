@@ -1,3 +1,4 @@
+import ErrorBoundary from "@components/ErrorBoundary";
 import ScrollY from "@components/ScrollY";
 import { TAB_BAR_HEIGHT, TabBar } from "@components/tabs/TabBar";
 import { BaseTabAction } from "@components/tabs/tabsReducer";
@@ -173,13 +174,17 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
                       >
                         {plugins.map((plugin, index) => (
                           <div key={index}>
-                            <Suspense fallback={<CircularProgress />}>
-                              <plugin.component
-                                file={tab.file}
-                                width={width - 20}
-                                height={pluginHeight}
-                              />
-                            </Suspense>
+                            <ErrorBoundary
+                              what={`the ${plugin.name} view of ${tab.file.filepath}`}
+                            >
+                              <Suspense fallback={<CircularProgress />}>
+                                <plugin.component
+                                  file={tab.file}
+                                  width={width - 20}
+                                  height={pluginHeight}
+                                />
+                              </Suspense>
+                            </ErrorBoundary>
                           </div>
                         ))}
                       </div>
