@@ -1,4 +1,4 @@
-import { FunctionComponent } from "react";
+import { ComponentType } from "react";
 
 export interface DatasetFile {
   id: string;
@@ -21,7 +21,7 @@ export interface DatasetPluginProps {
 export interface DatasetPlugin {
   name: string;
   type: string[]; // Glob patterns this plugin handles (e.g. "*.tsv", "CHANGES", "dataset_description.json")
-  component: FunctionComponent<DatasetPluginProps>;
+  component: ComponentType<DatasetPluginProps>;
   priority?: number;
 }
 

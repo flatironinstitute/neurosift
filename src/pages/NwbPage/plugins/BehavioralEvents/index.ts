@@ -1,7 +1,11 @@
+import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
 import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
 import { NwbObjectViewPlugin } from "../pluginInterface";
-import BehavioralEventsPluginView from "./BehavioralEventsPluginView";
+
+const BehavioralEventsPluginView = lazy(
+  () => import("./BehavioralEventsPluginView"),
+);
 
 export const behavioralEventsPlugin: NwbObjectViewPlugin = {
   name: "BehavioralEvents",

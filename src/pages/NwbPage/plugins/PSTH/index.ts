@@ -1,7 +1,9 @@
+import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
-import PSTHView from "./PSTHView";
+
+const PSTHView = lazy(() => import("./PSTHView"));
 
 export const psthPlugin: NwbObjectViewPlugin = {
   name: "PSTH",

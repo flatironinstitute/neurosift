@@ -18,6 +18,10 @@ export default defineConfig({
       "@jobManager": path.resolve(__dirname, "./src/jobManager"),
     },
   },
+  build: {
+    // Read by devel/check_bundle_size.mjs.
+    manifest: true,
+  },
   test: {
     // Only the front end's tests run here. The Python package's file server
     // and the job runners carry their own node:test suites, which vitest

@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx}\"",
-    "test": "vitest run"
+    "test": "vitest run",
+    "check:bundle": "node devel/check_bundle_size.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

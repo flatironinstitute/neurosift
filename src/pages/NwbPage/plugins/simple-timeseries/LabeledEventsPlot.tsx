@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useRef, useState } from "react";
-import Plot from "react-plotly.js";
+import Plot from "@components/LazyPlot";
 import { Data } from "plotly.js";
 import { distinctLabelValues, labeledEventPoints } from "./labeledEventsPoints";
 

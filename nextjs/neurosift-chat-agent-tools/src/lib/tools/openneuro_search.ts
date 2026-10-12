@@ -43,19 +43,17 @@ export async function openNeuroSearch(query: string, limit: number = 25): Promis
     .filter((keyword) => keyword.length > 0);
 
   const graphqlQuery = `query advancedSearchDatasets(
-    $query: JSON!,
+    $query: DatasetSearchInput!,
     $cursor: String,
     $allDatasets: Boolean,
     $datasetType: String,
-    $datasetStatus: String,
-    $sortBy: JSON
+    $datasetStatus: String
   ) {
     datasets: advancedSearch(
       query: $query,
       allDatasets: $allDatasets,
       datasetType: $datasetType,
       datasetStatus: $datasetStatus,
-      sortBy: $sortBy,
       first: ${limit},
       after: $cursor
     ) {
@@ -91,27 +89,11 @@ export async function openNeuroSearch(query: string, limit: number = 25): Promis
     }
   }`.split("\n").join(" ");
 
-  const queryBody = keywords.length > 0
-    ? {
-        bool: {
-          must: [
-            {
-              simple_query_string: {
-                query: keywords.join(" + ") + "~",
-                fields: [
-                  "id^20",
-                  "latestSnapshot.readme",
-                  "latestSnapshot.description.Name^6",
-                  "latestSnapshot.description.Authors^3",
-                ],
-              },
-            },
-          ],
-        },
-      }
-    : {
-        bool: {},
-      };
+  // OpenNeuro's DatasetSearchInput: datasets must match every keyword.
+  const queryBody = {
+    sortBy: "newest",
+    ...(keywords.length > 0 ? { keywords } : {}),
+  };
 
   const resp = await fetch("https://openneuro.org/crn/graphql", {
     method: "POST",
@@ -122,7 +104,6 @@ export async function openNeuroSearch(query: string, limit: number = 25): Promis
       operationName: "advancedSearchDatasets",
       variables: {
         query: queryBody,
-        sortBy: { created: "desc" },
         allDatasets: false,
         datasetType: "All Public",
         datasetStatus: null,
