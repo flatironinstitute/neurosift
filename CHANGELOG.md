@@ -4,6 +4,10 @@
 
 - DANDI semantic search on the DANDI page now queries the CatalystNeuro-hosted index service (`dandi-index.catalystneuro.com`) instead of the `neurosift-search` Vercel proxy, which is being retired.
 
+## October 8, 2026
+
+- Fixed the OpenNeuro dataset page and the OpenNeuro browser, which both failed to load after OpenNeuro changed its GraphQL API. Dataset file queries no longer ask for the removed `key` field, and dataset search uses the new `DatasetSearchInput` format. The same search fix is applied to the chat agent's OpenNeuro search tool.
+
 ## October 6, 2026
 
 - The DANDI-index job runner and index builders can get embeddings from another OpenAI-compatible provider that serves `text-embedding-3-large`, such as OpenRouter, by setting `OPENAI_BASE_URL` and `OPENAI_EMBEDDING_MODEL`. Defaults are unchanged.
