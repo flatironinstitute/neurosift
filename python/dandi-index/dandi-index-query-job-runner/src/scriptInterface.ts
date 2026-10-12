@@ -185,18 +185,18 @@ class DandiInterface {
       this.o.onStatusUpdate(
         `Performing semantic search for: ${o.semanticSearch}`
       );
-      const dandisetIds = await doDandisetSemanticSearch(
-        o.semanticSearch,
-        o.restrictToDandisets
-      );
-      const result: DandiInterfaceDandiset[] = [];
-      for (const dandisetId of dandisetIds) {
-        const dandiset = await this.getDandiset({ dandisetId });
-        if (dandiset) {
-          result.push(dandiset);
-        }
+      // Rank with this index's own embeddings, as semanticSortDandisets and
+      // the dandi-semantic-search endpoint do, and return the top 20.
+      let dandisets = await this.getDandisets();
+      if (o.restrictToDandisets && o.restrictToDandisets.length > 0) {
+        const allowed = new Set(o.restrictToDandisets);
+        dandisets = dandisets.filter((ds) => allowed.has(ds.dandiset_id));
       }
-      return result;
+      const sorted = await this.semanticSortDandisets(
+        dandisets,
+        o.semanticSearch
+      );
+      return sorted.slice(0, 20);
     } else {
       throw new Error("Either search or semanticSearch must be provided");
     }
@@ -693,7 +693,11 @@ export function createScriptInterface(
     getDandisets: async () => {
       return await dandiInterface.getDandisets();
     },
-    findDandisets: async (o: { search?: string; semanticSearch?: string }) => {
+    findDandisets: async (o: {
+      search?: string;
+      semanticSearch?: string;
+      restrictToDandisets?: string[];
+    }) => {
       return await dandiInterface.findDandisets(o);
     },
     getDandiset: async (o: { dandisetId: string }) => {
@@ -743,42 +747,6 @@ export interface DandisetInfo {
   embargo_status: string;
   star_count: number;
 }
-
-const doDandisetSemanticSearch = async (
-  query: string,
-  restrictToDandisets?: string[]
-): Promise<string[]> => {
-  const url =
-    "https://neurosift-chat-agent-tools.vercel.app/api/dandi_semantic_search";
-  const params: { [key: string]: any } = {
-    query,
-    limit: 20,
-  };
-  if (restrictToDandisets && restrictToDandisets.length > 0) {
-    params["dandisets"] = restrictToDandisets;
-  }
-  // POST
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(params),
-  });
-  if (!response.ok) {
-    throw new Error(
-      `Failed to perform semantic search: ${response.statusText}`
-    );
-  }
-  const data: any = await response.json();
-  if (!data) {
-    throw new Error("Semantic search returned no data");
-  }
-  if (typeof data !== "object" || !Array.isArray(data.results)) {
-    throw new Error("Semantic search returned invalid data format");
-  }
-  return data.results.map((item: { id: string }) => item.id);
-};
 
 ///// OpenNeuro Interface
 

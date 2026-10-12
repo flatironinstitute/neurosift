@@ -2,6 +2,7 @@
 
 ## October 12, 2026
 
+- The DANDI-index job runner's `findDandisets({ semanticSearch })` ranks dandisets with the index's own embeddings, the same way as `semanticSortDandisets`, instead of calling the `neurosift-chat-agent-tools` Vercel service. It returns the top 20 and still honors `restrictToDandisets`.
 - The NWB, dandiset, OpenNeuro dataset, SLP and video pages load about 63 kB less JavaScript: the Zarr reader is now fetched only when a Zarr file is opened.
 - Browsers now revalidate the app's JavaScript chunks on each load. A chunk requested in the moments after a deploy could be answered with `index.html`, which browsers then reused for up to 4 hours, so the page that needed it failed to load until then.
 
