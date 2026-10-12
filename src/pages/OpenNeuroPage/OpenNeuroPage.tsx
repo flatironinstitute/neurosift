@@ -17,6 +17,7 @@ import ScrollY from "@components/ScrollY";
 import OpenNeuroDatasetResult from "./OpenNeuroDatasetResult";
 import { getRecentOpenNeuroDatasets } from "../util/recentOpenNeuroDatasets";
 import { useNavigate } from "react-router-dom";
+import fetchOpenNeuroDatasets from "./fetchOpenNeuroDatasets";
 
 type OpenNeuroPageProps = {
   width: number;
@@ -51,113 +52,6 @@ export type OpenNeuroDataset = {
   };
 };
 
-const fetchONDatasets = async (
-  searchText: string,
-): Promise<OpenNeuroDataset[]> => {
-  const keywords = searchText
-    .split(" ")
-    .map((keyword) => keyword.trim())
-    .filter((keyword) => keyword.length > 0);
-
-  const query = `query advancedSearchDatasets(
-    $query: JSON!,
-    $cursor: String,
-    $allDatasets: Boolean,
-    $datasetType: String,
-    $datasetStatus: String,
-    $sortBy: JSON
-  ) {
-    datasets: advancedSearch(
-      query: $query,
-      allDatasets: $allDatasets,
-      datasetType: $datasetType,
-      datasetStatus: $datasetStatus,
-      sortBy: $sortBy,
-      first: 25,
-      after: $cursor
-    ) {
-      edges {
-        node {
-          id
-          created
-          uploader {
-            id
-            name
-            orcid
-          }
-          public
-          latestSnapshot {
-            size
-            summary {
-              modalities
-              sessions
-              subjects
-              totalFiles
-            }
-            description {
-              Name
-              Authors
-            }
-          }
-          analytics {
-            views
-            downloads
-          }
-        }
-      }
-    }
-  }`
-    .split("\n")
-    .join("\\n");
-
-  const qq =
-    keywords.length > 0
-      ? {
-          bool: {
-            must: [
-              {
-                simple_query_string: {
-                  query: keywords.join(" + ") + "~",
-                  fields: [
-                    "id^20",
-                    "latestSnapshot.readme",
-                    "latestSnapshot.description.Name^6",
-                    "latestSnapshot.description.Authors^3",
-                  ],
-                },
-              },
-            ],
-          },
-        }
-      : {
-          bool: {},
-        };
-
-  const resp = await fetch("https://openneuro.org/crn/graphql", {
-    headers: {
-      "content-type": "application/json",
-    },
-    body: `{"operationName":"advancedSearchDatasets","variables":{"query":${JSON.stringify(qq)},"sortBy":{"created":"desc"},"allDatasets":false,"datasetType":"All Public","datasetStatus":null},"query":"${query}"}`,
-    method: "POST",
-  });
-
-  if (!resp.ok) {
-    throw new Error("Failed to fetch OpenNeuro datasets");
-  }
-  interface GraphQLResponse {
-    data: {
-      datasets: {
-        edges: Array<{
-          node: OpenNeuroDataset;
-        }>;
-      };
-    };
-  }
-
-  const graphQLResponse = (await resp.json()) as GraphQLResponse;
-  return graphQLResponse.data.datasets.edges.map((edge) => edge.node);
-};
-
 type SearchState = {
   searchText: string;
   currentLimit: number;
@@ -185,7 +79,7 @@ const OpenNeuroPage: FunctionComponent<OpenNeuroPageProps> = ({
     setIsSearching(true);
     setSearchResults([]);
     try {
-      const results = await fetchONDatasets(searchState.searchText);
+      const results = await fetchOpenNeuroDatasets(searchState.searchText);
       setSearchResults(results);
     } catch (error) {
       console.error("Error fetching results:", error);

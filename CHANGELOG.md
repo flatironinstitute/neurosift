@@ -1,7 +1,14 @@
 # Changes
 
+## October 11, 2026
+
+- DANDI semantic search on the DANDI page now queries the CatalystNeuro-hosted index service (`dandi-index.catalystneuro.com`) instead of the `neurosift-search` Vercel proxy, which is being retired.
+
 ## October 8, 2026
 
+- Fixed the OpenNeuro dataset page and the OpenNeuro browser, which both failed to load after OpenNeuro changed its GraphQL API. Dataset file queries no longer ask for the removed `key` field, and dataset search uses the new `DatasetSearchInput` format. The same search fix is applied to the chat agent's OpenNeuro search tool.
+- Pages and views now load on demand. The app used to ship as a single 8.6 MB JavaScript file that every page downloaded. Each page is now its own chunk, NWB and dataset file views load when they are opened, and Plotly, the NIfTI viewer, and the Blosc decoder load the first time they are needed. The home page downloads about 0.4 MB and the NWB page about 0.9 MB before rendering.
+- A tab left open across a deploy reloads itself when it asks for a chunk from the previous build.
 - An error in one view no longer blanks the whole app. Each page, each NWB tab and view, and each dataset file view is now inside an error boundary that shows the error in place with a "Try again" button and a "Report this" link, which opens a GitHub issue with the page URL and the error filled in.
 - Errors are sent to the logging endpoint: render errors caught by a boundary, uncaught errors, and unhandled promise rejections. Each distinct error is sent once per page load, and presigned URL signatures are removed from the logged page URL.
 

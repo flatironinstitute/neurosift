@@ -1,7 +1,13 @@
-import { Blosc } from "numcodecs";
 import pako from "pako";
 import { qfcDecompress } from "./qfc";
 import { bigIntArrayToFloat64 } from "../bigIntArrayToFloat64";
+
+// numcodecs embeds its WebAssembly codecs, about 600 kB, so it is loaded only
+// when a chunk is Blosc-compressed.
+const bloscDecode = async (chunk: ArrayBuffer) => {
+  const { Blosc } = await import("numcodecs");
+  return new Blosc().decode(chunk);
+};
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const zarrDecodeChunkArray = async (
@@ -14,7 +20,7 @@ const zarrDecodeChunkArray = async (
   let ret: any = chunk;
   if (compressor) {
     if (compressor.id === "blosc") {
-      ret = await new Blosc().decode(chunk);
+      ret = await bloscDecode(chunk);
     } else if (compressor.id === "gzip") {
       ret = pako.inflate(chunk);
     } else if (compressor.id === "neurosift.mp4") {
@@ -190,7 +196,7 @@ const applyFilter = async (chunk: ArrayBuffer, filter: any) => {
     const a = pako.inflate(chunk);
     return a.buffer;
   } else if (filter.id === "blosc") {
-    return new Blosc().decode(chunk);
+    return bloscDecode(chunk);
   } else if (filter.id === "shuffle") {
     return unshuffle(chunk, filter.elementsize);
   }

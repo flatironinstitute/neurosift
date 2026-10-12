@@ -2,7 +2,14 @@ import ErrorBoundary from "@components/ErrorBoundary";
 import ScrollY from "@components/ScrollY";
 import { TAB_BAR_HEIGHT, TabBar } from "@components/tabs/TabBar";
 import { BaseTabAction } from "@components/tabs/tabsReducer";
-import { FunctionComponent, useEffect, useReducer, useRef } from "react";
+import { CircularProgress } from "@mui/material";
+import {
+  FunctionComponent,
+  Suspense,
+  useEffect,
+  useReducer,
+  useRef,
+} from "react";
 import { initializePlugins } from "./plugins/init";
 import { DatasetFile } from "./plugins/pluginInterface";
 import { findPluginsByFile } from "./plugins/registry";
@@ -170,11 +177,13 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
                             <ErrorBoundary
                               what={`the ${plugin.name} view of ${tab.file.filepath}`}
                             >
-                              <plugin.component
-                                file={tab.file}
-                                width={width - 20}
-                                height={pluginHeight}
-                              />
+                              <Suspense fallback={<CircularProgress />}>
+                                <plugin.component
+                                  file={tab.file}
+                                  width={width - 20}
+                                  height={pluginHeight}
+                                />
+                              </Suspense>
                             </ErrorBoundary>
                           </div>
                         ))}

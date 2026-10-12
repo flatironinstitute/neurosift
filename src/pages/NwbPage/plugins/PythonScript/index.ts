@@ -1,5 +1,7 @@
+import { lazy } from "react";
 import { NwbObjectViewPlugin } from "../pluginInterface";
-import PythonScriptPluginView from "./PythonScriptPluginView";
+
+const PythonScriptPluginView = lazy(() => import("./PythonScriptPluginView"));
 
 export const pythonScriptPlugin: NwbObjectViewPlugin = {
   name: "PythonScript",
