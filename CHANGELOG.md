@@ -1,5 +1,9 @@
 # Changes
 
+## October 11, 2026
+
+- DANDI semantic search on the DANDI page now queries the CatalystNeuro-hosted index service (`dandi-index.catalystneuro.com`) instead of the `neurosift-search` Vercel proxy, which is being retired.
+
 ## October 6, 2026
 
 - The DANDI-index job runner and index builders can get embeddings from another OpenAI-compatible provider that serves `text-embedding-3-large`, such as OpenRouter, by setting `OPENAI_BASE_URL` and `OPENAI_EMBEDDING_MODEL`. Defaults are unchanged.
