@@ -10,10 +10,15 @@ export const isZarrUrl = (url: string) => {
   return u.endsWith(".zarr") || /\/zarr\/[0-9a-f-]{36}$/.test(u);
 };
 
-/** Whether a url names a zarrshadow reference file or the folder that holds one. */
-export const isZarrShadowUrl = (url: string) => {
+/**
+ * Whether a url names a shadowzarr reference file or the folder that holds one.
+ * Files named before shadowzarr was renamed from zarrshadow end in .zarrshadow.
+ */
+export const isShadowZarrUrl = (url: string) => {
   const u = url.split("?")[0].replace(/\/+$/, "");
   return (
+    u.endsWith(".shadowzarr") ||
+    u.endsWith(".shadowzarr.json") ||
     u.endsWith(".zarrshadow") ||
     u.endsWith(".zarrshadow.json") ||
     u.endsWith("/refs.json")

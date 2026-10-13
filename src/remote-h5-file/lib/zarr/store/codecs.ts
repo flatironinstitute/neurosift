@@ -18,7 +18,7 @@ class Fletcher32Codec {
 }
 
 /**
- * Register the codecs that zarrshadow's references use and zarrita does not
+ * Register the codecs that shadowzarr's references use and zarrita does not
  * have. A ReferenceStore calls this when it is made.
  */
 export function registerCodecs(): void {

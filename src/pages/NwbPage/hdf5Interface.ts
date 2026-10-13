@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
   Canceler,
   DatasetDataType,
-  isZarrShadowUrl,
+  isShadowZarrUrl,
   isZarrUrl,
   RemoteH5File,
   RemoteH5FileLindi,
@@ -172,7 +172,7 @@ const getRemoteH5FileForUrl = async (url: string) => {
     try {
       inProgressGetRemoteH5Files[url] = true;
       const { url: urlResolved } = await getResolvedUrl(url);
-      if (isZarrShadowUrl(urlResolved) || isZarrUrl(urlResolved)) {
+      if (isShadowZarrUrl(urlResolved) || isZarrUrl(urlResolved)) {
         // Loaded on demand: the Zarr reader and zarrita are only needed
         // for Zarr files.
         const { getRemoteH5FileZarr } =

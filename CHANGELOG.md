@@ -1,5 +1,9 @@
 # Changes
 
+## October 13, 2026
+
+- zarrshadow, the package that writes the Zarr reference files Neurosift opens, is now called shadowzarr. Reference files named `.shadowzarr` or `.shadowzarr.json` are recognized, and so are files named `.zarrshadow` before the rename.
+
 ## October 12, 2026
 
 - The DANDI-index job runner's `findDandisets({ semanticSearch })` ranks dandisets with the index's own embeddings, the same way as `semanticSortDandisets`, instead of calling the `neurosift-chat-agent-tools` Vercel service. It returns the top 20 and still honors `restrictToDandisets`.
