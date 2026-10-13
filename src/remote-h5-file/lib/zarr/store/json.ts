@@ -12,7 +12,7 @@ const NON_FINITE: Record<string, number> = {
   Infinity: Infinity,
   "-Infinity": -Infinity,
 };
-const MARK = "@@zarrshadow-non-finite@@";
+const MARK = "@@shadowzarr-non-finite@@";
 
 const mayHaveTokens = (text: string) =>
   text.includes("NaN") || text.includes("Infinity");

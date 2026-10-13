@@ -5,9 +5,9 @@
  *  - A Zarr store that hdmf-zarr wrote, read through its consolidated
  *    metadata. A Zarr v2 store, from hdmf-zarr before 0.14, marks links and
  *    references in an earlier way, which zarr2Source describes in the v3 form.
- *  - A zarrshadow reference file: Zarr v3 metadata plus, for every chunk,
+ *  - A shadowzarr reference file: Zarr v3 metadata plus, for every chunk,
  *    where its bytes are in the original HDF5 file. The store from the
- *    zarrshadow package fetches those bytes with range requests.
+ *    shadowzarr package fetches those bytes with range requests.
  *
  * Both mark what Zarr lacks the same way: soft links in a group's _LINKS
  * attribute, object references as {_REFERENCE: {path}} in attributes and as
@@ -30,7 +30,7 @@ import {
   RemoteH5Subdataset,
   RemoteH5Subgroup,
 } from "../RemoteH5File";
-import { isZarrShadowUrl } from "./zarrUrls";
+import { isShadowZarrUrl } from "./zarrUrls";
 
 type NodeMetadata = {
   node_type: "group" | "array";
@@ -120,12 +120,12 @@ class RemoteH5FileZarr {
   ) {}
 
   static async create(url: string) {
-    return isZarrShadowUrl(url)
+    return isShadowZarrUrl(url)
       ? RemoteH5FileZarr.createFromReferences(url)
       : RemoteH5FileZarr.createFromZarr(url);
   }
 
-  /** A zarrshadow reference file, or the folder that holds one. */
+  /** A shadowzarr reference file, or the folder that holds one. */
   static async createFromReferences(url: string) {
     const store = await ReferenceStore.fromUrl(url, {
       // Tag the requests to the object stores, as the other readers do
@@ -594,6 +594,6 @@ export const getRemoteH5FileZarr = async (url: string) => {
   return globalZarrFiles[url];
 };
 
-export { isZarrShadowUrl, isZarrUrl } from "./zarrUrls";
+export { isShadowZarrUrl, isZarrUrl } from "./zarrUrls";
 
 export default RemoteH5FileZarr;

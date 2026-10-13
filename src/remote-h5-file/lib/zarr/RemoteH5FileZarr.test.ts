@@ -16,7 +16,7 @@ if (typeof URL.createObjectURL !== "function") {
 }
 const {
   default: RemoteH5FileZarr,
-  isZarrShadowUrl,
+  isShadowZarrUrl,
   isZarrUrl,
 } = await import("./RemoteH5FileZarr");
 const { ReferenceStore } = await import("./store");
@@ -70,7 +70,7 @@ const group = (attributes: object = {}) => ({
 
 const strings = [{ name: "vlen-utf8", configuration: {} }];
 
-// A compound type as hdmf-zarr and zarrshadow write a column of
+// A compound type as hdmf-zarr and shadowzarr write a column of
 // TimeSeriesReferenceVectorData: two integers and the path of a series, as
 // fixed-length UTF-32. The fields of a record are packed.
 const referenceChars = 24;
@@ -106,7 +106,7 @@ const records = (rows: [number, number, string][]) => {
 const data = Float32Array.from({ length: 30 }, (_, i) => i / 2);
 const timestamps = Float64Array.from({ length: 10 }, (_, i) => i * 0.1);
 
-// A small stand-in for the references zarrshadow makes from an NWB file: a
+// A small stand-in for the references shadowzarr makes from an NWB file: a
 // series that owns its timestamps, a second one that soft links to them, a
 // link to a whole group, and a table with a column of object references.
 // Stand-ins for the numbers JSON does not have, and the JSON Python writes for them
@@ -227,7 +227,7 @@ const serve = async (input: RequestInfo | URL) => {
 const open = () => {
   const store = new ReferenceStore({ version: 2, refs } as never);
   return RemoteH5FileZarr.fromReferenceStore(
-    "http://localhost/test.nwb.zarrshadow",
+    "http://localhost/test.nwb.shadowzarr",
     store,
   );
 };
@@ -456,7 +456,7 @@ describe("isZarrUrl", () => {
     }
     for (const url of [
       "https://example.org/a.nwb",
-      "https://example.org/a.nwb.zarrshadow",
+      "https://example.org/a.nwb.shadowzarr",
       "https://dandiarchive.s3.amazonaws.com/blobs/0d6/ee8/0d6ee8a3-4a2b-4d8c-9e5f-0123456789ab",
     ]) {
       expect(isZarrUrl(url), url).toBe(false);
@@ -464,22 +464,25 @@ describe("isZarrUrl", () => {
   });
 });
 
-describe("isZarrShadowUrl", () => {
+describe("isShadowZarrUrl", () => {
   it("recognizes a reference file or the folder that holds one", () => {
     for (const url of [
+      "https://example.org/a.nwb.shadowzarr",
+      "https://example.org/a.nwb.shadowzarr/",
+      "https://example.org/a.shadowzarr.json",
+      "https://example.org/a.nwb.shadowzarr/refs.json?source=neurosift",
+      // named before shadowzarr was renamed from zarrshadow
       "https://example.org/a.nwb.zarrshadow",
-      "https://example.org/a.nwb.zarrshadow/",
       "https://example.org/a.zarrshadow.json",
-      "https://example.org/a.nwb.zarrshadow/refs.json?source=neurosift",
     ]) {
-      expect(isZarrShadowUrl(url), url).toBe(true);
+      expect(isShadowZarrUrl(url), url).toBe(true);
     }
     for (const url of [
       "https://example.org/a.nwb",
       "https://example.org/a.nwb.lindi.json",
       "https://api.dandiarchive.org/api/assets/abc/download/",
     ]) {
-      expect(isZarrShadowUrl(url), url).toBe(false);
+      expect(isShadowZarrUrl(url), url).toBe(false);
     }
   });
 });
