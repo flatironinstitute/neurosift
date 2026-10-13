@@ -9,11 +9,14 @@ export const isUnderLfpModule = (path: string): boolean => {
   return parts.slice(1).some((p) => p === "LFP");
 };
 
-// "LFP" in any case, or an uppercase "LF" as in SpikeGLX LF streams
-// (ElectricalSeriesLF, ElectricalSeriesLFIMEC0). "LF" is case-sensitive so
+// "LFP" in any case, an uppercase "LF" as in SpikeGLX LF streams
+// (ElectricalSeriesLF, ElectricalSeriesLFIMEC0), or a ".lf" suffix in any case
+// as in SpikeGLX stream names (imec0.lf). A bare "LF" is case-sensitive so
 // words like "half" or "self" don't match.
-const nameMentionsLfp = (name: string): boolean =>
-  name.toLowerCase().includes("lfp") || name.includes("LF");
+const nameMentionsLfp = (name: string): boolean => {
+  const lower = name.toLowerCase();
+  return lower.includes("lfp") || lower.endsWith(".lf") || name.includes("LF");
+};
 
 // True if the object's own name, or the name of any group containing it,
 // mentions LFP. This catches LFP that was not nested under a processing

@@ -32,9 +32,19 @@ describe("hasLfpInPathName", () => {
     expect(hasLfpInPathName("/acquisition/ElectricalSeriesLFIMEC0")).toBe(true);
   });
 
+  test("matches names ending in .lf", () => {
+    expect(hasLfpInPathName("/acquisition/imec0.lf")).toBe(true);
+    expect(hasLfpInPathName("/acquisition/imec0.LF")).toBe(true);
+    expect(hasLfpInPathName("/acquisition/imec0.lf/ElectricalSeries")).toBe(
+      true,
+    );
+  });
+
   test("does not match paths without LFP", () => {
     expect(hasLfpInPathName("/acquisition/ElectricalSeries")).toBe(false);
     expect(hasLfpInPathName("/acquisition/ElectricalSeriesAP")).toBe(false);
     expect(hasLfpInPathName("/acquisition/half_rate_series")).toBe(false);
+    expect(hasLfpInPathName("/acquisition/imec0.ap")).toBe(false);
+    expect(hasLfpInPathName("/acquisition/shelf.lfoo")).toBe(false);
   });
 });
