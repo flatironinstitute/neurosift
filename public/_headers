@@ -1,0 +1,6 @@
+# Built chunks have hashed names, but a request for a chunk that is not
+# deployed yet (in the moments after a deploy) gets index.html from the SPA
+# rewrite in _redirects. Browsers must revalidate assets so that such a
+# response is not reused in place of the chunk; unchanged chunks get a 304.
+/assets/*
+  Cache-Control: no-cache

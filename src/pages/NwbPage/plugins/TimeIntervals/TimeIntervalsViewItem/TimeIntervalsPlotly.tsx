@@ -2,7 +2,7 @@
 import { useTimeRange } from "@shared/context-timeseries-selection-2";
 import { Data, Layout, Shape } from "plotly.js";
 import { FunctionComponent, useMemo } from "react";
-import Plot from "react-plotly.js";
+import Plot from "@components/LazyPlot";
 
 type Props = {
   width: number;

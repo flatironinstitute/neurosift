@@ -13,6 +13,7 @@ import { DynamicTab } from "./Types/index";
 import { getHdf5Group, hasAuthError, isDandiAssetUrl } from "./hdf5Interface";
 import { SetupNwbFileSpecificationsProvider } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
 import { neurodataTypeInheritsFrom } from "./neurodataTypeInheritance";
+import ErrorBoundary from "@components/ErrorBoundary";
 import ScrollY from "@components/ScrollY";
 import NwbHierarchyView from "./NwbHierarchyView";
 import Hdf5View from "./Hdf5View";
@@ -273,14 +274,16 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
             }}
           >
             <ScrollY width={contentWidth} height={contentHeight}>
-              <NwbHierarchyView
-                nwbUrl={nwbUrl}
-                onOpenObjectInNewTab={handleOpenObjectInNewTab}
-                onOpenObjectsInNewTab={handleOpenObjectsInNewTab}
-                isExpanded={showFixedContent && activeFixedTab === "widgets"}
-                defaultUnitsPath={defaultUnitsPath}
-                onSetDefaultUnitsPath={setDefaultUnitsPath}
-              />
+              <ErrorBoundary what="the Widgets tab">
+                <NwbHierarchyView
+                  nwbUrl={nwbUrl}
+                  onOpenObjectInNewTab={handleOpenObjectInNewTab}
+                  onOpenObjectsInNewTab={handleOpenObjectsInNewTab}
+                  isExpanded={showFixedContent && activeFixedTab === "widgets"}
+                  defaultUnitsPath={defaultUnitsPath}
+                  onSetDefaultUnitsPath={setDefaultUnitsPath}
+                />
+              </ErrorBoundary>
             </ScrollY>
           </div>
           <div
@@ -292,11 +295,13 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
             }}
           >
             <ScrollY width={contentWidth} height={contentHeight}>
-              <Hdf5View
-                nwbUrl={nwbUrl}
-                width={contentWidth}
-                isExpanded={showFixedContent && activeFixedTab === "hdf5"}
-              />
+              <ErrorBoundary what="the HDF5 tab">
+                <Hdf5View
+                  nwbUrl={nwbUrl}
+                  width={contentWidth}
+                  isExpanded={showFixedContent && activeFixedTab === "hdf5"}
+                />
+              </ErrorBoundary>
             </ScrollY>
           </div>
           <div
@@ -308,14 +313,16 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
             }}
           >
             <ScrollY width={contentWidth} height={contentHeight}>
-              <MultiVideoTabView
-                nwbUrl={nwbUrl}
-                width={contentWidth}
-                height={contentHeight}
-                isExpanded={
-                  showFixedContent && activeFixedTab === "video-widget"
-                }
-              />
+              <ErrorBoundary what="the Videos tab">
+                <MultiVideoTabView
+                  nwbUrl={nwbUrl}
+                  width={contentWidth}
+                  height={contentHeight}
+                  isExpanded={
+                    showFixedContent && activeFixedTab === "video-widget"
+                  }
+                />
+              </ErrorBoundary>
             </ScrollY>
           </div>
           <div
@@ -326,12 +333,14 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
                   : "none",
             }}
           >
-            <IcephysTabView
-              nwbUrl={nwbUrl}
-              width={contentWidth}
-              height={contentHeight}
-              isExpanded={showFixedContent && activeFixedTab === "icephys"}
-            />
+            <ErrorBoundary what="the Icephys tab">
+              <IcephysTabView
+                nwbUrl={nwbUrl}
+                width={contentWidth}
+                height={contentHeight}
+                isExpanded={showFixedContent && activeFixedTab === "icephys"}
+              />
+            </ErrorBoundary>
           </div>
           <div
             style={{
@@ -342,27 +351,32 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
             }}
           >
             <ScrollY width={contentWidth} height={contentHeight}>
-              <TimeseriesAlignmentView
-                nwbUrl={nwbUrl}
-                width={contentWidth}
-                isExpanded={
-                  showFixedContent && activeFixedTab === "timeseries-alignment"
-                }
-                onOpenTimeseriesItem={(path) => {
-                  handleOpenObjectInNewTab(path);
-                }}
-              />
+              <ErrorBoundary what="the Timeseries Alignment tab">
+                <TimeseriesAlignmentView
+                  nwbUrl={nwbUrl}
+                  width={contentWidth}
+                  isExpanded={
+                    showFixedContent &&
+                    activeFixedTab === "timeseries-alignment"
+                  }
+                  onOpenTimeseriesItem={(path) => {
+                    handleOpenObjectInNewTab(path);
+                  }}
+                />
+              </ErrorBoundary>
             </ScrollY>
           </div>
           {showFixedContent && activeFixedTab === "specifications" && (
             <ScrollY width={contentWidth} height={contentHeight}>
-              <Suspense
-                fallback={
-                  <div style={{ padding: 20 }}>Loading specifications...</div>
-                }
-              >
-                <SpecificationsView />
-              </Suspense>
+              <ErrorBoundary what="the Schema tab">
+                <Suspense
+                  fallback={
+                    <div style={{ padding: 20 }}>Loading specifications...</div>
+                  }
+                >
+                  <SpecificationsView />
+                </Suspense>
+              </ErrorBoundary>
             </ScrollY>
           )}
           <div
@@ -374,7 +388,9 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
             }}
           >
             <ScrollY width={contentWidth} height={contentHeight}>
-              <NwbUsageScript nwbUrl={nwbUrl} />
+              <ErrorBoundary what="the Python Usage tab">
+                <NwbUsageScript nwbUrl={nwbUrl} />
+              </ErrorBoundary>
             </ScrollY>
           </div>
 
@@ -389,17 +405,19 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
                       tabsState.activeTabId === tab.id ? "block" : "none",
                   }}
                 >
-                  <MultiTabView
-                    nwbUrl={nwbUrl}
-                    width={width}
-                    height={contentHeight}
-                    tabId={tab.id}
-                    paths={tab.paths}
-                    objectTypes={tab.objectTypes}
-                    plugins={tab.plugins}
-                    secondaryPathsList={tab.secondaryPathsList}
-                    onOpenObjectInNewTab={handleOpenObjectInNewTab}
-                  />
+                  <ErrorBoundary what="this tab">
+                    <MultiTabView
+                      nwbUrl={nwbUrl}
+                      width={width}
+                      height={contentHeight}
+                      tabId={tab.id}
+                      paths={tab.paths}
+                      objectTypes={tab.objectTypes}
+                      plugins={tab.plugins}
+                      secondaryPathsList={tab.secondaryPathsList}
+                      onOpenObjectInNewTab={handleOpenObjectInNewTab}
+                    />
+                  </ErrorBoundary>
                 </div>
               );
             } else if (tab.type === "single") {
@@ -411,17 +429,19 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
                       tabsState.activeTabId === tab.id ? "block" : "none",
                   }}
                 >
-                  <SingleTabView
-                    nwbUrl={nwbUrl}
-                    width={width}
-                    height={contentHeight}
-                    tabId={tab.id}
-                    path={tab.path}
-                    objectType={tab.objectType}
-                    plugin={tab.plugin}
-                    secondaryPaths={tab.secondaryPaths}
-                    onOpenObjectInNewTab={handleOpenObjectInNewTab}
-                  />
+                  <ErrorBoundary what="this tab">
+                    <SingleTabView
+                      nwbUrl={nwbUrl}
+                      width={width}
+                      height={contentHeight}
+                      tabId={tab.id}
+                      path={tab.path}
+                      objectType={tab.objectType}
+                      plugin={tab.plugin}
+                      secondaryPaths={tab.secondaryPaths}
+                      onOpenObjectInNewTab={handleOpenObjectInNewTab}
+                    />
+                  </ErrorBoundary>
                 </div>
               );
             }

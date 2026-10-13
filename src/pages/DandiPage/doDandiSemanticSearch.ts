@@ -3,7 +3,7 @@ const doDandiSemanticSearch = async (query: string): Promise<string[]> => {
 
   try {
     const response = await fetch(
-      "https://neurosift-search.vercel.app/api/dandi-semantic-search",
+      "https://dandi-index.catalystneuro.com/api/dandi-semantic-search",
       {
         method: "POST",
         headers: {

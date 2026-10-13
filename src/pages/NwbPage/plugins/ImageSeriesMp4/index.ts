@@ -1,7 +1,9 @@
+import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import { neurodataTypeInheritsFromAny } from "../../neurodataTypeInheritance";
-import ImageSeriesMp4View from "./ImageSeriesMp4View";
+
+const ImageSeriesMp4View = lazy(() => import("./ImageSeriesMp4View"));
 
 export const imageSeriesMp4Plugin: NwbObjectViewPlugin = {
   name: "ImageSeriesMp4",

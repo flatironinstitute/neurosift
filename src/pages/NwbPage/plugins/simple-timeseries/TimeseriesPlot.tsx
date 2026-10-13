@@ -1,5 +1,5 @@
 import { FunctionComponent, useMemo, useState } from "react";
-import Plot from "react-plotly.js";
+import Plot from "@components/LazyPlot";
 
 import { TimeseriesPlotProps as Props } from "./types";
 

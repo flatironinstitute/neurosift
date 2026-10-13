@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import Plot from "react-plotly.js";
+import Plot from "@components/LazyPlot";
 import { Data } from "plotly.js";
 
 type Props = {

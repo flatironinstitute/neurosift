@@ -1,7 +1,13 @@
+import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
-import { SimpleTimeseriesView } from "./SimpleTimeseriesView";
+
+const SimpleTimeseriesView = lazy(() =>
+  import("./SimpleTimeseriesView").then((m) => ({
+    default: m.SimpleTimeseriesView,
+  })),
+);
 
 export const simpleTimeseriesPlugin: NwbObjectViewPlugin = {
   name: "SimpleTimeseries",

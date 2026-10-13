@@ -1,8 +1,28 @@
 # Changes
 
-## October 8, 2026
+## October 13, 2026
 
 - The Spectrogram view is now offered for any ElectricalSeries whose own name or containing group's name mentions LFP (or an uppercase "LF" or a `.lf` suffix, as in SpikeGLX LF streams), not only for objects under an "LFP" processing module. This covers acquired LFP such as iEEG stored outside `/processing`.
+- zarrshadow, the package that writes the Zarr reference files Neurosift opens, is now called shadowzarr. Reference files named `.shadowzarr` or `.shadowzarr.json` are recognized, and so are files named `.zarrshadow` before the rename.
+
+## October 12, 2026
+
+- The DANDI-index job runner's `findDandisets({ semanticSearch })` ranks dandisets with the index's own embeddings, the same way as `semanticSortDandisets`, instead of calling the `neurosift-chat-agent-tools` Vercel service. It returns the top 20 and still honors `restrictToDandisets`.
+- The NWB, dandiset, OpenNeuro dataset, SLP and video pages load about 63 kB less JavaScript: the Zarr reader is now fetched only when a Zarr file is opened.
+- Browsers now revalidate the app's JavaScript chunks on each load. A chunk requested in the moments after a deploy could be answered with `index.html`, which browsers then reused for up to 4 hours, so the page that needed it failed to load until then.
+
+## October 11, 2026
+
+- DANDI semantic search on the DANDI page now queries the CatalystNeuro-hosted index service (`dandi-index.catalystneuro.com`) instead of the `neurosift-search` Vercel proxy, which is being retired.
+
+## October 8, 2026
+
+- Fixed the OpenNeuro dataset page and the OpenNeuro browser, which both failed to load after OpenNeuro changed its GraphQL API. Dataset file queries no longer ask for the removed `key` field, and dataset search uses the new `DatasetSearchInput` format. The same search fix is applied to the chat agent's OpenNeuro search tool.
+- Pages and views now load on demand. The app used to ship as a single 8.6 MB JavaScript file that every page downloaded. Each page is now its own chunk, NWB and dataset file views load when they are opened, and Plotly, the NIfTI viewer, and the Blosc decoder load the first time they are needed. The home page downloads about 0.4 MB and the NWB page about 0.9 MB before rendering.
+- A tab left open across a deploy reloads itself when it asks for a chunk from the previous build.
+- An error in one view no longer blanks the whole app. Each page, each NWB tab and view, and each dataset file view is now inside an error boundary that shows the error in place with a "Try again" button and a "Report this" link, which opens a GitHub issue with the page URL and the error filled in.
+- Errors are sent to the logging endpoint: render errors caught by a boundary, uncaught errors, and unhandled promise rejections. Each distinct error is sent once per page load, and presigned URL signatures are removed from the logged page URL.
+- NWB files stored as Zarr can be opened by url. A Zarr store written by hdmf-zarr is read through its consolidated metadata, both Zarr v2, which every NWB Zarr asset on DANDI is today, and Zarr v3. A [zarrshadow](https://github.com/bendichter/zarrshadow) reference file for an HDF5 NWB file is read the same way, with range requests into the original file. Datasets that older versions of hdmf-zarr stored as Python pickles, and compound datasets of Zarr v2 stores, are listed but not read. Opening a Zarr asset from a dandiset's file list is not part of this change.
 
 ## October 6, 2026
 

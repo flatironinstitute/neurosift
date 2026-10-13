@@ -1,7 +1,11 @@
+import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
 import { NwbObjectViewPlugin } from "../pluginInterface";
 import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
-import TwoPhotonSeriesPluginView from "./TwoPhotonSeriesPluginView";
+
+const TwoPhotonSeriesPluginView = lazy(
+  () => import("./TwoPhotonSeriesPluginView"),
+);
 
 export const twoPhotonSeriesPlugin: NwbObjectViewPlugin = {
   name: "TwoPhotonSeries",

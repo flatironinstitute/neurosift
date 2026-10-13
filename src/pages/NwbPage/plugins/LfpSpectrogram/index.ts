@@ -1,8 +1,10 @@
+import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
 import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
 import { NwbObjectViewPlugin } from "../pluginInterface";
-import LfpSpectrogramView from "./LfpSpectrogramView";
 import { hasLfpInPathName, isUnderLfpModule } from "./lfpDetection";
+
+const LfpSpectrogramView = lazy(() => import("./LfpSpectrogramView"));
 
 export const lfpSpectrogramPlugin: NwbObjectViewPlugin = {
   name: "LfpSpectrogram",
