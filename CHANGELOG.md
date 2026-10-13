@@ -2,6 +2,7 @@
 
 ## October 13, 2026
 
+- The Spectrogram view is now offered for any ElectricalSeries whose own name or containing group's name mentions LFP (or an uppercase "LF" or a `.lf` suffix, as in SpikeGLX LF streams), not only for objects under an "LFP" processing module. This covers acquired LFP such as iEEG stored outside `/processing`.
 - zarrshadow, the package that writes the Zarr reference files Neurosift opens, is now called shadowzarr. Reference files named `.shadowzarr` or `.shadowzarr.json` are recognized, and so are files named `.zarrshadow` before the rename.
 
 ## October 12, 2026

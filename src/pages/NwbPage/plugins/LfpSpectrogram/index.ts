@@ -1,35 +1,34 @@
 import { lazy } from "react";
 import { getHdf5Group } from "@hdf5Interface";
+import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
 import { NwbObjectViewPlugin } from "../pluginInterface";
+import { hasLfpInPathName, isUnderLfpModule } from "./lfpDetection";
 
 const LfpSpectrogramView = lazy(() => import("./LfpSpectrogramView"));
-
-// True if the object lives under a processing module named "LFP", e.g.
-//   /processing/LFP/ElectricalSeries
-//   /processing/ecephys/LFP/ElectricalSeries
-const isUnderLfpModule = (path: string): boolean => {
-  const parts = path.split("/").filter(Boolean);
-  if (parts[0] !== "processing") return false;
-  return parts.slice(1).some((p) => p === "LFP");
-};
 
 export const lfpSpectrogramPlugin: NwbObjectViewPlugin = {
   name: "LfpSpectrogram",
   label: "Spectrogram",
-  canHandle: async ({
-    nwbUrl,
-    path,
-    objectType,
-  }: {
-    nwbUrl: string;
-    path: string;
-    objectType: "group" | "dataset";
-  }) => {
+  canHandle: async ({ nwbUrl, path, objectType, specifications }) => {
     if (objectType !== "group") return false;
-    if (!isUnderLfpModule(path)) return false;
+    const underLfpModule = isUnderLfpModule(path);
+    if (!underLfpModule && !hasLfpInPathName(path)) return false;
 
     const group = await getHdf5Group(nwbUrl, path);
     if (!group) return false;
+
+    // Outside an LFP processing module, only accept an ElectricalSeries (or
+    // subtype) whose own name or container name mentions LFP.
+    if (
+      !underLfpModule &&
+      !neurodataTypeInheritsFrom(
+        group.attrs.neurodata_type,
+        "ElectricalSeries",
+        specifications,
+      )
+    ) {
+      return false;
+    }
 
     // Must be a timeseries-like object with a sampled data array.
     const dataDataset = group.datasets.find((ds) => ds.name === "data");
