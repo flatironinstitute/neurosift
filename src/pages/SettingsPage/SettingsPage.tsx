@@ -90,8 +90,7 @@ const SettingsPage: FunctionComponent<SettingsPageProps> = ({
             helperText={
               <>
                 Enter your Neurosift API key for accessing job management
-                features and for managing annotations. You can obtain a key by
-                filling out{" "}
+                features. You can obtain a key by filling out{" "}
                 <a
                   href="https://docs.google.com/forms/d/e/1FAIpQLSctE61_jy3WyQ5o0jqJDEifnrZvoYdXgzakAz_gGhenLXsltw/viewform?usp=header"
                   target="_blank"

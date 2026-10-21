@@ -28,9 +28,6 @@ import { sendUrlUpdate } from "./ai-integration/messaging/windowMessaging";
 import { logPageLoad } from "./util/sendLog";
 
 // Each page is its own chunk, so a visit downloads only the page it lands on.
-const AnnotationsPage = lazy(
-  () => import("./pages/AnnotationsPage/AnnotationsPage"),
-);
 const DandiPage = lazy(() => import("./pages/DandiPage/DandiPage"));
 const DandisetPageContainer = lazy(
   () => import("./pages/DandisetPage/DandisetPageContainer"),
@@ -426,10 +423,6 @@ const AppContent = () => {
               <Route
                 path="/edf"
                 element={<EdfPage width={width} height={mainHeight} />}
-              />
-              <Route
-                path="/annotations"
-                element={<AnnotationsPage width={width} height={mainHeight} />}
               />
               <Route
                 path="/video"

@@ -1,5 +1,9 @@
 # Changes
 
+## October 21, 2026
+
+- Removed annotations: the Annotations page, the annotation panels on dandiset, NWB and OpenNeuro pages, the home page's highlighted views, and the notebook and chat links built from annotations. They had not been used since mid-2025, and depended on the `neurosift-annotation-manager` service.
+
 ## October 13, 2026
 
 - The Spectrogram view is now offered for any ElectricalSeries whose own name or containing group's name mentions LFP (or an uppercase "LF" or a `.lf` suffix, as in SpikeGLX LF streams), not only for objects under an "LFP" processing module. This covers acquired LFP such as iEEG stored outside `/processing`.

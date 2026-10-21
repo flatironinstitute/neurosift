@@ -1,8 +1,5 @@
-import { ResourceAnnotation } from "../common/annotationTypes";
-import { Box, Typography, Divider, IconButton, Tooltip } from "@mui/material";
-import { FunctionComponent, useCallback, useState } from "react";
-import { MenuBook } from "@mui/icons-material";
-import ResourceAnnotations from "../common/ResourceAnnotations";
+import { Box, Divider, Typography } from "@mui/material";
+import { FunctionComponent } from "react";
 import ScrollY from "@components/ScrollY";
 import { formatBytes } from "@shared/util/formatBytes";
 import { OpenNeuroDatasetInfo } from "./types";
@@ -14,34 +11,10 @@ interface OpenNeuroDatasetOverviewProps {
   datasetInfo: OpenNeuroDatasetInfo;
 }
 
-const findNotebookUrls = (annotations: ResourceAnnotation[]): string[] => {
-  const notebookNotes =
-    annotations?.filter((note) => note.tags?.includes("notebook")) || [];
-
-  return notebookNotes
-    .map((note) => {
-      const firstLine = note.data.content.split("\n")[0].trim();
-      return firstLine.startsWith("http") ? firstLine : undefined;
-    })
-    .filter((url): url is string => url !== undefined);
-};
-
 const OpenNeuroDatasetOverview: FunctionComponent<
   OpenNeuroDatasetOverviewProps
 > = ({ width, height, datasetInfo }) => {
   const { snapshot } = datasetInfo;
-  const [notebookUrls, setNotebookUrls] = useState<string[]>([]);
-  const [, setAnnotations] = useState<ResourceAnnotation[]>([]);
-
-  const handleAnnotationsUpdate = useCallback(
-    (annotations: ResourceAnnotation[]) => {
-      setAnnotations(annotations);
-      const urls = findNotebookUrls(annotations);
-      setNotebookUrls(urls);
-    },
-    [],
-  );
-
   // Register AI overview component
   useRegisterOpenNeuroDatasetOverviewAIComponent({
     datasetInfo,
@@ -63,19 +36,6 @@ const OpenNeuroDatasetOverview: FunctionComponent<
           >
             View on OpenNeuro →
           </a>
-          {notebookUrls.map((url) => (
-            <Tooltip key={url} title={`Open notebook at ${url}`}>
-              <IconButton
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                size="small"
-                color="primary"
-              >
-                <MenuBook />
-              </IconButton>
-            </Tooltip>
-          ))}
         </Box>
 
         <Box sx={{ mt: 2 }}>
@@ -174,15 +134,6 @@ const OpenNeuroDatasetOverview: FunctionComponent<
               </Box>
             </Box>
           )}
-        <Divider sx={{ my: 3 }} />
-
-        <ResourceAnnotations
-          annotationType="note"
-          targetType="openneuro_dataset"
-          tags={[`openneuro:${datasetInfo.id}`]}
-          onAnnotationsUpdate={handleAnnotationsUpdate}
-          expandBlobs={true}
-        />
       </div>
     </ScrollY>
   );

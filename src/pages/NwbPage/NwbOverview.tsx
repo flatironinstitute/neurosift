@@ -6,7 +6,6 @@ import DatasetDataView from "./DatasetDataView";
 import { isUsingLindi, getLindiUrl } from "./hdf5Interface";
 
 import { NwbFileOverview } from "./Types";
-import NwbAnnotations from "./components/NwbAnnotations";
 
 type NwbFileOverviewResult = NwbFileOverview | { error: string } | null;
 
@@ -284,21 +283,6 @@ export const NwbOverview = ({
               </div>
             )}
           </div>
-        )}
-        {nwbUrl && (
-          <>
-            <hr
-              style={{
-                margin: "15px 0",
-                border: "none",
-                borderTop: "1px solid #ddd",
-              }}
-            />
-            <NwbAnnotations
-              nwbUrl={nwbUrl}
-              dandisetId={dandisetInfo?.dandiset.identifier}
-            />
-          </>
         )}
       </div>
     </div>

@@ -1,8 +1,6 @@
 import { Box, Button, Container, Paper, Typography, Link } from "@mui/material";
 import { FunctionComponent, useEffect, useState } from "react";
 import GitHubIcon from "@mui/icons-material/GitHub";
-import EditNoteIcon from "@mui/icons-material/EditNote";
-import HighlightedViews from "./components/HighlightedViews";
 import { useNavigate } from "react-router-dom";
 import ScrollY from "@components/ScrollY";
 import { AIRegisteredComponent, useAIComponentRegistry } from "../../AIContext";
@@ -14,7 +12,6 @@ type HomePageProps = {
 
 const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
   const navigate = useNavigate();
-  const [showHighlightedViews, setShowHighlightedViews] = useState(false);
 
   useRegisterAIComponent();
 
@@ -229,22 +226,6 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
               <GitHubIcon />
               <Typography variant="body2">Submit Feedback / Issues</Typography>
             </Link>
-            <Typography
-              component="span"
-              onClick={() => navigate("/annotations")}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                color: "text.secondary",
-                textDecoration: "none",
-                cursor: "pointer",
-                "&:hover": { color: "primary.main" },
-              }}
-            >
-              <EditNoteIcon />
-              <Typography variant="body2">Annotations</Typography>
-            </Typography>
           </Box>
           <Typography
             variant="body2"
@@ -268,20 +249,8 @@ const HomePage: FunctionComponent<HomePageProps> = ({ width, height }) => {
           >
             <BuildTimeFooter />
           </Typography>
-          <Box sx={{ mt: 2 }}>
-            <Button
-              variant="text"
-              onClick={() => setShowHighlightedViews((prev) => !prev)}
-              sx={{ color: "text.secondary" }}
-            >
-              {showHighlightedViews
-                ? "Hide Highlighted Views"
-                : "Show Highlighted Views"}
-            </Button>
-          </Box>
         </Box>
       </Container>
-      {showHighlightedViews && <HighlightedViews width={width} />}
     </ScrollY>
   );
 };
@@ -324,8 +293,7 @@ const useRegisterAIComponent = () => {
 const aiContextDescription = `
 The user is viewing the Home page.
 They can navigate to the DANDI Archive, OpenNeuro, or the NWB Viewer Guide.
-They can also view the source code on GitHub, submit feedback or issues, or view annotations.
-The user can also show or hide highlighted views.
+They can also view the source code on GitHub, or submit feedback or issues.
 `;
 
 export default HomePage;
