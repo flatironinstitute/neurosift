@@ -1,5 +1,9 @@
 # Changes
 
+## October 21, 2026
+
+- Removed Neurosift jobs: the job manager client, the Neurosift API key and admin user management in Settings, and the views that only ran as jobs (MP4 Video for ImageSeries, Spike Density, which was already switched off, and the text letter-count demo). They depended on the `neurosift-job-manager` service and were unused. Figpack views, which use their own service, are unchanged.
+
 ## October 13, 2026
 
 - The Spectrogram view is now offered for any ElectricalSeries whose own name or containing group's name mentions LFP (or an uppercase "LF" or a `.lf` suffix, as in SpikeGLX LF streams), not only for objects under an "LFP" processing module. This covers acquired LFP such as iEEG stored outside `/processing`.
