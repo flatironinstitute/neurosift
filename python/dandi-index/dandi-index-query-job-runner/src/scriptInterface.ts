@@ -391,7 +391,7 @@ type DandisetMetadata = {
   manifestLocation: string[];
 };
 
-const dandiBaseDir = "../data";
+export const dandiBaseDir = "../data";
 
 class DandiInterfaceDandiset {
   constructor(
