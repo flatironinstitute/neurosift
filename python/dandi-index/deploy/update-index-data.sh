@@ -8,6 +8,7 @@
 #   update-index-data.sh                 # base refresh (dandi + openneuro)
 #   update-index-data.sh --embeddings    # also refresh embeddings (needs OPENAI_API_KEY)
 #   update-index-data.sh --assets        # also refresh per-asset NWB metadata (DANDI only, slow)
+#                                        # and rebuild data/neurodata_types_index.json.gz
 #
 # Both the DANDI and OpenNeuro indexes are refreshed. --embeddings applies to
 # both; --assets applies to DANDI only (the OpenNeuro build has no asset pass).
@@ -37,8 +38,10 @@ PYTHON="${DANDI_INDEX_PYTHON:-$HOME/neurosift-venv/bin/python}"
 # Detect --embeddings so we can forward it to the OpenNeuro build (which does
 # NOT understand --assets, so we never forward "$@" verbatim there).
 EMB=""
+ASSETS=""
 for a in "$@"; do
   if [ "$a" = "--embeddings" ]; then EMB="--embeddings"; fi
+  if [ "$a" = "--assets" ]; then ASSETS=1; fi
 done
 
 echo "[$(date -u +%FT%TZ)] update-index-data.sh $* (python=$PYTHON)"
@@ -46,6 +49,11 @@ echo "[$(date -u +%FT%TZ)] update-index-data.sh $* (python=$PYTHON)"
 echo "[$(date -u +%FT%TZ)] -- DANDI index ($DANDI_DIR)"
 cd "$DANDI_DIR"
 "$PYTHON" scripts/update_data.py "$@"
+if [ -n "$ASSETS" ]; then
+  # Rebuild the index behind Neurosift's neurodata-types search from the
+  # per-asset info just refreshed (served at /api/neurodata-types-index).
+  "$PYTHON" scripts/create_neurodata_types_index.py
+fi
 
 echo "[$(date -u +%FT%TZ)] -- OpenNeuro index ($PY_ROOT/openneuro-index)"
 cd "$PY_ROOT/openneuro-index"
