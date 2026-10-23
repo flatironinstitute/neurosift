@@ -3,6 +3,9 @@
 ## October 21, 2026
 
 - Removed Neurosift jobs: the job manager client, the Neurosift API key and admin user management in Settings, and the views that only ran as jobs (MP4 Video for ImageSeries, Spike Density, which was already switched off, and the text letter-count demo). They depended on the `neurosift-job-manager` service and were unused. Figpack views, which use their own service, are unchanged.
+## October 22, 2026
+
+- Neurodata-types search on the DANDI and Ember pages uses an index built from the DANDI index and served by the DANDI-index job runner (`/api/neurodata-types-index`), refreshed nightly. The previous file at lindi.neurosift.org had not been updated since July 2025. It now covers 606 dandisets (was 408) and up to 200 files per dandiset (was 100); table-column types such as `VectorData` and `ElementIdentifiers` are no longer listed.
 
 ## October 13, 2026
 

@@ -5,12 +5,16 @@
 //   GET  /api/probe                  -> { status: "alive", systemMessage }
 //   POST /api/execute-script         { script } -> { success, output | error }
 //   POST /api/dandi-semantic-search  { query }  -> { success, dandisetIds | error }
+//   GET  /api/neurodata-types-index  -> gzipped JSON written by
+//        scripts/create_neurodata_types_index.py (Neurosift's neurodata-types
+//        search on the DANDI page)
 //
 // It is meant to listen on localhost behind a reverse proxy (e.g. Caddy) that
 // terminates TLS.
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http';
 import { randomUUID } from 'crypto';
-import { createScriptInterface } from './scriptInterface';
+import { readFile } from 'fs/promises';
+import { createScriptInterface, dandiBaseDir } from './scriptInterface';
 import { executeJob, releaseJobSlot, systemMessageText, tryAcquireJobSlot } from './jobExecution';
 
 const MAX_BODY_BYTES = 1024 * 1024;
@@ -111,6 +115,24 @@ const handleDandiSemanticSearch = async (req: IncomingMessage, res: ServerRespon
   });
 };
 
+// Served as the gzip bytes themselves (not Content-Encoding: gzip), because
+// Neurosift inflates the response with pako.
+const handleNeurodataTypesIndex = async (res: ServerResponse) => {
+  let data: Buffer;
+  try {
+    data = await readFile(`${dandiBaseDir}/neurodata_types_index.json.gz`);
+  } catch {
+    throw new HttpError(404, 'Neurodata types index not built yet');
+  }
+  res.writeHead(200, {
+    ...CORS_HEADERS,
+    'Content-Type': 'application/gzip',
+    'Content-Length': data.length,
+    'Cache-Control': 'public, max-age=600',
+  });
+  res.end(data);
+};
+
 const route = async (req: IncomingMessage, res: ServerResponse) => {
   const path = new URL(req.url || '/', 'http://localhost').pathname;
   if (req.method === 'OPTIONS') {
@@ -120,6 +142,10 @@ const route = async (req: IncomingMessage, res: ServerResponse) => {
   }
   if (req.method === 'GET' && path === '/api/probe') {
     sendJson(res, 200, { status: 'alive', systemMessage: systemMessageText });
+    return;
+  }
+  if (req.method === 'GET' && path === '/api/neurodata-types-index') {
+    await handleNeurodataTypesIndex(res);
     return;
   }
   if (req.method === 'POST' && path === '/api/execute-script') {
