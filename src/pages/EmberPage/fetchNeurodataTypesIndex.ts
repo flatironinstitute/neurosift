@@ -14,10 +14,11 @@ let cachedNeurodataTypesIndex: NeurodataTypesIndex | undefined = undefined;
 export const fetchNeurodataTypesIndex = async () => {
   if (cachedNeurodataTypesIndex) return cachedNeurodataTypesIndex;
   try {
-    // This is created by the workflow in https://github.com/magland/neurosift-kerchunker
-    // See https://github.com/magland/neurosift-kerchunker/blob/main/workflow_scripts/create_neurodata_types_index.py
+    // Built from the DANDI index by
+    // python/dandi-index/scripts/create_neurodata_types_index.py and served
+    // by the DANDI-index job runner.
     const url =
-      "https://lindi.neurosift.org/dandi/neurodata_types_index.json.gz";
+      "https://dandi-index.catalystneuro.com/api/neurodata-types-index";
     const response = await fetch(url + "?cb=" + Date.now());
     const bufferGz = await response.arrayBuffer();
     const buffer = pako.inflate(bufferGz);
