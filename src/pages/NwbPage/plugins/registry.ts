@@ -17,11 +17,9 @@ import { timeIntervalsPlugin } from "./TimeIntervals";
 import { trialAlignedSeriesPlugin } from "./TrialAlignedSeries";
 import { eventRelatedSignalPlugin } from "./EventRelatedSignal";
 import { pythonScriptPlugin } from "./PythonScript";
-// import spikeDensityPlugin from "./SpikeDensity";
 import { intervalSeriesPlugin } from "./IntervalSeries";
 import { lfpSpectrogramPlugin } from "./LfpSpectrogram";
 import { eventsPlugin } from "./Events";
-import { imageSeriesMp4Plugin } from "./ImageSeriesMp4";
 import { externalFileVideoPlugin } from "./ExternalFileVideo/index";
 import { poseEstimationPlugin } from "./PoseEstimation";
 import { NwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
@@ -52,10 +50,8 @@ export const nwbObjectViewPlugins: NwbObjectViewPlugin[] = [
 
   poseEstimationPlugin,
   externalFileVideoPlugin,
-  imageSeriesMp4Plugin,
 
   rasterPlugin,
-  // spikeDensityPlugin,
 
   figpackRasterPlotPlugin,
   figpackVideoPreviewPlugin,
