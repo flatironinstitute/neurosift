@@ -2,6 +2,7 @@
 
 ## October 21, 2026
 
+- Removed annotations: the Annotations page, the annotation panels on dandiset, NWB and OpenNeuro pages, the home page's highlighted views, and the notebook and chat links built from annotations. They had not been used since mid-2025, and depended on the `neurosift-annotation-manager` service.
 - Removed Neurosift jobs: the job manager client, the Neurosift API key and admin user management in Settings, and the views that only ran as jobs (MP4 Video for ImageSeries, Spike Density, which was already switched off, and the text letter-count demo). They depended on the `neurosift-job-manager` service and were unused. Figpack views, which use their own service, are unchanged.
 ## October 22, 2026
 

@@ -23,7 +23,6 @@ import EmberDandisetSearchResult from "./EmberDandisetSearchResult.tsx";
 import { NeurodataTypesSearchPanel } from "./components/NeurodataTypesSearchPanel";
 import { SearchMode, SearchModeControl } from "./components/SearchModeControl";
 import { DandisetSearchResultItem, DandisetsResponse } from "./dandi-types";
-import { useDandisetNotebooks } from "./hooks/useDandisetNotebooks";
 import { useNeurodataTypesIndex } from "./hooks/useNeurodataTypesIndex";
 
 type DandiPageProps = {
@@ -60,9 +59,6 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
     currentLimit: 10,
     scheduledSearch: false,
   });
-
-  // Get notebook URLs for all dandisets
-  const { notebookUrls } = useDandisetNotebooks();
 
   const { searchText, searchMode } = searchState;
   // TODO: eventually re-enable these
@@ -377,7 +373,6 @@ const EmberDandiPage: FunctionComponent<DandiPageProps> = ({
             <EmberDandisetSearchResult
               dandiset={result}
               key={result.identifier}
-              notebookUrls={notebookUrls[result.identifier]}
             />
           ))}
           {(useSemanticSearch ||
