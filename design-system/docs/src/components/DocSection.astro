@@ -1,0 +1,20 @@
+---
+interface Props {
+  title: string;
+  lead?: string;
+}
+
+const { title, lead } = Astro.props;
+const id = title
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, "-")
+  .replace(/^-|-$/g, "");
+---
+
+<section class="doc-section" aria-labelledby={id}>
+  <header class="doc-section-head">
+    <h2 id={id} class="type-h2">{title}</h2>
+    {lead && <p class="type-body">{lead}</p>}
+  </header>
+  <slot />
+</section>

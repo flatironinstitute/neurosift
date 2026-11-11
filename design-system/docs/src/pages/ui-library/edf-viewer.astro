@@ -1,0 +1,121 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import LiveScreen from "../../components/LiveScreen.astro";
+import Screen from "../../components/Screen.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const TODAY = [
+  ["Channels", "A navy-headed table: a bare checkbox, Channel and Rate (Hz) per signal; the header box selects all or clears", "shared/EdfViewer/EdfViewer.tsx", "No count of how many are on; checking a channel above 9 sorted it out of order"],
+  ["Separation", "“Chan. sep (stdev)” and an unstyled select of 0 to 100", "EdfViewer.tsx", "The unit is abbreviated"],
+  ["OpenNeuro", "An h4 and a table of Dataset, Subject, Session, Modality and File", "EdfViewer.tsx", "Terms wrap mid-word in the narrow column"],
+  ["Time toolbar", "A column of Font Awesome zoom and arrow icons beside the plot", "component-time-scroll-view-2/ViewToolbar.tsx", "No visible time or window length"],
+  ["Selection bar", "A gray bar above the plot showing the window in the recording", "TimeseriesSelectionBar", "No start or end times"],
+  ["Loading", "“Loading EDF file...”, then a blue 20px “Loading timeseries data...” over the plot", "EdfViewer.tsx, NwbTimeseriesView.tsx", "Shows on every pan, however short"],
+  ["Play", "A play button and 0.1× to 8× speed menu in the code, never shown", "PlayControl.tsx", "Unused; removed"],
+];
+
+const STATES = [
+  ["Loading", "Loading state: “Reading the EDF file”, “Loading timestamps”, then “Loading the channels”."],
+  ["Drawing", "Loading state “Loading the recording” over the plot, after 300ms and held at least 500ms."],
+  ["Some channels", "All channels is Mixed; Channels reads “3 of 4”."],
+  ["No channels", "All channels is off; the plot is empty."],
+  ["Not on OpenNeuro", "No OpenNeuro section."],
+  ["Too long a window", "The plot says to zoom in, as today; Shift+O draws it anyway."],
+  ["Waiting for data", "Playback holds the window, never skipping ahead, and says “Waiting for data” beside the readout until the next stretch arrives."],
+];
+
+const BEHAVIOR = [
+  ["Time window", "Window length and start, zoom and step buttons; the same control as every time series view."],
+  ["Time overview", "Drag across it to pick a stretch; it shows the window in the whole recording."],
+  ["Playback", "Play moves the window forward in real time at the chosen speed, loading a few seconds ahead; the readout is the window’s right edge. A window too long to draw is shortened to the longest that draws, keeping its right edge, so Play never runs behind the zoom-in message. Editing the window, dragging the overview, zooming or stepping pauses it, and so does the end. Space plays and pauses when the plot has focus."],
+  ["Plot", "Drag to pan, click then scroll to zoom, arrow keys pan, = and - zoom, M switches lines and markers, as today."],
+  ["Separation", "Spreads channels by 0 to 100 standard deviations of their first 5,000 samples, as today."],
+  ["Channels", "Check channels to plot; colors stay with each channel. All channels turns all on, or clears when all are on."],
+  ["Dataset", "Opens the dataset on OpenNeuro in a new tab."],
+];
+
+const DIFFERS = [
+  ["Frame", "The channel panel on the left, the plot on the right, split by a draggable bar", "View panel: summary, Time window, Separation, Time overview and the plot, with Channels and OpenNeuro in the settings beside it", "Built"],
+  ["Time controls", "Icon column and a gray bar", "Time window and Time overview, shared with the NWB views", "Built"],
+  ["Playback", "A play control in the code, never shown", "Play, pause and speed, after the Time window, as on traces", "Built"],
+  ["Summary", "None", "“0.00–522.00 s · 2,000 Hz · 4 channels”", "Built"],
+  ["Channels", "Table with bare checkboxes", "Checkboxes with each rate as a count, after All channels", "Built"],
+  ["Separation", "“Chan. sep (stdev)”, unstyled select", "Select, Small, labeled Separation, in σ", "Built"],
+  ["OpenNeuro", "h4 and a table", "Description list, the file name in the code face", "Built"],
+  ["Loading", "Plain text and a blue line", "Loading state", "Built"],
+  ["Splitter", "The channel panel could be dragged wider", "A fixed 320px settings panel, as in every view", "To confirm"],
+];
+
+const SPECS = [
+  ["Frame", "View panel with a 320px settings panel · 16px (space/4) padding"],
+  ["Controls", "Time window · Playback, right after it, readout in type/code-sm · Select, Small, 9rem"],
+  ["Settings", "Accordion items: Channels, with “3 of 4”; OpenNeuro, with the dataset ID"],
+  ["Channels", "Checkbox per signal · rate as the count, “2,000 Hz” · 4px (space/1) gap"],
+  ["OpenNeuro", "Description list, beside · File in type/code-sm"],
+  ["Plot", "surface/panel · border/subtle · drawn as today"],
+];
+---
+
+<DocsLayout title="EDF viewer" description="EDF recordings at /edf and in OpenNeuro datasets: channels, separation and the shared time controls around the traces.">
+  <Intro
+    lead="The EDF viewer opens European Data Format recordings, such as OpenNeuro’s EEG and iEEG files, at /edf?url= and from a dataset’s file list. It was the last time series view with the old toolbar: a column of icons beside the plot, a gray bar above it and a table of channels. The rebuild puts it in the same frame as the NWB time series views, with the Time window and Time overview, and moves channels and the file’s place on OpenNeuro into the settings beside the plot. The traces are drawn as today."
+    status="Updated November 11, 2026 · UI library · Captured at 1440 × 900 with OpenNeuro ds003374, sub-01 ses-01 iEEG · Built from View panel, Time window, Time overview, Playback, Select, Accordion, Checkbox, Description list and Loading state"
+    rules={[
+      { title: "One set of time controls", text: "The EDF viewer moves through time the way every time series view does." },
+      { title: "Say what’s drawn", text: "The summary gives the span, rate and channels; Channels counts what’s on." },
+      { title: "Drawing unchanged", text: "Traces, colors, axes and the zoom-in message are Neurosift’s own." },
+    ]}
+  />
+
+  <DocSection title="The EDF viewer today" lead="neurosift.app, captured with Playwright.">
+    <div class="captures">
+      <Screen file="edf-viewer" alt="Today’s EDF viewer: a navy-headed channel table with checkboxes, a Chan. sep (stdev) select and an OpenNeuro table on the left; zoom and arrow icons in a column beside the traces." caption="Today: a channel table, an icon column and a gray bar." />
+    </div>
+  </DocSection>
+
+  <DocSection title="What the viewer does today" lead="Read from the source and checked on the live site.">
+    <DocTable caption="What the viewer does today" columns={["Part", "Today", "Code", "Notes"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="The rebuilt viewer" lead="The redesign with the same file, with live data.">
+    <div class="captures">
+      <Screen file="edf-viewer-proposed" alt="The rebuilt EDF viewer: 0.00–522.00 s · 2,000 Hz · 4 channels, the Time window, Playback at 1×, a Separation select, the Time overview and the traces, with Channels and OpenNeuro beside them." caption="The shared time frame, with Channels and OpenNeuro beside the plot." />
+      <Screen file="edf-viewer-proposed-channels" alt="The rebuilt EDF viewer zoomed to 17.86 s from 5.36 s, Separation at 5 σ, mmAL2 unchecked and All channels mixed, Channels reading 3 of 4." caption="Zoomed and stepped, separated by 5 σ, with one channel off." />
+    </div>
+    <p class="doc-note">Built from the <a href={withBase("/components/view-panel/")}>View panel</a>, <a href={withBase("/components/time-controls/")}>Time controls</a>, <a href={withBase("/components/selects/")}>Selects</a>, <a href={withBase("/components/accordions/")}>Accordion</a>, <a href={withBase("/components/checkboxes/")}>Checkboxes</a> and the <a href={withBase("/components/description-list/")}>Description list</a>.</p>
+  </DocSection>
+
+  <DocSection title="Try it" lead="Play the recording, step the window, change the separation and turn channels off.">
+    <LiveScreen path="edf?url=https%3A%2F%2Fs3.amazonaws.com%2Fopenneuro.org%2Fds003374%2Fsub-01%2Fses-01%2Fieeg%2Fsub-01_ses-01_task-jokeit_run-01_ieeg.edf%3FversionId%3Dfmme9zou6CJaupJWGNfKx54PzDIruE1f" title="EDF recording, OpenNeuro ds003374 sub-01" size="tall" />
+  </DocSection>
+
+  <DocSection title="States">
+    <DocTable caption="States" columns={["When", "What changes"]}>
+      <DocRows rows={STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Behavior">
+    <DocTable caption="Behavior" columns={["Part", "Behavior"]}>
+      <DocRows rows={BEHAVIOR} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="What differs" lead="Built is in the app now.">
+    <DocTable caption="What differs" columns={["Area", "Existing", "Proposed", "Status"]}>
+      <DocRows rows={DIFFERS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Specs" columns={["Property", "Value"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

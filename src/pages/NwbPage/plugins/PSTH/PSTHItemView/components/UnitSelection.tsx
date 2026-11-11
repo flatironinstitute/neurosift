@@ -1,16 +1,18 @@
+import { Checkbox, LoadingState } from "@ui";
 import { FunctionComponent } from "react";
 import { DirectSpikeTrainsClient } from "../DirectSpikeTrainsClient";
+import "./PSTHControls.css";
 
 type UnitsSelectionProps = {
   unitIds?: (number | string)[];
   selectedUnitIds: (number | string)[];
   setSelectedUnitIds: (x: (number | string)[]) => void;
   sortUnitsByVariable: [string, "asc" | "desc"] | undefined;
-  /* eslint-disable @typescript-eslint/no-explicit-any */
   sortUnitsByValues: { [unitId: string | number]: number | string } | undefined;
   spikeTrainsClient: DirectSpikeTrainsClient | undefined;
 };
 
+/** Units to plot, with their spike counts; the first box picks all or none. */
 const UnitSelectionComponent: FunctionComponent<UnitsSelectionProps> = ({
   unitIds,
   selectedUnitIds,
@@ -19,67 +21,43 @@ const UnitSelectionComponent: FunctionComponent<UnitsSelectionProps> = ({
   sortUnitsByValues,
   spikeTrainsClient,
 }) => {
-  if (!unitIds) return <div>Loading unit IDs...</div>;
+  if (!unitIds)
+    return <LoadingState label="Reading the units" phase="loading" />;
+  const n = selectedUnitIds.length;
+  const sortedBy = sortUnitsByVariable?.[0];
   return (
-    <table className="nwb-table" style={{ tableLayout: "fixed" }}>
-      <colgroup>
-        <col style={{ width: 20 }} />
-      </colgroup>
-      <thead>
-        <tr>
-          <th style={{ padding: "4px 2px" }}>
-            <input
-              type="checkbox"
-              checked={
-                unitIds.length > 0 && selectedUnitIds.length === unitIds.length
-              }
-              onChange={() => {}}
-              onClick={() => {
-                if (selectedUnitIds.length > 0) {
-                  setSelectedUnitIds([]);
-                } else {
-                  setSelectedUnitIds(unitIds);
-                }
-              }}
-            />
-          </th>
-          <th>Unit ID</th>
-          <th># spikes</th>
-          {sortUnitsByVariable && <th>{sortUnitsByVariable[0]}</th>}
-        </tr>
-      </thead>
-      <tbody>
-        {unitIds.map((unitId) => (
-          <tr key={unitId}>
-            <td style={{ padding: "4px 2px" }}>
-              <input
-                type="checkbox"
-                checked={selectedUnitIds.includes(unitId)}
-                onChange={() => {}}
-                onClick={() => {
-                  if (selectedUnitIds.includes(unitId)) {
-                    setSelectedUnitIds(
-                      selectedUnitIds.filter((x) => x !== unitId),
-                    );
-                  } else {
-                    setSelectedUnitIds([...selectedUnitIds, unitId]);
-                  }
-                }}
-              />
-            </td>
-            <td>{unitId}</td>
-            <td>
-              {spikeTrainsClient
-                ? spikeTrainsClient.numSpikesForUnit(unitId)
-                : ""}
-            </td>
-            {sortUnitsByVariable && (
-              <td>{sortUnitsByValues ? sortUnitsByValues[unitId] : ""}</td>
-            )}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="psth-checklist">
+      <Checkbox
+        label="All units"
+        checked={n === 0 ? false : n === unitIds.length ? true : "mixed"}
+        onChange={() => setSelectedUnitIds(n > 0 ? [] : unitIds)}
+        count="Spikes"
+      />
+      {unitIds.map((unitId) => {
+        const spikes = spikeTrainsClient?.numSpikesForUnit(unitId);
+        const sortValue =
+          sortedBy && sortUnitsByValues
+            ? ` · ${sortedBy} ${sortUnitsByValues[unitId]}`
+            : "";
+        return (
+          <Checkbox
+            key={unitId}
+            label={`Unit ${unitId}${sortValue}`}
+            checked={selectedUnitIds.includes(unitId)}
+            count={
+              spikes !== undefined ? spikes.toLocaleString("en-US") : undefined
+            }
+            onChange={(on) =>
+              setSelectedUnitIds(
+                on
+                  ? [...selectedUnitIds, unitId]
+                  : selectedUnitIds.filter((x) => x !== unitId),
+              )
+            }
+          />
+        );
+      })}
+    </div>
   );
 };
 

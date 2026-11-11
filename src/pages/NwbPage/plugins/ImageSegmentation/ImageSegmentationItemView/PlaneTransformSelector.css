@@ -1,0 +1,14 @@
+.plane-transform {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.plane-transform-legend {
+  margin-block-end: var(--space-2);
+  padding: 0;
+  font: var(--type-label);
+  color: var(--text-default);
+}

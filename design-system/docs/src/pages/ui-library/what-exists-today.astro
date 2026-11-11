@@ -1,0 +1,171 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const PARTS = [
+  ["Archive browsing", "DANDI, EMBER and OpenNeuro search and dataset pages", "Search or browse an archive, open a dataset, read its metadata and pick a file from its tree."],
+  ["File viewing", "NWB file view, plus EDF, video, SLEAP and the OpenNeuro file viewers", "Stream a file from its URL, list what’s inside, open objects in views that share time, and hand off to Python."],
+  ["Setup and help", "Settings, the NWB viewer guide, Neurosift Chat", "Add API keys for embargoed data, learn the viewer, or ask in plain language. Chat is a separate site."],
+];
+
+const ARCHIVES = [
+  ["DANDI search", "Finds Dandisets on api.dandiarchive.org.", "Three modes: Basic text, Semantic (CatalystNeuro index) and Neurodata types, where every chosen type must be in the same file. Recent Dandisets. API key for embargoed results.", "Result cards: title, ID, created, modified, contact, version, file count, size, “N matching” files, embargo status.", "All three search modes; recents; the matching-file count; embargo handling."],
+  ["Dandiset page", "Describes one Dandiset and lists its files.", "Version (published versions and draft). Show NWB files only.", "Title, description, contributors, ID, version, dates, status, size, file count, license and citation; folder and file tree with sizes; View on DANDI.", "Version choice; NWB-only filter; every metadata field; the tree."],
+  ["EMBER search and Dandiset", "The same as DANDI, on api-dandi.emberarchive.org.", "As DANDI, with an EMBER API key.", "As DANDI.", "Parity with DANDI."],
+  ["OpenNeuro search and dataset", "Finds and opens OpenNeuro datasets through its GraphQL API.", "Search text. Recent datasets.", "Dataset metadata and file tree; files open in the OpenNeuro file viewers below.", "Every file type it can open."],
+];
+
+const TABS = [
+  ["Widgets", "The main workspace.", "Left: the overview panel (Dandiset title and description, session and subject metadata, file creation, keywords, notes, source script, NWB version, Using LINDI). Right: Main, a tree of top-level groups and neurodata objects, and one tab per opened object.", "Opening objects in tabs; checking several objects to open them together in one combined view; the collapsible overview panel."],
+  ["Videos", "Only when the file has video.", "Every video in the file, side by side, on one shared time slider.", "Copying a link with the arrangement and time."],
+  ["Icephys", "Only when the file has intracellular ephys.", "Intracellular ephys recordings, not yet reviewed in depth.", "Everything it shows today."],
+  ["Timeseries alignment", "Checks timing across the file.", "The start and end of every timeseries, interval table and events object on one axis; click to open one.", "The whole-file overview of timing."],
+  ["Python usage", "Writes a script for the whole file.", "PyNWB and LINDI code with every object and its type, shape and description as comments; Copy Script.", "The generated script."],
+  ["Schema", "Shows the NWB specifications in the file.", "The NWB specifications embedded in the file.", "All of it."],
+  ["HDF5", "Shows the raw file.", "Groups, datasets, attributes, shapes and dtypes.", "All of it."],
+];
+
+const ACROSS = [
+  ["Shared time", "Time views share one visible window and one cursor (TimeseriesSelectionContext)."],
+  ["Object tab bar", "Each tab shows the object path, a share button that copies a link with ?tab=, and Load in Python for that object."],
+  ["Status bar", "Counts of HDF5 groups, datasets and data reads, which show loading progress."],
+  ["Plotly toggle", "Raster and timeseries views can redraw with Plotly from an unlabeled “.” button."],
+];
+
+const PLUGINS = [
+  ["Simple timeseries", "Any group with a data dataset (TimeSeries)", "Traces over time, several channels stacked", "Time window, channels shown, separation, Plotly toggle"],
+  ["Spectrogram", "ElectricalSeries", "Time-frequency power for a channel, computed in the browser", "Preprocessing: high- and low-pass, order, zero-phase, notch at 50 or 60 Hz with harmonics, decimate, artifact threshold"],
+  ["Raster", "Units", "Spike times per unit", "Units window, time window, Plotly toggle"],
+  ["PSTH", "Units + TimeIntervals", "Spikes aligned to trial events, as raster and histogram", "Units, align to, window, group trials by, sort units by, bins (1–1,000), raster, histogram, smoothing, height"],
+  ["Event-related signal", "TimeIntervals + one timeseries", "A signal averaged around events", "Timeseries, channels, align to, window, raw trace opacity, standard deviation band"],
+  ["Trial-aligned series", "TimeIntervals + RoiResponseSeries, FiberPhotometry or Microscopy response series", "Responses aligned to trials", "Not yet reviewed"],
+  ["Two-photon series", "ImageSeries (TwoPhoton, OnePhoton)", "Imaging frames over time", "Plane, display range (two-thumb), time overview strip"],
+  ["Image", "Images", "Still images", "Brightness, contrast"],
+  ["Image segmentation, Plane segmentation", "ImageSegmentation, PlaneSegmentation", "ROI masks over the field of view", "Not yet reviewed"],
+  ["Time intervals", "TimeIntervals with start_time and stop_time", "Intervals on a time axis", "Shared time controls"],
+  ["Interval series, Events, Behavioral events", "IntervalSeries, Events, BehavioralEvents", "Events and intervals on a time axis", "Shared time controls"],
+  ["Spatial series XY", "SpatialSeries", "A path in x and y", "Time overview strip"],
+  ["Pose overlay", "PoseEstimation, PoseEstimationSeries", "Keypoints over video, with trails", "Trails and trail length (0.25–5 s), confidence threshold, show every keypoint, time"],
+  ["Video", "ImageSeries with an external file", "The video, synced to the file’s time", "Synced to the shared cursor; controls not yet reviewed"],
+  ["Dynamic table", "Any table with colnames (units, trials, electrodes)", "Rows and columns", "Sort by column, Export CSV, launch views from rows"],
+  ["Figpack raster, video preview, pose", "Units, ImageSeries, PoseEstimation", "Figures built with figpack", "Launchable only"],
+  ["Default", "Anything", "Attributes and datasets, when no other view applies", "Expand datasets"],
+  ["Python script", "Anything", "Load in Python code for the object", "Copy (to add)"],
+];
+
+const VIEWERS = [
+  ["OpenNeuro file viewers", "/openneuro-dataset/:id", "NIfTI (axial, coronal, sagittal, 3D render and all four), JSON, TSV, text, EDF, SNIRF and WAV files from a dataset’s tree. Keep every format and the NIfTI view choices."],
+  ["EDF page", "/edf", "EDF recordings as timeseries, with channel selection, separation and the OpenNeuro file’s place. The play control in the code was never shown."],
+  ["Video page", "/video", "A video file by URL."],
+  ["SLEAP page", "/slp", "SLEAP .slp pose files as a tree."],
+  ["Settings", "/settings", "DANDI, DANDI sandbox and EMBER API keys, saved in this browser’s localStorage; a reload applies them."],
+  ["NWB viewer guide", "/guide", "How to use the viewer."],
+];
+
+const LINKS = [
+  ["Pages", "/, /search, /dandi, /ember, /openneuro, /settings, /guide", "As they are."],
+  ["Datasets", "/dandiset/:id?dandisetVersion=…&tab=…, /ember-dandiset/:id?tab=…, /openneuro-dataset/:id?tab=…", "As they are; tab names a file in the dataset."],
+  ["NWB files", "/nwb?url=…&dandisetId=…&dandisetVersion=…&tab=…, or path= instead of url=", "As they are; tab is a section, an object path, view:Plugin|path^secondary or a JSON list, and a renamed plugin keeps its old name."],
+  ["View settings", "Search parameters and the # of each view", "As they are."],
+  ["Other viewers", "/edf, /video, /slp with url=", "As they are."],
+  ["Neurosift v1", "/?p=/dandi, /dandiset, /ember-dandiset, /openneuro-dataset, /nwb, /edf, /avi", "Redirected once, replacing the history entry, by src/util/legacyUrl.ts; embedded=1 and the # are kept."],
+];
+
+const BLOCKS = [
+  ["Time window and step buttons", "Every time view", "Time window, Time overview", "Time series views"],
+  ["Channel or unit window", "Timeseries, raster", "Channel window", "Time series views; Spike views"],
+  ["Control panel with sections", "PSTH, event-related signal, spectrogram", "Accordion item, Select, Slider, Text input", "Spike views; Spectrogram"],
+  ["Selection lists", "PSTH units and ROIs, align to", "Checkbox with counts, in compact rows", "Spike views"],
+  ["File and object trees", "Dandiset files, NWB objects, HDF5", "Tree", "Dataset page; Neurodata object tree; HDF5 and schema"],
+  ["Archive search", "DANDI, EMBER, OpenNeuro", "Search field, Segmented control, Multi-select, Badge", "Archive search"],
+  ["Code for Python", "Load in Python, Python usage", "Code block", "File viewer layout"],
+  ["Errors and access", "Embargoed files, failed reads", "Alert, Inline message", "Every page"],
+];
+
+const LEAVE = [
+  ["View on DANDI", "Full metadata, downloads and account actions live on DANDI", "Keep the link; say what DANDI adds."],
+  ["Load in Python", "Analysis happens in their own environment", "Intended. Make the code copyable everywhere."],
+  ["Neurosift v1 (the “1” button)", "Some views or links may only exist in v1", "Confirm what v1 still offers; label the button."],
+  ["Neurosift Chat", "It’s a separate site, chat.neurosift.app", "Link from the home page as today, clearly marked experimental."],
+  ["GitHub, to report problems", "No in-app feedback", "Keep “Report this” in error alerts."],
+];
+
+const PROBLEMS = [
+  ["Search query lost on Back", "DANDI search", "Upstream #321"],
+  ["File name not shown in the file view", "NWB file view", "Upstream #369"],
+  ["Embargoed files and bad URLs show Loading… forever", "NWB file view", "Upstream #525, #352; fixed by the redesign"],
+  ["Folders open only from the small ► arrow", "Dandiset file tree", "Walkthrough"],
+  ["PSTH opens empty until units are ticked", "PSTH", "Walkthrough"],
+  ["DANDI result list takes about 17 s to appear", "DANDI search", "Walkthrough"],
+  ["EMBER key helper names DANDI and api.dandiarchive.org", "Settings", "Code; fixed by the redesign"],
+  ["Invalid typed values snap back with no message", "Time window fields", "Code"],
+];
+
+const CONFIRM = [
+  ["Should the Widgets tab be called Views, and multi-object tabs a combined view?", "File view naming"],
+  ["What does Neurosift v1 still do that v2 doesn’t?", "App bar, “Open in v1”"],
+  ["Should shared links include the time window, not only the tab?", "Share, Time controls"],
+  ["Are channel and unit ranges meant to stay zero-based?", "Channel window"],
+  ["Why does the Plotly toggle exist: speed, export or interaction?", "Raster and timeseries views"],
+  ["Does the two-photon view load in a normal browser? It never finished in headless Chromium for Dandiset 000728.", "Imaging views"],
+  ["What should the Icephys tab show at a glance?", "Icephys"],
+];
+---
+
+<DocsLayout title="What exists today" description="Every part of Neurosift: what it does, takes in and shows, and what a redesign must keep.">
+  <Intro
+    lead="A functional reference for every part of Neurosift: what it does, what it takes in, what it shows, and the features any redesign must keep. It records behavior, not today’s look. The design system replaces the visuals; the data, the views and the way they stay in sync stay exactly as they are."
+    status="Compiled November 5, 2026 · UI library · Sources: the Neurosift repository (routes, 23 view plugins, 8 file viewers), the 2024 JOSS paper, its 351 GitHub issues, and a Playwright walkthrough of neurosift.app"
+    rules={[
+      { title: "Keep every view", text: "Each plugin, control, option and download listed here stays. Only how it’s presented changes." },
+      { title: "Keep the sync", text: "Views of one file share a time window and cursor, and a link restores the tab. That is the product." },
+      { title: "Ask before guessing", text: "Anything under “To confirm” needs an answer from Jeremy or Ben before it’s drawn." },
+    ]}
+  />
+
+  <DocSection title="How to use this page" lead="Read it before redesigning any screen. Keep every input, option, view and download listed for that area, then change only how it’s presented, using the system’s components. The UI library pages that follow redesign each area in turn." />
+
+  <DocSection title="Three parts of Neurosift" lead="Everything belongs to one part, and each part already shares most of its flow.">
+    <DocTable caption="Three parts of Neurosift" columns={["Part", "Pages", "Shared flow"]}><DocRows rows={PARTS} /></DocTable>
+  </DocSection>
+
+  <DocSection title="Archive browsing">
+    <DocTable caption="Archive browsing" columns={["Page", "What it does", "Input and options", "What it shows", "Must keep"]}><DocRows rows={ARCHIVES} /></DocTable>
+  </DocSection>
+
+  <DocSection title="NWB file view" lead="Route /nwb?url=… with optional dandisetId, dandisetVersion and tab. The file is read in the browser with HTTP range requests, or through a LINDI index when one exists, so nothing is downloaded first.">
+    <DocTable caption="NWB file view tabs" columns={["Tab", "What it does", "Shows", "Must keep"]}><DocRows rows={TABS} /></DocTable>
+    <DocTable caption="Across the file view" columns={["Behavior", "Detail"]}><DocRows rows={ACROSS} /></DocTable>
+  </DocSection>
+
+  <DocSection title="View plugins" lead="Neurosift picks the views that can open an object from its neurodata type and contents. They appear in this order. Launchable means the view can also start from a table row.">
+    <DocTable caption="View plugins" columns={["View", "Opens for", "What it shows", "Controls today"]}><DocRows rows={PLUGINS} /></DocTable>
+  </DocSection>
+
+  <DocSection title="Other file viewers">
+    <DocTable caption="Other file viewers" columns={["Viewer", "Route", "Opens, and must keep"]}><DocRows rows={VIEWERS} /></DocTable>
+  </DocSection>
+
+  <DocSection title="Links" lead="Researchers save Neurosift links, so these forms open the same thing forever. A redesign that renames a route, tab or plugin maps the old form; docs/saved-links.md lists every form with an example.">
+    <DocTable caption="Saved link forms" columns={["Kind", "Form", "Opens"]}><DocRows rows={LINKS} /></DocTable>
+  </DocSection>
+
+  <DocSection title="Shared building blocks" lead="Parts that repeat. Each has a component in this system, and a UI library page that uses it.">
+    <DocTable caption="Shared building blocks" columns={["Building block", "Used by", "Component", "UI library page"]}><DocRows rows={BLOCKS} /></DocTable>
+  </DocSection>
+
+  <DocSection title="Where people leave Neurosift" lead="Each is a chance to keep people in the tool, without changing any data.">
+    <DocTable caption="Where people leave Neurosift" columns={["Step today", "Why they leave", "Opportunity"]}><DocRows rows={LEAVE} /></DocTable>
+  </DocSection>
+
+  <DocSection title="Known problems" lead="From the walkthrough and the issue tracker. Each is fixed by presentation, not by changing data.">
+    <DocTable caption="Known problems" columns={["Problem", "Where", "Source"]}><DocRows rows={PROBLEMS} /></DocTable>
+  </DocSection>
+
+  <DocSection title="To confirm" lead="Questions for Jeremy and Ben. The design waits on these answers; the science doesn’t change.">
+    <DocTable caption="To confirm" columns={["Question", "Where it matters"]}><DocRows rows={CONFIRM} /></DocTable>
+  </DocSection>
+</DocsLayout>

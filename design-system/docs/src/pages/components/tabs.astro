@@ -1,0 +1,178 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import Existing from "../../components/Existing.astro";
+import CodeSample from "../../components/CodeSample.astro";
+import DoDont from "../../components/DoDont.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import SegmentedDemo from "../../components/SegmentedDemo";
+import { ObjectTabsDemo, SectionTabsDemo } from "../../components/TabsDemo";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const WHICH = [
+  ["Moving between views of the same file", "Section tabs", "Widgets, Python usage, Schema, HDF5"],
+  ["Switching between objects they opened", "Object tabs", "Main, LFPs, units"],
+  ["Choosing one of two to four settings", "Segmented control", "Sort order, PSTH height, notch frequency, search mode, plot mode"],
+  ["Choosing one of five or more", "Select", "Group trials by, version, playback speed"],
+  ["Turning one thing on or off", "Checkbox", "Show raster, Smoothed"],
+];
+
+const KEYS = [
+  ["Left and Right arrows", "Move between tabs and open them", "Move the selection"],
+  ["Home, End", "First or last tab", "First or last option"],
+  ["Tab", "Leaves the tab list for the panel", "Leaves the group"],
+  ["Delete", "Closes the focused object tab (not Main)", "—"],
+];
+
+const WRITING = [
+  ["Timeseries alignment", "Timeseries Alignment", "Sentence case"],
+  ["Python usage", "Python Usage", "Sentence case"],
+  ["Overview, Main", "OVERVIEW, MAIN", "No all caps"],
+  ["Search by: Basic · Semantic · Neurodata types", "Basic Search · Semantic Search · Neurodata Types Search", "The group label carries “Search”"],
+];
+
+const SPECS = [
+  ["Height", "44px · layout/sectionbar-height", "36px · layout/tabs-height", "32 or 24px · button/height"],
+  ["Padding", "16px · space/4", "12px left, 8px right", "12 or 8px · space/3, space/2"],
+  ["Label", "type/body-sm; selected type/label", "type/code-sm", "12px, SemiBold when selected · type/label-sm"],
+  ["Selected", "SemiBold · 3px action/primary underline", "Same", "surface/inverse · text/on-inverse"],
+  ["Hover", "action/secondary-hover", "Same", "Same"],
+  ["Bar or group", "1px border/strong rule under the bar", "Same", "1px border/strong · radius/sm"],
+];
+
+const code = `import { SegmentedControl, TabPanel, Tabs } from "@ui";
+
+<Tabs
+  id="file"
+  label="File views"
+  tabs={sections}
+  selected={view}
+  onSelect={setView}
+/>
+<TabPanel tabsId="file" tabId="widgets" selected={view === "widgets"}>
+  …
+</TabPanel>
+
+<Tabs
+  id="objects"
+  label="Open objects"
+  kind="object"
+  tabs={openObjects}
+  selected={current}
+  onSelect={setCurrent}
+  onClose={closeObject}
+/>
+
+<SegmentedControl
+  label="Sort order"
+  value={order}
+  onChange={setOrder}
+  options={[
+    { value: "asc", label: "Ascending" },
+    { value: "desc", label: "Descending" },
+  ]}
+/>`;
+const TAB_STATES = [
+  [
+    "Default",
+    "Regular weight in text/secondary."
+  ],
+  [
+    "Hover",
+    "Navy 50 behind the tab."
+  ],
+  [
+    "Selected",
+    "SemiBold text/default and a 3px navy underline."
+  ],
+  [
+    "Focus",
+    "A 2px link-blue ring inside the tab."
+  ]
+];
+---
+
+<DocsLayout title="Tabs and segmented controls" description="Tabs move between views of a file; segmented controls choose one of two to four settings.">
+  <Intro
+    lead="Tabs move between views of the same file: section tabs switch the whole workspace, and object tabs hold the neurodata objects people have opened. Segmented controls choose between two to four settings that are all worth seeing at once, such as sort order or the plot’s pan and zoom mode."
+    status="Updated November 9, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "Tabs change the view", text: "A tab shows different content in the same place. It never runs an action or opens a dialog." },
+      { title: "Segments change a setting", text: "A segmented control is a visible radio group: one choice, applied right away." },
+      { title: "Selected is unmistakable", text: "Tabs: SemiBold with a 3px navy underline. Segments: an inverted navy segment." },
+    ]}
+  />
+
+  <Existing page="tabs" />
+
+  <DocSection title="Section tabs" lead="The top level of the file workspace. Click a tab, or focus one and use the arrow keys: the panel follows.">
+    <SectionTabsDemo client:visible />
+    <p class="doc-note">Primary sections sit on the left; Schema and HDF5, for people who want the raw structure, sit on the right. Videos and Icephys appear only when the file has them. When tabs don’t fit, the bar scrolls sideways.</p>
+  </DocSection>
+
+  <DocSection title="Object tabs" lead="Each neurodata object people open gets a tab, named as in the file, in Plex Mono, with its full path in the tooltip. Main is the file overview and can’t be closed.">
+    <ObjectTabsDemo client:visible />
+    <p class="doc-note">Close a tab with its × or with Delete. Closing the open tab opens its neighbor, and focus moves to it.</p>
+  </DocSection>
+
+  <DocSection title="Tab states" lead="Section tabs and object tabs share four states. Hover or Tab to the tabs above to see them.">
+    <DocTable caption="Tab states" columns={["State","Look"]}>
+      <DocRows rows={TAB_STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Segmented control" lead="Two to four options, all visible, one selected. The selected segment is inverted: navy with white SemiBold text, the same signal as the selected row in tables.">
+    <div class="segmented-demos">
+      <SegmentedDemo client:visible label="Sort order" initial="asc" options={[{ value: "asc", label: "Ascending" }, { value: "desc", label: "Descending" }]} />
+      <SegmentedDemo client:visible label="PSTH height" initial="md" options={[{ value: "sm", label: "Small" }, { value: "md", label: "Medium" }, { value: "lg", label: "Large" }]} />
+      <SegmentedDemo client:visible label="Notch filter" size="sm" initial="60" options={[{ value: "50", label: "50 Hz" }, { value: "60", label: "60 Hz" }]} />
+      <SegmentedDemo client:visible label="Search by" initial="basic" options={[{ value: "basic", label: "Basic" }, { value: "semantic", label: "Semantic", disabled: true }, { value: "types", label: "Neurodata types" }]} />
+    </div>
+    <p class="doc-note">Medium is 32px tall and Small is 24px, for plot toolbars. Search by shows a disabled option, as on EMBER, which has no semantic search; arrow keys skip it. Options can carry an icon, and icon-only controls name each option for screen readers and in a tooltip.</p>
+  </DocSection>
+
+  <DocSection title="Tabs, segments or something else">
+    <DocTable caption="Tabs, segments or something else" columns={["If people are…", "Use", "In Neurosift"]}>
+      {WHICH.map(([doing, use, where]) => <tr><th scope="row">{doing}</th><td>{use}</td><td>{where}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Keyboard" lead="Tabs follow the WAI-ARIA tabs pattern; segmented controls follow the radio group. Each is one stop in the tab order.">
+    <DocTable caption="Keyboard" columns={["Key", "Tabs", "Segmented control"]}>
+      {KEYS.map(([key, tabs, segments]) => <tr><th scope="row">{key}</th><td>{tabs}</td><td>{segments}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Writing" lead="Rewrites of strings in the app today.">
+    <DocTable caption="Writing tabs and segments" columns={["Use", "Instead of", "Why"]}>
+      {WRITING.map(([use, instead, why]) => <tr><th scope="row">{use}</th><td>{instead}</td><td>{why}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Accessibility">
+    <ul class="rule-list">
+      <li><strong>Real tabs.</strong> role=tablist, tab and tabpanel with aria-selected, so screen readers announce “Widgets, tab 1 of 5, selected”.</li>
+      <li><strong>Closing on purpose.</strong> A tab list may only hold tabs, so the × is a pointer target, and Delete closes the focused tab. Closable tabs announce the key with aria-keyshortcuts, and selecting a tab never closes it.</li>
+      <li><strong>Inverted segment contrast.</strong> White on navy is 10.98:1; unselected text on white is 17.4:1.</li>
+      <li><strong>Not by color alone.</strong> Selected tabs change weight and gain an underline; segments invert.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Keep tab labels to one or two words.", "Keep the same tabs in the same order for every file.", "Use segments for two to four settings.", "Label a segmented control as a group."]}
+      donts={["Don’t style tabs as buttons.", "Don’t put actions in a tab bar.", "Don’t use a segmented control for five or more options.", "Don’t disable a tab that has no data; hide it, as Videos is hidden today."]}
+    />
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Tabs and segmented control specs" columns={["Property", "Section tab", "Object tab", "Segment"]}>
+      {SPECS.map(([property, section, object, segment]) => <tr><th scope="row">{property}</th><td>{section}</td><td>{object}</td><td>{segment}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. Tabs and panels share an id, so each tab controls its panel. Panels stay mounted while hidden, so views keep their state.">
+    <CodeSample label="React" code={code} />
+  </DocSection>
+</DocsLayout>

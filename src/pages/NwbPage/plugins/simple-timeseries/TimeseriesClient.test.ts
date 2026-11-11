@@ -217,6 +217,22 @@ describe("ChunkedTimeseriesClient with a regular series", () => {
       .map((r) => r.slice![1]);
     expect(channelSlices).toEqual([[0, 8]]);
   });
+
+  it("shares a chunk that is still loading instead of asking twice", async () => {
+    const client = await ChunkedTimeseriesClient.create("u", group("/acq/ts"), {
+      chunkSizeSec: 1,
+    });
+    dataRequests.length = 0;
+    const [prefetched, shown] = await Promise.all([
+      client.prefetch(1, 2, 0, 2),
+      client.getDataForTimeRange(1, 2, 0, 2),
+    ]);
+    expect(prefetched).toBeUndefined();
+    expect(shown.timestamps).toEqual(expectedRegularTimes(1, 2));
+    expect(dataRequests.filter((r) => r.path === "/acq/ts/data")).toHaveLength(
+      1,
+    );
+  });
 });
 
 describe("ChunkedTimeseriesClient with an irregular series", () => {

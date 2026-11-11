@@ -1,0 +1,79 @@
+---
+import DoDont from "../../components/DoDont.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const SCALE = [
+  ["0 · radius/none", "none", "Plot areas, tables, heat map cells, tab bars, the app bar"],
+  ["2px · radius/xs", "xs", "Checkboxes, badges, small data marks such as bars"],
+  ["3px · radius/sm, the default", "sm", "Buttons, inputs, selects, tags, tooltips, menus, cards, alerts"],
+  ["6px · radius/md", "md", "Large popovers"],
+  ["Full · radius/full", "full", "Status dots. Never buttons"],
+];
+
+const TODAY = [
+  ["4px", "40", "radius/sm (3px)", "The most common value, also Material UI’s default; one pixel less looks the same"],
+  ["5px", "8", "radius/sm (3px)", "Off the scale"],
+  ["3px", "6", "radius/sm (3px)", "Already the default"],
+  ["8px", "1, plus index.css buttons", "radius/sm (3px)", "Buttons move to the default"],
+  ["2px", "1", "radius/xs (2px)", "Already on the scale"],
+  ["6px", "1", "radius/sm or radius/md", "3px for controls, 6px for large popovers"],
+  ["10px, 12px", "3", "radius/md (6px)", "Large panels; 6px is the largest step"],
+  ["50%", "6", "radius/full", "Dots only"],
+  ["Unitless numbers", "33", "Check each one", "Plain style objects mean px; Material UI’s sx means × 4px"],
+];
+
+const COMPONENTS = [
+  ["Button, text input, select, tag link, tooltip, menu, alert, dialog", "radius/sm · 3px"],
+  ["Checkbox, badge, tag", "radius/xs · 2px"],
+  ["Plot area and table", "radius/none · 0"],
+];
+---
+
+<DocsLayout title="Corner radius" description="Small, exact corners: 3px for controls, square for data.">
+  <Intro
+    lead="Neurosift’s corners are small and exact. A 3px radius softens controls just enough to look finished, while plots, tables and bars stay square so the data reads as measured, not decorated."
+    status="Updated November 9, 2026 · Foundations · Values are in pixels"
+    rules={[
+      { title: "3px is the default", text: "Buttons, inputs, tags, menus, tooltips, alerts and dialogs all use 3px, so every control looks like one family." },
+      { title: "Data stays square", text: "Plot areas, tables, heat map cells, tab bars and the app bar have square corners." },
+      { title: "Nothing rounder than 6px", text: "Large popovers can use 6px. Nothing in Neurosift is rounder, except status dots." },
+    ]}
+  />
+
+  <DocSection title="Radius scale" lead="Five steps, each drawn to size.">
+    <DocTable caption="Radius scale" columns={["Step", "Sample", "Use"]}>
+      {SCALE.map(([step, cls, use]) => <tr><th scope="row">{step}</th><td><span class={`radius-chip radius-chip--${cls}`} aria-hidden="true" /></td><td>{use}</td></tr>)}
+    </DocTable>
+    <p class="doc-note">The tokens and their CSS are on <a href={withBase("/tokens/radius-and-elevation/")}>Radius and elevation tokens</a>.</p>
+  </DocSection>
+
+  <DocSection title="Moving today’s values onto the scale" lead="Corner radius values in Neurosift’s source today, and where each lands.">
+    <DocTable caption="Today’s radius values" columns={["Today", "Uses", "Becomes", "Why"]}>
+      {TODAY.map(([today, uses, becomes, why]) => <tr><th scope="row">{today}</th><td>{uses}</td><td>{becomes}</td><td>{why}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="By component" lead="Pick a component’s radius from this list rather than adjusting by eye.">
+    <DocTable caption="Radius by component" columns={["Components", "Radius"]}>
+      {COMPONENTS.map(([components, radius]) => <tr><th scope="row">{components}</th><td>{radius}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Nested corners and focus rings" lead="With corners this small, nesting is simple.">
+    <ul class="rule-list">
+      <li><strong>Inside a container, corners don’t grow.</strong> A dialog’s 3px corners minus its 16px padding would be negative, so the controls inside keep their own 3px.</li>
+      <li><strong>A focus ring adds its gap.</strong> A 3px button with a 2px gap gets a 5px ring, so the curves stay parallel.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Use 3px for every control, so buttons, inputs and tags match.", "Keep plot areas, tables and heat map cells square.", "Keep side-by-side elements, such as an input and its button, on the same radius.", "Round all four corners the same way, except where an element meets an edge, such as a drawer."]}
+      donts={["Don’t use values between steps, such as 4px, 5px or 8px.", "Don’t make buttons pill-shaped.", "Don’t round tables or plots inside a panel.", "Don’t go above 6px. Large, soft corners belong to a different product."]}
+    />
+  </DocSection>
+</DocsLayout>

@@ -37,7 +37,12 @@ const MultiTabView: React.FC<MultiTabViewProps> = ({
   return (
     <ProvideTimeseriesSelection>
       <div>
-        <TabToolbar width={width - 20} tabId={tabId} nwbUrl={nwbUrl} />
+        <TabToolbar
+          tabId={tabId}
+          nwbUrl={nwbUrl}
+          type="Combined view"
+          path={`${paths.length} objects: ${paths.join(", ")}`}
+        />
         <ScrollY
           width={width - 20}
           height={height - TOOLBAR_HEIGHT}
@@ -55,7 +60,7 @@ const MultiTabView: React.FC<MultiTabViewProps> = ({
                 key={plugins[index] ? plugins[index].name + ":" + path : path}
                 style={{ marginBottom: 8 }}
               >
-                <ObjectHeaderBar width={width - 40} path={path} />
+                <ObjectHeaderBar path={path} />
                 <NwbObjectView
                   nwbUrl={nwbUrl}
                   path={path}

@@ -45,7 +45,12 @@ const makeClient = (path: string) => ({
     loads.push({ tStart, tEnd, d });
     return d.promise;
   },
+  prefetch: (...args: number[]) => {
+    prefetches.push(args);
+    return Promise.resolve();
+  },
 });
+const prefetches: number[][] = [];
 
 vi.mock("@hdf5Interface", () => ({
   useHdf5Group: (_url: string, path: string) => groups[path],
@@ -156,6 +161,35 @@ describe("useTimeseriesData", () => {
     await flush();
     expect(result.current.data.error).toBeUndefined();
     expect(result.current.data.loadedTimestamps).toEqual([10]);
+  });
+
+  it("says which stretch is loaded, and loads ahead while playback asks", async () => {
+    prefetches.length = 0;
+    const { result, rerender } = renderHook(
+      ({ lookahead }: { lookahead: number }) => ({
+        data: useTimeseriesData("u", "/a", lookahead),
+        selection: useTimeseriesSelection(),
+      }),
+      { wrapper, initialProps: { lookahead: 0 } },
+    );
+    await flush();
+    await act(async () => {
+      creates[0].d.resolve(makeClient("/a"));
+    });
+    await waitFor(() => expect(loads.length).toBe(1));
+    await act(async () => {
+      result.current.selection.setVisibleTimeRange(10.2, 11.5);
+    });
+    await waitFor(() => expect(loads.length).toBe(2));
+    await act(async () => {
+      loads[1].d.resolve({ timestamps: [10, 11], data: [[1, 2]] });
+    });
+    await waitFor(() =>
+      expect(result.current.data.loadedRange).toEqual({ start: 10, end: 12 }),
+    );
+    expect(prefetches).toEqual([]);
+    rerender({ lookahead: 3 });
+    await waitFor(() => expect(prefetches).toEqual([[12, 15, 0, 2]]));
   });
 });
 

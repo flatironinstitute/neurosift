@@ -1,0 +1,44 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const PEOPLE = [
+  ["Jeremy Magland", "Neurosift developer", "Flatiron Institute, Center for Computational Mathematics", "The app, its data layer and its views"],
+  ["Ben Dichter", "NWB and DANDI", "CatalystNeuro", "Neurodata types, NWB files and the archives"],
+  ["Joel Guerrero", "Designer", "Simons Foundation", "This design system and its Figma file"],
+];
+
+const WHERE = [
+  ["A bug in a view", "github.com/flatironinstitute/neurosift/issues, with the view’s share link and a screenshot"],
+  ["A design question", "A comment on the Figma frame, or an issue on this repository"],
+  ["A new component or pattern", "Joel, before it’s built"],
+  ["A science or data question", "Jeremy or Ben"],
+];
+---
+
+<DocsLayout title="Contact the team" description="Who to ask about the app, the data and this design system.">
+  <Intro
+    lead="Neurosift is built at the Flatiron Institute’s Center for Computational Mathematics. Questions about the app go to its GitHub issues; questions about this design system go to its designer."
+    status="Updated November 10, 2026 · Resources"
+    rules={[
+      { title: "App questions", text: "GitHub issues on flatironinstitute/neurosift, with a share link and a screenshot." },
+      { title: "Design questions", text: "A comment on the Figma frame in question." },
+      { title: "New pieces", text: "Ask before adding a component the system doesn’t document." },
+    ]}
+  />
+
+  <DocSection title="People" lead="Who to ask about what.">
+    <DocTable caption="People" columns={["Name", "Role", "Organization", "Ask about"]}>
+      <DocRows rows={PEOPLE} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Where to ask" lead="Use the place that keeps the answer findable.">
+    <DocTable caption="Where to ask" columns={["Question", "Where"]}>
+      <DocRows rows={WHERE} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

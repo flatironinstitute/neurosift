@@ -1,0 +1,107 @@
+.ns-button {
+  gap: var(--space-2);
+  block-size: var(--button-height-md);
+  padding: 0 var(--space-4);
+  font: var(--type-label);
+  letter-spacing: var(--type-label-letter-spacing);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Large is Medium at the Large input's height, for Send beside a Large Text area. */
+.ns-button--lg {
+  block-size: var(--button-height-lg);
+}
+
+.ns-button--sm {
+  gap: var(--space-1);
+  block-size: var(--button-height-sm);
+  padding: 0 var(--space-3);
+}
+
+.ns-button--primary {
+  --control-bg: var(--action-primary);
+  --control-bg-hover: var(--action-primary-hover);
+  --control-bg-pressed: var(--action-primary-pressed);
+  --control-fg: var(--text-on-inverse);
+}
+
+.ns-button--destructive {
+  --control-bg: var(--action-destructive);
+  --control-bg-hover: var(--action-destructive-hover);
+  --control-bg-pressed: var(--action-destructive-pressed);
+  --control-fg: var(--text-on-inverse);
+}
+
+/* A pressed toggle keeps the pressed fill; Ghost gains the Secondary edge so it isn't color alone. */
+.ns-button[aria-pressed="true"]:not(:disabled) {
+  --control-bg: var(--control-bg-pressed);
+}
+
+.ns-button--ghost[aria-pressed="true"]:not(:disabled) {
+  --control-edge: var(--border-strong);
+}
+
+@media (forced-colors: active) {
+  .ns-button[aria-pressed="true"]:not(:disabled) {
+    forced-color-adjust: none;
+    color: SelectedItemText;
+    background: SelectedItem;
+  }
+}
+
+.ns-button[aria-busy="true"] {
+  cursor: progress;
+}
+
+/* Without an icon, the spinner sits over the label, which stays (unseen) to hold the width and name. */
+.ns-button[data-spinner="center"] {
+  position: relative;
+}
+
+.ns-button[data-spinner="center"] .ns-spinner {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  inline-size: var(--icon-size-sm);
+  block-size: var(--icon-size-sm);
+}
+
+.ns-button[data-spinner="center"] .ns-button-label {
+  opacity: 0;
+}
+
+/* Link sits inside a sentence, so it takes the sentence's font and size. */
+.ns-button--link {
+  --control-bg-hover: transparent;
+  --control-bg-pressed: transparent;
+  --control-fg: var(--text-link);
+  display: inline-block;
+  block-size: auto;
+  padding: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: inherit;
+  text-decoration: underline;
+  white-space: normal;
+  border-width: 0;
+}
+
+.ns-button--link:is(:hover, :active):not(:disabled) {
+  --control-fg: var(--text-link-hover);
+}
+
+.ns-button--link:active:not(:disabled) {
+  text-decoration-thickness: var(--border-width-2);
+}
+
+.ns-button--link:disabled {
+  --control-bg: transparent;
+  text-decoration: none;
+}
+
+@media (forced-colors: active) {
+  .ns-button--link:not(:disabled) {
+    color: LinkText;
+  }
+}

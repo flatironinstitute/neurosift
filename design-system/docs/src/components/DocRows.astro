@@ -1,0 +1,18 @@
+---
+interface Props {
+  rows: string[][];
+}
+
+const { rows } = Astro.props;
+---
+
+{
+  rows.map(([head, ...cells]) => (
+    <tr>
+      <th scope="row">{head}</th>
+      {cells.map((cell) => (
+        <td>{cell}</td>
+      ))}
+    </tr>
+  ))
+}

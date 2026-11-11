@@ -1,12 +1,7 @@
-.VerticalToolbar {
-  overflow: hidden;
+.time-scroll-toolbar {
   position: absolute;
-}
-
-.HorizontalToolbar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  inset-block-start: var(--toolbar-top);
+  inline-size: var(--toolbar-width);
+  block-size: var(--toolbar-height);
   overflow: hidden;
-  margin: auto;
 }

@@ -1,0 +1,193 @@
+.icephys {
+  inline-size: var(--icephys-w);
+  block-size: var(--icephys-h);
+  overflow: auto;
+}
+
+.icephys--state {
+  padding: var(--space-4);
+}
+
+.icephys-plot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  block-size: 100%;
+  min-block-size: 26rem;
+}
+
+.icephys-chart {
+  position: relative;
+  flex: 1;
+  min-block-size: 0;
+}
+
+.icephys-chart-fill {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.icephys-chart-box {
+  flex: none;
+  inline-size: var(--icephys-w);
+  block-size: var(--icephys-h);
+  overflow: auto;
+}
+
+.icephys-chart-empty,
+.icephys-facet-empty {
+  display: grid;
+  place-items: center;
+  font: var(--type-caption);
+  color: var(--text-secondary);
+}
+
+.icephys-panels {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  overflow-x: hidden;
+}
+
+.icephys-panel {
+  inline-size: var(--panel-w);
+}
+
+.icephys-panel-title,
+.icephys-facet-col,
+.icephys-facet-row {
+  margin: 0;
+  overflow: hidden;
+  font: var(--type-label-sm);
+  color: var(--text-default);
+}
+
+.icephys-panel-title,
+.icephys-facet-col {
+  padding-inline: var(--space-2);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icephys-panel-title {
+  block-size: var(--panel-label-h);
+}
+
+.icephys-facet-grid {
+  display: grid;
+  grid-template-columns: var(--facet-columns);
+  align-items: start;
+}
+
+.icephys-facet-corner,
+.icephys-facet-col {
+  block-size: var(--facet-label-h);
+}
+
+.icephys-facet-row {
+  display: flex;
+  align-items: center;
+  block-size: var(--facet-cell-h);
+  overflow-wrap: anywhere;
+}
+
+.icephys-facet-cell,
+.icephys-facet-empty {
+  block-size: var(--facet-cell-h);
+}
+
+.icephys-timeline {
+  box-sizing: border-box;
+  flex: none;
+  inline-size: var(--icephys-w);
+  block-size: var(--timeline-h);
+  border-block-start: var(--border-width-1) solid var(--border-subtle);
+}
+
+.icephys-timeline-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  block-size: var(--timeline-head-h);
+  margin: 0;
+  padding-inline: var(--space-3);
+  overflow: hidden;
+  font: var(--type-caption);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.icephys-timeline-plot {
+  position: relative;
+}
+
+.icephys-timeline-svg {
+  display: block;
+}
+
+.icephys-legend {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: var(--type-axis);
+  color: var(--text-default);
+}
+
+.icephys-legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.icephys-swatch {
+  flex: none;
+  inline-size: var(--space-3);
+  block-size: var(--space-3);
+  background: var(--icephys-swatch);
+}
+
+.icephys-fields,
+.icephys-sweeps {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.icephys-sweeps .ns-table-scroll {
+  max-block-size: 16rem;
+}
+
+.icephys-actions,
+.icephys-sample {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.icephys-sample {
+  margin-inline-start: auto;
+}
+
+.icephys-help,
+.icephys-sample-text {
+  margin: 0;
+  font: var(--type-caption);
+  color: var(--text-secondary);
+}
+
+@media (forced-colors: active) {
+  .icephys-swatch {
+    forced-color-adjust: none;
+  }
+}
+
+.icephys-axis > .ns-field {
+  inline-size: 9rem;
+}

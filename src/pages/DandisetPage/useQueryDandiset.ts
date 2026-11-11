@@ -2,57 +2,81 @@ import { useEffect, useState } from "react";
 import { DandisetSearchResultItem } from "../DandiPage/dandi-types";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 
-export const useQueryDandiset = (
+/** Why a Dandiset couldn't be loaded: the archive's status, when it answered, and a sentence for people. */
+export type DandisetFailure = { status?: number; url: string; message: string };
+
+type DandisetResult = {
+  dandiset: DandisetSearchResultItem | undefined;
+  failure: DandisetFailure | undefined;
+};
+
+const NOTHING: DandisetResult = { dandiset: undefined, failure: undefined };
+
+const dandisetUrl = (id: string, staging?: boolean, ember?: boolean) =>
+  ember
+    ? `https://api-dandi.emberarchive.org/api/dandisets/${id}`
+    : `https://api${staging ? ".sandbox" : ""}.dandiarchive.org/api/dandisets/${id}`;
+
+/** Loads a Dandiset from DANDI or EMBER, and says why when it can't. */
+export const useDandisetResult = (
   dandisetId: string | undefined,
   useStaging: boolean | undefined,
   useEmber: boolean | undefined,
-) => {
-  const [dandisetResponse, setDandisetResponse] = useState<
-    DandisetSearchResultItem | undefined | null
-  >(null);
+): DandisetResult => {
+  const [result, setResult] = useState<DandisetResult>(NOTHING);
   useEffect(() => {
     let canceled = false;
-    setDandisetResponse(undefined);
+    setResult(NOTHING);
     if (!dandisetId) return;
+    const url = dandisetUrl(dandisetId, useStaging, useEmber);
+    const archive = useEmber ? "EMBER" : "DANDI";
+    const fail = (failure: DandisetFailure) => {
+      if (!canceled) setResult({ dandiset: undefined, failure });
+    };
     (async () => {
-      const stagingStr = useStaging ? ".sandbox" : "";
-      const url = !useEmber
-        ? `https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}`
-        : `https://api${stagingStr}-dandi.emberarchive.org/api/dandisets/${dandisetId}`;
-      const authorizationHeader = getAuthorizationHeaderForUrl(url);
-      const headers = authorizationHeader
-        ? { Authorization: authorizationHeader }
-        : undefined;
+      const authorization = getAuthorizationHeaderForUrl(url);
       try {
         const response = await fetch(url, {
-          headers,
+          headers: authorization ? { Authorization: authorization } : undefined,
         });
         if (canceled) return;
         if (response.status === 200) {
-          const json = await response.json();
-          const dandisetResponse = json as DandisetSearchResultItem;
-          setDandisetResponse(dandisetResponse);
+          const dandiset = (await response.json()) as DandisetSearchResultItem;
+          if (!canceled) setResult({ dandiset, failure: undefined });
           return;
-        } else if (response.status === 403) {
-          console.error(
-            `Error fetching dandiset due to permissions. If this dandiset is embargoed, ` +
-              "make sure to set your DANDI API KEY on the settings page.",
-            response,
-          );
-        } else {
-          console.error("Error fetching dandiset", response);
         }
-        setDandisetResponse(null);
+        const { status } = response;
+        fail({
+          status,
+          url,
+          message:
+            status === 404
+              ? `${archive} has no Dandiset ${dandisetId} (404).`
+              : `${archive} answered ${status} for Dandiset ${dandisetId}.`,
+        });
       } catch (e) {
-        console.error("Error fetching dandiset", e);
-        setDandisetResponse(null);
+        fail({ url, message: e instanceof Error ? e.message : String(e) });
       }
     })();
     return () => {
       canceled = true;
     };
-  }, [dandisetId, useStaging]);
-  return dandisetResponse;
+  }, [dandisetId, useStaging, useEmber]);
+  return result;
+};
+
+/** The Dandiset, undefined while loading, or null when it couldn't be loaded. */
+export const useQueryDandiset = (
+  dandisetId: string | undefined,
+  useStaging: boolean | undefined,
+  useEmber: boolean | undefined,
+) => {
+  const { dandiset, failure } = useDandisetResult(
+    dandisetId,
+    useStaging,
+    useEmber,
+  );
+  return failure ? null : dandiset;
 };
 
 export default useQueryDandiset;

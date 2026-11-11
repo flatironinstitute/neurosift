@@ -1,0 +1,128 @@
+.file-viewer {
+  display: flex;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: hidden;
+  background: var(--surface-page);
+}
+
+.file-viewer-workspace {
+  position: relative;
+  flex: 1;
+  min-inline-size: 0;
+  overflow: hidden;
+}
+
+.file-viewer--panel-only > .ns-overview-panel {
+  inline-size: 100%;
+}
+
+.file-viewer--panel-only > .file-viewer-workspace {
+  display: none;
+}
+
+.file-overview-lindi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font: var(--type-body-sm);
+}
+
+.file-workspace {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: hidden;
+}
+
+.file-workspace-notice {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 1;
+}
+
+.file-workspace-sections {
+  display: flex;
+  align-items: flex-end;
+  block-size: var(--layout-sectionbar-height);
+  padding-inline: var(--space-4);
+  background: var(--surface-panel);
+}
+
+.file-workspace-sections > .ns-tabs,
+.file-workspace-objects > .ns-tabs {
+  flex: 1;
+}
+
+.file-workspace-objects {
+  display: flex;
+  align-items: flex-end;
+  block-size: var(--layout-tabs-height);
+  padding-inline: var(--space-4);
+}
+
+.file-workspace-content {
+  position: relative;
+  flex: 1;
+  min-block-size: 0;
+  padding-inline: var(--space-4);
+  overflow: hidden;
+}
+
+.file-workspace-content .ns-tab-panel {
+  position: relative;
+  block-size: 100%;
+}
+
+.file-object-path {
+  display: flex;
+  align-items: center;
+  block-size: 2rem;
+  border-block-end: var(--border-width-1) solid var(--border-subtle);
+}
+
+.file-object-path > .ns-object-path {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.file-object-header {
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  font: var(--type-code-sm);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+  border-block-end: var(--border-width-1) solid var(--border-subtle);
+}
+
+.file-viewer-frame {
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.file-viewer-crumbs {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-block-size: 2rem;
+  padding-inline: var(--space-4);
+  background: var(--surface-panel);
+  border-block-end: var(--border-width-1) solid var(--border-subtle);
+}
+
+.file-viewer-frame > .file-viewer {
+  flex: 1;
+  min-block-size: 0;
+}
+
+.file-viewer-crumbs > .ns-breadcrumbs {
+  flex: 1;
+  min-inline-size: 0;
+}

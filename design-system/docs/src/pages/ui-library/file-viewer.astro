@@ -1,0 +1,122 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import Screen from "../../components/Screen.astro";
+import LiveScreen from "../../components/LiveScreen.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const TODAY = [
+  ["App bar", "Navy, “Neurosift (v2)”, GitHub, Settings and a bare “1”", "App.tsx"],
+  ["Overview panel", "An OVERVIEW tab, “Dandiset 000673 - title (view)”, Version, description and contributors, then the file’s fields", "NwbPage.tsx, NwbOverview.tsx"],
+  ["Panel width", "A third of the window, 200 to 450px; ‹ on the splitter collapses it", "NwbPage.tsx"],
+  ["Sections", "Widgets, Timeseries Alignment, Python Usage; Schema and HDF5 on the right; Videos and Icephys only when the file has them. Filled gray pills that look like buttons", "MainWorkspace.tsx"],
+  ["Object tabs", "Main, then one tab per opened object, with ×", "MainWorkspace.tsx"],
+  ["Object path", "A share button, then the path", "TabToolbar.tsx"],
+  ["Status bar", "v0.1.0, then groups / datasets / data reads as bare numbers; the meaning is only in a tooltip", "StatusBar.tsx, hdf5Interface.ts"],
+  ["Narrow windows", "Panels stack at 768px and below, decided when the page loads", "ResponsiveLayout.tsx"],
+];
+
+const REGIONS = [
+  ["App bar · 48px", "The lockup, then Guide, GitHub, Settings and Open in Neurosift v1"],
+  ["Breadcrumbs · 32px", "Archive, Dandiset, folders, then the file"],
+  ["Overview · 320px", "Dandiset and version, description and contributors, the session’s fields, LINDI"],
+  ["Workspace", "Section tabs 44px · object tabs 36px · object path 32px · the view · status bar 20px"],
+];
+
+const STATES = [
+  ["Reading the file", "The status bar says what it’s reading, “Reading 2 groups”, then the counts."],
+  ["Overview collapsed", "A rail with Show overview; the choice and the panel’s width are remembered in this browser."],
+  ["Narrow windows", "At 768px and below, the open overview takes the whole width; hiding it brings the workspace back."],
+  ["Opened by link", "No archive context: the breadcrumbs name the file, and the panel starts at Session."],
+  ["No address", "“No file to open”, with how to add one, instead of a bare sentence."],
+];
+
+const BEHAVIOR = [
+  ["Breadcrumbs", "DANDI or EMBER and the Dandiset link to their pages; folders and the file are named."],
+  ["Overview panel", "Drag its edge between 240 and 480px, or use the arrow keys on it; collapse it with Hide overview. Both are remembered."],
+  ["Section tabs", "Switch the workspace. Videos and Icephys appear only when the file has them."],
+  ["Object tabs", "One per opened object; Main can’t be closed. × or Delete closes a tab."],
+  ["Object path", "The neurodata type and path; Copy path copies the path, Copy link a link to this file and tab."],
+  ["Status bar", "Counts what has been read, in words; Details explains the counts."],
+];
+
+const DIFFERS = [
+  ["App bar", "Navy, “Neurosift (v2)”, a bare “1”", "Light, 48px, the lockup; “Open in Neurosift v1” in words", "Built"],
+  ["Breadcrumbs", "None; a “(view)” link in the panel", "Archive › Dandiset › folders › file", "Built"],
+  ["Overview panel", "An OVERVIEW tab; a third of the window", "“Overview” with Hide overview; 320px, dragged 240 to 480, remembered", "Built"],
+  ["Overview fields", "A table of label and value", "Description lists by group; long text behind Show full description", "Built"],
+  ["Sections", "Filled pills", "Section tabs, Schema and HDF5 at the end", "Built"],
+  ["Section name", "“Widgets”", "“Views”", "To confirm"],
+  ["Object path", "Share, then the path", "Type and path, then Copy path and Copy link", "Built"],
+  ["Status bar", "19482 / 1267 / 85", "Read 19,531 groups · 1,272 datasets · 142 data requests", "Built"],
+  ["Narrow windows", "Panels stack at 768px, on load only", "The panel takes the width when open, at any time", "Built"],
+  ["Python usage", "Full-width Copy Script", "Code block with an install line and Copy", "Next"],
+  ["Dataset values", "Raw JSON; View in debug console", "Count and size, Show first 10 rows, long text behind Show all; see HDF5 and schema", "Built"],
+];
+---
+
+<DocsLayout title="File viewer layout" description="Where an NWB file opens: the overview on the left, the file’s objects and views on the right.">
+  <Intro
+    lead="The file viewer is where an NWB file opens: what the session is on the left, the file’s objects and their views on the right. Neurosift reads the file in the browser a piece at a time, so a 36 GB file opens without a download. The rebuilt viewer keeps every section, tab and field, and gives each row of the screen one job, from the app bar down to a status bar that says what its numbers count."
+    status="Updated November 10, 2026 · UI library · Captured at 1440 × 900 with Dandiset 000673, sub-1 · Built from App bar, Breadcrumbs, Overview panel, Description list, Select, Disclosure, Tabs, Object path and Status bar"
+    rules={[
+      { title: "One row, one question", text: "App bar, breadcrumbs, sections, object tabs and the object path each answer one question." },
+      { title: "The data gets the room", text: "The overview panel is 320px and collapses. The view takes everything else." },
+      { title: "Numbers say what they count", text: "The status bar reads “Read 19,531 groups · 1,272 datasets”, not 19531 / 1272." },
+    ]}
+  />
+
+  <DocSection title="File viewer today" lead="neurosift.app with sub-1 of Dandiset 000673, captured with Playwright.">
+    <div class="captures">
+      <Screen file="viewer-main" alt="Today’s file viewer on the Main tab: a navy app bar, an OVERVIEW panel, gray pill section buttons and a tree of objects." caption="Main: the overview panel and the tree of objects, under pill-shaped section buttons." />
+      <Screen file="viewer-lfps" alt="Today’s file viewer with the LFPs tab open: a share icon and path, time controls with emoji zoom buttons, and the LFP traces." caption="An open object: a share icon and the path, then the view. The status bar reads 19526 / 1273 / 91." />
+      <Screen file="viewer-python" alt="Today’s Python Usage section: a full-width Copy Script button over a long script." caption="Python Usage: a full-width Copy Script button over the script." />
+      <Screen file="viewer-alignment" alt="Today’s Timeseries Alignment section: one colored bar per series on a shared axis." caption="Timeseries Alignment: one row per series or table, on one axis." />
+    </div>
+  </DocSection>
+
+  <DocSection title="What the page does today" lead="Read from the source and checked on the live site.">
+    <DocTable caption="What the page does today" columns={["Part", "Today", "Code"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Regions on the page" lead="Rows from Navigation layers and the Spacing workspace layout. The overview panel is 320px, dragged between 240 and 480px, and collapses; the view takes everything left.">
+    <DocTable caption="Regions" columns={["Region", "What it holds"]}>
+      <DocRows rows={REGIONS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="The rebuilt file viewer" lead="The redesign’s viewer with the same file, with live data. The charts inside the views are Neurosift’s own and unchanged.">
+    <div class="captures">
+      <Screen file="viewer-proposed-main" alt="The rebuilt file viewer on Main: a light app bar, breadcrumbs, an overview panel with Dandiset and Session groups, section tabs and the object tree." caption="Main: breadcrumbs to the file, the overview panel in groups, and section tabs with Schema and HDF5 at the end." />
+      <Screen file="viewer-proposed-lfps" alt="The rebuilt file viewer with LFPs open: object tabs, an object path reading ElectricalSeries /acquisition/LFPs with copy buttons, and the view." caption="An open object: object tabs, then the type and path with Copy path and Copy link. The status bar counts in words." />
+    </div>
+    <p class="doc-note">Built from <a href={withBase("/components/navigation/")}>Navigation and breadcrumbs</a>, the <a href={withBase("/components/overview-panel/")}>Overview panel</a>, <a href={withBase("/components/tabs/")}>Tabs</a> and the <a href={withBase("/components/status-bar/")}>Status bar</a>.</p>
+  </DocSection>
+
+  <DocSection title="Try it" lead="Resize or hide the overview, switch sections and open objects.">
+    <LiveScreen path="nwb?url=https://api.dandiarchive.org/api/assets/65a7e913-45c7-48db-bf19-b9f5e910110a/download/&dandisetId=000673&dandisetVersion=0.250122.0110" title="File viewer, Dandiset 000673 sub-1" size="tall" />
+  </DocSection>
+
+  <DocSection title="States">
+    <DocTable caption="States" columns={["When", "What changes"]}>
+      <DocRows rows={STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Behavior">
+    <DocTable caption="Behavior" columns={["Part", "Behavior"]}>
+      <DocRows rows={BEHAVIOR} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="What differs" lead="Built is in the app now. Next comes with a later screen. To confirm needs Jeremy or Ben.">
+    <DocTable caption="What differs" columns={["Area", "Existing", "Proposed", "Status"]}>
+      <DocRows rows={DIFFERS} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

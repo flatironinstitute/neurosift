@@ -1,3 +1,5 @@
+import { DataTooltip } from "@ui";
+import { useCssVars } from "@components/useCssVars";
 import { FunctionComponent, useMemo, useState } from "react";
 import { colorsForGroups, internId } from "./palette";
 import { SweepTime } from "./useSweepTimes";
@@ -98,6 +100,11 @@ const TemporalDistribution: FunctionComponent<Props> = ({
     };
   }, [times, groupBy]);
 
+  const ref = useCssVars<HTMLDivElement>({
+    "--icephys-w": width,
+    "--timeline-h": HEIGHT,
+    "--timeline-head-h": HEADER_H,
+  });
   if (times.length === 0 && !loading) return null;
 
   // X-axis is session time: 0 = session start (starting_time is relative to
@@ -151,150 +158,121 @@ const TemporalDistribution: FunctionComponent<Props> = ({
 
   const total = contextTimes.length || times.length;
   const summary = sel
-    ? `${times.length} of ${total} sweeps selected - earliest at time ${fmtClock(
-        sel.t0,
-      )} - latest at time ${fmtClock(sel.latest)}`
+    ? `${times.length} of ${total} sweeps selected · earliest at ${fmtClock(sel.t0)} · latest at ${fmtClock(sel.latest)}`
     : loading
-      ? "computing timeline..."
+      ? "Computing the timeline…"
       : "";
 
   return (
-    <div
-      style={{
-        width,
-        height: HEIGHT,
-        position: "relative",
-        borderTop: "1px solid #eee",
-        boxSizing: "border-box",
-      }}
-    >
-      <div
-        style={{
-          height: HEADER_H,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          fontSize: 11,
-          color: "#666",
-        }}
-      >
+    <div ref={ref} className="icephys-timeline">
+      <p className="icephys-timeline-head">
         <span>{summary}</span>
-        <span style={{ color: "#aaa", whiteSpace: "nowrap" }}>
-          session time (m:ss)
-        </span>
-      </div>
-
-      <svg width={width} height={svgH} style={{ display: "block" }}>
-        {/* Whole-session gray backdrop: one translucent gray duration band per
+        <span className="icephys-timeline-unit">Session time (m:ss)</span>
+      </p>
+      <div className="icephys-timeline-plot">
+        <svg width={width} height={svgH} className="icephys-timeline-svg">
+          {/* Whole-session gray backdrop: one translucent gray duration band per
             session sweep, full strip height, drawn behind the signal so the
             colored selection sits on top. Overlapping bands accumulate, so a
             time region with many sweeps reads darker than a sparse one. Always
             on (the per-sweep context is the point of the strip). */}
-        {contextTimes.map((t, i) => {
-          const x0 = xOf(t.startSec);
-          const x1 = xOf(t.startSec + (t.durationSec || 0));
-          return (
-            <rect
-              key={`ctxb-${i}`}
-              x={x0}
-              y={laneTop}
-              width={Math.max(1.5, x1 - x0)}
-              height={laneAreaH}
-              fill="#c0c0c0"
-              fillOpacity={0.22}
-            />
-          );
-        })}
-
-        {/* Signal: the selection as colored duration bars (start -> end), laid
-            out in lanes by group. The bar width is the sweep's duration, so a
-            selection spanning the whole session reads as a full-width bar, not
-            a start-point tick. (Context is the gray coverage on the axis.) */}
-        {sel &&
-          times.map((t) => {
-            const id = sel.idOf(t);
-            const color = sel.colorOf.get(id) || "#2171b5";
-            const cy = laneCenter(t);
+          {contextTimes.map((t, i) => {
             const x0 = xOf(t.startSec);
             const x1 = xOf(t.startSec + (t.durationSec || 0));
             return (
               <rect
-                key={`s-${t.irtRow}`}
+                key={`ctxb-${i}`}
                 x={x0}
-                y={cy - tickH / 2}
-                width={Math.max(2, x1 - x0)}
-                height={tickH}
-                rx={1}
-                fill={color}
-                onMouseEnter={() =>
-                  setHover({
-                    x: x0,
-                    y: cy,
-                    label: `${sel.labelOf.get(id) || ""} · sweep ${
-                      t.irtRow
-                    } @ ${fmtClock(t.startSec)}`,
-                  })
-                }
-                onMouseLeave={() => setHover(null)}
+                y={laneTop}
+                width={Math.max(1.5, x1 - x0)}
+                height={laneAreaH}
+                fill="#c0c0c0"
+                fillOpacity={0.22}
               />
             );
           })}
 
-        {/* session-time axis */}
-        {(() => {
-          const axisY = svgH - AXIS_H + 10;
-          return (
-            <g>
-              <line
-                x1={MARGIN_L}
-                y1={axisY}
-                x2={MARGIN_L + plotW}
-                y2={axisY}
-                stroke="#ddd"
-              />
-              {axisTicks(rangeT0, rangeT1).map((tk, i) => (
-                <g key={i}>
-                  <line
-                    x1={xOf(tk)}
-                    y1={axisY}
-                    x2={xOf(tk)}
-                    y2={axisY + 4}
-                    stroke="#ccc"
-                  />
-                  <text
-                    x={xOf(tk)}
-                    y={axisY + 15}
-                    textAnchor="middle"
-                    fontSize={9}
-                    fill="#888"
-                  >
-                    {fmtClock(tk)}
-                  </text>
-                </g>
-              ))}
-            </g>
-          );
-        })()}
-      </svg>
+          {/* Signal: the selection as colored duration bars (start -> end), laid
+            out in lanes by group. The bar width is the sweep's duration, so a
+            selection spanning the whole session reads as a full-width bar, not
+            a start-point tick. (Context is the gray coverage on the axis.) */}
+          {sel &&
+            times.map((t) => {
+              const id = sel.idOf(t);
+              const color = sel.colorOf.get(id) || "#2171b5";
+              const cy = laneCenter(t);
+              const x0 = xOf(t.startSec);
+              const x1 = xOf(t.startSec + (t.durationSec || 0));
+              return (
+                <rect
+                  key={`s-${t.irtRow}`}
+                  x={x0}
+                  y={cy - tickH / 2}
+                  width={Math.max(2, x1 - x0)}
+                  height={tickH}
+                  rx={1}
+                  fill={color}
+                  onMouseEnter={() =>
+                    setHover({
+                      x: x0,
+                      y: cy,
+                      label: `${sel.labelOf.get(id) || ""} · sweep ${
+                        t.irtRow
+                      } @ ${fmtClock(t.startSec)}`,
+                    })
+                  }
+                  onMouseLeave={() => setHover(null)}
+                />
+              );
+            })}
 
-      {hover && (
-        <div
-          style={{
-            position: "absolute",
-            left: Math.min(width - 200, Math.max(0, hover.x + 6)),
-            top: hover.y + HEADER_H,
-            background: "rgba(0,0,0,0.8)",
-            color: "white",
-            fontSize: 11,
-            padding: "2px 6px",
-            borderRadius: 3,
-            pointerEvents: "none",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {hover.label}
-        </div>
-      )}
+          {/* session-time axis */}
+          {(() => {
+            const axisY = svgH - AXIS_H + 10;
+            return (
+              <g>
+                <line
+                  x1={MARGIN_L}
+                  y1={axisY}
+                  x2={MARGIN_L + plotW}
+                  y2={axisY}
+                  stroke="#ddd"
+                />
+                {axisTicks(rangeT0, rangeT1).map((tk, i) => (
+                  <g key={i}>
+                    <line
+                      x1={xOf(tk)}
+                      y1={axisY}
+                      x2={xOf(tk)}
+                      y2={axisY + 4}
+                      stroke="#ccc"
+                    />
+                    <text
+                      x={xOf(tk)}
+                      y={axisY + 15}
+                      textAnchor="middle"
+                      fontSize={9}
+                      fill="#888"
+                    >
+                      {fmtClock(tk)}
+                    </text>
+                  </g>
+                ))}
+              </g>
+            );
+          })()}
+        </svg>
+
+        {hover && (
+          <DataTooltip
+            time={hover.label}
+            rows={[]}
+            x={hover.x}
+            y={hover.y}
+            width={width}
+          />
+        )}
+      </div>
     </div>
   );
 };

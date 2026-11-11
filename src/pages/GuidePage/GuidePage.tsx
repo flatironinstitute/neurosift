@@ -1,70 +1,139 @@
-import { Box, Container } from "@mui/material";
-import { FunctionComponent } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import ScrollY from "@components/ScrollY";
-import markdownContent from "./guide.md?raw";
+import type { ReactNode } from "react";
+import { CodeBlock, InlineCode, Page, Section } from "@ui";
+import "./GuidePage.css";
 
-type GuidePageProps = {
-  width: number;
-  height: number;
-};
+function Steps({ children }: { children: ReactNode }) {
+  return <ol className="guide-list">{children}</ol>;
+}
 
-const GuidePage: FunctionComponent<GuidePageProps> = ({ width, height }) => {
+function Topic({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <ScrollY width={width} height={height}>
-      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-        <Box
-          className="markdown-content"
-          sx={{
-            "& h1": { marginBottom: "1rem", color: "text.primary" },
-            "& h2": {
-              marginTop: "2rem",
-              marginBottom: "1rem",
-              color: "text.primary",
-            },
-            "& h3": {
-              marginTop: "1.5rem",
-              marginBottom: "0.75rem",
-              color: "text.primary",
-            },
-            "& p": {
-              marginBottom: "1rem",
-              color: "text.secondary",
-              lineHeight: 1.6,
-            },
-            "& ul, & ol": { marginBottom: "1rem", paddingLeft: "2rem" },
-            "& li": { marginBottom: "0.5rem", color: "text.secondary" },
-            "& code": {
-              backgroundColor: "rgba(0, 0, 0, 0.04)",
-              padding: "0.2em 0.4em",
-              borderRadius: "3px",
-              fontSize: "85%",
-            },
-            "& pre code": {
-              display: "block",
-              overflow: "auto",
-              padding: "1em",
-              backgroundColor: "rgba(0, 0, 0, 0.04)",
-              border: "1px solid rgba(0, 0, 0, 0.1)",
-              borderRadius: "4px",
-            },
-            "& a": {
-              color: "primary.main",
-              textDecoration: "none",
-              "&:hover": {
-                textDecoration: "underline",
-              },
-            },
-          }}
-        >
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {markdownContent}
-          </ReactMarkdown>
-        </Box>
-      </Container>
-    </ScrollY>
+    <div className="guide-topic">
+      <h3 className="type-label guide-topic-title">{title}</h3>
+      {children}
+    </div>
   );
-};
+}
 
-export default GuidePage;
+/** The NWB viewer guide, linked from Home's footer. */
+export default function GuidePage() {
+  return (
+    <Page title="Neurosift Guide">
+      <div className="guide type-body">
+        <Section title="Overview">
+          <p>
+            Neurosift is a browser-based tool designed for the visualization of
+            NWB (Neurodata Without Borders) files, whether stored locally or
+            hosted remotely. It also enables interactive exploration of the{" "}
+            <a href="https://dandiarchive.org/">DANDI Archive</a> and{" "}
+            <a href="https://openneuro.org/">OpenNeuro</a> (OpenNeuro
+            integration is at an early stage).
+          </p>
+          <p>
+            <strong>
+              This is the new (next) version of Neurosift. To view the current
+              stable version visit{" "}
+              <a href="https://neurosift.app">https://neurosift.app</a>
+            </strong>
+          </p>
+        </Section>
+
+        <Section title="Using Neurosift">
+          <Topic title="Exploring DANDI Archive">
+            <Steps>
+              <li>Click on DANDI in the Neurosift home page</li>
+              <li>Browse available datasets or use the search functionality</li>
+              <li>Select a Dandiset to view its details and files</li>
+              <li>Click on any NWB file to visualize its contents</li>
+            </Steps>
+          </Topic>
+          <Topic title="Exploring EMBER Archive">
+            <Steps>
+              <li>Click on EMBER in the Neurosift home page</li>
+              <li>Browse available datasets or use the search functionality</li>
+              <li>Select a EMBER Dandiset to view its details and files</li>
+              <li>Click on any NWB file to visualize its contents</li>
+            </Steps>
+          </Topic>
+          <Topic title="Using OpenNeuro">
+            <p>
+              Note: OpenNeuro integration is still at an early stage and does
+              not have much functionality yet.
+            </p>
+            <Steps>
+              <li>Click on OpenNeuro in the Neurosift home page</li>
+              <li>Browse through available datasets</li>
+              <li>Select a dataset to explore its sessions and files</li>
+            </Steps>
+          </Topic>
+          <Topic title="Viewing Remote NWB Files">
+            <p>
+              To view NWB files hosted on other web servers or cloud storage:
+            </p>
+            <Steps>
+              <li>Ensure your file is hosted with CORS enabled</li>
+              <li>
+                Use the URL format:{" "}
+                <InlineCode>
+                  https://neurosift2.vercel.app/nwb?url=YOUR_FILE_URL
+                </InlineCode>
+              </li>
+            </Steps>
+            <p>
+              You may run into CORS issues if the server hosting the file does
+              not allow cross-origin requests. In that case, you must give{" "}
+              <a href="https://neurosift2.vercel.app">
+                https://neurosift2.vercel.app
+              </a>{" "}
+              permission to issue GET and HEAD requests to your server.
+            </p>
+          </Topic>
+          <Topic title="Viewing Local Files">
+            <p>To view local NWB files directly in your browser:</p>
+            <Steps>
+              <li>
+                Install the neurosift Python package:
+                <CodeBlock
+                  language="shell"
+                  code="pip install --upgrade neurosift"
+                />
+              </li>
+              <li>
+                Run the command:
+                <CodeBlock
+                  language="shell"
+                  code="neurosift view-nwb /path/to/file.nwb"
+                />
+              </li>
+              <li>
+                This will open Neurosift in your browser with your local file
+              </li>
+              <li>
+                When finished, press Ctrl-C in the terminal to stop the server
+              </li>
+            </Steps>
+            <p>
+              <strong>
+                Note that this will open the previous version of Neurosift, but
+                you can modify the URL accordingly to use this version.
+              </strong>
+            </p>
+          </Topic>
+        </Section>
+
+        <Section title="Getting Help">
+          <p>If you encounter any issues or have questions:</p>
+          <ul className="guide-list">
+            <li>
+              Visit the{" "}
+              <a href="https://github.com/flatironinstitute/neurosift/issues">
+                GitHub issue tracker
+              </a>{" "}
+              to report problems or request features
+            </li>
+          </ul>
+        </Section>
+      </div>
+    </Page>
+  );
+}

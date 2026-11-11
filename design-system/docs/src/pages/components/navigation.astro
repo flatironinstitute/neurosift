@@ -1,0 +1,156 @@
+---
+import Existing from "../../components/Existing.astro";
+import logo from "../../../../../public/neurosift-logo.png";
+import CodeSample from "../../components/CodeSample.astro";
+import DoDont from "../../components/DoDont.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import { AppBarDemo, BreadcrumbsDemo, ObjectPathDemo } from "../../components/NavigationDemo";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const here = withBase("/components/navigation/");
+
+const FILE_TRAIL = [
+  { label: "DANDI", href: here },
+  { label: "000673 · Control of working memory", href: here },
+  { label: "sub-1", href: here, code: true },
+  { label: "sub-1_ses-1_ecephys+image.nwb", code: true },
+];
+
+const LAYERS = [
+  ["App bar", "Which tool am I in, and where are settings and help?", "48px · layout/appbar-height"],
+  ["Breadcrumbs", "Which archive, Dandiset, folder and file is this?", "32px"],
+  ["Section tabs", "Which view of the file?", "44px · layout/sectionbar-height"],
+  ["Object tabs", "Which objects have I opened?", "36px · layout/tabs-height"],
+  ["Object path", "What exactly is on screen?", "32px · layout/row-default"],
+];
+
+const WRITING = [
+  ["Neurosift", "Neurosift (v2)", "The version is in the status bar"],
+  ["Open in v1", "1 (tooltip: View this in Neurosift v1)", "A visible label"],
+  ["DANDI, as a breadcrumb", "← Back to DANDI", "Part of the trail; keeps the query"],
+  ["000673 · Control of working memory, as a breadcrumb", "(view)", "Names the place it goes"],
+  ["Copy link to this tab", "Share tab URL", "Says what happens"],
+];
+
+const SPECS = [
+  ["App bar", "48px · surface/panel · 1px border/strong below · 16px left · type/h4 name · 28px logo"],
+  ["App bar actions", "32px Ghost buttons · 16px icons · icon-only ones named, with a tooltip"],
+  ["Crumb", "type/body-sm text/link · current SemiBold text/default · IDs and file names in type/code-sm"],
+  ["Separator", "chevron--right 16px · text/muted · hidden from screen readers"],
+  ["Overflow", "Below 36rem, the middle levels fold into “…”, which shows them again"],
+  ["Object path", "32px · surface/page · 1px border/subtle below · type/code-sm · Icon button, Ghost, 24px"],
+];
+
+const code = `import { AppBar, Breadcrumbs, ObjectPath } from "@ui";
+
+<AppBar
+  homeHref="/"
+  logo={<img src={logoUrl} alt="" />}
+  actions={[
+    { label: "Guide", href: "/guide", icon: "help" },
+    { label: "Settings", href: "/settings", icon: "settings", iconOnly: true },
+  ]}
+/>
+
+<Breadcrumbs items={[
+  { label: "DANDI", href: dandiSearchUrl },
+  { label: "000673", href: "/dandiset/000673", code: true },
+  { label: fileName, code: true },
+]} />
+
+<ObjectPath type="ElectricalSeries" path={path}
+  onCopyPath={copyPath} onCopyLink={copyLink} />`;
+---
+
+<DocsLayout title="Navigation and breadcrumbs" description="App bar, Breadcrumbs and Object path: where people are, at every layer.">
+  <Intro
+    lead="People move from an archive to a Dandiset, into a folder, open a file and then an object inside it. Navigation keeps that path in view: the app bar for the whole tool, breadcrumbs for where the open file came from, tabs for views of the file, and the object path for what’s on screen."
+    status="Updated November 9, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "Always know where you are", text: "Breadcrumbs name the archive, Dandiset, folder and file on every page below the archive." },
+      { title: "Every state has a URL", text: "Search queries, open tabs and the time window live in the URL, so Back and shared links return the same view." },
+      { title: "One layer, one job", text: "App bar: the tool. Breadcrumbs: the data’s location. Tabs: views. Object path: what’s open." },
+    ]}
+  />
+
+  <Existing page="navigation" />
+
+  <DocSection title="Navigation layers" lead="The file view from top to bottom. Each layer answers one question.">
+    <DocTable caption="Navigation layers" columns={["Layer", "Answers", "Height"]}>
+      {LAYERS.map(([layer, answers, height]) => <tr><th scope="row">{layer}</th><td>{answers}</td><td>{height}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="App bar" lead="48px. The logo and name go home; labeled actions sit on the right.">
+    <div class="app-bar-demo">
+      <AppBarDemo
+        homeHref={here}
+        logoSrc={logo.src}
+        actions={[
+          { label: "Guide", href: here, icon: "help" },
+          { label: "GitHub", href: "https://github.com/flatironinstitute/neurosift", icon: "logo--github", iconOnly: true, external: true },
+          { label: "Settings", href: here, icon: "settings", iconOnly: true },
+          { label: "Open in v1", href: here },
+        ]}
+      />
+    </div>
+    <p class="doc-note">“Neurosift”, not “Neurosift (v2)”: the status bar already shows the build version. The bare “1” becomes “Open in v1”, and the NWB viewer guide gets a place in the bar. Icon-only actions are named for screen readers and in a tooltip.</p>
+  </DocSection>
+
+  <DocSection title="Breadcrumbs" lead="Links to every level above the current page, in link blue, with the current page in SemiBold. IDs and file names use Plex Mono.">
+    <BreadcrumbsDemo client:visible items={FILE_TRAIL} />
+    <div class="breadcrumbs-narrow-demo">
+      <BreadcrumbsDemo client:visible items={FILE_TRAIL} />
+    </div>
+    <p class="doc-note">The first trail is a file view; it replaces “(view)” and adds the file name. The second is the same trail in a narrow space: the middle levels fold into “…”, which shows them again. The DANDI crumb links to the search with the last query, replacing “← Back to DANDI”.</p>
+  </DocSection>
+
+  <DocSection title="Object path" lead="Above the open object: its neurodata type and full HDF5 path, with Copy path and Copy link. A toast confirms each.">
+    <div class="object-path-demo">
+      <ObjectPathDemo client:visible />
+    </div>
+  </DocSection>
+
+  <DocSection title="Back, history and links">
+    <ul class="rule-list">
+      <li><strong>Back works.</strong> The browser’s Back returns to the previous view with its state, including the search query (upstream #321).</li>
+      <li><strong>Breadcrumbs keep state.</strong> The DANDI crumb links to the search with the last query and mode in the URL.</li>
+      <li><strong>Copy link, not Share.</strong> The object path’s link button copies a URL to this file and tab; a toast confirms it.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Writing" lead="Rewrites of strings in the app today.">
+    <DocTable caption="Writing navigation" columns={["Use", "Instead of", "Why"]}>
+      {WRITING.map(([use, instead, why]) => <tr><th scope="row">{use}</th><td>{instead}</td><td>{why}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Accessibility">
+    <ul class="rule-list">
+      <li><strong>Landmarks.</strong> The app bar is a header; breadcrumbs are a navigation landmark labeled “Breadcrumb”, with an ordered list.</li>
+      <li><strong>Current page.</strong> The last crumb has aria-current="page" and isn’t a link.</li>
+      <li><strong>Separators are decorative.</strong> Chevrons are hidden from screen readers; the list order carries the meaning.</li>
+      <li><strong>Nothing lost when folded.</strong> “…” is a button named “Show all levels”; focus moves to the first level it reveals.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Show breadcrumbs on every page below an archive.", "Use IDs and file names exactly as in the archive.", "Fold the middle of the trail, not the current page.", "Keep every view reachable by URL."]}
+      donts={["Don’t use breadcrumbs for history; they show location.", "Don’t put page actions in the app bar.", "Don’t label buttons with bare numbers or symbols.", "Don’t link the current page to itself."]}
+    />
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Navigation specs" columns={["Part", "Value"]}>
+      {SPECS.map(([part, value]) => <tr><th scope="row">{part}</th><td>{value}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. Breadcrumbs take hrefs that keep state, such as the search query; the object path's copy buttons are wired by the page.">
+    <CodeSample label="React" code={code} />
+  </DocSection>
+</DocsLayout>

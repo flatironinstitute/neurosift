@@ -1,0 +1,134 @@
+---
+import Sample from "../../components/Sample.astro";
+import { tokensIn } from "../../tokens";
+import { contrast } from "../../contrast";
+import { Alert } from "@ui";
+import DoDont from "../../components/DoDont.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const CURRENT = [
+  ["Navy", "navy", "color/navy/600 · #2C3E50", "Primary buttons, selected rows, inverse surfaces", "White on navy 10.98:1", "Current, from App.tsx"],
+  ["Link blue", "blue", "color/blue/600 · #2B5797", "Links, focus ring, selected items", "On the background 6.84:1", "Current, from index.css"],
+  ["Background", "page", "surface/page · #F7F9FC", "The tool background behind panels", "Ink on it 16.50:1", "Current, from index.css"],
+  ["Border", "border", "border/subtle · #DDE4ED", "Panel edges and dividers inside panels", "1.21:1 on the background: decorative only, never a control’s only outline", "Current, from index.css"],
+  ["Black", "black", "border/strong · #000000", "Table rules, outlined buttons", "21:1 on white", "New"],
+];
+
+const SERIES = [
+  ["Blue", "#1F77B4 · 4.82:1", "1 Blue", "#0072B2 · 5.19:1"],
+  ["Orange", "#FF7F0E · 2.53:1, below 3:1", "2 Vermilion", "#D55E00 · 3.87:1"],
+  ["Green", "#2CA02C · 3.40:1", "3 Green", "#009E73 · 3.42:1"],
+  ["Red", "#D62728 · 5.02:1", "4 Sienna", "#A0522D · 5.62:1"],
+  ["Purple", "#9467BD · 4.26:1", "5 Teal", "#00808A · 4.71:1"],
+  ["Brown", "#8C564B · 5.92:1", "6 Ink", "#1A1A1A · 17.40:1"],
+];
+
+const STATES = [
+  ["Primary button", "navy 600", "navy 700", "navy 800", "navy 600 with the ring", "neutral 100 and 400"],
+  ["Secondary button", "white, black rule", "navy 50", "navy 100", "white with the ring", "neutral 300 and 400"],
+  ["Link", "blue 600", "blue 700", "blue 800", "blue 600 with the ring", "neutral 400"],
+];
+
+const PAIRS = [
+  ["White on navy 600", "#FFFFFF on #2C3E50", "10.98:1", "Pass"],
+  ["Ink on background", "#1A1A1A on #F7F9FC", "16.50:1", "Pass"],
+  ["Link blue on background", "#2B5797 on #F7F9FC", "6.84:1", "Pass"],
+  ["Neutral 600 on background", "#565656 on #F7F9FC", "6.96:1", "Pass"],
+  ["Neutral 500 on background", "#6B6B6B on #F7F9FC", "5.05:1", "Pass"],
+  ["Time cursor on white", "#963232 on #FFFFFF", "7.50:1", "Pass"],
+  ["Neutral 400 on white", "#9E9E9E on #FFFFFF", "2.68:1", "Disabled only"],
+  ["Border on background", "#DDE4ED on #F7F9FC", "1.21:1", "Decorative only"],
+];
+const SCALES = [
+  { hue: "navy", name: "Navy", use: "Buttons, the app bar, dark surfaces" },
+  { hue: "blue", name: "Blue", use: "Links, focus, selection" },
+  { hue: "neutral", name: "Neutral", use: "Text, icons, disabled states" },
+].map((scale) => ({ ...scale, steps: tokensIn(`color.${scale.hue}`).filter((view) => /^\d+$/.test(view.step)) }));
+---
+
+<DocsLayout title="Color palette" description="Neurosift’s colors: the ones people know, the scales around them, and colors for data.">
+  <Intro
+    lead="Neurosift keeps the colors it already has: the navy of its buttons, the soft blue-gray background, and the link blue. This page names them, adds lighter and darker steps for states, and sets the colors plots share."
+    status="Updated November 9, 2026 · Foundations · Contrast follows WCAG 2.2"
+    rules={[
+      { title: "Keep what people know", text: "Navy, the blue-gray background and the link blue stay. Regular users should recognize the tool at a glance." },
+      { title: "Data gets the hue", text: "The interface stays navy, gray and black rules. A colored line in a plot always means data." },
+      { title: "Never color alone", text: "Every series has a label and every status has a word or icon, so meaning survives color blindness and print." },
+    ]}
+  />
+
+  <DocSection title="Current colors" lead="Five colors already define Neurosift. They stay as they are; the scales on Color tokens add steps around them.">
+    <DocTable caption="Current colors" columns={["Color", "Swatch", "Token and value", "Use", "Contrast", "Source"]}>
+      {CURRENT.map(([name, cls, token, use, contrast, source]) => <tr><th scope="row">{name}</th><td><span class={`color-chip color-chip--${cls}`} aria-hidden="true" /></td><td>{token}</td><td>{use}</td><td>{contrast}</td><td>{source}</td></tr>)}
+    </DocTable>
+    <p class="doc-note">Every primitive and semantic color, drawn from its CSS variable, is on <a href={withBase("/tokens/color/")}>Color tokens</a>.</p>
+  </DocSection>
+
+  <DocSection title="Color scales" lead="Each scale runs from 50, the lightest, to 900, the darkest. Contrast is measured against white panels and the tool background.">
+    {
+      SCALES.map(({ name, use, steps }) => (
+        <DocTable caption={`${name}: ${use}`} columns={["Step", "Swatch", "Value", "On white", "On background"]}>
+          {steps.map((view) => (
+            <tr>
+              <th scope="row">{view.step}</th>
+              <td><Sample view={view} kind="swatch" /></td>
+              <td>{view.value}</td>
+              <td>{contrast(view.value, "#FFFFFF")}</td>
+              <td>{contrast(view.value, "#F7F9FC")}</td>
+            </tr>
+          ))}
+        </DocTable>
+      ))
+    }
+    <p class="doc-note">The current colors are navy 600, blue 600 and neutral 900. Each table's caption names what the scale is for.</p>
+  </DocSection>
+
+  <DocSection title="Data colors" lead="Plots share these colors, so a unit, channel or condition keeps its color from one view to the next.">
+    <DocTable caption="Series colors, today and proposed" columns={["Today: category10", "Value and contrast", "Proposed: data/series", "Value and contrast"]}>
+      {SERIES.map(([today, todayValue, next, nextValue]) => <tr><th scope="row">{today}</th><td>{todayValue}</td><td>{next}</td><td>{nextValue}</td></tr>)}
+    </DocTable>
+    <ul class="rule-list">
+      <li><strong>Why the series change.</strong> D3’s category10, used today, blurs green and red for people with deuteranopia, and blue and purple for protanopia. The six replacements stay distinct for both, and every one passes 3:1 against white, so thin traces stay visible. Past six series, label lines directly or split into small multiples.</li>
+      <li><strong>Sequential: viridis.</strong> Spectrograms already use viridis. It is perceptually even and readable with color blindness and in grayscale, so it stays for every continuous scale: power, density, firing rate maps.</li>
+      <li><strong>Diverging: blue to red.</strong> For values above and below a midpoint, such as correlations or a signal around zero. The midpoint is near-white, so zero reads as no color.</li>
+      <li><strong>Plot interaction.</strong> The time cursor stays dark red at 90%, 7.50:1 on white. The selected time window moves from yellow at 10%, which is faint and reads as a warning, to navy at 8%.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Status colors" lead="Reserved for system feedback, never for data. Each has a light background (50), a border (200), and a text and icon color (700). Information uses the blue scale. These are the real Alerts.">
+    <div class="status-demo">
+      <Alert status="error" title="This file needs a DANDI API key.">It is in an embargoed Dandiset. Add your key in Settings, then reload.</Alert>
+      <Alert status="warning" title="Too much data to draw at this zoom.">This series has 70 channels at 400 Hz. Zoom in to see the traces.</Alert>
+      <Alert status="success" title="Link copied.">Anyone with the link sees this exact view.</Alert>
+      <Alert status="info" title="Opening a large file.">Neurosift reads only the parts you look at, so nothing is downloaded.</Alert>
+    </div>
+    <p class="doc-note">Text on each tint passes 4.5:1: error 6.01:1, warning 4.91:1, success 4.98:1 and information 6.47:1.</p>
+  </DocSection>
+
+  <DocSection title="Interaction states" lead="Hover darkens by one step and pressed by two. Focus adds a 2px link-blue ring with a 2px gap. The States tokens hold the values.">
+    <DocTable caption="Interaction states" columns={["Element", "Default", "Hover", "Pressed", "Focus", "Disabled"]}>
+      {STATES.map(([element, ...steps]) => <tr><th scope="row">{element}</th>{steps.map((s) => <td>{s}</td>)}</tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Accessible pairings" lead="Measured contrast for the combinations used most. Pass means 4.5:1 or more and is safe for any text. Graphics need 3:1.">
+    <DocTable caption="Accessible pairings" columns={["Pair", "Colors", "Contrast", "Verdict"]}>
+      {PAIRS.map(([pair, colors, contrast, verdict]) => <tr><th scope="row">{pair}</th><td>{colors}</td><td>{contrast}</td><td>{verdict}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Use navy 600 for primary buttons, with white text. The app bar is light: surface/panel with text/default.", "Use link blue for links and the focus ring, and underline every link.", "Give each series the same color in every view, in the order of data/series.", "Use viridis for anything continuous, with a labeled color bar.", "Pair every status color with a word or an icon."]}
+      donts={["Don’t use navy or link blue for data. A colored line should always mean data.", "Don’t rely on the border color alone to outline a control. It is 1.21:1 against the background.", "Don’t put status colors in plots or use them for decoration.", "Don’t add new shades. Pick the nearest step from a scale.", "Don’t use neutral 400 for text people need to read."]}
+    />
+  </DocSection>
+
+  <DocSection title="Semantic tokens" lead="Components use semantic tokens, which point to a step in a scale. To change a color across the product, change what the token points to.">
+    <p class="doc-note">Every semantic token, with what it points to, is on <a href={withBase("/tokens/color/")}>Color tokens</a>.</p>
+  </DocSection>
+</DocsLayout>

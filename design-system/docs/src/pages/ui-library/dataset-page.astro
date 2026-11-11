@@ -1,0 +1,115 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import Screen from "../../components/Screen.astro";
+import LiveScreen from "../../components/LiveScreen.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const TODAY = [
+  ["DANDI overview", "“← Back to DANDI”, the title, Version, “View on DANDI →”, description and contributors with read more, then ID, Version, dates, status, size, files and subjects as text lines", "DandisetPage/DandisetOverview.tsx", "Gray section labels; chat link at the end"],
+  ["EMBER overview", "The same layout, written separately", "EmberDandisetPage/EmberDandisetOverview.tsx", "A copy of the DANDI code"],
+  ["OpenNeuro overview", "Title, “View on OpenNeuro →”, Dataset Information, Summary, Authors, DOI, License, Acknowledgements, Funding, References and Links", "OpenNeuroDatasetPage/OpenNeuroDatasetOverview.tsx", "No way back to the archive"],
+  ["Files", "A table of folders and files; a ► arrow opens a folder", "DatasetWorkspace/DatasetMainTab.tsx", "Only the arrow opens it"],
+  ["Open files", "Gray tab pills; “No viewer available for this file type”", "DatasetWorkspace.tsx", "Loading shows a spinner"],
+  ["NWB filter", "A bare checkbox, “Show NWB files only”, and “Load more files”", "DandisetPage/index.tsx", "Inline styled"],
+];
+
+const REGIONS = [
+  ["Breadcrumbs", "The archive, which is also the way back, then the dataset"],
+  ["Header", "The archive’s tag and the dataset’s ID, then its title"],
+  ["Version", "A select when there are versions to pick, else the version; View on the archive"],
+  ["Facts", "Created, Modified, Status, Size, Files, Subjects, or for OpenNeuro Views and Downloads"],
+  ["Sections", "Description, Contributors or Authors, License and citation, Keywords, Species and methods"],
+  ["Files", "A tree of folders and files, with Download for the selected file"],
+];
+
+const STATES = [
+  ["Loading", "“Loading the Dandiset” in place of the overview."],
+  ["Long text", "A description or contributor list past 600 characters is cut, with Show full description."],
+  ["One version", "The version shows as a fact; no select."],
+  ["File with no viewer", "“Neurosift can’t show json files yet”, with Download the file."],
+  ["Partial file list", "“25 of 44 files” beside Load more files."],
+  ["Dataset not found", "OpenNeuro: “No dataset found”, naming the dataset."],
+];
+
+const BEHAVIOR = [
+  ["Breadcrumbs", "DANDI, EMBER or OpenNeuro opens that archive’s search."],
+  ["Version", "Picking a version reloads the overview and the files at that version, as today."],
+  ["Files", "A click anywhere on a folder row opens it; a file opens in a tab; an NWB file opens the file viewer."],
+  ["Download", "The selected file’s Download link, above the tree."],
+  ["Open files", "One tab per opened file; × closes it."],
+];
+
+const DIFFERS = [
+  ["Three overviews", "Written three times with different fields", "One Dataset overview, fed by each archive", "Built"],
+  ["Way back", "“← Back to DANDI”; none on OpenNeuro", "Breadcrumbs on every archive", "Built"],
+  ["Facts", "Text lines of label: value", "A description list of facts", "Built"],
+  ["Files", "A table; only the arrow opens folders", "A tree; the whole row opens", "Built"],
+  ["No viewer", "A sentence", "An empty state with Download the file", "Built"],
+  ["Chat", "A plain link", "A link with an Experimental badge", "Built"],
+];
+---
+
+<DocsLayout title="Dataset page" description="What a dataset is on the left, its folders and files on the right, for DANDI, EMBER and OpenNeuro.">
+  <Intro
+    lead="The dataset page is where a Dandiset or an OpenNeuro dataset opens: what it is on the left, its folders and files on the right. Today DANDI, EMBER and OpenNeuro each have their own version of the left side, with different fields and different ways back. The rebuild uses one Dataset overview for all three, fed by each archive’s data, and a tree of files where the whole row opens a folder."
+    status="Updated November 10, 2026 · UI library · Captured at 1440 × 900 with Dandiset 000673 and OpenNeuro ds000001 · Built from Breadcrumbs, Tag, Select, Button, Description list, Disclosure, Badge, Tree, Checkbox, Tabs, Loading state and Empty state"
+    rules={[
+      { title: "One page, three archives", text: "DANDI, EMBER and OpenNeuro share one overview; only the data differs." },
+      { title: "Always a way back", text: "Breadcrumbs start at the archive on every dataset." },
+      { title: "The whole row opens", text: "Click anywhere on a folder to open it, not just the arrow." },
+    ]}
+  />
+
+  <DocSection title="Dataset page today" lead="neurosift.app, captured with Playwright.">
+    <div class="captures">
+      <Screen file="dataset-dandi" alt="Today’s DANDI dataset page: Back to DANDI, the title, a version select, gray labeled sections, and a table of folders." caption="DANDI: “← Back to DANDI” and a table of folders." />
+      <Screen file="dataset-openneuro" alt="Today’s OpenNeuro dataset page: the title, View on OpenNeuro, Dataset Information lines and a table of files." caption="OpenNeuro: different fields, and no way back to the archive." />
+    </div>
+  </DocSection>
+
+  <DocSection title="What the page does today" lead="Read from the source and checked on the live site.">
+    <DocTable caption="What the page does today" columns={["Part", "Today", "Code", "Notes"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Regions on the page">
+    <DocTable caption="Regions" columns={["Region", "What it holds"]}>
+      <DocRows rows={REGIONS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="The rebuilt page" lead="The redesign with the same datasets, with live data.">
+    <div class="captures">
+      <Screen file="dataset-proposed-dandi" alt="The rebuilt DANDI page: breadcrumbs DANDI › Dandiset 000673, a DANDI tag and the ID, the title, a version select with View on DANDI, facts, description, contributors and a file tree." caption="DANDI: breadcrumbs, facts and sections, and a file tree." />
+      <Screen file="dataset-proposed-openneuro" alt="The rebuilt OpenNeuro page: breadcrumbs OpenNeuro › Dataset ds000001, the title, version and View on OpenNeuro, facts with views and downloads, modalities, authors, license and DOI, and the file tree." caption="OpenNeuro: the same overview, with OpenNeuro’s facts." />
+    </div>
+    <p class="doc-note">Built from <a href={withBase("/components/navigation/")}>Navigation and breadcrumbs</a>, the <a href={withBase("/components/description-list/")}>Description list</a> and the <a href={withBase("/components/tables/")}>Tree</a>.</p>
+  </DocSection>
+
+  <DocSection title="Try it" lead="Pick a version, open folders and files, and download.">
+    <LiveScreen path="dandiset/000673" title="Dandiset 000673" size="tall" />
+  </DocSection>
+
+  <DocSection title="States">
+    <DocTable caption="States" columns={["When", "What changes"]}>
+      <DocRows rows={STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Behavior">
+    <DocTable caption="Behavior" columns={["Part", "Behavior"]}>
+      <DocRows rows={BEHAVIOR} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="What differs" lead="Built is in the app now.">
+    <DocTable caption="What differs" columns={["Area", "Existing", "Proposed", "Status"]}>
+      <DocRows rows={DIFFERS} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

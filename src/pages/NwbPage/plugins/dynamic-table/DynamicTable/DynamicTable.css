@@ -1,0 +1,20 @@
+/* Short enough that a view below it, such as the units raster, stays in reach. */
+.dynamic-table > .ns-table-scroll {
+  max-block-size: 22rem;
+}
+
+/* One line per row; long paths and lists scroll sideways instead. */
+.dynamic-table td {
+  white-space: nowrap;
+}
+
+.dynamic-table-footer {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.dynamic-table-footer:empty {
+  display: none;
+}

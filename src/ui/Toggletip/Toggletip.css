@@ -1,0 +1,37 @@
+.ns-toggletip {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+/* Opens under its info button and flips when there's no room. */
+.ns-toggletip-panel {
+  inset: auto;
+  inline-size: calc(var(--layout-panel-min) + var(--space-10));
+  padding: var(--space-3);
+  margin: var(--space-2) 0 0;
+  color: var(--text-default);
+  background: var(--surface-panel);
+  border: var(--border-width-1) solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--elevation-2);
+  position-area: block-end span-inline-end;
+  position-try-fallbacks: flip-block, flip-inline;
+}
+
+.ns-toggletip-panel:popover-open {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.ns-toggletip-title {
+  margin: 0;
+  font: var(--type-label);
+}
+
+.ns-toggletip-body {
+  font: var(--type-body-sm);
+}
+
+.ns-toggletip-body > p {
+  margin: 0;
+}

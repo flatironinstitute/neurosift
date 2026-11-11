@@ -1,0 +1,135 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import Screen from "../../components/Screen.astro";
+import LiveScreen from "../../components/LiveScreen.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const TODAY = [
+  ["Raster", "Spike times per unit on recording time", "plugins/Raster", "Units change by doubling or halving; a “.” button switches to Plotly"],
+  ["PSTH", "A raster and histogram per unit, around each trial", "plugins/PSTH", "Navy section headers; units, align-to and categories in tables of bare checkboxes"],
+  ["Units list", "Unit ID and # spikes, with a header box that only selects all or clears", "PSTH/components/UnitSelection", "No count of how many are picked"],
+  ["Controls", "Window range, group by, sort units by and preferences in one block", "PSTH/components", "Number of bins drops values out of range without saying so"],
+  ["No units chosen", "“Select one or more units to plot”", "PSTHLayout", "No way to start"],
+  ["Unit header", "A stray “0” before the unit’s name; ROIs labeled “Unit”", "PSTHUnitWidget", "—"],
+];
+
+const STATES = [
+  ["No units chosen", "“No units chosen yet”, the unit count, and Select first 5 units."],
+  ["Loading", "The settings appear first; “Reading the spike times” in the plot area."],
+  ["Bins out of range", "Number of bins shows “Use between 1 and 1,000 bins.”"],
+  ["Grouped", "Categories lists each value of the column with a checkbox."],
+  ["Many units checked", "One chart per unit, in list order; Units reads “12 of 46 selected”."],
+  ["Figpack: no job yet", "Generate Figpack Raster Plot, a Primary button."],
+  ["Figpack: pending or in progress", "Info alert, “Job pending” or “Job in progress”, with Refresh status, which spins while it checks, and View job."],
+  ["Figpack: completed", "A Job completed success badge and View job, then the figure in a frame."],
+  ["Figpack: failed", "Error alert, “Job failed”, with the error, Retry job and View job."],
+  ["Figpack: expired", "Warning alert, “Job expired”, with Submit new job."],
+  ["Figpack: local file", "Info inline message: figures need a public NWB file served over HTTPS."],
+];
+
+const BEHAVIOR = [
+  ["Units window", "Raster: type a range or step; zero-based, as on Time controls."],
+  ["Units list", "Check units to plot; the first box selects all or clears, and shows Mixed when some are checked."],
+  ["Select first 5 units", "Checks units 0 to 4."],
+  ["Align to", "Check one or both; each gets its own chart."],
+  ["Controls", "Window from and to; changes apply at once."],
+  ["Categories", "Pick a column, then which of its values to show."],
+  ["Sort units by", "A column, then Ascending or Descending."],
+  ["Display", "Raster, histogram, smoothing, number of bins and chart height."],
+];
+
+const DIFFERS = [
+  ["Raster controls", "Buttons and text; a “.” button", "The shared Time window and overview, a Units window, Canvas or Plotly", "Built"],
+  ["PSTH settings", "Navy headers and tables of bare checkboxes", "Accordion items with checkboxes, counts and summaries", "Built"],
+  ["No units chosen", "A sentence", "An empty state with Select first 5 units", "Built"],
+  ["Number of bins", "Ignores values out of range", "Says “Use between 1 and 1,000 bins.”", "Built"],
+  ["Unit header", "A stray “0”; ROIs called Unit", "Unit or ROI, without the 0", "Built"],
+  ["Figpack job status", "Tinted boxes with a bold “Job Status:” link, a bright blue Generate button and a green ✓ line", "Generate, a Primary button; Info, Error and Warning alerts with Refresh status and View job; a success badge when done", "Built"],
+  ["Settings side", "Left of the charts", "Right, as in every View panel", "To confirm"],
+];
+
+const SPECS = [
+  ["Raster frame", "View panel · Time window · Channel window labeled Units · Segmented control, Small · Time overview"],
+  ["PSTH frame", "View panel with a 320px settings panel"],
+  ["Settings", "Accordion items: Units, Align to, Controls, Categories, Sort units by, Display · summaries in type/code-sm"],
+  ["Units list", "Checkbox with count · the first box is Mixed when some are checked · 18rem, then the list scrolls"],
+  ["Empty", "Empty state with Select first 5 units"],
+  ["Figpack job", "16px (space/4) padding · Button, Primary · Alert with up to two Small actions · Badge, success, with its icon · 12px (space/3) gap"],
+  ["Figpack frame", "border/subtle · radius/sm · the figure fills it"],
+];
+---
+
+<DocsLayout title="Spike views" description="The raster of spike times, and the PSTH of spikes around each trial.">
+  <Intro
+    lead="Spike views show the units table: a raster of spike times on recording time, and a peri-stimulus time histogram of each unit’s spikes around every trial. Neurosift’s charts stay as they are. The raster gets the shared time frame and a Units window; the PSTH’s settings move into a panel beside the charts, where each section says what it’s set to."
+    status="Updated November 10, 2026 · UI library · Captured at 1440 × 900 with Dandiset 000673, sub-1 · Built from View panel, Time window, Channel window, Segmented control, Accordion, Checkbox, Select, Text input, Empty state, Alert, Badge and Button"
+    rules={[
+      { title: "Count what’s picked", text: "Units reads “5 of 46 selected”, and each unit shows its spikes." },
+      { title: "A way to start", text: "With nothing picked, Select first 5 units is one click." },
+      { title: "Say what it’s set to", text: "Every settings section shows its value while closed." },
+    ]}
+  />
+
+  <DocSection title="Spike views today" lead="neurosift.app with sub-1 of Dandiset 000673, captured with Playwright.">
+    <div class="captures">
+      <Screen file="spikes-raster" alt="Today’s raster of units: buttons and text above, a dot button at the top right, and spike ticks for four units." caption="Raster: its own controls and a “.” button for Plotly." />
+      <Screen file="spikes-psth" alt="Today’s PSTH: navy section headers on the left with tables of checkboxes, and a raster and histogram for a unit." caption="PSTH: navy headers and tables of bare checkboxes." />
+    </div>
+  </DocSection>
+
+  <DocSection title="What the views do today" lead="Read from the source and checked on the live site.">
+    <DocTable caption="What the views do today" columns={["Part", "Today", "Code", "Notes"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="The rebuilt views" lead="The redesign’s viewer with the same file, with live data. The charts are Neurosift’s own and unchanged.">
+    <div class="captures">
+      <Screen file="spikes-proposed-raster" alt="The rebuilt raster: a summary of 46 units, the Time window, a Units window reading 0–3 of 46, Canvas and Plotly, the Time overview and the spike ticks." caption="Raster: the shared time frame with a Units window." />
+      <Screen file="spikes-proposed-psth" alt="The rebuilt PSTH: the raster and histogram for unit 0 around start_time, with Units, Align to, Controls, Categories and Sort units by settings beside it." caption="PSTH: settings beside the charts, each saying what it’s set to." />
+    </div>
+    <p class="doc-note">Built from the <a href={withBase("/components/view-panel/")}>View panel</a>, <a href={withBase("/components/time-controls/")}>Time controls</a> and <a href={withBase("/components/accordions/")}>Accordion</a>.</p>
+  </DocSection>
+
+  <DocSection title="Figpack figures" lead="Figpack Raster on Units, Video preview on an ImageSeries and Pose estimation open from the object table. A job on the runpack service builds the figure, and the tab says where the job stands. No job exists for this file, so the pending and failed captures answer the job check with a stubbed status.">
+    <div class="captures">
+      <Screen file="figpack-job" alt="Today’s Figpack Raster tab on neurosift.app: a bright blue Generate Figpack Raster Plot button." caption="Today: a bright blue button, then colored boxes once a job runs." />
+      <Screen file="figpack-job-proposed" alt="The rebuilt Figpack Raster tab: Generate Figpack Raster Plot as a Primary button." caption="No job yet: Generate, a Primary button." />
+      <Screen file="figpack-job-proposed-pending" alt="The rebuilt pending job: an info alert, Job pending, Your job is queued and waiting for a worker to process it, with Refresh status and View job." caption="Pending: an info alert with Refresh status and View job." />
+      <Screen file="figpack-job-proposed-failed" alt="The rebuilt failed job: an error alert, Job failed, An unknown error occurred, with Retry job and View job." caption="Failed: an error alert with Retry job." />
+    </div>
+    <p class="doc-note">Built from <a href={withBase("/components/buttons/")}>Buttons</a>, <a href={withBase("/components/alerts/")}>Alerts</a> and <a href={withBase("/components/badges/")}>Badges</a>. The three Figpack views share one view, so they read alike.</p>
+  </DocSection>
+
+  <DocSection title="Try it" lead="Select the first 5 units, align to a column and group by a category.">
+    <LiveScreen path="nwb?url=https://api.dandiarchive.org/api/assets/65a7e913-45c7-48db-bf19-b9f5e910110a/download/&dandisetId=000673&dandisetVersion=0.250122.0110&tab=view:PSTH|/intervals/trials" title="PSTH of trials, Dandiset 000673 sub-1" size="tall" />
+  </DocSection>
+
+  <DocSection title="States">
+    <DocTable caption="States" columns={["When", "What changes"]}>
+      <DocRows rows={STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Behavior">
+    <DocTable caption="Behavior" columns={["Part", "Behavior"]}>
+      <DocRows rows={BEHAVIOR} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="What differs" lead="Built is in the app now. To confirm needs Jeremy or Ben.">
+    <DocTable caption="What differs" columns={["Area", "Existing", "Proposed", "Status"]}>
+      <DocRows rows={DIFFERS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Specs" columns={["Property", "Value"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

@@ -1,0 +1,25 @@
+.dataset-workspace {
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: hidden;
+}
+
+.dataset-workspace-content {
+  position: relative;
+  flex: 1;
+  min-block-size: 0;
+  overflow: hidden;
+}
+
+.dataset-workspace-content > .ns-tab-panel {
+  position: relative;
+  block-size: 100%;
+}
+
+.dataset-workspace-views {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}

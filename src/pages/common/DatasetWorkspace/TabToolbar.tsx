@@ -1,53 +1,24 @@
 import { FunctionComponent } from "react";
-import ShareTabButton from "./ShareTabButton";
+import ShareTabButton from "@shared/ShareTabButton/ShareTabButton";
 import { DatasetFile } from "./plugins/pluginInterface";
+import "./TabToolbar.css";
 
-const TOOLBAR_HEIGHT = 24;
+const TOOLBAR_HEIGHT = 32;
 
 type TabToolbarProps = {
   width: number;
   file: DatasetFile;
 };
 
-const TabToolbar: FunctionComponent<TabToolbarProps> = ({ width, file }) => {
-  return (
-    <div
-      style={{
-        position: "relative",
-        width,
-        height: TOOLBAR_HEIGHT,
-        backgroundColor: "#f5f5f5",
-        borderBottom: "1px solid #ddd",
-        display: "flex",
-        alignItems: "center",
-        padding: "0 8px",
-      }}
-    >
-      <div
-        style={{
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-          minWidth: 0,
-          fontSize: "12px",
-          color: "#666",
-        }}
-      >
-        {file.filepath}
-      </div>
-      <div
-        style={{
-          marginLeft: 12,
-          display: "flex",
-          alignItems: "center",
-          minWidth: 28,
-        }}
-      >
-        <ShareTabButton file={file} />
-      </div>
-    </div>
-  );
-};
+/** The open file’s path, with a link that reopens this tab. */
+const TabToolbar: FunctionComponent<TabToolbarProps> = ({ file }) => (
+  <div className="dataset-tab-toolbar">
+    <p className="dataset-tab-path" title={file.filepath}>
+      {file.filepath}
+    </p>
+    <ShareTabButton params={{ tab: `${file.filepath}|${file.parentId}` }} />
+  </div>
+);
 
 export { TOOLBAR_HEIGHT };
 export default TabToolbar;

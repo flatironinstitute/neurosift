@@ -1,13 +1,26 @@
+import { useCssVars } from "@components/useCssVars";
+import {
+  AccordionItem,
+  Checkbox,
+  EmptyState,
+  formatSeconds,
+  IconButton,
+  LoadingState,
+  Playback,
+  SegmentedControl,
+  TimeOverview,
+  useToast,
+  ViewPanel,
+} from "@ui";
 import {
   FunctionComponent,
+  ReactNode,
   useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-import { IconButton, Tooltip } from "@mui/material";
-import ShareIcon from "@mui/icons-material/Share";
 import { getHdf5Dataset, getHdf5Group } from "./hdf5Interface";
 import { IrregularTimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
 import {
@@ -17,12 +30,16 @@ import {
   getSeriesTimeRange,
   resolveExternalVideoFromFile,
   VIDEO_DISCOVERY_ROOTS,
+  VideoProblem,
+  videoProblemOf,
 } from "./externalVideoUtils";
 
 import { useSearchParams } from "react-router-dom";
 import { useSetSearchParamsKeepingHash } from "./urlHash";
 import { neurodataTypeInheritsFrom } from "./neurodataTypeInheritance";
 import { useNwbFileSpecifications } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
+import VideoUnavailable from "./VideoUnavailable";
+import "./MultiVideoTabView.css";
 
 type Props = {
   nwbUrl: string;
@@ -38,12 +55,14 @@ const ARROW_SEEK_SEC = 5;
 
 type LayoutMode = "row" | "column" | "grid";
 
-const formatTime = (seconds: number) => {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  const tenths = Math.floor((seconds % 1) * 10);
-  return `${mins}:${secs.toString().padStart(2, "0")}.${tenths}`;
-};
+const LAYOUT_OPTIONS: { value: LayoutMode; label: string }[] = [
+  { value: "row", label: "Row" },
+  { value: "column", label: "Column" },
+  { value: "grid", label: "Grid" },
+];
+
+const plural = (n: number, word: string) =>
+  `${n.toLocaleString("en-US")} ${word}${n === 1 ? "" : "s"}`;
 
 const clamp = (value: number, min: number, max: number) => {
   return Math.min(Math.max(value, min), max);
@@ -154,18 +173,16 @@ const OrderPanel: FunctionComponent<{
   const [dragFrom, setDragFrom] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
   const { cols } = calculateGridDimensions(layoutMode, selectedPaths.length);
+  const ref = useCssVars<HTMLDivElement>({ "--cols": String(cols) });
 
   return (
-    <div
-      style={{
-        display: "inline-grid",
-        gridTemplateColumns: `repeat(${cols}, 36px)`,
-        gap: 4,
-      }}
-    >
+    <div ref={ref} className="videos-order">
       {selectedPaths.map((path, index) => (
         <div
           key={path}
+          className="videos-order-tile"
+          data-dragging={dragFrom === index ? "" : undefined}
+          data-over={dragOver === index ? "" : undefined}
           draggable
           onDragStart={() => setDragFrom(index)}
           onDragOver={(e) => {
@@ -192,26 +209,6 @@ const OrderPanel: FunctionComponent<{
             setDragFrom(null);
             setDragOver(null);
           }}
-          style={{
-            width: 36,
-            height: 28,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 13,
-            fontWeight: 600,
-            border: dragOver === index ? "2px solid #4f6df5" : "1px solid #bbb",
-            borderRadius: 4,
-            background:
-              dragFrom === index
-                ? "#e0e7ff"
-                : dragOver === index
-                  ? "#eef2ff"
-                  : "#fff",
-            cursor: "grab",
-            userSelect: "none",
-            color: "#4f6df5",
-          }}
         >
           {labelMap.get(path) || "?"}
         </div>
@@ -220,74 +217,28 @@ const OrderPanel: FunctionComponent<{
   );
 };
 
-const ShareVideoButton: FunctionComponent<{
-  selectedPaths: string[];
-  candidates: ExternalVideoCandidate[];
-  layoutMode: LayoutMode;
-  sharedTime: number | undefined;
-}> = ({ selectedPaths, candidates, layoutMode, sharedTime }) => {
-  const [showCopied, setShowCopied] = useState(false);
-
-  useEffect(() => {
-    let timer: number;
-    if (showCopied) {
-      timer = window.setTimeout(() => setShowCopied(false), 4500);
-    }
-    return () => {
-      if (timer) window.clearTimeout(timer);
-    };
-  }, [showCopied]);
-
-  const handleShare = () => {
-    const url = new URL(window.location.href);
-    url.searchParams.set(
-      "videoOrder",
-      encodeVideoOrder(selectedPaths, candidates),
-    );
-    if (layoutMode !== "row") {
-      url.searchParams.set("videoLayout", layoutMode);
-    } else {
-      url.searchParams.delete("videoLayout");
-    }
-    // Capture the current moment (YouTube-style), so the link lands there.
-    if (sharedTime !== undefined && Number.isFinite(sharedTime)) {
-      url.searchParams.set("videoTime", sharedTime.toFixed(2));
-    } else {
-      url.searchParams.delete("videoTime");
-    }
-    navigator.clipboard.writeText(url.toString()).then(() => {
-      setShowCopied(true);
-    });
-  };
-
+/** The tile around one video: its title and frame, sized by the grid. */
+const VideoTile: FunctionComponent<{
+  title: string;
+  shown: boolean;
+  order: number;
+  children: ReactNode;
+}> = ({ title, shown, order, children }) => {
+  const ref = useCssVars<HTMLElement>({ "--order": String(order) });
   return (
-    <div style={{ display: "flex", alignItems: "center" }}>
-      <Tooltip title="Copy link with current video arrangement and timestamp">
-        <IconButton
-          size="small"
-          onClick={handleShare}
-          sx={{
-            padding: "4px",
-            backgroundColor: "#fff",
-            "&:hover": { backgroundColor: "#f0f0f0" },
-          }}
-        >
-          <ShareIcon sx={{ fontSize: 14 }} />
-        </IconButton>
-      </Tooltip>
-      {showCopied && (
-        <span style={{ marginLeft: 8, fontSize: 12, color: "#666" }}>
-          Copied!
-        </span>
-      )}
-    </div>
+    <figure
+      ref={ref}
+      className="videos-tile"
+      data-hidden={shown ? undefined : ""}
+    >
+      <figcaption className="videos-tile-title">{title}</figcaption>
+      {children}
+    </figure>
   );
 };
 
 const MultiVideoTabView: FunctionComponent<Props> = ({
   nwbUrl,
-  width,
-  height,
   isExpanded,
 }) => {
   const [searchParams] = useSearchParams();
@@ -295,7 +246,6 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   const specifications = useNwbFileSpecifications();
   const [candidates, setCandidates] = useState<ExternalVideoCandidate[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState("");
   const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
   // Paths whose <video> element has ever been selected. This set only grows: a
   // deselected camera stays mounted (hidden and paused) so reselecting it is
@@ -308,7 +258,7 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
     return "row";
   });
   const [resolvedUrls, setResolvedUrls] = useState<Record<string, string>>({});
-  const [urlErrors, setUrlErrors] = useState<Record<string, string>>({});
+  const [urlErrors, setUrlErrors] = useState<Record<string, VideoProblem>>({});
   const [urlLoading, setUrlLoading] = useState<Record<string, boolean>>({});
   const [metadataLoaded, setMetadataLoaded] = useState<Record<string, boolean>>(
     {},
@@ -324,10 +274,13 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   // has no usable timestamps, so the uniform-rate fallback is used. Held in a
   // ref because the loop reads it directly.
   const timestampsRef = useRef<Record<string, Float64Array | null>>({});
-  const [playbackErrors, setPlaybackErrors] = useState<Record<string, string>>(
-    {},
-  );
+  const [playbackErrors, setPlaybackErrors] = useState<
+    Record<string, VideoProblem>
+  >({});
   const [isPlaying, setIsPlaying] = useState(false);
+  const [speed, setSpeed] = useState("1");
+  const [open, setOpen] = useState({ videos: true, arrangement: true });
+  const toast = useToast();
   const [sharedTime, setSharedTime] = useState<number | undefined>(undefined);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const syncAnimationRef = useRef<number | null>(null);
@@ -399,7 +352,6 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
     if (!isExpanded) return;
     let canceled = false;
     setLoading(true);
-    setLoadingMessage("Discovering external videos...");
     setCandidates([]);
 
     const visitGroup = async (
@@ -453,12 +405,10 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
         if (!canceled) {
           found.sort((a, b) => a.name.localeCompare(b.name));
           setCandidates(found);
-          setLoadingMessage("");
         }
       } catch (err) {
         if (!canceled) {
           console.warn("Error discovering external videos", err);
-          setLoadingMessage("");
         }
       } finally {
         if (!canceled) {
@@ -536,6 +486,8 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
         ? sessionWindow.start
         : clamp(prev, sessionWindow.start, sessionWindow.end),
     );
+    // Keyed to the window's bounds, not the object, so toggling a camera that leaves them alone doesn't re-run it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionWindow?.start, sessionWindow?.end]);
 
   useEffect(() => {
@@ -564,8 +516,7 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
           if (!canceled) {
             setUrlErrors((prev) => ({
               ...prev,
-              [candidate.path]:
-                err instanceof Error ? err.message : String(err),
+              [candidate.path]: videoProblemOf(err),
             }));
           }
         } finally {
@@ -766,6 +717,8 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
         syncAnimationRef.current = null;
       }
     };
+    // runDriftCorrection reads everything through refs; depending on it would restart the loop every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driftActive]);
 
   // React to selection changes on the mounted-but-hidden videos: pause anything
@@ -882,16 +835,26 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   // re-subscribing on every shared-time tick.
   const handleSeekRef = useRef(handleSeek);
   handleSeekRef.current = handleSeek;
+  const handlePlayPauseRef = useRef(handlePlayPause);
+  handlePlayPauseRef.current = handlePlayPause;
   useEffect(() => {
     if (!isExpanded) return;
     const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (e.key === " ") {
+        // Space plays and pauses unless a control has focus, which keeps its own Space.
+        if (target?.matches("button, input, select, textarea, a, [role]"))
+          return;
+        e.preventDefault();
+        handlePlayPauseRef.current();
+        return;
+      }
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
       // Ignore only controls where arrows have their own meaning: text entry,
       // selects, and the layout radios (arrow keys move the radio group). The
       // scrub slider (range) and the camera checkboxes still get the 5 s seek —
       // we preventDefault below so the slider's tiny native step doesn't fire —
       // so arrows work right after scrubbing, like YouTube.
-      const target = e.target as HTMLElement | null;
       const tag = target?.tagName;
       const inputType = (target as HTMLInputElement | null)?.type;
       const isTextOrNavControl =
@@ -910,467 +873,284 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isExpanded]);
 
+  useEffect(() => {
+    for (const element of Object.values(videoRefs.current))
+      if (element) element.playbackRate = Number(speed);
+  }, [speed]);
+
   const gridDimensions = calculateGridDimensions(
     layoutMode,
     selectedVideos.length,
   );
+  const gridRef = useCssVars<HTMLDivElement>({
+    "--cols": String(Math.max(gridDimensions.cols, 1)),
+  });
+
+  const handleShare = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set(
+      "videoOrder",
+      encodeVideoOrder(selectedPaths, candidates),
+    );
+    if (layoutMode !== "row") url.searchParams.set("videoLayout", layoutMode);
+    else url.searchParams.delete("videoLayout");
+    // Capture the current moment (YouTube-style), so the link lands there.
+    if (sharedTime !== undefined && Number.isFinite(sharedTime))
+      url.searchParams.set("videoTime", sharedTime.toFixed(2));
+    else url.searchParams.delete("videoTime");
+    navigator.clipboard
+      .writeText(url.toString())
+      .then(() => toast.show({ status: "success", message: "Link copied" }));
+  };
+
+  const tileTitle = (video: ExternalVideoCandidate) =>
+    `${labelMap.get(video.path)} · ${video.name}`;
 
   return (
-    <div
-      style={{
-        position: "relative",
-        width,
-        minHeight: height,
-        padding: 12,
-        boxSizing: "border-box",
-      }}
-    >
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "320px 1fr",
-          gap: 12,
-          alignItems: "start",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
-          <div
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: 8,
-              background: "#fff",
-              padding: 12,
-            }}
-          >
-            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
-              Video Selection{" "}
-              <span
-                style={{
-                  position: "relative",
-                  fontSize: 14,
-                  fontWeight: 400,
-                  color: "#999",
-                  cursor: "help",
-                }}
-              >
-                <span
-                  onMouseEnter={(e) => {
-                    const tip = e.currentTarget
-                      .nextElementSibling as HTMLElement;
-                    if (tip) tip.style.display = "block";
-                  }}
-                  onMouseLeave={(e) => {
-                    const tip = e.currentTarget
-                      .nextElementSibling as HTMLElement;
-                    if (tip) tip.style.display = "none";
-                  }}
-                >
-                  &#x24D8;
-                </span>
-                <span
-                  style={{
-                    display: "none",
-                    position: "absolute",
-                    left: 0,
-                    top: "100%",
-                    marginTop: 4,
-                    width: 260,
-                    padding: "8px 10px",
-                    fontSize: 13,
-                    fontWeight: 400,
-                    lineHeight: 1.4,
-                    color: "#333",
-                    background: "#fff",
-                    border: "1px solid #ccc",
-                    borderRadius: 6,
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
-                    zIndex: 10,
-                  }}
-                >
-                  Select compatible external videos to view them with shared
-                  controls. Videos are first displayed in selection order, then
-                  can be rearranged in Display Arrangement below.
-                </span>
-              </span>
-            </div>
-            {loading && <div>{loadingMessage || "Loading..."}</div>}
-            {!loading && candidates.length === 0 && (
-              <div>No external videos were found in this NWB file.</div>
-            )}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {candidates.map((candidate) => {
-                const isSelected = selectedPaths.includes(candidate.path);
-                const selectedOthers = selectedVideos.filter(
-                  (video) => video.path !== candidate.path,
-                );
-                const compatible =
-                  isSelected ||
-                  selectedOthers.length === 0 ||
-                  selectedOthers.every((video) =>
-                    areCompatible(candidate, video),
-                  );
-                const reason =
-                  compatible || selectedOthers.length === 0
-                    ? undefined
-                    : getCompatibilityReason(candidate, selectedOthers);
-                return (
-                  <label
-                    key={candidate.path}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 8,
-                      padding: 8,
-                      borderRadius: 6,
-                      background: compatible ? "#f7f7f7" : "#fdf2f2",
-                      color: compatible ? "inherit" : "#8a1c1c",
-                      cursor:
-                        compatible || isSelected ? "pointer" : "not-allowed",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      disabled={!compatible && !isSelected}
-                      onChange={(e) => {
-                        setSelectedPaths((prev) => {
-                          if (e.target.checked) {
-                            return [...prev, candidate.path];
-                          }
-                          return prev.filter((path) => path !== candidate.path);
-                        });
-                      }}
-                    />
-                    <div>
-                      <div style={{ fontWeight: 600 }}>
-                        {isSelected && (
-                          <span style={{ color: "#4f6df5", marginRight: 4 }}>
-                            [{labelMap.get(candidate.path)}]
-                          </span>
-                        )}
-                        {candidate.name}
-                      </div>
-                      <div style={{ fontSize: 12, color: "#666" }}>
-                        {candidate.path}
-                      </div>
-                      <div style={{ fontSize: 12, color: "#666" }}>
-                        {formatTime(candidate.startTime)} -{" "}
-                        {formatTime(candidate.endTime)}
-                      </div>
-                      {reason && (
-                        <div style={{ fontSize: 12, marginTop: 4 }}>
-                          {reason}
-                        </div>
-                      )}
-                    </div>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-
-          <div
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: 8,
-              background: "#fff",
-              padding: 12,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 8,
+    <ViewPanel
+      label="Videos"
+      summary={
+        loading
+          ? "Finding videos in this file"
+          : `${plural(candidates.length, "video")} in this file · played on one clock`
+      }
+      busy={loading}
+      controls={
+        selectedVideos.length > 0 && (
+          <>
+            <Playback
+              playing={isPlaying}
+              onPlayingChange={(next) => {
+                if (next !== isPlaying) handlePlayPause();
               }}
-            >
-              <div style={{ fontSize: 18, fontWeight: 600 }}>
-                Display Arrangement
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                {(["row", "column", "grid"] as LayoutMode[]).map((mode) => (
-                  <label
-                    key={mode}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4,
-                      fontSize: 13,
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="video-layout-mode"
-                      checked={layoutMode === mode}
-                      onChange={() => setLayoutMode(mode)}
-                    />
-                    {mode[0].toUpperCase() + mode.slice(1)}
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div style={{ color: "#666", marginBottom: 12, fontSize: 12 }}>
-              Drag tiles to reorder videos in the display.
-            </div>
-            <OrderPanel
-              selectedPaths={selectedPaths}
-              setSelectedPaths={setSelectedPaths}
-              labelMap={labelMap}
-              layoutMode={layoutMode}
+              speed={speed}
+              onSpeedChange={setSpeed}
+              time={sharedTime ?? sessionWindow?.start ?? 0}
             />
-          </div>
-        </div>
-
-        {/* Right column: Video Display + playback controls */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div
-            style={{
-              flex: 1,
-              border: "1px solid #ddd",
-              borderRadius: 8,
-              background: "#fff",
-              padding: 12,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                marginBottom: 8,
-              }}
+            <IconButton
+              icon="share"
+              label="Copy link to this arrangement and time"
+              size="sm"
+              variant="ghost"
+              onClick={handleShare}
+            />
+          </>
+        )
+      }
+      overview={
+        sessionWindow &&
+        sessionWindow.end > sessionWindow.start && (
+          <TimeOverview
+            session={sessionWindow}
+            value={{ start: sharedTime ?? sessionWindow.start, duration: 0 }}
+            cursor={sharedTime}
+            onChange={(v) => handleSeek(v.start + v.duration / 2)}
+          />
+        )
+      }
+      settings={
+        candidates.length > 0 && (
+          <>
+            <AccordionItem
+              title="Videos"
+              summary={`${selectedVideos.length} of ${candidates.length} shown`}
+              open={open.videos}
+              onToggle={(o) => setOpen((prev) => ({ ...prev, videos: o }))}
             >
-              <div style={{ fontSize: 18, fontWeight: 600 }}>Video Display</div>
-              {selectedVideos.length > 0 && (
-                <ShareVideoButton
-                  selectedPaths={selectedPaths}
-                  candidates={candidates}
-                  layoutMode={layoutMode}
-                  sharedTime={sharedTime}
-                />
-              )}
-            </div>
-            {selectedVideos.length === 0 && (
-              <div style={{ color: "#666" }}>
-                Select one or more external videos to display them here.
-              </div>
-            )}
-            {mountedVideos.length > 0 && (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns:
-                    gridDimensions.cols > 0
-                      ? `repeat(${gridDimensions.cols}, minmax(0, 1fr))`
-                      : undefined,
-                  gap: 12,
-                  maxWidth:
-                    gridDimensions.cols > 0
-                      ? gridDimensions.cols * 480 +
-                        (gridDimensions.cols - 1) * 12
-                      : undefined,
-                }}
-              >
-                {mountedVideos.map((video) => {
-                  const resolvedUrl = resolvedUrls[video.path];
-                  const playbackError = playbackErrors[video.path];
-                  const tileError = urlErrors[video.path] || playbackError;
-                  // Deselected videos stay mounted (so reselecting is instant and
-                  // keeps their position) but are hidden and excluded from the
-                  // grid flow; selection order drives their visual order. A
-                  // re-displayed camera stays hidden until it has seeked to the
-                  // shared time (resyncPending) so its stale frame is never shown.
-                  const selectionIndex = selectedPaths.indexOf(video.path);
-                  const isShown =
-                    selectionIndex >= 0 && !resyncPending[video.path];
+              <ul className="videos-list">
+                {candidates.map((candidate) => {
+                  const isSelected = selectedPaths.includes(candidate.path);
+                  const selectedOthers = selectedVideos.filter(
+                    (video) => video.path !== candidate.path,
+                  );
+                  const compatible =
+                    isSelected ||
+                    selectedOthers.length === 0 ||
+                    selectedOthers.every((video) =>
+                      areCompatible(candidate, video),
+                    );
+                  const reason =
+                    compatible || selectedOthers.length === 0
+                      ? undefined
+                      : getCompatibilityReason(candidate, selectedOthers);
                   return (
-                    <div
-                      key={video.path}
-                      style={{
-                        display: isShown ? "block" : "none",
-                        order: isShown ? selectionIndex : 0,
-                      }}
-                    >
-                      <div style={{ fontWeight: 600, marginBottom: 6 }}>
-                        {video.name}
-                      </div>
-                      {tileError ? (
-                        <div
-                          style={{
-                            padding: "18px 20px",
-                            border: "1px solid #e0c080",
-                            borderRadius: 8,
-                            background: "#fffbf0",
-                            color: "#6b5a2e",
-                            lineHeight: 1.5,
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontSize: 16,
-                              fontWeight: 600,
-                              marginBottom: 6,
-                            }}
-                          >
-                            Video Unavailable
-                          </div>
-                          {tileError}
-                        </div>
-                      ) : (
-                        <div
-                          style={{
-                            width: "100%",
-                            aspectRatio: "16 / 9",
-                            backgroundColor: "#111",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          {(!resolvedUrl || !metadataLoaded[video.path]) && (
-                            <div style={{ color: "#ccc", fontSize: 14 }}>
-                              {urlLoading[video.path]
-                                ? "Resolving video..."
-                                : "Loading video..."}
-                            </div>
-                          )}
-                          {resolvedUrl && (
-                            <video
-                              ref={(element) => {
-                                videoRefs.current[video.path] = element;
-                              }}
-                              src={resolvedUrl}
-                              muted
-                              playsInline
-                              preload="auto"
-                              onLoadedMetadata={() => {
-                                setMetadataLoaded((prev) => ({
-                                  ...prev,
-                                  [video.path]: true,
-                                }));
-                                const current =
-                                  sharedTimeRef.current === undefined
-                                    ? video.startTime
-                                    : sharedTimeRef.current;
-                                const target = clamp(
-                                  current,
-                                  video.startTime,
-                                  video.endTime,
-                                );
-                                const element = videoRefs.current[video.path];
-                                if (element) {
-                                  element.currentTime = sessionTimeToFileTime(
-                                    video,
-                                    target,
-                                    element,
-                                  );
-                                }
-                              }}
-                              onTimeUpdate={() => {
-                                if (
-                                  !isPlaying ||
-                                  selectedVideos[0]?.path !== video.path
-                                ) {
-                                  return;
-                                }
-                                const leader = selectedVideos[0];
-                                const element = videoRefs.current[leader.path];
-                                if (!element) return;
-                                setSharedTime(
-                                  clamp(
-                                    fileTimeToSessionTime(leader, element),
-                                    sessionWindow?.start ?? leader.startTime,
-                                    sessionWindow?.end ?? leader.endTime,
-                                  ),
-                                );
-                              }}
-                              onEnded={() => {
-                                if (selectedVideos[0]?.path === video.path) {
-                                  setIsPlaying(false);
-                                }
-                              }}
-                              onError={() => {
-                                if (!resolvedUrl) return;
-                                describeVideoPlaybackError(resolvedUrl).then(
-                                  (message) =>
-                                    setPlaybackErrors((prev) => ({
-                                      ...prev,
-                                      [video.path]: message,
-                                    })),
-                                );
-                              }}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "contain",
-                                display: metadataLoaded[video.path]
-                                  ? "block"
-                                  : "none",
-                              }}
-                            />
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    <li key={candidate.path} className="videos-item">
+                      <Checkbox
+                        label={tileTitle(candidate)}
+                        checked={isSelected}
+                        disabled={!compatible && !isSelected}
+                        onChange={(checked) =>
+                          setSelectedPaths((prev) =>
+                            checked
+                              ? [...prev, candidate.path]
+                              : prev.filter((path) => path !== candidate.path),
+                          )
+                        }
+                      />
+                      <p className="videos-item-note">
+                        {candidate.path} ·{" "}
+                        {candidate.endTime > candidate.startTime
+                          ? `${formatSeconds(candidate.startTime)}–${formatSeconds(candidate.endTime)} s`
+                          : "no frame times"}
+                      </p>
+                      {reason && <p className="videos-item-note">{reason}</p>}
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
+            </AccordionItem>
+            {selectedVideos.length >= 2 && (
+              <AccordionItem
+                title="Arrangement"
+                summary={
+                  LAYOUT_OPTIONS.find((o) => o.value === layoutMode)?.label
+                }
+                open={open.arrangement}
+                onToggle={(o) =>
+                  setOpen((prev) => ({ ...prev, arrangement: o }))
+                }
+              >
+                <SegmentedControl
+                  label="Arrangement"
+                  size="sm"
+                  value={layoutMode}
+                  onChange={(v) => setLayoutMode(v as LayoutMode)}
+                  options={LAYOUT_OPTIONS}
+                />
+                <p className="videos-item-note">
+                  Drag the tiles to reorder the videos.
+                </p>
+                <OrderPanel
+                  selectedPaths={selectedPaths}
+                  setSelectedPaths={setSelectedPaths}
+                  labelMap={labelMap}
+                  layoutMode={layoutMode}
+                />
+              </AccordionItem>
             )}
-          </div>
-
-          {selectedVideos.length > 0 && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "8px 12px",
-                border: "1px solid #ddd",
-                borderRadius: 8,
-                background: "#fafafa",
-              }}
+          </>
+        )
+      }
+    >
+      {loading ? (
+        <LoadingState label="Finding videos in this file" phase="loading" />
+      ) : candidates.length === 0 ? (
+        <EmptyState title="No videos in this file">
+          This file has no ImageSeries stored in an external video file.
+        </EmptyState>
+      ) : (
+        selectedVideos.length === 0 && (
+          <EmptyState title="No video shown">Check one in the list.</EmptyState>
+        )
+      )}
+      <div ref={gridRef} className="videos-grid">
+        {mountedVideos.map((video) => {
+          const resolvedUrl = resolvedUrls[video.path];
+          const tileProblem =
+            urlErrors[video.path] || playbackErrors[video.path];
+          // Deselected videos stay mounted (so reselecting is instant and keeps
+          // their position) but hidden; a re-displayed one stays hidden until it
+          // has seeked to the shared time, so its stale frame is never shown.
+          const selectionIndex = selectedPaths.indexOf(video.path);
+          const isShown = selectionIndex >= 0 && !resyncPending[video.path];
+          return (
+            <VideoTile
+              key={video.path}
+              title={tileTitle(video)}
+              shown={isShown}
+              order={isShown ? selectionIndex : 0}
             >
-              <button
-                onClick={handlePlayPause}
-                disabled={selectedVideos.length === 0}
-                style={{ padding: "4px 12px", cursor: "pointer" }}
-              >
-                {isPlaying ? "Pause" : "Play"}
-              </button>
-              <input
-                type="range"
-                min={sessionWindow?.start ?? 0}
-                max={sessionWindow?.end ?? 1}
-                step={0.01}
-                value={sharedTime ?? sessionWindow?.start ?? 0}
-                onChange={(e) => handleSeek(Number(e.target.value))}
-                disabled={!sessionWindow}
-                style={{ flex: 1 }}
-              />
-              <div
-                style={{
-                  minWidth: 100,
-                  textAlign: "right",
-                  fontVariantNumeric: "tabular-nums",
-                  fontSize: 13,
-                }}
-              >
-                {sessionWindow && sharedTime !== undefined
-                  ? `${formatTime(sharedTime)} / ${formatTime(sessionWindow.end)}`
-                  : ""}
-              </div>
-            </div>
-          )}
-        </div>
+              {tileProblem ? (
+                <VideoUnavailable problem={tileProblem} />
+              ) : (
+                <div className="videos-frame">
+                  {(!resolvedUrl || !metadataLoaded[video.path]) && (
+                    <LoadingState
+                      label={
+                        urlLoading[video.path]
+                          ? "Finding the video on DANDI"
+                          : "Loading the video"
+                      }
+                      phase="loading"
+                    />
+                  )}
+                  {resolvedUrl && (
+                    <video
+                      ref={(element) => {
+                        videoRefs.current[video.path] = element;
+                      }}
+                      className="videos-video"
+                      data-hidden={metadataLoaded[video.path] ? undefined : ""}
+                      src={resolvedUrl}
+                      muted
+                      playsInline
+                      preload="auto"
+                      onLoadedMetadata={(e) => {
+                        e.currentTarget.playbackRate = Number(speed);
+                        setMetadataLoaded((prev) => ({
+                          ...prev,
+                          [video.path]: true,
+                        }));
+                        const current =
+                          sharedTimeRef.current === undefined
+                            ? video.startTime
+                            : sharedTimeRef.current;
+                        const target = clamp(
+                          current,
+                          video.startTime,
+                          video.endTime,
+                        );
+                        const element = videoRefs.current[video.path];
+                        if (element) {
+                          element.currentTime = sessionTimeToFileTime(
+                            video,
+                            target,
+                            element,
+                          );
+                        }
+                      }}
+                      onTimeUpdate={() => {
+                        if (
+                          !isPlaying ||
+                          selectedVideos[0]?.path !== video.path
+                        ) {
+                          return;
+                        }
+                        const leader = selectedVideos[0];
+                        const element = videoRefs.current[leader.path];
+                        if (!element) return;
+                        setSharedTime(
+                          clamp(
+                            fileTimeToSessionTime(leader, element),
+                            sessionWindow?.start ?? leader.startTime,
+                            sessionWindow?.end ?? leader.endTime,
+                          ),
+                        );
+                      }}
+                      onEnded={() => {
+                        if (selectedVideos[0]?.path === video.path) {
+                          setIsPlaying(false);
+                        }
+                      }}
+                      onError={() => {
+                        if (!resolvedUrl) return;
+                        describeVideoPlaybackError(resolvedUrl).then(
+                          (problem) =>
+                            setPlaybackErrors((prev) => ({
+                              ...prev,
+                              [video.path]: problem,
+                            })),
+                        );
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+            </VideoTile>
+          );
+        })}
       </div>
-    </div>
+    </ViewPanel>
   );
 };
 

@@ -8,11 +8,13 @@ import {
 } from "@hdf5Interface";
 import NwbTimeIntervalsWidget from "./NwbTimeIntervalsWidget";
 import TimeIntervalsPlotly from "./TimeIntervalsPlotly";
-import {
-  useTimeRange,
-  useTimeseriesSelection,
-} from "@shared/context-timeseries-selection-2";
-import { TimeRangeControls } from "../../common/components/TimeseriesControls";
+import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
+import { EmptyState, LoadingState, SegmentedControl, Select } from "@ui";
+import TimeView, {
+  TIME_VIEW_CHROME,
+  TIME_VIEW_INSET,
+} from "../../common/TimeView";
+import "./NwbTimeIntervalsView.css";
 
 type Props = {
   width: number;
@@ -46,16 +48,9 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
     undefined,
   );
 
-  // Get the visible time range from the context for time controls
-  const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
-
   // Get all timeseriesSelection hooks
-  const {
-    initializeTimeseriesSelection,
-    setVisibleTimeRange,
-    zoomVisibleTimeRange,
-    translateVisibleTimeRangeFrac,
-  } = useTimeseriesSelection();
+  const { initializeTimeseriesSelection, setVisibleTimeRange } =
+    useTimeseriesSelection();
 
   const { labelData, allDistinctLabels, availableColumns, autoSelectedColumn } =
     useLabelData(nwbUrl, path, startTimeData?.length, selectedColumn);
@@ -98,185 +93,81 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
     });
   }, [timeRange, initializeTimeseriesSelection, setVisibleTimeRange]);
 
-  if (!startTimeData || !stopTimeData) {
-    return <div>loading data (NwbTimeIntervalsView)...</div>;
-  }
-  if (!timeRange) {
+  if (!startTimeData || !stopTimeData)
+    return <LoadingState label="Reading the intervals" phase="loading" />;
+  if (!timeRange)
     return (
-      <div style={{ padding: 10 }}>
+      <EmptyState title="No times to draw">
         This table has no finite start or stop times to display.
-      </div>
+      </EmptyState>
     );
-  }
 
-  const handleDecreaseVisibleDuration = () => {
-    zoomVisibleTimeRange(0.5); // Zoom in
-  };
-
-  const handleIncreaseVisibleDuration = () => {
-    zoomVisibleTimeRange(2); // Zoom out
-  };
-
-  const handleShiftTimeLeft = () => {
-    translateVisibleTimeRangeFrac(-0.5); // Move left
-  };
-
-  const handleShiftTimeRight = () => {
-    translateVisibleTimeRangeFrac(0.5); // Move right
-  };
-
-  const bottomBarHeight = 50;
-  const controlsHeight = 70; // Height for the time controls
+  const plotHeight = Math.max(height - TIME_VIEW_CHROME, 200);
+  const n = startTimeData.length;
+  const seconds = (s: number) =>
+    s.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
   return (
-    <div style={{ position: "relative", width, height }}>
-      <div
-        style={{
-          position: "absolute",
-          width,
-          height: controlsHeight,
-          top: 0,
-          padding: "0",
-          boxSizing: "border-box",
-          zIndex: 10,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0px",
-            background: "#f5f5f5",
-            padding: "8px 4px",
-            borderRadius: "5px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "15px",
-              fontSize: "0.9rem",
-              color: "#495057",
-              marginBottom: "5px",
-            }}
-          >
-            <div>
-              <span style={{ fontWeight: "bold" }}>Start:</span>{" "}
-              {timeRange.startTime.toFixed(2)}s
+    <TimeView
+      label={path.split("/").pop() || path}
+      summary={`${n.toLocaleString("en-US")} interval${n === 1 ? "" : "s"} · ${seconds(timeRange.startTime)}–${seconds(timeRange.endTime)} s`}
+      controls={
+        <>
+          {availableColumns.length > 0 && (
+            <div className="ns-time-group intervals-label">
+              <span className="ns-time-label" aria-hidden="true">
+                Label by
+              </span>
+              <Select
+                label="Label by"
+                hideLabel
+                size="sm"
+                value={selectedColumn || autoSelectedColumn || ""}
+                onChange={(value) => setSelectedColumn(value || undefined)}
+                options={availableColumns.map((col) => ({
+                  value: col.name,
+                  label: `${col.name} (${col.distinctValueCount} values)`,
+                }))}
+              />
             </div>
-            <div>
-              <span style={{ fontWeight: "bold" }}>Duration:</span>{" "}
-              {(timeRange.endTime - timeRange.startTime).toFixed(2)}s
-            </div>
-            <div>
-              <span style={{ fontWeight: "bold" }}>Intervals:</span>{" "}
-              {startTimeData.length}
-            </div>
-          </div>
-          <div style={{ margin: "0 -8px" }}>
-            <TimeRangeControls
-              visibleTimeStart={visibleStartTimeSec}
-              visibleDuration={
-                visibleEndTimeSec !== undefined &&
-                visibleStartTimeSec !== undefined
-                  ? visibleEndTimeSec - visibleStartTimeSec
-                  : undefined
-              }
-              timeseriesStartTime={timeRange.startTime}
-              timeseriesDuration={timeRange.endTime - timeRange.startTime}
-              onDecreaseVisibleDuration={handleDecreaseVisibleDuration}
-              onIncreaseVisibleDuration={handleIncreaseVisibleDuration}
-              onShiftTimeLeft={handleShiftTimeLeft}
-              onShiftTimeRight={handleShiftTimeRight}
-            />
-          </div>
-        </div>
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          width,
-          height: height - bottomBarHeight - controlsHeight,
-          top: controlsHeight,
-          marginTop: "0",
-        }}
-      >
-        {viewMode === "canvas" ? (
-          <NwbTimeIntervalsWidget
-            labels={labelData}
-            allDistinctLabels={allDistinctLabels}
-            startTimes={startTimeData}
-            stopTimes={stopTimeData}
-            width={width}
-            height={height - bottomBarHeight - controlsHeight}
-          />
-        ) : (
-          <TimeIntervalsPlotly
-            labels={labelData}
-            allDistinctLabels={allDistinctLabels}
-            startTimes={startTimeData}
-            stopTimes={stopTimeData}
-            width={width}
-            height={height - bottomBarHeight - controlsHeight}
-            additionalData={additionalData}
-          />
-        )}
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          width,
-          height: bottomBarHeight,
-          top: height - bottomBarHeight,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: 10,
-            gap: 10,
-          }}
-        >
-          <div>Label:</div>
-          {availableColumns.length > 0 ? (
-            <select
-              value={selectedColumn || autoSelectedColumn || ""}
-              onChange={(e) => setSelectedColumn(e.target.value || undefined)}
-              style={{ minWidth: 150 }}
-            >
-              {availableColumns.map((col) => (
-                <option key={col.name} value={col.name}>
-                  {col.name} ({col.distinctValueCount} values)
-                </option>
-              ))}
-            </select>
-          ) : (
-            <span>Default (no categorical columns)</span>
           )}
-
-          <div style={{ marginLeft: "auto" }}>
-            <button
-              onClick={() =>
-                setViewMode(viewMode === "canvas" ? "plotly" : "canvas")
-              }
-              style={{
-                padding: "4px 8px",
-                background: "#f0f0f0",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              {viewMode === "canvas"
-                ? "Switch to Plotly View"
-                : "Switch to Neurosift View"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+          <SegmentedControl
+            label="Renderer"
+            size="sm"
+            value={viewMode}
+            onChange={(mode) => setViewMode(mode as ViewMode)}
+            options={[
+              { value: "canvas", label: "Canvas" },
+              { value: "plotly", label: "Plotly" },
+            ]}
+          />
+        </>
+      }
+    >
+      {viewMode === "canvas" ? (
+        <NwbTimeIntervalsWidget
+          labels={labelData}
+          allDistinctLabels={allDistinctLabels}
+          startTimes={startTimeData}
+          stopTimes={stopTimeData}
+          width={width - TIME_VIEW_INSET}
+          height={plotHeight}
+        />
+      ) : (
+        <TimeIntervalsPlotly
+          labels={labelData}
+          allDistinctLabels={allDistinctLabels}
+          startTimes={startTimeData}
+          stopTimes={stopTimeData}
+          width={width - TIME_VIEW_INSET}
+          height={plotHeight}
+          additionalData={additionalData}
+        />
+      )}
+    </TimeView>
   );
 };
 

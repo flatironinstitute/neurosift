@@ -1,0 +1,84 @@
+.ns-segmented {
+  display: inline-flex;
+  flex: none;
+  overflow: hidden;
+  vertical-align: middle;
+  background: var(--surface-panel);
+  border: var(--border-width-1) solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.ns-segment {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: center;
+  justify-content: center;
+  block-size: var(--button-height-md);
+  padding: 0 var(--space-3);
+  color: var(--text-default);
+  font: var(--type-label-sm);
+  font-weight: 400;
+  letter-spacing: var(--type-label-sm-letter-spacing);
+  white-space: nowrap;
+  cursor: pointer;
+  background: var(--surface-panel);
+  border: 0;
+  border-radius: 0;
+}
+
+.ns-segment + .ns-segment,
+.ns-tooltip-anchor + .ns-tooltip-anchor .ns-segment {
+  border-inline-start: var(--border-width-1) solid var(--border-strong);
+}
+
+.ns-segmented--sm .ns-segment {
+  block-size: var(--button-height-sm);
+  padding: 0 var(--space-2);
+}
+
+/* Holds the SemiBold width, so the selected segment doesn't shift its neighbors. */
+.ns-segment span[data-label] {
+  display: inline-grid;
+}
+
+.ns-segment span[data-label]::after {
+  block-size: 0;
+  overflow: hidden;
+  font-weight: 600;
+  visibility: hidden;
+  content: attr(data-label);
+}
+
+.ns-segment:hover {
+  background: var(--action-secondary-hover);
+}
+
+.ns-segment[aria-checked="true"] {
+  --focus-ring: var(--border-focus-inverse);
+  color: var(--text-on-inverse);
+  font-weight: 600;
+  background: var(--surface-inverse);
+}
+
+.ns-segment:disabled {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+  background: var(--action-disabled);
+}
+
+.ns-segment:focus {
+  outline: none;
+}
+
+.ns-segment:focus-visible {
+  outline: var(--border-width-2) solid var(--focus-ring, var(--border-focus));
+  outline-offset: calc(var(--space-0-5) * -2);
+}
+
+@media (forced-colors: active) {
+  .ns-segment[aria-checked="true"] {
+    color: Canvas;
+    background: Highlight;
+    forced-color-adjust: none;
+  }
+}

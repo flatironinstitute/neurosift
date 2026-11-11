@@ -1,0 +1,120 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import Screen from "../../components/Screen.astro";
+import LiveScreen from "../../components/LiveScreen.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const TODAY = [
+  ["Video", "The browser’s player for an ImageSeries with external_file", "plugins/ExternalFileVideo", "“Resolving external video…” while the file is found on DANDI"],
+  ["Pose overlay", "Keypoints over the video, or alone", "plugins/PoseEstimation", "For PoseEstimation with a PoseEstimationSeries"],
+  ["Background video", "File and Video selects", "PoseEstimationView.tsx", "“Searching other files in this session for a video…”"],
+  ["Video alignment", "Pose and video bars with a status line", "PoseEstimationView.tsx", "aligned, no overlap, no timing metadata, or could not be loaded"],
+  ["Keypoints", "Skeleton, Show all, Hide all and a colored chip per keypoint", "PoseEstimationView.tsx", "Click toggles; double-click shows only that one"],
+  ["Trajectories and confidence", "Show trails, window 1.00 s; hide below 0.00, Fade by confidence", "PoseEstimationView.tsx", "—"],
+  ["Videos section", "Video Selection, Display Arrangement (Row, Column, Grid), Video Display with one Play bar", "MultiVideoTabView.tsx", "Shown only when the file has external videos"],
+  ["Playback errors", "Separate messages for retrieval and format failures", "externalVideoUtils.ts", "Names AVI codecs and a DANDI API key as likely causes"],
+];
+
+const STATES = [
+  ["Finding the video", "“Finding the video on DANDI” in the video area; the settings stay usable."],
+  ["No frame times", "A warning under Video: “This video has no frame times, so it starts at session time 0. If the markers don’t sit on the whisker, try another video.”"],
+  ["No overlap", "A warning under Video: “The pose and this video don’t overlap in time. Choose another video.”"],
+  ["Can’t retrieve the video", "An error in the video area: “This video couldn’t be retrieved (HTTP 403). The link may have expired, or the Dandiset may need a DANDI API key.” with Open settings."],
+  ["Can’t play the format", "An error: “This browser can’t play this video’s format. AVI files often can’t play in browsers.”"],
+  ["Pose only", "Markers are drawn on a blank frame of the video’s size."],
+  ["No video shown", "In Videos: “No video shown. Check one in the list.”"],
+];
+
+const BEHAVIOR = [
+  ["Playback", "Play and pause, speed, and the current time in seconds; Space plays and pauses when the frame has focus."],
+  ["Time", "A slider moves through the recording."],
+  ["View", "Overlay or Pose only."],
+  ["Video", "Choose a file in the session, then its video; the warning follows the choice."],
+  ["Markers", "Check to show; All markers shows or hides every one; double-click shows only that one; Skeleton draws the file’s edges."],
+  ["Trails", "Show trails, with a trail length in seconds."],
+  ["Confidence", "Hide markers below a confidence; Fade by confidence."],
+  ["Videos", "Check videos to show them; all play on one clock; Row, Column or Grid when two or more are shown."],
+];
+
+const DIFFERS = [
+  ["Settings", "Chips, buttons and bars in one panel", "Accordion items that say what they’re set to", "Built"],
+  ["Playback", "The browser’s video controls", "The shared Playback with speed, and a Time slider", "Built"],
+  ["Alignment", "Pose and video bars with a status line", "Two warnings in words under Video", "Built"],
+  ["Errors", "Separate messages", "One error alert with the cause and Open settings", "Built"],
+  ["Video list", "Video Selection with checkboxes", "Each video with its path and whether it has frame times", "Built"],
+  ["Fullscreen", "The browser’s own, on the pose overlay", "Not on the pose overlay", "To confirm"],
+];
+
+const SPECS = [
+  ["Frame", "View panel · summary in type/body-sm · chart title in type/label"],
+  ["Settings", "320px settings panel · Accordion items: View, Video, Markers, Trails, Confidence"],
+  ["Markers", "Checkbox per marker with its color swatch · All markers is Mixed when some are shown"],
+  ["Playback", "Playback, Small · Time slider"],
+  ["Errors", "Alert, Error · Open settings"],
+];
+---
+
+<DocsLayout title="Video and pose" description="Behavioral video, pose markers drawn over it, and the videos a file links to.">
+  <Intro
+    lead="Video and pose views show behavior: a camera’s video, the markers a pose estimator tracked on it, and every video a file links to, played on one clock. Neurosift draws the frames and markers as it does today. The rebuild gives the overlay a settings panel that says what it’s set to, puts playback on the shared controls, and says in words when a video can’t be aligned, found or played."
+    status="Updated November 10, 2026 · UI library · Captured at 1440 × 900 with Dandiset 000231, sub-KM91 · Built from View panel, Playback, Slider, Accordion, Segmented control, Select, Checkbox, Text input, Inline message, Alert and Empty state"
+    rules={[
+      { title: "Say why it doesn’t line up", text: "No frame times and no overlap get a warning in words, with what to try." },
+      { title: "Name the failure", text: "A video that can’t be retrieved or played says why, with Open settings." },
+      { title: "One clock", text: "Every video in a file plays together." },
+    ]}
+  />
+
+  <DocSection title="Video and pose today" lead="neurosift.app with Dandiset 000231, captured with Playwright.">
+    <div class="captures">
+      <Screen file="pose-today" alt="Today’s pose overlay: keypoint chips, Show all and Hide all buttons, alignment bars and the video with markers." caption="Pose overlay: chips, buttons and bars in one panel." />
+      <Screen file="videos-today" alt="Today’s Videos section: Video Selection, Display Arrangement and a Play bar." caption="Videos: Video Selection and Display Arrangement." />
+    </div>
+  </DocSection>
+
+  <DocSection title="What the views do today" lead="Read from the source and checked on the live site.">
+    <DocTable caption="What the views do today" columns={["Part", "Today", "Code", "Notes"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="The rebuilt views" lead="The redesign with the same file, with live data. Frames and markers are drawn as today.">
+    <div class="captures">
+      <Screen file="pose-proposed" alt="The rebuilt pose overlay: a summary of 8 markers, Playback and a Time slider, the video with markers, and View, Video, Markers, Trails and Confidence settings, with a no-frame-times warning under Video." caption="Pose overlay: settings that summarize themselves, and the warning in words." />
+      <Screen file="videos-proposed" alt="The rebuilt Videos section: a summary, Playback, the behavioral video titled A · behavioral video, and the video list with its path and no frame times." caption="Videos: each video with its path, played on one clock." />
+    </div>
+    <p class="doc-note">Built from the <a href={withBase("/components/view-panel/")}>View panel</a> and <a href={withBase("/components/time-controls/")}>Time controls</a>.</p>
+  </DocSection>
+
+  <DocSection title="Try it" lead="Play, show trails, hide markers and switch to Pose only.">
+    <LiveScreen path="nwb?url=https://api.dandiarchive.org/api/assets/70af470b-7cbe-4b9d-8490-9cdf584fd9e6/download/&dandisetId=000231&dandisetVersion=draft&tab=view:PoseEstimation|/processing/behavior/raw_position_whisker_C0" title="Pose overlay, Dandiset 000231 sub-KM91" size="tall" />
+  </DocSection>
+
+  <DocSection title="States">
+    <DocTable caption="States" columns={["When", "What changes"]}>
+      <DocRows rows={STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Behavior">
+    <DocTable caption="Behavior" columns={["Part", "Behavior"]}>
+      <DocRows rows={BEHAVIOR} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="What differs" lead="Built is in the app now. To confirm needs Jeremy or Ben.">
+    <DocTable caption="What differs" columns={["Area", "Existing", "Proposed", "Status"]}>
+      <DocRows rows={DIFFERS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Specs" columns={["Property", "Value"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

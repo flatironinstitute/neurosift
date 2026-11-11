@@ -16,6 +16,7 @@ export default defineConfig({
         "./src/pages/NwbPage/hdf5Interface",
       ),
       "@jobManager": path.resolve(__dirname, "./src/jobManager"),
+      "@ui": path.resolve(__dirname, "./src/ui"),
     },
   },
   build: {
@@ -26,6 +27,12 @@ export default defineConfig({
     // Only the front end's tests run here. The Python package's file server
     // and the job runners carry their own node:test suites, which vitest
     // would otherwise pick up and report as empty.
-    include: ["src/**/*.test.{ts,tsx}", "devel/**/*.test.ts"],
+    include: [
+      "src/**/*.test.{ts,tsx}",
+      "devel/**/*.test.ts",
+      "design-system/tokens/**/*.test.ts",
+      "design-system/icons/**/*.test.ts",
+      "design-system/migration/**/*.test.ts",
+    ],
   },
 });

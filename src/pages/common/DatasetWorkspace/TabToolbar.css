@@ -1,0 +1,19 @@
+.dataset-tab-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  block-size: 32px;
+  padding-inline: var(--space-2);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.dataset-tab-path {
+  flex: 1;
+  min-inline-size: 0;
+  margin: 0;
+  overflow: hidden;
+  font: var(--type-code-sm);
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

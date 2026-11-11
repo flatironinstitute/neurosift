@@ -3,9 +3,8 @@ import {
   useTimeRange,
   useTimeseriesSelection,
 } from "@shared/context-timeseries-selection-2";
-import TimeScrollView2, {
-  useTimeScrollView2,
-} from "@shared/component-time-scroll-view-2/TimeScrollView2";
+import TimeScrollView2 from "@shared/component-time-scroll-view-2/TimeScrollView2";
+import { useTimeScrollView2 } from "@shared/component-time-scroll-view-2/useTimeScrollView2";
 import { timeSelectionBarHeight } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
 
 type Props = {
@@ -150,7 +149,7 @@ const EventsWidget: FunctionComponent<Props> = ({ width, height, times }) => {
       gridlineOpts={gridlineOpts}
       yAxisInfo={yAxisInfo}
       hideToolbar={hideToolbar}
-      showTimeSelectionBar={true}
+      showTimeSelectionBar={false}
     />
   );
 };

@@ -1,0 +1,104 @@
+---
+import { RecentlyOpened } from "@ui";
+import CatalogDemo from "../../components/CatalogDemo";
+import PromptListDemo from "../../components/PromptListDemo";
+import CodeSample from "../../components/CodeSample.astro";
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const SPECS = [
+  ["Search row", "Search field, Large · the search modes as a Small segmented control · the total in type/body-sm, text/secondary"],
+  ["Filter group", "A fieldset: the legend in type/label, its source in type/caption, text/muted · a checkbox and count per value · groups 28px apart"],
+  ["Applied filters", "Removable tags above the results, with Clear all"],
+  ["Results head", "The total in type/h4 · Sort by, a Small select · a 2px border/strong below"],
+  ["Result row", "12px side padding, 18px above and below, 6px between lines · archive badge, ID in type/code-sm, title in type/h4 text/link, meta in type/body-sm, date in type/caption, a static tag per data type · hover surface/row-hover"],
+  ["Show more", "Button, Small, Secondary · “Showing 6 of 118” in type/caption, text/muted · “All 118 shown” at the end"],
+  ["Recently opened", "Shared rows (below) · ID in type/code-sm, text/default · the title in type/body-sm, text/default, wraps, never cut off · a badge for the archive"],
+  ["Prompt list", "Shared rows (below) · each row one button, its prompt in type/body-sm, text/link, wrapping, never cut off"],
+  ["Shared rows", "40px min height (input/height/lg) · no side padding · 1px border/subtle below · the link or button at least 24px tall (layout/target-min), with 4px inline padding (space/1) pulled back so text lines up with the row"],
+  ["Hover and pressed", "text/link-hover and an underline"],
+  ["Focus", "2px border/focus ring, radius/xs, around the link or button"],
+];
+
+const PROMPT_PROPS = [
+  ["label", "string", "Required", "The list’s accessible name, such as “Suggested prompts”. Show the same words as a heading on the page."],
+  ["items", "{ id: string; text: string }[]", "Required", "The prompts, in order. The text is the button’s name and what gets sent."],
+  ["onSelect", "(item) => void", "Required", "Called with the chosen prompt, from a click, Enter or Space."],
+];
+
+const PROMPT_STATES = [
+  ["Default", "text/link on the page surface, a 1px border/subtle rule below"],
+  ["Hover", "text/link-hover, underlined"],
+  ["Focus", "A 2px border/focus ring around the button, with radius/xs; keyboard focus only"],
+  ["Pressed", "text/link-hover, underlined, as on hover"],
+];
+
+const code = `import { ResultRow, SearchRow, ShowMore } from "@ui";
+
+<SearchRow
+  query={query}
+  onQueryChange={setQuery}
+  onSearch={search}
+  mode={mode}
+  onModeChange={setMode}
+/>
+<ul>
+  {results.map((r) => (
+    <ResultRow key={r.id} {...r} />
+  ))}
+</ul>
+<ShowMore shown={shown} total={total} onMore={more} />`;
+---
+
+<DocsLayout title="Catalog" description="Search, filters and result rows for one catalog across DANDI, EMBER and OpenNeuro.">
+  <Intro
+    lead="Home and Archive search share one catalog of datasets from DANDI, EMBER and OpenNeuro. These pieces build it: the search row with its three modes, filter groups that say where their values come from, the results head, result rows, Show more, the Recently opened list on Home, and the Prompt list that shares its rows."
+    status="Updated November 10, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "One catalog, three archives", text: "Each result names its archive, so one list can hold all three." },
+      { title: "Every result is reachable", text: "Show more keeps going past today’s 50 and 25 caps, and says how many are shown." },
+      { title: "Filters say where they apply", text: "Each group names its source, so a missing value isn’t mistaken for none." },
+    ]}
+  />
+
+  <DocSection title="Catalog" lead="Search, filter by archive, and sort. The rows are Dandisets as DANDI describes them.">
+    <CatalogDemo client:visible />
+  </DocSection>
+
+  <DocSection title="Recently opened" lead="On Home, the datasets opened in this browser, newest first.">
+    <div class="section-demo">
+      <RecentlyOpened items={[{ archive: "DANDI", id: "000673", title: "Data for: Control of working memory by phase–amplitude coupling of human hippocampal neurons", href: "#dandiset-000673" }, { archive: "DANDI", id: "000041", title: "Network Homeostasis and State Dynamics of Neocortical Sleep", href: "#dandiset-000041" }]} />
+    </div>
+    <p class="doc-note">Each row is a link that opens the dataset. The page shows the “Recently opened” heading; the list carries the same words as its accessible name.</p>
+  </DocSection>
+
+  <DocSection title="Prompt list" lead="Rows that do something when chosen, such as Neurosift Chat’s suggested prompts, which send at once. It uses Recently opened’s rows, so the two read as one family. Use Recently opened, or any list of links, when a row goes somewhere; use a Prompt list when a row sends or runs something here.">
+    <PromptListDemo client:visible />
+    <p class="doc-note">Each row is a &lt;button type="button"&gt; inside a list item, so Tab reaches every prompt and Enter or Space sends it. The heading belongs to the page, as on Home; the list repeats it as its accessible name.</p>
+  </DocSection>
+
+  <DocSection title="Prompt list states" lead="The same states as a Recently opened link.">
+    <DocTable caption="Prompt list states" columns={["State", "Looks"]}>
+      <DocRows rows={PROMPT_STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Prompt list props" lead="Pure: it renders from these props alone and takes no className or style.">
+    <DocTable caption="Prompt list props" columns={["Prop", "Type", "Default", "What it does"]}>
+      {PROMPT_PROPS.map(([prop, type, fallback, does]) => <tr><th scope="row"><code>{prop}</code></th><td><code>{type}</code></td><td>{fallback}</td><td>{does}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Catalog specs" columns={["Part", "Spec"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. Every piece is controlled; the page fetches and pages the results.">
+    <CodeSample label="Catalog" code={code} />
+  </DocSection>
+</DocsLayout>

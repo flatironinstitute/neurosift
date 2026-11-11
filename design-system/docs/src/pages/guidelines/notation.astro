@@ -1,0 +1,107 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const IDS = [
+  ["Dandiset", "000673", "673, DANDI-673", "Its page on DANDI"],
+  ["Version", "0.250122.0110 · draft", "v0.250122.0110, Draft", "The version on DANDI"],
+  ["Asset ID", "65a7e913-45c7-48db-bf19-b9f5e910110a", "A shortened ID in copy", "The file’s download URL. Tables may show the first 8 characters, with the full ID on hover and copy"],
+  ["Object path", "/acquisition/LFPs", "acquisition > LFPs, LFPs", "Opens the object"],
+  ["Neurodata type", "ElectricalSeries", "Electrical series, electricalseries", "The NWB schema entry"],
+  ["Unit ID", "As stored in the file: 0, 12, or a string", "A renumbered index", "—"],
+];
+
+const NUMBERS = [
+  ["Sampling rate", "400 Hz · 30 kHz", "400.00 Hz, 30000 Hz", "No trailing zeros. kHz from 1,000 Hz"],
+  ["Duration", "1,375.28 s", "1375.28 s, 1375.2800 s", "Seconds with two decimals; a minutes form (22 min 55 s) may follow in brackets in metadata"],
+  ["Time in a window", "3.75 s at 0.18 s", "3.75s at 0.18s", "A space before every unit"],
+  ["Rates", "1.20 Hz", "1.2 Hz in one row and 1.20 Hz in the next", "Same decimals within a column"],
+  ["Counts", "1,652 spikes · 46 units", "1652 spikes", "Commas from 1,000"],
+  ["File sizes", "6.5 GB · 441.8 MB", "1.37 undefined, 6.5GB", "Always a unit, and never a missing one"],
+  ["Missing", "— No start time in this file", "NaN, undefined, null", "An em dash and a reason"],
+];
+
+const UNITS = [
+  ["Time", "s · ms · µs", "sec, secs, seconds, msec", "“seconds” 30 times, “sec” 9, “secs” 2"],
+  ["Frequency", "Hz · kHz", "hz, HZ, KHz", "“Hz” 29 times, “kHz” 1"],
+  ["Voltage", "µV · mV", "uV, microvolts in labels", "“uV” 1, “mV” 5. Use the micro sign µ (U+00B5)"],
+  ["Space", "µm · mm", "um, microns", "As NWB stores them"],
+  ["Power", "dB", "db, decibels", "Spectrogram color bar"],
+];
+
+const TIME = [
+  ["Axis ticks", "0 s 1 s 2 s 3 s", "Session time in seconds. When zoomed in far, the first tick shows the full time and the rest show offsets, labeled “+10 ms”, so a reader never mistakes 20 s for 3 min 20 s (upstream issues #270 and #311)"],
+  ["Time controls", "3.75 s at 0.18 s", "Window length, then start. Both editable"],
+  ["Session start", "2018-01-01T00:00:00−08:00", "As the file writes it, ISO 8601, in metadata only"],
+  ["DANDI dates", "Created Nov 3, 2026", "Short month name, no time"],
+];
+
+const NOTATION = [
+  ["Very small", "1.2 × 10⁻⁵", "1.2e-5", "On screen only. Copy and downloads keep 1.2e-5"],
+  ["Negative", "−0.42", "-0.42", "A true minus sign (U+2212) on screen"],
+  ["Ranges", "0.5–1.0 s", "0.5-1.0 s", "An en dash"],
+];
+
+const TYPESETTING = [
+  ["Tabular figures", "Numbers in tables, axes and time controls use tabular figures so digits line up."],
+  ["Right-align numbers", "Numeric columns align right; IDs and paths align left."],
+  ["Read units in full", "Screen readers hear “400 hertz”, not “400 H Z”: give abbreviations an accessible label where needed."],
+  ["Copy is plain text", "Copying an ID or a value never includes formatting, thin spaces or the × sign."],
+];
+---
+
+<DocsLayout title="Scientific notation and units" description="Exact identifiers, readable numbers and one spelling per unit.">
+  <Intro
+    lead="People copy what Neurosift shows into notebooks, papers and messages to colleagues. Identifiers must survive the trip exactly, and numbers must read the same way in every view, so a duration in one panel never looks different from the same duration in another."
+    status="Updated November 9, 2026 · Usage guideline · Follows NWB and DANDI naming, and SI units (BIPM)"
+    rules={[
+      { title: "Exact and copyable", text: "IDs, versions and paths appear exactly as DANDI and the file write them, and copy as plain text." },
+      { title: "Readable on screen, exact on copy", text: "Show “1,375.28 s” in the interface; Copy and Load in Python keep every digit the file holds." },
+      { title: "One spelling per unit", text: "“s”, never “sec”, “secs” or “seconds” in labels. Today’s code uses all four." },
+    ]}
+  />
+
+  <DocSection title="Identifiers" lead="Plex Mono, exact case and format, never shortened in copy. Each one links to where it lives.">
+    <DocTable caption="Identifiers" columns={["Identifier", "Write", "Not", "Links to"]}>
+      <DocRows rows={IDS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Numbers" lead="On screen, numbers are for reading and comparing. Copy, download and Load in Python keep full precision.">
+    <DocTable caption="Numbers" columns={["Value", "On screen", "Not", "Rule"]}>
+      <DocRows rows={NUMBERS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Units" lead="SI symbols, one spelling each. Labels and axes carry the unit once, in the title or after the last tick, not on every value.">
+    <DocTable caption="Units" columns={["Quantity", "Write", "Not", "Today in src/"]}>
+      <DocRows rows={UNITS} />
+    </DocTable>
+    <p class="doc-note">Counts of unit spellings come from Neurosift’s src/ on November 5, 2026.</p>
+  </DocSection>
+
+  <DocSection title="Time on axes and in metadata" lead="Time is the shared axis of every synced view, so it is written one way.">
+    <DocTable caption="Time" columns={["Where", "Write", "Rule"]}>
+      <DocRows rows={TIME} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Statistics and very small or large values">
+    <DocTable caption="Notation" columns={["Value", "On screen", "Not", "Rule"]}>
+      <DocRows rows={NOTATION} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Species and subjects" lead="Latin names in IBM Plex Sans Italic. Common names, such as mouse and rhesus macaque, stay upright. Subject IDs are exact, in Plex Mono.">
+    <p class="type-body"><i lang="la">Mus musculus</i> · <i lang="la">Macaca mulatta</i> · <i lang="la">Homo sapiens</i></p>
+  </DocSection>
+
+  <DocSection title="Typesetting and screen readers">
+    <DocTable caption="Typesetting" columns={["Rule", "Detail"]}>
+      <DocRows rows={TYPESETTING} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

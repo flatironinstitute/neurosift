@@ -36,7 +36,7 @@ const SingleTabView: React.FC<SingleTabViewProps> = ({
   return (
     <ProvideTimeseriesSelection>
       <div>
-        <TabToolbar width={width} tabId={tabId} nwbUrl={nwbUrl} path={path} />
+        <TabToolbar tabId={tabId} nwbUrl={nwbUrl} path={path} />
         <ScrollY
           width={width}
           height={height - TOOLBAR_HEIGHT}

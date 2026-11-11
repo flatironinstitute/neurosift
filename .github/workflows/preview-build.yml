@@ -28,14 +28,31 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          # The design system docs (Astro) need Node 22.
+          node-version: "22"
           cache: "npm"
+          cache-dependency-path: |
+            package-lock.json
+            design-system/docs/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
       - name: Build project
         run: npm run build
+
+      # The design system docs are served with the app, at /design-system/.
+      - name: Install docs dependencies
+        run: npm run docs:install
+
+      - name: Build the design system docs into the app at /design-system/
+        run: |
+          npm run docs:build
+          mkdir -p dist/design-system
+          cp -R design-system/docs/dist/. dist/design-system/
+        env:
+          DOCS_BASE: /design-system/
+          PUBLIC_APP_BASE: /
 
       - name: Upload built site
         uses: actions/upload-artifact@v4

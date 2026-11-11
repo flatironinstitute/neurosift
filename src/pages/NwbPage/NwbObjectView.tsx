@@ -1,4 +1,6 @@
 import ErrorBoundary from "@components/ErrorBoundary";
+import ViewError from "@components/ViewError/ViewError";
+import { objectExists } from "./ObjectTypeUtils";
 import { CircularProgress } from "@mui/material";
 import React, { Suspense, useEffect, useState } from "react";
 import { NwbObjectViewPlugin } from "./plugins/pluginInterface";
@@ -42,17 +44,23 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
   const [resolved, setResolved] = useState<{
     key: string;
     plugins: NwbObjectViewPlugin[];
+    missing?: boolean;
   }>();
 
   const specifications = useNwbFileSpecifications();
 
   useEffect(() => {
-    if (plugin) {
-      setResolved({ key: objectKey, plugins: [plugin] });
-      return;
-    }
     let canceled = false;
     const loadPlugin = async () => {
+      if (!(await objectExists(nwbUrl, path))) {
+        if (!canceled)
+          setResolved({ key: objectKey, plugins: [], missing: true });
+        return;
+      }
+      if (plugin) {
+        if (!canceled) setResolved({ key: objectKey, plugins: [plugin] });
+        return;
+      }
       try {
         {
           let suitable = await findSuitablePlugins(nwbUrl, path, objectType, {
@@ -102,6 +110,11 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
 
   if (!resolved || resolved.key !== objectKey) {
     return <CircularProgress />;
+  }
+  if (resolved.missing) {
+    return (
+      <ViewError what={path} error={`This file has no object at ${path}.`} />
+    );
   }
   const plugins = resolved.plugins;
 

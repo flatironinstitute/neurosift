@@ -24,3 +24,28 @@ export const canStepFrame = (
   inc: number,
   numFrames: number | undefined,
 ): boolean => steppedFrameIndex(current, inc, numFrames) !== undefined;
+
+export const MAX_READ_AHEAD = 32;
+
+// Frames to read at once: one when stepping, about half a second's worth while playing.
+export const framesToRead = (
+  playing: boolean,
+  rate: number | undefined,
+  speed: number,
+): number =>
+  playing && rate
+    ? Math.min(MAX_READ_AHEAD, Math.max(1, Math.ceil((rate * speed) / 2)))
+    : 1;
+
+export const splitFrames = <
+  T extends { subarray(a: number, b: number): T; length: number },
+>(
+  block: T,
+  first: number,
+  frameSize: number,
+): Map<number, T> => {
+  const frames = new Map<number, T>();
+  for (let k = 0; k * frameSize < block.length; k++)
+    frames.set(first + k, block.subarray(k * frameSize, (k + 1) * frameSize));
+  return frames;
+};

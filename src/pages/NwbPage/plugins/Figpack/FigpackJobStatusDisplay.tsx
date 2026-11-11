@@ -1,4 +1,6 @@
+import { Alert, Badge, Button, type AlertAction } from "@ui";
 import { FunctionComponent } from "react";
+import "./Figpack.css";
 
 type Job = {
   job_id?: string;
@@ -15,6 +17,10 @@ type Props = {
   generateButtonText: string;
 };
 
+const jobUrl = (jobId: string) =>
+  `https://runpack-admin.neurosift.app/jobs/${jobId}`;
+
+/** Where a Figpack job stands: generate it, wait for it, or try again. */
 const FigpackJobStatusDisplay: FunctionComponent<Props> = ({
   job,
   error,
@@ -23,231 +29,79 @@ const FigpackJobStatusDisplay: FunctionComponent<Props> = ({
   refreshStatus,
   generateButtonText,
 }) => {
+  const viewJob: AlertAction | undefined = job?.job_id
+    ? { label: "View job", href: jobUrl(job.job_id), newTab: true }
+    : undefined;
+  const withViewJob = (action: AlertAction) =>
+    viewJob
+      ? ([action, viewJob] as [AlertAction, AlertAction])
+      : ([action] as [AlertAction]);
+  const refresh = withViewJob({
+    label: "Refresh status",
+    onClick: refreshStatus,
+    loading: isLoading,
+  });
+  const waiting = job?.status === "pending" || job?.status === "claimed";
+
   return (
-    <div style={{ marginBottom: "15px" }}>
+    <div className="figpack-job">
       {!job && (
         <div>
-          <button
-            onClick={submitJob}
-            style={{
-              padding: "10px 20px",
-              fontSize: "14px",
-              cursor: "pointer",
-              backgroundColor: "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-            }}
-          >
+          <Button variant="primary" onClick={submitJob}>
             {generateButtonText}
-          </button>
+          </Button>
         </div>
       )}
 
-      {job && (job.status === "pending" || job.status === "claimed") && (
-        <div
-          style={{
-            padding: "15px",
-            backgroundColor: "#fff9e6",
-            border: "1px solid #ffe58f",
-            borderRadius: "4px",
-          }}
-        >
-          <p style={{ margin: "0 0 10px 0", fontWeight: "bold" }}>
-            Job Status:{" "}
-            {job.job_id ? (
-              <a
-                href={`https://runpack-admin.neurosift.app/jobs/${job.job_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: "#d4a700", textDecoration: "underline" }}
-              >
-                Pending
-              </a>
-            ) : (
-              "Pending"
-            )}
-          </p>
-          <p style={{ margin: "0 0 10px 0" }}>
-            Your job is queued and waiting for a worker to process it.
-          </p>
-          <button
-            onClick={refreshStatus}
-            disabled={isLoading}
-            style={{
-              padding: "8px 16px",
-              fontSize: "14px",
-              cursor: isLoading ? "not-allowed" : "pointer",
-              opacity: isLoading ? 0.6 : 1,
-            }}
-          >
-            {isLoading ? "Refreshing..." : "Refresh Status"}
-          </button>
-        </div>
+      {waiting && (
+        <Alert status="info" title="Job pending" actions={refresh}>
+          Your job is queued and waiting for a worker to process it.
+        </Alert>
       )}
 
-      {job && job.status === "in_progress" && (
-        <div
-          style={{
-            padding: "15px",
-            backgroundColor: "#e6f7ff",
-            border: "1px solid #91d5ff",
-            borderRadius: "4px",
-          }}
-        >
-          <p style={{ margin: "0 0 10px 0", fontWeight: "bold" }}>
-            Job Status:{" "}
-            {job.job_id ? (
-              <a
-                href={`https://runpack-admin.neurosift.app/jobs/${job.job_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: "#1890ff", textDecoration: "underline" }}
-              >
-                In Progress
-              </a>
-            ) : (
-              "In Progress"
-            )}
-          </p>
-          <button
-            onClick={refreshStatus}
-            disabled={isLoading}
-            style={{
-              padding: "8px 16px",
-              fontSize: "14px",
-              cursor: isLoading ? "not-allowed" : "pointer",
-              opacity: isLoading ? 0.6 : 1,
-            }}
-          >
-            {isLoading ? "Refreshing..." : "Refresh Status"}
-          </button>
-        </div>
+      {job?.status === "in_progress" && (
+        <Alert status="info" title="Job in progress" actions={refresh}>
+          A worker is building the figure.
+        </Alert>
       )}
 
-      {job && job.status === "completed" && (
-        <div
-          style={{
-            padding: "6px 10px",
-            fontSize: "12px",
-            color: "#52c41a",
-            display: "inline-block",
-          }}
-        >
-          ✓{" "}
-          {job.job_id ? (
-            <a
-              href={`https://runpack-admin.neurosift.app/jobs/${job.job_id}`}
+      {job?.status === "completed" && (
+        <div className="figpack-job-done">
+          <Badge status="success" icon>
+            Job completed
+          </Badge>
+          {job.job_id && (
+            <Button
+              variant="ghost"
+              size="sm"
+              href={jobUrl(job.job_id)}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: "#52c41a", textDecoration: "underline" }}
             >
-              Job Completed
-            </a>
-          ) : (
-            "Job Completed"
+              View job
+            </Button>
           )}
         </div>
       )}
 
       {(job?.status === "failed" || error) && (
-        <div
-          style={{
-            padding: "15px",
-            backgroundColor: "#fff1f0",
-            border: "1px solid #ffccc7",
-            borderRadius: "4px",
-          }}
+        <Alert
+          status="error"
+          title="Job failed"
+          actions={withViewJob({ label: "Retry job", onClick: submitJob })}
         >
-          <p
-            style={{
-              margin: "0 0 10px 0",
-              fontWeight: "bold",
-              color: "#ff4d4f",
-            }}
-          >
-            Job Status:{" "}
-            {job?.job_id ? (
-              <a
-                href={`https://runpack-admin.neurosift.app/jobs/${job.job_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: "#ff4d4f", textDecoration: "underline" }}
-              >
-                Failed
-              </a>
-            ) : (
-              "Failed"
-            )}
-          </p>
-          <p style={{ margin: "0 0 10px 0", color: "#ff4d4f" }}>
-            {error || job?.error || "An unknown error occurred"}
-          </p>
-          <button
-            onClick={submitJob}
-            style={{
-              padding: "8px 16px",
-              fontSize: "14px",
-              cursor: "pointer",
-              backgroundColor: "#ff4d4f",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-            }}
-          >
-            Retry Job
-          </button>
-        </div>
+          {error || job?.error || "An unknown error occurred"}
+        </Alert>
       )}
 
       {job?.status === "expired" && (
-        <div
-          style={{
-            padding: "15px",
-            backgroundColor: "#fff1f0",
-            border: "1px solid #ffccc7",
-            borderRadius: "4px",
-          }}
+        <Alert
+          status="warning"
+          title="Job expired"
+          actions={withViewJob({ label: "Submit new job", onClick: submitJob })}
         >
-          <p
-            style={{
-              margin: "0 0 10px 0",
-              fontWeight: "bold",
-              color: "#ff4d4f",
-            }}
-          >
-            Job Status:{" "}
-            {job.job_id ? (
-              <a
-                href={`https://runpack-admin.neurosift.app/jobs/${job.job_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: "#ff4d4f", textDecoration: "underline" }}
-              >
-                Expired
-              </a>
-            ) : (
-              "Expired"
-            )}
-          </p>
-          <p style={{ margin: "0 0 10px 0", color: "#ff4d4f" }}>
-            The job output has expired.
-          </p>
-          <button
-            onClick={submitJob}
-            style={{
-              padding: "8px 16px",
-              fontSize: "14px",
-              cursor: "pointer",
-              backgroundColor: "#ff4d4f",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-            }}
-          >
-            Submit New Job
-          </button>
-        </div>
+          The job output has expired.
+        </Alert>
       )}
     </div>
   );

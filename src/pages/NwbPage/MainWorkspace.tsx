@@ -1,10 +1,6 @@
 import React, { useEffect, useMemo, useState, lazy, Suspense } from "react";
-import {
-  FixedTab,
-  TabBar,
-  FIXED_TAB_BAR_HEIGHT,
-  DYNAMIC_TAB_BAR_HEIGHT,
-} from "@components/tabs/TabBar";
+import { TabPanel, Tabs, type TabItem } from "@ui";
+import "./FileViewer.css";
 import { useTabManager } from "./TabManager";
 import SingleTabView from "./components/SingleTabView";
 import MultiTabView from "./components/MultiTabView";
@@ -16,13 +12,14 @@ import { neurodataTypeInheritsFrom } from "./neurodataTypeInheritance";
 import ErrorBoundary from "@components/ErrorBoundary";
 import ScrollY from "@components/ScrollY";
 import NwbHierarchyView from "./NwbHierarchyView";
-import Hdf5View from "./Hdf5View";
+import Hdf5View from "./Hdf5View/Hdf5View";
 import TimeseriesAlignmentView from "./TimeseriesAlignmentView";
 import NwbUsageScript from "./components/NwbUsageScript";
 import MultiVideoTabView from "./MultiVideoTabView";
 import IcephysTabView from "./IcephysTabView";
 import { hasExternalVideos } from "./externalVideoUtils";
 import { useSyncTabToUrl } from "./useSyncTabToUrl";
+import { LoadingState } from "@ui";
 
 const SpecificationsView = lazy(
   () => import("./SpecificationsView/SpecificationsView"),
@@ -31,15 +28,19 @@ const SpecificationsView = lazy(
 // All possible fixed tabs. "video-widget" and "icephys" are data-dependent and
 // only shown when the file actually contains the corresponding data (see below),
 // so they do not appear as dead buttons.
-const ALL_FIXED_TABS: FixedTab[] = [
+const ALL_FIXED_TABS: TabItem[] = [
   { id: "widgets", label: "Widgets" },
   { id: "video-widget", label: "Videos" },
   { id: "icephys", label: "Icephys" },
-  { id: "timeseries-alignment", label: "Timeseries Alignment" },
-  { id: "python-usage", label: "Python Usage" },
-  { id: "specifications", label: "Schema", group: "secondary" },
-  { id: "hdf5", label: "HDF5", group: "secondary" },
+  { id: "timeseries-alignment", label: "Timeseries alignment" },
+  { id: "python-usage", label: "Python usage" },
+  { id: "specifications", label: "Schema", end: true },
+  { id: "hdf5", label: "HDF5", end: true },
 ];
+
+// The section bar and object tabs, 44px and 36px (layout/sectionbar-height, layout/tabs-height).
+const SECTION_BAR_HEIGHT = 44;
+const OBJECT_TABS_HEIGHT = 36;
 
 const FIXED_TAB_IDS = new Set(ALL_FIXED_TABS.map((t) => t.id));
 
@@ -127,9 +128,9 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
 
   const hasDynamicTabs = tabsState.tabs.length > 0;
   const tabBarHeight =
-    FIXED_TAB_BAR_HEIGHT + (hasDynamicTabs ? DYNAMIC_TAB_BAR_HEIGHT : 0);
+    SECTION_BAR_HEIGHT + (hasDynamicTabs ? OBJECT_TABS_HEIGHT : 0);
   const contentHeight = height - tabBarHeight;
-  const contentWidth = width - 20;
+  const contentWidth = width - 32;
 
   // Determine what content to show:
   // If activeTabId matches a dynamic tab, show that; otherwise show the active fixed section
@@ -212,6 +213,13 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
     handleSwitchTab(id);
   };
 
+  // A path picked in the schema opens in the HDF5 tab.
+  const [hdf5Focus, setHdf5Focus] = useState<{ path: string; at: number }>();
+  const openInHdf5 = (path: string) => {
+    setHdf5Focus({ path, at: Date.now() });
+    handleFixedTabSwitch("hdf5");
+  };
+
   const handleDynamicTabSwitch = (id: string) => {
     if (id === "main") {
       // Switch back to showing the active fixed section
@@ -221,232 +229,216 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
     }
   };
 
-  const handleDynamicTabClose = (id: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    handleCloseTab(id, event);
-  };
+  const objectTabs: TabItem[] = [
+    { id: "main", label: "Main" },
+    ...tabsState.tabs.map((tab: DynamicTab) => ({
+      id: tab.id,
+      label: tab.label,
+      closable: true,
+      tooltip:
+        tab.type === "single"
+          ? tab.path
+          : tab.type === "multi"
+            ? tab.paths.join(", ")
+            : undefined,
+    })),
+  ];
 
   return (
-    <div style={{ position: "absolute", width, height, overflow: "hidden" }}>
-      {/* Error notification as overlay */}
+    <div className="file-workspace">
       {showAuthError && isDandiAssetUrl(nwbUrl) && (
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 1000,
-          }}
-        >
+        <div className="file-workspace-notice">
           <AuthErrorNotification dandiUrl={nwbUrl} />
         </div>
       )}
-
-      <TabBar
-        tabs={tabsState.tabs}
-        activeTabId={isDynamicTabActive ? tabsState.activeTabId : "main"}
-        onSwitchTab={handleDynamicTabSwitch}
-        onCloseTab={handleDynamicTabClose}
-        fixedTabs={fixedTabs}
-        fixedTabActiveId={activeFixedTab}
-        onFixedTabSwitch={handleFixedTabSwitch}
-        width={width}
-      />
-      <div
-        style={{
-          position: "absolute",
-          left: 10,
-          width: contentWidth,
-          height: contentHeight,
-          top: tabBarHeight,
-          overflow: "hidden",
-        }}
-      >
+      <div className="file-workspace-sections">
+        <Tabs
+          id="file-sections"
+          label="File views"
+          tabs={fixedTabs}
+          selected={activeFixedTab}
+          onSelect={handleFixedTabSwitch}
+        />
+      </div>
+      {hasDynamicTabs && (
+        <div className="file-workspace-objects">
+          <Tabs
+            id="file-objects"
+            kind="object"
+            label="Open objects"
+            tabs={objectTabs}
+            selected={isDynamicTabActive ? tabsState.activeTabId : "main"}
+            onSelect={handleDynamicTabSwitch}
+            onClose={(id) => handleCloseTab(id)}
+          />
+        </div>
+      )}
+      <div className="file-workspace-content">
         <SetupNwbFileSpecificationsProvider nwbUrl={nwbUrl}>
-          {/* Fixed section content */}
-          <div
-            style={{
-              display:
-                showFixedContent && activeFixedTab === "widgets"
-                  ? "block"
-                  : "none",
-            }}
+          <TabPanel
+            tabsId="file-objects"
+            tabId="main"
+            selected={showFixedContent}
           >
-            <ScrollY width={contentWidth} height={contentHeight}>
-              <ErrorBoundary what="the Widgets tab">
-                <NwbHierarchyView
-                  nwbUrl={nwbUrl}
-                  onOpenObjectInNewTab={handleOpenObjectInNewTab}
-                  onOpenObjectsInNewTab={handleOpenObjectsInNewTab}
-                  isExpanded={showFixedContent && activeFixedTab === "widgets"}
-                  defaultUnitsPath={defaultUnitsPath}
-                  onSetDefaultUnitsPath={setDefaultUnitsPath}
-                />
-              </ErrorBoundary>
-            </ScrollY>
-          </div>
-          <div
-            style={{
-              display:
-                showFixedContent && activeFixedTab === "hdf5"
-                  ? "block"
-                  : "none",
-            }}
-          >
-            <ScrollY width={contentWidth} height={contentHeight}>
-              <ErrorBoundary what="the HDF5 tab">
+            <TabPanel
+              tabsId="file-sections"
+              tabId="widgets"
+              selected={activeFixedTab === "widgets"}
+            >
+              <ScrollY width={contentWidth} height={contentHeight}>
+                <ErrorBoundary what="the widgets">
+                  <NwbHierarchyView
+                    nwbUrl={nwbUrl}
+                    onOpenObjectInNewTab={handleOpenObjectInNewTab}
+                    onOpenObjectsInNewTab={handleOpenObjectsInNewTab}
+                    isExpanded={
+                      showFixedContent && activeFixedTab === "widgets"
+                    }
+                    defaultUnitsPath={defaultUnitsPath}
+                    onSetDefaultUnitsPath={setDefaultUnitsPath}
+                  />
+                </ErrorBoundary>
+              </ScrollY>
+            </TabPanel>
+            <TabPanel
+              tabsId="file-sections"
+              tabId="hdf5"
+              selected={activeFixedTab === "hdf5"}
+            >
+              <ErrorBoundary what="the HDF5 view">
                 <Hdf5View
                   nwbUrl={nwbUrl}
                   width={contentWidth}
                   isExpanded={showFixedContent && activeFixedTab === "hdf5"}
+                  focus={hdf5Focus}
                 />
               </ErrorBoundary>
-            </ScrollY>
-          </div>
-          <div
-            style={{
-              display:
-                showFixedContent && activeFixedTab === "video-widget"
-                  ? "block"
-                  : "none",
-            }}
-          >
-            <ScrollY width={contentWidth} height={contentHeight}>
-              <ErrorBoundary what="the Videos tab">
-                <MultiVideoTabView
+            </TabPanel>
+            <TabPanel
+              tabsId="file-sections"
+              tabId="video-widget"
+              selected={activeFixedTab === "video-widget"}
+            >
+              <ScrollY width={contentWidth} height={contentHeight}>
+                <ErrorBoundary what="the videos">
+                  <MultiVideoTabView
+                    nwbUrl={nwbUrl}
+                    width={contentWidth}
+                    height={contentHeight}
+                    isExpanded={
+                      showFixedContent && activeFixedTab === "video-widget"
+                    }
+                  />
+                </ErrorBoundary>
+              </ScrollY>
+            </TabPanel>
+            <TabPanel
+              tabsId="file-sections"
+              tabId="icephys"
+              selected={activeFixedTab === "icephys"}
+            >
+              <ErrorBoundary what="the icephys view">
+                <IcephysTabView
                   nwbUrl={nwbUrl}
                   width={contentWidth}
                   height={contentHeight}
-                  isExpanded={
-                    showFixedContent && activeFixedTab === "video-widget"
-                  }
+                  isExpanded={showFixedContent && activeFixedTab === "icephys"}
                 />
               </ErrorBoundary>
-            </ScrollY>
-          </div>
-          <div
-            style={{
-              display:
-                showFixedContent && activeFixedTab === "icephys"
-                  ? "block"
-                  : "none",
-            }}
-          >
-            <ErrorBoundary what="the Icephys tab">
-              <IcephysTabView
-                nwbUrl={nwbUrl}
-                width={contentWidth}
-                height={contentHeight}
-                isExpanded={showFixedContent && activeFixedTab === "icephys"}
-              />
-            </ErrorBoundary>
-          </div>
-          <div
-            style={{
-              display:
-                showFixedContent && activeFixedTab === "timeseries-alignment"
-                  ? "block"
-                  : "none",
-            }}
-          >
-            <ScrollY width={contentWidth} height={contentHeight}>
-              <ErrorBoundary what="the Timeseries Alignment tab">
-                <TimeseriesAlignmentView
-                  nwbUrl={nwbUrl}
-                  width={contentWidth}
-                  isExpanded={
-                    showFixedContent &&
-                    activeFixedTab === "timeseries-alignment"
-                  }
-                  onOpenTimeseriesItem={(path) => {
-                    handleOpenObjectInNewTab(path);
-                  }}
-                />
-              </ErrorBoundary>
-            </ScrollY>
-          </div>
-          {showFixedContent && activeFixedTab === "specifications" && (
-            <ScrollY width={contentWidth} height={contentHeight}>
-              <ErrorBoundary what="the Schema tab">
-                <Suspense
-                  fallback={
-                    <div style={{ padding: 20 }}>Loading specifications...</div>
-                  }
-                >
-                  <SpecificationsView />
-                </Suspense>
-              </ErrorBoundary>
-            </ScrollY>
-          )}
-          <div
-            style={{
-              display:
-                showFixedContent && activeFixedTab === "python-usage"
-                  ? "block"
-                  : "none",
-            }}
-          >
-            <ScrollY width={contentWidth} height={contentHeight}>
-              <ErrorBoundary what="the Python Usage tab">
-                <NwbUsageScript nwbUrl={nwbUrl} />
-              </ErrorBoundary>
-            </ScrollY>
-          </div>
+            </TabPanel>
+            <TabPanel
+              tabsId="file-sections"
+              tabId="timeseries-alignment"
+              selected={activeFixedTab === "timeseries-alignment"}
+            >
+              <ScrollY width={contentWidth} height={contentHeight}>
+                <ErrorBoundary what="the timeseries alignment">
+                  <TimeseriesAlignmentView
+                    nwbUrl={nwbUrl}
+                    width={contentWidth}
+                    isExpanded={
+                      showFixedContent &&
+                      activeFixedTab === "timeseries-alignment"
+                    }
+                    onOpenTimeseriesItem={(path) => {
+                      handleOpenObjectInNewTab(path);
+                    }}
+                  />
+                </ErrorBoundary>
+              </ScrollY>
+            </TabPanel>
+            <TabPanel
+              tabsId="file-sections"
+              tabId="specifications"
+              selected={activeFixedTab === "specifications"}
+            >
+              {showFixedContent && activeFixedTab === "specifications" && (
+                <ErrorBoundary what="the schema">
+                  <Suspense
+                    fallback={
+                      <LoadingState
+                        label="Loading the schema"
+                        phase="loading"
+                      />
+                    }
+                  >
+                    <SpecificationsView
+                      nwbUrl={nwbUrl}
+                      onOpenPath={openInHdf5}
+                    />
+                  </Suspense>
+                </ErrorBoundary>
+              )}
+            </TabPanel>
+            <TabPanel
+              tabsId="file-sections"
+              tabId="python-usage"
+              selected={activeFixedTab === "python-usage"}
+            >
+              <ScrollY width={contentWidth} height={contentHeight}>
+                <ErrorBoundary what="the Python usage">
+                  <NwbUsageScript nwbUrl={nwbUrl} />
+                </ErrorBoundary>
+              </ScrollY>
+            </TabPanel>
+          </TabPanel>
 
-          {/* Dynamic object tabs */}
-          {tabsState.tabs.map((tab: DynamicTab) => {
-            if (tab.type === "multi") {
-              return (
-                <div
-                  key={tab.id}
-                  style={{
-                    display:
-                      tabsState.activeTabId === tab.id ? "block" : "none",
-                  }}
-                >
-                  <ErrorBoundary what="this tab">
-                    <MultiTabView
-                      nwbUrl={nwbUrl}
-                      width={width}
-                      height={contentHeight}
-                      tabId={tab.id}
-                      paths={tab.paths}
-                      objectTypes={tab.objectTypes}
-                      plugins={tab.plugins}
-                      secondaryPathsList={tab.secondaryPathsList}
-                      onOpenObjectInNewTab={handleOpenObjectInNewTab}
-                    />
-                  </ErrorBoundary>
-                </div>
-              );
-            } else if (tab.type === "single") {
-              return (
-                <div
-                  key={tab.id}
-                  style={{
-                    display:
-                      tabsState.activeTabId === tab.id ? "block" : "none",
-                  }}
-                >
-                  <ErrorBoundary what="this tab">
-                    <SingleTabView
-                      nwbUrl={nwbUrl}
-                      width={width}
-                      height={contentHeight}
-                      tabId={tab.id}
-                      path={tab.path}
-                      objectType={tab.objectType}
-                      plugin={tab.plugin}
-                      secondaryPaths={tab.secondaryPaths}
-                      onOpenObjectInNewTab={handleOpenObjectInNewTab}
-                    />
-                  </ErrorBoundary>
-                </div>
-              );
-            }
-            return null;
-          })}
+          {tabsState.tabs.map((tab: DynamicTab) => (
+            <TabPanel
+              key={tab.id}
+              tabsId="file-objects"
+              tabId={tab.id}
+              selected={tabsState.activeTabId === tab.id}
+            >
+              <ErrorBoundary what="this tab">
+                {tab.type === "multi" ? (
+                  <MultiTabView
+                    nwbUrl={nwbUrl}
+                    width={width}
+                    height={contentHeight}
+                    tabId={tab.id}
+                    paths={tab.paths}
+                    objectTypes={tab.objectTypes}
+                    plugins={tab.plugins}
+                    secondaryPathsList={tab.secondaryPathsList}
+                    onOpenObjectInNewTab={handleOpenObjectInNewTab}
+                  />
+                ) : tab.type === "single" ? (
+                  <SingleTabView
+                    nwbUrl={nwbUrl}
+                    width={width}
+                    height={contentHeight}
+                    tabId={tab.id}
+                    path={tab.path}
+                    objectType={tab.objectType}
+                    plugin={tab.plugin}
+                    secondaryPaths={tab.secondaryPaths}
+                    onOpenObjectInNewTab={handleOpenObjectInNewTab}
+                  />
+                ) : null}
+              </ErrorBoundary>
+            </TabPanel>
+          ))}
         </SetupNwbFileSpecificationsProvider>
       </div>
     </div>

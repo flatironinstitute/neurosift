@@ -1,0 +1,354 @@
+{
+  "font": {
+    "family": {
+      "$type": "fontFamily",
+      "sans": {
+        "$value": [
+          "IBM Plex Sans JP",
+          "IBM Plex Sans",
+          "system-ui",
+          "sans-serif"
+        ]
+      },
+      "mono": {
+        "$value": [
+          "IBM Plex Mono",
+          "ui-monospace",
+          "monospace"
+        ]
+      }
+    }
+  },
+  "type": {
+    "display": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontWeight": 400,
+        "fontSize": {
+          "value": 56,
+          "unit": "px"
+        },
+        "lineHeight": 1.05,
+        "letterSpacing": {
+          "value": -1.12,
+          "unit": "px"
+        }
+      },
+      "$description": "Home page title, once per page",
+      "$extensions": {
+        "com.figma": {
+          "style": "type/display"
+        }
+      }
+    },
+    "h1": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontWeight": 500,
+        "fontSize": {
+          "value": 36,
+          "unit": "px"
+        },
+        "lineHeight": 1.2,
+        "letterSpacing": {
+          "value": -0.36,
+          "unit": "px"
+        }
+      },
+      "$description": "Page titles: dandiset and file names",
+      "$extensions": {
+        "com.figma": {
+          "style": "type/h1"
+        }
+      }
+    },
+    "h2": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontWeight": 500,
+        "fontSize": {
+          "value": 28,
+          "unit": "px"
+        },
+        "lineHeight": 1.25,
+        "letterSpacing": {
+          "value": -0.28,
+          "unit": "px"
+        }
+      },
+      "$description": "Section titles",
+      "$extensions": {
+        "com.figma": {
+          "style": "type/h2"
+        }
+      }
+    },
+    "h3": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontWeight": 600,
+        "fontSize": {
+          "value": 22,
+          "unit": "px"
+        },
+        "lineHeight": 1.3,
+        "letterSpacing": {
+          "value": 0,
+          "unit": "px"
+        }
+      },
+      "$description": "Panel and view titles",
+      "$extensions": {
+        "com.figma": {
+          "style": "type/h3"
+        }
+      }
+    },
+    "h4": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontWeight": 600,
+        "fontSize": {
+          "value": 18,
+          "unit": "px"
+        },
+        "lineHeight": 1.35,
+        "letterSpacing": {
+          "value": 0,
+          "unit": "px"
+        }
+      },
+      "$description": "Small headings, control groups",
+      "$extensions": {
+        "com.figma": {
+          "style": "type/h4"
+        }
+      }
+    },
+    "lead": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontWeight": 400,
+        "fontSize": {
+          "value": 20,
+          "unit": "px"
+        },
+        "lineHeight": 1.5,
+        "letterSpacing": {
+          "value": 0,
+          "unit": "px"
+        }
+      },
+      "$description": "Introductions on home and archive pages",
+      "$extensions": {
+        "com.figma": {
+          "style": "type/lead"
+        }
+      }
+    },
+    "body-lg": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontWeight": 400,
+        "fontSize": {
+          "value": 18,
+          "unit": "px"
+        },
+        "lineHeight": 1.55,
+        "letterSpacing": {
+          "value": 0,
+          "unit": "px"
+        }
+      },
+      "$description": "Help text and guides",
+      "$extensions": {
+        "com.figma": {
+          "style": "type/body-lg"
+        }
+      }
+    },
+    "body": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontWeight": 400,
+        "fontSize": {
+          "value": 16,
+          "unit": "px"
+        },
+        "lineHeight": 1.55,
+        "letterSpacing": {
+          "value": 0,
+          "unit": "px"
+        }
+      },
+      "$description": "Default text, descriptions, inputs",
+      "$extensions": {
+        "com.figma": {
+          "style": "type/body"
+        }
+      }
+    },
+    "body-sm": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontWeight": 400,
+        "fontSize": {
+          "value": 14,
+          "unit": "px"
+        },
+        "lineHeight": 1.5,
+        "letterSpacing": {
+          "value": 0,
+          "unit": "px"
+        }
+      },
+      "$description": "File tree, metadata panel, dense tables",
+      "$extensions": {
+        "com.figma": {
+          "style": "type/body-sm"
+        }
+      }
+    },
+    "caption": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontWeight": 400,
+        "fontSize": {
+          "value": 13,
+          "unit": "px"
+        },
+        "lineHeight": 1.45,
+        "letterSpacing": {
+          "value": 0,
+          "unit": "px"
+        }
+      },
+      "$description": "Captions, status line, timestamps",
+      "$extensions": {
+        "com.figma": {
+          "style": "type/caption"
+        }
+      }
+    },
+    "label": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontWeight": 600,
+        "fontSize": {
+          "value": 14,
+          "unit": "px"
+        },
+        "lineHeight": 1.3,
+        "letterSpacing": {
+          "value": 0,
+          "unit": "px"
+        }
+      },
+      "$description": "Buttons, tabs, form labels",
+      "$extensions": {
+        "com.figma": {
+          "style": "type/label"
+        }
+      }
+    },
+    "label-sm": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontWeight": 600,
+        "fontSize": {
+          "value": 12,
+          "unit": "px"
+        },
+        "lineHeight": 1.3,
+        "letterSpacing": {
+          "value": 0.72,
+          "unit": "px"
+        }
+      },
+      "$description": "Eyebrows, uppercase. Table headers use it as typed, with no tracking",
+      "$extensions": {
+        "com.figma": {
+          "style": "type/label-sm"
+        }
+      }
+    },
+    "axis": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontWeight": 400,
+        "fontSize": {
+          "value": 12,
+          "unit": "px"
+        },
+        "lineHeight": 1.2,
+        "letterSpacing": {
+          "value": 0,
+          "unit": "px"
+        }
+      },
+      "$description": "Plot ticks and legends, tabular figures",
+      "$extensions": {
+        "com.figma": {
+          "style": "type/axis"
+        }
+      }
+    },
+    "code": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.mono}",
+        "fontWeight": 400,
+        "fontSize": {
+          "value": 14,
+          "unit": "px"
+        },
+        "lineHeight": 1.55,
+        "letterSpacing": {
+          "value": 0,
+          "unit": "px"
+        }
+      },
+      "$description": "Python snippets, paths in running text",
+      "$extensions": {
+        "com.figma": {
+          "style": "type/code"
+        }
+      }
+    },
+    "code-sm": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.mono}",
+        "fontWeight": 400,
+        "fontSize": {
+          "value": 12,
+          "unit": "px"
+        },
+        "lineHeight": 1.5,
+        "letterSpacing": {
+          "value": 0,
+          "unit": "px"
+        }
+      },
+      "$description": "Paths and IDs in the tree and tables",
+      "$extensions": {
+        "com.figma": {
+          "style": "type/code-sm"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,70 @@
+/* Color states shared by Button and IconButton. Variants set the --control-* values; states swap them. */
+:is(.ns-button, .ns-icon-button) {
+  --control-bg: transparent;
+  --control-bg-hover: var(--action-secondary-hover);
+  --control-bg-pressed: var(--action-secondary-pressed);
+  --control-fg: var(--text-default);
+  --control-edge: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-style: solid;
+  border-width: var(--border-width-1);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: none;
+}
+
+:is(.ns-button, .ns-icon-button),
+:is(.ns-button, .ns-icon-button):hover,
+:is(.ns-button, .ns-icon-button):active,
+:is(.ns-button, .ns-icon-button):focus {
+  color: var(--control-fg);
+  background: var(--control-bg);
+  border-color: var(--control-edge);
+}
+
+:is(.ns-button--secondary, .ns-icon-button--secondary) {
+  --control-bg: var(--action-secondary);
+  --control-edge: var(--border-strong);
+}
+
+:is(.ns-button, .ns-icon-button):hover {
+  --control-bg: var(--control-bg-hover);
+}
+
+:is(.ns-button, .ns-icon-button):active {
+  --control-bg: var(--control-bg-pressed);
+}
+
+:is(.ns-button, .ns-icon-button):focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Navy surfaces set --focus-ring to border/focus-inverse. */
+:is(.ns-button, .ns-icon-button):focus-visible {
+  outline: var(--border-width-2) solid var(--focus-ring, var(--border-focus));
+  outline-offset: var(--space-0-5);
+}
+
+:is(.ns-button, .ns-icon-button):disabled {
+  --control-bg: var(--action-disabled);
+  --control-fg: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+:is(.ns-button--secondary, .ns-icon-button--secondary):disabled {
+  --control-bg: var(--action-secondary);
+  --control-edge: var(--border-disabled);
+}
+
+:is(.ns-button--ghost, .ns-icon-button--ghost):disabled {
+  --control-bg: transparent;
+}
+
+@media (forced-colors: active) {
+  :is(.ns-button, .ns-icon-button):disabled {
+    color: GrayText;
+    border-color: GrayText;
+  }
+}

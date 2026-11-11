@@ -1,6 +1,25 @@
-import { canStepFrame, steppedFrameIndex } from "./frameStepping";
-import { SmallIconButton } from "@fi-sci/misc";
-import { ArrowLeft, ArrowRight } from "@mui/icons-material";
+import {
+  canStepFrame,
+  clampFrameIndex,
+  framesToRead,
+  steppedFrameIndex,
+} from "./frameStepping";
+import { FrameBlocks } from "./frameBlocks";
+import {
+  IconButton,
+  ImageZoom,
+  LoadingState,
+  Playback,
+  RangeSlider,
+  Slider,
+  ViewPanel,
+  type ImageZoomValue,
+} from "@ui";
+import { TIME_VIEW_CHROME, TIME_VIEW_INSET } from "../../common/TimeView";
+import { framesDue } from "../../common/playback";
+import { onSpace, usePlaybackClock } from "../../common/usePlayback";
+import "../../common/TimeView.css";
+import "./TwoPhotonSeriesItemView.css";
 import { getHdf5DatasetData, useHdf5Dataset } from "@hdf5Interface";
 import { Canceler, DatasetDataType } from "@remote-h5-file";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
@@ -9,11 +28,11 @@ import TimeseriesSelectionBar, {
 } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
 import { useTimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
 import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
-import PlaneTransformSelector, {
+import PlaneTransformSelector from "../../ImageSegmentation/ImageSegmentationItemView/PlaneTransformSelector";
+import {
   defaultPlaneTransform,
-  PlaneTransform,
-} from "../../ImageSegmentation/ImageSegmentationItemView/PlaneTransformSelector";
-import MultiRangeSlider from "./MultiRangeSlider/MultiRangeSlider";
+  type PlaneTransform,
+} from "../../ImageSegmentation/ImageSegmentationItemView/planeTransform";
 
 // const queryParams = parseQuery(window.location.href)
 
@@ -58,7 +77,11 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
 
   const { currentTime: currentTimeSource, setCurrentTime } =
     useTimeseriesSelection();
-  const currentTime = useThrottledState(currentTimeSource, throttleMsec);
+  const playback = usePlaybackClock((seconds) => advanceFrames(seconds));
+  const currentTime = useThrottledState(
+    currentTimeSource,
+    playback.playing ? 0 : throttleMsec,
+  );
 
   const { initializeTimeseriesSelection } = useTimeseriesSelection();
   useEffect(() => {
@@ -84,6 +107,7 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
   );
 
   const [planeTransform, setPlaneTransform] = useState(defaultPlaneTransform);
+  const [zoom, setZoom] = useState<ImageZoomValue>("fit");
 
   useEffect(() => {
     if (rgb) return;
@@ -97,6 +121,32 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
   }, [rgb]);
 
   const [loading, setLoading] = useState(false);
+  const [shownFrame, setShownFrame] = useState<number>();
+  const readAhead = useRef(1);
+  const rate = timeseriesTimestampsClient?.estimatedSamplingFrequency;
+  useEffect(() => {
+    readAhead.current = framesToRead(
+      playback.playing,
+      rate,
+      Number(playback.speed),
+    );
+  }, [playback.playing, playback.speed, rate]);
+  const frameBlocks = useMemo(() => {
+    if (!dataDataset || dataDataset.shape.length < 3) return undefined;
+    const [frames, h, w, planes = 1] = dataDataset.shape;
+    return new FrameBlocks(
+      async (start, end) => {
+        const block = await getHdf5DatasetData(nwbUrl, dataDataset.path, {
+          slice: [[start, end]],
+        });
+        if (!block)
+          throw Error(`Unable to read data from nwb file: ${dataDataset.path}`);
+        return block;
+      },
+      h * w * planes,
+      frames,
+    );
+  }, [nwbUrl, dataDataset]);
 
   const [frameIndex, setFrameIndex] = useState<number | undefined>(undefined);
   useEffect(() => {
@@ -133,11 +183,13 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
       if (frameIndex === undefined) return;
       // read from nwb file
       // const slice = [[frameIndex, frameIndex + 1], [0, N2], [0, N3]] as [number, number][]
-      const slice = [[frameIndex, frameIndex + 1]] as [number, number][];
-      const x = await getHdf5DatasetData(nwbUrl, dataDataset.path, {
-        slice,
-        canceler,
-      });
+      const x =
+        readAhead.current > 1 && frameBlocks
+          ? await frameBlocks.get(frameIndex, readAhead.current)
+          : await getHdf5DatasetData(nwbUrl, dataDataset.path, {
+              slice: [[frameIndex, frameIndex + 1]],
+              canceler,
+            });
       if (canceled) return;
       if (!x)
         throw Error(`Unable to read data from nwb file: ${dataDataset.path}`);
@@ -153,6 +205,7 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
       );
 
       setCurrentImage(imageData);
+      setShownFrame(frameIndex);
       setLoading(false);
     };
     load();
@@ -166,6 +219,7 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
     frameIndex,
     timeseriesTimestampsClient,
     planeTransform,
+    frameBlocks,
   ]);
 
   const [maxDataValue, setMaxDataValue] = useState<number | undefined>(
@@ -177,16 +231,12 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
     setMaxDataValue((v) => Math.max(v || 0, max));
   }, [currentImage]);
 
-  const bottomBarHeight = 30;
-
   const numFrames = dataDataset?.shape[0];
 
-  const incrementFrame = useMemo(
-    () => (inc: number) => {
+  const goToFrame = useMemo(
+    () => (i2: number) => {
       (async () => {
         if (!timeseriesTimestampsClient) return;
-        const i2 = steppedFrameIndex(frameIndex, inc, numFrames);
-        if (i2 === undefined) return;
         const tt = await timeseriesTimestampsClient.getTimestampsForDataIndices(
           i2,
           i2 + 1,
@@ -199,8 +249,49 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
         console.error("Unable to step to the next frame:", err);
       });
     },
-    [timeseriesTimestampsClient, frameIndex, numFrames, setCurrentTime],
+    [timeseriesTimestampsClient, setCurrentTime],
   );
+  const incrementFrame = (inc: number) => {
+    playback.setPlaying(false);
+    const i2 = steppedFrameIndex(frameIndex, inc, numFrames);
+    if (i2 !== undefined) goToFrame(i2);
+  };
+
+  // Playback asks for the frame now due and holds until it is drawn.
+  const requested = useRef<number>();
+  const carry = useRef(0);
+  function advanceFrames(seconds: number) {
+    if (shownFrame === undefined || numFrames === undefined || !rate)
+      return true;
+    const due = framesDue(carry.current, seconds, rate);
+    carry.current = due.carry;
+    if (due.steps === 0) return true;
+    const next = clampFrameIndex(shownFrame + due.steps, numFrames);
+    requested.current = next;
+    playback.hold(true);
+    goToFrame(next);
+    return next < numFrames - 1;
+  }
+  const { playing, setPlaying, hold } = playback;
+  useEffect(() => {
+    if (!playing) {
+      requested.current = undefined;
+      carry.current = 0;
+      hold(false);
+      return;
+    }
+    if (requested.current === undefined) return;
+    if (frameIndex !== undefined && frameIndex !== requested.current) {
+      setPlaying(false);
+      return;
+    }
+    hold(shownFrame !== requested.current);
+  }, [playing, frameIndex, shownFrame, setPlaying, hold]);
+  const play = (next: boolean) => {
+    if (next && numFrames !== undefined && shownFrame === numFrames - 1)
+      goToFrame(0);
+    setPlaying(next);
+  };
 
   useEffect(() => {
     if (currentMaxValue !== undefined) return;
@@ -209,115 +300,143 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
     setCurrentMaxValue(maxDataValue / (initialBrightnessFactor || 1));
   }, [currentMaxValue, maxDataValue, initialBrightnessFactor]);
 
-  return (
-    <div style={{ position: "relative", width, height }}>
-      <div
-        style={{ position: "absolute", width, height: timeSelectionBarHeight }}
-      >
-        <TimeseriesSelectionBar
-          width={width}
-          height={timeSelectionBarHeight - 5}
-          hideVisibleTimeRange={true}
-        />
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          top: timeSelectionBarHeight,
-          width,
-          height: height - timeSelectionBarHeight - bottomBarHeight,
-        }}
-      >
-        {currentImage && (
-          <ImageDataView
-            width={width}
-            height={height - timeSelectionBarHeight - bottomBarHeight}
-            imageData={currentImage}
-            currentPlane={currentPlane}
-            minValue={currentMinValue || 0}
-            maxValue={currentMaxValue || 1}
-          />
-        )}
-      </div>
+  const frameCount = numFrames ?? dataDataset?.shape[0];
+  const [, frameH, frameW] = dataDataset?.shape ?? [];
+  const numPlanes = dataDataset?.shape[3] || 1;
+  const n = (x: number) => x.toLocaleString("en-US");
+  const summary = [
+    frameCount !== undefined && `${n(frameCount)} frames`,
+    frameW !== undefined &&
+      frameH !== undefined &&
+      `${n(frameW)} × ${n(frameH)} px`,
+    dataDataset?.dtype,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const plotHeight = height - timeSelectionBarHeight - TIME_VIEW_CHROME;
+  const imageSize = Math.max(Math.min(plotHeight, width / 2), 200);
 
-      <div
-        style={{
-          position: "absolute",
-          top: height - bottomBarHeight,
-          width,
-          height: bottomBarHeight,
-          display: "flex",
-          overflow: "hidden",
-        }}
-      >
-        <div style={{ position: "relative", top: 3 }}>
-          <SmallIconButton
-            disabled={!canStepFrame(frameIndex, -1, numFrames)}
-            title="Previous frame"
-            onClick={() => incrementFrame(-1)}
-            icon={<ArrowLeft />}
+  return (
+    <ViewPanel
+      label={path.split("/").pop() || path}
+      summary={summary}
+      busy={loading}
+      controls={
+        <>
+          <Playback
+            playing={playing}
+            onPlayingChange={play}
+            speed={playback.speed}
+            onSpeedChange={playback.setSpeed}
+            time={currentTime ?? 0}
+            readout={
+              frameIndex !== undefined && frameCount !== undefined
+                ? `Frame ${n(frameIndex + 1)} of ${n(frameCount)}`
+                : "Frame —"
+            }
+            waiting={playback.waiting}
           />
-          <SmallIconButton
-            disabled={!canStepFrame(frameIndex, 1, numFrames)}
-            title="Next frame"
-            onClick={() => incrementFrame(1)}
-            icon={<ArrowRight />}
-          />
-        </div>
-        &nbsp;&nbsp;
-        {!rgb && (
-          <PlaneSelector
-            currentPlane={currentPlane}
-            setCurrentPlane={setCurrentPlane}
-            numPlanes={dataDataset?.shape[3] || 1}
-          />
-        )}
-        &nbsp;&nbsp;
-        <div style={{ position: "relative", top: 5 }}>
-          <ValueRangeSelector
-            min={0}
-            max={maxDataValue || 1}
-            currentMinValue={currentMinValue}
-            currentMaxValue={currentMaxValue}
-            setCurrentMinValue={setCurrentMinValue}
-            setCurrentMaxValue={setCurrentMaxValue}
-          />
-        </div>
-        {showOrientationControls !== false && (
-          <>
-            &nbsp;&nbsp;
-            <PlaneTransformSelector
-              planeTransform={planeTransform}
-              setPlaneTransform={setPlaneTransform}
+          <div className="ns-time-group" role="group" aria-label="Frame">
+            <IconButton
+              icon="chevron--left"
+              label="Previous frame"
+              size="sm"
+              disabled={!canStepFrame(frameIndex, -1, numFrames)}
+              onClick={() => incrementFrame(-1)}
             />
-          </>
-        )}
-        &nbsp;&nbsp;
-        {loading && (
-          <div style={{ position: "relative", top: 7 }}>
-            <span>&nbsp;&nbsp;loading...</span>
+            <IconButton
+              icon="chevron--right"
+              label="Next frame"
+              size="sm"
+              disabled={!canStepFrame(frameIndex, 1, numFrames)}
+              onClick={() => incrementFrame(1)}
+            />
           </div>
+          {!rgb && numPlanes > 1 && (
+            <div className="imaging-slider">
+              <Slider
+                label="Plane"
+                min={0}
+                max={numPlanes - 1}
+                step={1}
+                showValue
+                value={currentPlane}
+                onChange={setCurrentPlane}
+              />
+            </div>
+          )}
+          <div className="imaging-slider">
+            <RangeSlider
+              label="Display range"
+              min={0}
+              max={maxDataValue || 1}
+              step={1}
+              showValue
+              showField={false}
+              value={[currentMinValue || 0, currentMaxValue || 0]}
+              onChange={([lo, hi]) => {
+                setCurrentMinValue(lo);
+                setCurrentMaxValue(hi);
+              }}
+            />
+          </div>
+        </>
+      }
+      overview={
+        <div className="imaging-overview">
+          <TimeseriesSelectionBar
+            width={width - TIME_VIEW_INSET}
+            height={timeSelectionBarHeight - 5}
+            hideVisibleTimeRange={true}
+          />
+        </div>
+      }
+    >
+      <div className="imaging-frame">
+        {currentImage ? (
+          <ImageZoom
+            label={`${path.split("/").pop() || path}. Space plays and pauses`}
+            width={currentImage.width}
+            height={currentImage.height}
+            value={zoom}
+            onChange={setZoom}
+            viewWidth={imageSize}
+            viewHeight={imageSize}
+            onKeyDown={onSpace(() => play(!playing))}
+          >
+            <ImageDataView
+              imageData={currentImage}
+              currentPlane={currentPlane}
+              minValue={currentMinValue || 0}
+              maxValue={currentMaxValue || 1}
+            />
+          </ImageZoom>
+        ) : (
+          <LoadingState
+            label={`Loading frame ${n((frameIndex ?? 0) + 1)}`}
+            phase="loading"
+          />
         )}
-        &nbsp;&nbsp;
+        {showOrientationControls !== false && (
+          <PlaneTransformSelector
+            planeTransform={planeTransform}
+            setPlaneTransform={setPlaneTransform}
+          />
+        )}
       </div>
-    </div>
+    </ViewPanel>
   );
 };
 
 type ImageDataViewProps = {
-  width: number;
-  height: number;
   imageData: ImageData;
   currentPlane: number; // -1 means rgb
   minValue: number;
   maxValue: number;
 };
 
-const margins = { left: 10, right: 10, top: 10, bottom: 10 };
-
+/** The frame at its own size; ImageZoom scales it. */
 const ImageDataView: FunctionComponent<ImageDataViewProps> = ({
-  width,
-  height,
   imageData,
   currentPlane,
   minValue,
@@ -335,15 +454,6 @@ const ImageDataView: FunctionComponent<ImageDataViewProps> = ({
     const transformValue = (v: number) => {
       return Math.max(0, Math.min(1, (v - minValue) / (maxValue - minValue)));
     };
-
-    const scale = Math.min(
-      (width - margins.left - margins.right) / W,
-      (height - margins.top - margins.bottom) / H,
-    );
-    const offsetX =
-      margins.left + (width - margins.left - margins.right - W * scale) / 2;
-    const offsetY =
-      margins.top + (height - margins.top - margins.bottom - H * scale) / 2;
 
     if (!W || !H) {
       console.warn("Unexpected: W or H is zero");
@@ -379,156 +489,14 @@ const ImageDataView: FunctionComponent<ImageDataViewProps> = ({
         buf[4 * i + 3] = 255;
       }
     }
-    const offscreenCanvas = document.createElement("canvas");
-    offscreenCanvas.width = W;
-    offscreenCanvas.height = H;
-    const c = offscreenCanvas.getContext("2d");
-    if (!c) return;
-    c.putImageData(imgData, 0, 0);
-
-    ctx.clearRect(0, 0, width, height);
-    ctx.drawImage(offscreenCanvas, offsetX, offsetY, W * scale, H * scale);
-  }, [
-    W,
-    H,
-    data,
-    canvasElement,
-    width,
-    height,
-    minValue,
-    maxValue,
-    numPlanes,
-    currentPlane,
-  ]);
+    ctx.putImageData(imgData, 0, 0);
+  }, [W, H, data, canvasElement, minValue, maxValue, numPlanes, currentPlane]);
   return (
     <canvas
       ref={(elmt) => elmt && setCanvasElement(elmt)}
-      width={width}
-      height={height}
-      style={{ width, height }}
+      width={W}
+      height={H}
     />
-  );
-};
-
-type PlaneSelectorProps = {
-  currentPlane: number;
-  setCurrentPlane: (plane: number) => void;
-  numPlanes: number;
-};
-
-const PlaneSelector: FunctionComponent<PlaneSelectorProps> = ({
-  currentPlane,
-  setCurrentPlane,
-  numPlanes,
-}) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCurrentPlane(Number(e.target.value));
-  };
-  if (numPlanes <= 1) return <span />;
-  return (
-    <RangeInput
-      label="Plane"
-      min={0}
-      max={numPlanes - 1}
-      value={currentPlane}
-      showValue={true}
-      onChange={handleChange}
-    />
-  );
-};
-
-type ValueRangeSelectorProps = {
-  min: number;
-  max: number;
-  currentMinValue?: number;
-  currentMaxValue?: number;
-  setCurrentMinValue: (minValue: number) => void;
-  setCurrentMaxValue: (maxValue: number) => void;
-};
-
-const ValueRangeSelector: FunctionComponent<ValueRangeSelectorProps> = ({
-  currentMinValue,
-  currentMaxValue,
-  setCurrentMinValue,
-  setCurrentMaxValue,
-  min,
-  max,
-}) => {
-  const handleChange = (newMinValue: number, newMaxValue: number) => {
-    setCurrentMinValue(newMinValue);
-    setCurrentMaxValue(newMaxValue);
-  };
-  return (
-    <DualRangeInput
-      // label="range:"
-      label=""
-      title="Brightness/contrast"
-      min={min}
-      max={max}
-      value1={currentMinValue || 0}
-      value2={currentMaxValue || 0}
-      onChange={handleChange}
-      showValues={false}
-    />
-  );
-};
-
-const RangeInput: FunctionComponent<{
-  label: string;
-  min: number;
-  max: number;
-  value: number;
-  showValue: boolean;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}> = ({ label, min, max, value, showValue, onChange }) => {
-  return (
-    <span style={{ fontSize: 12 }}>
-      {label}
-      {showValue && ` ${value}`}:{" "}
-      <input
-        style={{ width: 70, position: "relative", top: 4 }}
-        type="range"
-        min={min}
-        max={max}
-        value={value}
-        onChange={onChange}
-      />
-    </span>
-  );
-};
-
-const DualRangeInput: FunctionComponent<{
-  label: string;
-  title?: string;
-  min: number;
-  max: number;
-  value1: number;
-  value2: number;
-  onChange: (minValue: number, maxValue: number) => void;
-  showValues?: boolean;
-}> = ({ label, min, max, value1, value2, onChange, showValues, title }) => {
-  return (
-    <div style={{ display: "flex" }} title={title}>
-      <div style={{ position: "relative", top: 5 }}>{label}&nbsp;</div>
-      <div style={{ position: "relative", top: 11 }}>
-        <MultiRangeSlider
-          min={min}
-          max={max}
-          value1={value1}
-          value2={value2}
-          setValue1={(x) => onChange(x, value2)}
-          setValue2={(x) => onChange(value1, x)}
-        />
-      </div>
-      {showValues !== false && (
-        <>
-          &nbsp;
-          <div style={{ position: "relative", top: 5 }}>
-            {value1}-{value2}
-          </div>
-        </>
-      )}
-    </div>
   );
 };
 

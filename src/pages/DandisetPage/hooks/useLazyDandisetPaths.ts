@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import getAuthorizationHeaderForUrl from "../../util/getAuthorizationHeaderForUrl";
 import { DatasetFile } from "../../common/DatasetWorkspace/plugins/pluginInterface";
 import { DandisetVersionInfo } from "../../DandiPage/dandi-types";
@@ -56,34 +56,36 @@ export const useLazyDandisetPaths = (
   const stagingStr = staging ? ".sandbox" : "";
   const baseUrl = `https://api${stagingStr}.dandiarchive.org/api/dandisets`;
   const authorizationHeader = getAuthorizationHeaderForUrl(baseUrl);
-  const headers = authorizationHeader
-    ? { Authorization: authorizationHeader }
-    : undefined;
+  const headers = useMemo(
+    () =>
+      authorizationHeader ? { Authorization: authorizationHeader } : undefined,
+    [authorizationHeader],
+  );
 
   // Convert API response to DatasetFile format
-  const convertPathToFile = (
-    item: DandiPathResponse["results"][0],
-    parentId: string,
-  ): DatasetFile => {
-    const parts = item.path.split("/");
-    const filename = parts[parts.length - 1];
-    const isDirectory = item.asset === null;
+  const convertPathToFile = useCallback(
+    (item: DandiPathResponse["results"][0], parentId: string): DatasetFile => {
+      const parts = item.path.split("/");
+      const filename = parts[parts.length - 1];
+      const isDirectory = item.asset === null;
 
-    return {
-      id: isDirectory ? item.path : item.asset?.asset_id || item.path,
-      key: item.path,
-      filename,
-      filepath: item.path,
-      parentId,
-      size: item.aggregate_size,
-      directory: isDirectory,
-      urls: isDirectory
-        ? []
-        : [
-            `https://api${stagingStr}.dandiarchive.org/api/assets/${item.asset?.asset_id}/download/`,
-          ],
-    };
-  };
+      return {
+        id: isDirectory ? item.path : item.asset?.asset_id || item.path,
+        key: item.path,
+        filename,
+        filepath: item.path,
+        parentId,
+        size: item.aggregate_size,
+        directory: isDirectory,
+        urls: isDirectory
+          ? []
+          : [
+              `https://api${stagingStr}.dandiarchive.org/api/assets/${item.asset?.asset_id}/download/`,
+            ],
+      };
+    },
+    [stagingStr],
+  );
 
   // Function to fetch directory contents
   const fetchDirectoryContents = useCallback(
@@ -108,7 +110,7 @@ export const useLazyDandisetPaths = (
         return [];
       }
     },
-    [dandisetId, dandisetVersionInfo, headers, nwbFilesOnly, stagingStr],
+    [baseUrl, dandisetId, dandisetVersionInfo, headers, nwbFilesOnly],
   );
 
   // Load initial top-level files
@@ -166,6 +168,7 @@ export const useLazyDandisetPaths = (
     staging,
     nwbFilesOnly,
     fetchDirectoryContents,
+    convertPathToFile,
   ]);
 
   // Function to fetch a specific file by path
@@ -185,7 +188,12 @@ export const useLazyDandisetPaths = (
         return null;
       }
     },
-    [dandisetId, dandisetVersionInfo, fetchDirectoryContents],
+    [
+      dandisetId,
+      dandisetVersionInfo,
+      fetchDirectoryContents,
+      convertPathToFile,
+    ],
   );
 
   // Function to fetch directory contents
@@ -230,6 +238,7 @@ export const useLazyDandisetPaths = (
       staging,
       nwbFilesOnly,
       fetchDirectoryContents,
+      convertPathToFile,
     ],
   );
 

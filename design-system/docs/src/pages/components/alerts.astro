@@ -1,0 +1,179 @@
+---
+import Existing from "../../components/Existing.astro";
+import { Alert, InlineMessage, Toast } from "@ui";
+import CodeSample from "../../components/CodeSample.astro";
+import DoDont from "../../components/DoDont.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import ToastDemo from "../../components/ToastDemo";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const noop = () => {};
+
+const WHICH = [
+  ["Something blocks the view: embargo, failed read, bad URL", "Alert, in the view", "Until fixed or dismissed"],
+  ["People did something and it worked", "Toast", "4 seconds, and longer while hovered or focused"],
+  ["Something people did failed", "Toast, error", "Until dismissed"],
+  ["A note about one control or plot", "Inline message", "While it applies"],
+  ["A decision before something irreversible", "Dialog (Modals and drawers)", "Until answered"],
+  ["Nothing to show yet", "Empty state (Usage guidelines)", "Until there is data"],
+];
+
+const WRITING = [
+  ["This Dandiset is embargoed", "Permission Required", "Names the cause"],
+  ["Add API key", "Go to Settings", "Says the action, not the place"],
+  ["Get a key on DANDI", "Get API Key from DANDI", "Shorter, sentence case"],
+  ["Reload to use the new key", "API key saved. Please reload the page for the changes to take effect.", "Title first; the button does the reload"],
+  ["Link copied", "Copied!", "Says what was copied; no exclamation"],
+  ["The timeseries alignment couldn’t be drawn", "Something went wrong in the Timeseries Alignment tab", "Names the view and what failed"],
+];
+
+const SPECS = [
+  ["Surface", "status/*/bg · 1px status/*/border · radius/sm", "surface/inverse · radius/sm · elevation/2", "None"],
+  ["Padding", "12px · space/3", "8px 8px 8px 12px · space/2 and space/3", "—"],
+  ["Icon", "20px · status/*/text", "16px · text/on-inverse; none for neutral", "16px · status/*/text"],
+  ["Text", "type/label title · type/body-sm message · type/code-sm detail", "type/body-sm · text/on-inverse", "type/caption · status/*/text"],
+  ["Actions", "Up to two Small buttons: Secondary, then Ghost; Primary, then Secondary when one is primary; a button action can be loading, with a spinner, while it runs", "One, as underlined type/label", "—"],
+  ["Dismiss", "Optional 24px Ghost icon button", "Always, 24px Ghost icon button", "—"],
+  ["Place", "In the view, where the problem is", "Bottom center, 24px up · space/6", "Under the field or plot"],
+  ["Timing", "Stays", "4 seconds; errors and work in progress stay", "While it applies"],
+];
+
+const IN_APP = [
+  ["Any view or file that can’t be shown", "Error alert: “The spectrogram couldn’t be shown”, the cause as detail, Report this, and Try again where the view can retry"],
+  ["A wrong value in a plot control", "Error inline message beside it: “Window start must be before the end.”"],
+  ["An embargoed Dandiset without a key", "Warning alert: “This Dandiset is embargoed”, with Add API key and Get a key on DANDI"],
+  ["A link to a file, object or Dandiset that can’t be found", "Error alert in place of “Loading…”: “This file couldn’t be shown”, with the cause, such as “DANDI has no Dandiset 999999 (404).”"],
+  ["Share on a tab", "Success toast: “Link copied”; an error toast if the browser won’t copy"],
+  ["Settings, after a key changes", "Info alert: “Reload to use the new key”, with Reload page"],
+  ["A Figpack figure being built", "Info alert: “Job pending” or “Job in progress”, with Refresh status, loading while it checks, and View job; an error alert when the job fails"],
+  ["A 4D NIfTI image", "Info inline message: how many frames have loaded and how to load the rest"],
+];
+
+const code = `import { Alert, InlineMessage, ToastProvider, useToast } from "@ui";
+
+<Alert
+  status="error"
+  title="The PSTH couldn’t be drawn"
+  detail={error.message}
+  actions={[{ label: "Try again", onClick: retry }, { label: "Report this", href: issueUrl }]}
+>
+  Try again, or report it if it keeps happening.
+</Alert>
+
+<Alert
+  status="warning"
+  title="Run this code?"
+  actions={[{ label: "Allow", onClick: allow, primary: true }, { label: "Deny", onClick: deny }]}
+>
+  The assistant wants to run a Python script that reads /units from this file.
+</Alert>
+
+<InlineMessage status="error">Window start must be before the end.</InlineMessage>
+
+// Once, at the app root:
+<ToastProvider><App /></ToastProvider>
+
+// Anywhere below it:
+const toast = useToast();
+toast.show({ status: "success", message: "Link copied" });`;
+---
+
+<DocsLayout title="Alerts and toasts" description="Alert, Toast and Inline message: what happened and what to do next.">
+  <Intro
+    lead="Alerts, toasts and inline messages tell people what happened and what to do next: an embargoed Dandiset, a plot that failed to draw, a link copied. They replace Material UI alerts, a browser alert() box, red text in two shades with no icon, and “Copied!” in small gray text."
+    status="Updated November 10, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "Say what to do", text: "Every alert names the problem and the next step, with a button for it when there is one." },
+      { title: "Stay or go by weight", text: "Alerts stay until the problem is fixed. Toasts confirm and leave after 4 seconds." },
+      { title: "One look per status", text: "Info, success, warning and error each have one color and one icon, everywhere." },
+    ]}
+  />
+
+  <Existing page="alerts" />
+
+  <DocSection title="Alert" lead="A problem or notice inside a view. A full 1px border in the status color, a light tint, an icon, a title, a message and up to two actions. No colored side bar.">
+    <div class="alert-demo">
+      <Alert status="info" title="Reload to use the new key" actions={[{ label: "Reload page", onClick: noop }, { label: "Not now", onClick: noop }]}>
+        Neurosift reads API keys when a page opens. Reload to open embargoed Dandisets with it.
+      </Alert>
+      <Alert status="success" title="API key works">
+        DANDI accepted the key. Embargoed Dandisets you can access will now open.
+      </Alert>
+      <Alert status="warning" title="This Dandiset is embargoed" actions={[{ label: "Add API key", onClick: noop }, { label: "Get a key on DANDI", onClick: noop }]}>
+        Add a DANDI API key from an account with access to open its files.
+      </Alert>
+      <Alert status="warning" title="Run this code?" actions={[{ label: "Allow", onClick: noop, primary: true }, { label: "Deny", onClick: noop }]}>
+        The assistant wants to run a Python script that reads /units from this file.
+      </Alert>
+      <Alert status="error" title="The PSTH couldn’t be drawn" detail="Reading /units/spike_times failed: the request timed out after 15 s." actions={[{ label: "Try again", onClick: noop }, { label: "Report this", onClick: noop }]}>
+        Try again, or report it if it keeps happening.
+      </Alert>
+    </div>
+    <p class="doc-note">Info for something people should know; success rarely, since a toast is usually enough; warning when people can fix it themselves; error when something failed. Errors say which view failed, show the cause in code, and offer Try again and Report this. When the alert asks for a decision, such as a permission prompt in Neurosift Chat, mark the expected answer primary: it becomes a Primary button and the other one Secondary.</p>
+  </DocSection>
+
+  <DocSection title="Toast" lead="A short confirmation after something people did, on navy at the bottom center of the window. Try them: each new toast replaces the one before.">
+    <ToastDemo client:visible />
+    <div class="toast-specimens">
+      <Toast status="success" message="Link copied" onDismiss={noop} />
+      <Toast message="Preparing units.csv" busy onDismiss={noop} />
+      <Toast message="Tab closed" action={{ label: "Undo", onClick: noop }} onDismiss={noop} />
+      <Toast status="error" message="Couldn’t copy the link. Copy it from the address bar." onDismiss={noop} />
+    </div>
+    <p class="doc-note">Confirmations leave after 4 seconds. A download shows a spinner until its result replaces it. One action at most, such as Undo. Errors stay until dismissed, so people can read them.</p>
+  </DocSection>
+
+  <DocSection title="Inline message" lead="One line inside a panel, under a field or under a plot. Icon and caption in the status color.">
+    <div class="inline-message-demo">
+      <InlineMessage status="info">Showing frame 12 of 120. 4D images load one frame at a time.</InlineMessage>
+      <InlineMessage status="warning">This file has no trials table to align to.</InlineMessage>
+      <InlineMessage status="error">Window start must be before the end.</InlineMessage>
+    </div>
+  </DocSection>
+
+  <DocSection title="Which one to use">
+    <DocTable caption="Which one to use" columns={["Situation", "Use", "Stays"]}>
+      {WHICH.map(([situation, use, stays]) => <tr><th scope="row">{situation}</th><td>{use}</td><td>{stays}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Writing" lead="Rewrites of messages in the app today. Wording follows the Voice and Errors and access pages.">
+    <DocTable caption="Writing messages" columns={["Use", "Instead of", "Why"]}>
+      {WRITING.map(([use, instead, why]) => <tr><th scope="row">{use}</th><td>{instead}</td><td>{why}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Accessibility">
+    <ul class="rule-list">
+      <li><strong>The right live region.</strong> Errors use role=alert and are read at once; everything else uses role=status and is read without interrupting. Toasts appear in one region that’s always in the page, so each is announced.</li>
+      <li><strong>Focus stays put.</strong> Alerts and toasts never take focus, and their buttons are reachable with Tab. If focus is on a toast when it closes, it goes back where it was.</li>
+      <li><strong>Time to read.</strong> Toasts wait while hovered or focused, then give 4 more seconds. Errors never leave by themselves.</li>
+      <li><strong>Not color alone.</strong> Each status has its own icon, and a title or message that says what happened.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Put the alert where the problem is: in the view that failed.", "Offer the next step as a button.", "Show technical detail in Plex Mono under the plain message.", "Replace endless loading with an alert once a request fails."]}
+      donts={["Don’t use browser alert() boxes.", "Don’t use red text without an icon.", "Don’t stack more than one toast; replace the old one.", "Don’t add a colored side bar to alerts."]}
+    />
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Alert, Toast and Inline message specs" columns={["Property", "Alert", "Toast", "Inline message"]}>
+      {SPECS.map(([property, alert, toast, inline]) => <tr><th scope="row">{property}</th><td>{alert}</td><td>{toast}</td><td>{inline}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In the app" lead="Where the app uses them today.">
+    <DocTable caption="Alert, Toast and Inline message in the app" columns={["Where", "Shows"]}>
+      {IN_APP.map(([where, shows]) => <tr><th scope="row">{where}</th><td>{shows}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. Toasts need one ToastProvider at the app root; any component below it shows a toast with useToast.">
+    <CodeSample label="React" code={code} />
+  </DocSection>
+</DocsLayout>

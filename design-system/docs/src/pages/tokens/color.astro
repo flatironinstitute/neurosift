@@ -1,0 +1,70 @@
+---
+import CodeSample from "../../components/CodeSample.astro";
+import DocSection from "../../components/DocSection.astro";
+import Intro from "../../components/Intro.astro";
+import SwatchGrid from "../../components/SwatchGrid.astro";
+import TokenTable from "../../components/TokenTable.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { countTokens, TokenView, tokensIn } from "../../tokens";
+
+const HUES = ["navy", "blue", "neutral", "red", "amber", "green"];
+const ROLES = ["surface", "text", "action", "border", "status", "overlay", "code"];
+const isStep = (view: TokenView) => /^\d+$/.test(view.step);
+
+const hues = HUES.map((hue) => ({ hue, views: tokensIn(`color.${hue}`).filter(isStep) }));
+const base = ["color.white", "color.black", "color.base.page", "color.base.border"].map(TokenView.of);
+const translucent = tokensIn("color.navy").filter((view) => !isStep(view));
+const semanticRows = ROLES.flatMap((role) => tokensIn(role)).map((view) => ({ view }));
+const series = [...tokensIn("data.series").filter(isStep), TokenView.of("data.series.other")];
+const interaction = ["data.cursor", "data.selection"].map(TokenView.of);
+const code = `:root {
+  --color-navy-600: #2c3e50;
+  --action-primary: var(--color-navy-600);
+  --text-link: var(--color-blue-600);
+  --border-strong: var(--color-black);
+}
+
+.button-primary {
+  color: var(--text-on-inverse);
+  background: var(--action-primary);
+}`;
+---
+
+<DocsLayout title="Color tokens" description="Primitive, semantic and data colors of the Neurosift design system.">
+  <Intro
+    lead={`Colors live in two Figma variable collections. Primitives hold every value once (${countTokens("Primitives", "color")}). Semantic tokens name what a color is for and point at a primitive (${countTokens("Semantic", "color")}). Components and screens use semantic tokens only.`}
+    status="Updated November 6, 2026 · Tokens · Every swatch is drawn with its CSS variable, so it changes when the token changes"
+    rules={[
+      { title: "Role, not hue", text: "Pick text/muted, not neutral 500. When a role changes, every screen follows." },
+      { title: "Data colors for data", text: "data/ tokens are only for plots. Navy and link blue never encode data." },
+      { title: "Status needs words", text: "Error, warning, success and info appear only with an icon and words, never as decoration." },
+    ]}
+  />
+
+  <DocSection title="Primitives" lead="Raw values, named by hue and step. Hidden from the Figma property pickers: designers and components reach them through semantic tokens.">
+    {hues.map(({ hue, views }) => <SwatchGrid label={`${hue} primitives`} views={views} />)}
+    <SwatchGrid label="Base, white and black" views={base} />
+    <SwatchGrid label="Translucent navy" views={translucent} />
+  </DocSection>
+
+  <DocSection title="Semantic tokens" lead="What components use. Each points at one primitive; the swatch shows the color it resolves to.">
+    <TokenTable caption="Semantic color tokens" rows={semanticRows} sample="swatch" showAlias />
+  </DocSection>
+
+  <DocSection title="Data visualization tokens" lead="Only for data: series for groups, sequential for amounts, diverging for values around zero. Neurosift’s own plots keep their colors; these are for new views and legends.">
+    <h3 class="doc-subhead">Series, in order; other for everything past six</h3>
+    <SwatchGrid label="Series colors" views={series} />
+    <h3 class="doc-subhead">Sequential: viridis, low to high</h3>
+    <SwatchGrid label="Viridis" views={tokensIn("data.viridis")} ramp />
+    <h3 class="doc-subhead">Diverging: below zero, zero, above zero</h3>
+    <SwatchGrid label="Diverging blue to red" views={tokensIn("data.diverging")} ramp />
+    <h3 class="doc-subhead">Plot interaction</h3>
+    <SwatchGrid label="Cursor and selected window" views={interaction} />
+    <p class="doc-note">Text inside a selected window uses text/secondary or darker: text/muted falls to 4.4:1 on the selection tint, under the 4.5:1 minimum.</p>
+  </DocSection>
+
+  <DocSection title="In code" lead="Each token is a custom property on :root, named by its Figma code syntax. Semantic tokens point at primitives with var().">
+    <CodeSample label="tokens.css and a component" code={code} />
+    <p class="doc-note">One mode, Light, for now. A dark mode can be added as a second mode of the Semantic collection without touching components.</p>
+  </DocSection>
+</DocsLayout>

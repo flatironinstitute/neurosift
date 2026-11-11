@@ -1,0 +1,57 @@
+---
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+import { EXISTING } from "../existing";
+import DocRows from "./DocRows.astro";
+import DocSection from "./DocSection.astro";
+import DocTable from "./DocTable.astro";
+
+interface Props {
+  page: keyof typeof EXISTING;
+}
+
+const captures = import.meta.glob<{ default: ImageMetadata }>(
+  "../assets/existing/*.png",
+  { eager: true },
+);
+const capture = (file: string) => {
+  const found = captures[`../assets/existing/${file}.png`];
+  if (!found) throw new Error(`Missing capture: ${file}.png`);
+  return found.default;
+};
+
+const { title, lead, shots = [], problems = [], table } = EXISTING[Astro.props.page];
+---
+
+<DocSection title={title} lead={lead}>
+  {
+    shots.length > 0 && (
+      <div class="captures">
+        {shots.map(({ file, alt, caption }) => (
+          <figure class="capture">
+            <Image src={capture(file)} alt={alt} />
+            <figcaption class="type-body-sm">{caption}</figcaption>
+          </figure>
+        ))}
+      </div>
+    )
+  }
+  {
+    problems.length > 0 && (
+      <ul class="rule-list">
+        {problems.map(({ title, text }) => (
+          <li>
+            <strong>{title}.</strong> {text}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+  {
+    table && (
+      <DocTable caption={table.caption} columns={table.columns}>
+        <DocRows rows={table.rows} />
+      </DocTable>
+    )
+  }
+</DocSection>

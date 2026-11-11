@@ -1,0 +1,55 @@
+---
+import "../../../../src/css/fonts.css";
+import "../../../../src/css/tokens.css";
+import "../styles/specimens.css";
+import "../styles/docs.css";
+import logo from "../../../../public/neurosift-logo.png";
+import { Image } from "astro:assets";
+import SideMenu from "../components/SideMenu.astro";
+import { Button } from "@ui";
+import { appHref } from "../appUrl";
+import { withBase } from "../navigation";
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const SITE = "Neurosift design system";
+const { title, description } = Astro.props;
+const pageTitle = title === SITE ? SITE : `${title} · ${SITE}`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="icon" href={logo.src} type="image/png" />
+    <title>{pageTitle}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#content">Skip to content</a>
+    <div class="docs-frame">
+      <SideMenu />
+      <div class="docs-page">
+        <header class="hero">
+          <div class="hero-bar">
+            <a class="hero-brand" href={withBase("/")}>
+              <Image src={logo} alt="" width={28} height={28} />
+              <span>neurosift</span>
+            </a>
+            <Button variant="secondary" icon="launch" href={appHref()} target="_blank" rel="noopener noreferrer">
+              View website
+            </Button>
+          </div>
+          <h1>{title}</h1>
+        </header>
+        <main id="content">
+          <slot />
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

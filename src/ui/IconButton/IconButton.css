@@ -1,0 +1,11 @@
+.ns-icon-button {
+  flex: none;
+  inline-size: var(--button-height-md);
+  block-size: var(--button-height-md);
+  padding: 0;
+}
+
+.ns-icon-button--sm {
+  inline-size: var(--button-height-sm);
+  block-size: var(--button-height-sm);
+}

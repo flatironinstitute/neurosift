@@ -1,0 +1,121 @@
+.ns-catalog-search {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.ns-catalog-search-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.ns-catalog-search-total,
+.ns-catalog-meta {
+  margin: 0;
+  font: var(--type-body-sm);
+  color: var(--text-secondary);
+}
+
+.ns-catalog-filter {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ns-catalog-filter-legend {
+  padding: 0;
+  font: var(--type-label);
+  color: var(--text-default);
+}
+
+.ns-catalog-filter-source,
+.ns-catalog-modified,
+.ns-catalog-more {
+  margin: 0;
+  font: var(--type-caption);
+  color: var(--text-muted);
+}
+
+.ns-catalog-applied {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ns-catalog-applied-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ns-catalog-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block-end: var(--space-2);
+  border-block-end: var(--border-width-2) solid var(--border-strong);
+}
+
+.ns-catalog-total {
+  margin: 0;
+  font: var(--type-h4);
+}
+
+.ns-catalog-result {
+  display: grid;
+  gap: calc(var(--space-1) + var(--space-0-5));
+  padding: calc(var(--space-4) + var(--space-0-5)) var(--space-3);
+  border-block-end: var(--border-width-1) solid var(--border-subtle);
+}
+
+.ns-catalog-result:hover {
+  background: var(--surface-row-hover);
+}
+
+.ns-catalog-result-line,
+.ns-catalog-types {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.ns-catalog-id {
+  font: var(--type-code-sm);
+  color: var(--text-default);
+}
+
+.ns-catalog-title {
+  font: var(--type-h4);
+  color: var(--text-link);
+}
+
+.ns-catalog-more {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-block: var(--space-4);
+}
+
+.ns-catalog-recent-title {
+  flex: 1;
+  min-inline-size: 0;
+  color: var(--text-default);
+  overflow-wrap: anywhere;
+}
+
+/* The sort select keeps the width of its longest option in the flex row. */
+.ns-catalog-sort {
+  inline-size: 12rem;
+}

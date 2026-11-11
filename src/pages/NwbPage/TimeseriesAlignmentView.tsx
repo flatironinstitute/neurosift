@@ -1,5 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { SmallIconButton } from "@fi-sci/misc";
+import { useCssVars } from "@components/useCssVars";
+import {
+  Button,
+  Checkbox,
+  IconButton,
+  Legend,
+  LoadingState,
+  ViewPanel,
+} from "@ui";
 import {
   FunctionComponent,
   useCallback,
@@ -8,7 +16,6 @@ import {
   useReducer,
   useState,
 } from "react";
-import { FaEye } from "react-icons/fa";
 import { getHdf5DatasetData, getHdf5Group } from "./hdf5Interface";
 import {
   useNwbFileSpecifications,
@@ -18,6 +25,7 @@ import {
   neurodataTypeInheritsFrom,
   neurodataTypeInheritsFromAny,
 } from "./neurodataTypeInheritance";
+import "./TimeseriesAlignmentView.css";
 
 type Props = {
   nwbUrl: string;
@@ -104,7 +112,6 @@ const buildTypeSets = (
 
 const TimeseriesAlignmentView: FunctionComponent<Props> = ({
   nwbUrl,
-  width,
   isExpanded,
   onOpenTimeseriesItem,
 }) => {
@@ -361,50 +368,76 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
 
   const items = timeseriesAlignment.timeseries;
   const anyHidden = items.some((item) => hiddenPaths.has(item.path));
+  // Types in name order take the six series steps, so a file's colors stay put as items arrive.
+  const types = useMemo(
+    () => [...new Set(items.map((item) => item.neurodataType))].sort(),
+    [items],
+  );
+  const shown = items.length - hiddenPaths.size;
+  const summary =
+    items.length === 0
+      ? loadingMessage
+        ? "Finding the time series, intervals and events in this file."
+        : "This file has no time series, intervals or events with times."
+      : `${items.length} time series, intervals and events` +
+        (startTime !== undefined && endTime !== undefined
+          ? `; the ${shown === items.length ? "" : "shown "}items span ${startTime.toFixed(1)} to ${endTime.toFixed(1)} s.`
+          : ".");
 
   return (
-    <div style={{ position: "relative", width }}>
-      {loadingMessage && <div>{loadingMessage}</div>}
-      {items.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginTop: 12,
-            marginBottom: 10,
-            fontSize: 13,
-          }}
-        >
-          <button
-            onClick={() =>
-              setHiddenPaths(
-                anyHidden ? new Set() : new Set(items.map((item) => item.path)),
-              )
-            }
-          >
-            {anyHidden ? "Show all" : "Hide all"}
-          </button>
-          <span style={{ color: "#666" }}>
-            {items.length - hiddenPaths.size} of {items.length} shown
-          </span>
+    <ViewPanel
+      label="Timeseries alignment"
+      summary={summary}
+      busy={!!loadingMessage}
+      controls={
+        items.length > 0 && (
+          <>
+            <Button
+              size="sm"
+              onClick={() =>
+                setHiddenPaths(
+                  anyHidden
+                    ? new Set()
+                    : new Set(items.map((item) => item.path)),
+                )
+              }
+            >
+              {anyHidden ? "Show all" : "Hide all"}
+            </Button>
+            <span className="alignment-count">
+              {shown} of {items.length} shown
+            </span>
+          </>
+        )
+      }
+    >
+      {loadingMessage && items.length === 0 ? (
+        <LoadingState label="Finding the time series" phase="loading" />
+      ) : (
+        <div className="alignment-chart">
+          <ul className="alignment-list" aria-label="Times of each item">
+            {items.map((item) => (
+              <TAItemView
+                key={item.path}
+                item={item}
+                startTime={startTime}
+                endTime={endTime}
+                series={types.indexOf(item.neurodataType) + 1}
+                visible={!hiddenPaths.has(item.path)}
+                onToggleVisible={toggleVisible}
+                onOpenTimeseriesItem={onOpenTimeseriesItem}
+              />
+            ))}
+          </ul>
+          {types.length > 0 && (
+            <Legend
+              label="Neurodata types"
+              items={types.map((name, index) => ({ name, series: index + 1 }))}
+            />
+          )}
         </div>
       )}
-      {items.map((item) => (
-        <div key={item.path} title={item.neurodataType}>
-          <TAItemView
-            key={item.path}
-            item={item}
-            startTime={startTime}
-            endTime={endTime}
-            width={width - 4}
-            visible={!hiddenPaths.has(item.path)}
-            onToggleVisible={toggleVisible}
-            onOpenTimeseriesItem={onOpenTimeseriesItem}
-          />
-        </div>
-      ))}
-    </div>
+    </ViewPanel>
   );
 };
 
@@ -412,137 +445,75 @@ type TAItemViewProps = {
   item: TAItem;
   startTime?: number;
   endTime?: number;
-  width: number;
+  /** The data/series step, 1 to 6; past six the other color. */
+  series: number;
   visible: boolean;
   onToggleVisible: (path: string) => void;
   onOpenTimeseriesItem: (path: string) => void;
 };
 
-const getColorForNeurodataType = (nt: string) => {
-  switch (nt) {
-    case "ElectricalSeries":
-      return "blue";
-    case "TwoPhotonSeries":
-      return "green";
-    case "OnePhotonSeries":
-      return "green";
-    case "SpatialSeries":
-      return "salmon";
-    case "ImageSeries":
-      return "orange";
-    case "RoiResponseSeries":
-      return "purple";
-    case "PatchClampSeries":
-      return "brown";
-    case "IndexSeries":
-      return "black";
-    case "AbstractFeatureSeries":
-      return "yellow";
-    case "AnnotationSeries":
-      return "slateblue";
-    case "IntervalSeries":
-      return "magenta";
-    case "DecompositionSeries":
-      return "lime";
-    case "OptogeneticSeries":
-      return "pink";
-    case "TimeIntervals":
-      return "teal";
-    case "Events":
-      return "darkred";
-    case "LabeledEvents":
-      return "darkred";
-    case "TTLs":
-      return "darkred";
-    default:
-      return "gray";
-  }
-};
+const percent = (x: number) => `${Math.min(Math.max(x, 0), 1) * 100}%`;
 
 const TAItemView: FunctionComponent<TAItemViewProps> = ({
   item,
   startTime,
   endTime,
-  width,
+  series,
   visible,
   onToggleVisible,
   onOpenTimeseriesItem,
 }) => {
-  const barHeight = 8;
-  const gapAboveBar = 5; // space between the text and the bar
-  const gapBelowBar = 14; // space separating this item from the next
-  const rawP1 =
-    ((item.startTime - (startTime || 0)) /
-      ((endTime || 1) - (startTime || 0))) *
-    width;
-  const rawP2 =
-    ((item.endTime - (startTime || 0)) / ((endTime || 1) - (startTime || 0))) *
-    width;
-  const p1 = Math.min(Math.max(rawP1, 0), width);
-  const p2 = Math.min(Math.max(rawP2, 0), width);
-  const color = getColorForNeurodataType(item.neurodataType);
-  if (item.startTime === undefined)
-    return <div>item.startTime is undefined</div>;
-  if (item.endTime === undefined) return <div>item.endTime is undefined</div>;
+  const t0 = startTime || 0;
+  const span = (endTime || 1) - t0;
+  const from = (item.startTime - t0) / span;
+  const to = (item.endTime - t0) / span;
+  const barRef = useCssVars<HTMLSpanElement>({
+    "--bar-start": percent(from),
+    "--bar-end": percent(1 - to),
+  });
+  if (item.startTime === undefined) return <li>item.startTime is undefined</li>;
+  if (item.endTime === undefined) return <li>item.endTime is undefined</li>;
   if (typeof item.startTime !== "number")
-    return <div>item.startTime is not a number</div>;
+    return <li>item.startTime is not a number</li>;
   if (typeof item.endTime !== "number")
-    return <div>item.endTime is not a number</div>;
+    return <li>item.endTime is not a number</li>;
+  const step = series >= 1 && series <= 6 ? series : "other";
   return (
-    <div style={{ width, marginBottom: gapBelowBar }}>
-      {/* Text in normal flow so it can wrap to multiple lines without
-          overlapping the bar, which is rendered below it */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          gap: 4,
-          color: visible ? color : "#999",
-          fontSize: 14,
-        }}
-      >
-        <input
-          type="checkbox"
+    <li
+      className={
+        visible ? "alignment-item" : "alignment-item alignment-item--hidden"
+      }
+      title={item.neurodataType}
+    >
+      <div className="alignment-head">
+        <Checkbox
+          label={`Show ${item.path} in the alignment`}
+          hideLabel
           checked={visible}
           onChange={() => onToggleVisible(item.path)}
-          title="Toggle this item in the alignment view"
-          style={{ marginTop: 3, cursor: "pointer", flexShrink: 0 }}
         />
-        <span style={{ flexShrink: 0 }} title="Open this item">
-          <SmallIconButton
-            icon={<FaEye />}
-            onClick={() => {
-              onOpenTimeseriesItem(item.path);
-            }}
-          />
-        </span>
-        <span>
-          {item.path} ({item.neurodataType}) [{item.startTime.toFixed(1)} -{" "}
-          {item.endTime.toFixed(1)} sec]
+        <IconButton
+          icon="view"
+          label={`Open ${item.path}`}
+          size="sm"
+          variant="ghost"
+          onClick={() => onOpenTimeseriesItem(item.path)}
+        />
+        <span className="alignment-path">{item.path}</span>
+        <span className="alignment-meta">
+          {item.neurodataType} · {item.startTime.toFixed(1)} –{" "}
+          {item.endTime.toFixed(1)} s
         </span>
       </div>
       {visible && (
-        <div
-          style={{
-            position: "relative",
-            width,
-            height: barHeight,
-            marginTop: gapAboveBar,
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              left: p1,
-              width: Math.max(p2 - p1, 2),
-              height: barHeight,
-              background: color,
-              borderRadius: 2,
-            }}
+        <span className="alignment-track" aria-hidden="true">
+          <span
+            ref={barRef}
+            className={`alignment-bar alignment-bar--${step}`}
           />
-        </div>
+        </span>
       )}
-    </div>
+    </li>
   );
 };
 

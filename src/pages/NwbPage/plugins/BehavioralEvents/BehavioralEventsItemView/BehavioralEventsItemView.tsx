@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getHdf5DatasetData, useHdf5Group } from "@hdf5Interface";
-import TimeScrollView2, {
-  useTimeScrollView2,
-} from "@shared/component-time-scroll-view-2/TimeScrollView2";
+import TimeScrollView2 from "@shared/component-time-scroll-view-2/TimeScrollView2";
+import { useTimeScrollView2 } from "@shared/component-time-scroll-view-2/useTimeScrollView2";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 import { timeSelectionBarHeight } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
 import {
@@ -12,6 +11,10 @@ import {
   useReducer,
   useState,
 } from "react";
+import TimeView, {
+  TIME_VIEW_CHROME,
+  TIME_VIEW_INSET,
+} from "../../common/TimeView";
 import { BehavioralEventsData, EventSeries, Opts } from "./WorkerTypes";
 
 type Props = {
@@ -120,12 +123,18 @@ const BehavioralEventsItemView: FunctionComponent<Props> = ({
     };
   }, [group, nwbUrl]);
 
+  const n = beData.seriesNames.length;
   return (
-    <BehavioralEventsItemViewChild
-      width={width}
-      height={height}
-      beData={beData}
-    />
+    <TimeView
+      label={path.split("/").pop() || path}
+      summary={`${n.toLocaleString("en-US")} event series`}
+    >
+      <BehavioralEventsItemViewChild
+        width={width - TIME_VIEW_INSET}
+        height={Math.max(height - TIME_VIEW_CHROME, 200)}
+        beData={beData}
+      />
+    </TimeView>
   );
 };
 
@@ -257,7 +266,7 @@ const BehavioralEventsItemViewChild: FunctionComponent<ChildProps> = ({
       gridlineOpts={gridlineOpts}
       yAxisInfo={yAxisInfo}
       hideToolbar={hideToolbar}
-      showTimeSelectionBar={true}
+      showTimeSelectionBar={false}
       leftMargin={leftMargin}
     />
   );

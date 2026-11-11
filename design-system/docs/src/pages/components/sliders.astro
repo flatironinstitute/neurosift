@@ -1,0 +1,151 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import Existing from "../../components/Existing.astro";
+import CodeSample from "../../components/CodeSample.astro";
+import DoDont from "../../components/DoDont.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import { RangeDemo, SliderDemos } from "../../components/SliderDemo";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const KEYS = [
+  ["Left and Down arrows", "One step lower"],
+  ["Right and Up arrows", "One step higher"],
+  ["Page Down, Page Up", "Ten steps"],
+  ["Home, End", "Minimum, maximum"],
+  ["Tab", "Moves from the slider to its field, and between the two thumbs of a range"],
+  ["Enter, in a field", "Applies the typed value, snapped to the step and the limits"],
+];
+
+const WRITING = [
+  ["Brightness", "(no label) Brightness tooltip", "Visible, not hover-only"],
+  ["Display range", "Brightness/contrast", "Names what the two values are"],
+  ["Plane, with the value in the field", "Plane 3:", "Label and value apart"],
+  ["Trail length (s)", "window: 1.00 s", "Says what the window is; unit in brackets"],
+  ["Raw trace opacity, with the note “Hidden at 0.” below", "Raw trace opacity: 0.00 (hidden)", "Keep the helpful note, move it out of the label"],
+];
+
+const SPECS = [
+  ["Track", "Fills the space beside the field · 4px rail · radius/xs"],
+  ["Rail", "border/subtle · disabled border/disabled"],
+  ["Fill", "action/primary · disabled text/disabled"],
+  ["Thumb", "14 × 14px, 16px while dragging · surface/panel · 1px border/strong, 2px on hover · radius/xs"],
+  ["Target", "24px · layout/target-min"],
+  ["Focus", "2px border/focus ring around the slider"],
+  ["Label and value", "type/label · value in type/code-sm, text/secondary"],
+  ["Field", "Text input, Small, 80px wide · 12px gap · space/3"],
+  ["Scale", "type/code-sm · text/muted"],
+];
+
+const code = `import { RangeSlider, Slider } from "@ui";
+
+<Slider
+  label="Trail length (s)"
+  unitName="seconds"
+  min={0.25}
+  max={5}
+  step={0.25}
+  value={trail}
+  onChange={setTrail}
+/>
+
+<RangeSlider
+  label="Display range"
+  min={0}
+  max={4095}
+  step={1}
+  value={range}
+  onChange={setRange}
+/>`;
+const IN_NEUROSIFT = [
+  [
+    "Brightness",
+    "Image brightness",
+    "A visible label in place of the tooltip"
+  ],
+  [
+    "Trail length (s)",
+    "Pose trail length",
+    "The unit in the label; the scale shows the limits, 0.25 to 5"
+  ],
+  [
+    "Confidence threshold",
+    "Pose confidence",
+    "Keypoints below it aren’t drawn, so a helper below says so"
+  ],
+  [
+    "Plane",
+    "Two-photon plane",
+    "Whole-number steps from 0 to 11; the field takes a plane number"
+  ]
+];
+---
+
+<DocsLayout title="Sliders" description="Slider and Range slider: settings people judge by eye, with a field for exact numbers.">
+  <Intro
+    lead="Sliders adjust how data looks while people watch it change: image brightness and contrast, the display range of a two-photon frame, how faint a raw trace is, how long a pose trail reaches. They are for settings people judge by eye. When the exact number matters, the field beside the slider takes it."
+    status="Updated November 9, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "Slider for feel, field for numbers", text: "Every slider has a Small field beside it, so people can drag or type." },
+      { title: "A visible label and value", text: "The name sits above the track and the value is always on screen, never only in a tooltip." },
+      { title: "Steps follow the data", text: "0.05 for opacity, 0.25 s for a trail, whole numbers for planes. The data decides, not the pixels." },
+    ]}
+  />
+
+  <Existing page="sliders" />
+
+  <DocSection title="Slider" lead="One value on a scale. Label and value above, track in the middle, a Small field at the end for exact entry. Drag, use the arrow keys, or type in the field and press Enter.">
+    <SliderDemos client:visible />
+    <p class="doc-note">Navy fill up to the thumb, a light rail after it. The thumb’s border thickens on hover, and it grows while held. The disabled slider is gray; say nearby why, such as while the image loads.</p>
+  </DocSection>
+
+  <DocSection title="Range slider" lead="Two thumbs for a low and a high value, with a field at each end. For the display range of images, two-photon frames and heatmaps.">
+    <RangeDemo client:visible />
+    <p class="doc-note">The thumbs can’t cross: dragging low past high stops at high, and typing a low above high says “Low must be below 3,400.” Name the result, “Display range”, not “Brightness/contrast”: the two numbers are the values shown as black and white.</p>
+  </DocSection>
+
+  <DocSection title="In Neurosift" lead="How the components replace the sliders above.">
+    <DocTable caption="Sliders in Neurosift" columns={["Slider","Replaces","What changes"]}>
+      <DocRows rows={IN_NEUROSIFT} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Keyboard" lead="The WAI-ARIA slider keys. Each thumb is a slider with its range and value, and its value text includes the unit.">
+    <DocTable caption="Keyboard" columns={["Key", "Does"]}>
+      {KEYS.map(([key, does]) => <tr><th scope="row">{key}</th><td>{does}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Writing" lead="Rewrites of strings in the app today.">
+    <DocTable caption="Writing sliders" columns={["Use", "Instead of", "Why"]}>
+      {WRITING.map(([use, instead, why]) => <tr><th scope="row">{use}</th><td>{instead}</td><td>{why}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Accessibility">
+    <ul class="rule-list">
+      <li><strong>Targets.</strong> The thumb is 14px but the slider is 24px tall, and clicking the rail moves the thumb there.</li>
+      <li><strong>Value text.</strong> The value is read with its unit, such as “1.25 seconds”.</li>
+      <li><strong>Contrast.</strong> The navy fill is 10.98:1 on white; the thumb’s black border is 21:1.</li>
+      <li><strong>Not by drag alone.</strong> The field and keys do everything dragging does, for people who can’t drag precisely.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Pair each slider with a field.", "Show the label and the value at all times.", "Use steps that match the data.", "Update the view while dragging when it’s cheap; on release when it’s not."]}
+      donts={["Don’t rely on a tooltip for the name.", "Don’t use a slider to seek through time; use the Time overview.", "Don’t use a slider for a few fixed options; use a segmented control.", "Don’t let thumbs cross in a range."]}
+    />
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Slider specs" columns={["Property", "Value"]}>
+      {SPECS.map(([property, value]) => <tr><th scope="row">{property}</th><td>{value}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. Values snap to the step and the limits before onChange is called.">
+    <CodeSample label="React" code={code} />
+  </DocSection>
+</DocsLayout>

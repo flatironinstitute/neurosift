@@ -1,0 +1,147 @@
+---
+import Existing from "../../components/Existing.astro";
+import { Badge, Tag, TagLink } from "@ui";
+import CodeSample from "../../components/CodeSample.astro";
+import DoDont from "../../components/DoDont.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const BADGES = [
+  { status: "warning", label: "Embargoed", note: "DANDI embargo_status EMBARGOED. People need an API key with access." },
+  { status: "info", label: "Unembargoing", note: "The data is being released." },
+  { status: "neutral", label: "Draft", note: "The draft version of a Dandiset, beside the version number." },
+  { status: "info", label: "Experimental", note: "For features such as Neurosift Chat." },
+  { status: "count", label: "22 matching", note: "Files that match the neurodata type search." },
+] as const;
+
+const WHICH = [
+  ["Describes an item’s status or a count, and does nothing when clicked", "Badge"],
+  ["Is a value people can jump to", "Tag / Link"],
+  ["Is a value people chose and can remove", "Tag / Removable, with Multi-select"],
+  ["Is a value read from the data", "Tag / Static"],
+  ["Starts an action", "Button, Small (Buttons)"],
+];
+
+const WRITING = [
+  ["Embargoed", "Status: EMBARGOED", "No caps, no field label inside a badge"],
+  ["Unembargoing", "Status: UNEMBARGOING", "Same"],
+  ["Neurosift Chat, with an Experimental badge", "Neurosift Chat (experimental)", "Status as a badge, not in the name"],
+  ["Recent", "Recent:", "Labels without colons"],
+];
+
+const SPECS = [
+  ["Height", "20px", "24px · layout/target-min", "20px"],
+  ["Padding", "6px", "8px · space/2", "6px"],
+  ["Corners", "radius/xs", "radius/xs", "radius/xs"],
+  ["Surface", "status/*/bg · 1px status/*/border · count: surface/inverse", "surface/panel · 1px border/strong", "surface/page · 1px border/subtle"],
+  ["Text", "type/caption SemiBold · status/*/text", "type/code-sm · text/link", "type/code-sm · text/default"],
+  ["Icon", "Optional, 12px, the status icon", "Optional, 12px", "—"],
+];
+
+const code = `import { Badge, Tag, TagLink } from "@ui";
+
+<Badge status="warning">Embargoed</Badge>
+<Badge status="count">22 matching</Badge>
+<TagLink href="/dandiset/000673" icon="recently-viewed">000673</TagLink>
+<Tag>ElectricalSeries</Tag>`;
+---
+
+<DocsLayout title="Badges and tags" description="Badge, Tag / Link and Tag / Static: statuses, counts and values.">
+  <Intro
+    lead="Badges label an item with a status or a count, such as an embargoed Dandiset or how many files match a search. Tags hold values: a recent Dandiset to jump back to, or a neurodata type read from a file. Badges are read-only; link tags go somewhere."
+    status="Updated November 9, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "Square, small, quiet", text: "2px corners and 20–24px tall, so badges and tags read as labels, not buttons or pills." },
+      { title: "Words, not shouting", text: "“Embargoed”, not “Status: EMBARGOED”. Sentence case, one or two words." },
+      { title: "Data in the code face", text: "IDs and neurodata types in Plex Mono, exactly as the archive writes them." },
+    ]}
+  />
+
+  <Existing page="badges" />
+
+  <DocSection title="Badge" lead="Five statuses and a count. Status badges use the status tokens with a 1px border; the count badge is navy.">
+    <dl class="badge-list">
+      {BADGES.map((b) => (
+        <div class="badge-list-row">
+          <dt><Badge status={b.status}>{b.label}</Badge></dt>
+          <dd class="type-body-sm">{b.note}</dd>
+        </div>
+      ))}
+    </dl>
+    <div class="demo-row">
+      <Badge status="warning" icon>Embargoed</Badge>
+      <Badge status="success" icon>Published</Badge>
+      <Badge status="error" icon>Retired</Badge>
+    </div>
+    <p class="doc-note">Most Dandisets are open, so open needs no badge; only exceptions get one, so a badge means something. Add the status icon when a badge stands alone, away from text that explains it. When something failed, use an Alert, not an error badge.</p>
+  </DocSection>
+
+  <DocSection title="In a search result" lead="The count badge sits after the metadata it qualifies.">
+    <article class="search-result-demo">
+      <p class="type-label">Network Homeostasis and State Dynamics of Neocortical Sleep</p>
+      <p class="search-result-demo-meta type-body-sm">
+        <Tag>000041</Tag>
+        <span>0.261104.0300</span>
+        <span>22 files</span>
+        <span>139.23 GB</span>
+        <Badge status="count">22 matching</Badge>
+      </p>
+      <p class="type-caption search-result-demo-people">Watson, Brendon O.</p>
+    </article>
+  </DocSection>
+
+  <DocSection title="Tags" lead="All with 2px corners and Plex Mono values.">
+    <div class="tag-demo">
+      <span class="type-label-sm tag-demo-label">Recent</span>
+      <TagLink href={withBase("/components/badges/")} icon="recently-viewed">000673</TagLink>
+      <TagLink href={withBase("/components/badges/")} icon="recently-viewed">000728</TagLink>
+      <TagLink href={withBase("/components/badges/")} icon="recently-viewed">000041</TagLink>
+    </div>
+    <div class="tag-demo">
+      <Tag>ElectricalSeries</Tag>
+      <Tag>Units</Tag>
+      <Tag>TimeIntervals</Tag>
+    </div>
+    <p class="doc-note">Tag / Link opens what it names, such as a recent Dandiset: link blue, navy 50 with an underline on hover, and a link-blue focus ring. Tag / Static is a value read from a file. The removable tag comes with Multi-select, on <a href={withBase("/components/selects/")}>Dropdowns and selects</a>.</p>
+  </DocSection>
+
+  <DocSection title="Badge, tag or button">
+    <DocTable caption="Badge, tag or button" columns={["If it…", "Use"]}>
+      {WHICH.map(([it, use]) => <tr><th scope="row">{it}</th><td>{use}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Writing" lead="Rewrites of strings in the app today.">
+    <DocTable caption="Writing badges and tags" columns={["Use", "Instead of", "Why"]}>
+      {WRITING.map(([use, instead, why]) => <tr><th scope="row">{use}</th><td>{instead}</td><td>{why}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Accessibility">
+    <ul class="rule-list">
+      <li><strong>Badges are text.</strong> Plain text in a span, read in place; no role needed. Counts include their noun: “22 matching”.</li>
+      <li><strong>Contrast.</strong> Status text on its tint passes 4.5:1, using the 700 shades; white on navy is 10.98:1.</li>
+      <li><strong>Links look like links.</strong> Tag / Link is a real link in link blue, underlined on hover, with a visible focus ring.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Badge only the exceptions.", "Keep badge text to one or two words.", "Use Plex Mono for IDs and neurodata types.", "Put the count badge next to what it counts."]}
+      donts={["Don’t use rounded pills.", "Don’t make badges clickable.", "Don’t write statuses in capitals.", "Don’t stack more than two badges on one item."]}
+    />
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Badge and tag specs" columns={["Property", "Badge", "Tag / Link", "Tag / Static"]}>
+      {SPECS.map(([property, badge, link, tag]) => <tr><th scope="row">{property}</th><td>{badge}</td><td>{link}</td><td>{tag}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. Badges and tags take their text as children and no className or style.">
+    <CodeSample label="React" code={code} />
+  </DocSection>
+</DocsLayout>
