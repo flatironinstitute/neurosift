@@ -1,0 +1,25 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "include": [
+    ".astro/types.d.ts",
+    "src",
+    "../tokens/build.d.mts",
+    "../../src/ui"
+  ],
+  "exclude": [
+    "dist",
+    "../../src/ui/**/*.test.ts",
+    "../../src/ui/**/*.test.tsx"
+  ],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "baseUrl": ".",
+    "paths": {
+      "@ui": ["../../src/ui"],
+      "@ui/*": ["../../src/ui/*"],
+      "react": ["./node_modules/@types/react"],
+      "react/*": ["./node_modules/@types/react/*"]
+    }
+  }
+}

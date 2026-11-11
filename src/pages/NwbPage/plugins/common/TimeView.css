@@ -1,0 +1,4 @@
+.time-view-plot:focus-visible {
+  outline: var(--border-width-2) solid var(--border-focus);
+  outline-offset: var(--space-0-5);
+}

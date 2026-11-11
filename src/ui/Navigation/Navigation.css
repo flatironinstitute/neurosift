@@ -1,0 +1,167 @@
+.ns-app-bar {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  align-items: center;
+  min-block-size: var(--layout-appbar-height);
+  padding: 0 var(--space-2) 0 var(--space-4);
+  background: var(--surface-panel);
+  border-block-end: var(--border-width-1) solid var(--border-strong);
+}
+
+.ns-app-bar-home {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-inline-end: auto;
+  color: var(--text-default);
+  text-decoration: none;
+  border-radius: var(--radius-xs);
+}
+
+.ns-app-bar-home:focus-visible {
+  outline: var(--border-width-2) solid var(--border-focus);
+  outline-offset: var(--space-0-5);
+}
+
+/* The mark is 28px tall, between the 24 and 32px icon sizes. */
+.ns-app-bar-logo {
+  display: flex;
+  block-size: calc(var(--icon-size-lg) + var(--space-1));
+}
+
+.ns-app-bar-logo > * {
+  block-size: 100%;
+  inline-size: auto;
+}
+
+.ns-app-bar-name {
+  font: var(--type-h4);
+  letter-spacing: var(--type-h4-letter-spacing);
+}
+
+.ns-app-bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.ns-app-bar-actions .ns-button:has(.ns-visually-hidden) {
+  inline-size: var(--button-height-md);
+  padding: 0;
+}
+
+.ns-breadcrumbs {
+  container: breadcrumbs / inline-size;
+}
+
+.ns-breadcrumbs-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-0-5);
+  align-items: center;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.ns-crumb-item,
+.ns-crumb-overflow {
+  display: inline-flex;
+  gap: var(--space-0-5);
+  align-items: center;
+  min-inline-size: 0;
+  color: var(--text-muted);
+}
+
+.ns-crumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: var(--layout-target-min);
+  min-block-size: var(--layout-target-min);
+  padding: 0 var(--space-1);
+  font: var(--type-body-sm);
+  letter-spacing: var(--type-body-sm-letter-spacing);
+  text-decoration: none;
+  border-radius: var(--radius-xs);
+}
+
+.ns-crumb--link {
+  color: var(--text-link);
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.ns-crumb--link:hover {
+  text-decoration: underline;
+  background: var(--action-secondary-hover);
+}
+
+.ns-crumb--link:focus {
+  outline: none;
+}
+
+.ns-crumb--link:focus-visible {
+  outline: var(--border-width-2) solid var(--border-focus);
+  outline-offset: 0;
+}
+
+.ns-crumb--current {
+  color: var(--text-default);
+  font-weight: 600;
+}
+
+.ns-crumb--code {
+  font: var(--type-code-sm);
+  letter-spacing: var(--type-code-sm-letter-spacing);
+}
+
+.ns-crumb--current.ns-crumb--code {
+  font-weight: 600;
+}
+
+.ns-crumb-overflow {
+  display: none;
+}
+
+/* A narrow trail folds its middle levels into "…", which brings them back. */
+@container breadcrumbs (max-width: 36rem) {
+  .ns-breadcrumbs:not([data-expanded]) .ns-crumb-item[data-middle] {
+    display: none;
+  }
+
+  .ns-breadcrumbs:not([data-expanded]) .ns-crumb-overflow {
+    display: inline-flex;
+  }
+}
+
+.ns-object-path {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  block-size: var(--layout-row-default);
+  padding: 0 var(--space-1) 0 var(--space-3);
+  font: var(--type-code-sm);
+  letter-spacing: var(--type-code-sm-letter-spacing);
+  background: var(--surface-page);
+  border-block-end: var(--border-width-1) solid var(--border-subtle);
+}
+
+.ns-object-path-type {
+  color: var(--text-secondary);
+}
+
+/* Takes only the space left, so a long path truncates instead of widening the page. */
+.ns-object-path-path {
+  flex: 1;
+  inline-size: 0;
+  min-inline-size: 0;
+  overflow: hidden;
+  color: var(--text-default);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

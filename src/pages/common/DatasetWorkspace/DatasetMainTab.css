@@ -1,0 +1,25 @@
+.dataset-files {
+  display: grid;
+  gap: var(--space-3);
+  max-inline-size: 50rem;
+  padding: var(--space-3);
+}
+
+.dataset-files-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.dataset-files-hint {
+  margin: 0;
+  font: var(--type-caption);
+  color: var(--text-muted);
+}
+
+.dataset-files-count {
+  font: var(--type-body-sm);
+  color: var(--text-muted);
+}

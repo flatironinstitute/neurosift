@@ -1,13 +1,26 @@
-import { Splitter } from "@fi-sci/splitter";
+import { useCssVars } from "@components/useCssVars";
 import { TimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
+import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
+import { AccordionItem, DescriptionList, LoadingState, Select } from "@ui";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import TimeView, {
+  TIME_VIEW_CHROME,
+  TIME_VIEW_INSET,
+  TIME_VIEW_SETTINGS,
+} from "../../pages/NwbPage/plugins/common/TimeView";
+import { covers } from "../../pages/NwbPage/plugins/common/playback";
+import { useWindowPlayback } from "../../pages/NwbPage/plugins/common/usePlayback";
+import { useTimeWindow } from "../../pages/NwbPage/plugins/common/useTimeWindow";
+import { timeseriesSummary } from "../../pages/NwbPage/plugins/simple-timeseries/timeseriesSummary";
 import EDFReader from "./EDFReader";
+import EdfChannels from "./EdfChannels";
 import { channelStdev, computeMedian } from "./edfStats";
+import { openNeuroInfo } from "./openNeuroInfo";
 import {
   DatasetChunkingClientInterface,
   NwbTimeseriesViewChild,
 } from "./TimeseriesItemView/NwbTimeseriesView";
-import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
+import "./EdfViewer.css";
 
 type EdfPageProps = {
   edfUrl: string;
@@ -21,6 +34,9 @@ type EdfPageProps = {
 // 95 channels, with one not shown because it has a different sampling rate:
 // https://neurosift.app/?p=/edf&url=%22https://s3.amazonaws.com/openneuro.org/ds005523/sub-R1032D/ses-0/ieeg/sub-R1032D_ses-0_task-YC2_acq-bipolar_ieeg.edf?versionId=456bC8NDUApR25BVpvdVrut7sur0Nk_o%22
 
+const channelSeparationChoices = [0, 2, 5, 10, 20, 50, 100];
+
+/** An EDF recording: its signals on the shared time controls, with channels and the file's place on OpenNeuro beside. */
 const EdfViewer: FunctionComponent<EdfPageProps> = ({
   edfUrl,
   width,
@@ -31,6 +47,7 @@ const EdfViewer: FunctionComponent<EdfPageProps> = ({
     number[]
   >([]);
   const [channelSeparation, setChannelSeparation] = useState<number>(0);
+  const [open, setOpen] = useState({ channels: true, openNeuro: true });
   const timeseriesTimestampsClient =
     useTimeseriesTimestampsClientForEdfReader(edfReader);
   const datasetChunkingClient = useDatasetChunkingClientForEdfReader(
@@ -38,7 +55,10 @@ const EdfViewer: FunctionComponent<EdfPageProps> = ({
     selectedChannelIndices,
     channelSeparation,
   );
-  const yLabel = "";
+  const sizeRef = useCssVars<HTMLDivElement>({
+    "--edf-width": width,
+    "--edf-height": height,
+  });
 
   const { initializeTimeseriesSelection } = useTimeseriesSelection();
   useEffect(() => {
@@ -54,312 +74,147 @@ const EdfViewer: FunctionComponent<EdfPageProps> = ({
     const nSamplesPerSec = edfReader?.getSignalFreqs()[0] || 1;
     return 5e6 / (nSamplesPerSec * nChannels);
   }, [edfReader]);
-  const initialLeftPanelPosition = width < 800 ? Math.min(200, width / 2) : 300;
+  // Play shortens a window too long to draw, so it never plays the zoom-in message.
+  const playback = useWindowPlayback(maxVisibleDuration);
+  const lookahead = playback.playing
+    ? 2 * Math.max(1, Number(playback.speed))
+    : 0;
+  const [loadedRange, setLoadedRange] = useState<
+    { start: number; end: number } | undefined
+  >();
+  const time = useTimeWindow();
   useEffect(() => {
     // select all the channels to start
     setSelectedChannelIndices(
       edfReader?.getSignalTextLabels().map((_, i) => i) || [],
     );
   }, [edfReader]);
-  if (!edfReader) return <div>Loading EDF file...</div>;
-  if (!timeseriesTimestampsClient)
-    return <div>Loading timestamps client...</div>;
-  if (!datasetChunkingClient) return <div>Loading chunking client...</div>;
-  return (
-    <Splitter
-      width={width}
-      height={height}
-      direction="horizontal"
-      initialPosition={initialLeftPanelPosition}
-    >
-      <LeftPanel
-        width={0}
-        height={0}
-        edfReader={edfReader}
-        selectedChannelIndices={selectedChannelIndices}
-        setSelectedChannelIndices={setSelectedChannelIndices}
-        edfUrl={edfUrl}
-        channelSeparation={channelSeparation}
-        setChannelSeparation={setChannelSeparation}
-      />
-      <NwbTimeseriesViewChild
-        width={0}
-        height={0}
-        autoChannelSeparation={undefined}
-        colorChannels={true}
-        channelIndicesForColor={selectedChannelIndices}
-        applyConversion={true}
-        // spikeTrainsClient={undefined}
-        startZoomedOut={undefined}
-        timeseriesTimestampsClient={timeseriesTimestampsClient}
-        datasetChunkingClient={datasetChunkingClient}
-        numVisibleChannels={undefined}
-        yLabel={yLabel}
-        maxVisibleDuration={maxVisibleDuration}
-      />
-    </Splitter>
-  );
-};
 
-type LeftPanelProps = {
-  width: number;
-  height: number;
-  edfReader: EDFReader;
-  selectedChannelIndices: number[];
-  setSelectedChannelIndices: (indices: number[]) => void;
-  edfUrl: string;
-  channelSeparation: number;
-  setChannelSeparation: (channelSeparation: number) => void;
-};
+  const loading = !edfReader
+    ? "Reading the EDF file"
+    : !timeseriesTimestampsClient
+      ? "Loading timestamps"
+      : !datasetChunkingClient
+        ? "Loading the channels"
+        : undefined;
 
-const LeftPanel: FunctionComponent<LeftPanelProps> = ({
-  width,
-  height,
-  edfReader,
-  selectedChannelIndices,
-  setSelectedChannelIndices,
-  edfUrl,
-  channelSeparation,
-  setChannelSeparation,
-}) => {
-  const openNeuroEDFInfo = useOpenNeuroInfo(edfUrl);
-  return (
-    <div
-      style={{
-        position: "relative",
-        left: 10,
-        top: 10,
-        width: width - 20,
-        height: height - 20,
-        overflowY: "auto",
-      }}
-    >
-      <EDFChannelSelectionComponent
-        width={width - 20}
-        height={Math.max(200, height / 2)}
-        edfReader={edfReader}
-        selectedChannelIndices={selectedChannelIndices}
-        setSelectedChannelIndices={setSelectedChannelIndices}
-      />
-      <hr />
-      <ChannelSeparationSelector
-        channelSeparation={channelSeparation}
-        setChannelSeparation={setChannelSeparation}
-      />
-      <div>
-        {openNeuroEDFInfo && (
-          <div>
-            <hr />
-            <h4>OpenNeuro</h4>
-            <table className="nwb-table">
-              <tbody>
-                <tr>
-                  <td>Dataset</td>
-                  <td>
-                    <a
-                      href={`https://openneuro.org/datasets/${openNeuroEDFInfo.datasetId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {openNeuroEDFInfo.datasetId}
-                    </a>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Subject</td>
-                  <td>{openNeuroEDFInfo.subjectId}</td>
-                </tr>
-                <tr>
-                  <td>Session</td>
-                  <td>{openNeuroEDFInfo.sessionId}</td>
-                </tr>
-                <tr>
-                  <td>Modality</td>
-                  <td>{openNeuroEDFInfo.modality}</td>
-                </tr>
-                <tr>
-                  <td>File</td>
-                  <td>{openNeuroEDFInfo.fileName}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-type ChannelSeparationSelectorProps = {
-  channelSeparation: number;
-  setChannelSeparation: (channelSeparation: number) => void;
-};
-
-const channelSeparationChoices = [0, 2, 5, 10, 20, 50, 100];
-
-const ChannelSeparationSelector: FunctionComponent<
-  ChannelSeparationSelectorProps
-> = ({ channelSeparation, setChannelSeparation }) => {
-  return (
-    <div>
-      Chan. sep (stdev)&nbsp;
-      <select
-        value={channelSeparation}
-        onChange={(e) => setChannelSeparation(Number(e.target.value))}
-      >
-        {channelSeparationChoices.map((val) => (
-          <option key={val} value={val}>
-            {val}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-};
-
-type EDFChannelSelectionComponentProps = {
-  width: number;
-  height: number;
-  edfReader: EDFReader;
-  selectedChannelIndices: number[];
-  setSelectedChannelIndices: (indices: number[]) => void;
-};
-
-const EDFChannelSelectionComponent: FunctionComponent<
-  EDFChannelSelectionComponentProps
-> = ({
-  width,
-  height,
-  edfReader,
-  selectedChannelIndices,
-  setSelectedChannelIndices,
-}) => {
-  const channelLabels = useMemo(() => {
-    return edfReader.getSignalTextLabels();
-  }, [edfReader]);
-
-  const channelSamplingFrequencies = useMemo(() => {
-    return edfReader.getSignalFreqs();
-  }, [edfReader]);
+  const info = openNeuroInfo(edfUrl);
+  const labels = edfReader?.getSignalTextLabels() ?? [];
+  const rates = edfReader?.getSignalFreqs() ?? [];
+  const visibleEnd = time.value.start + time.value.duration;
+  const holding =
+    time.value.duration <= maxVisibleDuration &&
+    !covers(
+      loadedRange,
+      time.value.start,
+      visibleEnd,
+      timeseriesTimestampsClient?.endTime ?? visibleEnd,
+    );
+  const section = (key: keyof typeof open) => ({
+    open: open[key],
+    onToggle: (next: boolean) => setOpen((o) => ({ ...o, [key]: next })),
+  });
 
   return (
-    <div style={{ width, height, overflowY: "auto" }}>
-      <table className="nwb-table">
-        <thead>
-          <tr>
-            <th>
-              <input
-                type="checkbox"
-                checked={selectedChannelIndices.length === channelLabels.length}
-                onChange={() => {}}
-                onClick={() => {
-                  if (selectedChannelIndices.length === channelLabels.length) {
-                    setSelectedChannelIndices([]);
-                  } else {
-                    setSelectedChannelIndices(channelLabels.map((_, i) => i));
-                  }
-                }}
+    <div ref={sizeRef} className="edf-viewer">
+      {loading || !timeseriesTimestampsClient || !datasetChunkingClient ? (
+        <LoadingState label={loading ?? ""} phase="loading" />
+      ) : (
+        <TimeView
+          label={info?.fileName ?? fileNameOf(edfUrl)}
+          summary={timeseriesSummary({
+            timeseriesStartTime: timeseriesTimestampsClient.startTime ?? 0,
+            timeseriesDuration:
+              (timeseriesTimestampsClient.endTime ?? 0) -
+              (timeseriesTimestampsClient.startTime ?? 0),
+            samplingFrequency: rates[0] ?? 0,
+            totalNumChannels: labels.length,
+          })}
+          playback={playback}
+          holding={holding}
+          controls={
+            <div className="edf-separation">
+              <Select
+                label="Separation"
+                size="sm"
+                value={String(channelSeparation)}
+                onChange={(v) => setChannelSeparation(Number(v))}
+                options={channelSeparationChoices.map((v) => ({
+                  value: String(v),
+                  label: `${v} σ`,
+                }))}
               />
-            </th>
-            <th>Channel</th>
-            <th>Rate (Hz)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {channelLabels.map((label, i) => (
-            <tr key={i}>
-              <td>
-                <input
-                  type="checkbox"
-                  checked={selectedChannelIndices.includes(i)}
-                  onChange={() => {}}
-                  onClick={() => {
-                    if (selectedChannelIndices.includes(i)) {
-                      setSelectedChannelIndices(
-                        selectedChannelIndices.filter((x) => x !== i),
-                      );
-                    } else {
-                      setSelectedChannelIndices(
-                        [...selectedChannelIndices, i].sort(),
-                      );
-                    }
-                  }}
+            </div>
+          }
+          settings={
+            <>
+              <AccordionItem
+                title="Channels"
+                summary={`${selectedChannelIndices.length} of ${labels.length}`}
+                {...section("channels")}
+              >
+                <EdfChannels
+                  labels={labels}
+                  rates={rates}
+                  selected={selectedChannelIndices}
+                  onChange={setSelectedChannelIndices}
                 />
-              </td>
-              <td>{label}</td>
-              <td>{channelSamplingFrequencies[i] || ""}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </AccordionItem>
+              {info && (
+                <AccordionItem
+                  title="OpenNeuro"
+                  summary={info.datasetId}
+                  {...section("openNeuro")}
+                >
+                  <DescriptionList
+                    label="OpenNeuro file"
+                    items={[
+                      {
+                        term: "Dataset",
+                        value: (
+                          <a
+                            href={`https://openneuro.org/datasets/${info.datasetId}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {info.datasetId}
+                          </a>
+                        ),
+                      },
+                      { term: "Subject", value: info.subjectId },
+                      { term: "Session", value: info.sessionId },
+                      { term: "Modality", value: info.modality },
+                      { term: "File", value: info.fileName, code: true },
+                    ]}
+                  />
+                </AccordionItem>
+              )}
+            </>
+          }
+        >
+          <NwbTimeseriesViewChild
+            width={Math.max(240, width - TIME_VIEW_INSET - TIME_VIEW_SETTINGS)}
+            height={Math.max(200, height - TIME_VIEW_CHROME - TIME_VIEW_INSET)}
+            autoChannelSeparation={undefined}
+            colorChannels={true}
+            channelIndicesForColor={selectedChannelIndices}
+            applyConversion={true}
+            startZoomedOut={undefined}
+            timeseriesTimestampsClient={timeseriesTimestampsClient}
+            datasetChunkingClient={datasetChunkingClient}
+            numVisibleChannels={undefined}
+            yLabel=""
+            maxVisibleDuration={maxVisibleDuration}
+            lookahead={lookahead}
+            onLoadedRange={setLoadedRange}
+          />
+        </TimeView>
+      )}
     </div>
   );
 };
 
-// const UnitSelectionComponent: FunctionComponent<
-//   UnitsSelectionComponentProps
-// > = ({
-//   unitIds,
-//   selectedUnitIds,
-//   setSelectedUnitIds,
-//   sortUnitsByVariable,
-//   sortUnitsByValues,
-// }) => {
-//   if (!unitIds) return <div>Loading unit IDs...</div>;
-//   return (
-//     <table className="nwb-table">
-//       <thead>
-//         <tr>
-//           <th>
-//             <input
-//               type="checkbox"
-//               checked={
-//                 (unitIds || []).length > 0 &&
-//                 selectedUnitIds.length === (unitIds || []).length
-//               }
-//               onChange={() => {}}
-//               onClick={() => {
-//                 if (selectedUnitIds.length > 0) {
-//                   setSelectedUnitIds([]);
-//                 } else {
-//                   setSelectedUnitIds(unitIds || []);
-//                 }
-//               }}
-//             />
-//           </th>
-//           <th>Unit ID</th>
-//           {sortUnitsByVariable && <th>{sortUnitsByVariable[0]}</th>}
-//         </tr>
-//       </thead>
-//       <tbody>
-//         {(unitIds || []).map((unitId) => (
-//           <tr key={unitId}>
-//             <td>
-//               <input
-//                 type="checkbox"
-//                 checked={selectedUnitIds.includes(unitId)}
-//                 onChange={() => {}}
-//                 onClick={() => {
-//                   if (selectedUnitIds.includes(unitId)) {
-//                     setSelectedUnitIds(
-//                       selectedUnitIds.filter((x) => x !== unitId),
-//                     );
-//                   } else {
-//                     setSelectedUnitIds([...selectedUnitIds, unitId]);
-//                   }
-//                 }}
-//               />
-//             </td>
-//             <td>{unitId}</td>
-//             {sortUnitsByVariable && (
-//               <td>{sortUnitsByValues ? sortUnitsByValues[unitId] : ""}</td>
-//             )}
-//           </tr>
-//         ))}
-//       </tbody>
-//     </table>
-//   );
-// };
+const fileNameOf = (url: string) => url.split("?")[0].split("/").pop() || url;
 
 const useEdfReader = (edfUrl: string) => {
   const [edfReader, setEdfReader] = useState<EDFReader | null>(null);
@@ -572,31 +427,6 @@ const useDatasetChunkingClientForEdfReader = (
     };
   }, [datasetChunkingClient2, absoluteChannelSeparation]);
   return datasetChunkingClient3;
-};
-
-type OpenNeuroEDFInfo = {
-  datasetId: string;
-  subjectId: string;
-  sessionId: string;
-  modality: string;
-  fileName: string;
-};
-
-const useOpenNeuroInfo = (url: string): OpenNeuroEDFInfo | null => {
-  if (!url) return null;
-  if (url.startsWith("https://s3.amazonaws.com/openneuro.org/")) {
-    const parts = url.split("?")[0].split("/");
-    if (parts.length === 9) {
-      return {
-        datasetId: parts[4],
-        subjectId: parts[5],
-        sessionId: parts[6],
-        modality: parts[7],
-        fileName: parts[8],
-      };
-    }
-  }
-  return null;
 };
 
 export default EdfViewer;

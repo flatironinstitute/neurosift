@@ -1,0 +1,104 @@
+---
+import { Alert } from "@ui";
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const noop = () => {};
+
+const TODAY = [
+  ["Opening an embargoed file without an API key", "“Loading...” in both panels with no end. A 401 shows only in the console", "A page message: “This file is in an embargoed Dandiset. Add your EMBER API key to open it.” With Add API key and Back to Dandiset"],
+  ["A URL that doesn’t answer", "“Loading...” with no end", "“Neurosift couldn’t open this file. The server answered 404, not found.” With Check the URL and Open the Dandiset"],
+  ["Semantic search fails", "An error from the search service", "“Semantic search isn’t answering right now. Basic search still works.” With Use basic search"],
+  ["An archive changes its API (OpenNeuro, October 8)", "The OpenNeuro pages failed to load", "“OpenNeuro didn’t answer as expected, so the list can’t load.” With Try again and a link to OpenNeuro"],
+  ["A view throws an error", "An error in place with Try again and Report this", "Kept. The first line names the view: “This view couldn’t draw LFPs.” The error text moves into details"],
+  ["An object Neurosift can’t draw", "“Unexpected neurodata_type: {neurodataType}”", "“Neurosift can’t draw this type yet.” With Open in HDF5 view and Load in Python"],
+];
+
+const PLACES = [
+  ["A field is wrong", "Under the field, with a 2px border/error edge", "An API key that DANDI rejects, in Settings"],
+  ["One view fails", "Inside that view’s panel. The rest of the tab keeps working", "“This view couldn’t draw LFPs.”"],
+  ["The file or page can’t open", "A page message in place of the content, with a way back", "An embargoed file, a broken URL"],
+  ["An action fails", "A toast, with the fix if there is one", "“Couldn’t copy the link. Your browser blocked it.”"],
+  ["A service is down", "A notice above the affected feature, with an alternative", "Semantic search unavailable"],
+];
+
+const ACCESS = [
+  ["No key saved", "“This file needs a DANDI API key. It is in an embargoed Dandiset.”", "Add API key, which opens Settings and returns to the file"],
+  ["Key saved but rejected", "“DANDI didn’t accept the saved API key. It may have expired.”", "Update API key"],
+  ["Key works, but no access to this Dandiset", "“Your API key works, but it doesn’t have access to Dandiset 000200. Ask its owners for access.”", "Back to Dandiset"],
+];
+
+const WRITING = [
+  ["Say what to do", "Add your EMBER API key to open it.", "Unauthorized."],
+  ["Name the thing", "This view couldn’t draw LFPs.", "Error: {error}"],
+  ["Give the reason plainly", "The server stopped answering.", "Failed to decode chunk array for /acquisition/LFPs/data"],
+  ["Put codes in details", "Details: HTTP 503", "503 Service Unavailable, as the headline"],
+  ["No blame", "Neurosift couldn’t open this URL.", "You entered an invalid URL."],
+];
+
+const A11Y = [
+  ["Not color alone", "Every error has an icon and words; fields add a 2px border/error edge."],
+  ["Announce once", "Page-level errors use role=alert. View errors use a polite live region so they don’t interrupt."],
+  ["Move focus only when needed", "Focus moves to a page-level message, never to a view error the person didn’t trigger."],
+  ["Keep the way out", "Every error offers a next step, even if it is only going back."],
+];
+---
+
+<DocsLayout title="Errors and access" description="Where each error goes, how to word it, and the three API key cases.">
+  <Intro
+    lead="Neurosift reads data from other people’s servers, so things fail that Neurosift can’t prevent: an embargoed file without an API key, a URL that doesn’t answer, an archive that changed its API. Today many of these fail silently, with “Loading...” forever and the reason only in the browser console."
+    status="Updated November 9, 2026 · Usage guideline · Draws on the November 5 walkthrough and upstream issues"
+    rules={[
+      { title: "Say it where it happened", text: "In the view, the page or the field that failed. One broken view never blanks the rest of the screen." },
+      { title: "Lead with the fix", text: "What to do first, then why. The technical reason goes in details, one click away." },
+      { title: "Never only in the console", text: "Every failure a person can act on is on screen in words. A loading area that waits 15 seconds says what went wrong." },
+    ]}
+  />
+
+  <DocSection title="What happens today" lead="Each moment, what Neurosift does now, and what it does with this guideline.">
+    <DocTable caption="Errors today and with this guideline" columns={["Moment", "Today", "With this guideline"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Where each error goes" lead="The closer to the problem, the better. Each kind has one home.">
+    <DocTable caption="Where errors go" columns={["Kind", "Shown as", "Example"]}>
+      <DocRows rows={PLACES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Two examples" lead="A view-level error inside its panel, and a page-level access message in place of the file. Both are the real Alert.">
+    <div class="alert-demo">
+      <Alert status="error" title="This view couldn’t draw LFPs." detail="Details: HTTP 503 from api.dandiarchive.org" actions={[{ label: "Try again", onClick: noop }, { label: "Report this", onClick: noop }]}>
+        The server stopped answering partway through. The other views in this tab still work.
+      </Alert>
+      <Alert status="warning" title="This file needs an EMBER API key" actions={[{ label: "Add API key", onClick: noop }, { label: "Back to Dandiset 000200", onClick: noop }]}>
+        It is in Dandiset 000200, which is embargoed. Add your EMBER API key and Neurosift will open the file as soon as it is saved.
+      </Alert>
+    </div>
+    <p class="doc-note">More on each status and its actions is on <a href={withBase("/components/alerts/")}>Alerts and toasts</a>.</p>
+  </DocSection>
+
+  <DocSection title="Access and credentials" lead="DANDI and EMBER need an API key for embargoed Dandisets. Three different problems need three different messages.">
+    <DocTable caption="API key cases" columns={["Case", "Message", "Action"]}>
+      <DocRows rows={ACCESS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Writing error messages" lead="Lead with the fix, then the reason. Plain words, no blame.">
+    <DocTable caption="Writing errors" columns={["Guideline", "Write", "Not"]}>
+      <DocRows rows={WRITING} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Accessibility">
+    <DocTable caption="Error accessibility" columns={["Rule", "Detail"]}>
+      <DocRows rows={A11Y} />
+    </DocTable>
+    <p class="doc-note">Error wording depends on what DANDI, EMBER and OpenNeuro return; check it against their real responses before it ships.</p>
+  </DocSection>
+</DocsLayout>

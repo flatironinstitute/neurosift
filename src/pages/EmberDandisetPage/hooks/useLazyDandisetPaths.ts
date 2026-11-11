@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import getAuthorizationHeaderForUrl from "../../util/getAuthorizationHeaderForUrl";
 import { DatasetFile } from "../../common/DatasetWorkspace/plugins/pluginInterface";
 import { DandisetVersionInfo } from "../../DandiPage/dandi-types";
@@ -53,12 +53,13 @@ export const useLazyDandisetPaths = (
   const [error, setError] = useState<string | null>(null);
 
   // Get authorization header
-  const stagingStr = staging ? "-staging" : "";
   const baseUrl = `https://api-dandi.emberarchive.org/api/dandisets`;
   const authorizationHeader = getAuthorizationHeaderForUrl(baseUrl);
-  const headers = authorizationHeader
-    ? { Authorization: authorizationHeader }
-    : undefined;
+  const headers = useMemo(
+    () =>
+      authorizationHeader ? { Authorization: authorizationHeader } : undefined,
+    [authorizationHeader],
+  );
 
   // Convert API response to DatasetFile format
   const convertPathToFile = (
@@ -108,7 +109,7 @@ export const useLazyDandisetPaths = (
         return [];
       }
     },
-    [dandisetId, dandisetVersionInfo, headers, nwbFilesOnly, stagingStr],
+    [baseUrl, dandisetId, dandisetVersionInfo, headers, nwbFilesOnly],
   );
 
   // Load initial top-level files

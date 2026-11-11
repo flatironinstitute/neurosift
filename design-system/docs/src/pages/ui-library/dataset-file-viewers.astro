@@ -1,0 +1,143 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import LiveScreen from "../../components/LiveScreen.astro";
+import Screen from "../../components/Screen.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const TODAY = [
+  ["File Information", "A gray “File Information” label, then Path, Size, ID and URLs as bold-label text lines; “Download Options” with an outlined DOWNLOAD button per URL; a preview for images", "default/DefaultFileView.tsx", "Under every file, after the viewer; URLs run together with commas; no Copy"],
+  ["NIfTI gate", "A centered alert: “This NIfTI file is 5.4 MB in size. Click to proceed with loading the file.” and a LOAD button; over 100 MB it warns and says Load Anyway, over 2,000 MB Bypass Warning (not recommended)", "nifti/NiftiView.tsx", "The size is the subject, not the choice"],
+  ["NIfTI viewer", "An unlabeled view select, three lowercase checkboxes, BACK and FORWARD, the volume canvas and the voxel readout", "nifti/components/NiftiViewer.tsx", "BACK and FORWARD step 4D frames, which the labels don’t say"],
+  ["TSV", "COPY TO CLIPBOARD, then a striped table with a sort label on every header and a reset icon that appears once sorted; then the same file again as text", "tsv/TsvView.tsx, tsv/components/Table.tsx", "Every column in the same face; numbers left-aligned; no row count"],
+  ["JSON", "The parsed file, pretty-printed in a dark syntax-highlighted block", "json/JsonFileView.tsx", "The only dark block in the app; long lines scroll sideways"],
+  ["Text", "README, CHANGES, .txt, .bvals, .bvecs and .tsv in a gray monospace block, wrapped", "text/TextFileView.tsx", "Long files render in full"],
+  ["Audio", "A gray bar with play, back to the start and “0s / 564.9s”, then the waveform of the first channel", "wav/WavFileView.tsx, wav/AudioPlayer.tsx", "Sample rate and channels are read but not shown"],
+  ["Loading and errors", "“Loading JSON content...”, a spinner for TSV, “Loading audio file...”; errors already use View error", "Each plugin", "Three different loading looks"],
+  ["EDF", "The EDF viewer, rebuilt on its own page", "edf/", "See EDF viewer"],
+  ["SNIRF", "The rebuilt time series and HDF5 views", "snirf/", "No change needed"],
+];
+
+const STATES = [
+  ["Loading", "Loading state with what is loading: “Loading the table”, “Loading the JSON”, “Loading the text”, “Loading the audio file”, “Loading the NIfTI image”."],
+  ["Couldn’t load", "View error: “This file couldn’t be shown”, the cause, and Report this."],
+  ["Malformed TSV", "View error with “Malformed TSV: Inconsistent number of columns”, as today."],
+  ["Invalid JSON", "View error with the parser’s message, as today."],
+  ["TSV with no rows", "Empty state: “This table has no rows”, naming the file."],
+  ["Long text or JSON", "The first 200 lines, then Show all 1,234 lines; open, it says Hide the last 1,034 lines."],
+  ["NIfTI over 100 MB", "“Load this 150.0 MB file?”, a sentence that it may be slow or fail, and Load 150.0 MB anyway."],
+  ["NIfTI over 2,000 MB", "The same, with Load 2,400.0 MB anyway (not recommended)."],
+  ["Mirrors", "With more than one URL, the term reads URLs, each URL has Copy, and Download (mirror 2) follows Download."],
+  ["Images", "File information ends with a Preview of the image, at most 30rem tall."],
+];
+
+const BEHAVIOR = [
+  ["Stacking", "Every plugin that matches the file shows, highest priority first, and File information comes last, as today. A TSV shows the table, then its text."],
+  ["Copy", "Copy beside a URL copies it and says Link copied; Copy table copies the whole file and says Table copied. A blocked clipboard says so."],
+  ["Download", "A link that opens the file in a new tab, one per URL."],
+  ["TSV sort", "Every header sorts, ascending then descending; numbers sort by value. Original order puts the file’s order back."],
+  ["TSV types", "Columns named id or ending in _id are in the code face; a column whose every value is a number is right-aligned in the code face; n/a and empty cells show as missing."],
+  ["TSV size", "Every row shows, as today, in a region 70% of the window tall with the header kept in view; the line above says how many rows and columns."],
+  ["NIfTI", "Nothing loads until Load; then the viewer draws as today. Previous frame and Next frame step a 4D image."],
+  ["Audio", "Play and pause move the shared time cursor; Back to the start returns to 0. Times read to two decimals, like the time controls. The waveform is drawn as today."],
+];
+
+const DIFFERS = [
+  ["File information", "Bold-label text lines; URLs joined with commas", "A description list; ID and URL in the code face, each URL with Copy", "Built"],
+  ["Download", "DOWNLOAD under “Download Options”", "Download, a Secondary button with the download icon", "Built"],
+  ["File name heading", "The file name as a heading above File Information", "Dropped: the tab and the path line above already name the file", "To confirm"],
+  ["NIfTI gate", "An alert about the size; LOAD", "An empty state that asks, “Load this 5.4 MB file?”, with Load 5.4 MB", "Built"],
+  ["NIfTI controls", "MUI select, lowercase checkboxes, BACK and FORWARD", "Select labeled View, Checkboxes, Previous frame and Next frame", "Built"],
+  ["TSV", "MUI table with stripes; every column alike", "Data table, compact; IDs and numbers typed; a row count", "Built"],
+  ["Copy table", "COPY TO CLIPBOARD, turning green", "Copy table, then a Table copied toast", "Built"],
+  ["JSON", "Dark, syntax highlighted", "The code face on the panel, wrapped, no highlighting; Code block only knows Python and shell", "To confirm"],
+  ["Long text", "Rendered in full", "The first 200 lines, then Show all", "Built"],
+  ["Audio facts", "Not shown", "Sample rate, Channels and Length as a description list", "Built"],
+  ["Audio controls", "MUI icon buttons in a gray bar", "Icon buttons in a labeled Audio player region", "Built"],
+  ["Loading", "Three different looks", "Loading state everywhere", "Built"],
+];
+
+const SPECS = [
+  ["Viewer", "16px (space/4) padding around file information, tables, text and the NIfTI controls; the waveform keeps the full width"],
+  ["File information", "Heading in type/label · Description list, beside · ID and URL in type/code-sm · 16px gap"],
+  ["URL row", "The URL wraps anywhere · Copy, a Ghost Small button with the copy icon"],
+  ["Download", "Button, Secondary, with the download icon · one per URL, 8px apart"],
+  ["NIfTI gate", "Empty state with the image icon · title type/h4 · Load, a Primary button"],
+  ["NIfTI controls", "Select, Small, at least 9rem · Checkboxes · Small buttons · 8px by 16px gaps · voxel readout in type/body-sm text/muted above a border/subtle rule"],
+  ["TSV", "Row count in type/body-sm text/muted · Copy table, Small · Data table, compact, at most 70vh tall"],
+  ["Text and JSON", "type/code-sm, text/default on surface/panel · 12px by 16px padding · border/subtle · pre-wrap · Disclosure after 200 lines"],
+  ["Audio", "Description list, stacked · player 48px tall on surface/panel between border/subtle rules · time as “2.87 s of 564.98 s” in type/code-sm text/muted"],
+];
+---
+
+<DocsLayout title="Dataset file viewers" description="What opens when you open a non-NWB file in a dataset: tables, text, JSON, NIfTI volumes, audio and the file’s information.">
+  <Intro
+    lead="When you open a file that isn’t NWB in a dataset, such as OpenNeuro’s participants.tsv, a README or a NIfTI volume, a viewer picked by the file’s name shows it, with the file’s information underneath. These viewers were the last place in a dataset with the old look. The rebuild keeps every viewer, how each is picked and how it loads, and draws them with the design system: a description list for the file’s facts, a data table for TSV, the code face for text, and an empty state that asks before a large volume loads."
+    status="Updated November 10, 2026 · UI library · Captured at 1440 × 900 with OpenNeuro ds000001 and ds003643 · Built from Description list, Button, Data table, Disclosure, Empty state, Select, Checkbox, Icon button, Loading state, Toast and View error"
+    rules={[
+      { title: "Ask, naming the size", text: "A volume waits for Load, and the button says how much it will read." },
+      { title: "Facts you can copy", text: "IDs and URLs are in the code face, and each URL has Copy." },
+      { title: "Show the start, offer the rest", text: "Long text stops at 200 lines with Show all; tables say how many rows they show." },
+    ]}
+  />
+
+  <DocSection title="Dataset file viewers today" lead="neurosift.app, captured with Playwright.">
+    <div class="captures">
+      <Screen file="file-viewers-tsv" alt="Today’s participants.tsv: COPY TO CLIPBOARD, a striped table of participant_id, sex and age, then the same file as text." caption="TSV: a striped MUI table, then the file again as text." />
+      <Screen file="file-viewers-json" alt="Today’s dataset_description.json in a dark syntax-highlighted block, then the file name, File Information as text lines and an outlined DOWNLOAD button." caption="JSON and File Information: a dark block, bold-label lines and DOWNLOAD." />
+      <Screen file="file-viewers-text" alt="Today’s README in a gray monospace block." caption="Text: a gray monospace block." />
+      <Screen file="file-viewers-nifti-gate" alt="Today’s NIfTI gate: This NIfTI file is 5.4 MB in size. Click to proceed with loading the file. and a LOAD button." caption="NIfTI: a size alert with LOAD." />
+      <Screen file="file-viewers-nifti" alt="Today’s NIfTI viewer: an A+C+S+R select, three lowercase checkboxes, BACK and FORWARD, and four brain views." caption="NIfTI loaded: MUI controls above the volume." />
+      <Screen file="file-viewers-audio" alt="Today’s WAV viewer: a gray bar with play and back buttons and the time, then the waveform." caption="Audio: a gray player bar over the waveform." />
+    </div>
+  </DocSection>
+
+  <DocSection title="What the viewers do today" lead="Read from the source and checked on the live site.">
+    <DocTable caption="What the viewers do today" columns={["Viewer", "Today", "Code", "Notes"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="The rebuilt viewers" lead="The redesign with the same files, with live data.">
+    <div class="captures">
+      <Screen file="file-viewers-proposed-tsv" alt="The rebuilt participants.tsv: Showing all 16 rows and 3 columns, Copy table, and a compact data table with IDs in the code face and ages right-aligned." caption="TSV: a data table that says how many rows it shows." />
+      <Screen file="file-viewers-proposed-json" alt="The rebuilt dataset_description.json in the code face on the panel, then File information as a description list with Copy beside the URL and a Download button." caption="JSON and File information: the code face, a description list and Download." />
+      <Screen file="file-viewers-proposed-text" alt="The rebuilt README in the code face on the panel." caption="Text: the code face, wrapped." />
+      <Screen file="file-viewers-proposed-nifti-gate" alt="The rebuilt NIfTI gate: an image icon, Load this 5.4 MB file?, The volume is read in your browser, so it waits until you ask., and Load 5.4 MB." caption="NIfTI: an empty state that asks, naming the size." />
+      <Screen file="file-viewers-proposed-nifti" alt="The rebuilt NIfTI viewer: a View select, three checkboxes, Previous frame and Next frame, and the volume drawn as today." caption="NIfTI loaded: design-system controls; the volume is drawn as today." />
+      <Screen file="file-viewers-proposed-audio" alt="The rebuilt WAV viewer: sample rate, channels and length as facts, a player with play and back to the start, then the waveform." caption="Audio: the facts, the player and the waveform." />
+    </div>
+    <p class="doc-note">Built from the <a href={withBase("/components/description-list/")}>Description list</a>, <a href={withBase("/components/buttons/")}>Buttons</a>, the <a href={withBase("/components/tables/")}>Data table</a>, <a href={withBase("/components/accordions/")}>Disclosure</a>, <a href={withBase("/guidelines/empty-states/")}>Empty states</a> and <a href={withBase("/guidelines/loading/")}>Loading</a>.</p>
+  </DocSection>
+
+  <DocSection title="Try it" lead="Open participants.tsv, a JSON sidecar, or sub-01/anat/sub-01_T1w.nii.gz and press Load.">
+    <LiveScreen path="openneuro-dataset/ds000001" title="OpenNeuro dataset ds000001" size="tall" />
+  </DocSection>
+
+  <DocSection title="States">
+    <DocTable caption="States" columns={["When", "What changes"]}>
+      <DocRows rows={STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Behavior">
+    <DocTable caption="Behavior" columns={["Part", "Behavior"]}>
+      <DocRows rows={BEHAVIOR} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="What differs" lead="Built is in the app now.">
+    <DocTable caption="What differs" columns={["Area", "Existing", "Proposed", "Status"]}>
+      <DocRows rows={DIFFERS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Specs" columns={["Property", "Value"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

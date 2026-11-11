@@ -1,0 +1,124 @@
+.home {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  block-size: 100%;
+  padding: var(--space-8) var(--space-4) var(--space-5);
+  overflow-y: auto;
+}
+
+.home-main {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--space-5);
+  inline-size: min(100%, 690px);
+  margin-inline: auto;
+}
+
+.home-hero {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  text-align: center;
+}
+
+.home-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font: var(--type-h1);
+  color: var(--text-default);
+}
+
+.home-logo {
+  block-size: 2.5rem;
+  inline-size: auto;
+}
+
+.home-lead {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--text-secondary);
+}
+
+.home-search,
+.home-link {
+  inline-size: 100%;
+}
+
+.home-search {
+  margin-block-start: var(--space-6);
+}
+
+.home-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.home-link > .ns-field {
+  flex: 1 1 20rem;
+}
+
+.home-link > .ns-button {
+  margin-block-start: var(--space-6);
+}
+
+.home-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-6);
+  margin: 0;
+  font: var(--type-body-sm);
+}
+
+.home-links a,
+.home-link-button {
+  color: var(--text-link);
+  text-decoration: underline;
+}
+
+.home-link-button {
+  padding: 0;
+  font: inherit;
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.home-recent {
+  display: grid;
+  gap: var(--space-2);
+  inline-size: 100%;
+  margin-block-start: var(--space-8);
+}
+
+.home-recent-title {
+  margin: 0;
+  font: var(--type-label);
+  color: var(--text-default);
+}
+
+.home-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-2) var(--space-5);
+  padding-block-start: var(--space-8);
+  font: var(--type-body-sm);
+}
+
+.home-footer a {
+  color: var(--text-link);
+}
+
+.home-version {
+  font: var(--type-code-sm);
+  color: var(--text-muted);
+}

@@ -1,0 +1,49 @@
+/* Rows shared by Recently opened (links) and the Prompt list (buttons). */
+.ns-row-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ns-row-list-row {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: var(--input-height-lg);
+  border-block-end: var(--border-width-1) solid var(--border-subtle);
+}
+
+/* The inline padding gives the focus ring room; the margin keeps the text on the row's edge. */
+.ns-row-list-action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  min-block-size: var(--layout-target-min);
+  margin: 0 calc(-1 * var(--space-1));
+  padding: 0 var(--space-1);
+  font: var(--type-body-sm);
+  color: var(--text-link);
+  text-align: start;
+  text-decoration: none;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+}
+
+.ns-row-list-action:is(:hover, :active) {
+  color: var(--text-link-hover);
+  text-decoration: underline;
+}
+
+.ns-row-list-action:focus {
+  outline: none;
+}
+
+.ns-row-list-action:focus-visible {
+  outline: var(--border-width-2) solid var(--border-focus);
+  outline-offset: 0;
+}

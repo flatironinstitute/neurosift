@@ -1,0 +1,89 @@
+---
+import { EmptyState } from "@ui";
+import CodeSample from "../../components/CodeSample.astro";
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const noop = () => {};
+
+const KINDS = [
+  ["Nothing chosen yet", "A view that needs a choice first, such as the PSTH’s units or the combined view’s objects", "A one-click start: Select first 5 units"],
+  ["Nothing opened yet", "A file opened with no object tab, or the Videos tab with no video chosen", "Point to the tree: “Open an object from the list”"],
+  ["No results", "A search or filter that matched nothing", "What was searched, and a way to widen it"],
+  ["Nothing in the object", "An object with no data, or a file with no videos", "Say so plainly, and show what is there instead, such as attributes"],
+  ["Can’t be drawn here", "No view for this type or file format", "Open in HDF5 view, Load in Python, or Download"],
+];
+
+const ANATOMY = [
+  ["1 Icon", "The view’s neurodata type icon, 32px, text/muted. Optional; never an illustration."],
+  ["2 Title", "What is empty, in type/h4."],
+  ["3 Reason", "Why, and what is possible, in one sentence of type/body-sm."],
+  ["4 One action", "A primary button that fills the view. A second, quieter action only if needed."],
+];
+
+const TODAY = [
+  ["Select one or more units to plot", "No units chosen yet. Pick units from the list, or select the first five."],
+  ["No search text entered.", "Search Dandisets by title, species or method, such as “mouse hippocampus”."],
+  ["No search results yet.", "No Dandisets match “hippocampus place cells”. Try fewer words, or semantic search."],
+  ["No external videos were found in this NWB file.", "Kept as it is: it already says what is missing and where."],
+  ["No data available", "This object has no data. Its attributes are listed below."],
+  ["No viewer available for this file type", "Neurosift can’t show .mat files yet. Download the file to open it elsewhere."],
+  ["No dataset found", "Neurosift couldn’t find Dandiset 000999. Check the ID, or browse DANDI."],
+];
+
+const WRITING = [
+  ["Name what’s empty, and why", "No units chosen yet", "Nothing here"],
+  ["Use the reader’s own terms", "No Dandisets match “hippocampus”", "0 results"],
+  ["Offer one next step", "Select first 5 units", "Several equal buttons"],
+  ["Stay calm", "This file has no external videos.", "Oops! No videos found!"],
+];
+const code = `import { EmptyState } from "@ui";\n\n<EmptyState\n  title="No units chosen yet"\n  action={{ label: "Select first 5 units", onClick: selectFirstFive }}\n>\n  Pick units from the list to plot their firing around each trial.\n</EmptyState>`;
+---
+
+<DocsLayout title="Empty states" description="Say why it’s empty and offer one way forward, quietly.">
+  <Intro
+    lead="An empty state is what people see when there is nothing to show yet: no units chosen, no search results, an object with no data. It is often the first thing someone reads in a view, so it explains the reason and offers one way forward."
+    status="Updated November 9, 2026 · Usage guideline · Uses Buttons and the type styles"
+    rules={[
+      { title: "Say why it’s empty", text: "“No units chosen yet” tells people what to do. “No data” leaves them guessing whether something broke." },
+      { title: "One way forward", text: "A single action that fills it, such as Select first 5 units or Use basic search." },
+      { title: "Quiet, not decorative", text: "Text and an action in the space the content would fill. No illustrations, no shimmer, no animation." },
+    ]}
+  />
+
+  <DocSection title="Five kinds of empty" lead="Each has a different cause, so each says something different.">
+    <DocTable caption="Kinds of empty state" columns={["Kind", "Cause", "What to offer"]}>
+      <DocRows rows={KINDS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Anatomy" lead="Centered in the space the content would fill, so the layout doesn’t jump when the content arrives.">
+    <div class="empty-frame">
+      <EmptyState title="No units chosen yet" action={{ label: "Select first 5 units", onClick: noop }}>
+        Pick units from the list to plot their firing around each trial. This file has 46 units.
+      </EmptyState>
+    </div>
+    <DocTable caption="Empty state parts" columns={["Part", "Spec"]}>
+      <DocRows rows={ANATOMY} />
+    </DocTable>
+    <p class="doc-note">Empty states never use illustrations in Neurosift; the space belongs to the data that will fill it.</p>
+  </DocSection>
+
+  <DocSection title="Today’s empty states, rewritten" lead="Real strings from Neurosift’s source.">
+    <DocTable caption="Rewrites" columns={["Today", "Rewritten"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Writing empty states" lead="Factual and specific. Neurosift has no accounts, so never write “your files” or “you haven’t”.">
+    <DocTable caption="Writing empty states" columns={["Guideline", "Write", "Not"]}>
+      <DocRows rows={WRITING} />
+    </DocTable>
+  </DocSection>
+  <DocSection title="In code" lead="Import from @ui. EmptyState fills the space it’s given and centers its contents; the view decides when to show it.">
+    <CodeSample label="Empty state" code={code} />
+  </DocSection>
+</DocsLayout>

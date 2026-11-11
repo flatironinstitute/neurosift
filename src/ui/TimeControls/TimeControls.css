@@ -1,0 +1,140 @@
+.ns-time-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  max-inline-size: 100%;
+  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-2);
+  color: var(--text-default);
+  background: var(--surface-panel);
+  border: var(--border-width-1) solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.ns-time-label {
+  font: var(--type-label);
+  letter-spacing: var(--type-label-letter-spacing);
+}
+
+.ns-time-text {
+  color: var(--text-secondary);
+  font: var(--type-body-sm);
+  letter-spacing: var(--type-body-sm-letter-spacing);
+}
+
+.ns-time-value {
+  font: var(--type-code-sm);
+  letter-spacing: var(--type-code-sm-letter-spacing);
+}
+
+.ns-time-divider {
+  inline-size: var(--border-width-1);
+  block-size: var(--space-4);
+  background: var(--border-subtle);
+}
+
+/* Fields are sized to their values: a window length, a start up to five digits, a range. */
+.ns-time-field {
+  inline-size: calc(var(--space-16) + var(--space-6));
+}
+
+.ns-time-field .ns-field-input {
+  font: var(--type-code-sm);
+}
+
+.ns-time-field .ns-field-message {
+  inline-size: max-content;
+  max-inline-size: 16rem;
+}
+
+.ns-time-status {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: center;
+  color: var(--text-secondary);
+  font: var(--type-body-sm);
+  letter-spacing: var(--type-body-sm-letter-spacing);
+}
+
+/* Out of the flow while empty, so it adds no gap but stays a live region. */
+.ns-time-status:empty {
+  position: absolute;
+}
+
+.ns-time-speed {
+  inline-size: calc(var(--space-16) + var(--space-4));
+}
+
+.ns-overview {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.ns-overview-strip {
+  position: relative;
+  block-size: var(--layout-target-min);
+  cursor: grab;
+  touch-action: none;
+  background: var(--surface-page);
+  border: var(--border-width-1) solid var(--border-strong);
+  border-radius: var(--radius-xs);
+}
+
+.ns-overview-strip[data-dragging] {
+  cursor: grabbing;
+}
+
+.ns-overview-strip:focus {
+  outline: none;
+}
+
+.ns-overview-strip:focus-visible {
+  outline: var(--border-width-2) solid var(--border-focus);
+  outline-offset: var(--space-0-5);
+}
+
+.ns-overview-svg {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+}
+
+.ns-overview-window {
+  fill: var(--data-selection);
+  stroke: var(--action-primary);
+  stroke-width: var(--border-width-1);
+}
+
+.ns-overview-strip:hover .ns-overview-window {
+  stroke-width: var(--border-width-2);
+}
+
+.ns-overview-strip[data-dragging] .ns-overview-window {
+  fill: var(--surface-row-hover);
+  stroke-width: var(--border-width-2);
+}
+
+.ns-overview-cursor {
+  fill: var(--data-cursor);
+}
+
+.ns-overview-labels {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-secondary);
+  font: var(--type-code-sm);
+  letter-spacing: var(--type-code-sm-letter-spacing);
+}
+
+@media (forced-colors: active) {
+  .ns-overview-window {
+    fill: Highlight;
+    stroke: CanvasText;
+  }
+
+  .ns-overview-cursor {
+    fill: CanvasText;
+  }
+}

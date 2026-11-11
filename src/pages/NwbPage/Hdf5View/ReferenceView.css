@@ -1,0 +1,145 @@
+/* HDF5 and Schema: a summary, Find, then the content beside a 440px details panel. */
+.reference-view {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: var(--space-4);
+  block-size: 100%;
+  padding-block-start: var(--space-4);
+  overflow: hidden;
+}
+
+.reference-summary,
+.reference-note {
+  margin: 0;
+  font: var(--type-caption);
+  color: var(--text-muted);
+}
+
+.reference-find {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.reference-find > .ns-search {
+  inline-size: min(100%, 480px);
+}
+
+.reference-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 440px;
+  gap: var(--space-6);
+  min-block-size: 0;
+}
+
+.reference-main,
+.reference-details {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+  min-block-size: 0;
+  padding-block-end: var(--space-6);
+  overflow-y: auto;
+}
+
+.reference-details-body {
+  display: grid;
+  gap: 0;
+}
+
+.reference-details-header {
+  display: grid;
+  gap: var(--space-1);
+  padding-block-end: var(--space-3);
+}
+
+.reference-details-name {
+  margin: 0;
+  font: var(--type-label);
+  color: var(--text-default);
+}
+
+.reference-details-path {
+  margin: 0;
+  font: var(--type-code-sm);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.reference-details-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-block-start: var(--space-2);
+}
+
+.reference-value {
+  margin: 0;
+  font: var(--type-code-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.reference-section-title {
+  margin: 0;
+  font: var(--type-label);
+  color: var(--text-default);
+}
+
+@media (width <= 1024px) {
+  .reference-split {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-y: auto;
+  }
+
+  .reference-main,
+  .reference-details {
+    overflow: visible;
+  }
+}
+
+.reference-group {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.reference-text {
+  margin: 0;
+  font: var(--type-body-sm);
+  overflow-wrap: anywhere;
+}
+
+.reference-paths {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reference-parts {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reference-parts > li {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.reference-part-name {
+  font: var(--type-code-sm);
+  color: var(--text-default);
+  overflow-wrap: anywhere;
+}
+
+.reference-part-doc {
+  font: var(--type-body-sm);
+  color: var(--text-muted);
+}

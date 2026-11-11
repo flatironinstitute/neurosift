@@ -1,0 +1,97 @@
+.ns-badge,
+.ns-tag {
+  --chip-pad: calc(var(--space-1) + var(--space-0-5));
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  border: var(--border-width-1) solid transparent;
+  border-radius: var(--radius-xs);
+}
+
+.ns-badge {
+  --status-tint: var(--surface-page);
+  --status-edge: var(--border-strong);
+  --status-ink: var(--text-default);
+  block-size: var(--space-5);
+  padding: 0 var(--chip-pad);
+  color: var(--status-ink);
+  font: var(--type-caption);
+  font-weight: 600;
+  letter-spacing: var(--type-caption-letter-spacing);
+  background: var(--status-tint);
+  border-color: var(--status-edge);
+}
+
+.ns-badge--info {
+  --status-tint: var(--status-info-bg);
+  --status-edge: var(--status-info-border);
+  --status-ink: var(--status-info-text);
+}
+
+.ns-badge--success {
+  --status-tint: var(--status-success-bg);
+  --status-edge: var(--status-success-border);
+  --status-ink: var(--status-success-text);
+}
+
+.ns-badge--warning {
+  --status-tint: var(--status-warning-bg);
+  --status-edge: var(--status-warning-border);
+  --status-ink: var(--status-warning-text);
+}
+
+.ns-badge--error {
+  --status-tint: var(--status-error-bg);
+  --status-edge: var(--status-error-border);
+  --status-ink: var(--status-error-text);
+}
+
+.ns-badge--count {
+  --status-tint: var(--surface-inverse);
+  --status-edge: var(--surface-inverse);
+  --status-ink: var(--text-on-inverse);
+}
+
+/* Badges and tags carry a 12px icon: three quarters of the small icon. */
+:is(.ns-badge, .ns-tag) .ns-icon {
+  inline-size: calc(var(--icon-size-sm) * 0.75);
+  block-size: calc(var(--icon-size-sm) * 0.75);
+}
+
+.ns-tag {
+  font: var(--type-code-sm);
+  letter-spacing: var(--type-code-sm-letter-spacing);
+}
+
+.ns-tag--static {
+  block-size: var(--space-5);
+  padding: 0 var(--chip-pad);
+  color: var(--text-default);
+  background: var(--surface-page);
+  border-color: var(--border-subtle);
+}
+
+.ns-tag--link {
+  block-size: var(--layout-target-min);
+  padding: 0 var(--space-2);
+  color: var(--text-link);
+  text-decoration: none;
+  background: var(--surface-panel);
+  border-color: var(--border-strong);
+}
+
+.ns-tag--link:hover {
+  text-decoration: underline;
+  background: var(--action-secondary-hover);
+}
+
+.ns-tag--link:focus {
+  outline: none;
+}
+
+.ns-tag--link:focus-visible {
+  outline: var(--border-width-2) solid var(--border-focus);
+  outline-offset: var(--space-0-5);
+}

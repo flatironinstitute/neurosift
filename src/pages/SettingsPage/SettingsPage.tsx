@@ -1,113 +1,36 @@
-import { Box, Typography, TextField, Paper, Alert } from "@mui/material";
-import { FunctionComponent, useState, useEffect } from "react";
+import { useState } from "react";
+import { SettingsView, type ApiKeys } from "./SettingsView";
 
-type SettingsPageProps = {
-  width: number;
-  height: number;
-};
+const readKeys = (): ApiKeys => ({
+  dandiApiKey: localStorage.getItem("dandiApiKey") || "",
+  dandiStagingApiKey: localStorage.getItem("dandiStagingApiKey") || "",
+  emberApiKey: localStorage.getItem("emberApiKey") || "",
+});
 
-const SettingsPage: FunctionComponent<SettingsPageProps> = ({
-  width,
-  height,
-}) => {
-  const [dandiApiKey, setDandiApiKey] = useState("");
-  const [dandiStagingApiKey, setDandiStagingApiKey] = useState("");
-  const [emberApiKey, setEmberApiKey] = useState("");
-  const [showSaveNotification, setShowSaveNotification] = useState(false);
-
-  useEffect(() => {
-    // Load initial values from localStorage
-    const savedDandiApiKey = localStorage.getItem("dandiApiKey") || "";
-    const savedDandiStagingApiKey =
-      localStorage.getItem("dandiStagingApiKey") || "";
-    const savedEmberApiKey = localStorage.getItem("emberApiKey") || "";
-    setDandiApiKey(savedDandiApiKey);
-    setDandiStagingApiKey(savedDandiStagingApiKey);
-    setEmberApiKey(savedEmberApiKey);
-  }, []);
-
-  const handleDandiApiKeyChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const newKey = event.target.value;
-    setDandiApiKey(newKey);
-    localStorage.setItem("dandiApiKey", newKey);
-    setShowSaveNotification(true);
+/** Keeps the API keys in this browser's localStorage, saving each as it's typed. */
+export default function SettingsPage() {
+  const [keys, setKeys] = useState(readKeys);
+  const [showReload, setShowReload] = useState(false);
+  const [shown, setShown] = useState<Record<keyof ApiKeys, boolean>>({
+    dandiApiKey: false,
+    dandiStagingApiKey: false,
+    emberApiKey: false,
+  });
+  const onChange = (key: keyof ApiKeys, value: string) => {
+    localStorage.setItem(key, value);
+    setKeys((current) => ({ ...current, [key]: value }));
+    setShowReload(true);
   };
-
-  const handleDandiStagingApiKeyChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const newKey = event.target.value;
-    setDandiStagingApiKey(newKey);
-    localStorage.setItem("dandiStagingApiKey", newKey);
-    setShowSaveNotification(true);
-  };
-
-  const handleEmberApiKeyChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const newKey = event.target.value;
-    setEmberApiKey(newKey);
-    localStorage.setItem("emberApiKey", newKey);
-    setShowSaveNotification(true);
-  };
-
   return (
-    <div style={{ position: "absolute", width, height, overflowY: "auto" }}>
-      <Box sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          Settings
-        </Typography>
-        <Paper sx={{ p: 3, maxWidth: 600 }}>
-          <Typography variant="h6" gutterBottom>
-            DANDI API Keys
-          </Typography>
-          <TextField
-            fullWidth
-            label="DANDI API Key"
-            variant="outlined"
-            value={dandiApiKey}
-            onChange={handleDandiApiKeyChange}
-            margin="normal"
-            type="password"
-            helperText="Enter your DANDI API key for accessing protected resources on api.dandiarchive.org"
-          />
-          <TextField
-            fullWidth
-            label="DANDI Staging API Key"
-            variant="outlined"
-            value={dandiStagingApiKey}
-            onChange={handleDandiStagingApiKeyChange}
-            margin="normal"
-            type="password"
-            helperText="Enter your DANDI Sandbox API key for accessing protected resources on api.sandbox.dandiarchive.org"
-          />
-        </Paper>
-        <Paper sx={{ p: 3, mt: 3, maxWidth: 600 }}>
-          <Typography variant="h6" gutterBottom>
-            EMBER API Keys
-          </Typography>
-          <TextField
-            fullWidth
-            label="EMBER API Key"
-            variant="outlined"
-            value={emberApiKey}
-            onChange={handleEmberApiKeyChange}
-            margin="normal"
-            type="password"
-            helperText="Enter your DANDI API key for accessing protected resources on api.dandiarchive.org"
-          />
-          {showSaveNotification && (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              API key saved. Please reload the page for the changes to take
-              effect.
-            </Alert>
-          )}
-        </Paper>
-      </Box>
-    </div>
+    <SettingsView
+      keys={keys}
+      onChange={onChange}
+      shown={shown}
+      onShownChange={(key, next) =>
+        setShown((current) => ({ ...current, [key]: next }))
+      }
+      showReload={showReload}
+      onReload={() => window.location.reload()}
+    />
   );
-};
-
-export default SettingsPage;
+}

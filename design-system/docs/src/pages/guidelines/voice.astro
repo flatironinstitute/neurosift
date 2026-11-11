@@ -1,0 +1,161 @@
+---
+import { Alert } from "@ui";
+import DoDont from "../../components/DoDont.astro";
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const noop = () => {};
+
+const MODES = [
+  ["Direct", "Opening objects, zooming, switching tabs, copying a link", "The action or answer first, in one short sentence. Nothing extra.", "Link copied."],
+  ["Instructive", "A first visit, an empty view, an error that repeats, missing credentials", "What happened, what to do, and a way to learn more. Still short; each line complete on its own.", "This file is in an embargoed Dandiset. Add your DANDI API key in Settings to open it."],
+];
+
+const SIGNALS = [
+  ["Arrived from a shared link or DANDI’s “Open with Neurosift”", "Direct", "The view opens exactly as shared, with one line saying what it is: “Shared view: LFPs and units, Dandiset 000673”."],
+  ["First visit in this browser, with no recent Dandisets yet", "Instructive", "The home page explains what Neurosift does, with a Dandiset to try. Short “How this view works” notes are open the first time, closed after."],
+  ["Opening objects, zooming, switching tabs", "Direct", "Labels and confirmations stay to one line."],
+  ["Returning to a recent Dandiset", "Direct", "Recent Dandisets are listed first; explanations stay collapsed."],
+  ["The same problem twice in a row", "Instructive", "The message grows: why it happens, and how to fix it."],
+  ["Nothing to show", "Instructive", "Empty states explain why and offer the next step."],
+  ["A load past 15 seconds", "Direct, then reassuring", "Progress first; what is slow and a way out below it."],
+  ["Embedded in another tool (embedded=1)", "Direct", "No help text; the host tool already explains."],
+];
+
+const LAYERS = [
+  ["The direct line", "Always visible and complete on its own: what the control does. “Align to start_time: the trial event each row is centered on.”"],
+  ["The why and how", "One click away, in a disclosure. Open the first time someone uses this view in this browser."],
+  ["Something to try", "A real alternative from the file, such as “Try aligning to stop_time”, so people learn by doing."],
+];
+
+const THREE_WAYS = [
+  ["Unauthorized.", "This file needs a DANDI API key.", "This file is in an embargoed Dandiset, so DANDI shares it only with people who have access. Add your API key in Settings to open it."],
+  ["Zoom in to view data", "Too much data to draw. Zoom in to see the traces.", "This window holds 70 channels at 400 Hz for 600 s, more than Neurosift draws at once. Zoom in to see the traces, or draw them anyway."],
+  ["Select one or more units to plot", "Choose units to plot.", "The PSTH shows how each unit fires around a trial event. Pick units from the list, or select the first five."],
+  ["No search results yet.", "No Dandisets match “place cells”.", "Basic search looks for exact words, and no Dandiset titles contain “place cells”. Semantic search finds related studies."],
+];
+
+const TONE = [
+  ["Arriving at Neurosift", "Instructive", "See inside NWB files on DANDI, EMBER and OpenNeuro, in your browser, with nothing to install. Try a recent Dandiset."],
+  ["Exploring a file", "Direct", "LFPs: 70 channels at 400 Hz, 1,375.28 s."],
+  ["Something worked", "Direct", "Link copied."],
+  ["Waiting", "Direct, then reassuring", "Loading LFPs, 12 of 40 chunks. The other views keep working while this loads."],
+  ["Something went wrong", "Direct, growing if repeated", "This view couldn’t draw LFPs. Try again."],
+  ["About to lose work", "Direct", "Close this tab? The combined view isn’t saved. Copy its link first to keep it."],
+  ["Nothing to show", "Instructive", "No units chosen yet. Pick units from the list, or select the first five."],
+];
+
+const REWRITES = [
+  ["Loading...", "Loading LFPs…", "Direct. Name what is loading"],
+  ["Loading timeseries client...", "Loading LFPs…", "Direct. Internals mean nothing to readers"],
+  ["Error: {error}", "Couldn’t load LFPs. The server didn’t answer. Try again", "Instructive. What happened, then what to do"],
+  ["Unexpected neurodata_type: {neurodataType}", "Neurosift can’t draw ImagingRetinotopy yet. Open it in the HDF5 view, or load it in Python.", "Instructive. Offer a way forward"],
+  ["Select one or more units to plot", "Choose units to plot, or select the first five.", "Instructive. Give a one-click start"],
+  ["Zoom in to view spike trains", "Too many spikes to draw at this zoom. Zoom in to see them.", "Direct. Say why, then the action"],
+  ["No data available", "This object has no data. Its attributes are listed below.", "Direct. Say what is there instead"],
+  ["Neurosift (v2)", "Neurosift", "Version numbers belong in Settings and the status bar"],
+];
+
+const STYLE = [
+  ["Sentence case", "Headings, buttons, tabs and menu items: “Load in Python”, “Timeseries alignment”. Not Title Case or ALL CAPS, except small eyebrow labels."],
+  ["Buttons start with a verb", "“Open file”, “Share view”, “Add API key”. Not “OK”, “Submit” or “Go”."],
+  ["Numbers are numerals", "“3 units”, “70 channels”. Commas from 1,000. Units after a space: “400 Hz”."],
+  ["No filler", "No “please”, “simply”, “just”, “Oops” or exclamation marks. No ellipsis except on loading text."],
+  ["Say “you” sparingly", "Neurosift has no accounts. Talk about the data and the action, not the person."],
+  ["Names as their owners write them", "DANDI, EMBER, OpenNeuro, NWB, HDF5, Dandiset, LINDI, Zarr."],
+];
+
+const WORDS = [
+  ["Dandiset", "dataset (for DANDI), DANDIset", "Capital D, as DANDI writes it. “Dataset” for OpenNeuro"],
+  ["file", "asset, NWB asset", "“Asset” only in IDs and code"],
+  ["object", "item, neurodata item, node", "Anything in a file: a group or dataset with a neurodata type"],
+  ["view", "widget, plugin", "A way of drawing an object. The “Widgets” tab would become “Views” (to confirm)"],
+  ["time window", "viewport, range", "The span of time a plot shows"],
+  ["unit", "neuron, cell", "As NWB names sorted units"],
+  ["combined view", "multi-view, composite view", "Several objects in one tab, on a shared time axis (to confirm)"],
+  ["API key", "token, credential", "As DANDI names it"],
+];
+---
+
+<DocsLayout title="Voice and content" description="Precise, plain and considerate: how Neurosift writes, in two modes of one voice.">
+  <Intro
+    lead="Neurosift speaks to neuroscientists around the world, many reading English as a second language, who came to look at their data. The voice is precise, plain and considerate: it names the real thing, uses common words, and is as short as the moment allows without being curt."
+    status="Updated November 9, 2026 · Usage guideline · Collects the writing rules for the interface, the guide and error messages"
+    rules={[
+      { title: "Precise", text: "Name the real thing: the Dandiset, the object path, the number of channels. “Loading LFPs”, not “Loading...”." },
+      { title: "Plain", text: "Short sentences and common words. Explain NWB terms where they appear, never internals like “timeseries client”." },
+      { title: "Considerate", text: "Lead with what to do, kindly. No blame, no “Oops”, no exclamation marks, and never a raw error on its own." },
+    ]}
+  />
+
+  <DocSection title="Two modes of one voice" lead="The interface can’t see who is in a hurry, so it reads the moment. Direct for people mid-task; instructive when someone is new, stuck, or blocked.">
+    <DocTable caption="Two modes" columns={["Mode", "When", "How", "Example"]}>
+      <DocRows rows={MODES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Reading the moment" lead="Signals Neurosift already has. None of them need accounts or tracking.">
+    <DocTable caption="Signals and modes" columns={["Signal", "Suggests", "What changes"]}>
+      <DocRows rows={SIGNALS} />
+    </DocTable>
+    <p class="doc-note">Opened or closed help is remembered in this browser, like the recent Dandisets list. People can always open it, and always close it.</p>
+  </DocSection>
+
+  <DocSection title="Direct first, more on request" lead="The pattern that serves both at once. The first line is complete on its own; the next layer is one click away for anyone who wants it.">
+    <DocTable caption="Layers of help" columns={["Layer", "What it holds"]}>
+      <DocRows rows={LAYERS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="When help grows" lead="A first mistake gets a short, kind fix. If the same thing happens again, the message turns instructive, because the short version clearly wasn’t enough.">
+    <div class="alert-demo">
+      <Alert status="error" title="DANDI didn’t accept this API key">Check that it was copied in full, then save it again.</Alert>
+      <Alert status="error" title="Still not accepted" actions={[{ label: "Open DANDI account page", onClick: noop }]}>
+        DANDI API keys are on your DANDI account page, under API key. Copy it again with nothing before or after it. Keys from the DANDI sandbox don’t work on the main archive.
+      </Alert>
+    </div>
+    <p class="doc-note">First time, direct; the same problem again, instructive.</p>
+  </DocSection>
+
+  <DocSection title="Firm, curt or considerate" lead="The same message three ways. Aim for the second or third: as short as the moment allows, with the reason that makes it reasonable.">
+    <DocTable caption="Curt and considerate" columns={["Curt", "Considerate, direct mode", "Considerate, instructive mode"]}>
+      <DocRows rows={THREE_WAYS} />
+    </DocTable>
+    <p class="doc-note">Screen readers should still hear “Error” first, from visually hidden text, so the visible message can lead with the fix; the icon and border mark it on screen. Alert announces errors with role=alert today but doesn’t add that hidden word yet.</p>
+  </DocSection>
+
+  <DocSection title="Tone by moment" lead="The voice stays the same; the mode and tone follow the moment.">
+    <DocTable caption="Tone by moment" columns={["Moment", "Mode", "Example"]}>
+      <DocRows rows={TONE} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Today’s copy, rewritten" lead="Real strings from Neurosift’s source, with the mode each one should use.">
+    <DocTable caption="Rewrites" columns={["Today", "Rewritten", "Mode and why"]}>
+      <DocRows rows={REWRITES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Style rules" lead="The same everywhere: the app, the guide, error messages and Figma.">
+    <DocTable caption="Style rules" columns={["Rule", "Detail"]}>
+      <DocRows rows={STYLE} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Word list" lead="One word for each thing, used everywhere. Items marked “to confirm” need a decision with the Neurosift team.">
+    <DocTable caption="Word list" columns={["Use", "Not", "Notes"]}>
+      <DocRows rows={WORDS} />
+    </DocTable>
+    <p class="doc-note">Word choices marked “to confirm” should be settled with Jeremy Magland and Ben Dichter before the copy changes in the app.</p>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Name the object, file or Dandiset in loading and error text.", "Lead with the action or the answer.", "Explain an NWB term the first time it appears on a screen.", "Keep each line complete on its own, so people can stop reading."]}
+      donts={["Don’t show raw errors, stack traces or variable names to readers.", "Don’t blame: “You entered an invalid URL” becomes “Neurosift couldn’t open this URL”.", "Don’t write “Loading...” on its own.", "Don’t use internal names such as “timeseries client” or “TSV2”."]}
+    />
+  </DocSection>
+</DocsLayout>

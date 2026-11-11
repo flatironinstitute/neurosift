@@ -1,0 +1,188 @@
+---
+import CodeSample from "../../components/CodeSample.astro";
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const DURATIONS = [
+  ["0ms · instant", "Plots, the time cursor, focus rings, closing menus, switching tabs, opening sections"],
+  ["100ms · fast", "Hover and press colors, checkbox marks"],
+  ["150ms · base", "Dialogs fading in, menus and toasts"],
+  ["200ms · slow", "Overlay drawers sliding in"],
+];
+
+const EASING = [
+  ["Enter", "cubic-bezier(0.2, 0, 0, 1)", "Menus, toasts, dialogs and drawers arriving"],
+  ["Exit", "cubic-bezier(0.4, 0, 1, 1)", "Toasts, dialogs and drawers leaving"],
+  ["Linear", "linear", "Fades, the spinner, progress bars"],
+];
+
+const MOVES = [
+  ["Button, link, row", "Hover, press", "Color change only; no scale or lift", "Same"],
+  ["Focus ring", "Keyboard focus", "Appears at once", "Same"],
+  ["Tooltip", "Hover after 500ms, or focus", "Appears", "Same"],
+  ["Dialog", "Open", "Fades in and rises 4px, 150ms", "Appears at once"],
+  ["Overlay drawer", "Open", "Slides in from its side, 200ms", "Appears at once"],
+  ["Accordion and tree row", "Open, close", "Children appear at once; the chevron turns", "Same"],
+  ["Spinner", "Waiting", "Turns at a constant speed", "Stops turning"],
+];
+
+const TIMING = [
+  ["Response", "Under 100ms", "Every click or key gets visible feedback this fast, even when the data takes longer."],
+  ["Tooltip", "500ms on hover", "Tooltips wait this long on hover, and appear at once on keyboard focus."],
+  ["Toast", "4 s", "Confirmations stay this long, wait while hovered or focused, and can be closed. Errors stay until dismissed."],
+  ["Loading", "Until it fails", "A loading area stops and says what failed, instead of “Loading…” forever."],
+];
+
+const NEVER = [
+  ["Animated data", "Lines that draw themselves, bars that grow, values that count up."],
+  ["Inertia and bounce", "Plots that keep sliding after a drag, or overshoot and spring back."],
+  ["Shimmer loading", "A light band sweeping over empty plots. Empty states stay still."],
+  ["Pulsing attention", "Buttons, badges or rows that throb to be noticed."],
+  ["Page transitions", "Pages that slide, scale or fade when you navigate."],
+  ["Autoplay", "Videos or views that start playing on their own."],
+];
+const TODAY = [
+  [
+    "transition: all 0.15s ease",
+    "9",
+    "Name the property, such as background-color, at motion/duration/fast"
+  ],
+  [
+    "transition: all 0.2s ease, ease-in-out",
+    "7",
+    "Name the property, at motion/duration/base"
+  ],
+  [
+    "transition: background-color 0.2s",
+    "4",
+    "motion/duration/fast"
+  ],
+  [
+    "transition: width 0.3s ease",
+    "1",
+    "No animation. Panels resize with the pointer"
+  ],
+  [
+    "Spinners: three custom keyframes at 0.8s, CircularProgress ×7",
+    "10",
+    "One spinner, 16 or 20px, shown after 300ms"
+  ],
+  [
+    "LinearProgress",
+    "3",
+    "Determinate progress when Neurosift knows how many chunks to load"
+  ],
+  [
+    "“Loading...” text",
+    "30+",
+    "Say what is loading, and what to do if it fails"
+  ],
+  [
+    "prefers-reduced-motion",
+    "1",
+    "Honored everywhere, not only the spectrogram"
+  ]
+];
+const DISTANCE = [
+  [
+    "0px · none",
+    "Plots, rows, tooltips, focus rings, page content"
+  ],
+  [
+    "4px · xs",
+    "Menus and selects, down from their control"
+  ],
+  [
+    "8px · sm",
+    "Toasts, up from the bottom edge; the overview drawer, in from the left while fading"
+  ]
+];
+const motionCode = `:root {
+  --motion-duration-fast: 100ms;
+  --motion-duration-base: 150ms;
+  --motion-duration-slow: 200ms;
+  --motion-easing-enter: cubic-bezier(0.2, 0, 0, 1);
+  --motion-easing-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-property: opacity, color, background-color !important;
+  }
+}`;
+---
+
+<DocsLayout title="Motion" description="Short, cued motion around the data, and none in it.">
+  <Intro
+    lead="Neurosift barely moves. Plots respond to the pointer at once and never animate the data. Around them, dialogs and drawers use short fades and slides so people can see what changed, and every animation has a still version for people who ask for less motion."
+    status="Updated November 9, 2026 · Foundations · Follows WCAG 2.2: 2.2.2 Pause, Stop, Hide; 2.3.1 Three Flashes; 2.3.3 Animation from Interactions"
+    rules={[
+      { title: "Data never animates", text: "Zoom, pan and the time cursor follow the pointer directly. A plot never tweens, eases or settles, so what you see is always the data." },
+      { title: "Short and on cue", text: "Motion answers something the person did. Most of it ends within 150ms, and nothing takes longer than 200ms." },
+      { title: "Reduced means still", text: "With reduced motion on, movement becomes an instant change, and the spinner stops." },
+    ]}
+  />
+
+  <DocSection title="Motion in Neurosift today" lead="Transitions and animations in Neurosift's src/ today, and what each becomes.">
+    <DocTable caption="Motion today" columns={["Today","Uses","Becomes"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Duration" lead="Four steps. Neurosift is a working tool, so motion stays at the fast end: nothing runs longer than 200ms.">
+    <DocTable caption="Durations" columns={["Step", "Use"]}>
+      {DURATIONS.map(([step, use]) => <tr><th scope="row">{step}</th><td>{use}</td></tr>)}
+    </DocTable>
+    <p class="doc-note">These steps and curves are proposed; there are no motion tokens in code yet. Today the components change state at once, and only the spinner moves.</p>
+  </DocSection>
+
+  <DocSection title="Easing" lead="Things arrive fast and settle; things leave by speeding away; fades and spinners run at a constant rate.">
+    <DocTable caption="Easing curves" columns={["Curve", "Value", "Use"]}>
+      {EASING.map(([curve, value, use]) => <tr><th scope="row">{curve}</th><td><code class="type-code-sm">{value}</code></td><td>{use}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Distance" lead="How far things travel. Short distances read as a cue; long ones read as movement.">
+    <DocTable caption="Distances" columns={["Step","Use"]}>
+      <DocRows rows={DISTANCE} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="What moves, and how" lead="Every animated element, with its reduced motion version. If something isn’t on this list, it doesn’t move.">
+    <DocTable caption="What moves" columns={["Element", "Trigger", "Default", "Reduced motion"]}>
+      {MOVES.map(([element, trigger, normal, reduced]) => <tr><th scope="row">{element}</th><td>{trigger}</td><td>{normal}</td><td>{reduced}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Plots and data" lead="Plots fill most of the screen and hold the data people came for, so they follow stricter rules than the rest of the interface.">
+    <ul class="rule-list">
+      <li><strong>Direct manipulation.</strong> Zoom and pan follow the pointer, wheel and trackpad exactly. No inertia: a plot stops when the pointer stops.</li>
+      <li><strong>Buttons jump.</strong> Zoom and step buttons change the time window at once. Animated zoom makes the axis unreadable while it moves.</li>
+      <li><strong>Synced views move together.</strong> In a synced view, every plot updates in the same frame, so they never drift apart.</li>
+      <li><strong>Data arrives as it loads.</strong> Chunks draw as soon as they arrive, without fading in.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="The right moment" lead="When feedback appears matters as much as how it moves.">
+    <DocTable caption="Timing" columns={["Moment", "Value", "Rule"]}>
+      {TIMING.map(([moment, value, rule]) => <tr><th scope="row">{moment}</th><td>{value}</td><td>{rule}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Reduced motion" lead="Neurosift follows the device’s reduce-motion setting. With it on, movement becomes an instant change, plots behave exactly the same since they never animate, and the spinner stops. Nothing flashes more than three times a second, in any mode.">
+    <p class="doc-note">The docs’ accessibility suite checks that the spinner stops under reduced motion.</p>
+  </DocSection>
+
+  <DocSection title="Never in Neurosift" lead="Easy to add, hard to live with, and wrong for a data tool.">
+    <DocTable caption="Never in Neurosift" columns={["Never", "Such as"]}>
+      {NEVER.map(([never, example]) => <tr><th scope="row">{never}</th><td>{example}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Tokens and code" lead="The proposed tokens, as they would sit in tokens.css. They aren't in the code yet.">
+    <CodeSample label="Proposed motion tokens" code={motionCode} />
+  </DocSection>
+</DocsLayout>

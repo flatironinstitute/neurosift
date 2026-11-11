@@ -203,6 +203,7 @@ interface TimeseriesChunk {
 
 export class ChunkedTimeseriesClient {
   private chunks: Map<string, TimeseriesChunk> = new Map();
+  private loading: Map<string, Promise<TimeseriesChunk>> = new Map();
 
   private constructor(
     private client: TimeseriesClient,
@@ -269,14 +270,28 @@ export class ChunkedTimeseriesClient {
     );
   }
 
-  private async loadChunk(
+  private loadChunk(
     chunkIndex: number,
     channelIndex: number,
   ): Promise<TimeseriesChunk> {
     const chunkKey = `${chunkIndex}-${channelIndex}`;
-    if (this.chunks.has(chunkKey)) {
-      return this.chunks.get(chunkKey)!;
+    const loaded = this.chunks.get(chunkKey);
+    if (loaded) return Promise.resolve(loaded);
+    let pending = this.loading.get(chunkKey);
+    if (!pending) {
+      pending = this.fetchChunk(chunkIndex, channelIndex).finally(() =>
+        this.loading.delete(chunkKey),
+      );
+      this.loading.set(chunkKey, pending);
     }
+    return pending;
+  }
+
+  private async fetchChunk(
+    chunkIndex: number,
+    channelIndex: number,
+  ): Promise<TimeseriesChunk> {
+    const chunkKey = `${chunkIndex}-${channelIndex}`;
 
     const startTime = chunkIndex * this.chunkSizeSec;
     const endTime = (chunkIndex + 1) * this.chunkSizeSec;
@@ -324,6 +339,21 @@ export class ChunkedTimeseriesClient {
     }
 
     await Promise.all(promises);
+  }
+
+  /** Loads the chunks a coming window needs, so playback finds them ready. */
+  async prefetch(
+    tStart: number,
+    tEnd: number,
+    channelStart: number,
+    channelEnd: number,
+  ): Promise<void> {
+    await this.ensureChunksLoaded(
+      this.getChunkTimeIndex(tStart),
+      this.getLastChunkTimeIndex(tStart, tEnd),
+      this.getChunkChannelIndex(channelStart),
+      this.getLastChunkChannelIndex(channelStart, channelEnd),
+    );
   }
 
   async getDataForTimeRange(

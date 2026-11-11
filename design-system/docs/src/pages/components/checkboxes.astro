@@ -1,0 +1,166 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import Existing from "../../components/Existing.astro";
+import { Checkbox } from "@ui";
+import CodeSample from "../../components/CodeSample.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const noop = () => {};
+
+const STATES: { name: string; checked: boolean | "mixed" }[] = [
+  { name: "Off", checked: false },
+  { name: "On", checked: true },
+  { name: "Mixed", checked: "mixed" },
+];
+
+const KEYS = [
+  ["Space", "Turns the focused checkbox on or off; Mixed turns on"],
+  ["Tab", "Moves to the next checkbox, one stop per box"],
+  ["Click the label", "Same as clicking the box: the whole row is the target"],
+];
+
+const WRITING = [
+  ["Zero-phase filter", "zero-phase", "Sentence case, and says what it is"],
+  ["Notch filter", "notch", "Says what it is; the 50 or 60 Hz select stays beside it"],
+  ["Frequency-dependent window", "f-dep", "No abbreviations in labels"],
+  ["Swap x and y", "xy swap", "Starts with the action"],
+  ["Show ±σ band", "±Std band (dashed)", "Describes the on state; the line style belongs in the legend"],
+];
+
+const SPECS = [
+  ["Box", "16px · icon/size/sm · radius/xs (2px)"],
+  ["Off", "1px border/strong, surface/panel fill; hover border/selected"],
+  ["On and Mixed", "action/primary fill and edge, hover action/primary-hover; checkmark or subtract icon in text/on-inverse"],
+  ["Label", "type/body-sm · text/default, 8px after the box (space/2)"],
+  ["Count", "type/caption · text/muted, pushed to the end of the row"],
+  ["Row", "At least 24px tall · layout/target-min"],
+  ["Focus", "2px border/focus ring with a 2px gap around the box, keyboard focus only"],
+  ["Disabled", "action/disabled fill, border/disabled, text/disabled"],
+];
+
+const code = `import { Checkbox } from "@ui";
+
+<Checkbox label="Show trails" checked={trails} onChange={setTrails} />
+<Checkbox label="All channels" checked={allChannels} onChange={selectAll}
+  count="3 of 16" />   // allChannels is true, false or "mixed"`;
+const CHOICE = [
+  [
+    "Turn one option on or off",
+    "Checkbox",
+    "Show NWB files only, Show trails"
+  ],
+  [
+    "Pick any number from a short list",
+    "Checkbox group with a legend",
+    "Catalog filters, PSTH preferences"
+  ],
+  [
+    "Pick any number from a long list",
+    "Multi-select",
+    "Units in the PSTH"
+  ],
+  [
+    "Pick one of a few",
+    "Segmented control",
+    "Plot or table"
+  ],
+  [
+    "Pick one of many",
+    "Select",
+    "Align to"
+  ],
+  [
+    "Show or hide a block of content",
+    "Disclosure",
+    "Show attributes"
+  ]
+];
+---
+
+<DocsLayout title="Checkboxes" description="Checkbox: on, off and mixed, with the whole row as the target.">
+  <Intro
+    lead="Checkboxes turn options on and off: which files to list, which channels to plot, whether a PSTH shows its raster. Neurosift uses them in a dozen places, all as unstyled browser checkboxes. One Checkbox component replaces them, and adds a mixed state for “some of these”."
+    status="Updated November 6, 2026 · Components · Every checkbox on this page is the component the app imports from @ui"
+    rules={[
+      { title: "The whole row is the target", text: "The label is part of the control, so clicking the words works, not only the 16px box." },
+      { title: "Say the on state", text: "Labels describe the on state in sentence case: Show NWB files only, Show trails." },
+      { title: "Mixed means some", text: "A parent box shows a dash when some of its children are on. Clicking it turns them all on." },
+    ]}
+  />
+
+  <Existing page="checkboxes" />
+
+  <DocSection title="Checkbox" lead="A 16px box and its label. Checked is Off, On or Mixed, each enabled or disabled; a count can sit at the end of the row, for filter lists. Click a box or its label to see it change.">
+    <DocTable caption="Checkbox states" columns={["State", "Enabled", "Disabled"]}>
+      {
+        STATES.map(({ name, checked }) => (
+          <tr>
+            <th scope="row">{name}</th>
+            <td><Checkbox label="Show NWB files only" checked={checked} onChange={noop} /></td>
+            <td><Checkbox label="Show NWB files only" checked={checked} onChange={noop} disabled /></td>
+          </tr>
+        ))
+      }
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In panels and filter lists" lead="A group gets a fieldset and legend, so screen readers say “Archive, DANDI, checked”. Counts sit at the end of the row.">
+    <div class="field-grid">
+      <fieldset class="checkbox-group">
+        <legend class="type-label">Archive</legend>
+        <Checkbox label="DANDI" checked onChange={noop} count="673" />
+        <Checkbox label="EMBER" checked={false} onChange={noop} count="26" />
+        <Checkbox label="OpenNeuro" checked onChange={noop} count="1,941" />
+      </fieldset>
+      <fieldset class="checkbox-group">
+        <legend class="type-label">Channels</legend>
+        <Checkbox label="All channels" checked="mixed" onChange={noop} count="2 of 4" />
+        <Checkbox label="Channel 0" checked onChange={noop} />
+        <Checkbox label="Channel 1" checked onChange={noop} />
+        <Checkbox label="Channel 2" checked={false} onChange={noop} />
+        <Checkbox label="Channel 3" checked={false} onChange={noop} />
+      </fieldset>
+    </div>
+    <p class="doc-note">Archive counts are the Dandisets and datasets each archive listed on November 5, 2026.</p>
+  </DocSection>
+
+  <DocSection title="Checkbox or something else">
+    <DocTable caption="Checkbox or something else" columns={["To…","Use","In Neurosift"]}>
+      <DocRows rows={CHOICE} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Keyboard" lead="A native input inside its label, so all of this comes with the browser.">
+    <DocTable caption="Checkbox keyboard" columns={["Key", "Does"]}>
+      {KEYS.map(([key, does]) => <tr><th scope="row">{key}</th><td>{does}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Writing" lead="Rewrites of labels in the app today.">
+    <DocTable caption="Checkbox labels" columns={["Use", "Instead of", "Why"]}>
+      {WRITING.map(([use, instead, why]) => <tr><th scope="row">{use}</th><td>{instead}</td><td>{why}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Accessibility">
+    <ul class="rule-list">
+      <li><strong>Native input.</strong> Screen readers announce checked, not checked or mixed; Mixed is the browser’s own indeterminate state.</li>
+      <li><strong>Target.</strong> The label wraps the input, and the row is at least 24px tall.</li>
+      <li><strong>Groups.</strong> A fieldset and legend name the group.</li>
+      <li><strong>Contrast.</strong> On has a check and Mixed a dash, white on the primary color, and the box edge is black, 21:1.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Checkbox specs" columns={["Property", "Value"]}>
+      {SPECS.map(([property, value]) => <tr><th scope="row">{property}</th><td>{value}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead={'Import from @ui. checked is true, false or "mixed"; onChange reports the new on or off state.'}>
+    <CodeSample label="React" code={code} />
+  </DocSection>
+</DocsLayout>

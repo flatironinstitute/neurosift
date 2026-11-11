@@ -1,0 +1,195 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import Existing from "../../components/Existing.astro";
+import CodeSample from "../../components/CodeSample.astro";
+import DoDont from "../../components/DoDont.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import TimeDemo from "../../components/TimeDemo";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const WINDOW = [
+  ["Length field", "Sets the window length. Enter applies; Escape restores the last value.", "—"],
+  ["Start field", "Sets where the window begins. Enter applies; Escape restores.", "—"],
+  ["Zoom in", "Shortens the window by 1.4×, keeping the cursor where it is.", "="],
+  ["Zoom out", "Lengthens the window by 1.4×, up to the whole session.", "-"],
+  ["Earlier", "Moves back by a tenth of the window; disabled at the start.", "Left arrow"],
+  ["Later", "Moves forward by a tenth of the window; disabled at the end.", "Right arrow"],
+];
+
+const KEYS = [
+  ["Zoom in or out", "Mouse wheel over the plot", "=  -"],
+  ["Move earlier or later", "Drag the plot, or drag the overview box", "Left and right arrows"],
+  ["Jump to start or end", "—", "Home  End"],
+  ["Step the overview", "Click the strip to center the window there", "Arrows step a tenth; Shift steps a whole window"],
+  ["Play or pause", "Play button", "Space"],
+];
+
+const WRITING = [
+  ["Time window", "Time Window", "Sentence case"],
+  ["3.75 s from 0.00 s", "3.75s at 0.00s", "A space before units; “from” says it’s a start"],
+  ["0.00–1,375.69 s · 400 Hz · 70 channels", "Start: 0.00 s, Duration: 1375.69 s, 400.00 Hz", "Shorter, with a thousands comma"],
+  ["Zoom in, with the = key", "Zoom in (decrease time window)", "The tooltip names the key; the icon already says zoom"],
+  ["Earlier, with the Left arrow key", "Move backward in time", "A plain word plus its key"],
+  ["0–3 of 70", "0-3 of 70", "An en dash for ranges"],
+];
+
+const SPECS = [
+  ["Group", "surface/panel · 1px border/subtle · radius/sm · padding 4px 4px 4px 8px"],
+  ["Fields", "Text input, Small · 24px · values in type/code-sm"],
+  ["Buttons", "Icon button, Secondary, 24px, with the key in each tooltip"],
+  ["Gap in a group", "8px · space/2, with 1px × 16px border/subtle dividers"],
+  ["Overview track", "24px · surface/page · 1px border/strong · radius/xs"],
+  ["Overview window", "data/selection fill · 1px action/primary, 2px on hover and drag"],
+  ["Cursor", "2px · data/cursor"],
+  ["Zoom step", "1.4×"],
+  ["Step", "10% of the window"],
+];
+
+const code = `import { Playback, TimeOverview, TimeWindow, timeKey } from "@ui";
+
+<TimeWindow value={window} session={session} cursor={cursor} onChange={setWindow} />
+<TimeOverview value={window} session={session} cursor={cursor} onChange={setWindow} />
+<Playback playing={playing} onPlayingChange={setPlaying}
+  speed={speed} onSpeedChange={setSpeed} time={cursor} waiting={waiting} />
+<Playback ... readout="Frame 412 of 113,855" />
+
+// In the plot's key handler:
+const next = timeKey(event.key, window, session, cursor);
+if (next) setWindow(next);`;
+const CHANNEL_WINDOW = [
+  [
+    "Channels, 0–3 of 70",
+    "In a timeseries. Fewer and More change how many show; Previous and Next move through the list."
+  ],
+  [
+    "Units, 0–3 of 46",
+    "In a raster. Numbers stay zero-based, matching the indices people use in Python. To confirm with the team."
+  ]
+];
+const OVERVIEW_STATES = [
+  [
+    "Default",
+    "1px navy outline around the visible window."
+  ],
+  [
+    "Hover",
+    "2px outline; the pointer becomes a grab hand."
+  ],
+  [
+    "Focus",
+    "Link-blue ring. Arrow keys step, Shift steps a whole window."
+  ],
+  [
+    "Dragging",
+    "The fill turns navy 50 while the window moves."
+  ]
+];
+const PLAYBACK_STATES = [
+  [
+    "Stopped",
+    "The Play button, the speed and the cursor time."
+  ],
+  [
+    "Playing",
+    "Pause keeps the position. Space toggles play when the view has focus."
+  ],
+  [
+    "Speed menu",
+    "0.1×, 0.25×, 0.5×, 1×, 2×, 4× and 8×. It can change mid-play."
+  ],
+  [
+    "Waiting for data",
+    "Still playing, but held until data arrives: a spinner and “Waiting for data” after the readout, in a polite status."
+  ],
+  [
+    "Frame readout",
+    "Views that step frames read out “Frame 412 of 113,855” in place of the time."
+  ]
+];
+---
+
+<DocsLayout title="Time controls" description="Time window, Channel window, Time overview and Playback: one shared time for every view.">
+  <Intro
+    lead="Time controls decide which stretch of a recording a plot shows. They are what makes Neurosift different from a file browser: people zoom from a 23-minute session down to a few spikes, step through trials, and play behavior video in step with neural data. Every view of a file shares the same time window and cursor, so the controls behave the same everywhere."
+    status="Updated November 11, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "One time for every view", text: "The window and cursor are shared, so moving one view moves them all." },
+      { title: "Numbers you can see and type", text: "The window’s length and start are fields, not labels that only look editable." },
+      { title: "Every move has a key", text: "Zoom, step, jump and play all have keys, named in each button’s tooltip." },
+    ]}
+  />
+
+  <Existing page="time-controls" />
+
+  <DocSection title="Plot toolbar" lead="The order is the same in every view: a one-line summary of the recording, then time with playback right after it, then the other axis. Groups wrap to a second line when the panel is narrow. All of these share one window and cursor.">
+    <TimeDemo client:visible />
+    <p class="doc-note">The plot itself stays as it is; the stand-in here takes the same keys a focused plot would. For long sessions the Time overview sits under the toolbar, so people always see where they are.</p>
+  </DocSection>
+
+  <DocSection title="Time window" lead="A duration from a start time. Both are fields people can type into; the buttons zoom and step.">
+    <DocTable caption="Time window controls" columns={["Control", "Does", "Key"]}>
+      {WINDOW.map(([control, does, key]) => <tr><th scope="row">{control}</th><td>{does}</td><td>{key}</td></tr>)}
+    </DocTable>
+    <p class="doc-note">A value that won’t fit gets a reason, such as “Start must be between 0 and 1,371.94 s.”, in place of snapping back. Times show two decimals, with a thousands comma past 1,000 s.</p>
+  </DocSection>
+
+  <DocSection title="Channel window" lead="The same pattern for the other axis. Channels in a timeseries, units in a raster: the label and total change, the behavior doesn’t.">
+    <DocTable caption="Channel window" columns={["Label","Where and how"]}>
+      <DocRows rows={CHANNEL_WINDOW} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Time overview" lead="The whole session as a strip, under the toolbar above. The outlined box is the visible window; the red line is the cursor shared with every view.">
+    <DocTable caption="Time overview states" columns={["State","Look"]}>
+      <DocRows rows={OVERVIEW_STATES} />
+    </DocTable>
+    <p class="doc-note">Drag the box to move it, or click the strip to center the window there. Session start and end sit at either end in Plex Mono. It replaces today’s light-gray strip with a black box and red line.</p>
+  </DocSection>
+
+  <DocSection title="Playback" lead="For video, pose, traces, Spatial X/Y, EDF recordings and two-photon frames. Play moves the shared window or cursor at the chosen speed, 1× being real time.">
+    <DocTable caption="Playback states" columns={["State","Look and behavior"]}>
+      <DocRows rows={PLAYBACK_STATES} />
+    </DocTable>
+    <p class="doc-note">Playback never starts by itself. Editing the window, dragging the overview, zooming or stepping pauses it, and so does the end. Under reduced motion it still plays, since people start it, with no extra animation.</p>
+  </DocSection>
+
+  <DocSection title="Pointer and keyboard" lead="The plot takes keys once it has focus; the focus ring shows when it does.">
+    <DocTable caption="Pointer and keyboard" columns={["Action", "Pointer", "Key"]}>
+      {KEYS.map(([action, pointer, key]) => <tr><th scope="row">{action}</th><td>{pointer}</td><td>{key}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Writing" lead="Rewrites of strings in the app today.">
+    <DocTable caption="Writing time controls" columns={["Use", "Instead of", "Why"]}>
+      {WRITING.map(([use, instead, why]) => <tr><th scope="row">{use}</th><td>{instead}</td><td>{why}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Accessibility">
+    <ul class="rule-list">
+      <li><strong>Named buttons.</strong> Every icon button is named, Zoom in, Zoom out, Earlier, Later, with its key announced.</li>
+      <li><strong>The overview is a slider.</strong> Its value reads as the window, such as “3.75 s from 412.00 s”.</li>
+      <li><strong>Changes are announced.</strong> A polite status reads the new window after a zoom or step, once it settles.</li>
+      <li><strong>No motion surprises.</strong> Playback never starts by itself.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Keep time controls in the same place in every view.", "Show the window and start as fields.", "Put the key in each tooltip.", "Keep every view on one shared window and cursor."]}
+      donts={["Don’t use emoji or typed characters as icons.", "Don’t snap a typed value back without a message.", "Don’t hide wheel zoom behind an unexplained click.", "Don’t use a color outside the palette for an active mode."]}
+    />
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Time control specs" columns={["Property", "Value"]}>
+      {SPECS.map(([property, value]) => <tr><th scope="row">{property}</th><td>{value}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. The controls are pure: the view holds the shared window and cursor, and timeKey gives a focused plot the same keys.">
+    <CodeSample label="React" code={code} />
+  </DocSection>
+</DocsLayout>

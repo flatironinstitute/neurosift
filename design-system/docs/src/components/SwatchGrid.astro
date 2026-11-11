@@ -1,0 +1,24 @@
+---
+import type { TokenView } from "../tokens";
+import Sample from "./Sample.astro";
+
+interface Props {
+  label: string;
+  views: TokenView[];
+  ramp?: boolean;
+}
+
+const { label, views, ramp = false } = Astro.props;
+---
+
+<ul class={ramp ? "ramp" : "swatch-grid"} aria-label={label}>
+  {
+    views.map((view) => (
+      <li>
+        <Sample view={view} kind="swatch" />
+        <code>{ramp ? view.step : view.name}</code>
+        <span class:list={[ramp ? "visually-hidden" : "swatch-hex"]}>{view.value}</span>
+      </li>
+    ))
+  }
+</ul>

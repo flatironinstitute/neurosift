@@ -10,6 +10,7 @@ import {
   RemoteH5FileX,
 } from "@remote-h5-file";
 import { getCachedObject, setCachedObject } from "./hdf5Cache";
+import { MAX_READ_BYTES, datasetBytes, tooLargeMessage } from "./datasetSize";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 import { removeStatusItem, setStatusItem } from "@components/StatusBarContext";
 import {
@@ -145,9 +146,10 @@ const globalStats: GlobalStats = {
 
 const globalStatsUpdated = () => {
   setStatusItem("hdf5Stats", {
-    type: "text",
-    text: `${globalStats.numGroups} / ${globalStats.numDatasets} / ${globalStats.numDatasetDatas}`,
-    tooltip: "Number of groups / datasets / dataset data accesses",
+    type: "stats",
+    groups: globalStats.numGroups,
+    datasets: globalStats.numDatasets,
+    reads: globalStats.numDatasetDatas,
   });
   if (
     globalStats.numGroups === 0 &&
@@ -261,9 +263,9 @@ export const getHdf5Group = async (
   const f = (await getRemoteH5FileForUrl(url)).remoteH5File;
   const itemName = `getHdf5Group-${url}-${path}`;
   setStatusItem(itemName, {
-    type: "text",
-    text: "g",
-    tooltip: `Loading HDF5 group: ${path}`,
+    type: "reading",
+    what: "group",
+    path,
   });
   let group;
   try {
@@ -295,9 +297,9 @@ export const getHdf5Dataset = async (
   let dataset;
   const itemName = `getHdf5Dataset-${url}-${path}`;
   setStatusItem(itemName, {
-    type: "text",
-    text: "d",
-    tooltip: `Loading HDF5 dataset: ${path}`,
+    type: "reading",
+    what: "dataset",
+    path,
   });
   try {
     dataset = await f.getDataset(path);
@@ -334,34 +336,18 @@ export const getHdf5DatasetData = async (
     url.endsWith(".lindi.json") || url.endsWith(".lindi.tar");
   const itemName = `getHdf5DatasetData-${url}-${path}-${JSON.stringify(o.slice)}`;
   setStatusItem(itemName, {
-    type: "text",
-    text: "◯",
-    tooltip: `Loading HDF5 dataset data: ${path}`,
+    type: "reading",
+    what: "data",
+    path,
   });
   try {
     const ds = await f.getDataset(path);
     if (!ds) {
       throw new Error(`Dataset not found: ${path}`);
     }
-    let totalSize = 1;
-    for (let i = 0; i < ds.shape.length; i++) {
-      if (o.slice && o.slice[i]) {
-        totalSize *= o.slice[i][1] - o.slice[i][0];
-      } else {
-        totalSize *= ds.shape[i];
-      }
-    }
-    const maxNumElements = 1e8;
-    if (totalSize > maxNumElements) {
-      // Format sizes in MB for human readability
-      const formatSize = (size: number) => {
-        const sizeInMB = (size / 1e6).toFixed(1);
-        return `${sizeInMB} MB`;
-      };
-      throw new Error(
-        `The dataset "${path}" is too large to load (${formatSize(totalSize)}). Maximum allowed size is ${formatSize(maxNumElements)}.`,
-      );
-    }
+    const bytes = datasetBytes(ds.shape, ds.dtype, o.slice);
+    if (bytes > MAX_READ_BYTES)
+      throw new Error(tooLargeMessage(path, bytes, MAX_READ_BYTES));
     try {
       return await f.getDatasetData(path, o);
     } catch (err) {

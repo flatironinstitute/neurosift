@@ -401,7 +401,6 @@ export const useTimeRange = () => {
     [visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange],
   );
   const setCurrentTimeFraction = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (fraction: number, _opts: { event: React.MouseEvent }) => {
       if (visibleStartTimeSec === undefined || visibleEndTimeSec === undefined)
         return;

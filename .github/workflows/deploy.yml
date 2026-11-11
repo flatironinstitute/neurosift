@@ -14,11 +14,30 @@ jobs:
       - name: Update submodules
         run: git submodule update --init --recursive
 
+      # The design system docs (Astro) need Node 22.
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       - name: Install dependencies
         run: npm install
 
       - name: Build project
         run: npm run build
+
+      # The design system docs are served with the app, at /design-system/.
+      - name: Install docs dependencies
+        run: npm run docs:install
+
+      - name: Build the design system docs into the app at /design-system/
+        run: |
+          npm run docs:build
+          mkdir -p dist/design-system
+          cp -R design-system/docs/dist/. dist/design-system/
+        env:
+          DOCS_BASE: /design-system/
+          PUBLIC_APP_BASE: /
 
       - name: Install Wrangler
         run: npm install --global wrangler

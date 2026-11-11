@@ -1,0 +1,21 @@
+.psth-checklist {
+  display: grid;
+  gap: var(--space-1);
+  max-block-size: 18rem;
+  overflow-y: auto;
+}
+
+.psth-charts {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.psth-chart {
+  position: relative;
+  block-size: var(--chart-h);
+}
+
+.psth-chart-frame {
+  position: relative;
+  block-size: 100%;
+}

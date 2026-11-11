@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  MAX_READ_AHEAD,
   canStepFrame,
   clampFrameIndex,
+  framesToRead,
+  splitFrames,
   steppedFrameIndex,
 } from "./frameStepping";
 
@@ -48,5 +51,23 @@ describe("canStepFrame", () => {
     expect(canStepFrame(9, -1, 10)).toBe(true);
     expect(canStepFrame(undefined, 1, 10)).toBe(false);
     expect(canStepFrame(0, 1, 1)).toBe(false);
+  });
+});
+
+describe("framesToRead", () => {
+  it("reads half a second of frames ahead while playing, within limits", () => {
+    expect(framesToRead(false, 30, 1)).toBe(1);
+    expect(framesToRead(true, 30, 1)).toBe(15);
+    expect(framesToRead(true, 30, 8)).toBe(MAX_READ_AHEAD);
+    expect(framesToRead(true, 1, 0.1)).toBe(1);
+    expect(framesToRead(true, undefined, 1)).toBe(1);
+  });
+});
+
+describe("splitFrames", () => {
+  it("cuts a block of frames into one array per frame index", () => {
+    const frames = splitFrames(Uint16Array.from([1, 2, 3, 4, 5, 6]), 10, 2);
+    expect([...frames.keys()]).toEqual([10, 11, 12]);
+    expect([...frames.get(11)!]).toEqual([3, 4]);
   });
 });

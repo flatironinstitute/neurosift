@@ -1,0 +1,36 @@
+.tsv {
+  position: relative;
+  inline-size: var(--tsv-width);
+  block-size: var(--tsv-height);
+  background: var(--surface-panel);
+}
+
+.tsv--bare {
+  position: absolute;
+}
+
+.tsv-content {
+  position: relative;
+  overflow: hidden;
+  inline-size: var(--tsv-canvas-width);
+  block-size: var(--tsv-canvas-height);
+}
+
+.tsv-canvas {
+  position: absolute;
+  inline-size: var(--tsv-canvas-width);
+  block-size: var(--tsv-canvas-height);
+}
+
+.tsv-bar {
+  position: absolute;
+  inline-size: var(--tsv-canvas-width);
+  block-size: var(--tsv-bar-height);
+}
+
+.tsv-below-bar {
+  position: absolute;
+  inset-block-start: var(--tsv-bar-height);
+  inline-size: var(--tsv-canvas-width);
+  block-size: calc(var(--tsv-canvas-height) - var(--tsv-bar-height));
+}

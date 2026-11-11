@@ -1,0 +1,15 @@
+.imaging-slider {
+  inline-size: 14rem;
+}
+
+.imaging-frame {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-5);
+}
+
+.imaging-overview {
+  position: relative;
+  block-size: 1.25rem;
+}

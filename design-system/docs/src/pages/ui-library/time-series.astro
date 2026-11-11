@@ -1,0 +1,128 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import Screen from "../../components/Screen.astro";
+import LiveScreen from "../../components/LiveScreen.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const TODAY = [
+  ["SimpleTimeseries", "Any TimeSeries with data and timestamps or a starting time: traces, stacked or overlaid", "plugins/simple-timeseries", "Channels change by doubling or halving; a “.” button switches to Plotly"],
+  ["Events, BehavioralEvents", "Event times on a time axis", "plugins/Events, BehavioralEvents", "Their own time selection bar under the plot"],
+  ["IntervalSeries", "Intervals on a time axis", "plugins/IntervalSeries", "—"],
+  ["TimeIntervals", "The table’s intervals as colored blocks, with a Label select", "plugins/TimeIntervals", "“Switch to Neurosift View” and “Switch to Plotly View” as one button"],
+  ["SpatialSeries X/Y", "A two-channel SpatialSeries as a path in x and y, colored by time", "plugins/SpatialSeries", "Its own time selection bar above the plot; a gray Loading… over it; nothing said when the window is too long to draw"],
+  ["EventRelatedSignal", "A signal around each interval: single trials, mean and ± standard deviation band", "plugins/EventRelatedSignal", "Navy section headers; Window and Max intervals wait for Update"],
+  ["Too much data", "A red sentence inside the plot", "simple-timeseries", "No way to draw anyway"],
+];
+
+const STATES = [
+  ["Reading", "“Reading the time series” in place of the plot; the frame stays."],
+  ["Too much data", "A warning: how many channels, at what rate, for how long, with Zoom in and Draw anyway."],
+  ["Drawn anyway", "The window draws once; zooming out further asks again."],
+  ["No times", "A TimeIntervals table with no finite times says so, instead of a bare sentence."],
+  ["Nothing picked", "The aligned view says to pick a channel or a column to align to."],
+  ["Playing", "Pause replaces Play; the window, the overview box and the readout move together."],
+  ["Waiting for data", "Playback holds the window, never skipping ahead, and says “Waiting for data” beside the readout until the next stretch arrives."],
+];
+
+const BEHAVIOR = [
+  ["Time window", "As on Time controls: type a window and start, step, zoom. Every view on the shared time selection moves together."],
+  ["Channels", "Type a range or step by the same count; + and − double and halve, as today."],
+  ["Separation", "Drag to space the traces, in standard deviations; kept while zooming and panning."],
+  ["Renderer", "Canvas or Plotly, a segmented control in place of the unlabeled “.” button."],
+  ["Draw anyway", "Draws the whole window once; a wider window asks again."],
+  ["Aligned views", "Changes apply at once; Window and Max intervals apply when typing pauses. Update goes away."],
+  ["Playback", "On traces and Spatial X/Y. Play moves the window forward in real time at the chosen speed; the readout is the window’s right edge. Speed changes mid-play. Dragging the overview, editing the window, zooming or stepping pauses it, and so does the end. Space plays and pauses when the plot has focus."],
+  ["Spatial X/Y while playing", "The path draws up to the window’s right edge, with a dot at the current position; earlier samples in the window stay as the trail. Play shortens a window longer than 30 s to 30 s, keeping its right edge, so the path redraws smoothly; shorter windows stay as they are."],
+  ["Loading ahead", "While playing, traces load the next seconds before the window reaches them."],
+];
+
+const DIFFERS = [
+  ["Time controls", "Buttons and text that differ by view", "One Time window and Time overview on every time view", "Built"],
+  ["Renderer switch", "A “.” button, or Switch to … View", "Canvas or Plotly, labeled", "Built"],
+  ["Too much data", "A red sentence; nothing else to do", "Zoom in and Draw anyway", "Built"],
+  ["Aligned to trials", "Navy headers, Update button", "Settings beside the plots, applied at once", "Built"],
+  ["Group legend", "Inline swatches", "The chart’s own colors beside each group, with counts", "Built"],
+  ["Channels + and −", "Double and halve", "The same; stepping by one is to confirm", "To confirm"],
+  ["Playback", "—", "Play, pause and speed on traces and Spatial X/Y, after the Time window", "Built"],
+];
+
+const SPECS = [
+  ["Frame", "View panel · summary in type/body-sm · controls, then the Time overview, then the plot"],
+  ["Time window", "Time window, Small fields · Time overview below the controls"],
+  ["Channels", "Channel window · “of 70” in type/body-sm"],
+  ["Separation", "Slider, 0 to 10 σ, value shown"],
+  ["Renderer", "Segmented control, Small: Canvas, Plotly"],
+  ["Playback", "Playback, right after the Time window · readout in type/code-sm · “Waiting for data” in type/body-sm"],
+  ["Too much data", "Alert, Warning · Zoom in (secondary), Draw anyway (ghost)"],
+  ["Aligned settings", "320px settings panel · Accordion items: Series, Channels, Align to, Window, Group by, Display"],
+];
+---
+
+<DocsLayout title="Time series views" description="Traces, events and intervals on recording time, and signals aligned to trials.">
+  <Intro
+    lead="Time series views draw a neurodata object against recording time: voltage traces, event times, intervals, and a signal cut around each trial. Neurosift’s charts stay as they are. What changes is the frame around them: every view on recording time now shares the same Time window and overview, says in one line what it shows, and offers a way forward when a window holds too much to draw."
+    status="Updated November 11, 2026 · UI library · Captured at 1440 × 900 with Dandiset 000673, sub-1, and 000871 for Spatial X/Y · Built from View panel, Time window, Time overview, Playback, Channel window, Slider, Segmented control, Alert and Accordion"
+    rules={[
+      { title: "One clock", text: "Every view on recording time reads and sets the same time window." },
+      { title: "Say what’s drawn", text: "A summary line gives the span, rate and channels before the plot." },
+      { title: "Never a dead end", text: "Too much data offers Zoom in and Draw anyway, not a red sentence." },
+    ]}
+  />
+
+  <DocSection title="Time series views today" lead="neurosift.app with sub-1 of Dandiset 000673, captured with Playwright.">
+    <div class="captures">
+      <Screen file="viewer-lfps" alt="Today’s LFPs view: a share icon and path, time controls with zoom buttons, and the LFP traces." caption="Traces: buttons and text above the plot, and a “.” button that switches to Plotly." />
+      <Screen file="timeseries-trials" alt="Today’s trials view: intervals as colored blocks, start, duration and interval count in bold labels, and a Switch to Neurosift View button." caption="TimeIntervals: its own time controls and a Switch to … View button." />
+    </div>
+  </DocSection>
+
+  <DocSection title="What the views do today" lead="Read from the source and checked on the live site.">
+    <DocTable caption="What the views do today" columns={["Part", "Today", "Code", "Notes"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="The rebuilt views" lead="The redesign’s viewer with the same file, with live data. The charts are Neurosift’s own and unchanged.">
+    <div class="captures">
+      <Screen file="timeseries-proposed" alt="The rebuilt LFPs view: a summary line, the Time window, Channels and Separation controls, Canvas and Plotly, the Time overview and the traces." caption="Traces: one line on what’s drawn, then the shared time and channel windows." />
+      <Screen file="timeseries-too-much" alt="The rebuilt LFPs view at 600 seconds: a warning that the window holds 8 channels at 400 Hz for 600 s, with Zoom in and Draw anyway." caption="Too much data: what the window holds, with Zoom in and Draw anyway." />
+      <Screen file="timeseries-aligned" alt="The rebuilt event-related signal: single trials, the mean and a dashed band around trial starts, with Series, Channels, Align to, Window, Group by and Display settings beside it." caption="Aligned to trials: settings beside the plots, applied at once." />
+      <Screen file="timeseries-intervals" alt="The rebuilt trials view: a summary of 140 intervals, the Time window, a Label by select, Canvas and Plotly, and the intervals." caption="Intervals: the same frame, with Label by and the renderer." />
+      <Screen file="timeseries-playing" alt="The rebuilt LFPs view playing at 1×: Pause and the speed after the Time window, the readout at 5.87 s, the window from 2.12 s and the traces." caption="Traces playing: the window, overview box and readout move together." />
+      <Screen file="spatial-xy-playing" alt="Pupil tracking from Dandiset 000871 playing: a 30 s window, the readout at its right edge, and the path with a dot at the current position." caption="Spatial X/Y playing: the path up to the current time, with a dot where it is now." />
+    </div>
+    <p class="doc-note">Built from the <a href={withBase("/components/view-panel/")}>View panel</a> and <a href={withBase("/components/time-controls/")}>Time controls</a>.</p>
+  </DocSection>
+
+  <DocSection title="Try it" lead="Change the time window and channels, and zoom out until it says there’s too much to draw.">
+    <LiveScreen path="nwb?url=https://api.dandiarchive.org/api/assets/65a7e913-45c7-48db-bf19-b9f5e910110a/download/&dandisetId=000673&dandisetVersion=0.250122.0110&tab=view:SimpleTimeseries|/acquisition/LFPs" title="LFPs time series, Dandiset 000673 sub-1" size="tall" />
+  </DocSection>
+
+  <DocSection title="States">
+    <DocTable caption="States" columns={["When", "What changes"]}>
+      <DocRows rows={STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Behavior">
+    <DocTable caption="Behavior" columns={["Part", "Behavior"]}>
+      <DocRows rows={BEHAVIOR} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="What differs" lead="Built is in the app now. To confirm needs Jeremy or Ben.">
+    <DocTable caption="What differs" columns={["Area", "Existing", "Proposed", "Status"]}>
+      <DocRows rows={DIFFERS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Specs" columns={["Property", "Value"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

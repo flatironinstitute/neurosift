@@ -1,0 +1,119 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import Screen from "../../components/Screen.astro";
+import LiveScreen from "../../components/LiveScreen.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const TODAY = [
+  ["DANDI", "Basic Search", "DANDI API text search, recently modified first; the first 50 only", "Title, ID, Created, Modified, Contact, Version, Files, Size"],
+  ["DANDI", "Semantic Search", "Dandisets close in meaning, from the CatalystNeuro index; 10, then View More adds 30", "Same card"],
+  ["DANDI", "Neurodata Types Search", "Dandisets with a file holding every selected type; 10, then View More adds 30", "Same card, plus “n matching” files"],
+  ["EMBER", "Basic Search, the only mode", "EMBER’s DANDI-compatible API; the first 50 only", "Same as DANDI"],
+  ["OpenNeuro", "No mode control", "OpenNeuro keyword search, newest first; the first 25 only", "Title, ID, Created, Uploader, Authors, Files, Size, Views, Downloads"],
+];
+
+const STATES = [
+  ["Loading", "Rows show as gray placeholders; the Archive filter keeps its last counts."],
+  ["No results", "“No datasets match hippocampus.” With filters on, Clear filters sits beside it."],
+  ["One archive doesn’t answer", "Results from the others still show, above them: “OpenNeuro didn’t respond. Showing DANDI and EMBER.” with Try again."],
+  ["Search by meaning unavailable", "An error message names API quota limits and suggests Basic search."],
+  ["Embargoed, private or draft", "The row shows a warning badge: Embargoed, Private or Draft."],
+  ["End of results", "Show more gives way to “All 130 shown”."],
+];
+
+const BEHAVIOR = [
+  ["Search", "Enter searches every checked archive at once. The address becomes /search?q=hippocampus, so a search can be shared."],
+  ["Modes", "Basic searches every checked archive; Semantic and Neurodata types search DANDI only, and say so."],
+  ["Archive", "Pick which archives to search; each shows its total."],
+  ["Sort", "Best match takes turns between archives; Recently modified and Newest merge them by date."],
+  ["Show more", "Adds the next 25, past today’s caps, until the end."],
+  ["Exact ID", "A typed Dandiset ID, such as 000673, comes first."],
+  ["Old archive links", "/dandi, /ember and /openneuro open the catalog filtered to that archive, with a link to the archive’s own site."],
+];
+
+const DIFFERS = [
+  ["Where search lives", "Three archive pages", "One catalog with an Archive filter", "Built"],
+  ["Results shown", "DANDI and EMBER 50, OpenNeuro 25, no total", "Every result, 25 at a time, with real totals", "Built"],
+  ["Search modes", "Radio buttons on DANDI; EMBER has only Basic", "One segmented control: Basic, Semantic, Neurodata types", "Built"],
+  ["Result layout", "Raised cards of label: value pairs", "Rows: archive badge and ID, a title link, one meta line, tags", "Built"],
+  ["Species, Approach, Modality filters", "—", "Counts across every result", "Next: needs each dataset’s metadata"],
+  ["Did you mean", "—", "A suggestion above the results for a typo", "Next: no archive offers suggestions"],
+  ["Smaller screens", "—", "Filters behind a Filters disclosure at 768px", "Built; a drawer waits for a Drawer component"],
+];
+
+const SPECS = [
+  ["Page", "Full width, 32px margins · filters 260px, then 40px to the results"],
+  ["Search row", "Search field, Large · total in type/body-sm text/secondary"],
+  ["Filter group", "Legend in type/label · Checkbox with Show count"],
+  ["Results head", "Total in type/h4 · Sort by Select, 12rem · 2px border/strong below"],
+  ["Result row", "Badge with the archive, ID in type/code-sm · title in type/h4 text/link · meta in type/body-sm"],
+  ["Show more", "Button, Small · “Showing 25 of 130” in type/caption"],
+];
+---
+
+<DocsLayout title="Archive search" description="One search across DANDI, OpenNeuro and EMBER, with their modes and filters.">
+  <Intro
+    lead="Archive search is where people find a dataset. Today DANDI, EMBER and OpenNeuro each have their own page, each showing the first 25 or 50 results with no total. The rebuild searches all three at once in one catalog: every result is reachable 25 at a time, each archive says how many it holds, and the search lives in the address so it can be shared."
+    status="Updated November 10, 2026 · UI library · Captured at 1440 × 900 · Built from Search row, Filter group, Results head, Result row, Show more, Multi-select, Inline message, Empty state and Skeleton rows"
+    rules={[
+      { title: "One catalog, three archives", text: "An Archive filter picks DANDI, OpenNeuro, EMBER or all three." },
+      { title: "Every result is reachable", text: "Show more pages on past today’s caps, with real totals." },
+      { title: "Say where a mode applies", text: "Semantic and Neurodata types search DANDI only, and the page says so." },
+    ]}
+  />
+
+  <DocSection title="Search today" lead="neurosift.app, captured with Playwright.">
+    <div class="captures">
+      <Screen file="archive-dandi" alt="Today’s DANDI page: a search field, three radio buttons for the search mode, recent Dandiset chips and raised result cards." caption="DANDI: three search modes as radio buttons, 50 results at most." />
+      <Screen file="archive-openneuro" alt="Today’s OpenNeuro page: a search field and result cards with uploader, authors, views and downloads." caption="OpenNeuro: 25 results at most, no mode control." />
+      <Screen file="archive-ember" alt="Today’s EMBER page: a search field and result cards." caption="EMBER: Basic search only." />
+    </div>
+  </DocSection>
+
+  <DocSection title="What search does today" lead="Read from the source and checked on the live site.">
+    <DocTable caption="What search does today" columns={["Archive", "Mode", "What it returns", "Result card"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="The catalog" lead="The redesign with live data from all three archives.">
+    <div class="captures">
+      <Screen file="search-proposed" alt="The catalog for hippocampus: 130 datasets, an Archive filter with DANDI 68, OpenNeuro 61 and EMBER 1, Sort by Best match, and rows from each archive with badges, IDs, titles, facts and modality tags." caption="130 datasets for “hippocampus” across the three archives, each with its total." />
+      <Screen file="search-proposed-types" alt="The catalog in Neurodata types mode: 71 datasets contain ElectricalSeries and Units, with a Contains multi-select and rows saying how many files match." caption="Neurodata types: Dandisets with a file holding every picked type, and how many files match." />
+      <Screen file="search-proposed-narrow" alt="The catalog at 768px: the search field, a Filters disclosure, and the results at full width." caption="At 768px the filters fold behind Filters and the results take the width." />
+    </div>
+    <p class="doc-note">Built from the <a href={withBase("/components/catalog/")}>Catalog</a> pieces and the <a href={withBase("/components/selects/")}>Multi-select</a>.</p>
+  </DocSection>
+
+  <DocSection title="Try it" lead="Search, filter by archive, switch modes and show more.">
+    <LiveScreen path="search?q=hippocampus" title="Archive search for hippocampus" size="tall" />
+  </DocSection>
+
+  <DocSection title="States">
+    <DocTable caption="States" columns={["When", "What changes"]}>
+      <DocRows rows={STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Behavior">
+    <DocTable caption="Behavior" columns={["Part", "Behavior"]}>
+      <DocRows rows={BEHAVIOR} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="What differs" lead="Built is in the app now. Next needs data or a component that doesn’t exist yet.">
+    <DocTable caption="What differs" columns={["Area", "Existing", "Proposed", "Status"]}>
+      <DocRows rows={DIFFERS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Specs" columns={["Property", "Value"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

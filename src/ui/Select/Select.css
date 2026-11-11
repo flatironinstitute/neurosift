@@ -1,0 +1,117 @@
+/* The select fills the frame, so the whole field opens it; the chevron sits on top. */
+.ns-field-box:has(> .ns-select) {
+  --chevron-end: var(--space-2);
+
+  position: relative;
+  padding: 0;
+}
+
+.ns-field--sm .ns-field-box:has(> .ns-select) {
+  --chevron-end: var(--space-1);
+}
+
+.ns-select {
+  flex: 1;
+  inline-size: 0;
+  block-size: 100%;
+  padding: 0 calc(var(--chevron-end) + var(--icon-size-sm) + var(--space-2)) 0
+    var(--space-3);
+  font: var(--type-body-sm);
+  color: inherit;
+  appearance: none;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
+.ns-field--sm .ns-select {
+  padding-inline-start: var(--space-2);
+}
+
+.ns-select + .ns-icon {
+  position: absolute;
+  inset-inline-end: var(--chevron-end);
+  pointer-events: none;
+}
+
+.ns-field-box:has(.ns-select:open) .ns-icon {
+  rotate: 180deg;
+}
+
+.ns-select:disabled {
+  cursor: not-allowed;
+}
+
+/* Browsers with customizable selects draw the list as the Menu; others keep their own. */
+@supports (appearance: base-select) {
+  .ns-select,
+  .ns-select::picker(select) {
+    appearance: base-select;
+  }
+
+  .ns-select {
+    display: flex;
+    align-items: center;
+  }
+
+  .ns-select::picker-icon {
+    display: none;
+  }
+
+  .ns-select::picker(select) {
+    max-block-size: calc(var(--button-height-md) * 8 + var(--space-2));
+    padding: var(--space-1) 0;
+    margin-block-start: var(--space-1);
+    color: var(--text-default);
+    background: var(--surface-panel);
+    border: var(--border-width-1) solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--elevation-2);
+  }
+
+  .ns-select option {
+    gap: var(--space-2);
+    align-items: center;
+    min-block-size: var(--button-height-md);
+    padding: 0 var(--space-3) 0 var(--space-2);
+    font: var(--type-body-sm);
+  }
+
+  .ns-field--sm .ns-select option {
+    min-block-size: var(--button-height-sm);
+  }
+
+  .ns-select option:is(:hover, :focus-visible) {
+    background: var(--action-secondary-hover);
+    outline: none;
+  }
+
+  .ns-select option:checked {
+    font: var(--type-label);
+  }
+
+  .ns-select option:disabled {
+    color: var(--text-disabled);
+  }
+
+  /* The Carbon checkmark, as a mask so it takes the text color. */
+  .ns-select option::checkmark {
+    content: "";
+    inline-size: var(--icon-size-sm);
+    block-size: var(--icon-size-sm);
+    background: currentcolor;
+    mask: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M13 24 4 15 5.414 13.586 13 21.171 26.586 7.586 28 9 13 24z"/></svg>')
+      center / contain no-repeat;
+  }
+
+  .ns-select option[data-meta]::after {
+    margin-inline-start: auto;
+    font: var(--type-caption);
+    color: var(--text-muted);
+    content: attr(data-meta);
+  }
+
+  .ns-select option:disabled[data-meta]::after {
+    color: var(--text-disabled);
+  }
+}

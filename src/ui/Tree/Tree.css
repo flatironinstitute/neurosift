@@ -1,0 +1,67 @@
+.ns-tree {
+  padding: 0;
+  margin: 0;
+  color: var(--text-default);
+  list-style: none;
+}
+
+.ns-tree-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  block-size: var(--layout-row-default);
+  padding: 0 var(--space-3) 0 var(--space-2);
+  font: var(--type-code-sm);
+  letter-spacing: var(--type-code-sm-letter-spacing);
+  cursor: pointer;
+  border-block-end: var(--border-width-1) solid var(--border-subtle);
+}
+
+/* One 16px step per level below the first; the row's gap makes up the rest. */
+.ns-tree-indent {
+  flex: none;
+  inline-size: calc(var(--space-4) - var(--space-2));
+}
+
+.ns-tree-row:hover {
+  background: var(--surface-row-hover);
+}
+
+.ns-tree-row[aria-selected="true"] {
+  --focus-ring: var(--border-focus-inverse);
+  color: var(--text-on-inverse);
+  background: var(--surface-row-selected);
+  border-color: var(--surface-row-selected);
+}
+
+.ns-tree-row:focus {
+  outline: none;
+}
+
+.ns-tree-row:focus-visible {
+  outline: var(--border-width-2) solid var(--focus-ring, var(--border-focus));
+  outline-offset: calc(var(--border-width-2) * -1);
+}
+
+.ns-tree-chevron {
+  display: flex;
+  flex: none;
+  inline-size: var(--icon-size-sm);
+}
+
+.ns-tree-name {
+  flex: 1;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ns-tree-size {
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.ns-tree-row[aria-selected="true"] .ns-tree-size {
+  color: inherit;
+}

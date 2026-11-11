@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ColumnSortState, RowItem, sortRowItems } from "./sortRowItems";
+import { tableColumns, tableCsv } from "./dynamicTableColumns";
 import {
   FunctionComponent,
   useCallback,
@@ -8,24 +9,26 @@ import {
   useReducer,
   useState,
 } from "react";
-import { SmallIconButton } from "@fi-sci/misc";
-import { Download } from "@mui/icons-material";
+import {
+  Button,
+  type Column,
+  DataTable,
+  Disclosure,
+  EmptyState,
+  LoadingState,
+  ViewPanel,
+} from "@ui";
 import {
   getHdf5Dataset,
   getHdf5DatasetData,
   useHdf5Group,
 } from "@hdf5Interface";
 import { DatasetDataType } from "@remote-h5-file";
+import "./DynamicTable.css";
 
 type Props = {
-  width: number;
-  height: number;
   nwbUrl: string;
   path: string;
-  condensed?: boolean;
-  referenceColumnName?: string; // for example, 'id'
-  selectedRowIds?: (string | number)[];
-  setSelectedRowIds?: (ids: (string | number)[]) => void;
 };
 
 type DataState = {
@@ -45,15 +48,18 @@ const dataReducer = (state: DataState, action: DataAction) => {
   } else return state;
 };
 
-type ColumnSortAction = {
-  type: "click";
-  column: string;
-};
+type ColumnSortAction =
+  | {
+      type: "click";
+      column: string;
+    }
+  | { type: "reset" };
 
 const columnSortReducer = (
   state: ColumnSortState,
   action: ColumnSortAction,
 ): ColumnSortState => {
+  if (action.type === "reset") return {};
   if (action.type === "click") {
     if (state.primary) {
       // the primary column is already set
@@ -112,15 +118,16 @@ const columnDescriptionReducer = (
   } else return state;
 };
 
-const DynamicTable: FunctionComponent<Props> = ({
-  width,
-  height,
-  nwbUrl,
-  path,
-  referenceColumnName,
-  selectedRowIds,
-  setSelectedRowIds,
-}) => {
+const DESCRIPTION_COLUMNS: Column<{ name: string; description: string }>[] = [
+  { key: "name", label: "Column", type: "code", value: (row) => row.name },
+  {
+    key: "description",
+    label: "Description",
+    value: (row) => row.description,
+  },
+];
+
+const DynamicTable: FunctionComponent<Props> = ({ nwbUrl, path }) => {
   const [data, dataDispatch] = useReducer(dataReducer, {});
   const group = useHdf5Group(nwbUrl, path);
   const [columnSortState, columnSortDispatch] = useReducer(
@@ -147,13 +154,6 @@ const DynamicTable: FunctionComponent<Props> = ({
         c = ["id", ...c];
       }
     }
-    // const nt = group.attrs['neurodata_type']
-    // if (nt === 'Units') {
-    //     c = c.filter(name => (name !== 'spike_times'))
-    //     if (!c.includes('id')) {
-    //         c = ['id', ...c]
-    //     }
-    // }
     return c;
   }, [group]);
   const [loading, setLoading] = useState(false);
@@ -254,28 +254,10 @@ const DynamicTable: FunctionComponent<Props> = ({
     };
   }, [colnames, nwbUrl, path]);
 
-  const validColumnNames = useMemo(() => {
-    if (!colnames) return undefined;
-    const referenceColumnData = referenceColumnName
-      ? data[referenceColumnName]
-      : undefined;
-    const ret: string[] = [];
-    for (const colname of colnames) {
-      const d = data[colname];
-      if (d) {
-        if (referenceColumnData && d.length !== referenceColumnData.length) {
-          console.warn(
-            `In DynamicTableView, unexpected length for ${path}/${colname}`,
-            d.length,
-            referenceColumnData.length,
-          );
-          continue;
-        }
-        ret.push(colname);
-      }
-    }
-    return ret;
-  }, [colnames, data, path, referenceColumnName]);
+  const validColumnNames = useMemo(
+    () => colnames?.filter((colname) => data[colname]),
+    [colnames, data],
+  );
 
   const rowItems: RowItem[] = useMemo(() => {
     if (!colnames) return [];
@@ -288,27 +270,18 @@ const DynamicTable: FunctionComponent<Props> = ({
     }
     const ret: RowItem[] = [];
     for (let i = 0; i < numRows; i++) {
-      const row: RowItem = { id: "", columnValues: [] };
-      for (const colname of colnames) {
-        const d = data[colname];
-        if (d) {
-          row.columnValues.push(d[i]);
-        } else {
-          row.columnValues.push(undefined);
-        }
-        if (colname === referenceColumnName) {
-          row.id = d[i];
-        }
-      }
-      ret.push(row);
+      ret.push({
+        id: i,
+        columnValues: colnames.map((colname) => data[colname]?.[i]),
+      });
     }
     return ret;
-  }, [colnames, data, referenceColumnName]);
+  }, [colnames, data]);
 
   const sortedRowItems = useMemo(() => {
-    if (!validColumnNames) return rowItems;
-    return sortRowItems(rowItems, validColumnNames, columnSortState);
-  }, [validColumnNames, rowItems, columnSortState]);
+    if (!colnames) return rowItems;
+    return sortRowItems(rowItems, colnames, columnSortState);
+  }, [colnames, rowItems, columnSortState]);
 
   const [columnDescriptions, columnDescriptionDispatch] = useReducer(
     columnDescriptionReducer,
@@ -342,228 +315,131 @@ const DynamicTable: FunctionComponent<Props> = ({
     return ret;
   }, [sortedRowItems, colnames, maxNumCellsToView]);
 
+  const columns = useMemo(
+    () =>
+      colnames && validColumnNames
+        ? tableColumns(colnames, validColumnNames, data)
+        : [],
+    [colnames, validColumnNames, data],
+  );
+
+  const name = path.split("/").pop() || path;
   const handleExportAsCsv = useCallback(() => {
-    if (!validColumnNames) return;
-    const lines: string[] = [];
-    lines.push(validColumnNames.join(","));
-    for (const rowItem of sortedRowItems) {
-      const line = validColumnNames
-        .map((colname) => {
-          const val = rowItem.columnValues[validColumnNames.indexOf(colname)];
-          if (val === undefined) return "";
-          if (typeof val === "string") {
-            return `"${val.replace(/"/g, '""')}"`;
-          } else if (typeof val === "number") {
-            return val;
-          } else {
-            // not supported for now. Note that if this is a list and we naively return the value then there's a problem with commas
-            return "";
-          }
-        })
-        .join(",");
-      lines.push(line);
-    }
-    const csv = lines.join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
+    if (!colnames || !validColumnNames) return;
+    const csv = tableCsv(colnames, validColumnNames, sortedRowItems);
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = "data.csv";
+    a.download = `${name}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [validColumnNames, sortedRowItems]);
+  }, [colnames, validColumnNames, sortedRowItems, name]);
 
-  if (!validColumnNames) return <div>Loading...</div>;
-  if (!colnames) return <div>No columns found</div>;
+  const [descriptionsOpen, setDescriptionsOpen] = useState(false);
+
+  if (!group || !colnames || !validColumnNames)
+    return <LoadingState label="Reading the table" phase="loading" />;
+  if (colnames.length === 0)
+    return (
+      <EmptyState icon="data-table" title="This table has no columns">
+        {`${path} lists no columns to show.`}
+      </EmptyState>
+    );
+  if (validColumnNames.length === 0)
+    return <LoadingState label="Reading the columns" phase="loading" />;
+
+  const count = (n: number) => n.toLocaleString("en-US");
+  const shown = sortedRowItemsAbbreviated.length;
+  const total = sortedRowItems.length;
+  const rows = total === 1 ? "row" : "rows";
+  const columnCount = `${count(columns.length)} column${columns.length === 1 ? "" : "s"}`;
+  const summary =
+    shown < total
+      ? `Showing ${count(shown)} of ${count(total)} rows and ${columnCount}`
+      : `Showing all ${count(total)} ${rows} and ${columnCount}`;
+  const descriptions = validColumnNames
+    .filter((colname) => columnDescriptions[colname])
+    .map((colname) => ({
+      name: colname,
+      description: columnDescriptions[colname],
+    }));
 
   return (
-    <div
-      className="dynamic-table-view"
-      style={{
-        position: "relative",
-        width,
-        height,
-        background: "white",
-        overflowY: "auto",
-      }}
+    <ViewPanel
+      label={name}
+      summary={loading ? `${summary} · reading more columns` : summary}
+      busy={loading}
+      controls={
+        <>
+          {columnSortState.primary && (
+            <Button
+              size="sm"
+              variant="ghost"
+              icon="reset"
+              onClick={() => columnSortDispatch({ type: "reset" })}
+            >
+              Original order
+            </Button>
+          )}
+          <Button
+            size="sm"
+            icon="download"
+            disabled={loading || total === 0}
+            onClick={handleExportAsCsv}
+          >
+            Export as CSV
+          </Button>
+        </>
+      }
     >
-      <div style={{ color: "gray", paddingBottom: 2 }}>
-        {/* <SmallIconButton
-          onClick={openColumnInfo}
-          icon={<Help />}
-          title="View info about columns"
-        /> */}
-        <SmallIconButton
-          onClick={handleExportAsCsv}
-          disabled={
-            loading || !sortedRowItems.length || !colnames || !colnames.length
+      <div className="dynamic-table">
+        <DataTable
+          caption={path}
+          columns={columns}
+          rows={sortedRowItemsAbbreviated}
+          rowKey={(row) => String(row.id)}
+          density="compact"
+          sort={
+            columnSortState.primary && {
+              key: columnSortState.primary.column,
+              direction: columnSortState.primary.ascending
+                ? "ascending"
+                : "descending",
+            }
           }
-          icon={<Download />}
-          title="Export as CSV"
+          onSort={(sort) =>
+            columnSortDispatch({ type: "click", column: sort.key })
+          }
         />
       </div>
-      {sortedRowItemsAbbreviated.length < sortedRowItems.length && (
-        <div style={{ padding: 10, fontSize: 12, color: "gray" }}>
-          Showing {sortedRowItemsAbbreviated.length} of {sortedRowItems.length}{" "}
-          rows
-        </div>
-      )}
-      <table className="nwb-table-2">
-        <thead>
-          <tr>
-            {selectedRowIds && <th />}
-            {colnames.map((colname) => (
-              <th key={colname}>
-                <span
-                  onClick={() => {
-                    columnSortDispatch({ type: "click", column: colname });
-                  }}
-                  style={{ cursor: "pointer" }}
-                  title={columnDescriptions[colname] || ""}
-                >
-                  {columnSortState.primary &&
-                    columnSortState.primary.column === colname && (
-                      <span style={{ color: "white" }}>
-                        {columnSortState.primary.ascending ? "▲" : "▼"}&nbsp;
-                      </span>
-                    )}
-                  {colname}
-                </span>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {sortedRowItemsAbbreviated.map((rowItem, i) => (
-            <tr key={i}>
-              {selectedRowIds && (
-                <td>
-                  <input
-                    type="checkbox"
-                    checked={selectedRowIds.includes(rowItem.id)}
-                    onClick={() => {
-                      if (setSelectedRowIds) {
-                        if (selectedRowIds.includes(rowItem.id)) {
-                          setSelectedRowIds(
-                            selectedRowIds.filter((id) => id !== rowItem.id),
-                          );
-                        } else {
-                          setSelectedRowIds([...selectedRowIds, rowItem.id]);
-                        }
-                      }
-                    }}
-                  />
-                </td>
-              )}
-              {rowItem.columnValues.map((val, j) => (
-                <td key={j}>{valueToElement(val)}</td>
-              ))}
-            </tr>
-          ))}
-          {sortedRowItemsAbbreviated.length < sortedRowItems.length && (
-            <tr>
-              <td colSpan={colnames.length}>
-                <div style={{ textAlign: "left" }}>
-                  <button
-                    onClick={() => setMaxNumCellsToView((x) => x + 20_000)}
-                  >
-                    Show more
-                  </button>
-                </div>
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-      {/* <ModalWindow visible={columnInfoVisible} onClose={closeColumnInfo}>
-        <DynamicTableColumnInfoView
-          columnNames={colnames}
-          columnDescriptions={columnDescriptions}
-        />
-      </ModalWindow> */}
-    </div>
+      <div className="dynamic-table-footer">
+        {shown < total && (
+          <Button
+            size="sm"
+            onClick={() => setMaxNumCellsToView((x) => x + 20_000)}
+          >
+            Show more rows
+          </Button>
+        )}
+        {descriptions.length > 0 && (
+          <Disclosure
+            label={`Show column descriptions (${descriptions.length})`}
+            expandedLabel="Hide column descriptions"
+            open={descriptionsOpen}
+            onToggle={setDescriptionsOpen}
+          >
+            <DataTable
+              caption={`Column descriptions of ${path}`}
+              columns={DESCRIPTION_COLUMNS}
+              rows={descriptions}
+              rowKey={(row) => row.name}
+              density="compact"
+            />
+          </Disclosure>
+        )}
+      </div>
+    </ViewPanel>
   );
-};
-
-export const valueToElement = (val: any): any => {
-  if (typeof val === "string") {
-    return val;
-  } else if (typeof val === "number") {
-    return val + "";
-  } else if (typeof val === "boolean") {
-    return val ? "true" : "false";
-  } else if (typeof val === "object") {
-    if (Array.isArray(val)) {
-      if (val.length < 200) {
-        return `[${val.map((x) => valueToElement(x)).join(", ")}]`;
-      } else {
-        return `[${val
-          .slice(0, 200)
-          .map((x) => valueToElement(x))
-          .join(", ")} ...]`;
-      }
-    }
-    // check for Float64Array, Int32Array, etc.
-    else if (
-      val.constructor &&
-      [
-        "Float64Array",
-        "Int32Array",
-        "Uint32Array",
-        "Uint8Array",
-        "Uint16Array",
-        "Int8Array",
-        "Int16Array",
-      ].includes(val.constructor.name)
-    ) {
-      const array = Array.from(val);
-      return valueToElement(array);
-    } else {
-      if ("_REFERENCE" in val) {
-        return <ReferenceComponent value={val["_REFERENCE"]} />;
-      } else {
-        return JSON.stringify(serializeBigInt(val));
-      }
-    }
-  } else {
-    return "<>";
-  }
-};
-
-type ReferenceValue = {
-  path: string;
-  object_id: string;
-  source: string;
-  source_object_id: string;
-};
-
-export const ReferenceComponent: FunctionComponent<{
-  value: ReferenceValue;
-}> = ({ value }) => {
-  return (
-    <span style={{ color: "darkgreen" }} title={JSON.stringify(value)}>
-      {value.path}
-    </span>
-  );
-};
-
-const serializeBigInt = (val: any): any => {
-  if (typeof val === "bigint") {
-    // convert to number
-    return Number(val);
-  } else if (typeof val === "object") {
-    if (Array.isArray(val)) {
-      return val.map((x) => serializeBigInt(x));
-    } else {
-      const ret: { [key: string]: any } = {};
-      for (const key in val) {
-        ret[key] = serializeBigInt(val[key]);
-      }
-      return ret;
-    }
-  } else {
-    return val;
-  }
 };
 
 export default DynamicTable;

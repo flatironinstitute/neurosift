@@ -1,0 +1,14 @@
+.wav-view {
+  display: grid;
+  gap: var(--space-3);
+  inline-size: var(--wav-width);
+}
+
+.wav-view > .ns-dl {
+  padding: var(--space-4) var(--space-4) 0;
+}
+
+.wav-view-waveform {
+  position: relative;
+  block-size: var(--wav-waveform-height);
+}

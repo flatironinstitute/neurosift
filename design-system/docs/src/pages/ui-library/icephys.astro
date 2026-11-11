@@ -1,0 +1,124 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import Screen from "../../components/Screen.astro";
+import LiveScreen from "../../components/LiveScreen.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const TODAY = [
+  ["Scope", "Protocol, Condition and Repetition dropdowns in a 320px sidebar; “-- pick one --” until one is chosen", "SelectorDropdown.tsx", "Options that don’t occur with the other picks are greyed out"],
+  ["Summary", "“624 sweeps · 1 protocol · 2 electrodes” and an ⓘ whose tooltip lists the icephys tables present", "IcephysTabView.tsx", "The table list shows on hover only"],
+  ["Selected sweeps", "A table of the columns that vary across the selection; the ones that don’t on a line above", "IcephysTabView.tsx", "Up to 500 rows"],
+  ["Encoding bar", "Color by, Panels by and “& by” dropdowns, “window (ms)” start and end, a “full” button and “lock y”", "IcephysTabView.tsx", "Above the plot, in 12px text"],
+  ["Sampling", "“showing 30 of 624 sweeps (evenly spaced)”, “plot more” and a yellow “plot all (slow)”", "IcephysTabView.tsx", "Over 60 sweeps, Plot all warns"],
+  ["Plot", "Sweeps overlaid, one panel per value, or a grid of two axes; response above, stimulus below", "FamilyOverlayPlot.tsx, FamilySeparatePanels.tsx, FamilyFacetGrid.tsx", "Plotly"],
+  ["Colors and Sweeps per panel", "A legend and a count table in the sidebar once the plot has panels", "FacetLegend.tsx", "—"],
+  ["Timeline", "Every sweep on session time, the selection colored on top of the whole session in gray", "TemporalDistribution.tsx", "Hover a bar for its sweep"],
+];
+
+const STATES = [
+  ["Looking for recordings", "A spinner says “Looking for intracellular recordings” while the file is checked."],
+  ["No recordings", "An empty state names the missing intracellular_recordings table."],
+  ["Reading the tables", "A spinner says “Reading the icephys tables”; the summary waits for them."],
+  ["Nothing chosen", "“Choose what to plot” with Plot all sweeps, which picks every protocol (or every condition or repetition)."],
+  ["No sweeps match", "An empty state says the protocol isn’t in that condition or repetition, and to set a filter back to All."],
+  ["Loading sweeps", "A progress bar counts sweeps loaded; the plot draws as they arrive."],
+  ["Sampled", "“Showing 30 of 624 sweeps, evenly spaced” with Plot more and Plot all; over 60 sweeps Plot all says how many and (slow)."],
+  ["Window error", "A reversed or non-numeric window shows its error under Window start; the plot keeps the whole sweep."],
+  ["Too many panels", "Over 36 cells, an empty state asks to narrow the scope or use one Panels by axis."],
+  ["Errors", "An inline error names the table or the sweeps that couldn’t be read."],
+];
+
+const BEHAVIOR = [
+  ["Scope", "Protocol anchors; Condition and Repetition narrow it. Changing Condition resets Repetition. Options that don’t occur with the other picks are off."],
+  ["Color by, Panels by, And by", "List only axes with two or more values in scope, and custom columns with 2 to 8. And by appears once Panels by is set and leaves out its axis."],
+  ["Axes", "Window start and end crop every panel (ms); Whole sweep clears them. Lock y across panels shares one y scale per unit; it appears with panels."],
+  ["Plot more and Plot all", "Plot more doubles the sample; Plot all loads every sweep. A new scope starts again at 30."],
+  ["Address", "Every setting is kept in the address under the names upstream uses: icephysProtocol, icephysCondition, icephysRepetition, icephysColorBy, icephysPanelsBy, icephysAndBy, icephysWindowStart, icephysWindowEnd, icephysLockY. Defaults are left out."],
+  ["Timeline", "Hover a bar to read its group, sweep and start time."],
+];
+
+const DIFFERS = [
+  ["Frame", "Its own sidebar and encoding bar", "View panel: summary, controls, the plot, and settings beside it", "Built"],
+  ["Scope and settings", "Headings Scope and Summary over loose controls", "Accordion items that say what they’re set to: Scope, Axes, Colors, Sweeps per panel, Selected sweeps", "Built"],
+  ["Encoding", "Bare dropdowns, lower-case options", "Select fields with their labels beside them, as in the time views", "Built"],
+  ["Window and lock y", "Above the plot", "In Axes, with a sentence on what Lock y does instead of a tooltip", "To confirm"],
+  ["Icephys tables", "Behind an ⓘ tooltip", "In the summary line", "Built"],
+  ["Nothing chosen", "“Pick anything in the sidebar to start”", "Choose what to plot, with Plot all sweeps", "To confirm"],
+  ["Plot all warning", "Yellow button", "“Plot all 624 (slow)” as an ordinary button", "Built"],
+];
+
+const SPECS = [
+  ["Frame", "View panel · summary in type/caption · charts measured from the plot area"],
+  ["Controls", "Select, Small, label beside it in type/label · 9rem fields · Button, Small: Plot more, Plot all"],
+  ["Settings", "320px settings panel · Accordion items · Setting pair for Window start and end, with unit ms · Checkbox: Lock y across panels"],
+  ["Tables", "Data table, Compact · Selected sweeps scrolls at 16rem"],
+  ["Legend", "Swatches in the chart’s own colors, type/axis"],
+  ["States", "Loading state · Progress bar · Empty state · Inline message"],
+];
+---
+
+<DocsLayout title="Intracellular recordings" description="Patch-clamp sweeps by protocol, condition and repetition, overlaid or in panels.">
+  <Intro
+    lead="The Icephys tab plots patch-clamp sweeps from an NWB file’s intracellular recording tables: the response above and the stimulus below, overlaid or split into panels by protocol, condition, repetition, electrode, cell or a custom column. A timeline shows when each sweep was recorded. The charts stay Neurosift’s own. The rebuild puts them in the shared view frame, moves scope and settings into sections that say what they’re set to, and gives every state words."
+    status="Updated November 10, 2026 · UI library · Captured at 1440 × 900 with Dandiset 001354, sub-PK-109 · Built from View panel, Accordion, Select, Setting pair, Text input, Checkbox, Button, Data table, Empty state, Loading state, Progress bar, Inline message and Data tooltip"
+    rules={[
+      { title: "Closed, it still says what’s set", text: "Scope reads All protocols; Axes reads 500 to 3500 ms · y locked." },
+      { title: "One way to compare", text: "Color by, Panels by and And by sit above the plot, as the time views’ options do." },
+      { title: "Say it, don’t hide it", text: "The icephys tables and what Lock y does are written out, not behind a hover." },
+    ]}
+  />
+
+  <DocSection title="Icephys today" lead="neurosift.app with sub-PK-109 of Dandiset 001354, captured with Playwright.">
+    <div class="captures">
+      <Screen file="icephys-start" alt="Today’s Icephys tab before a pick: a Scope sidebar with a Protocol dropdown reading “-- pick one --”, a Summary line, and “Pick anything in the sidebar to start” in gray." caption="Today, before a pick: a sidebar and a gray prompt." />
+      <Screen file="icephys" alt="Today’s Icephys tab with every protocol: Color by Electrode and Panels by none above the plot, a window field, plot more and a yellow plot all (slow), sweeps overlaid in orange and blue, and the timeline below." caption="Today, plotted: an encoding bar in small type and a yellow Plot all." />
+    </div>
+  </DocSection>
+
+  <DocSection title="What the tab does today" lead="Read from the source and checked on the live site.">
+    <DocTable caption="What the tab does today" columns={["Part", "Today", "Code", "Notes"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="The rebuilt tab" lead="The redesign’s viewer with the same file and live data. The charts are Neurosift’s own and unchanged.">
+    <div class="captures">
+      <Screen file="icephys-proposed-start" alt="The rebuilt tab before a pick: the summary line with the icephys tables, an empty state titled Choose what to plot with a Plot all sweeps button, and Scope in the settings beside it." caption="Before a pick: one way forward, Plot all sweeps." />
+      <Screen file="icephys-proposed" alt="The rebuilt tab with every protocol colored by electrode: Color by and Panels by fields above the plot, Showing 30 of 624 sweeps with Plot more and Plot all, the overlaid sweeps and the timeline, and Scope, Axes and Selected sweeps beside it." caption="Overlaid: the comparison above the plot, scope and axes beside it." />
+      <Screen file="icephys-proposed-panels" alt="The rebuilt tab split into a panel per electrode, cropped to 500 to 3500 ms with y locked, the Colors legend and the Sweeps per panel table open in the settings." caption="In panels: Axes, Colors and Sweeps per panel say what’s drawn." />
+    </div>
+    <p class="doc-note">Built from the <a href={withBase("/components/view-panel/")}>View panel</a>, <a href={withBase("/components/accordions/")}>Accordion</a> and <a href={withBase("/components/tables/")}>Data table</a>.</p>
+  </DocSection>
+
+  <DocSection title="Try it" lead="Pick All in Protocol, color and split by electrode, then crop the window and lock y.">
+    <LiveScreen path="nwb?url=https://api.dandiarchive.org/api/assets/b2860f39-ba08-4b5f-8e12-c4b51ad6ccba/download/&dandisetId=001354&dandisetVersion=0.250312.0036&tab=icephys" title="Icephys tab, Dandiset 001354 sub-PK-109" size="tall" />
+  </DocSection>
+
+  <DocSection title="States">
+    <DocTable caption="States" columns={["When", "What changes"]}>
+      <DocRows rows={STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Behavior">
+    <DocTable caption="Behavior" columns={["Part", "Behavior"]}>
+      <DocRows rows={BEHAVIOR} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="What differs" lead="Built is in the app now. To confirm needs Jeremy or Ben.">
+    <DocTable caption="What differs" columns={["Area", "Existing", "Proposed", "Status"]}>
+      <DocRows rows={DIFFERS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Specs" columns={["Property", "Value"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

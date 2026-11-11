@@ -1,0 +1,135 @@
+---
+import Existing from "../../components/Existing.astro";
+import CodeSample from "../../components/CodeSample.astro";
+import { ConfirmDemo, DockedDrawerDemo, OverlayDrawerDemo, ShareDemo } from "../../components/DialogDemo";
+import DoDont from "../../components/DoDont.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const FOCUS = [
+  ["Opens", "Focus moves to the first field, or the title if there is none", "Focus moves to the drawer title", "Focus stays where it was"],
+  ["Tab", "Cycles inside the dialog", "Cycles inside the drawer", "Moves through the page as usual"],
+  ["Escape", "Closes, no changes", "Closes", "—"],
+  ["Closes", "Focus returns to the button that opened it", "Same", "—"],
+];
+
+const WRITING = [
+  ["Title", "A question for a decision, a task for a task", "Remove the DANDI API key? · Share this view"],
+  ["Message", "What happens next, in one or two sentences", "Embargoed Dandisets will stop opening in this browser until you add a key again."],
+  ["Main button", "The verb from the title, never OK or Yes. Disabled until the task can be done, with the reason in the dialog", "Remove key · Copy link · Save, disabled until there’s a key"],
+  ["Other button", "Cancel", "Cancel"],
+];
+
+const SPECS = [
+  ["Width", "400px small · 560px medium", "320px · layout/panel-default"],
+  ["Surface", "surface/panel · 1px border/strong · radius/sm · elevation/3", "surface/panel · 1px border/strong edge · elevation/3 in overlay"],
+  ["Header", "type/h4 title · 16px sides · 1px border/subtle below · 32px Close icon button", "Same"],
+  ["Body", "16px padding · space/4 · type/body-sm", "Same"],
+  ["Footer", "Buttons right, 8px gap · 1px border/subtle above", "—"],
+  ["Backdrop", "overlay/backdrop", "overlay/backdrop in overlay mode; a click on it closes the drawer"],
+  ["Motion", "Fade and 4px rise, 150ms; none with reduced motion", "Slide, 200ms; none with reduced motion"],
+];
+
+const code = `import { Dialog, Drawer, TextInput } from "@ui";
+
+<Dialog
+  open={confirming}
+  onClose={() => setConfirming(false)}
+  size="sm"
+  kind="destructive"
+  title="Remove the DANDI API key?"
+  confirmLabel="Remove key"
+  onConfirm={removeKey}
+>
+  Embargoed Dandisets will stop opening in this browser until you add a key again.
+</Dialog>
+
+<Dialog
+  open={adding}
+  onClose={() => setAdding(false)}
+  title="Add an API key"
+  confirmLabel="Save"
+  confirmDisabled={key === ""}
+  onConfirm={saveKey}
+>
+  <TextInput label="DANDI API key" type="password" value={key} onChange={setKey} />
+</Dialog>
+
+<Drawer open={showInfo} onClose={() => setShowInfo(false)}
+  side="right" mode="overlay" title="Column info">
+  …
+</Drawer>`;
+---
+
+<DocsLayout title="Modals and drawers" description="Dialog and Drawer: one decision at a time, and panels that keep the data in view.">
+  <Intro
+    lead="Dialogs pause the page for one decision or one short task, such as confirming that an API key should be removed. Drawers bring a panel in from the side while the data stays in view, such as the overview panel on a narrow window. Neurosift has neither today; this page sets them up before they’re needed."
+    status="Updated November 10, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "Rarely", text: "Use a dialog only when people must decide before going on. Everything else stays on the page." },
+      { title: "Escape always closes", text: "Escape, the × and Cancel all close without changes, and focus returns to what opened it." },
+      { title: "Keep the data in view", text: "Drawers slide over part of the workspace, never all of it, so the plot stays as context." },
+    ]}
+  />
+
+  <Existing page="modals" />
+
+  <DocSection title="Dialog" lead="Two sizes, 400 and 560px, and two kinds. Title, short message, an optional content area, and Cancel beside the main action on the right. Open one and try Escape, Tab and Cancel.">
+    <div class="demo-row dialog-demos">
+      <ConfirmDemo client:visible />
+      <ShareDemo client:visible />
+    </div>
+    <p class="doc-note">The confirmation is for the Remove API key button in Settings: the title asks the question, and the red button repeats the verb. Share is a task with a field, so focus starts in the field.</p>
+  </DocSection>
+
+  <DocSection title="In context" lead="A dialog sits centered on a backdrop that dims the page. The page behind can’t be used until the dialog closes.">
+    <p class="doc-note">Open Remove key above to see it: the backdrop is navy at 40%, the page behind is inert, and focus returns to the button when the dialog closes.</p>
+  </DocSection>
+
+  <DocSection title="Drawer" lead="320px wide, the default panel width. Docked drawers sit beside the workspace with a 1px black edge; overlay drawers slide over it with a shadow and a backdrop.">
+    <OverlayDrawerDemo client:visible />
+    <DockedDrawerDemo client:visible />
+    <p class="doc-note">On windows 1,024px and wider, the overview panel docks on the left, as today. Below that, the same panel opens over the plot from the app bar, and a click on the backdrop closes it.</p>
+  </DocSection>
+
+  <DocSection title="Focus and keyboard" lead="Dialogs and overlay drawers trap focus and make the page behind them inert; docked drawers don’t.">
+    <DocTable caption="Focus and keyboard" columns={["When", "Dialog", "Overlay drawer", "Docked drawer"]}>
+      {FOCUS.map(([when, dialog, overlay, docked]) => <tr><th scope="row">{when}</th><td>{dialog}</td><td>{overlay}</td><td>{docked}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Writing">
+    <DocTable caption="Writing dialogs" columns={["Part", "Rule", "Example"]}>
+      {WRITING.map(([part, rule, example]) => <tr><th scope="row">{part}</th><td>{rule}</td><td>{example}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Accessibility">
+    <ul class="rule-list">
+      <li><strong>Real dialogs.</strong> The native dialog element, opened as a modal and named by its title; overlay drawers are dialogs too.</li>
+      <li><strong>The background is inert.</strong> The page behind a dialog can’t be reached, so screen readers can’t wander out of it.</li>
+      <li><strong>Close is labeled.</strong> The × is an icon button named “Close”, 32px.</li>
+      <li><strong>One dialog closes at a time.</strong> A dialog or overlay drawer opened from another, such as Add from Settings, closes on its own with Escape, the × or Cancel; the first stays open.</li>
+      <li><strong>No surprise opens.</strong> Dialogs open only from something people pressed, never on page load.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Confirm before removing keys or clearing saved data.", "Keep dialogs to one decision or one short task.", "Keep the plot visible behind a drawer.", "Return focus where it came from."]}
+      donts={["Don’t open a dialog for an error; use an Alert in the view.", "Don’t stack dialogs more than one deep.", "Don’t use a drawer for content people need all the time on wide screens; dock it.", "Don’t put the main action on the left."]}
+    />
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token, apart from the motion durations.">
+    <DocTable caption="Dialog and drawer specs" columns={["Property", "Dialog", "Drawer"]}>
+      {SPECS.map(([property, dialog, drawer]) => <tr><th scope="row">{property}</th><td>{dialog}</td><td>{drawer}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. Both are controlled; Cancel, the × and Escape all call onClose. confirmDisabled disables the main button until the task can be done.">
+    <CodeSample label="React" code={code} />
+  </DocSection>
+</DocsLayout>

@@ -1,0 +1,101 @@
+.lfp-spectrogram:focus-visible {
+  outline: var(--border-width-2) solid var(--border-focus);
+  outline-offset: calc(var(--space-1) * -1);
+}
+
+.lfp-spectrogram-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font: var(--type-caption);
+  color: var(--text-muted);
+}
+
+.lfp-spectrogram-plots {
+  display: grid;
+  gap: var(--space-4);
+  inline-size: var(--plot-w);
+  max-inline-size: 100%;
+  cursor: grab;
+}
+
+.lfp-spectrogram-plots:active {
+  cursor: grabbing;
+}
+
+.lfp-spectrogram-panel {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.lfp-spectrogram-panel-label {
+  margin: 0;
+  padding-inline: var(--space-2);
+  font: var(--type-label);
+  color: var(--text-default);
+}
+
+.lfp-spectrogram-channels {
+  display: grid;
+  gap: var(--space-1);
+  max-block-size: 14rem;
+  overflow-y: auto;
+}
+
+.lfp-spectrogram-group {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.lfp-spectrogram-group + .lfp-spectrogram-group {
+  margin-block-start: var(--space-2);
+}
+
+.lfp-spectrogram-group-title {
+  padding: 0;
+  font: var(--type-caption);
+  color: var(--text-muted);
+}
+
+.lfp-spectrogram-note {
+  margin: 0;
+  font: var(--type-body-sm);
+  color: var(--text-muted);
+}
+
+.lfp-spectrogram-actions {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-2);
+  border-block-start: var(--border-width-1) solid var(--border-subtle);
+}
+
+.lfp-spectrogram-widget {
+  position: relative;
+  inline-size: var(--spectrogram-w);
+  block-size: var(--spectrogram-h);
+}
+
+.lfp-spectrogram-canvas {
+  display: block;
+}
+
+.lfp-spectrogram-badge {
+  position: absolute;
+  inset-block-start: calc(var(--margin-top) + var(--space-1));
+  inset-inline-end: calc(var(--margin-right) + var(--space-1));
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  font: var(--type-caption);
+  color: var(--text-default);
+  background: var(--surface-panel);
+  border: var(--border-width-1) solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  pointer-events: none;
+}

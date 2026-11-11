@@ -1,0 +1,96 @@
+---
+// Illustrative plots drawn from the data tokens; the numbers are made up, not recordings.
+import { ColorBar, Legend } from "@ui";
+interface Props {
+  kind: "traces" | "raster" | "spectrogram";
+}
+
+const { kind } = Astro.props;
+const W = 480;
+const H = 200;
+const LEFT = 48;
+const BOTTOM = 24;
+const plotW = W - LEFT - 16;
+const plotH = H - BOTTOM - 8;
+const areaW = plotW;
+const x = (t: number) => LEFT + t * areaW;
+const ticks = ["0 s", "1 s", "2 s", "3 s"];
+
+const wave = (seed: number, t: number) =>
+  Math.sin(t * 23 + seed) * 0.5 + Math.sin(t * 61 + seed * 2) * 0.3 + Math.sin(t * 7 + seed * 3) * 0.2;
+
+const traces = [0, 1, 2, 3].map((channel) => {
+  const mid = 8 + (plotH / 4) * (channel + 0.5);
+  const points = Array.from({ length: 121 }, (_, i) => {
+    const t = i / 120;
+    return `${x(t).toFixed(1)},${(mid + wave(channel, t) * 14).toFixed(1)}`;
+  });
+  return { channel, mid, points: points.join(" ") };
+});
+
+const rows = Array.from({ length: 10 }, (_, trial) => ({
+  trial,
+  group: trial < 5 ? 1 : 3,
+  y: 8 + (plotH / 10) * trial,
+  spikes: Array.from({ length: 14 }, (_, i) => {
+    const t = ((Math.sin(trial * 12.9 + i * 78.2) + 1) / 2) * 0.9 + 0.05;
+    return trial >= 5 ? 1 / 3 + t * 0.5 : t;
+  }),
+}));
+
+const COLS = 24;
+const BANDS = 10;
+const cells = Array.from({ length: COLS * BANDS }, (_, i) => {
+  const col = i % COLS;
+  const band = Math.floor(i / COLS);
+  const power = (Math.sin(col * 0.6) + 1) / 2 * (1 - band / BANDS) + (band === 7 ? 0.4 : 0);
+  return { col, band, step: Math.max(1, Math.min(9, Math.round(power * 9))) };
+});
+const cellW = areaW / COLS;
+const cellH = plotH / BANDS;
+
+const LABELS = {
+  traces: "LFPs: channels 0 to 3 at 400 Hz, from 0 to 3 s. An illustration, not a recording.",
+  raster: "Units aligned to trial start: 10 trials in two groups, Load 1 and Load 3, from 0 to 3 s. An illustration, not a recording.",
+  spectrogram: "Spectrogram: power from −40.3 to 1.4 dB across frequency, from 0 to 3 s. An illustration, not a recording.",
+};
+---
+
+<figure class="example-plot">
+  <div class="example-plot-body">
+  <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={LABELS[kind]}>
+    <line class="example-plot-axis" x1={LEFT} y1={8 + plotH} x2={LEFT + areaW} y2={8 + plotH} />
+    <line class="example-plot-axis" x1={LEFT} y1={8} x2={LEFT} y2={8 + plotH} />
+    {ticks.map((label, i) => <text class="example-plot-tick" x={x(i / 3)} y={H - 6} text-anchor="middle">{label}</text>)}
+    {
+      kind === "traces" &&
+        traces.map(({ channel, mid, points }) => (
+          <g>
+            <text class="example-plot-tick" x={LEFT - 8} y={mid + 4} text-anchor="end">Ch {channel}</text>
+            <polyline class={`example-plot-line example-plot-series-${channel + 1}`} points={points} />
+          </g>
+        ))
+    }
+    {
+      kind === "raster" &&
+        rows.map(({ trial, group, y, spikes }) => (
+          <g class={`example-plot-group-${group}`}>
+            {spikes.map((t) => <rect x={x(t)} y={y + 2} width="2" height={plotH / 10 - 4} />)}
+            {trial % 5 === 0 && <text class="example-plot-tick" x={LEFT - 8} y={y + 12} text-anchor="end">{trial}</text>}
+          </g>
+        ))
+    }
+    {kind === "spectrogram" && <text class="example-plot-tick" x={LEFT - 8} y={8 + plotH / 2} text-anchor="end">Hz</text>}
+    {kind === "raster" && <line class="example-plot-event" x1={x(1 / 3)} y1={8} x2={x(1 / 3)} y2={8 + plotH} />}
+    {
+      kind === "spectrogram" &&
+        cells.map(({ col, band, step }) => (
+          <rect class={`example-plot-viridis-${step}`} x={LEFT + col * cellW} y={8 + band * cellH} width={cellW} height={cellH} />
+        ))
+    }
+  </svg>
+  {kind === "raster" && <Legend label="Group" items={[{ name: "Load 1" }, { name: "Load 3" }]} />}
+  {kind === "spectrogram" && <ColorBar label="Power" scale="sequential" low="−40.3 dB" high="1.4 dB" />}
+  </div>
+  <figcaption class="type-caption">{kind === "spectrogram" ? "Color bar beside the plot, ends labeled in dB." : kind === "raster" ? "Legend beside the plot, naming each group’s value." : "One color per channel, labels beside each trace."}</figcaption>
+</figure>

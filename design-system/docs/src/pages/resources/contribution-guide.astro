@@ -1,0 +1,74 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const STEPS = [
+  ["1. Open an issue", "Name the page or component, link its Figma frame, and say what changes and why."],
+  ["2. Design it", "Update the component or page in Figma, with real data and a labeled placeholder for any chart."],
+  ["3. Branch", "One branch per issue, named after it, from main."],
+  ["4. Pass the checks", "npm run format:check, npm run lint, npx tsc -b --noEmit, npm test, npm run build && npm run check:bundle, and npm run docs:test, which runs the accessibility suite."],
+  ["5. Open a pull request", "Into main. Link the preview deployment and a screenshot, with the production link for the before."],
+  ["6. Review", "Keep the diff small enough to read in one sitting; Neurosift’s maintainers review and merge."],
+];
+
+const ADDITIONS = [
+  ["A token", "A Figma variable with scopes and code syntax, exported to design-system/tokens/*.tokens.json, then npm run tokens. Never edit tokens.css by hand."],
+  ["An icon", "The Carbon SVG in design-system/icons/carbon/, then npm run icons."],
+  ["A component", "A pure component in src/ui that renders only from props, built from existing tokens, with tests written from its Figma spec and a page here with states and specs. Ask before adding anything undocumented."],
+  ["A UI library page", "Start from a live capture and the source: what the page does today, then the proposal. Mark anything new “to confirm”."],
+  ["A chart", "Don’t redraw it. Place today’s chart as a labeled placeholder; the system dresses what surrounds it."],
+];
+
+const WRITING = [
+  ["Sample data", "Real, public data from a published version. No photos of people, brands or number plates."],
+  ["Words", "Plain words over abbreviations, sentence case, numbers with their units."],
+  ["Type", "IBM Plex Sans JP for reading and IBM Plex Mono for code."],
+  ["Styling", "Classes in CSS files that read the tokens. No inline styles, no Material UI sx, no hex colors in new code."],
+];
+
+const REPORT = [
+  ["A link to the view", "The share link carries url, dandisetId, dandisetVersion and tab, so anyone can open exactly what you saw."],
+  ["A screenshot", "What you see, with a note about what you expected."],
+  ["A published version", "Draft assets can be replaced and Dandisets can become embargoed, which makes a report impossible to reproduce."],
+  ["A script, for private data", "A small pynwb script that makes a file showing the problem, and where in the file the object lives."],
+];
+---
+
+<DocsLayout title="Contribution guide" description="How a change moves from an idea to a merged pull request.">
+  <Intro
+    lead="The design system moves into Neurosift through small pull requests. Every change, from a token to a page, follows Neurosift’s own CONTRIBUTING.md and the repository’s AGENTS.md: a focused change, passing checks, and a preview deployment with before and after links on real data."
+    status="Updated November 10, 2026 · Resources · Follows CONTRIBUTING.md and AGENTS.md in this repository"
+    rules={[
+      { title: "Small and focused", text: "One page or component per pull request, as CONTRIBUTING.md asks." },
+      { title: "Real, public data", text: "Every example names its Dandiset and a published version, not draft." },
+      { title: "Charts stay Neurosift’s", text: "The design system proposes what surrounds a chart, never the chart itself." },
+    ]}
+  />
+
+  <DocSection title="How a change moves" lead="From an idea to a merged pull request.">
+    <DocTable caption="How a change moves" columns={["Step", "What to do"]}>
+      <DocRows rows={STEPS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Adding to the system" lead="What each kind of addition needs.">
+    <DocTable caption="Adding to the system" columns={["Addition", "What it needs"]}>
+      <DocRows rows={ADDITIONS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Writing and examples" lead="Rules every page follows.">
+    <DocTable caption="Writing and examples" columns={["Rule", "Detail"]}>
+      <DocRows rows={WRITING} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Reporting a problem in a view" lead="From Neurosift’s CONTRIBUTING.md.">
+    <DocTable caption="What a report includes" columns={["Include", "Why"]}>
+      <DocRows rows={REPORT} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

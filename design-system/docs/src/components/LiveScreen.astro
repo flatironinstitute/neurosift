@@ -1,0 +1,23 @@
+---
+import { appBase, appHref } from "../appUrl";
+
+interface Props {
+  /** The app path after its root, such as "search?q=hippocampus". */
+  path: string;
+  /** Names the frame, such as "Spectrogram of LFPs, Dandiset 000673". */
+  title: string;
+  /** "tall" for views with settings beside a chart. */
+  size?: "default" | "tall";
+}
+
+const { path, title, size = "default" } = Astro.props;
+const src = appHref(path);
+---
+
+<figure class={`live-screen live-screen--${size}`}>
+  {appBase && <iframe class="live-screen-frame" src={src} title={title} loading="lazy" />}
+  <figcaption class="live-screen-caption type-body-sm">
+    {appBase ? "The real screen, with live data from the archive. " : "The real screen runs on the published site. "}
+    <a href={src} target="_blank" rel="noopener noreferrer">Open it full size</a>
+  </figcaption>
+</figure>

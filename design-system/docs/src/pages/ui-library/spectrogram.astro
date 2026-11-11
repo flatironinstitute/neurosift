@@ -1,0 +1,116 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import Screen from "../../components/Screen.astro";
+import LiveScreen from "../../components/LiveScreen.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const TODAY = [
+  ["Zoom toolbar", "Zoom in, zoom out and pan buttons; “window 30.00 s”", "LfpSpectrogramView.tsx", "Separate from the Time window the other views share"],
+  ["Channels", "70 channels in a 220px list; Multiple channels: Average or Split", "ChannelSelector.tsx", "Channel 0 checked by default"],
+  ["Estimator", "Taper / method Hann, Window (samp) 1,024, Overlap 50%, Per-window detrend none", "spectralConfig.ts", "Also none (boxcar), DPSS multitaper, Morlet wavelet"],
+  ["Preprocessing", "High-pass, Low-pass, Order 4, zero-phase on, notch 60 Hz × 3 harm., Decimate × 1, Artifact σ", "spectralConfig.ts", "Titled “Preprocessing (off by default)”"],
+  ["Normalization", "none / raw dB, 1/f whitening, per-frequency z-score, baseline ratio", "LfpSpectrogramView.tsx", "—"],
+  ["Color", "Limits auto percentile or manual; viridis, magma, grayscale, diverging", "colormap.ts", "Color bar Power (dB)"],
+  ["Frequency axis", "fmin and fmax", "LfpSpectrogramView.tsx", "Titled “Frequency axis (view only)”"],
+  ["Readouts and warnings", "Time resolution 2560 ms, Nyquist 200 Hz; the anti-alias warning", "derived.ts", "Warnings are a section of their own"],
+  ["Diagnostics", "Compare against Hann (press D), Copy parameters (JSON), Reset all to defaults", "LfpSpectrogramView.tsx", "A gold dot marks each changed setting"],
+];
+
+const STATES = [
+  ["Computing", "“Computing…” beside the Time window; the previous spectrogram stays until the new one is ready."],
+  ["No channels", "An empty state asks for a channel, in place of a blank chart."],
+  ["Changed settings", "The section’s summary names the change, such as “Notch 60 Hz · 3 harmonics”; Reset all to defaults turns on."],
+  ["Comparing with Hann", "A notice says the estimator is Hann for now; the button reads “Back to your estimator (D)”."],
+  ["Window limits", "The Time window shows the window actually computed: 10 becomes 10.24 s at 1,024 samples and 400 Hz."],
+];
+
+const BEHAVIOR = [
+  ["Time window", "Shared with the other time views; type a length or start, or drag the box in the Time overview. Wheel zoom and drag pan on the chart still work."],
+  ["Channels", "Check channels; with more than one, choose Average or Split."],
+  ["Section summaries", "Update as settings change; a section with changes names them."],
+  ["Readouts", "Follow window and rate: time resolution = window ÷ rate; Nyquist = rate ÷ 2."],
+  ["Compare with Hann", "Press D or the button to flip to Hann and back. D is ignored while typing in a field."],
+  ["Copy settings as JSON", "Copies the current settings; a Toast confirms, or says if the browser blocked it."],
+  ["Reset all to defaults", "Restores today’s defaults; off when nothing has changed."],
+];
+
+const DIFFERS = [
+  ["Time controls", "Its own zoom toolbar", "The shared Time window and Time overview", "Built"],
+  ["Settings", "Navy sections, all open", "Accordion items that say what they’re set to; Channels open", "Built"],
+  ["Labels", "harm., Decimate ×, Artifact σ, bare checkboxes", "Harmonics, Decimate by, Artifact threshold (σ), Zero-phase, Notch filter", "Built"],
+  ["Changed settings", "A gold dot", "The section summary names the change", "Built"],
+  ["Anti-alias warning", "A warning section", "In Readouts, at its own level (info today)", "To confirm"],
+  ["Sections open at first", "All", "Channels only", "To confirm"],
+];
+
+const SPECS = [
+  ["Frame", "View panel · summary in type/body-sm · chart title in type/label"],
+  ["Settings", "320px settings panel · Accordion items: Channels, Estimator, Preprocessing, Normalization, Color, Frequency axis, Readouts"],
+  ["Pairs", "Setting pair for Window and Overlap, High-pass and Low-pass, Mains and Harmonics"],
+  ["Actions", "Button, Small: Compare with Hann (D), Copy settings as JSON, Reset all to defaults"],
+  ["Readouts", "Key and value in type/caption and type/code-sm · warnings as Inline message"],
+];
+---
+
+<DocsLayout title="Spectrogram" description="Power by frequency over recording time, and the settings that shape it.">
+  <Intro
+    lead="The spectrogram shows how a signal’s power spreads across frequencies over recording time, one channel or an average of several. It has more settings than any other view: how the spectrum is estimated, how the signal is filtered first, and how the power is normalized and colored. The chart stays Neurosift’s own. The rebuild puts it on the shared time frame and gives each group of settings a section that says what it’s set to, even closed."
+    status="Updated November 10, 2026 · UI library · Captured at 1440 × 900 with Dandiset 000673, sub-1 · Built from View panel, Time window, Time overview, Accordion, Setting pair, Select, Text input, Checkbox, Segmented control, Button and Inline message"
+    rules={[
+      { title: "Closed, it still says what’s set", text: "Estimator reads Hann · 1,024 · 50% without opening." },
+      { title: "Words, not abbreviations", text: "Harmonics, Decimate by, Artifact threshold (σ)." },
+      { title: "One clock", text: "The spectrogram reads and sets the same time window as every other time view." },
+    ]}
+  />
+
+  <DocSection title="Spectrogram today" lead="neurosift.app with sub-1 of Dandiset 000673, captured with Playwright.">
+    <div class="captures">
+      <Screen file="spectrogram" alt="Today’s spectrogram of LFPs: navy settings sections on the left, its own zoom toolbar, and the spectrogram with a color bar." caption="Today: navy sections, all open, and a zoom toolbar of its own." />
+    </div>
+  </DocSection>
+
+  <DocSection title="What the page does today" lead="Read from the source and checked on the live site.">
+    <DocTable caption="What the page does today" columns={["Part", "Today", "Code", "Notes"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="The rebuilt spectrogram" lead="The redesign’s viewer with the same file, with live data. The chart is Neurosift’s own and unchanged.">
+    <div class="captures">
+      <Screen file="spectrogram-proposed" alt="The rebuilt spectrogram: a summary, the shared Time window and overview, the chart titled Channel 0 · Hann window, 1,024 samples · power in dB, and settings beside it with Channels open and the other sections closed with their summaries." caption="The shared time frame, a chart title that says what’s drawn, and settings that summarize themselves." />
+    </div>
+    <p class="doc-note">Built from the <a href={withBase("/components/view-panel/")}>View panel</a>, <a href={withBase("/components/time-controls/")}>Time controls</a> and <a href={withBase("/components/accordions/")}>Accordion</a>.</p>
+  </DocSection>
+
+  <DocSection title="Try it" lead="Open the settings, change the estimator and press D to compare with Hann.">
+    <LiveScreen path="nwb?url=https://api.dandiarchive.org/api/assets/65a7e913-45c7-48db-bf19-b9f5e910110a/download/&dandisetId=000673&dandisetVersion=0.250122.0110&tab=view:LfpSpectrogram|/acquisition/LFPs" title="Spectrogram of LFPs, Dandiset 000673 sub-1" size="tall" />
+  </DocSection>
+
+  <DocSection title="States">
+    <DocTable caption="States" columns={["When", "What changes"]}>
+      <DocRows rows={STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Behavior">
+    <DocTable caption="Behavior" columns={["Part", "Behavior"]}>
+      <DocRows rows={BEHAVIOR} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="What differs" lead="Built is in the app now. To confirm needs Jeremy or Ben.">
+    <DocTable caption="What differs" columns={["Area", "Existing", "Proposed", "Status"]}>
+      <DocRows rows={DIFFERS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Specs" columns={["Property", "Value"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

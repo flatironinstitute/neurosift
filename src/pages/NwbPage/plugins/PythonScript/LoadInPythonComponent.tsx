@@ -1,9 +1,4 @@
 import { FunctionComponent, useMemo } from "react";
-import Markdown from "react-markdown";
-import SyntaxHighlighter from "react-syntax-highlighter/dist/esm/prism-light";
-import bash from "react-syntax-highlighter/dist/esm/languages/prism/bash";
-import python from "react-syntax-highlighter/dist/esm/languages/prism/python";
-import { vs } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Hdf5Group, useHdf5Group } from "@hdf5Interface";
 import {
   getCustomPythonCodeForTimeIntervals,
@@ -12,9 +7,7 @@ import {
 } from "./customPythonCode";
 import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
 import { useNwbFileSpecifications } from "../../SpecificationsView/SetupNwbFileSpecificationsProvider";
-
-SyntaxHighlighter.registerLanguage("bash", bash);
-SyntaxHighlighter.registerLanguage("python", python);
+import PythonCode from "../../components/PythonCode";
 
 type Props = {
   nwbUrl: string;
@@ -43,23 +36,12 @@ const LoadInPythonWindow: FunctionComponent<Props> = ({ nwbUrl, path }) => {
     if (!group) return "";
     return createSource(nwbUrl, "hdf5", path, group, customCode);
   }, [nwbUrl, path, group, customCode]);
+  if (!group) return null;
   return (
-    <Markdown
-      children={source}
-      components={{
-        code(props) {
-          const { children, className } = props;
-          const match = /language-(\w+)/.exec(className || "");
-          const language = match ? match[1] : "";
-          return language ? (
-            <SyntaxHighlighter style={vs} language={language} PreTag="div">
-              {String(children).replace(/\n$/, "")}
-            </SyntaxHighlighter>
-          ) : (
-            <code className={className}>{children}</code>
-          );
-        },
-      }}
+    <PythonCode
+      install="pip install --upgrade lindi"
+      script={source}
+      expandLabel="Load in Python"
     />
   );
 };
@@ -86,21 +68,7 @@ const createSource = (
   group: Hdf5Group,
   customCode: string,
 ) => {
-  const backticks = "```";
-  // const backtick = "`";
-  // const nt = group.attrs.neurodata_type
-  return `
-
-${backticks}bash
-# Prerequisites:
-pip install --upgrade lindi
-${backticks}
-
----
-
-${backticks}python
-
-import lindi
+  return `import lindi
 
 url = '${nwbUrl}'
 
@@ -111,13 +79,7 @@ ${urlType === "lindi" ? "f = lindi.LindiH5pyFile.from_lindi_file(url, local_cach
 
 # load the neurodata object (${group.attrs.neurodata_type})
 X = f['${path}']
-${customCode}
-${backticks}
-
----
-
-See [lindi](https://github.com/neurodatawithoutborders/lindi)
-`;
+${customCode}`.trimEnd();
 };
 
 export default LoadInPythonWindow;

@@ -1,0 +1,216 @@
+---
+import MultiSelectDemo from "../../components/MultiSelectDemo";
+import Existing from "../../components/Existing.astro";
+import { Select } from "@ui";
+import CodeSample from "../../components/CodeSample.astro";
+import DoDont from "../../components/DoDont.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import MenuDemo from "../../components/MenuDemo";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const noop = () => {};
+
+const GROUPS = [
+  { value: "", label: "None" },
+  { value: "trial_type", label: "Trial type" },
+  { value: "orientation", label: "Stimulus orientation" },
+  { value: "contrast", label: "Contrast" },
+  { value: "response", label: "Response", disabled: true },
+];
+
+const SPEEDS = ["0.1×", "0.25×", "0.5×", "1×", "2×", "4×", "8×"].map((s) => ({ value: s, label: s }));
+
+const SORTS = ["Unit ID", "Firing rate", "Number of spikes", "Depth"].map((s) => ({ value: s, label: s }));
+
+const VERSIONS = [
+  { value: "draft", label: "Draft", meta: "Latest, not yet published" },
+  { value: "0.240827.1809", label: "0.240827.1809", meta: "Published Aug 27, 2024" },
+];
+
+const SHARE = [
+  { label: "Copy link" },
+  { label: "Download NWB file", meta: "1.2 GB" },
+  { label: "Open in Python", disabled: true },
+  { label: "View on DANDI" },
+];
+
+const CHOOSING = [
+  ["One on/off setting", "Checkbox", "Show raster, Show histogram, Smoothed"],
+  ["Two to four, one at a time", "Segmented control or radio buttons", "Sort order (Ascending, Descending) · Notch at 50 Hz or 60 Hz · PSTH height"],
+  ["Five or more, one at a time", "Select", "Group trials by · Sort units by · Version · Playback speed (0.1× to 8×)"],
+  ["Actions on the current item", "Menu", "Share, export and open-in options"],
+];
+
+const BROWSERS = [
+  ["Chrome and Edge", "Customizable select", "The list is drawn as the Menu: tokens, the Carbon checkmark, meta text, eight options before it scrolls"],
+  ["Safari and Firefox", "Native list", "The closed field looks the same; the open list is the browser’s own, without meta text, until the browser ships customizable selects"],
+];
+
+const SELECT_KEYS = [
+  ["Space or Down arrow", "Opens the list"],
+  ["Up and Down arrows, while open", "Move through the options"],
+  ["Typing", "Jumps to the first option starting with those letters, open or closed"],
+  ["Enter", "Picks the highlighted option and closes the list"],
+  ["Escape", "Closes the list and keeps the last value"],
+];
+
+const MENU_KEYS = [
+  ["Enter or Space on the button", "Opens the Menu and moves focus to the first item"],
+  ["Up and Down arrows", "Move between items, skipping disabled ones, and wrap at the ends"],
+  ["Home and End", "Go to the first or last item"],
+  ["Enter or Space on an item", "Runs it, closes the Menu and returns focus to the button"],
+  ["Escape or Tab", "Closes the Menu and returns focus to the button"],
+];
+
+const WRITING = [
+  ["Version", "Version:", "Labels sit above, without a colon"],
+  ["Draft, with meta “Latest, not yet published”", "draft (latest)", "Says what draft means"],
+  ["None", "(none)", "Plain word, no brackets"],
+  ["All four views", "A+C+S+R", "No codes"],
+  ["Sort units by, with an Ascending and Descending segmented control", "Sort units by: and an Ascending select", "Two options show at once"],
+];
+
+const SPECS = [
+  ["Field height", "32px · button/height/md", "24px · button/height/sm"],
+  ["Field padding", "12px start · space/3, 8px end · space/2", "8px start · space/2, 4px end · space/1"],
+  ["Chevron", "16px · icon/size/sm · chevron--down; turns over while open", "Same"],
+  ["Edge", "1px border/strong; 2px border/focus on focus and while open; 2px border/error on error", "Same"],
+  ["List", "surface/panel · 1px border/strong · radius/sm · elevation/2 · 4px above and below (space/1)", "Same"],
+  ["Option height", "32px · button/height/md, up to eight before it scrolls", "24px · button/height/sm"],
+  ["Highlighted option", "action/secondary-hover", "Same"],
+  ["Chosen option", "Carbon checkmark and type/label (SemiBold)", "Same"],
+  ["Meta text", "type/caption · text/muted, at the end of the row", "Same"],
+  ["Menu item padding", "12px at both sides · space/3, as there is no check column", "Same"],
+];
+
+const code = `import { Menu, Select } from "@ui";
+
+<Select label="Group trials by" value={groupBy} onChange={setGroupBy}
+  options={[{ value: "", label: "None" }, { value: "trial_type", label: "Trial type" }]}
+  helper="Splits the PSTH into one row per value." />
+
+<Select label="Version" value={version} onChange={setVersion} size="sm"
+  options={[{ value: "draft", label: "Draft", meta: "Latest, not yet published" }]} />
+
+<Menu label="Share" icon="share" items={[
+  { label: "Copy link", onSelect: copyLink },
+  { label: "Download NWB file", meta: "1.2 GB", onSelect: download },
+]} />`;
+---
+
+<DocsLayout title="Dropdowns and selects" description="Select and Menu: one value from a list, or one action from a list.">
+  <Intro
+    lead="Selects let people pick one value from a list: how to group trials, which Dandiset version to open, the playback speed. Menus list actions behind a button, such as the ways to share a file. Both work fully from the keyboard, and the Select is the browser’s own, so screen readers and phones handle it as they always do."
+    status="Updated November 10, 2026 · Components · Every select and menu on this page is the component the app imports from @ui"
+    rules={[
+      { title: "Pick the control by count", text: "Four or fewer choices: radio buttons or a segmented control, so every option shows. Five or more: a select." },
+      { title: "Options name the value", text: "“None”, not “(none)”. Units come with the value: “60 Hz”, “2×”." },
+      { title: "Change in place", text: "Picking an option updates the view right away. It never navigates away or resets other settings." },
+    ]}
+  />
+
+  <Existing page="selects" />
+
+  <DocSection title="Choosing the control" lead="Selects hide their options until opened. Use one only when the list is too long to show.">
+    <DocTable caption="Choosing the control" columns={["Choices", "Use", "In Neurosift"]}>
+      {CHOOSING.map(([choices, use, where]) => <tr><th scope="row">{choices}</th><td>{use}</td><td>{where}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Select" lead="The field matches the Text input, so selects and inputs line up in the same panel. Open one here to see the list; hover, focus and open are live.">
+    <div class="field-grid">
+      <Select label="Group trials by" value="trial_type" onChange={noop} options={GROUPS} helper="Splits the PSTH into one row per value." />
+      <Select label="Group trials by" value="contrast" onChange={noop} options={GROUPS} error="“Contrast” isn’t in this file’s trials table. Pick another column." />
+      <Select label="Group trials by" value="" onChange={noop} options={GROUPS} helper="This file has no trials table." disabled />
+    </div>
+    <p class="doc-note">Default with a helper, an error for a saved choice that no longer applies to this file, and disabled with the reason beside it. Response is a disabled option: it’s grayed out in the list, and only a disabled select dims the field.</p>
+  </DocSection>
+
+  <DocSection title="Sizes" lead="Medium in pages and dialogs. Small in plot control panels, next to Small text inputs and buttons.">
+    <div class="field-grid">
+      <Select label="Playback speed" value="1×" onChange={noop} options={SPEEDS} />
+      <Select label="Sort units by" value="Firing rate" onChange={noop} options={SORTS} size="sm" />
+    </div>
+  </DocSection>
+
+  <DocSection title="Meta text" lead="An option can carry a short note at the end of its row, such as what a version is. The closed field shows only the value.">
+    <div class="field-grid">
+      <Select label="Version" value="draft" onChange={noop} options={VERSIONS} />
+    </div>
+  </DocSection>
+
+  <DocSection title="Browser support" lead="The Select is a native select, styled with appearance: base-select where the browser supports it. Elsewhere the open list is the browser’s own, still labelled and fully usable.">
+    <div class="field-grid">
+      <Select label="Group trials by, styled" value="trial_type" onChange={noop} options={GROUPS} />
+      <div class="select-fallback">
+        <Select label="Group trials by, fallback" value="trial_type" onChange={noop} options={GROUPS} />
+      </div>
+    </div>
+    <p class="doc-note">The second field turns the styling off, so it opens the list Safari and Firefox show. The tests run Playwright’s Chromium 158, Firefox 159 and WebKit 27.2; that WebKit is ahead of shipping Safari and already draws the styled list, while Safari 26.6 still shows its own.</p>
+    <DocTable caption="What each browser shows" columns={["Browsers", "Open list", "What people see"]}>
+      {BROWSERS.map(([browsers, list, see]) => <tr><th scope="row">{browsers}</th><td>{list}</td><td>{see}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Menu" lead="A list of actions behind a button, built on the browser’s popover. It opens under the button, at least as wide, and flips above when there’s no room below. Picking an item runs it and closes the Menu.">
+    <div class="demo-row">
+      <MenuDemo client:visible label="Share" icon="share" items={SHARE} />
+      <MenuDemo client:visible label="Share" icon="share" items={SHARE} size="sm" />
+    </div>
+    <p class="doc-note">Medium and Small. Each item here only says it ran.</p>
+  </DocSection>
+
+  <DocSection title="Multi-select" lead="Several values from a long list, picked by typing. Matches anywhere in the name, so “Series” finds ElectricalSeries. Chosen values become removable tags inside the field.">
+    <MultiSelectDemo client:visible />
+    <ul class="rule-list">
+      <li><strong>Type, then pick.</strong> Up and Down move through matches, Enter adds the active one, Escape closes the list.</li>
+      <li><strong>Remove either way.</strong> Each tag’s × is named after its value, such as “Remove Units”; Backspace in the empty field removes the last one.</li>
+      <li><strong>Chosen values leave the list,</strong> so the list only offers what can still be added.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Keyboard" lead="The Select’s keys come from the browser; the Menu’s follow the WAI-ARIA menu button pattern.">
+    <DocTable caption="Select keyboard" columns={["Key", "Select"]}>
+      {SELECT_KEYS.map(([key, does]) => <tr><th scope="row">{key}</th><td>{does}</td></tr>)}
+    </DocTable>
+    <DocTable caption="Menu keyboard" columns={["Key", "Menu"]}>
+      {MENU_KEYS.map(([key, does]) => <tr><th scope="row">{key}</th><td>{does}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Writing options and labels" lead="Rewrites of strings in the app today.">
+    <DocTable caption="Writing options and labels" columns={["Use", "Instead of", "Why"]}>
+      {WRITING.map(([use, instead, why]) => <tr><th scope="row">{use}</th><td>{instead}</td><td>{why}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Accessibility">
+    <ul class="rule-list">
+      <li><strong>A real label.</strong> The label is tied to the select, so screen readers say “Group trials by, Trial type, collapsed”.</li>
+      <li><strong>Descriptions add up.</strong> A description the caller links with aria-describedby stays, and the helper or error is read after it, in the Select and the Multi-select.</li>
+      <li><strong>Native semantics.</strong> The browser announces the select, its options and the chosen one; nothing is rebuilt with ARIA.</li>
+      <li><strong>Menus say what they are.</strong> The button has aria-haspopup and aria-expanded, the list is role="menu", and focus never gets lost when it closes.</li>
+      <li><strong>Not by color alone.</strong> The chosen option has a check and SemiBold text as well as its position.</li>
+      <li><strong>Targets.</strong> Medium options and items are 32px tall and Small are 24px; the whole row is the target.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Use a select for five or more choices.", "Put the label above the field.", "Start with “None” when no choice is allowed.", "Use a Menu for actions and a Select for values."]}
+      donts={["Don’t use a select for two options; show both.", "Don’t navigate or reload when the value changes.", "Don’t truncate options; widen the list.", "Don’t put settings in a Menu; they belong in a Select or a form."]}
+    />
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Select and Menu specs" columns={["Property", "Medium", "Small"]}>
+      {SPECS.map(([property, medium, small]) => <tr><th scope="row">{property}</th><td>{medium}</td><td>{small}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. Select is controlled: it shows the value it’s given and reports each pick. Menu items run their onSelect.">
+    <CodeSample label="React" code={code} />
+  </DocSection>
+</DocsLayout>

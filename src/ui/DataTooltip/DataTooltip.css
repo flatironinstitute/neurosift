@@ -1,0 +1,43 @@
+.ns-data-tooltip {
+  position: absolute;
+  inset-block-start: var(--ns-cursor-y, 0);
+  inset-inline-start: calc(var(--ns-cursor-x, 0) + var(--space-3));
+  z-index: 1;
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  font: var(--type-caption);
+  color: var(--text-default);
+  white-space: nowrap;
+  pointer-events: none;
+  background: var(--surface-panel);
+  border: var(--border-width-1) solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.ns-data-tooltip--left {
+  translate: calc(-100% - var(--space-6)) 0;
+}
+
+.ns-data-tooltip-time,
+.ns-data-tooltip-row {
+  margin: 0;
+}
+
+.ns-data-tooltip-time {
+  font: var(--type-code-sm);
+  color: var(--text-secondary);
+}
+
+.ns-data-tooltip-row {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ns-data-tooltip-value {
+  font: var(--type-code-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}

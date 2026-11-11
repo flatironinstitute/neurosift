@@ -1,4 +1,4 @@
-import { Alert, Box, Button } from "@mui/material";
+import { EmptyState } from "@ui";
 import { FunctionComponent, useState } from "react";
 import { DatasetPluginProps } from "../pluginInterface";
 import NiftiViewer from "./components/NiftiViewer";
@@ -8,77 +8,37 @@ const NiftiView: FunctionComponent<DatasetPluginProps> = ({
   width,
   height,
 }) => {
-  const [loadState, setLoadState] = useState<"initial" | "confirmed">(
-    "initial",
-  );
-  const fileUrl = file.urls[0];
+  const [confirmed, setConfirmed] = useState(false);
   const fileSizeMB = file.size / (1024 * 1024);
   const isLargeFile = fileSizeMB > 100;
   const isVeryLargeFile = fileSizeMB > 2000;
+  const size = `${fileSizeMB.toFixed(1)} MB`;
 
-  const handleConfirm = () => {
-    setLoadState("confirmed");
-  };
-
+  if (confirmed)
+    return (
+      <NiftiViewer
+        fileUrl={file.urls[0]}
+        width={(width || 600) - 30}
+        height={height}
+      />
+    );
   return (
-    <Box sx={{ width: "100%", height: "100%", overflow: "auto" }}>
-      {loadState === "initial" ? (
-        <Alert
-          severity={isLargeFile ? "warning" : "info"}
-          sx={{
-            bgcolor: isLargeFile ? undefined : "transparent",
-            color: isLargeFile ? undefined : "inherit",
-            p: 4,
-            m: 4,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            fontSize: "1.2rem",
-            "& .MuiAlert-message": {
-              fontSize: "1.2rem",
-              textAlign: "center",
-              mb: 2,
-            },
-            ...(!isLargeFile && {
-              "& .MuiAlert-icon": {
-                color: "inherit",
-              },
-            }),
-            maxWidth: 500,
-          }}
-          action={
-            <Button
-              variant="contained"
-              color="primary"
-              size="large"
-              onClick={handleConfirm}
-              sx={{ mt: 2 }}
-            >
-              {isVeryLargeFile
-                ? "Bypass Warning (not recommended)"
-                : isLargeFile
-                  ? "Load Anyway"
-                  : "Load"}
-            </Button>
-          }
-        >
-          <>
-            This NIfTI file is {fileSizeMB.toFixed(1)} MB in size.
-            <br />
-            <br />
-            {isLargeFile || isVeryLargeFile
-              ? "Warning: Loading large files may impact performance or fail to load."
-              : "Click to proceed with loading the file."}
-          </>
-        </Alert>
-      ) : (
-        <NiftiViewer
-          fileUrl={fileUrl}
-          width={(width || 600) - 30}
-          height={height}
-        />
-      )}
-    </Box>
+    <EmptyState
+      icon="image"
+      title={`Load this ${size} file?`}
+      action={{
+        label: isVeryLargeFile
+          ? `Load ${size} anyway (not recommended)`
+          : isLargeFile
+            ? `Load ${size} anyway`
+            : `Load ${size}`,
+        onClick: () => setConfirmed(true),
+      }}
+    >
+      {isLargeFile
+        ? "The volume is read in your browser, and a file this large may be slow or fail to load."
+        : "The volume is read in your browser, so it waits until you ask."}
+    </EmptyState>
   );
 };
 

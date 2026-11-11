@@ -1,0 +1,32 @@
+---
+interface Rule {
+  title: string;
+  text: string;
+}
+
+interface Props {
+  lead: string;
+  status: string;
+  rules?: Rule[];
+}
+
+const { lead, status, rules = [] } = Astro.props;
+---
+
+<section class="intro" aria-labelledby="overview">
+  <h2 id="overview" class="page-title">Overview</h2>
+  <p class="intro-lead type-lead">{lead}</p>
+  <p class="intro-status type-caption">{status}</p>
+  {
+    rules.length > 0 && (
+      <ul class="key-rules">
+        {rules.map(({ title, text }) => (
+          <li>
+            <h3 class="type-label">{title}</h3>
+            <p class="type-body-sm">{text}</p>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</section>

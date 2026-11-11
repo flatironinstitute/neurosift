@@ -1,8 +1,8 @@
 import ErrorBoundary from "@components/ErrorBoundary";
 import ScrollY from "@components/ScrollY";
-import { TAB_BAR_HEIGHT, TabBar } from "@components/tabs/TabBar";
 import { BaseTabAction } from "@components/tabs/tabsReducer";
-import { CircularProgress } from "@mui/material";
+import { EmptyState, LoadingState, TabPanel, Tabs, type TabItem } from "@ui";
+import "./DatasetWorkspace.css";
 import {
   FunctionComponent,
   Suspense,
@@ -14,8 +14,8 @@ import { initializePlugins } from "./plugins/init";
 import { DatasetFile } from "./plugins/pluginInterface";
 import { findPluginsByFile } from "./plugins/registry";
 import {
-  DatasetWorkspaceTab,
   datasetWorkspaceTabsReducer,
+  type FileTab,
 } from "./datasetWorkspaceTabsReducer";
 import DatasetMainTab from "./DatasetMainTab";
 import TabToolbar, { TOOLBAR_HEIGHT } from "./TabToolbar";
@@ -83,8 +83,7 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
     dispatch({ type: "OPEN_TAB", file });
   };
 
-  const handleCloseTab = (id: string, event: React.MouseEvent) => {
-    event.stopPropagation();
+  const handleCloseTab = (id: string) => {
     dispatch({ type: "CLOSE_TAB", id } as BaseTabAction);
   };
 
@@ -92,45 +91,42 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
     dispatch({ type: "SWITCH_TO_TAB", id } as BaseTabAction);
   };
 
-  const tabBarHeight = TAB_BAR_HEIGHT;
-  const contentHeight = height - tabBarHeight;
+  // The object tabs are 36px (layout/tabs-height).
+  const contentHeight = height - 36;
   const toolbarHeight = TOOLBAR_HEIGHT;
   const pluginContentHeight = contentHeight - toolbarHeight;
+  const contentWidth = width;
+
+  const tabs: TabItem[] = [
+    { id: "main", label: "Files" },
+    ...tabsState.tabs
+      .filter((tab): tab is FileTab => tab.type === "file")
+      .map((tab) => ({
+        id: tab.id,
+        label: tab.label,
+        closable: true,
+        tooltip: tab.file.filepath,
+      })),
+  ];
 
   return (
-    <div
-      style={{
-        position: "absolute",
-        width,
-        height,
-        overflow: "hidden",
-        padding: "0 10px",
-      }}
-    >
-      <TabBar<DatasetWorkspaceTab>
-        tabs={tabsState.tabs}
-        activeTabId={tabsState.activeTabId}
-        onSwitchTab={handleSwitchTab}
-        onCloseTab={handleCloseTab}
-        width={width}
+    <div className="dataset-workspace">
+      <Tabs
+        id="dataset-tabs"
+        kind="object"
+        label="Open files"
+        tabs={tabs}
+        selected={tabsState.activeTabId}
+        onSelect={handleSwitchTab}
+        onClose={handleCloseTab}
       />
-
-      <div
-        style={{
-          position: "absolute",
-          left: 10,
-          width: width - 20,
-          height: contentHeight,
-          top: tabBarHeight,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            display: tabsState.activeTabId === "main" ? "block" : "none",
-          }}
+      <div className="dataset-workspace-content">
+        <TabPanel
+          tabsId="dataset-tabs"
+          tabId="main"
+          selected={tabsState.activeTabId === "main"}
         >
-          <ScrollY width={width - 20} height={contentHeight}>
+          <ScrollY width={contentWidth} height={contentHeight}>
             <DatasetMainTab
               topLevelFiles={topLevelFiles}
               onOpenFile={handleOpenFile}
@@ -138,79 +134,73 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
               additionalControls={mainTabAdditionalControls}
             />
           </ScrollY>
-        </div>
+        </TabPanel>
         {tabsState.tabs.map((tab) => {
-          if (tab.type === "file") {
-            const plugins = findPluginsByFile(tab.file.filename);
-
-            if (plugins.length > 0) {
-              const pluginHeight =
-                plugins.length > 1
-                  ? Math.min(600, (pluginContentHeight * 2) / 3)
-                  : pluginContentHeight;
-
-              return (
-                <div
-                  key={tab.id}
-                  style={{
-                    display:
-                      tabsState.activeTabId === tab.id ? "block" : "none",
-                    height: contentHeight,
-                  }}
+          if (tab.type !== "file") return null;
+          const plugins = findPluginsByFile(tab.file.filename);
+          const pluginHeight =
+            plugins.length > 1
+              ? Math.min(600, (pluginContentHeight * 2) / 3)
+              : pluginContentHeight;
+          return (
+            <TabPanel
+              key={tab.id}
+              tabsId="dataset-tabs"
+              tabId={tab.id}
+              selected={tabsState.activeTabId === tab.id}
+            >
+              <TabToolbar width={contentWidth} file={tab.file} />
+              {plugins.length > 0 ? (
+                <ScrollY
+                  width={contentWidth}
+                  height={contentHeight - toolbarHeight}
+                  top={toolbarHeight}
                 >
-                  <TabToolbar width={width - 20} file={tab.file} />
-                  <ScrollY
-                    width={width - 20}
-                    height={contentHeight - toolbarHeight}
-                    top={toolbarHeight}
-                  >
-                    <ProvideTimeseriesSelection>
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "20px",
-                        }}
-                      >
-                        {plugins.map((plugin, index) => (
-                          <div key={index}>
-                            <ErrorBoundary
-                              what={`the ${plugin.name} view of ${tab.file.filepath}`}
-                            >
-                              <Suspense fallback={<CircularProgress />}>
-                                <plugin.component
-                                  file={tab.file}
-                                  width={width - 20}
-                                  height={pluginHeight}
+                  <ProvideTimeseriesSelection>
+                    <div className="dataset-workspace-views">
+                      {plugins.map((plugin, index) => (
+                        <div key={index}>
+                          <ErrorBoundary
+                            what={`the ${plugin.name} view of ${tab.file.filepath}`}
+                          >
+                            <Suspense
+                              fallback={
+                                <LoadingState
+                                  label={`Loading the ${plugin.name} view`}
+                                  phase="loading"
                                 />
-                              </Suspense>
-                            </ErrorBoundary>
-                          </div>
-                        ))}
-                      </div>
-                    </ProvideTimeseriesSelection>
-                  </ScrollY>
-                </div>
-              );
-            }
-
-            return (
-              <div
-                key={tab.id}
-                style={{
-                  display: tabsState.activeTabId === tab.id ? "block" : "none",
-                  height: contentHeight,
-                }}
-              >
-                <TabToolbar width={width - 20} file={tab.file} />
-                <div style={{ padding: "20px" }}>
-                  <h3>No viewer available for this file type</h3>
-                  <p>Filename: {tab.file.filename}</p>
-                </div>
-              </div>
-            );
-          }
-          return null;
+                              }
+                            >
+                              <plugin.component
+                                file={tab.file}
+                                width={contentWidth}
+                                height={pluginHeight}
+                              />
+                            </Suspense>
+                          </ErrorBoundary>
+                        </div>
+                      ))}
+                    </div>
+                  </ProvideTimeseriesSelection>
+                </ScrollY>
+              ) : (
+                <EmptyState
+                  title={`Neurosift can’t show ${tab.file.filename.split(".").pop()} files yet`}
+                  action={
+                    tab.file.urls[0]
+                      ? {
+                          label: "Download the file",
+                          onClick: () =>
+                            window.open(tab.file.urls[0], "_blank", "noopener"),
+                        }
+                      : undefined
+                  }
+                >
+                  {`${tab.file.filename} can be downloaded to open it elsewhere.`}
+                </EmptyState>
+              )}
+            </TabPanel>
+          );
         })}
       </div>
     </div>

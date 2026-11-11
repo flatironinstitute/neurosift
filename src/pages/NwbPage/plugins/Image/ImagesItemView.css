@@ -1,0 +1,62 @@
+.images-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--image-min), 1fr));
+  gap: var(--space-5);
+}
+
+.images-item {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  min-inline-size: 0;
+}
+
+.images-item--wide {
+  grid-column: 1 / -1;
+}
+
+.images-frame {
+  display: grid;
+  place-items: center;
+  inline-size: 100%;
+  aspect-ratio: var(--image-ratio);
+  overflow: hidden;
+  background: var(--surface-row-hover);
+}
+
+.images-frame canvas {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+
+.images-caption {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  justify-content: space-between;
+  min-inline-size: 0;
+}
+
+.images-name {
+  overflow: hidden;
+  font: var(--type-code-sm);
+  color: var(--text-default);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.images-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 12rem));
+  gap: var(--space-3);
+}
+
+.images-grayscale {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.images-message {
+  overflow-wrap: anywhere;
+}

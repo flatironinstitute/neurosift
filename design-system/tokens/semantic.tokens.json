@@ -1,0 +1,694 @@
+{
+  "surface": {
+    "page": {
+      "$type": "color",
+      "$value": "{color.base.page}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "panel": {
+      "$type": "color",
+      "$value": "{color.white}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "header": {
+      "$type": "color",
+      "$value": "{color.navy.600}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "overlay": {
+      "$type": "color",
+      "$value": "{color.white}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "inverse": {
+      "$type": "color",
+      "$value": "{color.navy.600}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "row-hover": {
+      "$type": "color",
+      "$value": "{color.navy.50}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "row-selected": {
+      "$type": "color",
+      "$value": "{color.navy.600}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    }
+  },
+  "text": {
+    "default": {
+      "$type": "color",
+      "$value": "{color.neutral.900}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "TEXT_FILL"
+          ]
+        }
+      }
+    },
+    "secondary": {
+      "$type": "color",
+      "$value": "{color.neutral.700}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "TEXT_FILL"
+          ]
+        }
+      }
+    },
+    "muted": {
+      "$type": "color",
+      "$value": "{color.neutral.500}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "TEXT_FILL"
+          ]
+        }
+      }
+    },
+    "table-head": {
+      "$type": "color",
+      "$value": "{color.neutral.600}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "TEXT_FILL"
+          ]
+        }
+      }
+    },
+    "link": {
+      "$type": "color",
+      "$value": "{color.blue.600}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "TEXT_FILL"
+          ]
+        }
+      }
+    },
+    "link-hover": {
+      "$type": "color",
+      "$value": "{color.blue.700}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "TEXT_FILL"
+          ]
+        }
+      }
+    },
+    "on-inverse": {
+      "$type": "color",
+      "$value": "{color.white}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "TEXT_FILL"
+          ]
+        }
+      }
+    },
+    "disabled": {
+      "$type": "color",
+      "$value": "{color.neutral.400}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "TEXT_FILL"
+          ]
+        }
+      }
+    }
+  },
+  "action": {
+    "primary": {
+      "$type": "color",
+      "$value": "{color.navy.600}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "primary-hover": {
+      "$type": "color",
+      "$value": "{color.navy.700}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "primary-pressed": {
+      "$type": "color",
+      "$value": "{color.navy.800}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "secondary": {
+      "$type": "color",
+      "$value": "{color.white}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "secondary-hover": {
+      "$type": "color",
+      "$value": "{color.navy.50}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "secondary-pressed": {
+      "$type": "color",
+      "$value": "{color.navy.100}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "disabled": {
+      "$type": "color",
+      "$value": "{color.neutral.100}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "destructive": {
+      "$type": "color",
+      "$value": "{color.red.700}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "destructive-hover": {
+      "$type": "color",
+      "$value": "{color.red.800}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "destructive-pressed": {
+      "$type": "color",
+      "$value": "{color.red.900}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    }
+  },
+  "border": {
+    "subtle": {
+      "$type": "color",
+      "$value": "{color.base.border}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "STROKE_COLOR"
+          ]
+        }
+      }
+    },
+    "strong": {
+      "$type": "color",
+      "$value": "{color.black}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "STROKE_COLOR"
+          ]
+        }
+      }
+    },
+    "selected": {
+      "$type": "color",
+      "$value": "{color.blue.600}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "STROKE_COLOR"
+          ]
+        }
+      }
+    },
+    "focus": {
+      "$type": "color",
+      "$value": "{color.blue.600}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "STROKE_COLOR"
+          ]
+        }
+      }
+    },
+    "focus-inverse": {
+      "$type": "color",
+      "$value": "{color.white}",
+      "$description": "Focus ring on navy surfaces: the header, selected rows, primary buttons",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "STROKE_COLOR"
+          ]
+        }
+      }
+    },
+    "error": {
+      "$type": "color",
+      "$value": "{color.red.700}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "STROKE_COLOR"
+          ]
+        }
+      }
+    },
+    "disabled": {
+      "$type": "color",
+      "$value": "{color.neutral.300}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "STROKE_COLOR"
+          ]
+        }
+      }
+    }
+  },
+  "status": {
+    "error": {
+      "bg": {
+        "$type": "color",
+        "$value": "{color.red.50}",
+        "$extensions": {
+          "com.figma": {
+            "collection": "Semantic",
+            "scopes": [
+              "FRAME_FILL",
+              "SHAPE_FILL"
+            ]
+          }
+        }
+      },
+      "border": {
+        "$type": "color",
+        "$value": "{color.red.200}",
+        "$extensions": {
+          "com.figma": {
+            "collection": "Semantic",
+            "scopes": [
+              "STROKE_COLOR"
+            ]
+          }
+        }
+      },
+      "text": {
+        "$type": "color",
+        "$value": "{color.red.700}",
+        "$extensions": {
+          "com.figma": {
+            "collection": "Semantic",
+            "scopes": [
+              "SHAPE_FILL",
+              "TEXT_FILL"
+            ]
+          }
+        }
+      }
+    },
+    "warning": {
+      "bg": {
+        "$type": "color",
+        "$value": "{color.amber.50}",
+        "$extensions": {
+          "com.figma": {
+            "collection": "Semantic",
+            "scopes": [
+              "FRAME_FILL",
+              "SHAPE_FILL"
+            ]
+          }
+        }
+      },
+      "border": {
+        "$type": "color",
+        "$value": "{color.amber.200}",
+        "$extensions": {
+          "com.figma": {
+            "collection": "Semantic",
+            "scopes": [
+              "STROKE_COLOR"
+            ]
+          }
+        }
+      },
+      "text": {
+        "$type": "color",
+        "$value": "{color.amber.700}",
+        "$extensions": {
+          "com.figma": {
+            "collection": "Semantic",
+            "scopes": [
+              "SHAPE_FILL",
+              "TEXT_FILL"
+            ]
+          }
+        }
+      }
+    },
+    "success": {
+      "bg": {
+        "$type": "color",
+        "$value": "{color.green.50}",
+        "$extensions": {
+          "com.figma": {
+            "collection": "Semantic",
+            "scopes": [
+              "FRAME_FILL",
+              "SHAPE_FILL"
+            ]
+          }
+        }
+      },
+      "border": {
+        "$type": "color",
+        "$value": "{color.green.200}",
+        "$extensions": {
+          "com.figma": {
+            "collection": "Semantic",
+            "scopes": [
+              "STROKE_COLOR"
+            ]
+          }
+        }
+      },
+      "text": {
+        "$type": "color",
+        "$value": "{color.green.700}",
+        "$extensions": {
+          "com.figma": {
+            "collection": "Semantic",
+            "scopes": [
+              "SHAPE_FILL",
+              "TEXT_FILL"
+            ]
+          }
+        }
+      }
+    },
+    "info": {
+      "bg": {
+        "$type": "color",
+        "$value": "{color.blue.50}",
+        "$extensions": {
+          "com.figma": {
+            "collection": "Semantic",
+            "scopes": [
+              "FRAME_FILL",
+              "SHAPE_FILL"
+            ]
+          }
+        }
+      },
+      "border": {
+        "$type": "color",
+        "$value": "{color.blue.200}",
+        "$extensions": {
+          "com.figma": {
+            "collection": "Semantic",
+            "scopes": [
+              "STROKE_COLOR"
+            ]
+          }
+        }
+      },
+      "text": {
+        "$type": "color",
+        "$value": "{color.blue.600}",
+        "$extensions": {
+          "com.figma": {
+            "collection": "Semantic",
+            "scopes": [
+              "SHAPE_FILL",
+              "TEXT_FILL"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "data": {
+    "selection": {
+      "$type": "color",
+      "$value": "{color.navy.600-a08}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "series": {
+      "other": {
+        "$type": "color",
+        "$value": "{color.neutral.500}",
+        "$extensions": {
+          "com.figma": {
+            "collection": "Semantic",
+            "scopes": [
+              "SHAPE_FILL",
+              "STROKE_COLOR"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "overlay": {
+    "backdrop": {
+      "$type": "color",
+      "$value": "{color.navy.600-a40}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    }
+  },
+  "code": {
+    "surface": {
+      "$type": "color",
+      "$value": "{color.base.page}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "text": {
+      "$type": "color",
+      "$value": "{color.neutral.900}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "TEXT_FILL"
+          ]
+        }
+      }
+    },
+    "keyword": {
+      "$type": "color",
+      "$value": "{color.blue.600}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "TEXT_FILL"
+          ]
+        }
+      }
+    },
+    "string": {
+      "$type": "color",
+      "$value": "{color.green.700}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "TEXT_FILL"
+          ]
+        }
+      }
+    },
+    "number": {
+      "$type": "color",
+      "$value": "{color.amber.700}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "TEXT_FILL"
+          ]
+        }
+      }
+    },
+    "comment": {
+      "$type": "color",
+      "$value": "{color.neutral.600}",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "TEXT_FILL"
+          ]
+        }
+      }
+    }
+  }
+}
