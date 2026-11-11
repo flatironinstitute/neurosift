@@ -7,6 +7,7 @@ import DocSection from "../../components/DocSection.astro";
 import DocTable from "../../components/DocTable.astro";
 import Intro from "../../components/Intro.astro";
 import TimeDemo from "../../components/TimeDemo";
+import { Playback } from "@ui";
 import DocsLayout from "../../layouts/DocsLayout.astro";
 
 const WINDOW = [
@@ -54,6 +55,7 @@ const code = `import { Playback, TimeOverview, TimeWindow, timeKey } from "@ui";
 <Playback playing={playing} onPlayingChange={setPlaying}
   speed={speed} onSpeedChange={setSpeed} time={cursor} waiting={waiting} />
 <Playback ... readout="Frame 412 of 113,855" />
+<Playback ... disabledReason="Playing in another view" />
 
 // In the plot's key handler:
 const next = timeKey(event.key, window, session, cursor);
@@ -86,6 +88,7 @@ const OVERVIEW_STATES = [
     "The fill turns navy 50 while the window moves."
   ]
 ];
+const noop = () => {};
 const PLAYBACK_STATES = [
   [
     "Stopped",
@@ -102,6 +105,10 @@ const PLAYBACK_STATES = [
   [
     "Waiting for data",
     "Still playing, but held until data arrives: a spinner and “Waiting for data” after the readout, in a polite status."
+  ],
+  [
+    "Playing in another view",
+    "Another view on the same time window is playing. Play and the speed turn gray, and “Playing in another view” sits after the readout, in a polite status that both controls point to. They come back when that view pauses, reaches the end or closes."
   ],
   [
     "Frame readout",
@@ -152,7 +159,10 @@ const PLAYBACK_STATES = [
     <DocTable caption="Playback states" columns={["State","Look and behavior"]}>
       <DocRows rows={PLAYBACK_STATES} />
     </DocTable>
-    <p class="doc-note">Playback never starts by itself. Editing the window, dragging the overview, zooming or stepping pauses it, and so does the end. Under reduced motion it still plays, since people start it, with no extra animation.</p>
+    <div class="demo-row">
+      <Playback playing={false} onPlayingChange={noop} speed="4" onSpeedChange={noop} time={50.92} disabledReason="Playing in another view" />
+    </div>
+    <p class="doc-note">Playback never starts by itself, and only one player moves a time window at a time, so views never drift apart at different speeds. Editing the window, dragging the overview, zooming or stepping pauses it, and so does the end. Under reduced motion it still plays, since people start it, with no extra animation.</p>
   </DocSection>
 
   <DocSection title="Pointer and keyboard" lead="The plot takes keys once it has focus; the focus ring shows when it does.">
@@ -173,6 +183,7 @@ const PLAYBACK_STATES = [
       <li><strong>The overview is a slider.</strong> Its value reads as the window, such as “3.75 s from 412.00 s”.</li>
       <li><strong>Changes are announced.</strong> A polite status reads the new window after a zoom or step, once it settles.</li>
       <li><strong>No motion surprises.</strong> Playback never starts by itself.</li>
+      <li><strong>Turned off with a reason.</strong> While another view plays, Play and the speed are disabled and described by the status that says why.</li>
     </ul>
   </DocSection>
 

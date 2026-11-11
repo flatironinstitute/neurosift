@@ -1,6 +1,18 @@
 import type { TimeWindowValue } from "@ui";
-import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
-import { KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
+import {
+  PlaybackOwnerContext,
+  useTimeseriesSelection,
+} from "@shared/context-timeseries-selection-2";
+import {
+  KeyboardEvent,
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import {
   advanceWindow,
   isPlaybackKey,
@@ -14,6 +26,9 @@ const WAIT_MS = 250;
 /** After a background tab or a long frame, catch up by no more than this. */
 const MAX_FRAME_MS = 100;
 
+export const PLAYING_ELSEWHERE = "Playing in another view";
+const noSubscribe = () => () => {};
+
 export type PlaybackClock = {
   playing: boolean;
   setPlaying: (playing: boolean) => void;
@@ -25,6 +40,8 @@ export type PlaybackClock = {
   hold: (holding: boolean) => void;
   /** For the plot's wrapper: Space plays and pauses. */
   onKeyDown: (e: KeyboardEvent) => void;
+  /** Set while another player moves the same time window; Play does nothing. */
+  disabledReason?: string;
 };
 
 /** A key handler for a plot: Space calls `toggle`. */
@@ -34,12 +51,34 @@ export const onSpace = (toggle: () => void) => (e: KeyboardEvent) => {
   toggle();
 };
 
+/** Holds the shared time window while `playing`; says why not to play while another player holds it. */
+export function usePlaybackOwner(playing: boolean): string | undefined {
+  const owner = useContext(PlaybackOwnerContext);
+  const id = useId();
+  const holder = useSyncExternalStore(owner?.subscribe ?? noSubscribe, () =>
+    owner?.current(),
+  );
+  useEffect(() => {
+    if (!owner || !playing) return;
+    owner.claim(id);
+    return () => owner.release(id);
+  }, [owner, playing, id]);
+  return holder !== undefined && holder !== id ? PLAYING_ELSEWHERE : undefined;
+}
+
 /** Calls `advance` each animation frame with the seconds of recording due; it returns false at the end. */
 export function usePlaybackClock(
   advance: (seconds: number) => boolean,
 ): PlaybackClock {
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlayingState] = useState(false);
   const [speed, setSpeed] = useState("1");
+  const disabledReason = usePlaybackOwner(playing);
+  const setPlaying = useCallback(
+    (next: boolean) => {
+      if (!(next && disabledReason)) setPlayingState(next);
+    },
+    [disabledReason],
+  );
   const [waiting, setWaiting] = useState(false);
   const advanceRef = useRef(advance);
   const speedRef = useRef(speed);
@@ -63,7 +102,7 @@ export function usePlaybackClock(
         setWaiting(false);
         const ms = Math.min(now - last, MAX_FRAME_MS);
         if (!advanceRef.current((ms / 1000) * Number(speedRef.current))) {
-          setPlaying(false);
+          setPlayingState(false);
           return;
         }
       }
@@ -81,7 +120,16 @@ export function usePlaybackClock(
     holdingRef.current = holding;
   }, []);
   const onKeyDown = onSpace(() => setPlaying(!playing));
-  return { playing, setPlaying, speed, setSpeed, waiting, hold, onKeyDown };
+  return {
+    playing,
+    setPlaying,
+    speed,
+    setSpeed,
+    waiting,
+    hold,
+    onKeyDown,
+    disabledReason,
+  };
 }
 
 export type WindowPlayback = PlaybackClock & {
@@ -122,6 +170,7 @@ export function useWindowPlayback(maxDuration?: number): WindowPlayback {
   }, [playing, value, setPlaying]);
 
   const play = (next: boolean) => {
+    if (next && clock.disabledReason) return;
     const start = next ? startWindow(value, session, maxDuration) : null;
     if (start) show(start);
     setPlaying(next);

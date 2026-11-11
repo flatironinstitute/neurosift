@@ -47,6 +47,7 @@ import {
   TIME_VIEW_SETTINGS,
   TIME_VIEW_TITLE,
 } from "../common/TimeView";
+import { usePlaybackOwner } from "../common/usePlayback";
 import { useTimeWindow } from "../common/useTimeWindow";
 import {
   drawPoseFrame,
@@ -247,6 +248,8 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   // exists once the sibling scan has finished. An explicit Pose-only choice wins
   // immediately, even mid-scan, so 3D (which defaults to it) never waits.
   const poseOnlyMode = forcePoseOnly || (!scanning && noPlayableVideo);
+  const playing = poseOnlyMode ? posePlaying : videoPlaying;
+  const disabledReason = usePlaybackOwner(playing);
   const poseExtent = useMemo(() => (pose ? getPoseExtent(pose) : null), [pose]);
 
   // Group discovered videos by their source file for the two-step picker (which
@@ -911,11 +914,11 @@ const PoseEstimationView: FunctionComponent<Props> = ({
         meta: c.externalBasename,
       }));
 
-  const playing = poseOnlyMode ? posePlaying : videoPlaying;
   const time = poseOnlyMode
     ? poseUiTime
     : (currentTime ?? pose.timeRange.start);
   const setPlaying = (next: boolean) => {
+    if (next && disabledReason) return;
     if (!poseOnlyMode) {
       const v = videoRef.current;
       if (next) v?.play().catch(() => {});
@@ -986,6 +989,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
             speed={speed}
             onSpeedChange={setSpeed}
             time={time}
+            disabledReason={disabledReason}
           />
           <div className="pose-seek">
             <Slider

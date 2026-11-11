@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { IconButton } from "../IconButton/IconButton";
 import { Select } from "../Select/Select";
 import { Spinner } from "../Spinner/Spinner";
@@ -21,6 +22,8 @@ interface PlaybackProps {
   readout?: string;
   /** Playing, but held until the next stretch of data loads. */
   waiting?: boolean;
+  /** Turns off Play and speed, and says why beside them. */
+  disabledReason?: string;
 }
 
 /** Plays the session at a chosen speed, moving the shared cursor. It never starts by itself. */
@@ -32,7 +35,13 @@ export function Playback({
   time,
   readout,
   waiting = false,
+  disabledReason,
 }: PlaybackProps) {
+  const statusId = useId();
+  const off = {
+    disabled: !!disabledReason,
+    "aria-describedby": disabledReason ? statusId : undefined,
+  };
   return (
     <div className="ns-time-group" role="group" aria-label="Playback">
       <IconButton
@@ -40,6 +49,7 @@ export function Playback({
         label={playing ? "Pause" : "Play"}
         size="sm"
         shortcut="Space"
+        {...off}
         onClick={() => onPlayingChange(!playing)}
       />
       <span className="ns-time-speed">
@@ -49,6 +59,7 @@ export function Playback({
           size="sm"
           value={speed}
           options={SPEEDS}
+          {...off}
           onChange={onSpeedChange}
         />
       </span>
@@ -56,7 +67,8 @@ export function Playback({
       <span className="ns-time-value">
         {readout ?? `${formatSeconds(time)} s`}
       </span>
-      <span className="ns-time-status" role="status">
+      <span id={statusId} className="ns-time-status" role="status">
+        {disabledReason}
         {waiting && (
           <>
             <Spinner />

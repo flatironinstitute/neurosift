@@ -68,6 +68,7 @@ const TimeView: FunctionComponent<Props> = ({
               onSpeedChange={playback.setSpeed}
               time={playback.time}
               waiting={playback.waiting}
+              disabledReason={playback.disabledReason}
             />
           )}
           {controls}

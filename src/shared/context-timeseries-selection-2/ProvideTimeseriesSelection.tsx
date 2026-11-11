@@ -1,4 +1,5 @@
-import React, { PropsWithChildren, useMemo, useReducer } from "react";
+import React, { PropsWithChildren, useMemo, useReducer, useState } from "react";
+import { createPlaybackOwner, PlaybackOwnerContext } from "./playbackOwner";
 import {
   TimeseriesSelectionContext,
   TimeseriesSelectionState,
@@ -21,6 +22,7 @@ export const ProvideTimeseriesSelection: React.FC<PropsWithChildren> = ({
     timeseriesSelectionReducer,
     initialState,
   );
+  const [owner] = useState(createPlaybackOwner);
 
   const value = useMemo(
     () => ({
@@ -32,7 +34,9 @@ export const ProvideTimeseriesSelection: React.FC<PropsWithChildren> = ({
 
   return (
     <TimeseriesSelectionContext.Provider value={value}>
-      {children}
+      <PlaybackOwnerContext.Provider value={owner}>
+        {children}
+      </PlaybackOwnerContext.Provider>
     </TimeseriesSelectionContext.Provider>
   );
 };
