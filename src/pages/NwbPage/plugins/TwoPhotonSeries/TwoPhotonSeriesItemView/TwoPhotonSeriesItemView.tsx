@@ -288,6 +288,7 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
     hold(shownFrame !== requested.current);
   }, [playing, frameIndex, shownFrame, setPlaying, hold]);
   const play = (next: boolean) => {
+    if (next && playback.disabledReason) return;
     if (next && numFrames !== undefined && shownFrame === numFrames - 1)
       goToFrame(0);
     setPlaying(next);
@@ -335,6 +336,7 @@ export const TwoPhotonSeriesItemView: FunctionComponent<Props> = ({
                 : "Frame —"
             }
             waiting={playback.waiting}
+            disabledReason={playback.disabledReason}
           />
           <div className="ns-time-group" role="group" aria-label="Frame">
             <IconButton

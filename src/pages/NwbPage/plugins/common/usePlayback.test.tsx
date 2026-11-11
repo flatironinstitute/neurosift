@@ -1,12 +1,17 @@
 // @vitest-environment jsdom
-import { act, renderHook } from "@testing-library/react";
+import { act, render, renderHook } from "@testing-library/react";
 import { ReactNode, useEffect } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ProvideTimeseriesSelection,
   useTimeseriesSelection,
 } from "@shared/context-timeseries-selection-2";
-import { usePlaybackClock, useWindowPlayback } from "./usePlayback";
+import {
+  PLAYING_ELSEWHERE,
+  usePlaybackClock,
+  useWindowPlayback,
+  type WindowPlayback,
+} from "./usePlayback";
 
 beforeEach(() => {
   vi.useFakeTimers({
@@ -146,5 +151,82 @@ describe("useWindowPlayback", () => {
     act(() => result.current.playback.onKeyDown(event));
     expect(result.current.playback.playing).toBe(true);
     expect(event.preventDefault).toHaveBeenCalled();
+  });
+});
+
+describe("one player at a time", () => {
+  type Players = Record<string, WindowPlayback>;
+  const Player = ({ name, players }: { name: string; players: Players }) => {
+    players[name] = useWindowPlayback();
+    return null;
+  };
+  const renderPlayers = (names: string[], players: Players) =>
+    render(
+      <Session>
+        {names.map((name) => (
+          <Player key={name} name={name} players={players} />
+        ))}
+      </Session>,
+    );
+
+  it("turns off the other players while one plays, until it pauses", () => {
+    const players: Players = {};
+    renderPlayers(["xy", "traces"], players);
+    expect(players.traces.disabledReason).toBeUndefined();
+    act(() => players.xy.setPlaying(true));
+    expect(players.xy.disabledReason).toBeUndefined();
+    expect(players.traces.disabledReason).toBe(PLAYING_ELSEWHERE);
+    act(() => players.traces.setPlaying(true));
+    expect(players.traces.playing).toBe(false);
+    act(() => players.xy.setPlaying(false));
+    expect(players.traces.disabledReason).toBeUndefined();
+  });
+
+  it("ignores Space on a turned-off player", () => {
+    const players: Players = {};
+    renderPlayers(["xy", "traces"], players);
+    act(() => players.xy.setPlaying(true));
+    const event = {
+      key: " ",
+      target: document.createElement("div"),
+      preventDefault: vi.fn(),
+    } as unknown as React.KeyboardEvent;
+    act(() => players.traces.onKeyDown(event));
+    expect(players.traces.playing).toBe(false);
+    expect(players.xy.playing).toBe(true);
+  });
+
+  it("turns the others back on when the playing view closes", () => {
+    const players: Players = {};
+    const { rerender } = renderPlayers(["xy", "traces"], players);
+    act(() => players.xy.setPlaying(true));
+    expect(players.traces.disabledReason).toBe(PLAYING_ELSEWHERE);
+    rerender(
+      <Session>
+        <Player key="traces" name="traces" players={players} />
+      </Session>,
+    );
+    expect(players.traces.disabledReason).toBeUndefined();
+  });
+
+  it("doesn't block a player in another tab's time window", () => {
+    const first: Players = {};
+    const second: Players = {};
+    renderPlayers(["xy"], first);
+    renderPlayers(["xy"], second);
+    act(() => first.xy.setPlaying(true));
+    expect(second.xy.disabledReason).toBeUndefined();
+  });
+
+  it("frees the window when playback reaches the end", () => {
+    const players: Players = {};
+    renderPlayers(["xy", "traces"], players);
+    act(() => {
+      players.xy.setSpeed("8");
+      players.xy.setPlaying(true);
+    });
+    run(15000);
+    expect(players.xy.playing).toBe(false);
+    expect(players.traces.disabledReason).toBeUndefined();
   });
 });

@@ -245,4 +245,28 @@ describe("Playback", () => {
       "Waiting for data",
     );
   });
+
+  it("turns off Play and speed with a reason beside them", () => {
+    const onPlayingChange = vi.fn();
+    render(
+      <Playback
+        playing={false}
+        onPlayingChange={onPlayingChange}
+        speed="1"
+        onSpeedChange={() => {}}
+        time={5.85}
+        disabledReason="Playing in another view"
+      />,
+    );
+    const play = screen.getByRole("button", { name: "Play" });
+    const speed = screen.getByRole("combobox", { name: "Playback speed" });
+    const status = screen.getByRole("status");
+    expect(status.textContent).toBe("Playing in another view");
+    for (const control of [play, speed]) {
+      expect((control as HTMLButtonElement).disabled).toBe(true);
+      expect(control.getAttribute("aria-describedby")).toContain(status.id);
+    }
+    fireEvent.click(play);
+    expect(onPlayingChange).not.toHaveBeenCalled();
+  });
 });
