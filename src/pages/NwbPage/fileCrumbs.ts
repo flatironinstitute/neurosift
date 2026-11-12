@@ -1,9 +1,12 @@
 import type { Crumb } from "@ui";
+import { locationSearch } from "../common/DatasetWorkspace/folderLocation";
 
 interface FileCrumbsInput {
   base: string;
   archive?: "DANDI" | "EMBER";
   dandisetId?: string;
+  /** Kept on folder links, so they open the same version. */
+  dandisetVersion?: string;
   /** The file’s path inside the Dandiset, such as sub-1/sub-1_ses-1_ecephys+image.nwb. */
   assetPath?: string;
   nwbUrl: string;
@@ -14,6 +17,7 @@ export function fileCrumbs({
   base,
   archive,
   dandisetId,
+  dandisetVersion,
   assetPath,
   nwbUrl,
 }: FileCrumbsInput): Crumb[] {
@@ -24,13 +28,19 @@ export function fileCrumbs({
   const archivePage = archive === "DANDI" ? "dandi" : "ember";
   const dandisetPage = archive === "DANDI" ? "dandiset" : "ember-dandiset";
   const folders = (assetPath ?? "").split("/").slice(0, -1).filter(Boolean);
+  const version = dandisetVersion ? `dandisetVersion=${dandisetVersion}` : "";
+  const dandisetHref = `${base}${dandisetPage}/${dandisetId}`;
   return [
     { label: archive, href: `${base}${archivePage}` },
     {
       label: `Dandiset ${dandisetId}`,
-      href: `${base}${dandisetPage}/${dandisetId}`,
+      href: dandisetHref,
     },
-    ...folders.map((folder) => ({ label: folder, code: true })),
+    ...folders.map((folder, index) => ({
+      label: folder,
+      href: `${dandisetHref}${locationSearch(version, folders.slice(0, index + 1).join("/"))}`,
+      code: true,
+    })),
     { label: assetPath ? fileName : "This file", code: Boolean(assetPath) },
   ];
 }

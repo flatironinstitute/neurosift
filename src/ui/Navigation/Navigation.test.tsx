@@ -102,6 +102,21 @@ describe("Breadcrumbs", () => {
       expect(svg.getAttribute("aria-hidden")).toBe("true");
   });
 
+  it("takes its own name, so a page can hold two", () => {
+    render(<Breadcrumbs label="Folder" items={ITEMS} />);
+    expect(screen.getByRole("navigation", { name: "Folder" })).toBeTruthy();
+  });
+
+  it("hands plain clicks to onNavigate and leaves new-tab clicks to the browser", () => {
+    const onNavigate = vi.fn();
+    render(<Breadcrumbs items={ITEMS} onNavigate={onNavigate} />);
+    const link = screen.getByRole("link", { name: "sub-1" });
+    expect(fireEvent.click(link)).toBe(false);
+    expect(onNavigate).toHaveBeenCalledWith("/dandiset/000673?folder=sub-1");
+    expect(fireEvent.click(link, { metaKey: true })).toBe(true);
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+  });
+
   it("can show every level again after a narrow window folds the middle", () => {
     render(<Breadcrumbs items={ITEMS} />);
     const nav = screen.getByRole("navigation");

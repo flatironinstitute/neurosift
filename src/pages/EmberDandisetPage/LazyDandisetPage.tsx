@@ -50,13 +50,18 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
   const [nwbFilesOnly, setNwbFilesOnly] = useState(false);
 
   // Use lazy loading hook
-  const { topLevelFiles, loadFileFromPath, fetchDirectory, loading } =
-    useLazyDandisetPaths(
-      effectiveDandisetId,
-      dandisetVersionInfo,
-      staging,
-      nwbFilesOnly,
-    );
+  const {
+    topLevelFiles,
+    loadFileFromPath,
+    fetchDirectory,
+    fetchFolder,
+    loading,
+  } = useLazyDandisetPaths(
+    effectiveDandisetId,
+    dandisetVersionInfo,
+    staging,
+    nwbFilesOnly,
+  );
 
   // Special handler for NWB files
   const specialOpenFileHandler = useCallback(
@@ -119,6 +124,7 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
         initialTab={initialTabId}
         loadFileFromPath={loadFileFromPath}
         fetchDirectory={fetchDirectory}
+        fetchFolder={fetchFolder}
         specialOpenFileHandler={specialOpenFileHandler}
         mainTabAdditionalControls={mainTabAdditionalControls}
       />

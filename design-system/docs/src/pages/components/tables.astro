@@ -124,6 +124,7 @@ const code = `import { DataTable, Tree } from "@ui";
       <li><strong>Sort from the header.</strong> Click a header to sort ascending, again for descending. The arrow and aria-sort show the direction. One column at a time.</li>
       <li><strong>Select with checkboxes.</strong> When rows can be picked for a plot, a checkbox column comes first and the toolbar says how many are selected.</li>
       <li><strong>Open one row’s details.</strong> When a row opens its details beside the table, as in Schema, there are no checkboxes: the first cell is the row’s button, the whole row takes the click, and the open row inverts. Pass <code>active</code> and <code>onActivate</code>.</li>
+      <li><strong>One folder at a time.</strong> A file list that shows one folder, as on the dataset page, passes <code>onOpenFolder</code>: a folder row moves into the folder instead of expanding, with no chevron, and a breadcrumb above the list leads back up.</li>
       <li><strong>Empty folders don’t open.</strong> A folder whose children are known to be none, such as an empty HDF5 group, has no chevron and says Empty.</li>
       <li><strong>Long values wrap or open.</strong> Descriptions wrap to three lines with a Disclosure; IDs and paths truncate in the middle with the full value in a tooltip.</li>
     </ul>

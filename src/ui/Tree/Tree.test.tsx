@@ -146,4 +146,35 @@ describe("Tree", () => {
     fireEvent.keyDown(item, { key: "ArrowRight" });
     expect(onExpandedChange).not.toHaveBeenCalled();
   });
+
+  it("moves into a folder instead of expanding it when it lists one folder at a time", () => {
+    const onOpenFolder = vi.fn();
+    const onOpen = vi.fn();
+    const onExpandedChange = vi.fn();
+    render(
+      <Tree
+        label="Files"
+        nodes={NODES.map((n) => ({ ...n, children: undefined }))}
+        expanded={[]}
+        onExpandedChange={onExpandedChange}
+        onSelect={() => {}}
+        onOpen={onOpen}
+        onOpenFolder={onOpenFolder}
+      />,
+    );
+    const folder = item("sub-491604967");
+    expect(folder.getAttribute("aria-expanded")).toBeNull();
+    expect(folder.querySelector(".ns-tree-chevron svg")).toBeNull();
+    fireEvent.click(folder);
+    expect(onOpenFolder).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "sub-1" }),
+    );
+    folder.focus();
+    key("ArrowRight");
+    key("Enter");
+    expect(onOpenFolder).toHaveBeenCalledTimes(2);
+    expect(onExpandedChange).not.toHaveBeenCalled();
+    fireEvent.click(item("dandiset.yaml"));
+    expect(onOpen).toHaveBeenCalledWith(NODES[2]);
+  });
 });

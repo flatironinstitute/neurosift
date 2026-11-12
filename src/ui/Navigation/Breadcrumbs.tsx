@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type MouseEvent } from "react";
 import { Icon } from "../Icon/Icon";
 import "./Navigation.css";
 
@@ -12,10 +12,18 @@ export interface Crumb {
 
 interface BreadcrumbsProps {
   items: Crumb[];
+  /** Names the landmark; "Breadcrumb" unless the page holds another. */
+  label?: string;
+  /** Follows a link in the app, such as with the router; new-tab clicks stay with the browser. */
+  onNavigate?: (href: string) => void;
 }
 
 /** Where the open item sits: archive, Dandiset, folders, file. A narrow window folds the middle into "…". */
-export function Breadcrumbs({ items }: BreadcrumbsProps) {
+export function Breadcrumbs({
+  items,
+  label = "Breadcrumb",
+  onNavigate,
+}: BreadcrumbsProps) {
   const [expanded, setExpanded] = useState(false);
   const nav = useRef<HTMLElement>(null);
   // The "…" button goes away, so focus moves to the first level it revealed.
@@ -27,11 +35,18 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
         ?.focus(),
     );
   };
+  const follow = (event: MouseEvent, href: string) => {
+    const modified =
+      event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+    if (!onNavigate || modified || event.button !== 0) return;
+    event.preventDefault();
+    onNavigate(href);
+  };
   const last = items.length - 1;
   return (
     <nav
       ref={nav}
-      aria-label="Breadcrumb"
+      aria-label={label}
       className="ns-breadcrumbs"
       data-expanded={expanded ? "" : undefined}
     >
@@ -54,6 +69,7 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
               <a
                 className={`ns-crumb ns-crumb--link${item.code ? " ns-crumb--code" : ""}`}
                 href={item.href}
+                onClick={(event) => follow(event, item.href!)}
               >
                 {item.label}
               </a>

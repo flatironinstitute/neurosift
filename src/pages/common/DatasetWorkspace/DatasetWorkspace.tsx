@@ -7,9 +7,11 @@ import {
   FunctionComponent,
   Suspense,
   useEffect,
+  useMemo,
   useReducer,
   useRef,
 } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { initializePlugins } from "./plugins/init";
 import { DatasetFile } from "./plugins/pluginInterface";
 import { findPluginsByFile } from "./plugins/registry";
@@ -18,6 +20,8 @@ import {
   type FileTab,
 } from "./datasetWorkspaceTabsReducer";
 import DatasetMainTab from "./DatasetMainTab";
+import { LOCATION_PARAM, findFolder, locationSearch } from "./folderLocation";
+import useCopyText from "./plugins/useCopyText";
 import TabToolbar, { TOOLBAR_HEIGHT } from "./TabToolbar";
 import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 
@@ -34,6 +38,8 @@ interface DatasetWorkspaceProps {
     parentId: string,
   ) => Promise<DatasetFile | null>;
   fetchDirectory: (file: DatasetFile) => Promise<DatasetFile[]>; // fetches the files in a directory
+  /** One folder by path, null if it isn't there; without it, folders are found from the top level down. */
+  fetchFolder?: (path: string) => Promise<DatasetFile[] | null>;
   specialOpenFileHandler?: (file: DatasetFile) => boolean;
   mainTabAdditionalControls?: JSX.Element;
 }
@@ -45,9 +51,33 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
   initialTab,
   loadFileFromPath,
   fetchDirectory,
+  fetchFolder,
   specialOpenFileHandler,
   mainTabAdditionalControls,
 }) => {
+  const navigate = useNavigate();
+  const { search } = useLocation();
+  const copy = useCopyText();
+  const location = new URLSearchParams(search).get(LOCATION_PARAM);
+  const hrefFor = (path: string) => locationSearch(search, path);
+
+  const loadFolder = useMemo(() => {
+    if (fetchFolder) return fetchFolder;
+    // Each folder is fetched once, so moving back up is instant.
+    const cache = new Map<DatasetFile, Promise<DatasetFile[]>>();
+    const fetchOnce = (folder: DatasetFile) => {
+      if (!cache.has(folder))
+        cache.set(
+          folder,
+          fetchDirectory(folder).catch((error) => {
+            cache.delete(folder);
+            throw error;
+          }),
+        );
+      return cache.get(folder)!;
+    };
+    return (path: string) => findFolder(path, topLevelFiles, fetchOnce);
+  }, [fetchFolder, fetchDirectory, topLevelFiles]);
   const [tabsState, dispatch] = useReducer(datasetWorkspaceTabsReducer, {
     tabs: [],
     activeTabId: "main",
@@ -130,7 +160,16 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
             <DatasetMainTab
               topLevelFiles={topLevelFiles}
               onOpenFile={handleOpenFile}
-              fetchDirectory={fetchDirectory}
+              location={location}
+              loadFolder={loadFolder}
+              hrefFor={hrefFor}
+              onNavigate={(href) => navigate({ search: href })}
+              onCopyLink={(path) =>
+                copy(
+                  new URL(hrefFor(path), window.location.href).href,
+                  "Link copied",
+                )
+              }
               additionalControls={mainTabAdditionalControls}
             />
           </ScrollY>
