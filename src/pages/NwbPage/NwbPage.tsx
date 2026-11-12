@@ -217,6 +217,7 @@ const FileViewer: FunctionComponent<FileViewerProps> = ({
     base: import.meta.env.BASE_URL,
     archive: dandisetId ? (useEmber ? "EMBER" : "DANDI") : undefined,
     dandisetId,
+    dandisetVersion: useEmber ? undefined : dandisetVersion,
     assetPath,
     nwbUrl,
   });

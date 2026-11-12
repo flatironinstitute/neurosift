@@ -41,6 +41,7 @@ const SPECS = [
   ["Crumb", "type/body-sm text/link · current SemiBold text/default · IDs and file names in type/code-sm"],
   ["Separator", "chevron--right 16px · text/muted · hidden from screen readers"],
   ["Overflow", "Below 36rem, the middle levels fold into “…”, which shows them again"],
+  ["Folder trail", "On the dataset page’s Files: All files, then folders in type/code-sm · Copy link to this folder, Icon button, Ghost, 24px · 1px border/subtle below"],
   ["Object path", "32px · surface/page · 1px border/subtle below · type/code-sm · Icon button, Ghost, 24px"],
 ];
 
@@ -118,6 +119,7 @@ const code = `import { AppBar, Breadcrumbs, ObjectPath } from "@ui";
     <ul class="rule-list">
       <li><strong>Back works.</strong> The browser’s Back returns to the previous view with its state, including the search query (upstream #321).</li>
       <li><strong>Breadcrumbs keep state.</strong> The DANDI crumb links to the search with the last query and mode in the URL.</li>
+      <li><strong>Folders have links.</strong> A dataset’s file list shows one folder, named by <code>location</code> in the URL. Its trail passes <code>onNavigate</code>, so a crumb moves in the app and adds a history entry; Back goes up again, and new-tab clicks still work.</li>
       <li><strong>Copy link, not Share.</strong> The object path’s link button copies a URL to this file and tab; a toast confirms it.</li>
     </ul>
   </DocSection>
@@ -130,7 +132,7 @@ const code = `import { AppBar, Breadcrumbs, ObjectPath } from "@ui";
 
   <DocSection title="Accessibility">
     <ul class="rule-list">
-      <li><strong>Landmarks.</strong> The app bar is a header; breadcrumbs are a navigation landmark labeled “Breadcrumb”, with an ordered list.</li>
+      <li><strong>Landmarks.</strong> The app bar is a header; breadcrumbs are a navigation landmark labeled “Breadcrumb”, with an ordered list. A second trail on the page takes its own <code>label</code>, such as “Folder” above a dataset’s files.</li>
       <li><strong>Current page.</strong> The last crumb has aria-current="page" and isn’t a link.</li>
       <li><strong>Separators are decorative.</strong> Chevrons are hidden from screen readers; the list order carries the meaning.</li>
       <li><strong>Nothing lost when folded.</strong> “…” is a button named “Show all levels”; focus moves to the first level it reveals.</li>

@@ -17,8 +17,28 @@ describe("fileCrumbs", () => {
     ).toEqual([
       { label: "DANDI", href: "/dandi" },
       { label: "Dandiset 000673", href: "/dandiset/000673" },
-      { label: "sub-1", code: true },
+      {
+        label: "sub-1",
+        href: "/dandiset/000673?location=sub-1",
+        code: true,
+      },
       { label: "sub-1_ses-1_ecephys+image.nwb", code: true },
+    ]);
+  });
+
+  it("links each folder to that folder of the Dandiset, at the same version", () => {
+    const crumbs = fileCrumbs({
+      base: "/",
+      archive: "DANDI",
+      dandisetId: "000108",
+      dandisetVersion: "draft",
+      assetPath: "sub-MITU01/ses-1/micr/photo.jpg",
+      nwbUrl: URL,
+    });
+    expect(crumbs.slice(2, 5).map((c) => c.href)).toEqual([
+      "/dandiset/000108?dandisetVersion=draft&location=sub-MITU01",
+      "/dandiset/000108?dandisetVersion=draft&location=sub-MITU01/ses-1",
+      "/dandiset/000108?dandisetVersion=draft&location=sub-MITU01/ses-1/micr",
     ]);
   });
 

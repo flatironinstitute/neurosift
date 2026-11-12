@@ -1,5 +1,7 @@
+/* minmax(0, 1fr) lets long names truncate in a narrow panel instead of widening it. */
 .dataset-files {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
   max-inline-size: 50rem;
   padding: var(--space-3);
@@ -22,4 +24,24 @@
 .dataset-files-count {
   font: var(--type-body-sm);
   color: var(--text-muted);
+}
+
+/* The folder breadcrumb with Copy link, ruled off from the list right below. */
+.dataset-files-folder {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.dataset-files-location {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+  min-block-size: var(--layout-row-default);
+  border-block-end: var(--border-width-1) solid var(--border-subtle);
+}
+
+.dataset-files-location .ns-breadcrumbs {
+  flex: 1;
+  min-inline-size: 0;
 }
