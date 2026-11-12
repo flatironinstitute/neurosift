@@ -42,6 +42,7 @@ describe("useDandisetResult", () => {
         status: 404,
         url: "https://api.dandiarchive.org/api/dandisets/999999",
         message: "DANDI has no Dandiset 999999 (404).",
+        access: "notPublic",
       }),
     );
   });
@@ -52,6 +53,52 @@ describe("useDandisetResult", () => {
       useDandisetResult("000123", false, false),
     );
     await waitFor(() => expect(result.current.failure?.status).toBe(403));
+  });
+
+  it("opens a public Dandiset without a key DANDI refused, and says so", async () => {
+    localStorage.setItem("dandiApiKey", "refused-in-hook-test");
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) =>
+      Promise.resolve(
+        init?.headers
+          ? new Response("{}", { status: 401 })
+          : new Response(JSON.stringify({ identifier: "000673" })),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const { result } = renderHook(() =>
+      useDandisetResult("000673", false, false),
+    );
+    await waitFor(() =>
+      expect(result.current.dandiset?.identifier).toBe("000673"),
+    );
+    expect(result.current.keyRefusedUrl).toBe(
+      "https://api.dandiarchive.org/api/dandisets/000673",
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    localStorage.clear();
+  });
+
+  it("reports a refused key on an embargoed Dandiset with the key's 401", async () => {
+    localStorage.setItem("dandiApiKey", "refused-embargoed-test");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url: string, init?: RequestInit) =>
+        Promise.resolve(
+          new Response("{}", { status: init?.headers ? 401 : 404 }),
+        ),
+      ),
+    );
+    const { result } = renderHook(() =>
+      useDandisetResult("001675", false, false),
+    );
+    await waitFor(() =>
+      expect(result.current.failure).toMatchObject({
+        status: 401,
+        access: "keyRefused",
+        message: "DANDI answered 401 for Dandiset 001675.",
+      }),
+    );
+    localStorage.clear();
   });
 
   it("reports a request that never reached DANDI", async () => {

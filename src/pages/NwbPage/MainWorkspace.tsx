@@ -4,9 +4,8 @@ import "./FileViewer.css";
 import { useTabManager } from "./TabManager";
 import SingleTabView from "./components/SingleTabView";
 import MultiTabView from "./components/MultiTabView";
-import AuthErrorNotification from "./components/AuthErrorNotification";
 import { DynamicTab } from "./Types/index";
-import { getHdf5Group, hasAuthError, isDandiAssetUrl } from "./hdf5Interface";
+import { getHdf5Group } from "./hdf5Interface";
 import { SetupNwbFileSpecificationsProvider } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
 import { neurodataTypeInheritsFrom } from "./neurodataTypeInheritance";
 import ErrorBoundary from "@components/ErrorBoundary";
@@ -70,7 +69,6 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
     initialTabId: isFixedTabInitial ? undefined : initialTabId,
   });
 
-  const [showAuthError, setShowAuthError] = useState(false);
   const [defaultUnitsPath, setDefaultUnitsPath] = useState<
     string | undefined
   >();
@@ -163,29 +161,6 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
     };
   }, [nwbUrl]);
 
-  // Check for authentication errors
-  useEffect(() => {
-    if (nwbUrl) {
-      const checkAuthError = () => {
-        const hasError = hasAuthError(nwbUrl);
-        setShowAuthError(hasError);
-      };
-      checkAuthError();
-      const intervalId = setInterval(checkAuthError, 1000);
-      return () => {
-        clearInterval(intervalId);
-      };
-    }
-  }, [nwbUrl]);
-
-  // Debug logs
-  useEffect(() => {
-    if (isDandiAssetUrl(nwbUrl)) {
-      console.log("MainWorkspace - DANDI URL detected:", nwbUrl);
-      console.log("MainWorkspace - Current auth errors:", hasAuthError(nwbUrl));
-    }
-  }, [nwbUrl, showAuthError]);
-
   // Sync the active tab to the ?tab= URL parameter
   const effectiveActiveTab = isDynamicTabActive
     ? tabsState.activeTabId
@@ -246,11 +221,6 @@ const MainWorkspace: React.FC<MainWorkspaceProps> = ({
 
   return (
     <div className="file-workspace">
-      {showAuthError && isDandiAssetUrl(nwbUrl) && (
-        <div className="file-workspace-notice">
-          <AuthErrorNotification dandiUrl={nwbUrl} />
-        </div>
-      )}
       <div className="file-workspace-sections">
         <Tabs
           id="file-sections"

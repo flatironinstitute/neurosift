@@ -19,6 +19,8 @@ import { useStoredState } from "./useStoredState";
 import { useAssetPath } from "./useAssetPath";
 import { fileCrumbs } from "./fileCrumbs";
 import FileError from "./components/FileError";
+import FileAccessNotice from "./components/FileAccessNotice";
+import { useFileAccess } from "./components/useFileAccess";
 import { NwbFileOverview } from "./Types";
 import { useNwbFileOverview } from "./useNwbFileOverview";
 import { setCurrentDandisetId, setTryUsingLindi } from "@hdf5Interface";
@@ -135,7 +137,14 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({
       </EmptyState>
     );
 
-  if (fileError) return <FileError nwbUrl={nwbUrl} error={fileError} />;
+  if (fileError)
+    return (
+      <FileError
+        nwbUrl={nwbUrl}
+        dandisetId={dandisetId || undefined}
+        error={fileError}
+      />
+    );
 
   return (
     <FileViewer
@@ -211,6 +220,7 @@ const FileViewer: FunctionComponent<FileViewerProps> = ({
   );
 
   useRegisterNwbAIComponent({ nwbUrl, dandisetId, dandisetVersion });
+  const authError = useFileAccess(nwbUrl);
 
   const assetPath = useAssetPath(nwbUrl);
   const crumbs = fileCrumbs({
@@ -228,6 +238,13 @@ const FileViewer: FunctionComponent<FileViewerProps> = ({
       <div className="file-viewer-crumbs">
         <Breadcrumbs items={crumbs} />
       </div>
+      {authError && (
+        <FileAccessNotice
+          nwbUrl={nwbUrl}
+          dandisetId={dandisetId}
+          authError={authError}
+        />
+      )}
       <div
         className={
           narrow && panelOpen
