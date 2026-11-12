@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from "vitest";
+import { spectrogramFromSettings } from "../pages/NwbPage/plugins/LfpSpectrogram/spectrogramSettings";
+import { makeDefaultConfig } from "../pages/NwbPage/plugins/LfpSpectrogram/spectralConfig";
 import { mapLegacyUrl, mapV1Tab, redirectLegacyUrl } from "./legacyUrl";
 
 const ASSET =
@@ -109,6 +111,40 @@ const V1_LINKS: [string, string][] = [
   ["/experimental-neurotile", "/experimental-neurosift-tiles"],
 ];
 
+// [saved link, what it opens now] for views' settings in their older forms.
+const PSTH_TAB = "tab=view:PSTH|/intervals/trials";
+const ERS_TAB = "tab=view:EventRelatedSignal|/intervals/trials^/acquisition/x";
+const SETTINGS_LINKS: [string, string][] = [
+  [
+    `/nwb?${NWB}&${PSTH_TAB}#units=0,1&alignTo=start_time`,
+    `/nwb?${NWB}&${PSTH_TAB}&units=0,1&alignTo=start_time`,
+  ],
+  [
+    `/nwb?${NWB}&${PSTH_TAB}#units=all&windowStart=-1&numBins=80&other=1`,
+    `/nwb?${NWB}&${PSTH_TAB}&units=all&windowStart=-1&numBins=80#other=1`,
+  ],
+  [
+    `/nwb?${NWB}&${PSTH_TAB}&units=2#units=0,1`,
+    `/nwb?${NWB}&${PSTH_TAB}&units=2`,
+  ],
+  [
+    `/nwb?${NWB}&${ERS_TAB}#ta_series=/acquisition/y&ta_channels=0,2&ta_win=-1,2&ta_max=50&ta_groupby=stim&ta_groupdisp=split`,
+    `/nwb?${NWB}&${ERS_TAB}&series=/acquisition/y&channels=0,2&window=-1,2&maxIntervals=50&groupBy=stim&groupDisplay=split`,
+  ],
+  [
+    `/nwb?${NWB}&tab=icephys&icephysProtocol=2&icephysColorBy=col:stim&icephysWindowStart=10&icephysLockY=1`,
+    `/nwb?${NWB}&tab=icephys&protocol=2&colorBy=col:stim&windowStart=10&lockY=1`,
+  ],
+  [
+    `/nwb?${NWB}&tab=video-widget&videoOrder=1,0&videoLayout=grid&videoTime=12.50`,
+    `/nwb?${NWB}&tab=video-widget&order=1,0&layout=grid&time=12.50`,
+  ],
+  [
+    `/nwb?${NWB}&tab=view:PoseEstimation|/processing/behavior/pose&poseHidden=nose&poseEdges=1&poseOnly=1&poseConf=0.5&poseTrailSec=2&poseVideo=cam&poseTime=3.000`,
+    `/nwb?${NWB}&tab=view:PoseEstimation|/processing/behavior/pose&hidden=nose&edges=1&poseOnly=1&confidence=0.5&trailSeconds=2&video=cam&time=3.000`,
+  ],
+];
+
 // Links that already open the same thing, left as they are.
 const CURRENT_LINKS = [
   "/",
@@ -127,7 +163,8 @@ const CURRENT_LINKS = [
   `/nwb?${NWB}&tab=view:TimeAlignedSeries|/intervals/trials`,
   `/nwb?${NWB}&tab=["/units","Raster|/units"]`,
   `/nwb?${NWB}&tab=hdf5`,
-  `/nwb?${NWB}&tab=view:PSTH|/intervals/trials#units=0,1&alignTo=start_time`,
+  `/nwb?${NWB}&tab=/acquisition/LFPs&channels=8-15&separation=2&start=120&duration=5`,
+  `/nwb?${NWB}&tab=view:PSTH|/intervals/trials&units=0,1&windowStart=-1`,
   `/nwb?${NWB}&embedded=1`,
   "/nwb?dandisetId=000673&path=sub-1/sub-1.nwb",
   "/edf?url=https://example.org/a.edf",
@@ -156,7 +193,7 @@ describe("mapLegacyUrl", () => {
     expect(mapLegacyUrl(...split(link))).toBeNull();
   });
 
-  it("keeps the hash a view stores its settings in", () => {
+  it("moves a v1 link's view settings from the hash to the query", () => {
     expect(
       mapLegacyUrl(
         "/",
@@ -165,8 +202,50 @@ describe("mapLegacyUrl", () => {
       ),
     ).toEqual({
       pathname: "/nwb",
-      search: "?url=x&tab=view:PSTH|/intervals/trials",
-      hash: "#units=0",
+      search: "?url=x&tab=view:PSTH|/intervals/trials&units=0",
+      hash: "",
+    });
+  });
+
+  it.each(SETTINGS_LINKS)("opens %s as %s", (link, expected) => {
+    const mapped = mapLegacyUrl(...split(link));
+    expect(mapped).not.toBeNull();
+    expect(`${mapped!.pathname}${mapped!.search}${mapped!.hash}`).toBe(
+      expected,
+    );
+  });
+
+  it("reads an old spectrogram link's changed settings as plain parameters", () => {
+    const spec = {
+      "/acquisition/LFPs": {
+        config: {
+          ...makeDefaultConfig(200),
+          taper: "multitaper",
+          highPassHz: 1,
+        },
+        channels: [0, 3],
+        visRange: [10, 40],
+      },
+    };
+    const tab = "view:LfpSpectrogram|/acquisition/LFPs";
+    const mapped = mapLegacyUrl(
+      "/nwb",
+      `?${NWB}&tab=${tab}&spec=${encodeURIComponent(JSON.stringify(spec))}`,
+      "",
+    )!;
+    expect(mapped.search).toBe(
+      `?${NWB}&tab=${tab}&channels=0,3&taper=multitaper&highPassHz=1&fMaxHz=200&start=10&duration=30`,
+    );
+    const params = new URLSearchParams(mapped.search);
+    const { config, channels } = spectrogramFromSettings(
+      params,
+      makeDefaultConfig(200),
+    );
+    expect(channels).toEqual([0, 3]);
+    expect(config).toEqual({
+      ...makeDefaultConfig(200),
+      taper: "multitaper",
+      highPassHz: 1,
     });
   });
 

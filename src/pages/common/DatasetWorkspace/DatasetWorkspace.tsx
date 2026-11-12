@@ -10,6 +10,7 @@ import {
   useMemo,
   useReducer,
   useRef,
+  useState,
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { initializePlugins } from "./plugins/init";
@@ -24,6 +25,10 @@ import { LOCATION_PARAM, findFolder, locationSearch } from "./folderLocation";
 import useCopyText from "./plugins/useCopyText";
 import TabToolbar, { TOOLBAR_HEIGHT } from "./TabToolbar";
 import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection-2";
+import { ShareSettingsProvider } from "@shared/shareLink/ShareSettingsProvider";
+import { pageSearch } from "@shared/shareLink/linkSettings";
+import { ShareAddress } from "@shared/shareLink/shareAddress";
+import { ShareAddressContext } from "@shared/shareLink/shareSettingsContext";
 
 // Initialize plugins
 initializePlugins();
@@ -44,6 +49,8 @@ interface DatasetWorkspaceProps {
   mainTabAdditionalControls?: JSX.Element;
 }
 
+const linkTab = (file: DatasetFile) => `${file.filepath}|${file.parentId}`;
+
 const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
   width,
   height,
@@ -59,7 +66,7 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
   const { search } = useLocation();
   const copy = useCopyText();
   const location = new URLSearchParams(search).get(LOCATION_PARAM);
-  const hrefFor = (path: string) => locationSearch(search, path);
+  const hrefFor = (path: string) => locationSearch(pageSearch(search), path);
 
   const loadFolder = useMemo(() => {
     if (fetchFolder) return fetchFolder;
@@ -82,6 +89,20 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
     tabs: [],
     activeTabId: "main",
   });
+
+  // The address follows the open file and its settings; Main drops the tab
+  // once a linked file has opened, so a slow restore isn't lost.
+  const [address] = useState(() => new ShareAddress());
+  const shownFile = useRef(!initialTab);
+  const activeFile = tabsState.tabs.find(
+    (t) => t.id === tabsState.activeTabId && t.type === "file",
+  );
+  const activeLink =
+    activeFile?.type === "file" ? linkTab(activeFile.file) : null;
+  useEffect(() => {
+    if (activeLink) shownFile.current = true;
+    if (shownFile.current) address.activate(activeLink);
+  }, [address, activeLink]);
 
   // Handle initial tab opening
   const initialTabLoaded = useRef(false);
@@ -140,109 +161,124 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
   ];
 
   return (
-    <div className="dataset-workspace">
-      <Tabs
-        id="dataset-tabs"
-        kind="object"
-        label="Open files"
-        tabs={tabs}
-        selected={tabsState.activeTabId}
-        onSelect={handleSwitchTab}
-        onClose={handleCloseTab}
-      />
-      <div className="dataset-workspace-content">
-        <TabPanel
-          tabsId="dataset-tabs"
-          tabId="main"
-          selected={tabsState.activeTabId === "main"}
-        >
-          <ScrollY width={contentWidth} height={contentHeight}>
-            <DatasetMainTab
-              topLevelFiles={topLevelFiles}
-              onOpenFile={handleOpenFile}
-              location={location}
-              loadFolder={loadFolder}
-              hrefFor={hrefFor}
-              onNavigate={(href) => navigate({ search: href })}
-              onCopyLink={(path) =>
-                copy(
-                  new URL(hrefFor(path), window.location.href).href,
-                  "Link copied",
-                )
-              }
-              additionalControls={mainTabAdditionalControls}
-            />
-          </ScrollY>
-        </TabPanel>
-        {tabsState.tabs.map((tab) => {
-          if (tab.type !== "file") return null;
-          const plugins = findPluginsByFile(tab.file.filename);
-          const pluginHeight =
-            plugins.length > 1
-              ? Math.min(600, (pluginContentHeight * 2) / 3)
-              : pluginContentHeight;
-          return (
-            <TabPanel
-              key={tab.id}
-              tabsId="dataset-tabs"
-              tabId={tab.id}
-              selected={tabsState.activeTabId === tab.id}
-            >
-              <TabToolbar width={contentWidth} file={tab.file} />
-              {plugins.length > 0 ? (
-                <ScrollY
-                  width={contentWidth}
-                  height={contentHeight - toolbarHeight}
-                  top={toolbarHeight}
-                >
-                  <ProvideTimeseriesSelection>
-                    <div className="dataset-workspace-views">
-                      {plugins.map((plugin, index) => (
-                        <div key={index}>
-                          <ErrorBoundary
-                            what={`the ${plugin.name} view of ${tab.file.filepath}`}
-                          >
-                            <Suspense
-                              fallback={
-                                <LoadingState
-                                  label={`Loading the ${plugin.name} view`}
-                                  phase="loading"
-                                />
-                              }
-                            >
-                              <plugin.component
-                                file={tab.file}
-                                width={contentWidth}
-                                height={pluginHeight}
-                              />
-                            </Suspense>
-                          </ErrorBoundary>
-                        </div>
-                      ))}
-                    </div>
-                  </ProvideTimeseriesSelection>
-                </ScrollY>
-              ) : (
-                <EmptyState
-                  title={`Neurosift can’t show ${tab.file.filename.split(".").pop()} files yet`}
-                  action={
-                    tab.file.urls[0]
-                      ? {
-                          label: "Download the file",
-                          onClick: () =>
-                            window.open(tab.file.urls[0], "_blank", "noopener"),
-                        }
-                      : undefined
+    <ShareAddressContext.Provider value={address}>
+      <div className="dataset-workspace">
+        <Tabs
+          id="dataset-tabs"
+          kind="object"
+          label="Open files"
+          tabs={tabs}
+          selected={tabsState.activeTabId}
+          onSelect={handleSwitchTab}
+          onClose={handleCloseTab}
+        />
+        <div className="dataset-workspace-content">
+          <TabPanel
+            tabsId="dataset-tabs"
+            tabId="main"
+            selected={tabsState.activeTabId === "main"}
+          >
+            <ScrollY width={contentWidth} height={contentHeight}>
+              <DatasetMainTab
+                topLevelFiles={topLevelFiles}
+                onOpenFile={handleOpenFile}
+                location={location}
+                loadFolder={loadFolder}
+                hrefFor={hrefFor}
+                onNavigate={(href) => navigate({ search: href })}
+                onCopyLink={(path) =>
+                  copy(
+                    new URL(hrefFor(path), window.location.href).href,
+                    "Link copied",
+                  )
+                }
+                additionalControls={mainTabAdditionalControls}
+              />
+            </ScrollY>
+          </TabPanel>
+          {tabsState.tabs.map((tab) => {
+            if (tab.type !== "file") return null;
+            const plugins = findPluginsByFile(tab.file.filename);
+            const pluginHeight =
+              plugins.length > 1
+                ? Math.min(600, (pluginContentHeight * 2) / 3)
+                : pluginContentHeight;
+            return (
+              <TabPanel
+                key={tab.id}
+                tabsId="dataset-tabs"
+                tabId={tab.id}
+                selected={tabsState.activeTabId === tab.id}
+              >
+                <ShareSettingsProvider
+                  tab={linkTab(tab.file)}
+                  opensAs={
+                    initialTab?.split("|")[0] === tab.file.filepath
+                      ? initialTab
+                      : linkTab(tab.file)
                   }
                 >
-                  {`${tab.file.filename} can be downloaded to open it elsewhere.`}
-                </EmptyState>
-              )}
-            </TabPanel>
-          );
-        })}
+                  <TabToolbar file={tab.file} />
+                  {plugins.length > 0 ? (
+                    <ScrollY
+                      width={contentWidth}
+                      height={contentHeight - toolbarHeight}
+                      top={toolbarHeight}
+                    >
+                      <ProvideTimeseriesSelection>
+                        <div className="dataset-workspace-views">
+                          {plugins.map((plugin, index) => (
+                            <div key={index}>
+                              <ErrorBoundary
+                                what={`the ${plugin.name} view of ${tab.file.filepath}`}
+                              >
+                                <Suspense
+                                  fallback={
+                                    <LoadingState
+                                      label={`Loading the ${plugin.name} view`}
+                                      phase="loading"
+                                    />
+                                  }
+                                >
+                                  <plugin.component
+                                    file={tab.file}
+                                    width={contentWidth}
+                                    height={pluginHeight}
+                                  />
+                                </Suspense>
+                              </ErrorBoundary>
+                            </div>
+                          ))}
+                        </div>
+                      </ProvideTimeseriesSelection>
+                    </ScrollY>
+                  ) : (
+                    <EmptyState
+                      title={`Neurosift can’t show ${tab.file.filename.split(".").pop()} files yet`}
+                      action={
+                        tab.file.urls[0]
+                          ? {
+                              label: "Download the file",
+                              onClick: () =>
+                                window.open(
+                                  tab.file.urls[0],
+                                  "_blank",
+                                  "noopener",
+                                ),
+                            }
+                          : undefined
+                      }
+                    >
+                      {`${tab.file.filename} can be downloaded to open it elsewhere.`}
+                    </EmptyState>
+                  )}
+                </ShareSettingsProvider>
+              </TabPanel>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </ShareAddressContext.Provider>
   );
 };
 

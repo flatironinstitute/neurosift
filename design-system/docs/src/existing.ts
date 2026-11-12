@@ -434,7 +434,7 @@ export const EXISTING: Record<string, Existing> = {
         [
           "ShareTabButton.tsx",
           "Copies a link with the file URL and the tab, then shows “Copied!”",
-          "Still one click, with a toast; a Share dialog only if options are added",
+          "Copy link in the object path row of every tab, one click, with a toast naming the settings it carries; a Share dialog only if options are added",
         ],
         [
           "DynamicTable.tsx",

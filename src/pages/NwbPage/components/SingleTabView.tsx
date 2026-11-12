@@ -1,4 +1,5 @@
 import ScrollY from "@components/ScrollY";
+import { ShareSettingsProvider } from "@shared/shareLink/ShareSettingsProvider";
 import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection-2/ProvideTimeseriesSelection";
 import React from "react";
 import NwbObjectView from "../NwbObjectView";
@@ -34,27 +35,29 @@ const SingleTabView: React.FC<SingleTabViewProps> = ({
   onOpenObjectInNewTab,
 }) => {
   return (
-    <ProvideTimeseriesSelection>
-      <div>
-        <TabToolbar tabId={tabId} nwbUrl={nwbUrl} path={path} />
-        <ScrollY
-          width={width}
-          height={height - TOOLBAR_HEIGHT}
-          top={TOOLBAR_HEIGHT}
-        >
-          <NwbObjectView
-            nwbUrl={nwbUrl}
-            path={path}
-            objectType={objectType}
-            onOpenObjectInNewTab={onOpenObjectInNewTab}
-            plugin={plugin}
-            secondaryPaths={secondaryPaths}
-            width={width - 20}
-            height={height - TOOLBAR_HEIGHT - 5}
-          />
-        </ScrollY>
-      </div>
-    </ProvideTimeseriesSelection>
+    <ShareSettingsProvider tab={tabId}>
+      <ProvideTimeseriesSelection>
+        <div>
+          <TabToolbar tabId={tabId} nwbUrl={nwbUrl} path={path} />
+          <ScrollY
+            width={width}
+            height={height - TOOLBAR_HEIGHT}
+            top={TOOLBAR_HEIGHT}
+          >
+            <NwbObjectView
+              nwbUrl={nwbUrl}
+              path={path}
+              objectType={objectType}
+              onOpenObjectInNewTab={onOpenObjectInNewTab}
+              plugin={plugin}
+              secondaryPaths={secondaryPaths}
+              width={width - 20}
+              height={height - TOOLBAR_HEIGHT - 5}
+            />
+          </ScrollY>
+        </div>
+      </ProvideTimeseriesSelection>
+    </ShareSettingsProvider>
   );
 };
 

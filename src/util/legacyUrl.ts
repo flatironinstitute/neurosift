@@ -1,3 +1,6 @@
+import { readableParam } from "@shared/shareLink/linkSettings";
+import { legacySpecSettings } from "../pages/NwbPage/plugins/LfpSpectrogram/spectrogramSettings";
+
 export type AppUrl = { pathname: string; search: string; hash: string };
 
 // v1 view names whose view still exists under another name; any other v1 view opens its object.
@@ -8,16 +11,10 @@ const V1_VIEWS: Record<string, string> = {
   TrialAlignedSeries: "TrialAlignedSeries",
 };
 
-// Keeps paths and tab forms readable in the address bar while escaping &, #, + and %.
-const encodeValue = (value: string) =>
-  encodeURIComponent(value).replace(/%(2F|3A|7C|5B|5D|2C|40|5E)/g, (escaped) =>
-    decodeURIComponent(escaped),
-  );
-
 const toSearch = (entries: [string, string | null | undefined][]) => {
   const parts = entries
     .filter((entry): entry is [string, string] => !!entry[1])
-    .map(([key, value]) => `${key}=${encodeValue(value)}`);
+    .map(([key, value]) => `${key}=${readableParam(value)}`);
   return parts.length > 0 ? `?${parts.join("&")}` : "";
 };
 
@@ -124,7 +121,99 @@ const v1Target = (
   }
 };
 
-/** Where a saved link from Neurosift v1 (?p=…) opens now; null for links that already open as they are. */
+// Settings the PSTH and Event-related signal views kept after # before they moved to the query.
+const HASH_SETTINGS: Record<string, string> = {
+  ...Object.fromEntries(
+    [
+      "units",
+      "alignTo",
+      "groupBy",
+      "categories",
+      "windowStart",
+      "windowEnd",
+      "sortBy",
+      "sortDir",
+      "showRaster",
+      "showHist",
+      "smoothed",
+      "numBins",
+      "plotHeight",
+    ].map((key) => [key, key]),
+  ),
+  ta_series: "series",
+  ta_channels: "channels",
+  ta_align: "alignTo",
+  ta_win: "window",
+  ta_max: "maxIntervals",
+  ta_groupby: "groupBy",
+  ta_groupdisp: "groupDisplay",
+};
+
+// Settings that carried their view's name before links took plain names.
+const RENAMED_SETTINGS: Record<string, string> = {
+  icephysProtocol: "protocol",
+  icephysCondition: "condition",
+  icephysRepetition: "repetition",
+  icephysColorBy: "colorBy",
+  icephysPanelsBy: "panelsBy",
+  icephysAndBy: "andBy",
+  icephysWindowStart: "windowStart",
+  icephysWindowEnd: "windowEnd",
+  icephysLockY: "lockY",
+  videoOrder: "order",
+  videoLayout: "layout",
+  videoTime: "time",
+  poseTime: "time",
+  poseEdges: "edges",
+  poseConf: "confidence",
+  poseFade: "fade",
+  poseTrails: "trails",
+  poseTrailSec: "trailSeconds",
+  poseHidden: "hidden",
+  poseVideo: "video",
+  poseVideoSource: "videoSource",
+};
+
+const tabPath = (tab: string | null) =>
+  tab?.replace(/^view:[^|]*\|/, "").split("^")[0] || undefined;
+
+/** An NWB link with a view's settings in an older form, with them as plain query parameters. */
+export function mapLegacySettings(search: string, hash: string): AppUrl | null {
+  const entries: [string, string][] = [];
+  const keys = new Set<string>();
+  let changed = false;
+  const q = new URLSearchParams(search);
+  for (const [key, value] of q) {
+    if (key === "spec") {
+      changed = true;
+      for (const [k, v] of legacySpecSettings(value, tabPath(q.get("tab"))))
+        if (!q.has(k)) entries.push([k, v]);
+      continue;
+    }
+    const name = RENAMED_SETTINGS[key] ?? key;
+    changed ||= name !== key;
+    if (keys.has(name)) continue;
+    keys.add(name);
+    entries.push([name, value]);
+  }
+  const rest = new URLSearchParams(hash.replace(/^#/, ""));
+  for (const [key, value] of [...rest]) {
+    const name = HASH_SETTINGS[key];
+    if (!name) continue;
+    changed = true;
+    rest.delete(key);
+    if (!keys.has(name)) entries.push([name, value]);
+    keys.add(name);
+  }
+  if (!changed) return null;
+  return {
+    pathname: "/nwb",
+    search: toSearch(entries),
+    hash: rest.size ? `#${rest}` : "",
+  };
+}
+
+/** Where a saved link from Neurosift v1 (?p=…) or with older view settings opens now; null for links that already open as they are. */
 export function mapLegacyUrl(
   pathname: string,
   search: string,
@@ -134,14 +223,17 @@ export function mapLegacyUrl(
     return { pathname: "/experimental-neurosift-tiles", search, hash };
   const q = new URLSearchParams(search);
   const p = q.get("p");
-  if (p === null) return null;
+  if (p === null)
+    return pathname === "/nwb" ? mapLegacySettings(search, hash) : null;
   const target = v1Target(p, q);
   if (q.get("embedded") === "1") target.entries.push(["embedded", "1"]);
-  return {
+  const mapped = {
     pathname: target.pathname,
     search: toSearch(target.entries),
     hash,
   };
+  if (mapped.pathname !== "/nwb") return mapped;
+  return mapLegacySettings(mapped.search, hash) ?? mapped;
 }
 
 /** Rewrites a v1 link in the address bar before the app renders, replacing its history entry. */

@@ -55,7 +55,14 @@ import {
   SpectralConfig,
   TaperMethod,
 } from "./spectralConfig";
-import { useSpectrogramUrlState } from "./urlState";
+import {
+  useLinkedSettings,
+  useShareSettings,
+} from "@shared/shareLink/useShareSettings";
+import {
+  spectrogramFromSettings,
+  spectrogramSettings,
+} from "./spectrogramSettings";
 import SpectrogramWorkerClient, {
   ComputeStatus,
   isComputeCanceled,
@@ -380,23 +387,20 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
   const numChannels = client.numChannels;
   const toast = useToast();
 
-  // Settings that a shared URL restores: channels, spectral config, and the
-  // visible time range. Read once at mount to seed the initial state.
-  const { initial: urlInitial, persist: persistUrl } =
-    useSpectrogramUrlState(path);
+  const linked = useLinkedSettings();
+  const [fromLink] = useState(() =>
+    spectrogramFromSettings(linked, makeDefaultConfig(nativeNyquist)),
+  );
   const defaultVisRange = useMemo<[number, number]>(
     () => [dataStart, dataStart + Math.min(30, totalDuration || 30)],
     [dataStart, totalDuration],
   );
 
-  const [selectedChannels, setSelectedChannels] = useState<number[]>(() =>
-    urlInitial?.channels?.length ? urlInitial.channels : [0],
-  );
-  const [config, setConfig] = useState<SpectralConfig>(() =>
-    urlInitial?.config
-      ? { ...makeDefaultConfig(nativeNyquist), ...urlInitial.config }
-      : makeDefaultConfig(nativeNyquist),
-  );
+  const [selectedChannels, setSelectedChannels] = useState<number[]>(() => {
+    const inRange = fromLink.channels.filter((c) => c < numChannels);
+    return inRange.length ? inRange : [0];
+  });
+  const [config, setConfig] = useState<SpectralConfig>(fromLink.config);
   const [diagFlip, setDiagFlip] = useState(false);
   const [open, setOpen] = useState<Record<SectionKey, boolean>>({
     channels: true,
@@ -522,38 +526,18 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
     visibleStartTimeSec,
     visibleEndTimeSec,
   } = useTimeseriesSelection();
-  const [initialVisRange] = useState<[number, number]>(() => {
-    const v = urlInitial?.visRange;
-    if (v && v.length === 2) {
-      const s = Math.max(dataStart, Math.min(v[0], dataEnd));
-      const e = Math.max(s, Math.min(v[1], dataEnd));
-      if (e > s) return [s, e];
-    }
-    return defaultVisRange;
-  });
-  const restoresUrlRange = initialVisRange !== defaultVisRange;
   useEffect(() => {
     initializeTimeseriesSelection({
       startTimeSec: dataStart,
       endTimeSec: dataEnd,
-      initialVisibleStartTimeSec: initialVisRange[0],
-      initialVisibleEndTimeSec: initialVisRange[1],
+      initialVisibleStartTimeSec: defaultVisRange[0],
+      initialVisibleEndTimeSec: defaultVisRange[1],
     });
-    // A shared link's range wins over one another view already set.
-    if (restoresUrlRange)
-      setVisibleTimeRange(initialVisRange[0], initialVisRange[1]);
-  }, [
-    dataStart,
-    dataEnd,
-    initialVisRange,
-    restoresUrlRange,
-    initializeTimeseriesSelection,
-    setVisibleTimeRange,
-  ]);
+  }, [dataStart, dataEnd, defaultVisRange, initializeTimeseriesSelection]);
 
   const [visStart, visEnd] = clampRange(
-    visibleStartTimeSec ?? initialVisRange[0],
-    visibleEndTimeSec ?? initialVisRange[1],
+    visibleStartTimeSec ?? defaultVisRange[0],
+    visibleEndTimeSec ?? defaultVisRange[1],
   );
   const visRange = useMemo<[number, number]>(
     () => [visStart, visEnd],
@@ -580,33 +564,11 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
     visRangeRef.current = visRange;
   }, [visRange]);
 
-  // Mirror the current view into the URL (debounced, history-replacing). When
-  // everything is at its default the slot is cleared, keeping plain links tidy.
-  const defaultConfigJson = useMemo(
-    () => JSON.stringify(makeDefaultConfig(nativeNyquist)),
+  const defaults = useMemo(
+    () => makeDefaultConfig(nativeNyquist),
     [nativeNyquist],
   );
-  useEffect(() => {
-    const h = setTimeout(() => {
-      const atDefault =
-        JSON.stringify(config) === defaultConfigJson &&
-        selectedChannels.length === 1 &&
-        selectedChannels[0] === 0 &&
-        Math.abs(visRange[0] - defaultVisRange[0]) < RANGE_EPSILON &&
-        Math.abs(visRange[1] - defaultVisRange[1]) < RANGE_EPSILON;
-      persistUrl(
-        atDefault ? null : { config, channels: selectedChannels, visRange },
-      );
-    }, 400);
-    return () => clearTimeout(h);
-  }, [
-    config,
-    selectedChannels,
-    visRange,
-    persistUrl,
-    defaultConfigJson,
-    defaultVisRange,
-  ]);
+  useShareSettings(spectrogramSettings(config, defaults, selectedChannels));
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const dragRef = useRef<{ x: number; range: [number, number] } | null>(null);

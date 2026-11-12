@@ -4,12 +4,10 @@ import {
   Checkbox,
   EmptyState,
   formatSeconds,
-  IconButton,
   LoadingState,
   Playback,
   SegmentedControl,
   TimeOverview,
-  useToast,
   ViewPanel,
 } from "@ui";
 import {
@@ -35,7 +33,12 @@ import {
 } from "./externalVideoUtils";
 
 import { useSearchParams } from "react-router-dom";
-import { useSetSearchParamsKeepingHash } from "./urlHash";
+import {
+  useLinkedSettings,
+  useShareSettings,
+} from "@shared/shareLink/useShareSettings";
+import ScrollY from "@components/ScrollY";
+import TabToolbar, { TOOLBAR_HEIGHT } from "./TabToolbar";
 import { neurodataTypeInheritsFrom } from "./neurodataTypeInheritance";
 import { useNwbFileSpecifications } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
 import VideoUnavailable from "./VideoUnavailable";
@@ -239,10 +242,12 @@ const VideoTile: FunctionComponent<{
 
 const MultiVideoTabView: FunctionComponent<Props> = ({
   nwbUrl,
+  width,
+  height,
   isExpanded,
 }) => {
   const [searchParams] = useSearchParams();
-  const setSearchParams = useSetSearchParamsKeepingHash();
+  const linked = useLinkedSettings();
   const specifications = useNwbFileSpecifications();
   const [candidates, setCandidates] = useState<ExternalVideoCandidate[]>([]);
   const [loading, setLoading] = useState(false);
@@ -253,7 +258,7 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   const [mountedPaths, setMountedPaths] = useState<string[]>([]);
   const initialVideoOrderApplied = useRef(false);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>(() => {
-    const param = searchParams.get("videoLayout");
+    const param = linked.get("layout");
     if (param === "row" || param === "column" || param === "grid") return param;
     return "row";
   });
@@ -280,7 +285,6 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState("1");
   const [open, setOpen] = useState({ videos: true, arrangement: true });
-  const toast = useToast();
   const [sharedTime, setSharedTime] = useState<number | undefined>(undefined);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const syncAnimationRef = useRef<number | null>(null);
@@ -299,54 +303,28 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
   // Previous selection, used to detect cameras that were just (re)displayed so
   // they can be caught up to the shared time.
   const prevSelectedRef = useRef<string[]>([]);
-  // A shared time captured from the URL (?videoTime=, in session seconds),
+  // The link's time (in session seconds),
   // applied once when the window is first known so a shared link lands on that
   // moment (paused). Consumed after the first seed.
   const initialVideoTimeRef = useRef<number | undefined>(
     (() => {
-      const raw = searchParams.get("videoTime");
+      const raw = linked.get("time");
       const value = raw === null ? NaN : Number(raw);
       return Number.isFinite(value) ? value : undefined;
     })(),
   );
 
-  // Apply URL params once candidates are loaded
+  // Apply the link's videos once candidates are loaded
   useEffect(() => {
     if (candidates.length === 0 || initialVideoOrderApplied.current) return;
     initialVideoOrderApplied.current = true;
-    const param = searchParams.get("videoOrder");
+    const param = linked.get("order");
     if (!param) return;
     const paths = decodeVideoOrder(param, candidates);
     if (paths.length > 0) {
       setSelectedPaths(paths);
     }
-  }, [candidates, searchParams]);
-
-  // Live-persist selection order and layout to the URL (replace, no history
-  // churn) so a refresh restores the arrangement and the address bar reflects
-  // the current view. Defaults are omitted. The time cursor is intentionally NOT
-  // written live (it moves ~4 Hz); it is captured only on Share.
-  useEffect(() => {
-    if (
-      !isExpanded ||
-      candidates.length === 0 ||
-      !initialVideoOrderApplied.current
-    ) {
-      return;
-    }
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        const order = encodeVideoOrder(selectedPaths, candidates);
-        if (order) next.set("videoOrder", order);
-        else next.delete("videoOrder");
-        if (layoutMode !== "row") next.set("videoLayout", layoutMode);
-        else next.delete("videoLayout");
-        return next;
-      },
-      { replace: true },
-    );
-  }, [isExpanded, selectedPaths, layoutMode, candidates, setSearchParams]);
+  }, [candidates, linked]);
 
   useEffect(() => {
     if (!isExpanded) return;
@@ -886,271 +864,304 @@ const MultiVideoTabView: FunctionComponent<Props> = ({
     "--cols": String(Math.max(gridDimensions.cols, 1)),
   });
 
-  const handleShare = () => {
-    const url = new URL(window.location.href);
-    url.searchParams.set(
-      "videoOrder",
-      encodeVideoOrder(selectedPaths, candidates),
-    );
-    if (layoutMode !== "row") url.searchParams.set("videoLayout", layoutMode);
-    else url.searchParams.delete("videoLayout");
-    // Capture the current moment (YouTube-style), so the link lands there.
-    if (sharedTime !== undefined && Number.isFinite(sharedTime))
-      url.searchParams.set("videoTime", sharedTime.toFixed(2));
-    else url.searchParams.delete("videoTime");
-    navigator.clipboard
-      .writeText(url.toString())
-      .then(() => toast.show({ status: "success", message: "Link copied" }));
-  };
-
   const tileTitle = (video: ExternalVideoCandidate) =>
     `${labelMap.get(video.path)} · ${video.name}`;
 
+  const startTime = sessionWindow?.start ?? 0;
+  // Until the videos are found, the link keeps its own settings.
+  useShareSettings(
+    candidates.length === 0 || !sessionWindow
+      ? []
+      : [
+          {
+            key: "order",
+            value: encodeVideoOrder(selectedPaths, candidates),
+            default: "",
+            label: "the videos shown",
+          },
+          {
+            key: "layout",
+            value: layoutMode,
+            default: "row",
+            label: "the layout",
+          },
+          {
+            key: "time",
+            value: (sharedTime ?? startTime).toFixed(2),
+            default: startTime.toFixed(2),
+            label: "the time",
+          },
+        ],
+  );
+  const shownPaths = selectedPaths.length
+    ? selectedPaths
+    : candidates.map((c) => c.path);
+
   return (
-    <ViewPanel
-      label="Videos"
-      summary={
-        loading
-          ? "Finding videos in this file"
-          : `${plural(candidates.length, "video")} in this file · played on one clock`
-      }
-      busy={loading}
-      controls={
-        selectedVideos.length > 0 && (
-          <>
-            <Playback
-              playing={isPlaying}
-              onPlayingChange={(next) => {
-                if (next !== isPlaying) handlePlayPause();
-              }}
-              speed={speed}
-              onSpeedChange={setSpeed}
-              time={sharedTime ?? sessionWindow?.start ?? 0}
-            />
-            <IconButton
-              icon="share"
-              label="Copy link to this arrangement and time"
-              size="sm"
-              variant="ghost"
-              onClick={handleShare}
-            />
-          </>
-        )
-      }
-      overview={
-        sessionWindow &&
-        sessionWindow.end > sessionWindow.start && (
-          <TimeOverview
-            session={sessionWindow}
-            value={{ start: sharedTime ?? sessionWindow.start, duration: 0 }}
-            cursor={sharedTime}
-            onChange={(v) => handleSeek(v.start + v.duration / 2)}
-          />
-        )
-      }
-      settings={
-        candidates.length > 0 && (
-          <>
-            <AccordionItem
-              title="Videos"
-              summary={`${selectedVideos.length} of ${candidates.length} shown`}
-              open={open.videos}
-              onToggle={(o) => setOpen((prev) => ({ ...prev, videos: o }))}
-            >
-              <ul className="videos-list">
-                {candidates.map((candidate) => {
-                  const isSelected = selectedPaths.includes(candidate.path);
-                  const selectedOthers = selectedVideos.filter(
-                    (video) => video.path !== candidate.path,
-                  );
-                  const compatible =
-                    isSelected ||
-                    selectedOthers.length === 0 ||
-                    selectedOthers.every((video) =>
-                      areCompatible(candidate, video),
-                    );
-                  const reason =
-                    compatible || selectedOthers.length === 0
-                      ? undefined
-                      : getCompatibilityReason(candidate, selectedOthers);
-                  return (
-                    <li key={candidate.path} className="videos-item">
-                      <Checkbox
-                        label={tileTitle(candidate)}
-                        checked={isSelected}
-                        disabled={!compatible && !isSelected}
-                        onChange={(checked) =>
-                          setSelectedPaths((prev) =>
-                            checked
-                              ? [...prev, candidate.path]
-                              : prev.filter((path) => path !== candidate.path),
-                          )
-                        }
-                      />
-                      <p className="videos-item-note">
-                        {candidate.path} ·{" "}
-                        {candidate.endTime > candidate.startTime
-                          ? `${formatSeconds(candidate.startTime)}–${formatSeconds(candidate.endTime)} s`
-                          : "no frame times"}
-                      </p>
-                      {reason && <p className="videos-item-note">{reason}</p>}
-                    </li>
-                  );
-                })}
-              </ul>
-            </AccordionItem>
-            {selectedVideos.length >= 2 && (
-              <AccordionItem
-                title="Arrangement"
-                summary={
-                  LAYOUT_OPTIONS.find((o) => o.value === layoutMode)?.label
-                }
-                open={open.arrangement}
-                onToggle={(o) =>
-                  setOpen((prev) => ({ ...prev, arrangement: o }))
-                }
-              >
-                <SegmentedControl
-                  label="Arrangement"
-                  size="sm"
-                  value={layoutMode}
-                  onChange={(v) => setLayoutMode(v as LayoutMode)}
-                  options={LAYOUT_OPTIONS}
-                />
-                <p className="videos-item-note">
-                  Drag the tiles to reorder the videos.
-                </p>
-                <OrderPanel
-                  selectedPaths={selectedPaths}
-                  setSelectedPaths={setSelectedPaths}
-                  labelMap={labelMap}
-                  layoutMode={layoutMode}
-                />
-              </AccordionItem>
-            )}
-          </>
-        )
-      }
-    >
-      {loading ? (
-        <LoadingState label="Finding videos in this file" phase="loading" />
-      ) : candidates.length === 0 ? (
-        <EmptyState title="No videos in this file">
-          This file has no ImageSeries stored in an external video file.
-        </EmptyState>
-      ) : (
-        selectedVideos.length === 0 && (
-          <EmptyState title="No video shown">Check one in the list.</EmptyState>
-        )
+    <>
+      {candidates.length > 0 && (
+        <TabToolbar
+          tabId="video-widget"
+          nwbUrl={nwbUrl}
+          type="Videos"
+          path={shownPaths}
+        />
       )}
-      <div ref={gridRef} className="videos-grid">
-        {mountedVideos.map((video) => {
-          const resolvedUrl = resolvedUrls[video.path];
-          const tileProblem =
-            urlErrors[video.path] || playbackErrors[video.path];
-          // Deselected videos stay mounted (so reselecting is instant and keeps
-          // their position) but hidden; a re-displayed one stays hidden until it
-          // has seeked to the shared time, so its stale frame is never shown.
-          const selectionIndex = selectedPaths.indexOf(video.path);
-          const isShown = selectionIndex >= 0 && !resyncPending[video.path];
-          return (
-            <VideoTile
-              key={video.path}
-              title={tileTitle(video)}
-              shown={isShown}
-              order={isShown ? selectionIndex : 0}
-            >
-              {tileProblem ? (
-                <VideoUnavailable problem={tileProblem} />
-              ) : (
-                <div className="videos-frame">
-                  {(!resolvedUrl || !metadataLoaded[video.path]) && (
-                    <LoadingState
-                      label={
-                        urlLoading[video.path]
-                          ? "Finding the video on DANDI"
-                          : "Loading the video"
-                      }
-                      phase="loading"
+      <ScrollY
+        width={width}
+        height={height - (candidates.length > 0 ? TOOLBAR_HEIGHT : 0)}
+        top={candidates.length > 0 ? TOOLBAR_HEIGHT : 0}
+      >
+        <ViewPanel
+          label="Videos"
+          summary={
+            loading
+              ? "Finding videos in this file"
+              : `${plural(candidates.length, "video")} in this file · played on one clock`
+          }
+          busy={loading}
+          controls={
+            selectedVideos.length > 0 && (
+              <>
+                <Playback
+                  playing={isPlaying}
+                  onPlayingChange={(next) => {
+                    if (next !== isPlaying) handlePlayPause();
+                  }}
+                  speed={speed}
+                  onSpeedChange={setSpeed}
+                  time={sharedTime ?? sessionWindow?.start ?? 0}
+                />
+              </>
+            )
+          }
+          overview={
+            sessionWindow &&
+            sessionWindow.end > sessionWindow.start && (
+              <TimeOverview
+                session={sessionWindow}
+                value={{
+                  start: sharedTime ?? sessionWindow.start,
+                  duration: 0,
+                }}
+                cursor={sharedTime}
+                onChange={(v) => handleSeek(v.start + v.duration / 2)}
+              />
+            )
+          }
+          settings={
+            candidates.length > 0 && (
+              <>
+                <AccordionItem
+                  title="Videos"
+                  summary={`${selectedVideos.length} of ${candidates.length} shown`}
+                  open={open.videos}
+                  onToggle={(o) => setOpen((prev) => ({ ...prev, videos: o }))}
+                >
+                  <ul className="videos-list">
+                    {candidates.map((candidate) => {
+                      const isSelected = selectedPaths.includes(candidate.path);
+                      const selectedOthers = selectedVideos.filter(
+                        (video) => video.path !== candidate.path,
+                      );
+                      const compatible =
+                        isSelected ||
+                        selectedOthers.length === 0 ||
+                        selectedOthers.every((video) =>
+                          areCompatible(candidate, video),
+                        );
+                      const reason =
+                        compatible || selectedOthers.length === 0
+                          ? undefined
+                          : getCompatibilityReason(candidate, selectedOthers);
+                      return (
+                        <li key={candidate.path} className="videos-item">
+                          <Checkbox
+                            label={tileTitle(candidate)}
+                            checked={isSelected}
+                            disabled={!compatible && !isSelected}
+                            onChange={(checked) =>
+                              setSelectedPaths((prev) =>
+                                checked
+                                  ? [...prev, candidate.path]
+                                  : prev.filter(
+                                      (path) => path !== candidate.path,
+                                    ),
+                              )
+                            }
+                          />
+                          <p className="videos-item-note">
+                            {candidate.path} ·{" "}
+                            {candidate.endTime > candidate.startTime
+                              ? `${formatSeconds(candidate.startTime)}–${formatSeconds(candidate.endTime)} s`
+                              : "no frame times"}
+                          </p>
+                          {reason && (
+                            <p className="videos-item-note">{reason}</p>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </AccordionItem>
+                {selectedVideos.length >= 2 && (
+                  <AccordionItem
+                    title="Arrangement"
+                    summary={
+                      LAYOUT_OPTIONS.find((o) => o.value === layoutMode)?.label
+                    }
+                    open={open.arrangement}
+                    onToggle={(o) =>
+                      setOpen((prev) => ({ ...prev, arrangement: o }))
+                    }
+                  >
+                    <SegmentedControl
+                      label="Arrangement"
+                      size="sm"
+                      value={layoutMode}
+                      onChange={(v) => setLayoutMode(v as LayoutMode)}
+                      options={LAYOUT_OPTIONS}
                     />
-                  )}
-                  {resolvedUrl && (
-                    <video
-                      ref={(element) => {
-                        videoRefs.current[video.path] = element;
-                      }}
-                      className="videos-video"
-                      data-hidden={metadataLoaded[video.path] ? undefined : ""}
-                      src={resolvedUrl}
-                      muted
-                      playsInline
-                      preload="auto"
-                      onLoadedMetadata={(e) => {
-                        e.currentTarget.playbackRate = Number(speed);
-                        setMetadataLoaded((prev) => ({
-                          ...prev,
-                          [video.path]: true,
-                        }));
-                        const current =
-                          sharedTimeRef.current === undefined
-                            ? video.startTime
-                            : sharedTimeRef.current;
-                        const target = clamp(
-                          current,
-                          video.startTime,
-                          video.endTime,
-                        );
-                        const element = videoRefs.current[video.path];
-                        if (element) {
-                          element.currentTime = sessionTimeToFileTime(
-                            video,
-                            target,
-                            element,
-                          );
-                        }
-                      }}
-                      onTimeUpdate={() => {
-                        if (
-                          !isPlaying ||
-                          selectedVideos[0]?.path !== video.path
-                        ) {
-                          return;
-                        }
-                        const leader = selectedVideos[0];
-                        const element = videoRefs.current[leader.path];
-                        if (!element) return;
-                        setSharedTime(
-                          clamp(
-                            fileTimeToSessionTime(leader, element),
-                            sessionWindow?.start ?? leader.startTime,
-                            sessionWindow?.end ?? leader.endTime,
-                          ),
-                        );
-                      }}
-                      onEnded={() => {
-                        if (selectedVideos[0]?.path === video.path) {
-                          setIsPlaying(false);
-                        }
-                      }}
-                      onError={() => {
-                        if (!resolvedUrl) return;
-                        describeVideoPlaybackError(resolvedUrl).then(
-                          (problem) =>
-                            setPlaybackErrors((prev) => ({
+                    <p className="videos-item-note">
+                      Drag the tiles to reorder the videos.
+                    </p>
+                    <OrderPanel
+                      selectedPaths={selectedPaths}
+                      setSelectedPaths={setSelectedPaths}
+                      labelMap={labelMap}
+                      layoutMode={layoutMode}
+                    />
+                  </AccordionItem>
+                )}
+              </>
+            )
+          }
+        >
+          {loading ? (
+            <LoadingState label="Finding videos in this file" phase="loading" />
+          ) : candidates.length === 0 ? (
+            <EmptyState title="No videos in this file">
+              This file has no ImageSeries stored in an external video file.
+            </EmptyState>
+          ) : (
+            selectedVideos.length === 0 && (
+              <EmptyState title="No video shown">
+                Check one in the list.
+              </EmptyState>
+            )
+          )}
+          <div ref={gridRef} className="videos-grid">
+            {mountedVideos.map((video) => {
+              const resolvedUrl = resolvedUrls[video.path];
+              const tileProblem =
+                urlErrors[video.path] || playbackErrors[video.path];
+              // Deselected videos stay mounted (so reselecting is instant and keeps
+              // their position) but hidden; a re-displayed one stays hidden until it
+              // has seeked to the shared time, so its stale frame is never shown.
+              const selectionIndex = selectedPaths.indexOf(video.path);
+              const isShown = selectionIndex >= 0 && !resyncPending[video.path];
+              return (
+                <VideoTile
+                  key={video.path}
+                  title={tileTitle(video)}
+                  shown={isShown}
+                  order={isShown ? selectionIndex : 0}
+                >
+                  {tileProblem ? (
+                    <VideoUnavailable problem={tileProblem} />
+                  ) : (
+                    <div className="videos-frame">
+                      {(!resolvedUrl || !metadataLoaded[video.path]) && (
+                        <LoadingState
+                          label={
+                            urlLoading[video.path]
+                              ? "Finding the video on DANDI"
+                              : "Loading the video"
+                          }
+                          phase="loading"
+                        />
+                      )}
+                      {resolvedUrl && (
+                        <video
+                          ref={(element) => {
+                            videoRefs.current[video.path] = element;
+                          }}
+                          className="videos-video"
+                          data-hidden={
+                            metadataLoaded[video.path] ? undefined : ""
+                          }
+                          src={resolvedUrl}
+                          muted
+                          playsInline
+                          preload="auto"
+                          onLoadedMetadata={(e) => {
+                            e.currentTarget.playbackRate = Number(speed);
+                            setMetadataLoaded((prev) => ({
                               ...prev,
-                              [video.path]: problem,
-                            })),
-                        );
-                      }}
-                    />
+                              [video.path]: true,
+                            }));
+                            const current =
+                              sharedTimeRef.current === undefined
+                                ? video.startTime
+                                : sharedTimeRef.current;
+                            const target = clamp(
+                              current,
+                              video.startTime,
+                              video.endTime,
+                            );
+                            const element = videoRefs.current[video.path];
+                            if (element) {
+                              element.currentTime = sessionTimeToFileTime(
+                                video,
+                                target,
+                                element,
+                              );
+                            }
+                          }}
+                          onTimeUpdate={() => {
+                            if (
+                              !isPlaying ||
+                              selectedVideos[0]?.path !== video.path
+                            ) {
+                              return;
+                            }
+                            const leader = selectedVideos[0];
+                            const element = videoRefs.current[leader.path];
+                            if (!element) return;
+                            setSharedTime(
+                              clamp(
+                                fileTimeToSessionTime(leader, element),
+                                sessionWindow?.start ?? leader.startTime,
+                                sessionWindow?.end ?? leader.endTime,
+                              ),
+                            );
+                          }}
+                          onEnded={() => {
+                            if (selectedVideos[0]?.path === video.path) {
+                              setIsPlaying(false);
+                            }
+                          }}
+                          onError={() => {
+                            if (!resolvedUrl) return;
+                            describeVideoPlaybackError(resolvedUrl).then(
+                              (problem) =>
+                                setPlaybackErrors((prev) => ({
+                                  ...prev,
+                                  [video.path]: problem,
+                                })),
+                            );
+                          }}
+                        />
+                      )}
+                    </div>
                   )}
-                </div>
-              )}
-            </VideoTile>
-          );
-        })}
-      </div>
-    </ViewPanel>
+                </VideoTile>
+              );
+            })}
+          </div>
+        </ViewPanel>
+      </ScrollY>
+    </>
   );
 };
 

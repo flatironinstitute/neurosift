@@ -36,6 +36,7 @@ const BEHAVIOR = [
   ["Compare with Hann", "Press D or the button to flip to Hann and back. D is ignored while typing in a field."],
   ["Copy settings as JSON", "Copies the current settings; a Toast confirms, or says if the browser blocked it."],
   ["Reset all to defaults", "Restores today’s defaults; off when nothing has changed."],
+  ["Copy link", "Adds channels and each changed setting under its own name, such as taper=boxcar&colormap=magma, and the moved window. A spec={…} link from before still opens the same view."],
 ];
 
 const DIFFERS = [
@@ -45,6 +46,7 @@ const DIFFERS = [
   ["Changed settings", "A gold dot", "The section summary names the change", "Built"],
   ["Anti-alias warning", "A warning section", "In Readouts, at its own level (info today)", "To confirm"],
   ["Sections open at first", "All", "Channels only", "To confirm"],
+  ["Shared links", "Every setting as JSON in spec=, rewritten as you work", "Only the changed settings, kept in the address as they change", "Built"],
 ];
 
 const SPECS = [

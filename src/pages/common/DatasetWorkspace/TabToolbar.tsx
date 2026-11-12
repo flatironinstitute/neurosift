@@ -1,24 +1,27 @@
+import { ObjectPath } from "@ui";
+import { useCopy, useCopyLink } from "@shared/shareLink/useShareSettings";
 import { FunctionComponent } from "react";
-import ShareTabButton from "@shared/ShareTabButton/ShareTabButton";
 import { DatasetFile } from "./plugins/pluginInterface";
-import "./TabToolbar.css";
 
 const TOOLBAR_HEIGHT = 32;
 
 type TabToolbarProps = {
-  width: number;
   file: DatasetFile;
 };
 
-/** The open file’s path, with a link that reopens this tab. */
-const TabToolbar: FunctionComponent<TabToolbarProps> = ({ file }) => (
-  <div className="dataset-tab-toolbar">
-    <p className="dataset-tab-path" title={file.filepath}>
-      {file.filepath}
-    </p>
-    <ShareTabButton params={{ tab: `${file.filepath}|${file.parentId}` }} />
-  </div>
-);
+/** The open file’s type and path, with Copy path and Copy link. */
+const TabToolbar: FunctionComponent<TabToolbarProps> = ({ file }) => {
+  const copy = useCopy();
+  const copyLink = useCopyLink();
+  return (
+    <ObjectPath
+      type={file.filename.split(".").slice(1).join(".").toUpperCase()}
+      path={file.filepath}
+      onCopyPath={() => copy(file.filepath, "Path copied")}
+      onCopyLink={() => copyLink({ tab: `${file.filepath}|${file.parentId}` })}
+    />
+  );
+};
 
 export { TOOLBAR_HEIGHT };
 export default TabToolbar;

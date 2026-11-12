@@ -29,7 +29,10 @@ import {
   useState,
 } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useSetSearchParamsKeepingHash } from "../../urlHash";
+import {
+  useLinkedSettings,
+  useShareSettings,
+} from "@shared/shareLink/useShareSettings";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 import {
   normalizeExternalFileValue,
@@ -145,10 +148,8 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   path,
 }) => {
   const [searchParams] = useSearchParams();
-  const setSearchParams = useSetSearchParamsKeepingHash();
-  // Extract the DANDI identifiers as stable strings. Effects key off these rather
-  // than the whole `searchParams` object, so writing `pose*` params (which mutates
-  // searchParams) does not re-trigger candidate discovery or video resolution.
+  const linked = useLinkedSettings();
+  // Effects key off these stable strings rather than the whole `searchParams`.
   const dandisetId = searchParams.get("dandisetId");
   const dandisetVersion = searchParams.get("dandisetVersion") || "draft";
 
@@ -271,10 +272,8 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     : sources[0];
   const selectedSourceKey = selectedSource?.key ?? NO_SOURCE;
 
-  // --- URL persistence (static view state). See url_react_router.md for the
-  // param schema and write-timing rules; poseTime is handled separately.
-  // Keypoint series names share a long common prefix (e.g. "PoseEstimationSeries");
-  // strip it for the URL value, shorter and still a stable per-file id.
+  // Keypoint names share a long prefix (e.g. "PoseEstimationSeries"); a link
+  // names them without it.
   const namePrefix = useMemo(() => {
     const names = pose?.keypoints.map((k) => k.name) ?? [];
     if (names.length < 2) return "";
@@ -294,24 +293,22 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   const [hydrated, setHydrated] = useState(false);
   const videoHydratedRef = useRef(false);
 
-  // Hydrate static view state from the URL once the pose (hence keypoint names)
-  // is known. Flipping `hydrated` gates the writer so it cannot clobber the
-  // incoming params before they are applied.
+  // Apply the link's settings once the pose (hence keypoint names) is known.
   useEffect(() => {
     if (!pose || hydrated) return;
-    const g = (k: string) => searchParams.get(k);
-    if (g("poseEdges") === "1") setShowEdges(true);
+    const g = (k: string) => linked.get(k);
+    if (g("edges") === "1") setShowEdges(true);
     // 3D pose defaults to pose-only (overlaying world coordinates on a 2D camera
-    // is meaningless); an explicit poseOnly param or a chosen poseVideo wins.
+    // is meaningless); an explicit poseOnly or a chosen video wins.
     if (g("poseOnly") === "1") setForcePoseOnly(true);
-    else if (pose.is3D && !g("poseVideo")) setForcePoseOnly(true);
-    const conf = g("poseConf");
+    else if (pose.is3D && !g("video")) setForcePoseOnly(true);
+    const conf = g("confidence");
     if (conf !== null) setConfThreshold(Number(conf) || 0);
-    if (g("poseFade") === "1") setFadeByConfidence(true);
-    if (g("poseTrails") === "1") setShowTrails(true);
-    const tw = g("poseTrailSec");
+    if (g("fade") === "1") setFadeByConfidence(true);
+    if (g("trails") === "1") setShowTrails(true);
+    const tw = g("trailSeconds");
     if (tw !== null) setTrailSec(Number(tw) || 1.0);
-    const hid = g("poseHidden");
+    const hid = g("hidden");
     if (hid) {
       const want = new Set(hid.split(",").filter(Boolean));
       const full = pose.keypoints
@@ -320,14 +317,14 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       if (full.length) setHidden(new Set(full));
     }
     setHydrated(true);
-  }, [pose, hydrated, searchParams, shortName]);
+  }, [pose, hydrated, linked, shortName]);
 
-  // Apply the selected video from the URL once candidates are discovered (incl.
+  // Apply the link's video once candidates are discovered (incl.
   // the cross-file sibling scan), matched by series name (+ source asset id).
   useEffect(() => {
     if (videoHydratedRef.current || candidates.length === 0) return;
-    const wantName = searchParams.get("poseVideo");
-    const wantSrc = searchParams.get("poseVideoSource");
+    const wantName = linked.get("video");
+    const wantSrc = linked.get("videoSource");
     if (wantName) {
       const m = candidates.find(
         (c) =>
@@ -337,73 +334,71 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       if (m) setSelectedVideoPath(m.path);
     }
     videoHydratedRef.current = true;
-  }, [candidates, searchParams]);
+  }, [candidates, linked]);
 
-  // Write static view state to the URL live (replace, defaults omitted). poseVideo
-  // is written only after the video has been applied, so the incoming param is
-  // not wiped before it is read.
-  useEffect(() => {
-    if (!hydrated) return;
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        const setDel = (k: string, v: string | null) =>
-          v ? next.set(k, v) : next.delete(k);
-        setDel(
-          "poseHidden",
-          hidden.size ? [...hidden].map(shortName).sort().join(",") : null,
-        );
-        setDel("poseEdges", showEdges ? "1" : null);
-        setDel("poseOnly", forcePoseOnly ? "1" : null);
-        setDel("poseConf", confThreshold > 0 ? String(confThreshold) : null);
-        setDel("poseFade", fadeByConfidence ? "1" : null);
-        setDel("poseTrails", showTrails ? "1" : null);
-        setDel("poseTrailSec", trailSec !== 1.0 ? String(trailSec) : null);
-        if (videoHydratedRef.current) {
-          const cand = candidates.find((c) => c.path === selectedVideoPath);
-          const suggested = candidates[0];
-          const isSuggested =
-            !!cand && !!suggested && cand.path === suggested.path;
-          setDel("poseVideo", cand && !isSuggested ? cand.name : null);
-          const m = cand?.sourceNwbUrl?.match(/\/assets\/([0-9a-fA-F-]{36})\//);
-          setDel("poseVideoSource", m ? m[1] : null);
-        }
-        return next;
-      },
-      { replace: true },
-    );
-  }, [
-    hydrated,
-    offset,
-    hidden,
-    showEdges,
-    forcePoseOnly,
-    confThreshold,
-    fadeByConfidence,
-    showTrails,
-    trailSec,
-    selectedVideoPath,
-    candidates,
-    shortName,
-    setSearchParams,
-  ]);
-
-  // poseTime: written on pause/seek (never live), cleared on play; the loader
-  // accepts any value and seeds it paused (see url_react_router.md).
-  const writePoseTime = useCallback(
-    (t: number | null) => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          if (t === null || !Number.isFinite(t)) next.delete("poseTime");
-          else next.set("poseTime", t.toFixed(3));
-          return next;
-        },
-        { replace: true },
-      );
-    },
-    [setSearchParams],
+  // The paused moment, for a link; playing clears it.
+  const [pausedTime, writePoseTime] = useState<number | null>(() => {
+    const t = Number(linked.get("time") ?? NaN);
+    return Number.isFinite(t) ? t : null;
+  });
+  const videoCandidate = candidates.find((c) => c.path === selectedVideoPath);
+  const videoSource = videoCandidate?.sourceNwbUrl?.match(
+    /\/assets\/([0-9a-fA-F-]{36})\//,
   );
+  const flag = (on: boolean) => (on ? "1" : "");
+  const setting = (key: string, value: string, label: string) => ({
+    key,
+    value,
+    default: "",
+    label,
+  });
+  // Until the pose and its videos load, the link keeps its own settings.
+  const hydratedSettings = hydrated
+    ? [
+        setting(
+          "hidden",
+          [...hidden].map(shortName).sort().join(","),
+          "the keypoints",
+        ),
+        setting("edges", flag(showEdges), "the skeleton"),
+        setting("poseOnly", flag(forcePoseOnly), "pose only"),
+        setting(
+          "confidence",
+          confThreshold > 0 ? String(confThreshold) : "",
+          "the confidence",
+        ),
+        setting("fade", flag(fadeByConfidence), "the confidence"),
+        setting("trails", flag(showTrails), "the trails"),
+        setting(
+          "trailSeconds",
+          trailSec !== 1.0 ? String(trailSec) : "",
+          "the trails",
+        ),
+      ]
+    : [];
+  const videoSettings = videoHydratedRef.current
+    ? [
+        setting(
+          "video",
+          videoCandidate && videoCandidate.path !== candidates[0]?.path
+            ? videoCandidate.name
+            : "",
+          "the video",
+        ),
+        setting("videoSource", videoSource ? videoSource[1] : "", "the video"),
+      ]
+    : [];
+  useShareSettings([
+    ...hydratedSettings,
+    ...videoSettings,
+    setting(
+      "time",
+      pausedTime !== null && Number.isFinite(pausedTime)
+        ? pausedTime.toFixed(3)
+        : "",
+      "the time",
+    ),
+  ]);
   const videoSeededRef = useRef(false);
 
   // True while the full-resolution coordinates are still streaming in the
@@ -514,14 +509,14 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   // the two-phase load swaps `pose` when the full coordinates arrive, and without
   // this guard that swap would jump playback back to start. timeRange comes from
   // the full timestamps in both phases, so leading and full agree on it. Initial
-  // position: a deep-linked poseTime (clamped) if present, else the span start.
+  // position: a linked time (clamped) if present, else the span start.
   const clockSeededKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (!pose) return;
     const key = `${nwbUrl}|${path}`;
     if (clockSeededKeyRef.current === key) return;
     clockSeededKeyRef.current = key;
-    const raw = searchParams.get("poseTime");
+    const raw = linked.get("time");
     const t0 =
       raw !== null && Number.isFinite(Number(raw))
         ? Math.min(
@@ -537,7 +532,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       initialVisibleStartTimeSec: pose.timeRange.start,
       initialVisibleEndTimeSec: pose.timeRange.end,
     });
-  }, [pose, nwbUrl, path, searchParams, initializeTimeseriesSelection]);
+  }, [pose, nwbUrl, path, linked, initializeTimeseriesSelection]);
 
   // Discover + rank candidate videos once per container. In-file first; if none,
   // scan sibling assets of the same session. Gated on the steady boolean
@@ -604,10 +599,10 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     if (!hydrated || edgesDefaultedRef.current) return;
     if (!discoveryDone || !pose || pose.edges.length === 0) return;
     edgesDefaultedRef.current = true;
-    if (candidates.length === 0 && searchParams.get("poseEdges") === null) {
+    if (candidates.length === 0 && linked.get("edges") === null) {
       setShowEdges(true);
     }
-  }, [hydrated, discoveryDone, pose, candidates, searchParams]);
+  }, [hydrated, discoveryDone, pose, candidates, linked]);
 
   // Resolve the selected video to a playable URL + its session-time range. The
   // candidate may live in a sibling asset (cross-file), so resolve against its
@@ -1233,7 +1228,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
                     setFrameSize({ w: v.videoWidth, h: v.videoHeight });
                     if (videoSeededRef.current || !video) return;
                     videoSeededRef.current = true;
-                    const raw = searchParams.get("poseTime");
+                    const raw = linked.get("time");
                     if (raw === null || !Number.isFinite(Number(raw))) return;
                     v.currentTime = sessionTimeToVideoTime(
                       Number(raw),

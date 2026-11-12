@@ -1,3 +1,7 @@
+import {
+  useLinkedSettings,
+  useShareSettings,
+} from "@shared/shareLink/useShareSettings";
 import { getHdf5DatasetData, getHdf5Group } from "@hdf5Interface";
 import {
   FunctionComponent,
@@ -88,14 +92,6 @@ const buildSeriesLabels = (paths: string[]): { [path: string]: string } => {
   return labels;
 };
 
-// The view persists its main selections in the URL hash (like the PSTH view) so
-// a link or reload restores them. Keys are prefixed to avoid colliding with
-// other views' hash params.
-const readHashParams = (): URLSearchParams => {
-  const h = window.location.hash;
-  return new URLSearchParams(h.startsWith("#") ? h.slice(1) : h);
-};
-
 const EventRelatedSignalView: FunctionComponent<Props> = ({
   nwbUrl,
   path,
@@ -121,10 +117,11 @@ const EventRelatedSignalView: FunctionComponent<Props> = ({
     [neurodataObjects],
   );
 
+  const linked = useLinkedSettings();
   const initialSeries = secondaryPaths && secondaryPaths[0];
   const [selectedSeriesPath, setSelectedSeriesPath] = useState<
     string | undefined
-  >(() => readHashParams().get("ta_series") || initialSeries);
+  >(() => linked.get("series") || initialSeries);
 
   // Once the object list is known, make sure a valid series is selected.
   useEffect(() => {
@@ -138,6 +135,14 @@ const EventRelatedSignalView: FunctionComponent<Props> = ({
     if (initialSeries && seriesOptions.length === 0) return;
     if (seriesOptions.length > 0) setSelectedSeriesPath(seriesOptions[0]);
   }, [seriesOptions, initialSeries, selectedSeriesPath]);
+  useShareSettings([
+    {
+      key: "series",
+      value: selectedSeriesPath ?? "",
+      default: initialSeries ?? seriesOptions[0] ?? "",
+      label: "the series",
+    },
+  ]);
 
   if (!selectedSeriesPath) {
     if (seriesOptions.length === 0 && neurodataObjects.length > 0) {
@@ -189,6 +194,7 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
   width,
   height,
 }) => {
+  const linked = useLinkedSettings();
   // Load a client for the selected series. Keep the previous client visible
   // while a new series loads so the controls and existing plots don't flicker.
   const [client, setClient] = useState<TimeseriesClient | null>(null);
@@ -219,7 +225,7 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
 
   // Channel and align-to selections apply live (like the PSTH unit selector).
   const [selectedChannels, setSelectedChannels] = useState<number[]>(() => {
-    const v = readHashParams().get("ta_channels");
+    const v = linked.get("channels");
     if (v) {
       const arr = v
         .split(",")
@@ -230,7 +236,7 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
     return [0];
   });
   const [alignToVariables, setAlignToVariables] = useState<string[]>(() => {
-    const v = readHashParams().get("ta_align");
+    const v = linked.get("alignTo");
     return v ? v.split(",").filter(Boolean) : ["start_time"];
   });
 
@@ -248,7 +254,7 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
     start: string;
     end: string;
   }>(() => {
-    const v = readHashParams().get("ta_win");
+    const v = linked.get("window");
     if (v) {
       const parts = v.split(",");
       if (parts.length === 2) return { start: parts[0], end: parts[1] };
@@ -259,13 +265,12 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
     };
   });
   const [maxIntervalsStr, setMaxIntervalsStr] = useState(
-    () => readHashParams().get("ta_max") || String(DEFAULT_MAX_INTERVALS),
+    () => linked.get("maxIntervals") || String(DEFAULT_MAX_INTERVALS),
   );
   const [committed, setCommitted] = useState<CommittedParams>(() => {
-    const p = readHashParams();
     let start = DEFAULT_WINDOW.start;
     let end = DEFAULT_WINDOW.end;
-    const w = p.get("ta_win");
+    const w = linked.get("window");
     if (w) {
       const [s, e] = w.split(",").map(Number);
       if (isFinite(s) && isFinite(e) && e > s) {
@@ -273,7 +278,7 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
         end = e;
       }
     }
-    const mv = parseInt(p.get("ta_max") || "");
+    const mv = parseInt(linked.get("maxIntervals") || "");
     const maxIntervals =
       Number.isFinite(mv) && mv >= 1 ? mv : DEFAULT_MAX_INTERVALS;
     return { windowRange: { start, end }, maxIntervals };
@@ -332,13 +337,13 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
   const stdPending = showStdBand && effectiveStdMultiple !== stdMultiple;
   // How to show groups: overlaid on one plot, or split into side-by-side plots.
   const [groupDisplay, setGroupDisplay] = useState<"overlay" | "split">(() =>
-    readHashParams().get("ta_groupdisp") === "split" ? "split" : "overlay",
+    linked.get("groupDisplay") === "split" ? "split" : "overlay",
   );
 
   // Group by (live). Only offered when the table has categorical columns.
   const categoricalOptions = useCategoricalOptions(nwbUrl, intervalsPath);
   const [groupByVariable, setGroupByVariable] = useState<string>(
-    () => readHashParams().get("ta_groupby") || "",
+    () => linked.get("groupBy") || "",
   );
 
   const [groupByValues, setGroupByValues] = useState<string[] | undefined>(
@@ -432,53 +437,43 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
     alignTimesByVariable,
   ]);
 
-  // Persist the main selections in the URL hash.
-  useEffect(() => {
-    const p = readHashParams();
-    const setOrDelete = (k: string, val: string, isDefault: boolean) => {
-      if (val && !isDefault) p.set(k, val);
-      else p.delete(k);
-    };
-    if (seriesPath) p.set("ta_series", seriesPath);
-    else p.delete("ta_series");
-    setOrDelete(
-      "ta_channels",
-      selectedChannels.join(","),
-      selectedChannels.length === 1 && selectedChannels[0] === 0,
-    );
-    setOrDelete(
-      "ta_align",
-      alignToVariables.join(","),
-      alignToVariables.length === 1 && alignToVariables[0] === "start_time",
-    );
-    setOrDelete(
-      "ta_win",
-      `${committed.windowRange.start},${committed.windowRange.end}`,
-      committed.windowRange.start === DEFAULT_WINDOW.start &&
-        committed.windowRange.end === DEFAULT_WINDOW.end,
-    );
-    setOrDelete(
-      "ta_max",
-      String(committed.maxIntervals),
-      committed.maxIntervals === DEFAULT_MAX_INTERVALS,
-    );
-    setOrDelete("ta_groupby", groupByVariable, groupByVariable === "");
-    setOrDelete(
-      "ta_groupdisp",
-      groupDisplay,
-      !(groupByVariable !== "" && groupDisplay === "split"),
-    );
-    const newHash = "#" + p.toString();
-    if (window.location.hash !== newHash) {
-      window.history.replaceState(null, "", newHash);
-    }
-  }, [
-    seriesPath,
-    selectedChannels,
-    alignToVariables,
-    committed,
-    groupByVariable,
-    groupDisplay,
+  useShareSettings([
+    {
+      key: "channels",
+      value: selectedChannels.join(","),
+      default: "0",
+      label: "channels",
+    },
+    {
+      key: "alignTo",
+      value: alignToVariables.join(","),
+      default: "start_time",
+      label: "the alignment",
+    },
+    {
+      key: "window",
+      value: `${committed.windowRange.start},${committed.windowRange.end}`,
+      default: `${DEFAULT_WINDOW.start},${DEFAULT_WINDOW.end}`,
+      label: "the window",
+    },
+    {
+      key: "maxIntervals",
+      value: String(committed.maxIntervals),
+      default: String(DEFAULT_MAX_INTERVALS),
+      label: "the window",
+    },
+    {
+      key: "groupBy",
+      value: groupByVariable,
+      default: "",
+      label: "the grouping",
+    },
+    {
+      key: "groupDisplay",
+      value: groupByVariable ? groupDisplay : "overlay",
+      default: "overlay",
+      label: "the grouping",
+    },
   ]);
 
   // The list shown in the series dropdown (prepend the selected series if it is

@@ -9,7 +9,23 @@ import {
 } from "@ui";
 import ViewError from "@components/ViewError/ViewError";
 import { useCssVars } from "@components/useCssVars";
-import { FunctionComponent, ReactNode, useMemo, useState } from "react";
+import {
+  useLinkedSettings,
+  useShareSettings,
+} from "@shared/shareLink/useShareSettings";
+import {
+  formatRun,
+  parseNumber,
+  parseRun,
+  type Setting,
+} from "@shared/shareLink/linkSettings";
+import {
+  FunctionComponent,
+  ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import TimeView, { TIME_VIEW_INSET } from "../common/TimeView";
 import { covers } from "../common/playback";
 import { useWindowPlayback } from "../common/usePlayback";
@@ -21,6 +37,36 @@ import TimeseriesPlotTSV2 from "./TimeseriesPlotTSV2";
 import { timeseriesSummary } from "./timeseriesSummary";
 import { Props } from "./types";
 import "./SimpleTimeseriesView.css";
+
+/** What a link carries for traces: the channels shown, their separation and the renderer. */
+const timeseriesSettings = (o: {
+  numChannels: number;
+  first: number;
+  count: number;
+  separation: number;
+  renderer: string;
+}): Setting[] => {
+  return [
+    {
+      key: "channels",
+      value: formatRun(o.first, o.count),
+      default: formatRun(0, Math.min(4, o.numChannels)),
+      label: "channels",
+    },
+    {
+      key: "separation",
+      value: String(o.separation),
+      default: "0",
+      label: "separation",
+    },
+    {
+      key: "renderer",
+      value: o.renderer,
+      default: "canvas",
+      label: "the renderer",
+    },
+  ];
+};
 
 /** Traces of a TimeSeries: the shared time and channel windows, then Neurosift's plot. */
 const CanvasFrame = ({
@@ -41,8 +87,14 @@ const CanvasFrame = ({
 export const SimpleTimeseriesView: FunctionComponent<
   Props & { condensed?: boolean }
 > = ({ nwbUrl, path, width = 700, condensed = false }) => {
-  const [renderer, setRenderer] = useState("canvas");
-  const [channelSeparation, setChannelSeparation] = useState(0);
+  const linked = useLinkedSettings();
+  const [renderer, setRenderer] = useState(() =>
+    linked.get("renderer") === "plotly" ? "plotly" : "canvas",
+  );
+  const [channelSeparation, setChannelSeparation] = useState(() => {
+    const value = parseNumber(linked.get("separation"));
+    return value !== undefined && value >= 0 && value <= 10 ? value : 0;
+  });
   const time = useTimeWindow();
   const playback = useWindowPlayback();
   const lookahead = playback.playing
@@ -64,6 +116,27 @@ export const SimpleTimeseriesView: FunctionComponent<
     numVisibleChannels,
     setNumVisibleChannels,
   } = useTimeseriesData(nwbUrl, path, lookahead);
+
+  // After the data hook picks its first channels, a link's channels win.
+  const numChannels = timeseriesClient?.numChannels;
+  useEffect(() => {
+    if (!numChannels) return;
+    const run = parseRun(linked.get("channels"));
+    if (!run || run.first >= numChannels) return;
+    setVisibleChannelsStart(run.first);
+    setNumVisibleChannels(Math.min(run.count, numChannels - run.first));
+  }, [numChannels, linked, setVisibleChannelsStart, setNumVisibleChannels]);
+  useShareSettings(
+    numChannels
+      ? timeseriesSettings({
+          numChannels,
+          first: visibleChannelsStart,
+          count: numVisibleChannels,
+          separation: channelSeparation,
+          renderer,
+        })
+      : [],
+  );
 
   const group = useHdf5Group(nwbUrl, path);
   const channelNames = useMemo(() => {

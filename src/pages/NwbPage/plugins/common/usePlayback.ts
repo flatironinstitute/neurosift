@@ -14,6 +14,11 @@ import {
   useSyncExternalStore,
 } from "react";
 import {
+  useLinkedSettings,
+  useShareSettings,
+} from "@shared/shareLink/useShareSettings";
+import { parseNumber } from "@shared/shareLink/linkSettings";
+import {
   advanceWindow,
   isPlaybackKey,
   settleWindow,
@@ -71,7 +76,14 @@ export function usePlaybackClock(
   advance: (seconds: number) => boolean,
 ): PlaybackClock {
   const [playing, setPlayingState] = useState(false);
-  const [speed, setSpeed] = useState("1");
+  const linked = useLinkedSettings();
+  const [speed, setSpeed] = useState(() => {
+    const value = parseNumber(linked.get("speed"));
+    return value && value > 0 && value <= 8 ? String(value) : "1";
+  });
+  useShareSettings([
+    { key: "speed", value: speed, default: "1", label: "speed" },
+  ]);
   const disabledReason = usePlaybackOwner(playing);
   const setPlaying = useCallback(
     (next: boolean) => {

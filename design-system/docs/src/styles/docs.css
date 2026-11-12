@@ -577,6 +577,11 @@ main {
   padding-inline-start: var(--space-5);
 }
 
+/* A URL in a rule has no break points, so it wraps anywhere instead of widening the page. */
+.rule-list code {
+  overflow-wrap: anywhere;
+}
+
 .do-dont {
   display: grid;
   grid-template-columns: 1fr 1fr;
