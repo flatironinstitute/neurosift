@@ -5,14 +5,31 @@ import { RemovableTag } from "../MultiSelect/MultiSelect";
 import { SearchField } from "../SearchField/SearchField";
 import { SegmentedControl } from "../SegmentedControl/SegmentedControl";
 import { Select, type SelectOption } from "../Select/Select";
+import { useId } from "react";
 import "../base.css";
+import "../field.css";
 import "../row-list.css";
 import "./Catalog.css";
 
 const MODES = [
-  { value: "basic", label: "Basic" },
-  { value: "semantic", label: "Semantic" },
-  { value: "types", label: "Neurodata types" },
+  {
+    value: "basic",
+    label: "Keywords",
+    description:
+      "Matches your words in titles, descriptions and other details across DANDI, OpenNeuro and EMBER.",
+  },
+  {
+    value: "semantic",
+    label: "Meaning",
+    description:
+      "Finds the 20 Dandisets closest in meaning to your words, even when they use different words. Ranked by an AI model.",
+  },
+  {
+    value: "types",
+    label: "Neurodata types",
+    description:
+      "Lists Dandisets with an NWB file holding every type you pick, most matching files first.",
+  },
 ];
 
 interface SearchRowProps {
@@ -26,7 +43,7 @@ interface SearchRowProps {
   loading?: boolean;
 }
 
-/** One search across DANDI, EMBER and OpenNeuro, with its three modes. */
+/** One search across DANDI, EMBER and OpenNeuro, with its three modes and a line on the chosen one. */
 export function SearchRow({
   query,
   onQueryChange,
@@ -36,6 +53,8 @@ export function SearchRow({
   total,
   loading,
 }: SearchRowProps) {
+  const descriptionId = useId();
+  const description = MODES.find((m) => m.value === mode)?.description;
   return (
     <div className="ns-catalog-search">
       <SearchField
@@ -46,15 +65,26 @@ export function SearchRow({
         onSearch={onSearch}
         loading={loading}
       />
-      <div className="ns-catalog-search-meta">
-        <SegmentedControl
-          label="Search by"
-          size="sm"
-          options={MODES}
-          value={mode}
-          onChange={onModeChange}
-        />
-        {total && <span className="ns-catalog-search-total">{total}</span>}
+      <div className="ns-catalog-search-mode">
+        <div className="ns-catalog-search-meta">
+          <SegmentedControl
+            label="Search by"
+            size="sm"
+            options={MODES}
+            value={mode}
+            onChange={onModeChange}
+            describedBy={description ? descriptionId : undefined}
+          />
+          {total && <span className="ns-catalog-search-total">{total}</span>}
+        </div>
+        {description && (
+          <p
+            id={descriptionId}
+            className="ns-field-message ns-catalog-search-note"
+          >
+            {description}
+          </p>
+        )}
       </div>
     </div>
   );

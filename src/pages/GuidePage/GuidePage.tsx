@@ -46,6 +46,10 @@ export default function GuidePage() {
               <li>Select a Dandiset to view its details and files</li>
               <li>Click on any NWB file to visualize its contents</li>
             </Steps>
+            <p>
+              Search by meaning and by neurodata types use an index that updates
+              daily, so a new Dandiset can take up to a day to appear.
+            </p>
           </Topic>
           <Topic title="Exploring EMBER Archive">
             <Steps>

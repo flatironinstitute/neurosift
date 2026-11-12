@@ -9,7 +9,7 @@ import DocsLayout from "../../layouts/DocsLayout.astro";
 import { withBase } from "../../navigation";
 
 const DIFFERS = [
-  ["Words", "The guide as written", "The same words, in the same order", "Same"],
+  ["Words", "The guide as written", "The same words, in the same order, plus one line under Exploring DANDI Archive: search by meaning and by neurodata types can take up to a day to show a new Dandiset", "Changed"],
   ["Page", "Material UI container, centered, with its own margins", "Page: the title at type/h2 and a 720px column at the page margin, like Settings", "Changed"],
   ["Sections", "Headings on the page background", "Overview, Using Neurosift and Getting Help each in a Section, named by its heading", "Changed"],
   ["Topics", "Five headings one step down from the sections", "The same five as h3 in type/label, each with its steps", "Changed"],
@@ -32,7 +32,7 @@ const SPECS = [
 <DocsLayout title="Guide" description="The NWB viewer guide, linked from Home’s footer, rebuilt from Page and Section.">
   <Intro
     lead="The guide explains how to explore DANDI, EMBER and OpenNeuro and how to open remote and local NWB files. Home’s footer links to it as NWB viewer guide. The words stay exactly as they are; only the page around them changes."
-    status="Updated November 10, 2026 · UI library · Captured at 1440 × 900 · Built from Page, Section, type styles, links, Code block and Inline code"
+    status="Updated November 11, 2026 · UI library · Captured at 1440 × 900 · Built from Page, Section, type styles, links, Code block and Inline code"
     rules={[
       { title: "Same words", text: "The guide reads word for word as it does today; the rebuild changes only how it looks." },
       { title: "Commands copy cleanly", text: "Each command sits in a Code block with a Copy button, so nobody retypes it." },

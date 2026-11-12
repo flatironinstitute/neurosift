@@ -35,6 +35,19 @@ describe("GuidePage", () => {
     expect(within(using).getAllByRole("list")).toHaveLength(5);
   });
 
+  it("says the Meaning and Neurodata types index can take a day to catch up, where DANDI search is explained", () => {
+    render(<GuidePage />);
+    const dandi = screen.getByRole("heading", {
+      level: 3,
+      name: "Exploring DANDI Archive",
+    }).parentElement!;
+    expect(
+      within(dandi).getByText(
+        "Search by meaning and by neurodata types use an index that updates daily, so a new Dandiset can take up to a day to appear.",
+      ).tagName,
+    ).toBe("P");
+  });
+
   it("links to the archives, both versions and the issue tracker", () => {
     render(<GuidePage />);
     const links: [string, string][] = [

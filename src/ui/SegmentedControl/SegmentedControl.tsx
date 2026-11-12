@@ -19,6 +19,8 @@ interface SegmentedControlProps {
   size?: "md" | "sm";
   /** Icons only; each label moves to the segment's name and a tooltip. */
   hideLabels?: boolean;
+  /** The id of visible text that explains the choice. */
+  describedBy?: string;
 }
 
 const STEPS: Record<string, number> = {
@@ -36,6 +38,7 @@ export function SegmentedControl({
   onChange,
   size = "md",
   hideLabels = false,
+  describedBy,
 }: SegmentedControlProps) {
   const enabled = options.filter((o) => !o.disabled);
 
@@ -62,6 +65,7 @@ export function SegmentedControl({
     <div
       role="radiogroup"
       aria-label={label}
+      aria-describedby={describedBy}
       className={`ns-segmented ns-segmented--${size}`}
       onKeyDown={onKeyDown}
     >

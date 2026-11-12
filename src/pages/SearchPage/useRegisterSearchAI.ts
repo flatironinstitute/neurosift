@@ -3,8 +3,9 @@ import { AIRegisteredComponent, useAIComponentRegistry } from "../../AIContext";
 
 const CONTEXT = `
 The user is viewing the dataset search, which searches DANDI, OpenNeuro and EMBER at once.
-Basic search matches the text in each archive. Semantic search finds DANDI Dandisets close in meaning.
-Neurodata types search finds DANDI Dandisets with a file holding every selected type.
+The "Search by" control has three modes. Keywords matches the words in each archive.
+Meaning finds the 20 DANDI Dandisets closest in meaning, ranked by an AI model.
+Neurodata types finds DANDI Dandisets with an NWB file holding every selected type.
 The Archive filter picks which archives are searched.
 `;
 

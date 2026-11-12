@@ -13,7 +13,7 @@ export type CatalogItem = {
   size?: number;
   /** Data types or modalities, shown as tags. */
   types?: string[];
-  /** Files holding every picked type, in a Contains search. */
+  /** Files holding every picked type, in a Neurodata types search. */
   matchingFiles?: number;
   status?: "Embargoed" | "Draft" | "Private";
 };
