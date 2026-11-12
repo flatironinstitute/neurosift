@@ -42,6 +42,7 @@ const STATES = [
   ["Sorted table", "The sorted column’s header shows its arrow and Original order appears."],
   ["Ragged column", "The count from its index, then as many values as fit; Reading… until a visible row’s first values arrive. 0 values for an empty row; five or fewer show whole and don’t open."],
   ["Ragged column, indexed twice", "The shape of its values, such as waveforms of 000673: “1,652 × 256”; with more than one inner list, “3 lists · 4,034 × 256”. Opened, each inner list is headed the same way, “List 2 · 382 × 256” only when there are several."],
+  ["Table or chart", "A table with a chart view, trials and other TimeIntervals (Intervals) or Units in its own tab (Raster), shows one of the two. Intervals in a combined tab; Table in the object’s own tab."],
 ];
 
 const BEHAVIOR = [
@@ -57,6 +58,7 @@ const BEHAVIOR = [
   ["Export as CSV", "Downloads the loaded columns, in the order shown, as the table’s name .csv; strings quoted. A ragged column’s list goes in full in one quoted field, values separated by semicolons; a column of over 5,000,000 values is left empty, and a note under the table says so and points to Python usage: “waveforms has 43,098,880 values, too many for CSV. Load it in Python instead: see Python usage.”"],
   ["Open a ragged cell", "Its button opens a full-width row under the table row: the column, row and count, the first 30 values, how many more and the last, Show all, and Copy values, which copies the whole list. One open at a time."],
   ["Column descriptions", "Show column descriptions opens a table of each column’s description from the file, in place of header tooltips."],
+  ["Show", "One click switches between Table and the chart; arrow keys move the choice. Each object in a combined tab has its own choice. It isn’t remembered between files; a choice other than the default goes in the link, so a shared link opens the same view: view=intervals in the object’s own tab, and trials.view=table in a combined tab, named by the object’s last path segment, or the shortest path suffix no other object in the tab shares."],
 ];
 
 const DIFFERS = [
@@ -73,6 +75,7 @@ const DIFFERS = [
   ["Table actions", "An unlabeled download icon", "Export as CSV and Original order buttons, and a row count", "Built"],
   ["Column descriptions", "Header tooltips", "A Show column descriptions table under the rows", "Built"],
   ["Ragged columns", "Not shown, such as spike_times", "A list cell with the count and values; it opens a detail row. Columns missing from colnames show after the listed ones when an index points at them.", "Built"],
+  ["Table and chart", "Both, the table above the chart, in every tab", "One at a time, chosen with Show: Table or Intervals (Raster for Units)", "Built"],
 ];
 
 const SPECS = [
@@ -89,6 +92,8 @@ const SPECS = [
   ["Table actions", "Button, Small, Secondary, download · Button, Small, Ghost, reset · count in type/caption"],
   ["Column types", "id and lists in the code face · numbers right-aligned in the code face · strings in type/body-sm"],
   ["Ragged cell", "Data table list cell · detail row: title in type/label, Button, Small, Secondary, copy · values in type/code-sm · Button, Small, Ghost for Show all"],
+  ["Show", "“Show” in type/label-sm, hidden from screen readers · Segmented control, Small, named “Show <path> as”"],
+  ["Path row", "In a combined view: the path in type/code-sm text/secondary, Show at the end, wrapping below when narrow · in the object’s own tab: Show above the views, at their end"],
 ];
 ---
 
