@@ -11,11 +11,21 @@ import { AppBar } from "./AppBar";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { ObjectPath } from "./ObjectPath";
 
+let narrow = false;
 beforeAll(() => {
+  window.matchMedia = ((query: string) => ({
+    matches: narrow,
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  })) as unknown as typeof window.matchMedia;
   HTMLElement.prototype.showPopover = function () {};
   HTMLElement.prototype.hidePopover = function () {};
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  narrow = false;
+});
 
 describe("AppBar", () => {
   const setup = () =>
@@ -63,6 +73,37 @@ describe("AppBar", () => {
     expect(github.getAttribute("target")).toBe("_blank");
     expect(github.getAttribute("rel")).toBe("noopener noreferrer");
     expect(screen.getByRole("link", { name: "Open in v1" })).toBeTruthy();
+  });
+
+  it("shows collapsing actions as icon-only, still named, when the window is narrow", () => {
+    narrow = true;
+    render(
+      <AppBar
+        homeHref="/"
+        logo={<img src="/logo.png" alt="" />}
+        actions={[
+          { label: "Guide", href: "/guide", icon: "help", collapses: true },
+        ]}
+      />,
+    );
+    const guide = screen.getByRole("link", { name: "Guide" });
+    expect(guide.getAttribute("aria-label")).toBe("Guide");
+    expect(guide.querySelector(".ns-visually-hidden")).toBeTruthy();
+  });
+
+  it("keeps the label visible when the window is wide", () => {
+    render(
+      <AppBar
+        homeHref="/"
+        logo={<img src="/logo.png" alt="" />}
+        actions={[
+          { label: "Guide", href: "/guide", icon: "help", collapses: true },
+        ]}
+      />,
+    );
+    const guide = screen.getByRole("link", { name: "Guide" });
+    expect(guide.getAttribute("aria-label")).toBeNull();
+    expect(guide.querySelector(".ns-visually-hidden")).toBeNull();
   });
 });
 

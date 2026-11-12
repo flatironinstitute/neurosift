@@ -134,6 +134,7 @@ const AppContent = () => {
                 label: "Guide",
                 href: `${import.meta.env.BASE_URL}guide`,
                 icon: "help",
+                collapses: true,
               },
               {
                 label: "Report a problem on GitHub",
@@ -152,6 +153,7 @@ const AppContent = () => {
                 label: "Open in Neurosift v1",
                 href: v1Url(location.pathname, location.search),
                 icon: "launch",
+                collapses: true,
               },
             ]}
           />

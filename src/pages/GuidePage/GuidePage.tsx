@@ -41,7 +41,7 @@ export default function GuidePage() {
         <Section title="Using Neurosift">
           <Topic title="Exploring DANDI Archive">
             <Steps>
-              <li>Click on DANDI in the Neurosift home page</li>
+              <li>Search from Home, or open Browse DANDI datasets</li>
               <li>Browse available datasets or use the search functionality</li>
               <li>Select a Dandiset to view its details and files</li>
               <li>Click on any NWB file to visualize its contents</li>
@@ -53,7 +53,9 @@ export default function GuidePage() {
           </Topic>
           <Topic title="Exploring EMBER Archive">
             <Steps>
-              <li>Click on EMBER in the Neurosift home page</li>
+              <li>
+                Search from Home. One search covers DANDI, EMBER and OpenNeuro
+              </li>
               <li>Browse available datasets or use the search functionality</li>
               <li>Select a EMBER Dandiset to view its details and files</li>
               <li>Click on any NWB file to visualize its contents</li>
@@ -65,7 +67,10 @@ export default function GuidePage() {
               not have much functionality yet.
             </p>
             <Steps>
-              <li>Click on OpenNeuro in the Neurosift home page</li>
+              <li>
+                Search from Home, or open Browse all datasets. One search covers
+                DANDI, EMBER and OpenNeuro
+              </li>
               <li>Browse through available datasets</li>
               <li>Select a dataset to explore its sessions and files</li>
             </Steps>
