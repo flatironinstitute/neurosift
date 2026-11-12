@@ -35,6 +35,7 @@ const STATES = [
   ["Finding items", "The alignment shows “Finding the time series” until the first item arrives."],
   ["Hidden item", "Its path and range turn text/disabled and its bar goes; the rest rescale."],
   ["No items", "“This file has no time series, intervals or events with times.”"],
+  ["Event table in view", "Its light bar shows at once from the first and last event; its ticks appear once the row scrolls into view and the timestamps are read."],
   ["Reading a table", "“Reading the table” until the first columns arrive; then the summary says “reading more columns” until the rest do."],
   ["Missing value", "An em dash, read as “No value”, in place of NaN or an empty cell; missing values sort last both ways."],
   ["Long table", "Over 20,000 cells, the summary says “Showing 1,000 of 5,000 rows” and Show more rows adds 20,000 cells more."],
@@ -63,6 +64,7 @@ const DIFFERS = [
   ["Load in Python", "A plain button and Markdown code", "Button and Code blocks with Copy, shared with Python usage", "Built"],
   ["Alignment colors", "17 named colors by type", "The six data/series steps by type in name order, past six data/series/other, with a legend", "Built"],
   ["Alignment frame", "Bare rows", "The view panel: summary, controls, plot", "Built"],
+  ["Event tables", "Not shown", "One row per EventsTable or subtype: its event count, a light bar from first to last event, and a tick per event, at most one per pixel column", "Built"],
   ["Table header", "Navy bar, white text, ▲ ▼ characters", "Data table: rules, a sort button per header with an arrow icon", "Built"],
   ["Table numbers", "Plain text, left-aligned, NaN shown", "The code face, right-aligned, grouped; NaN as a dash", "Built"],
   ["Table actions", "An unlabeled download icon", "Export as CSV and Original order buttons, and a row count", "Built"],
@@ -77,6 +79,7 @@ const SPECS = [
   ["Load in Python", "Button, Small, Secondary, chevron · Code block, Shell titled Install · Code block, Python · note in type/caption"],
   ["Alignment row", "Checkbox, label hidden · Icon button, Small, Ghost, view · path in type/code-sm · type and range in type/caption text/secondary"],
   ["Alignment bar", "8px (space/2) on surface/page · color data/series/1–6, then data/series/other · at least 2px wide"],
+  ["Event table bar", "The alignment bar at 35% opacity · then 4px (space/1) · 8px of 1px ticks in the same color, one per pixel column holding an event"],
   ["Legend", "Legend, beside the bars, top aligned"],
   ["Table", "View panel · Data table, Compact · up to 22rem tall, scrolling with its header in view · one line per row"],
   ["Table actions", "Button, Small, Secondary, download · Button, Small, Ghost, reset · count in type/caption"],
@@ -87,7 +90,7 @@ const SPECS = [
 <DocsLayout title="Default object view and Python" description="The view for objects with no view of their own, tables, Load in Python, Python usage and the Timeseries alignment tab.">
   <Intro
     lead="Neurosift shows the default object view when an object has no view of its own, such as a ProcessingModule or a DfOverF container. Units, trials, electrodes and every other DynamicTable show as a table. Under every object sits Load in Python, and the file has a Python usage tab and a Timeseries alignment tab. These were the last views with the original look. The rebuild keeps what they read and how: the same groups, datasets, values, rows, scripts and time ranges."
-    status="Updated November 10, 2026 · UI library · Captured at 1440 × 900 with Dandiset 000728 · Built from Tree, Description list, Data table, Icon button, Button, Code block, Checkbox, Legend, View panel and Loading state"
+    status="Updated November 11, 2026 · UI library · Captured at 1440 × 900 with Dandiset 000728 · Built from Tree, Description list, Data table, Icon button, Button, Code block, Checkbox, Legend, View panel and Loading state"
     rules={[
       { title: "Same data", text: "Every attribute, value, script line and time range is the one read today." },
       { title: "One Python component", text: "Load in Python and Python usage share one component with Copy." },

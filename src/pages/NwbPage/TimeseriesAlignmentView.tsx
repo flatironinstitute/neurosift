@@ -16,6 +16,8 @@ import {
   useReducer,
   useState,
 } from "react";
+import { useInView } from "react-intersection-observer";
+import { eventTickColumns, eventTicksPath } from "./eventTickColumns";
 import { getHdf5DatasetData, getHdf5Group } from "./hdf5Interface";
 import {
   useNwbFileSpecifications,
@@ -25,6 +27,7 @@ import {
   neurodataTypeInheritsFrom,
   neurodataTypeInheritsFromAny,
 } from "./neurodataTypeInheritance";
+import { useElementSize } from "./useElementSize";
 import "./TimeseriesAlignmentView.css";
 
 type Props = {
@@ -37,9 +40,12 @@ type Props = {
 type TAItem = {
   path: string;
   neurodataType: string;
-  itemType: "timeseries" | "timeintervals" | "events";
+  itemType: "timeseries" | "timeintervals" | "events" | "eventstable";
   startTime: number;
   endTime: number;
+  /** An event table's event count and timestamp column, read in full only when shown. */
+  eventCount?: number;
+  timestampPath?: string;
 };
 
 type TimeseriesAlignmentState = {
@@ -79,7 +85,7 @@ const timeseriesRootPaths = new Set([
 ]);
 
 // Build sets of relevant data types and container types from NWB specs.
-// relevantTypes: types that descend from TimeSeries, TimeIntervals, or Events
+// relevantTypes: types that descend from TimeSeries, TimeIntervals, Events or EventsTable
 // containerTypes: types that might contain relevant types (NWBDataInterface
 //   subtypes, ProcessingModule) but are not themselves data types
 const buildTypeSets = (
@@ -92,7 +98,7 @@ const buildTypeSets = (
     if (
       neurodataTypeInheritsFromAny(
         def,
-        ["TimeSeries", "TimeIntervals", "Events"],
+        ["TimeSeries", "TimeIntervals", "Events", "EventsTable"],
         specs,
       )
     ) {
@@ -281,6 +287,39 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
             }
           }
         } else if (
+          neurodataTypeInheritsFrom(nt, "EventsTable", specifications)
+        ) {
+          const timestampDs = gr.datasets?.find(
+            (ds: any) => ds.name === "timestamp",
+          );
+          const N = timestampDs?.shape?.[0];
+          if (timestampDs && N && N > 0) {
+            const first = await getHdf5DatasetData(nwbUrl, timestampDs.path, {
+              slice: [[0, 1]],
+            });
+            if (canceled) return;
+            const last = await getHdf5DatasetData(nwbUrl, timestampDs.path, {
+              slice: [[N - 1, N]],
+            });
+            if (canceled) return;
+            const startTime = first?.[0] as number;
+            const endTime = last?.[0] as number;
+            if (!isNaN(startTime) && !isNaN(endTime)) {
+              timeseriesAlignmentDispatch({
+                type: "addItem",
+                item: {
+                  path: gr.path,
+                  neurodataType: nt,
+                  itemType: "eventstable",
+                  startTime,
+                  endTime,
+                  eventCount: N,
+                  timestampPath: timestampDs.path,
+                },
+              });
+            }
+          }
+        } else if (
           nt &&
           !gr.subgroups?.length &&
           !gr.datasets?.find((ds: any) => ds.name === "data") &&
@@ -424,6 +463,7 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
                 endTime={endTime}
                 series={types.indexOf(item.neurodataType) + 1}
                 visible={!hiddenPaths.has(item.path)}
+                nwbUrl={nwbUrl}
                 onToggleVisible={toggleVisible}
                 onOpenTimeseriesItem={onOpenTimeseriesItem}
               />
@@ -448,6 +488,7 @@ type TAItemViewProps = {
   /** The data/series step, 1 to 6; past six the other color. */
   series: number;
   visible: boolean;
+  nwbUrl: string;
   onToggleVisible: (path: string) => void;
   onOpenTimeseriesItem: (path: string) => void;
 };
@@ -460,11 +501,16 @@ const TAItemView: FunctionComponent<TAItemViewProps> = ({
   endTime,
   series,
   visible,
+  nwbUrl,
   onToggleVisible,
   onOpenTimeseriesItem,
 }) => {
   const t0 = startTime || 0;
   const span = (endTime || 1) - t0;
+  const eventTimes = useEventTimes(
+    nwbUrl,
+    visible ? item.timestampPath : undefined,
+  );
   const from = (item.startTime - t0) / span;
   const to = (item.endTime - t0) / span;
   const barRef = useCssVars<HTMLSpanElement>({
@@ -478,8 +524,10 @@ const TAItemView: FunctionComponent<TAItemViewProps> = ({
   if (typeof item.endTime !== "number")
     return <li>item.endTime is not a number</li>;
   const step = series >= 1 && series <= 6 ? series : "other";
+  const isEventsTable = item.itemType === "eventstable";
   return (
     <li
+      ref={eventTimes.ref}
       className={
         visible ? "alignment-item" : "alignment-item alignment-item--hidden"
       }
@@ -501,19 +549,91 @@ const TAItemView: FunctionComponent<TAItemViewProps> = ({
         />
         <span className="alignment-path">{item.path}</span>
         <span className="alignment-meta">
-          {item.neurodataType} · {item.startTime.toFixed(1)} –{" "}
-          {item.endTime.toFixed(1)} s
+          {item.neurodataType} ·{" "}
+          {item.eventCount !== undefined &&
+            `${item.eventCount.toLocaleString("en-US")} event${item.eventCount === 1 ? "" : "s"} · `}
+          {item.startTime.toFixed(1)} – {item.endTime.toFixed(1)} s
         </span>
       </div>
       {visible && (
-        <span className="alignment-track" aria-hidden="true">
+        <span
+          className={`alignment-track alignment-series--${step}`}
+          aria-hidden="true"
+        >
           <span
             ref={barRef}
-            className={`alignment-bar alignment-bar--${step}`}
+            className={
+              isEventsTable
+                ? "alignment-bar alignment-bar--range"
+                : "alignment-bar"
+            }
           />
         </span>
       )}
+      {visible && isEventsTable && (
+        <EventTicks times={eventTimes.times} t0={t0} span={span} step={step} />
+      )}
     </li>
+  );
+};
+
+/** Reads an event table's timestamps in full once its row scrolls into view, and keeps them. */
+const useEventTimes = (nwbUrl: string, timestampPath: string | undefined) => {
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    skip: !timestampPath,
+  });
+  const [times, setTimes] = useState<ArrayLike<number>>();
+  useEffect(() => {
+    if (!inView || !timestampPath || times) return;
+    let canceled = false;
+    getHdf5DatasetData(nwbUrl, timestampPath, {})
+      .then((data) => {
+        if (!canceled && data) setTimes(data as ArrayLike<number>);
+      })
+      .catch((err) => console.warn("Problem loading", timestampPath, err));
+    return () => {
+      canceled = true;
+    };
+  }, [inView, nwbUrl, timestampPath, times]);
+  return { ref, times };
+};
+
+const TICK_HEIGHT = 8;
+
+type EventTicksProps = {
+  times?: ArrayLike<number>;
+  t0: number;
+  span: number;
+  step: number | "other";
+};
+
+const EventTicks: FunctionComponent<EventTicksProps> = ({
+  times,
+  t0,
+  span,
+  step,
+}) => {
+  const [ref, { width }] = useElementSize<HTMLSpanElement>();
+  const path = useMemo(
+    () =>
+      times
+        ? eventTicksPath(eventTickColumns(times, t0, span, width), TICK_HEIGHT)
+        : "",
+    [times, t0, span, width],
+  );
+  return (
+    <span
+      ref={ref}
+      className={`alignment-ticks alignment-series--${step}`}
+      aria-hidden="true"
+    >
+      {width > 0 && (
+        <svg width={width} height={TICK_HEIGHT}>
+          {path && <path d={path} />}
+        </svg>
+      )}
+    </span>
   );
 };
 
