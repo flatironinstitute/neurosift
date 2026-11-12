@@ -42,6 +42,7 @@ const fallbackParentMap: { [type: string]: string } = {
   ElectrodesTable: "DynamicTable",
   // common extensions
   LabeledEvents: "Events", // ndx-events
+  EventsTable: "DynamicTable", // ndx-events
   PoseEstimationSeries: "SpatialSeries", // ndx-pose
   FiberPhotometryResponseSeries: "TimeSeries", // ndx-fiber-photometry
   OptogeneticPulsesTable: "TimeIntervals", // ndx-optogenetics
