@@ -38,7 +38,13 @@ export { Slider } from "./Slider/Slider";
 export { RangeSlider } from "./Slider/RangeSlider";
 
 export { DataTable } from "./Table/DataTable";
-export type { Column, Sort, SortDirection } from "./Table/DataTable";
+export type {
+  Cell,
+  Column,
+  ListCell,
+  Sort,
+  SortDirection,
+} from "./Table/DataTable";
 export { Tree } from "./Tree/Tree";
 export type { TreeNode } from "./Tree/Tree";
 

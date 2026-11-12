@@ -2,6 +2,26 @@
 import { ColumnSortState, RowItem, sortRowItems } from "./sortRowItems";
 import { tableColumns, tableCsv } from "./dynamicTableColumns";
 import {
+  type RaggedColumn,
+  cellSummary,
+  csvLeftOut,
+  rowSize,
+  detailSummary,
+  findRaggedColumns,
+  listCounts,
+  previewText,
+  SHORT_LIST,
+} from "./ragged";
+import {
+  type RaggedIndexes,
+  readRaggedColumn,
+  readRaggedRow,
+  useRaggedPreviews,
+} from "./useRaggedValues";
+import RaggedDetail from "./RaggedDetail";
+import { useOpenFixedTab } from "../../../openFixedTab";
+
+import {
   FunctionComponent,
   useCallback,
   useEffect,
@@ -11,10 +31,13 @@ import {
 } from "react";
 import {
   Button,
+  type Cell,
   type Column,
   DataTable,
   Disclosure,
   EmptyState,
+  InlineMessage,
+  type ListCell,
   LoadingState,
   ViewPanel,
 } from "@ui";
@@ -127,6 +150,8 @@ const DESCRIPTION_COLUMNS: Column<{ name: string; description: string }>[] = [
   },
 ];
 
+type OpenValues = { cell: Cell; values?: unknown[]; error?: string };
+
 const DynamicTable: FunctionComponent<Props> = ({ nwbUrl, path }) => {
   const [data, dataDispatch] = useReducer(dataReducer, {});
   const group = useHdf5Group(nwbUrl, path);
@@ -134,13 +159,25 @@ const DynamicTable: FunctionComponent<Props> = ({ nwbUrl, path }) => {
     columnSortReducer,
     {},
   );
+  const ragged = useMemo(() => {
+    const listed = group?.attrs["colnames"] as string[] | undefined;
+    if (!group || !listed) return [];
+    return findRaggedColumns(group.datasets, listed);
+  }, [group]);
   const colnames = useMemo(() => {
     if (!group) return undefined;
     let c = group.attrs["colnames"] as string[];
     if (!c) return undefined;
+    const raggedNames = new Set(ragged.map((r) => r.name));
+    const indexNames = new Set(ragged.flatMap((r) => r.indexes));
+    c = [
+      ...c.filter((name) => !indexNames.has(name)),
+      ...ragged.filter((r) => !r.listed).map((r) => r.name),
+    ];
     const idDataset = group.datasets.find((ds) => ds.name === "id");
     if (idDataset) {
       c = c.filter((name) => {
+        if (raggedNames.has(name)) return true;
         const ds = group.datasets.find((ds) => ds.name === name);
         if (ds && ds.shape[0] !== idDataset.shape[0]) {
           // for example, event_times, event_amplitudes
@@ -155,7 +192,8 @@ const DynamicTable: FunctionComponent<Props> = ({ nwbUrl, path }) => {
       }
     }
     return c;
-  }, [group]);
+  }, [group, ragged]);
+  const [indexes, setIndexes] = useState<RaggedIndexes>({});
   const [loading, setLoading] = useState(false);
   useEffect(() => {
     let canceled = false;
@@ -165,6 +203,21 @@ const DynamicTable: FunctionComponent<Props> = ({ nwbUrl, path }) => {
       let timer = Date.now();
       let toDispatch: { key: string; data: any[] }[] = [];
       for (const colname of colnames) {
+        const column = ragged.find((r) => r.name === colname);
+        if (column) {
+          // Only the indexes load up front: they give each row's count.
+          const levels: number[][] = [];
+          for (const name of column.indexes) {
+            const d = await getHdf5DatasetData(nwbUrl, `${path}/${name}`, {});
+            if (canceled) return;
+            if (!d) break;
+            levels.push(Array.from(d as ArrayLike<number>, Number));
+          }
+          if (levels.length !== column.indexes.length) continue;
+          setIndexes((x) => ({ ...x, [colname]: levels }));
+          toDispatch.push({ key: colname, data: listCounts(levels[0]) });
+          continue;
+        }
         const ds0 = await getHdf5Dataset(nwbUrl, path + "/" + colname);
         if (!ds0) {
           console.warn(
@@ -252,7 +305,77 @@ const DynamicTable: FunctionComponent<Props> = ({ nwbUrl, path }) => {
     return () => {
       canceled = true;
     };
-  }, [colnames, nwbUrl, path]);
+  }, [colnames, ragged, nwbUrl, path]);
+
+  const { previews, onRowVisible } = useRaggedPreviews(
+    nwbUrl,
+    path,
+    ragged,
+    indexes,
+  );
+
+  const lists = useMemo(() => {
+    const ret: { [name: string]: (row: RowItem) => ListCell } = {};
+    for (const column of ragged) {
+      const levels = indexes[column.name];
+      if (!levels) continue;
+      ret[column.name] = (item) => {
+        const row = Number(item.id);
+        const summary = cellSummary(column, levels, row);
+        const count = levels[0][row] - (row === 0 ? 0 : levels[0][row - 1]);
+        if (!summary.needsValues) return { ...summary, expandable: count > 0 };
+        const values = previews[column.name]?.[row];
+        return {
+          count: summary.count,
+          values: values && previewText(values),
+          loading: !values,
+          expandable: count > SHORT_LIST,
+        };
+      };
+    }
+    return ret;
+  }, [ragged, indexes, previews]);
+
+  const [open, setOpen] = useState<OpenValues>();
+  const openCell = useCallback(
+    (cell?: Cell) => {
+      const column = ragged.find((r) => r.name === cell?.column);
+      const levels = column && indexes[column.name];
+      if (!cell || !column || !levels) {
+        setOpen(undefined);
+        return;
+      }
+      setOpen({ cell });
+      const same = (o?: OpenValues) =>
+        o?.cell.row === cell.row && o.cell.column === cell.column;
+      readRaggedRow(nwbUrl, path, column, levels, Number(cell.row)).then(
+        (values) => setOpen((o) => (same(o) ? { cell, values } : o)),
+        (err: Error) =>
+          setOpen((o) => (same(o) ? { cell, error: err.message } : o)),
+      );
+    },
+    [ragged, indexes, nwbUrl, path],
+  );
+  const renderDetail = useCallback(
+    (item: RowItem, name: string) => {
+      const column = ragged.find((r) => r.name === name) as RaggedColumn;
+      const levels = indexes[name];
+      const row = Number(item.id);
+      const unit = group?.datasets.find((ds) => ds.name === name)?.attrs.unit;
+      return (
+        <RaggedDetail
+          key={`${name}:${row}`}
+          title={`${name} · row ${row}`}
+          summary={detailSummary(column, levels, row, unit)}
+          values={open?.values}
+          error={open?.error}
+          nested={column.indexes.length > 1}
+          shape={column.shape}
+        />
+      );
+    },
+    [ragged, indexes, group, open],
+  );
 
   const validColumnNames = useMemo(
     () => colnames?.filter((colname) => data[colname]),
@@ -318,22 +441,55 @@ const DynamicTable: FunctionComponent<Props> = ({ nwbUrl, path }) => {
   const columns = useMemo(
     () =>
       colnames && validColumnNames
-        ? tableColumns(colnames, validColumnNames, data)
+        ? tableColumns(colnames, validColumnNames, data, lists)
         : [],
-    [colnames, validColumnNames, data],
+    [colnames, validColumnNames, data, lists],
   );
 
   const name = path.split("/").pop() || path;
-  const handleExportAsCsv = useCallback(() => {
+  const [exporting, setExporting] = useState(false);
+  const [leftOut, setLeftOut] = useState<{ name: string; values: number }[]>(
+    [],
+  );
+  const openFixedTab = useOpenFixedTab();
+  const handleExportAsCsv = useCallback(async () => {
     if (!colnames || !validColumnNames) return;
-    const csv = tableCsv(colnames, validColumnNames, sortedRowItems);
+    setExporting(true);
+    const full: { [name: string]: unknown[][] | null } = {};
+    for (const column of ragged) {
+      const levels = indexes[column.name];
+      if (!levels || !validColumnNames.includes(column.name)) continue;
+      full[column.name] =
+        (await readRaggedColumn(nwbUrl, path, column, levels).catch(
+          () => undefined,
+        )) ?? null;
+    }
+    setExporting(false);
+    setLeftOut(
+      ragged
+        .filter((column) => full[column.name] === null)
+        .map((column) => ({
+          name: column.name,
+          values: (column.shape[0] ?? 0) * rowSize(column.shape),
+        })),
+    );
+    const csv = tableCsv(colnames, validColumnNames, sortedRowItems, full);
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
     const a = document.createElement("a");
     a.href = url;
     a.download = `${name}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [colnames, validColumnNames, sortedRowItems, name]);
+  }, [
+    colnames,
+    validColumnNames,
+    sortedRowItems,
+    name,
+    ragged,
+    indexes,
+    nwbUrl,
+    path,
+  ]);
 
   const [descriptionsOpen, setDescriptionsOpen] = useState(false);
 
@@ -385,6 +541,7 @@ const DynamicTable: FunctionComponent<Props> = ({ nwbUrl, path }) => {
             size="sm"
             icon="download"
             disabled={loading || total === 0}
+            loading={exporting}
             onClick={handleExportAsCsv}
           >
             Export as CSV
@@ -398,7 +555,12 @@ const DynamicTable: FunctionComponent<Props> = ({ nwbUrl, path }) => {
           columns={columns}
           rows={sortedRowItemsAbbreviated}
           rowKey={(row) => String(row.id)}
+          rowLabel={(row) => `row ${row.id}`}
           density="compact"
+          expanded={open?.cell}
+          onExpandedChange={openCell}
+          detail={renderDetail}
+          onRowVisible={onRowVisible}
           sort={
             columnSortState.primary && {
               key: columnSortState.primary.column,
@@ -413,6 +575,22 @@ const DynamicTable: FunctionComponent<Props> = ({ nwbUrl, path }) => {
         />
       </div>
       <div className="dynamic-table-footer">
+        {leftOut.length > 0 && (
+          <InlineMessage status="info">
+            {csvLeftOut(leftOut)}{" "}
+            {openFixedTab ? (
+              <Button
+                variant="link"
+                onClick={() => openFixedTab("python-usage")}
+              >
+                Python usage
+              </Button>
+            ) : (
+              "Python usage"
+            )}
+            .
+          </InlineMessage>
+        )}
         {shown < total && (
           <Button
             size="sm"

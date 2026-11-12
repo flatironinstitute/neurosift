@@ -784,6 +784,13 @@ main {
   max-inline-size: var(--layout-text-max);
 }
 
+.table-demo-detail {
+  margin: 0;
+  font: var(--type-code-sm);
+  letter-spacing: var(--type-code-sm-letter-spacing);
+  overflow-wrap: anywhere;
+}
+
 .table-demo-summary {
   min-block-size: 1lh;
   margin: 0;
