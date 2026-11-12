@@ -10,7 +10,7 @@ name: Preview Build
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, main-v3]
 
 permissions:
   contents: read
