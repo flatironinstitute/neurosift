@@ -39,7 +39,9 @@ const BEHAVIOR = [
   ["Overview panel", "Drag its edge between 240 and 480px, or use the arrow keys on it; collapse it with Hide overview. Both are remembered."],
   ["Section tabs", "Switch the workspace. Videos and Icephys appear only when the file has them."],
   ["Object tabs", "One per opened object; Main can’t be closed. × or Delete closes a tab."],
-  ["Object path", "The neurodata type and path; Copy path copies the path, Copy link a link to this file and tab."],
+  ["Object path", "Under the tabs on every tab with something to share, Videos and Icephys included: the neurodata type and path, then Copy path and Copy link. Copy link copies a link to this file and tab with only the settings changed from their defaults; the toast names them, such as “Link copied with the time window, channels and separation”."],
+  ["Settings in the address", "Plain names after the tab, such as &channels=8-15&separation=2&start=120&duration=5, only for settings changed from their defaults; the time window only when it was moved. The address follows the open tab and its settings as they change, replacing the history entry, so a refresh restores the view, Back still goes to the previous page, and the address is the same link Copy link gives."],
+  ["Combined tabs", "Each view's settings carry its object's name, such as LFPs.channels=8-15&trials.alignTo=start_time; the shortest path suffix that tells two objects apart when their names match. The same object twice keeps its name for its default view and adds the other view’s name, such as units-raster. start, duration and speed stay plain, as the views share them."],
   ["Status bar", "Counts what has been read, in words; Details explains the counts."],
 ];
 
@@ -51,6 +53,7 @@ const DIFFERS = [
   ["Sections", "Filled pills", "Section tabs, Schema and HDF5 at the end", "Built"],
   ["Section name", "“Widgets”", "“Views”", "To confirm"],
   ["Object path", "Share, then the path", "Type and path, then Copy path and Copy link", "Built"],
+  ["Settings in a link", "Only the file and tab; PSTH and Event-related signal settings after #, the spectrogram as JSON", "Changed settings as plain query parameters, kept in the address as they change; old links still open (upstream #361)", "Built"],
   ["Status bar", "19482 / 1267 / 85", "Read 19,531 groups · 1,272 datasets · 142 data requests", "Built"],
   ["Narrow windows", "Panels stack at 768px, on load only", "The panel takes the width when open, at any time", "Built"],
   ["Python usage", "Full-width Copy Script", "Code block with an install line and Copy", "Next"],

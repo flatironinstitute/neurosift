@@ -10,7 +10,7 @@ This list was checked on November 10, 2026, against upstream
 `flatironinstitute/neurosift` main at commit `c0e9b8c3` (October 23, 2026), and
 against Neurosift v1's routes. Rows marked **Tested** are loaded against live
 DANDI, EMBER and OpenNeuro data by the end-to-end suite in
-`e2e/tests/old-links.spec.ts`, which runs on every pull request. Every v1 form is
+`e2e/tests/old-links.spec.ts`, which runs on every pull request. Every v1 form and every older settings form is
 also covered by the unit tests in `src/util/legacyUrl.test.ts`, which check the
 exact address each one is rewritten to.
 
@@ -62,12 +62,23 @@ catalog filtered to that archive, and adds `q`, `mode`, `sort` and `types`.
 
 The file is given by `url`, or by `dandisetId` with `path` (the asset's path in
 the Dandiset). `dandisetId` and `dandisetVersion` link the file back to its
-Dandiset. `tab` takes one of the forms below. Each view also keeps its own
-settings in the address, under the same names as upstream: PSTH and
-Event-related signal after `#` (`units`, `alignTo`, `groupBy`, `windowStart`,
-`ta_series`, `ta_win` and the rest), Icephys, Videos, Pose and Spectrogram in the
-search parameters (`icephys…`, `videoLayout`, `videoOrder`, `videoTime`, `pose…`,
-`spec`).
+Dandiset. `tab` takes one of the forms below. Copy link in a tab's object path adds the
+settings its view changed from their defaults, as plain query parameters after
+`tab`: the time window (`start`, `duration`, only when it was moved), `speed`,
+and per view `channels`, `separation`, `renderer` (time series), `units`
+(raster, PSTH), the PSTH's `alignTo`, `groupBy`, `windowStart` and the rest, the
+spectrogram's config fields by name (`taper`, `colormap`, …), Event-related
+signal's `series`, `window`, `maxIntervals`, Icephys's `protocol`, `colorBy`,
+`lockY` and the rest, Videos' `order`, `layout`, `time`, and Pose's `hidden`,
+`edges`, `video`, `time` and the rest. They're read only when the link's `tab`
+is the tab that opens. The address bar keeps the open tab's changed settings as
+they change, replacing the history entry, so a refresh restores the view and the
+address equals what Copy link gives. In a combined tab each view's settings carry
+its object's name (`LFPs.channels=8-15&trials.alignTo=start_time`, or the
+shortest unique path suffix when names match; the same object in a second view
+adds the view's name, as in `units-raster`); `start`, `duration` and `speed`
+stay plain. Older forms of these settings
+are redirected, below.
 
 | Link | Example | Opens | Status | Tested |
 | --- | --- | --- | --- | --- |
@@ -79,7 +90,10 @@ search parameters (`icephys…`, `videoLayout`, `videoOrder`, `videoTime`, `pose
 | `tab=view:Plugin\|path^secondary` | …&tab=view:TrialAlignedSeries\|/intervals/trials^/processing/ophys/Fluorescence/RoiResponseSeries | The view with a second object | Works as before | No |
 | `tab=view:` a renamed plugin | …&tab=view:TimeAlignedSeries\|/intervals/trials | The Event-related signal view, its current name | Works as before | Yes |
 | `tab=` a JSON list | …&tab=["/units","Raster\|/units"] | Several objects in one combined view | Works as before | Yes |
-| A view's settings after `#` | …&tab=view:PSTH\|/intervals/trials#units=0,1 | The PSTH with units 0 and 1 picked | Works as before | Yes |
+| A view's settings | …&tab=/acquisition/LFPs&channels=8-15&separation=2&start=120&duration=5 | The LFPs with channels 8–15, separation 2 σ and the window 120–125 s | New with upstream #361 | No (checked in Playwright) |
+| PSTH or Event-related signal settings after `#` | …&tab=view:PSTH\|/intervals/trials#units=0,1 | The PSTH with units 0 and 1 picked | Redirected: the settings move to the query (`&units=0,1`); Event-related signal's `ta_series`, `ta_channels`, `ta_align`, `ta_win`, `ta_max`, `ta_groupby`, `ta_groupdisp` become `series`, `channels`, `alignTo`, `window`, `maxIntervals`, `groupBy`, `groupDisplay` | Yes |
+| Spectrogram `spec={…}` | …&tab=view:LfpSpectrogram\|/acquisition/LFPs&spec={"/acquisition/LFPs":{…}} | The spectrogram with the same settings, channels and window | Redirected to the changed fields by name, `channels`, `start` and `duration` | No (unit tests and Playwright) |
+| `icephys…`, `video…`, `pose…` settings | …&tab=icephys&icephysLockY=1 | The same settings | Redirected to the plain names: `lockY`; `videoOrder`, `videoLayout`, `videoTime` to `order`, `layout`, `time`; `poseTime`, `poseEdges`, `poseConf`, `poseFade`, `poseTrails`, `poseTrailSec`, `poseHidden`, `poseVideo`, `poseVideoSource` to `time`, `edges`, `confidence`, `fade`, `trails`, `trailSeconds`, `hidden`, `video`, `videoSource` | No (unit tests) |
 | `embedded=1` | …&embedded=1 | The page without the app bar | Works as before | Yes (from a v1 link) |
 | `lindi=0` | …&lindi=0 | The file read directly, not through a LINDI index | Works as before | No |
 

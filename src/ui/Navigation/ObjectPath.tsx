@@ -1,10 +1,12 @@
 import { IconButton } from "../IconButton/IconButton";
+import { Tooltip } from "../Tooltip/Tooltip";
 import "./Navigation.css";
 
 interface ObjectPathProps {
-  /** The neurodata type, such as ElectricalSeries. */
+  /** The neurodata type, such as ElectricalSeries, or what the tab shows, such as Videos. */
   type: string;
-  path: string;
+  /** One path, or several when the tab shows several objects. */
+  path: string | string[];
   onCopyPath: () => void;
   onCopyLink: () => void;
 }
@@ -16,13 +18,23 @@ export function ObjectPath({
   onCopyPath,
   onCopyLink,
 }: ObjectPathProps) {
+  const paths = typeof path === "string" ? [path] : path;
+  const text = paths.join(", ");
   return (
     <div className="ns-object-path">
       <span className="ns-object-path-type">{type}</span>
-      <span className="ns-object-path-path">{path}</span>
+      {paths.length > 1 ? (
+        <Tooltip label={text} placement="bottom">
+          <span className="ns-object-path-path" tabIndex={0}>
+            {text}
+          </span>
+        </Tooltip>
+      ) : (
+        <span className="ns-object-path-path">{text}</span>
+      )}
       <IconButton
         icon="copy"
-        label="Copy path"
+        label={paths.length > 1 ? "Copy paths" : "Copy path"}
         variant="ghost"
         size="sm"
         tooltipPlacement="bottom"

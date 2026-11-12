@@ -26,8 +26,10 @@ import {
   useRef,
   useState,
 } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { toWithCurrentHash } from "../urlHash";
+import {
+  useLinkedSettings,
+  useShareSettings,
+} from "@shared/shareLink/useShareSettings";
 import { getHdf5Group } from "../hdf5Interface";
 import { useElementSize } from "../useElementSize";
 import ConditionSelector from "./ConditionSelector";
@@ -84,16 +86,14 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   height,
   isExpanded,
 }) => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const linked = useLinkedSettings();
 
   const [hasIcephys, setHasIcephys] = useState<boolean | null>(null);
-  // Selection + encoding are seeded from the URL (a refresh / shared link), then
-  // kept in sync below; see the URL-persistence note above.
+  // Selection and encoding start from the link that opened the tab.
   const [scope, setScope] = useState<ScopeSelection>(() => ({
-    protoRow: numParam(searchParams, "icephysProtocol"),
-    condRow: numParam(searchParams, "icephysCondition"),
-    repRow: numParam(searchParams, "icephysRepetition"),
+    protoRow: numParam(linked, "protocol"),
+    condRow: numParam(linked, "condition"),
+    repRow: numParam(linked, "repetition"),
   }));
   const [sampleLimit, setSampleLimit] = useState(SAMPLE_SIZE);
   // Axis types include (string & {}) so a custom "col:<name>" column can be an axis.
@@ -105,7 +105,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     | "electrode"
     | "cell"
     | (string & {})
-  >(() => axisParam(searchParams, "icephysColorBy", COLOR_BY_VALUES, "auto"));
+  >(() => axisParam(linked, "colorBy", COLOR_BY_VALUES, "auto"));
   const [panelsBy, setPanelsBy] = useState<
     | "none"
     | "protocol"
@@ -114,7 +114,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     | "electrode"
     | "cell"
     | (string & {})
-  >(() => axisParam(searchParams, "icephysPanelsBy", PANELS_BY_VALUES, "none"));
+  >(() => axisParam(linked, "panelsBy", PANELS_BY_VALUES, "none"));
   // Optional second panel axis -> 2-D facet grid (rows = panelsBy, cols = this).
   const [panelsBy2, setPanelsBy2] = useState<
     | "none"
@@ -124,19 +124,17 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     | "electrode"
     | "cell"
     | (string & {})
-  >(() => axisParam(searchParams, "icephysAndBy", PANELS_BY_VALUES, "none"));
+  >(() => axisParam(linked, "andBy", PANELS_BY_VALUES, "none"));
   // Within-sweep x-window crop (ms), shared across all panels. Empty = full range.
   const [xWindowStr, setXWindowStr] = useState<{ start: string; end: string }>(
     () => ({
-      start: searchParams.get("icephysWindowStart") ?? "",
-      end: searchParams.get("icephysWindowEnd") ?? "",
+      start: linked.get("windowStart") ?? "",
+      end: linked.get("windowEnd") ?? "",
     }),
   );
   // Opt in: sharing a y range per unit is a pass over the loaded sweeps,
   // so it runs only when asked and once the sample has loaded.
-  const [lockY, setLockY] = useState(
-    () => searchParams.get("icephysLockY") === "1",
-  );
+  const [lockY, setLockY] = useState(() => linked.get("lockY") === "1");
 
   useEffect(() => {
     if (!isExpanded) return;
@@ -172,38 +170,22 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     setLockY(false);
   }, [nwbUrl]);
 
-  // Mirrors the view into the address (replace, defaults left out). The equality
-  // guard stops a navigate loop.
-  useEffect(() => {
-    const p = new URLSearchParams(searchParams);
-    const put = (key: string, value: string | number | undefined) => {
-      if (value === undefined || value === "") p.delete(key);
-      else p.set(key, String(value));
-    };
-    put("icephysProtocol", scope.protoRow);
-    put("icephysCondition", scope.condRow);
-    put("icephysRepetition", scope.repRow);
-    put("icephysColorBy", colorBy === "auto" ? undefined : colorBy);
-    put("icephysPanelsBy", panelsBy === "none" ? undefined : panelsBy);
-    put("icephysAndBy", panelsBy2 === "none" ? undefined : panelsBy2);
-    put("icephysWindowStart", xWindowStr.start || undefined);
-    put("icephysWindowEnd", xWindowStr.end || undefined);
-    put("icephysLockY", lockY ? "1" : undefined);
-    if (p.toString() !== searchParams.toString()) {
-      navigate(toWithCurrentHash(p), { replace: true });
-    }
-  }, [
-    scope.protoRow,
-    scope.condRow,
-    scope.repRow,
-    colorBy,
-    panelsBy,
-    panelsBy2,
-    xWindowStr.start,
-    xWindowStr.end,
-    lockY,
-    searchParams,
-    navigate,
+  const setting = (key: string, value: string, label: string) => ({
+    key,
+    value,
+    default: "",
+    label,
+  });
+  useShareSettings([
+    setting("protocol", String(scope.protoRow ?? ""), "the protocol"),
+    setting("condition", String(scope.condRow ?? ""), "the condition"),
+    setting("repetition", String(scope.repRow ?? ""), "the repetition"),
+    setting("colorBy", colorBy === "auto" ? "" : colorBy, "the colors"),
+    setting("panelsBy", panelsBy === "none" ? "" : panelsBy, "the panels"),
+    setting("andBy", panelsBy2 === "none" ? "" : panelsBy2, "the panels"),
+    setting("windowStart", xWindowStr.start, "the window"),
+    setting("windowEnd", xWindowStr.end, "the window"),
+    setting("lockY", lockY ? "1" : "", "the y-scale"),
   ]);
 
   // Protocol anchors; Condition and Repetition narrow it. Changing Condition

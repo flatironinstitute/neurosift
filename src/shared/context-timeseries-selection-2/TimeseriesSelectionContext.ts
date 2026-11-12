@@ -13,6 +13,9 @@ export type TimeseriesSelectionState = {
   visibleTimeRangeHasBeenSetAtLeastOnce: boolean;
   visibleStartTimeSec: number | undefined;
   visibleEndTimeSec: number | undefined;
+  /** The window the views open with, before anyone moves it. */
+  defaultVisibleStartTimeSec?: number;
+  defaultVisibleEndTimeSec?: number;
   currentTime: number | undefined;
 };
 
@@ -86,13 +89,19 @@ export const timeseriesSelectionReducer = (
         }
       }
 
+      const moved = state.visibleTimeRangeHasBeenSetAtLeastOnce;
       return {
         startTimeSec: newStartTimeSec,
         endTimeSec: newEndTimeSec,
         visibleStartTimeSec: newVisibleStartTimeSec,
         visibleEndTimeSec: newVisibleEndTimeSec,
-        visibleTimeRangeHasBeenSetAtLeastOnce:
-          state.visibleTimeRangeHasBeenSetAtLeastOnce,
+        defaultVisibleStartTimeSec: moved
+          ? state.defaultVisibleStartTimeSec
+          : newVisibleStartTimeSec,
+        defaultVisibleEndTimeSec: moved
+          ? state.defaultVisibleEndTimeSec
+          : newVisibleEndTimeSec,
+        visibleTimeRangeHasBeenSetAtLeastOnce: moved,
         currentTime: state.currentTime,
       };
     }

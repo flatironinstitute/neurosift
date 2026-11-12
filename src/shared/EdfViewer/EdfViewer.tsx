@@ -2,6 +2,15 @@ import { useCssVars } from "@components/useCssVars";
 import { TimeseriesTimestampsClient } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 import { AccordionItem, DescriptionList, LoadingState, Select } from "@ui";
+import {
+  formatIndices,
+  parseIndices,
+  parseNumber,
+} from "@shared/shareLink/linkSettings";
+import {
+  useLinkedSettings,
+  useShareSettings,
+} from "@shared/shareLink/useShareSettings";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import TimeView, {
   TIME_VIEW_CHROME,
@@ -46,7 +55,13 @@ const EdfViewer: FunctionComponent<EdfPageProps> = ({
   const [selectedChannelIndices, setSelectedChannelIndices] = useState<
     number[]
   >([]);
-  const [channelSeparation, setChannelSeparation] = useState<number>(0);
+  const linked = useLinkedSettings();
+  const [channelSeparation, setChannelSeparation] = useState<number>(() => {
+    const value = parseNumber(linked.get("separation"));
+    return value !== undefined && channelSeparationChoices.includes(value)
+      ? value
+      : 0;
+  });
   const [open, setOpen] = useState({ channels: true, openNeuro: true });
   const timeseriesTimestampsClient =
     useTimeseriesTimestampsClientForEdfReader(edfReader);
@@ -83,12 +98,37 @@ const EdfViewer: FunctionComponent<EdfPageProps> = ({
     { start: number; end: number } | undefined
   >();
   const time = useTimeWindow();
+  const allChannels = useMemo(
+    () => edfReader?.getSignalTextLabels().map((_, i) => i) ?? [],
+    [edfReader],
+  );
   useEffect(() => {
-    // select all the channels to start
-    setSelectedChannelIndices(
-      edfReader?.getSignalTextLabels().map((_, i) => i) || [],
+    // All channels to start, or the link's.
+    const picked = parseIndices(linked.get("channels"))?.filter(
+      (i) => i < allChannels.length,
     );
-  }, [edfReader]);
+    setSelectedChannelIndices(picked?.length ? picked : allChannels);
+  }, [allChannels, linked]);
+  useShareSettings(
+    edfReader
+      ? [
+          {
+            key: "channels",
+            value: formatIndices(
+              [...selectedChannelIndices].sort((a, b) => a - b),
+            ),
+            default: formatIndices(allChannels),
+            label: "channels",
+          },
+          {
+            key: "separation",
+            value: String(channelSeparation),
+            default: "0",
+            label: "separation",
+          },
+        ]
+      : [],
+  );
 
   const loading = !edfReader
     ? "Reading the EDF file"

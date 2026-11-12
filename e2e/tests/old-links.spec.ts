@@ -155,6 +155,8 @@ test.describe("NWB files", () => {
       "view:PSTH|/intervals/trials",
       "2 of 590 selected",
     );
+    expect(params(page).get("units")).toBe("0,1");
+    expect(new URL(page.url()).hash).toBe("");
   });
 
   test("a renamed plugin's old name opens its view", async ({ page }) => {
@@ -164,7 +166,7 @@ test.describe("NWB files", () => {
       "view:TimeAlignedSeries|/intervals/trials",
       "Channel 0",
     );
-    await expect.poll(() => new URL(page.url()).hash).toContain("ta_series=");
+    await expect.poll(() => new URL(page.url()).hash).toBe("");
   });
 
   test("an object path and a JSON list of items", async ({ page }) => {

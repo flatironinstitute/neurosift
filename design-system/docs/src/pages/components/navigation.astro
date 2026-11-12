@@ -43,6 +43,7 @@ const SPECS = [
   ["Overflow", "Below 36rem, the middle levels fold into “…”, which shows them again"],
   ["Folder trail", "On the dataset page’s Files: All files, then folders in type/code-sm · Copy link to this folder, Icon button, Ghost, 24px · 1px border/subtle below"],
   ["Object path", "32px · surface/page · 1px border/subtle below · type/code-sm · Icon button, Ghost, 24px"],
+  ["Several paths", "Joined with “, ” · one line, cut with … · focusable, with a Tooltip below holding the full list"],
 ];
 
 const code = `import { AppBar, Breadcrumbs, ObjectPath } from "@ui";
@@ -69,10 +70,10 @@ const code = `import { AppBar, Breadcrumbs, ObjectPath } from "@ui";
 <DocsLayout title="Navigation and breadcrumbs" description="App bar, Breadcrumbs and Object path: where people are, at every layer.">
   <Intro
     lead="People move from an archive to a Dandiset, into a folder, open a file and then an object inside it. Navigation keeps that path in view: the app bar for the whole tool, breadcrumbs for where the open file came from, tabs for views of the file, and the object path for what’s on screen."
-    status="Updated November 9, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    status="Updated November 11, 2026 · Components · Every example on this page is the component the app imports from @ui"
     rules={[
       { title: "Always know where you are", text: "Breadcrumbs name the archive, Dandiset, folder and file on every page below the archive." },
-      { title: "Every state has a URL", text: "Search queries, open tabs and the time window live in the URL, so Back and shared links return the same view." },
+      { title: "Every state has a URL", text: "Search queries and open tabs live in the URL, and Copy link adds a view’s changed settings, so Back and shared links return the same view." },
       { title: "One layer, one job", text: "App bar: the tool. Breadcrumbs: the data’s location. Tabs: views. Object path: what’s open." },
     ]}
   />
@@ -109,9 +110,13 @@ const code = `import { AppBar, Breadcrumbs, ObjectPath } from "@ui";
     <p class="doc-note">The first trail is a file view; it replaces “(view)” and adds the file name. The second is the same trail in a narrow space: the middle levels fold into “…”, which shows them again. The DANDI crumb links to the search with the last query, replacing “← Back to DANDI”.</p>
   </DocSection>
 
-  <DocSection title="Object path" lead="Above the open object: its neurodata type and full HDF5 path, with Copy path and Copy link. A toast confirms each.">
+  <DocSection title="Object path" lead="Above every tab with something to share, Videos and Icephys included: its neurodata type and full HDF5 path, with Copy path and Copy link. A toast confirms each.">
     <div class="object-path-demo">
       <ObjectPathDemo client:visible />
+    </div>
+    <p class="doc-note">Several paths, as on the Videos tab: listed with commas and cut with … when they don’t fit. Hover or Tab to the paths to read them all in a tooltip. The button reads Copy paths and copies every path, one per line.</p>
+    <div class="object-path-demo object-path-demo--narrow">
+      <ObjectPathDemo client:visible type="Videos" paths={["/acquisition/BehavioralVideoCamera1", "/acquisition/BehavioralVideoCamera2", "/acquisition/BehavioralVideoCamera3"]} />
     </div>
   </DocSection>
 
@@ -120,7 +125,10 @@ const code = `import { AppBar, Breadcrumbs, ObjectPath } from "@ui";
       <li><strong>Back works.</strong> The browser’s Back returns to the previous view with its state, including the search query (upstream #321).</li>
       <li><strong>Breadcrumbs keep state.</strong> The DANDI crumb links to the search with the last query and mode in the URL.</li>
       <li><strong>Folders have links.</strong> A dataset’s file list shows one folder, named by <code>location</code> in the URL. Its trail passes <code>onNavigate</code>, so a crumb moves in the app and adds a history entry; Back goes up again, and new-tab clicks still work.</li>
-      <li><strong>Copy link, not Share.</strong> The object path’s link button copies a URL to this file and tab; a toast confirms it.</li>
+      <li><strong>Copy link, not Share.</strong> The object path’s link button copies a URL to this file and tab, with only the view’s settings that differ from their defaults, under plain names: <code>…&amp;tab=/acquisition/LFPs&amp;channels=8-15&amp;separation=2</code>. The time window goes in only when it was moved. The toast names what the link carries.</li>
+      <li><strong>The address is the link.</strong> As a view's settings change, the address follows them, replacing the history entry rather than adding one: a refresh restores the view, Back still goes to the previous page, and the address equals what Copy link gives. Switching tabs shows that tab's settings.</li>
+      <li><strong>Combined tabs.</strong> Each view's settings carry its object's name, as in <code>LFPs.channels=8-15&amp;trials.alignTo=start_time</code>; The same object in two views keeps its name for the default view and adds the other’s, such as <code>units-raster</code>. start, duration and speed stay plain.</li>
+      <li><strong>Old links still open.</strong> PSTH settings after #, the spectrogram’s spec= JSON and the older icephys…, video… and pose… names are read and rewritten to the plain form once.</li>
     </ul>
   </DocSection>
 

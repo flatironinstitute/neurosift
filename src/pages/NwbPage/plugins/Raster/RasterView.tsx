@@ -2,6 +2,11 @@ import {
   useTimeRange,
   useTimeseriesSelection,
 } from "@shared/context-timeseries-selection-2";
+import {
+  useLinkedSettings,
+  useShareSettings,
+} from "@shared/shareLink/useShareSettings";
+import { formatRun, parseRun } from "@shared/shareLink/linkSettings";
 import { FunctionComponent, useEffect, useState } from "react";
 import { ChannelWindow, LoadingState, SegmentedControl } from "@ui";
 import TimeView, { TIME_VIEW_INSET } from "../common/TimeView";
@@ -55,10 +60,34 @@ const RasterViewChild = ({
   condensed?: boolean;
 }) => {
   const [plotData, setPlotData] = useState<PlotData | null>(null);
-  const [usePlotly, setUsePlotly] = useState(false);
+  const linked = useLinkedSettings();
+  const [usePlotly, setUsePlotly] = useState(
+    () => linked.get("renderer") === "plotly",
+  );
   const [isLoading, setIsLoading] = useState(false);
-  const [visibleUnitsStart, setVisibleUnitsStart] = useState(0);
-  const [numVisibleUnits, setNumVisibleUnits] = useState(4);
+  const [linkedUnits] = useState(() => {
+    const run = parseRun(linked.get("units"));
+    const total = spikeTrainsClient.unitIds.length;
+    return run && run.first < total
+      ? { first: run.first, count: Math.min(run.count, total - run.first) }
+      : { first: 0, count: 4 };
+  });
+  const [visibleUnitsStart, setVisibleUnitsStart] = useState(linkedUnits.first);
+  const [numVisibleUnits, setNumVisibleUnits] = useState(linkedUnits.count);
+  useShareSettings([
+    {
+      key: "units",
+      value: formatRun(visibleUnitsStart, numVisibleUnits),
+      default: formatRun(0, 4),
+      label: "units",
+    },
+    {
+      key: "renderer",
+      value: usePlotly ? "plotly" : "canvas",
+      default: "canvas",
+      label: "the renderer",
+    },
+  ]);
 
   const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
   const visibleDuration =

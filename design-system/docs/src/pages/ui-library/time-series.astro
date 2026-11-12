@@ -40,6 +40,7 @@ const BEHAVIOR = [
   ["One player at a time", "Views in one tab share a time window, so only one plays it. While one plays, the others turn Play and the speed off and say “Playing in another view”, until it pauses, ends or closes. Other tabs keep their own windows and aren't affected."],
   ["Spatial X/Y while playing", "The path draws up to the window’s right edge, with a dot at the current position; earlier samples in the window stay as the trail. Play shortens a window longer than 30 s to 30 s, keeping its right edge, so the path redraws smoothly; shorter windows stay as they are."],
   ["Loading ahead", "While playing, traces load the next seconds before the window reaches them."],
+  ["Copy link", "Adds what changed: channels (8-15), separation, renderer=plotly, speed, and start and duration when the window was moved. The raster adds units (4-7) and renderer. Opening the link restores them."],
 ];
 
 const DIFFERS = [
@@ -50,6 +51,7 @@ const DIFFERS = [
   ["Group legend", "Inline swatches", "The chart’s own colors beside each group, with counts", "Built"],
   ["Channels + and −", "Double and halve", "The same; stepping by one is to confirm", "To confirm"],
   ["Playback", "—", "Play, pause and speed on traces and Spatial X/Y, after the Time window", "Built"],
+  ["Shared links", "Only the file and tab", "Changed channels, separation, renderer, speed and the moved window (upstream #361)", "Built"],
 ];
 
 const SPECS = [

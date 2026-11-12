@@ -40,6 +40,7 @@ const BEHAVIOR = [
   ["Categories", "Pick a column, then which of its values to show."],
   ["Sort units by", "A column, then Ascending or Descending."],
   ["Display", "Raster, histogram, smoothing, number of bins and chart height."],
+  ["Copy link", "PSTH: the changed settings under the names upstream uses (units, alignTo, groupBy, categories, windowStart, windowEnd, sortBy, sortDir, showRaster, showHist, smoothed, numBins, plotHeight), now in the query. Raster: units and renderer. A link with them after # still opens."],
 ];
 
 const DIFFERS = [
@@ -50,6 +51,7 @@ const DIFFERS = [
   ["Unit header", "A stray “0”; ROIs called Unit", "Unit or ROI, without the 0", "Built"],
   ["Figpack job status", "Tinted boxes with a bold “Job Status:” link, a bright blue Generate button and a green ✓ line", "Generate, a Primary button; Info, Error and Warning alerts with Refresh status and View job; a success badge when done", "Built"],
   ["Settings side", "Left of the charts", "Right, as in every View panel", "To confirm"],
+  ["Shared links", "PSTH settings after #, rewritten as you work", "In the query, changed settings only, kept in the address as they change", "Built"],
 ];
 
 const SPECS = [

@@ -13,7 +13,7 @@ export function BreadcrumbsDemo({ items }: { items: Crumb[] }) {
   return <Breadcrumbs items={items} />;
 }
 
-function Path() {
+function Path({ type, paths }: { type: string; paths: string[] }) {
   const toast = useToast();
   const copy = (text: string, message: string) =>
     navigator.clipboard.writeText(text).then(
@@ -21,24 +21,35 @@ function Path() {
       () =>
         toast.show({
           status: "error",
-          message: "Couldn’t copy. Copy it from the address bar.",
+          message: "Couldn’t copy. Your browser blocked it.",
         }),
     );
   return (
     <ObjectPath
-      type="ElectricalSeries"
-      path="/acquisition/LFPs"
-      onCopyPath={() => copy("/acquisition/LFPs", "Path copied")}
+      type={type}
+      path={paths.length > 1 ? paths : paths[0]}
+      onCopyPath={() =>
+        copy(
+          paths.join("\n"),
+          paths.length > 1 ? "Paths copied" : "Path copied",
+        )
+      }
       onCopyLink={() => copy(window.location.href, "Link copied")}
     />
   );
 }
 
 /** The object path with its copy buttons wired to toasts, as the app does. */
-export function ObjectPathDemo() {
+export function ObjectPathDemo({
+  type = "ElectricalSeries",
+  paths = ["/acquisition/LFPs"],
+}: {
+  type?: string;
+  paths?: string[];
+}) {
   return (
     <ToastProvider>
-      <Path />
+      <Path type={type} paths={paths} />
     </ToastProvider>
   );
 }

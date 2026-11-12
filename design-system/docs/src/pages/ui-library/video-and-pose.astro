@@ -38,6 +38,8 @@ const BEHAVIOR = [
   ["Trails", "Show trails, with a trail length in seconds."],
   ["Confidence", "Hide markers below a confidence; Fade by confidence."],
   ["Videos", "Check videos to show them; all play on one clock; Row, Column or Grid when two or more are shown."],
+  ["Videos path row", "As on object tabs: “Videos” and the paths shown, comma-separated and cut with … when long; hover or focus shows them all. With several, the button reads Copy paths and copies every path, one per line. With none shown, the row lists every video in the file. Copy link adds the videos shown (order), the layout and the time, when they differ from the defaults."],
+  ["Pose link", "Copy link in the object path adds the changed settings: hidden, edges, poseOnly, confidence, fade, trails, trailSeconds, video, videoSource and the paused time."],
 ];
 
 const DIFFERS = [
@@ -46,6 +48,7 @@ const DIFFERS = [
   ["Alignment", "Pose and video bars with a status line", "Two warnings in words under Video", "Built"],
   ["Errors", "Separate messages", "One error alert with the cause and Open settings", "Built"],
   ["Video list", "Video Selection with checkboxes", "Each video with its path and whether it has frame times", "Built"],
+  ["Share", "A share icon beside Playback; selection and layout written to the address as they change", "Copy link in the path row, as on every tab; the address keeps the changed settings as they change, so a refresh keeps the arrangement (upstream #412)", "Built"],
   ["Fullscreen", "The browser’s own, on the pose overlay", "Not on the pose overlay", "To confirm"],
 ];
 

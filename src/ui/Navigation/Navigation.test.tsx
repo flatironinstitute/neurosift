@@ -148,4 +148,29 @@ describe("ObjectPath", () => {
     expect(onCopyPath).toHaveBeenCalledTimes(1);
     expect(onCopyLink).toHaveBeenCalledTimes(1);
   });
+
+  it("lists several paths in one focusable line, with the full list in a tooltip", () => {
+    render(
+      <ObjectPath
+        type="Videos"
+        path={["/acquisition/a", "/acquisition/b"]}
+        onCopyPath={() => {}}
+        onCopyLink={() => {}}
+      />,
+    );
+    const line = screen.getByText("/acquisition/a, /acquisition/b", {
+      selector: ".ns-object-path-path",
+    });
+    expect(line.tabIndex).toBe(0);
+    expect(
+      screen.getByText("/acquisition/a, /acquisition/b", {
+        selector: ".ns-tooltip",
+      }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Copy paths" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Copy path" })).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Copy link to this tab" }),
+    ).toBeTruthy();
+  });
 });
