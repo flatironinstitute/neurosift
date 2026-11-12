@@ -55,8 +55,7 @@
   overflow-wrap: anywhere;
 }
 
-.dataset-tags,
-.dataset-chat {
+.dataset-tags {
   display: flex;
   flex-wrap: wrap;
   align-items: center;

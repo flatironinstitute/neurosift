@@ -1,5 +1,4 @@
 import {
-  Badge,
   Breadcrumbs,
   Button,
   DescriptionList,
@@ -8,6 +7,7 @@ import {
   Tag,
 } from "@ui";
 import { FunctionComponent, useState } from "react";
+import ChatLink from "../ChatLink/ChatLink";
 import "./DatasetOverview.css";
 
 export type DatasetFact = { term: string; value: string; code?: boolean };
@@ -150,12 +150,7 @@ const DatasetOverview: FunctionComponent<DatasetOverviewProps> = ({
     ))}
 
     {chatHref && (
-      <p className="dataset-chat">
-        <a href={chatHref} target="_blank" rel="noopener noreferrer">
-          Ask about this dataset in Chat
-        </a>
-        <Badge status="info">Experimental</Badge>
-      </p>
+      <ChatLink href={chatHref}>Ask about this dataset in Chat</ChatLink>
     )}
   </div>
 );

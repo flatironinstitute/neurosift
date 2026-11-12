@@ -38,6 +38,20 @@ describe("OverviewPanel", () => {
     ).toEqual(["Dandiset", "Session"]);
   });
 
+  it("shows what a group adds after its fields, before the next group", () => {
+    setup({
+      groups: [
+        { ...GROUPS[0], after: <a href="#chat">Ask about this file</a> },
+        GROUPS[1],
+      ],
+    });
+    const panel = screen.getByRole("region", { name: "Overview" });
+    const order = [...panel.querySelectorAll("dl, a")].map(
+      (el) => el.getAttribute("aria-label") ?? el.textContent,
+    );
+    expect(order).toEqual(["Dandiset", "Ask about this file", "Session"]);
+  });
+
   it("collapses with one button, and reopens from the rail", () => {
     const { onCollapsedChange } = setup();
     fireEvent.click(screen.getByRole("button", { name: "Hide overview" }));

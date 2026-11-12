@@ -6,8 +6,9 @@ import {
   Select,
   type Description,
 } from "@ui";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import ChatLink from "../common/ChatLink/ChatLink";
 import { DandisetVersionInfo } from "../DandiPage/dandi-types";
 import DatasetDataView from "./DatasetDataView";
 import { getLindiUrl, isUsingLindi } from "./hdf5Interface";
@@ -24,6 +25,8 @@ interface FileOverviewProps {
   dandisetPath: string;
   availableVersions: VersionOption[];
   onVersionChange: (version: string) => void;
+  /** The chat about this file, only for DANDI files. */
+  chatHref?: string;
   width: number;
   onWidthChange: (width: number) => void;
   collapsed: boolean;
@@ -58,6 +61,7 @@ export default function FileOverview({
   dandisetPath,
   availableVersions,
   onVersionChange,
+  chatHref,
   ...panel
 }: FileOverviewProps) {
   // Whether LINDI is used is known only once the file starts loading.
@@ -66,7 +70,8 @@ export default function FileOverview({
     const timer = setTimeout(() => recheck((n) => n + 1), 2000);
     return () => clearTimeout(timer);
   }, [nwbUrl]);
-  const groups: { title: string; items: Description[] }[] = [];
+  const groups: { title: string; items: Description[]; after?: ReactNode }[] =
+    [];
   if (dandisetInfo) {
     const id = dandisetInfo.dandiset.identifier;
     groups.push({
@@ -115,6 +120,9 @@ export default function FileOverview({
           ),
         },
       ],
+      after: chatHref && (
+        <ChatLink href={chatHref}>Ask about this file in Chat</ChatLink>
+      ),
     });
   }
   if (nwbFileOverview && !("error" in nwbFileOverview))
