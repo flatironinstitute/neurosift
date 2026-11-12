@@ -7,7 +7,7 @@ import DocSection from "../../components/DocSection.astro";
 import DocTable from "../../components/DocTable.astro";
 import Intro from "../../components/Intro.astro";
 import TimeDemo from "../../components/TimeDemo";
-import { Playback } from "@ui";
+import { Playback, SegmentedControl } from "@ui";
 import DocsLayout from "../../layouts/DocsLayout.astro";
 
 const WINDOW = [
@@ -21,7 +21,8 @@ const WINDOW = [
 
 const KEYS = [
   ["Zoom in or out", "Mouse wheel over the plot", "=  -"],
-  ["Move earlier or later", "Drag the plot, or drag the overview box", "Left and right arrows"],
+  ["Move earlier or later", "Drag the plot in Pan mode, or drag the overview box", "Left and right arrows"],
+  ["Zoom to a stretch", "Drag across the plot in Select mode, or Shift+drag in Pan; Escape cancels", "Type the length and start, or zoom"],
   ["Jump to start or end", "—", "Home  End"],
   ["Step the overview", "Click the strip to center the window there", "Arrows step a tenth; Shift steps a whole window"],
   ["Play or pause", "Play button", "Space"],
@@ -43,6 +44,8 @@ const SPECS = [
   ["Gap in a group", "8px · space/2, with 1px × 16px border/subtle dividers"],
   ["Overview track", "24px · surface/page · 1px border/strong · radius/xs"],
   ["Overview window", "data/selection fill · 1px action/primary, 2px on hover and drag"],
+  ["Drag to", "Segmented control, Small · Pan (pan--horizontal) and Select (zoom--area)"],
+  ["Selection band", "data/selection fill · 1px border/selected · Data tooltip with the range and length"],
   ["Cursor", "2px · data/cursor"],
   ["Zoom step", "1.4×"],
   ["Step", "10% of the window"],
@@ -89,6 +92,15 @@ const OVERVIEW_STATES = [
   ]
 ];
 const noop = () => {};
+const DRAG_TO = [
+  ["Pan", "The default. Dragging the plot moves the window; the pointer is a grab hand. Holding Shift over the plot turns it to a crosshair, and Shift+drag selects."],
+  ["Select", "Dragging across the plot shades the stretch and reads out its range and length; releasing zooms the window to it. The pointer is a crosshair. It stays in Select until switched back."],
+  ["Escape", "Cancels a drag in progress; the window doesn’t change. A click or a drag under 4px doesn’t zoom."],
+];
+const DRAG_OPTIONS = [
+  { value: "pan", label: "Pan", icon: "pan--horizontal" as const },
+  { value: "select", label: "Select", icon: "zoom--area" as const },
+];
 const PLAYBACK_STATES = [
   [
     "Stopped",
@@ -120,7 +132,7 @@ const PLAYBACK_STATES = [
 <DocsLayout title="Time controls" description="Time window, Channel window, Time overview and Playback: one shared time for every view.">
   <Intro
     lead="Time controls decide which stretch of a recording a plot shows. They are what makes Neurosift different from a file browser: people zoom from a 23-minute session down to a few spikes, step through trials, and play behavior video in step with neural data. Every view of a file shares the same time window and cursor, so the controls behave the same everywhere."
-    status="Updated November 11, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    status="Updated November 12, 2026 · Components · Every example on this page is the component the app imports from @ui"
     rules={[
       { title: "One time for every view", text: "The window and cursor are shared, so moving one view moves them all." },
       { title: "Numbers you can see and type", text: "The window’s length and start are fields, not labels that only look editable." },
@@ -130,7 +142,7 @@ const PLAYBACK_STATES = [
 
   <Existing page="time-controls" />
 
-  <DocSection title="Plot toolbar" lead="The order is the same in every view: a one-line summary of the recording, then time with playback right after it, then the other axis. Groups wrap to a second line when the panel is narrow. All of these share one window and cursor.">
+  <DocSection title="Plot toolbar" lead="The order is the same in every view: a one-line summary of the recording, then time, Drag to and playback right after it, then the other axis. Groups wrap to a second line when the panel is narrow. All of these share one window and cursor.">
     <TimeDemo client:visible />
     <p class="doc-note">The plot itself stays as it is; the stand-in here takes the same keys a focused plot would. For long sessions the Time overview sits under the toolbar, so people always see where they are.</p>
   </DocSection>
@@ -140,6 +152,16 @@ const PLAYBACK_STATES = [
       {WINDOW.map(([control, does, key]) => <tr><th scope="row">{control}</th><td>{does}</td><td>{key}</td></tr>)}
     </DocTable>
     <p class="doc-note">A value that won’t fit gets a reason, such as “Start must be between 0 and 1,371.94 s.”, in place of snapping back. Times show two decimals, with a thousands comma past 1,000 s.</p>
+  </DocSection>
+
+  <DocSection title="Drag to" lead="Right after the Time window, on views whose plot is drawn on the shared time window: what a drag across the plot does. Selection is time only; the value axis keeps its own controls.">
+    <div class="demo-row">
+      <SegmentedControl label="Drag to" size="sm" value="select" onChange={noop} options={DRAG_OPTIONS} />
+    </div>
+    <DocTable caption="Drag to" columns={["Mode","Behavior"]}>
+      <DocRows rows={DRAG_TO} />
+    </DocTable>
+    <p class="doc-note">The view's frame adds it to the controls row once a plot on the shared time axis is inside, so every view on recording time gets it without a new component. The overview, Earlier and Later keep moving the window in either mode, and a drag pauses playback, as other window edits do. There is no undo: Zoom out and the overview go back.</p>
   </DocSection>
 
   <DocSection title="Channel window" lead="The same pattern for the other axis. Channels in a timeseries, units in a raster: the label and total change, the behavior doesn’t.">
@@ -183,6 +205,7 @@ const PLAYBACK_STATES = [
       <li><strong>The overview is a slider.</strong> Its value reads as the window, such as “3.75 s from 412.00 s”.</li>
       <li><strong>Changes are announced.</strong> A polite status reads the new window after a zoom or step, once it settles.</li>
       <li><strong>No motion surprises.</strong> Playback never starts by itself.</li>
+      <li><strong>Drag has a keyboard path.</strong> Drag to is a radio group that arrow keys move through; the window fields and zoom buttons set any stretch a drag can. The plot’s name says Shift+drag selects.</li>
       <li><strong>Turned off with a reason.</strong> While another view plays, Play and the speed are disabled and described by the status that says why.</li>
     </ul>
   </DocSection>

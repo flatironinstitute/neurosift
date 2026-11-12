@@ -1,6 +1,7 @@
 import { useHdf5Group } from "@hdf5Interface";
 import {
   ChannelWindow,
+  clampWindow,
   LoadingState,
   SegmentedControl,
   Slider,
@@ -103,6 +104,10 @@ export const SimpleTimeseriesView: FunctionComponent<
     width: width - TIME_VIEW_INSET,
     height,
     zoomInRequired: false,
+    onVisibleTimeChange: (start: number, end: number) =>
+      time.onChange(
+        clampWindow({ start, duration: end - start }, time.session),
+      ),
   };
 
   let plot;

@@ -1,0 +1,4 @@
+/* As wide as the plot, so its box is the plot's for drag to select. */
+.timeseries-plotly {
+  inline-size: fit-content;
+}
