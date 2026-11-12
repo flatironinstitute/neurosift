@@ -1,5 +1,6 @@
 import { FunctionComponent } from "react";
 import DatasetOverview from "../common/DatasetOverview/DatasetOverview";
+import { dandisetChatHref } from "../common/ChatLink/chatHref";
 import { dandisetContent } from "../common/DatasetOverview/dandiOverview";
 import { DandisetVersionInfo } from "../DandiPage/dandi-types";
 
@@ -35,7 +36,7 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
         href: `https://dandiarchive.org/dandiset/${id}/${info.version}`,
       }}
       {...dandisetContent(info)}
-      chatHref={`https://dandiset-explorer.neurosift.app/chat?dandisetId=${id}&dandisetVersion=${info.version}`}
+      chatHref={dandisetChatHref(id, info.version)}
     />
   );
 };

@@ -19,7 +19,8 @@ const STEP = 16;
 
 interface OverviewPanelProps {
   title: string;
-  groups: { title: string; items: Description[] }[];
+  /** Each group's fields; after, such as a link, sits under them. */
+  groups: { title: string; items: Description[]; after?: ReactNode }[];
   /** Anything after the groups, such as a description in a Disclosure. */
   children?: ReactNode;
   width: number;
@@ -107,6 +108,7 @@ export function OverviewPanel({
           <div className="ns-overview-panel-group" key={group.title}>
             <p className="ns-overview-panel-group-title">{group.title}</p>
             <DescriptionList label={group.title} items={group.items} />
+            {group.after}
           </div>
         ))}
         {children}

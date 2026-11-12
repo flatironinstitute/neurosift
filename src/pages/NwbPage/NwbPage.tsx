@@ -17,6 +17,7 @@ import "./FileViewer.css";
 import { useElementSize } from "./useElementSize";
 import { useStoredState } from "./useStoredState";
 import { useAssetPath } from "./useAssetPath";
+import { fileChatHref } from "../common/ChatLink/chatHref";
 import { fileCrumbs } from "./fileCrumbs";
 import FileError from "./components/FileError";
 import FileAccessNotice from "./components/FileAccessNotice";
@@ -263,6 +264,12 @@ const FileViewer: FunctionComponent<FileViewerProps> = ({
           }
           availableVersions={availableVersions}
           onVersionChange={handleVersionChange}
+          chatHref={fileChatHref({
+            nwbUrl,
+            dandisetId: useEmber ? undefined : dandisetId,
+            version: dandisetVersionInfo?.version,
+            assetPath,
+          })}
           width={width}
           onWidthChange={setWidth}
           collapsed={!panelOpen}
