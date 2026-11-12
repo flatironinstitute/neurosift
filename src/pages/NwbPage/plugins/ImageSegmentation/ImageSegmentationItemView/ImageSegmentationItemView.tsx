@@ -1,8 +1,7 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import PlaneSegmentationView from "./PlaneSegmentationView";
-import { useHdf5Group } from "@hdf5Interface";
-import { EmptyState, LoadingState, Select } from "@ui";
-import "./PlaneSegmentationView.css";
+import { Hdf5Group, useHdf5Group } from "@hdf5Interface";
+import { Splitter } from "@fi-sci/splitter";
 
 type Props = {
   width: number;
@@ -29,38 +28,68 @@ const ImageSegmentationItemView: FunctionComponent<Props> = ({
     setSelectedSegmentationName(group.subgroups[0].name);
   }, [group]);
 
-  if (!group)
-    return <LoadingState label="Reading the segmentation" phase="loading" />;
-  if (!selectedSegmentationName)
-    return (
-      <EmptyState title="No plane segmentations">
-        This ImageSegmentation holds no PlaneSegmentation to draw.
-      </EmptyState>
-    );
-  const picker =
-    group.subgroups.length > 1 ? (
-      <div className="segmentation-picker">
-        <Select
-          label="Plane segmentation"
-          size="sm"
-          value={selectedSegmentationName}
-          onChange={setSelectedSegmentationName}
-          options={group.subgroups.map((sg) => ({
-            value: sg.name,
-            label: sg.name,
-          }))}
-        />
-      </div>
-    ) : undefined;
+  if (!group) return <div>Loading group: {path}</div>;
   return (
-    <PlaneSegmentationView
+    <Splitter
       width={width}
       height={height}
-      imageSegmentationGroup={group}
-      nwbUrl={nwbUrl}
-      selectedSegmentationName={selectedSegmentationName}
-      picker={picker}
-    />
+      initialPosition={Math.min(400, width / 3)}
+    >
+      <LeftPanel
+        width={0}
+        height={0}
+        group={group}
+        nwbUrl={nwbUrl}
+        selectedSegmentationName={selectedSegmentationName}
+        setSelectedSegmentationName={setSelectedSegmentationName}
+      />
+      {selectedSegmentationName ? (
+        <PlaneSegmentationView
+          width={0}
+          height={0}
+          imageSegmentationGroup={group}
+          nwbUrl={nwbUrl}
+          selectedSegmentationName={selectedSegmentationName}
+        />
+      ) : (
+        <div />
+      )}
+    </Splitter>
+  );
+};
+
+type LeftPanelProps = {
+  width: number;
+  height: number;
+  group: Hdf5Group;
+  nwbUrl: string;
+  selectedSegmentationName?: string;
+  setSelectedSegmentationName: (name: string) => void;
+};
+
+const LeftPanel: FunctionComponent<LeftPanelProps> = ({
+  group,
+  selectedSegmentationName,
+  setSelectedSegmentationName,
+}) => {
+  return (
+    <table className="nwb-table">
+      <tbody>
+        {group.subgroups.map((sg) => (
+          <tr key={sg.name}>
+            <td>
+              <input
+                type="radio"
+                name="segmentation"
+                checked={sg.name === selectedSegmentationName}
+                onChange={() => setSelectedSegmentationName(sg.name)}
+              />
+            </td>
+            <td>{sg.name}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 };
 

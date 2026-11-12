@@ -114,7 +114,7 @@ const useTimeScrollMouse = (params: UseTimeScrollMouseParams) => {
       }
       if (onMouseMove) onMouseMove(e);
     },
-    [pixelToTime, onMouseMove, panTimeseriesSelectionVisibleStartTimeSec],
+    [pixelToTime, onMouseMove],
   );
 
   const handleMouseOut = useCallback(

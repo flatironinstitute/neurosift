@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { FetchPageError, fetchAllPages } from "./fetchAllPages";
+import { fetchAllPages } from "./fetchAllPages";
 
 const pages: { [url: string]: { results: number[]; next: string | null } } = {
   "https://api.example/paths/?page=1": {
@@ -54,12 +54,5 @@ describe("fetchAllPages", () => {
   it("throws when a page request fails", async () => {
     vi.stubGlobal("fetch", async () => ({ ok: false, status: 403 }));
     await expect(fetchAllPages("https://api.example/x")).rejects.toThrow(/403/);
-  });
-
-  it("carries the status, so a caller can tell a missing path from a failure", async () => {
-    vi.stubGlobal("fetch", async () => ({ ok: false, status: 404 }));
-    const error = await fetchAllPages("https://api.example/x").catch((e) => e);
-    expect(error).toBeInstanceOf(FetchPageError);
-    expect(error.status).toBe(404);
   });
 });

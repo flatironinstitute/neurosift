@@ -1,16 +1,20 @@
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
 import { FunctionComponent, useEffect, useRef, useState } from "react";
-import { formatSeconds, IconButton } from "@ui";
-import "./AudioPlayer.css";
+import { IconButton } from "@mui/material";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import PauseIcon from "@mui/icons-material/Pause";
+import SkipPreviousIcon from "@mui/icons-material/SkipPrevious";
 
 interface AudioPlayerProps {
   audioUrl: string;
   duration: number;
+  height: number;
 }
 
 const AudioPlayer: FunctionComponent<AudioPlayerProps> = ({
   audioUrl,
   duration,
+  height,
 }) => {
   const { currentTime, setCurrentTime } = useTimeseriesSelection();
   const [isPlaying, setIsPlaying] = useState(false);
@@ -74,24 +78,31 @@ const AudioPlayer: FunctionComponent<AudioPlayerProps> = ({
   };
 
   return (
-    <section className="audio-player" aria-label="Audio player">
+    <div
+      style={{
+        height,
+        display: "flex",
+        alignItems: "center",
+        padding: "0 20px",
+        gap: 10,
+        backgroundColor: "#f5f5f5",
+        borderBottom: "1px solid #ddd",
+      }}
+    >
       <audio ref={audioRef} src={audioUrl} />
-      <IconButton
-        icon={isPlaying ? "pause" : "play"}
-        label={isPlaying ? "Pause" : "Play"}
-        size="sm"
-        onClick={handlePlayPause}
-      />
-      <IconButton
-        icon="skip--back"
-        label="Back to the start"
-        size="sm"
-        onClick={handleReset}
-      />
-      <span className="audio-player-time">
-        {formatSeconds(currentTime ?? 0)} s of {formatSeconds(duration)} s
+      <IconButton onClick={handlePlayPause} size="small" sx={{ color: "#666" }}>
+        {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+      </IconButton>
+      <IconButton onClick={handleReset} size="small" sx={{ color: "#666" }}>
+        <SkipPreviousIcon />
+      </IconButton>
+      <span style={{ fontSize: "12px", color: "#666" }}>
+        {currentTime !== undefined
+          ? `${Math.floor(currentTime * 10) / 10}s`
+          : "0.0s"}{" "}
+        / {Math.floor(duration * 10) / 10}s
       </span>
-    </section>
+    </div>
   );
 };
 

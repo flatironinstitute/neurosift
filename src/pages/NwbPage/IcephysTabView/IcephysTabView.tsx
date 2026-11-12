@@ -1,43 +1,18 @@
 import {
-  AccordionItem,
-  Button,
-  Checkbox,
-  type Column,
-  DataTable,
-  EmptyState,
-  InlineCode,
-  InlineMessage,
-  LoadingState,
-  ProgressBar,
-  Select,
-  type SelectOption,
-  SettingPair,
-  TextInput,
-  useLoadingPhase,
-  ViewPanel,
-} from "@ui";
-import { useCssVars } from "@components/useCssVars";
-import {
+  CSSProperties,
   FunctionComponent,
-  ReactNode,
   useEffect,
-  useId,
   useMemo,
   useRef,
   useState,
 } from "react";
-import {
-  useLinkedSettings,
-  useShareSettings,
-} from "@shared/shareLink/useShareSettings";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { toWithCurrentHash } from "../urlHash";
 import { getHdf5Group } from "../hdf5Interface";
-import { useElementSize } from "../useElementSize";
 import ConditionSelector from "./ConditionSelector";
-import FacetLegend from "./FacetLegend";
-import { facetColors } from "./sweepGroups";
+import FacetLegend, { facetColors } from "./FacetLegend";
 import FamilyFacetGrid from "./FamilyFacetGrid";
-import FamilyOverlayPlot from "./FamilyOverlayPlot";
-import { pickDisplayUnit } from "./displayUnit";
+import FamilyOverlayPlot, { pickDisplayUnit } from "./FamilyOverlayPlot";
 import FamilySeparatePanels from "./FamilySeparatePanels";
 import ProtocolSelector from "./ProtocolSelector";
 import RepetitionSelector from "./RepetitionSelector";
@@ -46,20 +21,6 @@ import { ALL_ROW, ResolvedSweep, ScopeSelection } from "./useChain";
 import { IcephysRow, useIcephysTable } from "./useIcephysTable";
 import { useSweepData } from "./useSweepData";
 import { useSweepTimes } from "./useSweepTimes";
-import {
-  axisLabel,
-  axisOptions,
-  axisParam,
-  COLOR_BY_VALUES,
-  fileSummary,
-  numParam,
-  PANELS_BY_VALUES,
-  panelKey,
-  panelLabel,
-  sampleIndices,
-} from "./viewState";
-import { parseXWindow } from "./xWindow";
-import "./IcephysTabView.css";
 
 interface IcephysTabViewProps {
   nwbUrl: string;
@@ -68,17 +29,160 @@ interface IcephysTabViewProps {
   isExpanded: boolean;
 }
 
-// Large families are sampled: this many evenly spaced sweeps first, then Plot more or Plot all.
+const SIDEBAR_WIDTH = 320;
+// Large families are sampled rather than blocked: plot this many evenly-spaced
+// sweeps by default (overlay), with "plot more" / "plot all" to expand.
 const SAMPLE_SIZE = 30;
-// Above this many sweeps, Plot all says it may be slow.
+// Above this many sweeps, "plot all" carries a "may be slow" caution.
 const PLOT_ALL_WARN = 60;
-// A custom column is a Color or Panels axis only with 2 to this many values in scope.
+// The app's global StatusBarDiv (the "v0.1.0 ..." footer) is position:absolute
+// and overlays the bottom ~21px of the content area. The tab is handed a height
+// that does not exclude it, so reserve it here; otherwise the timeline strip
+// (pinned at the bottom) has its session-time axis labels painted over by it.
+const STATUS_BAR_H = 24;
+// A custom column is offered as an encoding axis only when its distinct-value
+// count in scope is in [2, this]. Above it, faceting/coloring is illegible.
 const MAX_CUSTOM_AXIS_VALUES = 8;
-const TIMELINE_H = 84;
+// Height reserved above the plot for the two-row encoding bar (row 1: Color by /
+// Panels by / & by; row 2: window + lock y). Subtracted from the plot height.
+const ENCODING_BAR_H = 64;
+
+// Panel grouping key for sampling, matching FamilySeparatePanels.groupOf so the
+// sampled groups line up with the panels actually rendered.
+function panelKey(
+  sw: ResolvedSweep & { custom?: Record<string, string> },
+  axis: string,
+): string {
+  if (axis === "condition") return `c${sw.condRow ?? -1}`;
+  if (axis === "repetition") return `r${sw.repRow ?? -1}`;
+  if (axis === "electrode") return `e:${sw.electrode ?? "?"}`;
+  if (axis === "cell") return `cell:${sw.cell ?? "?"}`;
+  if (axis.startsWith("col:"))
+    return `${axis}=${sw.custom?.[axis.slice(4)] ?? "?"}`;
+  return `p:${sw.protocolLabel || `seq ${sw.seqRow}`}`;
+}
+
+// Human-readable label for a panel-axis value, for the per-facet count grid.
+function panelLabel(
+  sw: ResolvedSweep & { custom?: Record<string, string> },
+  axis: string,
+): string {
+  if (axis === "condition")
+    return sw.condRow !== undefined ? `condition ${sw.condRow}` : "(none)";
+  if (axis === "repetition")
+    return sw.repRow !== undefined ? `repetition ${sw.repRow}` : "(none)";
+  if (axis === "electrode") return sw.electrode ?? "(no electrode)";
+  if (axis === "cell") return sw.cell ?? "(no cell)";
+  if (axis.startsWith("col:")) return sw.custom?.[axis.slice(4)] ?? "(none)";
+  return sw.protocolLabel || `seq ${sw.seqRow}`;
+}
+
+// Even-ish spread of <= n indices over [0..total), NESTED in n: the result for a
+// larger n is a superset of the result for a smaller n. That nesting is what lets
+// "plot more" / "plot all" reuse already-loaded sweeps (see useSweepData's cache)
+// instead of resampling a different set and reloading from scratch. Endpoints
+// come first (so an ordered family still spans light -> dark), then the midpoint,
+// then quarters, etc. (recursive bisection, breadth-first). Returns every index
+// when total <= n. The build order is independent of n, so slicing to n yields
+// nested prefixes.
+function sampleIndices(total: number, n: number): number[] {
+  if (total <= 0) return [];
+  if (n >= total) return Array.from({ length: total }, (_, i) => i);
+  if (n <= 1) return [0];
+  const order: number[] = [];
+  const seen = new Set<number>();
+  const add = (i: number) => {
+    if (i >= 0 && i < total && !seen.has(i)) {
+      seen.add(i);
+      order.push(i);
+    }
+  };
+  add(0);
+  add(total - 1);
+  const queue: [number, number][] = [[0, total - 1]];
+  while (order.length < n && queue.length) {
+    const [lo, hi] = queue.shift()!;
+    const mid = Math.floor((lo + hi) / 2);
+    add(mid);
+    if (mid - lo > 1) queue.push([lo, mid]);
+    if (hi - mid > 1) queue.push([mid, hi]);
+  }
+  return order.slice(0, n).sort((a, b) => a - b);
+}
 
 // A scope row value is a real selection (not the "All" sentinel and not unset).
 const isSpecificRow = (v: number | undefined): v is number =>
   v !== undefined && v !== ALL_ROW;
+
+// --- URL persistence of the icephys view ----------------------------------
+// The tab serializes its selection (Protocol/Condition/Repetition) and encoding
+// (Color by / Panels by / & by / window / lock y) into namespaced query params,
+// so a refresh or a copied link reproduces the view. Params are written with
+// replace (no history churn) and omitted at their default value (a fresh file
+// stays a clean URL). Read values are seeds only: the existing cardinality
+// gating and reset logic still validate them against the actual file.
+const COLOR_BY_VALUES = [
+  "auto",
+  "protocol",
+  "condition",
+  "repetition",
+  "electrode",
+  "cell",
+] as const;
+const PANELS_BY_VALUES = [
+  "none",
+  "protocol",
+  "condition",
+  "repetition",
+  "electrode",
+  "cell",
+] as const;
+
+function numParam(sp: URLSearchParams, key: string): number | undefined {
+  const v = sp.get(key);
+  if (v === null) return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+}
+// Seed an encoding-axis value (Color/Panels) from the URL: a built-in from
+// `allowed`, or any "col:<name>" custom-column axis (validated later, once the
+// data loads, by the cardinality gate). Unknown values fall back.
+function axisParam<T extends string>(
+  sp: URLSearchParams,
+  key: string,
+  allowed: readonly T[],
+  fallback: T,
+): T | string {
+  const v = sp.get(key);
+  if (v === null) return fallback;
+  if (v.startsWith("col:")) return v;
+  return (allowed as readonly string[]).includes(v) ? v : fallback;
+}
+
+// Selected-sweeps table cell styles.
+const selThStyle: CSSProperties = {
+  textAlign: "left",
+  padding: "2px 6px",
+  borderBottom: "1px solid #ddd",
+  position: "sticky",
+  top: 0,
+  background: "#fff",
+  whiteSpace: "nowrap",
+  fontWeight: 600,
+  color: "#666",
+};
+const selTdStyle: CSSProperties = {
+  padding: "2px 6px",
+  borderBottom: "1px solid #f0f0f0",
+  whiteSpace: "nowrap",
+};
+// Per-facet sweep-count grid cell.
+const fcCell: CSSProperties = {
+  border: "1px solid #eee",
+  padding: "1px 6px",
+  textAlign: "center",
+  whiteSpace: "nowrap",
+};
 
 const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   nwbUrl,
@@ -86,17 +190,22 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   height,
   isExpanded,
 }) => {
-  const linked = useLinkedSettings();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [hasIcephys, setHasIcephys] = useState<boolean | null>(null);
-  // Selection and encoding start from the link that opened the tab.
+  // Selection + encoding are seeded from the URL (a refresh / shared link), then
+  // kept in sync below; see the URL-persistence note above.
   const [scope, setScope] = useState<ScopeSelection>(() => ({
-    protoRow: numParam(linked, "protocol"),
-    condRow: numParam(linked, "condition"),
-    repRow: numParam(linked, "repetition"),
+    protoRow: numParam(searchParams, "icephysProtocol"),
+    condRow: numParam(searchParams, "icephysCondition"),
+    repRow: numParam(searchParams, "icephysRepetition"),
   }));
   const [sampleLimit, setSampleLimit] = useState(SAMPLE_SIZE);
-  // Axis types include (string & {}) so a custom "col:<name>" column can be an axis.
+  // Encoding channels (the "how to compare" controls, shown above the plot).
+  // Filters (Condition/Repetition) stay in the sidebar as the "what" controls.
+  // Axis unions include (string & {}) so a custom "col:<name>" column can be a
+  // Color/Panels axis; the built-in literals stay for autocomplete.
   const [colorBy, setColorBy] = useState<
     | "auto"
     | "protocol"
@@ -105,7 +214,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     | "electrode"
     | "cell"
     | (string & {})
-  >(() => axisParam(linked, "colorBy", COLOR_BY_VALUES, "auto"));
+  >(() => axisParam(searchParams, "icephysColorBy", COLOR_BY_VALUES, "auto"));
   const [panelsBy, setPanelsBy] = useState<
     | "none"
     | "protocol"
@@ -114,7 +223,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     | "electrode"
     | "cell"
     | (string & {})
-  >(() => axisParam(linked, "panelsBy", PANELS_BY_VALUES, "none"));
+  >(() => axisParam(searchParams, "icephysPanelsBy", PANELS_BY_VALUES, "none"));
   // Optional second panel axis -> 2-D facet grid (rows = panelsBy, cols = this).
   const [panelsBy2, setPanelsBy2] = useState<
     | "none"
@@ -124,17 +233,22 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     | "electrode"
     | "cell"
     | (string & {})
-  >(() => axisParam(linked, "andBy", PANELS_BY_VALUES, "none"));
+  >(() => axisParam(searchParams, "icephysAndBy", PANELS_BY_VALUES, "none"));
   // Within-sweep x-window crop (ms), shared across all panels. Empty = full range.
   const [xWindowStr, setXWindowStr] = useState<{ start: string; end: string }>(
     () => ({
-      start: linked.get("windowStart") ?? "",
-      end: linked.get("windowEnd") ?? "",
+      start: searchParams.get("icephysWindowStart") ?? "",
+      end: searchParams.get("icephysWindowEnd") ?? "",
     }),
   );
-  // Opt in: sharing a y range per unit is a pass over the loaded sweeps,
-  // so it runs only when asked and once the sample has loaded.
-  const [lockY, setLockY] = useState(() => linked.get("lockY") === "1");
+  // Lock the y-axis to a shared range across facet panels (per display unit) so
+  // amplitudes are comparable. Opt-in (off by default): computing the shared
+  // range is a pass over the loaded sample data, so it runs only when the user
+  // turns it on, and only once the sample has loaded. Users can still box-zoom /
+  // double-click each panel; unchecking releases the lock (autorange).
+  const [lockY, setLockY] = useState(
+    () => searchParams.get("icephysLockY") === "1",
+  );
 
   useEffect(() => {
     if (!isExpanded) return;
@@ -152,8 +266,10 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     };
   }, [nwbUrl, isExpanded]);
 
-  // A new file resets the view; the first run is skipped so a shared link's
-  // settings survive the first load.
+  // Reset selection + encoding when switching files: a selection valid in one
+  // file may be invalid in another. Skip the first run so URL-seeded state (a
+  // refresh / shared link) survives the initial mount; reset only on a real
+  // file change.
   const persistedUrlRef = useRef<string | null>(null);
   useEffect(() => {
     if (persistedUrlRef.current === null) {
@@ -170,26 +286,45 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     setLockY(false);
   }, [nwbUrl]);
 
-  const setting = (key: string, value: string, label: string) => ({
-    key,
-    value,
-    default: "",
-    label,
-  });
-  useShareSettings([
-    setting("protocol", String(scope.protoRow ?? ""), "the protocol"),
-    setting("condition", String(scope.condRow ?? ""), "the condition"),
-    setting("repetition", String(scope.repRow ?? ""), "the repetition"),
-    setting("colorBy", colorBy === "auto" ? "" : colorBy, "the colors"),
-    setting("panelsBy", panelsBy === "none" ? "" : panelsBy, "the panels"),
-    setting("andBy", panelsBy2 === "none" ? "" : panelsBy2, "the panels"),
-    setting("windowStart", xWindowStr.start, "the window"),
-    setting("windowEnd", xWindowStr.end, "the window"),
-    setting("lockY", lockY ? "1" : "", "the y-scale"),
+  // Mirror the icephys view into the URL (replace, default-omit) so a refresh or
+  // a copied link reproduces it. All synced controls are discrete, so this is
+  // one cheap replaceState per change; the equality guard prevents a navigate
+  // loop (after navigate, searchParams equals p, so the next run is a no-op).
+  useEffect(() => {
+    const p = new URLSearchParams(searchParams);
+    const put = (key: string, value: string | number | undefined) => {
+      if (value === undefined || value === "") p.delete(key);
+      else p.set(key, String(value));
+    };
+    put("icephysProtocol", scope.protoRow);
+    put("icephysCondition", scope.condRow);
+    put("icephysRepetition", scope.repRow);
+    put("icephysColorBy", colorBy === "auto" ? undefined : colorBy);
+    put("icephysPanelsBy", panelsBy === "none" ? undefined : panelsBy);
+    put("icephysAndBy", panelsBy2 === "none" ? undefined : panelsBy2);
+    put("icephysWindowStart", xWindowStr.start || undefined);
+    put("icephysWindowEnd", xWindowStr.end || undefined);
+    put("icephysLockY", lockY ? "1" : undefined);
+    if (p.toString() !== searchParams.toString()) {
+      navigate(toWithCurrentHash(p), { replace: true });
+    }
+  }, [
+    scope.protoRow,
+    scope.condRow,
+    scope.repRow,
+    colorBy,
+    panelsBy,
+    panelsBy2,
+    xWindowStr.start,
+    xWindowStr.end,
+    lockY,
+    searchParams,
+    navigate,
   ]);
 
-  // Protocol anchors; Condition and Repetition narrow it. Changing Condition
-  // resets Repetition, which it contains.
+  // Protocol is the anchor; Condition/Repetition are filters that narrow it.
+  // Changing a filter keeps the chosen Protocol. Condition contains Repetition,
+  // so changing Condition resets Repetition.
   const setProtoRow = (v: number | undefined) =>
     setScope((s) => ({ ...s, protoRow: v }));
   const setCondRow = (v: number | undefined) =>
@@ -197,8 +332,10 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   const setRepRow = (v: number | undefined) =>
     setScope((s) => ({ protoRow: s.protoRow, condRow: s.condRow, repRow: v }));
 
-  // The file is resolved once into a tidy table and scope applied in memory.
-  // Protocol matches by name, Condition and Repetition by row.
+  // The whole file is resolved once into a tidy table; scope is then applied in
+  // memory (no per-selection chain re-walk). Protocol aggregates by name (the
+  // picked protoRow is a representative sequential_recordings row, so all rows
+  // sharing its stimulus_type are in scope); Condition/Repetition match by row.
   const table = useIcephysTable(nwbUrl);
   const selectedProtocolName = isSpecificRow(scope.protoRow)
     ? table.rows.find((r) => r.seqRow === scope.protoRow)?.protocolLabel
@@ -224,13 +361,18 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     selectedProtocolName,
   ]);
 
-  // Any explicit pick opens the plot; a large family is sampled, not blocked.
+  // Render gate: any explicit selection at any tier commits to rendering.
+  // A large family is not blocked; it is sampled (an evenly-spaced subset is
+  // plotted, with "plot more"/"plot all" to expand), so there is no runaway
+  // full-family fetch on the first paint.
   const hasAnySelection =
     scope.condRow !== undefined ||
     scope.repRow !== undefined ||
     scope.protoRow !== undefined;
 
-  // Files with no tier to pick have nothing to choose, so they plot at once.
+  // Flat files (only intracellular_recordings; no Condition/Repetition/Protocol
+  // tier to pick) have nothing to select, so render the whole family
+  // automatically. Otherwise wait for an explicit pick.
   const hasNarrowableTier =
     table.chainDepth.includes("experimental_conditions") ||
     table.chainDepth.includes("repetitions") ||
@@ -245,15 +387,21 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
       ? "protocol"
       : "sweep";
 
-  // Metadata only, so the timeline covers every sweep in scope, not just the sample.
+  // The temporal distribution is metadata-only (starting_time + rate), so we
+  // compute it for the full in-scope sweep set even when only a sample is
+  // plotted. Seeing where/when every sweep falls is the full-family context.
   const sweepTimes = useSweepTimes(nwbUrl, shouldRender ? inScopeRows : []);
 
-  // The whole session, drawn in gray behind the selection.
+  // Whole-session sweep set + times: a gray backdrop showing the overall time
+  // structure of the recording, with the current selection highlighted on top.
+  // Metadata-only (starting_time + rate), so cheap even for the full session.
   const showTimeline =
     shouldRender && !table.loading && table.error !== "UNSUPPORTED_ASSET";
   const contextTimes = useSweepTimes(nwbUrl, showTimeline ? table.rows : []);
 
-  // An axis can color or split only if it varies within the scope.
+  // An axis can be a Color or Panels channel only if it actually VARIES within
+  // the current scope (filtering to one repetition leaves nothing to compare
+  // across repetitions). Derived from the in-scope sweep provenance.
   const distinctConds = new Set(
     inScopeRows.map((s) => s.condRow).filter((x) => x !== undefined),
   ).size;
@@ -275,8 +423,12 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   const electrodeVaries = distinctElectrodes >= 2;
   const cellVaries = distinctCells >= 2;
 
-  // Custom columns as axes, keyed "col:<name>": 2 values or more, but few
-  // enough not to scatter the grid into confetti.
+  // Custom intracellular_recordings columns offered as encoding axes (Color by /
+  // Panels by / & by), keyed "col:<name>". Same information criterion as the
+  // built-in axes (>= 2 distinct values in scope), plus an upper bound: a column
+  // with too many distinct values would make a facet grid of confetti or a
+  // wrapped palette, so it stays in the Selected-sweeps table rather than becoming
+  // an axis.
   const customAxisOptions = useMemo(() => {
     return table.columns
       .map((name) => {
@@ -297,9 +449,28 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   // File-wide data summary for the sidebar (always-on orientation), from the
   // whole-session sweep set.
   const fileSweeps = table.rows;
+  const fileSummary: string[] = [];
+  if (fileSweeps.length) {
+    const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
+    const nP = new Set(fileSweeps.map((s) => s.protocolLabel).filter(Boolean))
+      .size;
+    const nR = new Set(
+      fileSweeps.map((s) => s.repRow).filter((x) => x !== undefined),
+    ).size;
+    const nC = new Set(
+      fileSweeps.map((s) => s.condRow).filter((x) => x !== undefined),
+    ).size;
+    const nE = new Set(fileSweeps.map((s) => s.electrode).filter(Boolean)).size;
+    fileSummary.push(plural(fileSweeps.length, "sweep"));
+    if (nP > 0) fileSummary.push(plural(nP, "protocol"));
+    if (nR > 0) fileSummary.push(plural(nR, "repetition"));
+    if (nC > 0) fileSummary.push(plural(nC, "condition"));
+    if (nE > 0) fileSummary.push(plural(nE, "electrode"));
+  }
 
-  // Cross-filter: an option is on only if it occurs with the other axes' picks,
-  // so an empty combination can't be built.
+  // Cross-filter: enabled values per filter axis = those that co-occur with the
+  // OTHER axes' current selections. Disabled (greyed) options can't be picked,
+  // so an empty Protocol + Condition + Repetition combination can't be built.
   const condSel =
     scope.condRow !== undefined && scope.condRow !== ALL_ROW
       ? scope.condRow
@@ -325,8 +496,17 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   }
   const haveProvenance = fileSweeps.length > 0;
 
-  // Columns that vary across the selection become table columns; constant ones
-  // collapse to one line. The cap is only a backstop for huge flat files.
+  // Selection table: the slice of the intracellular_recordings table for the
+  // selected sweeps. Information criterion (same as selectors): a column becomes
+  // a table column only if it VARIES across the selection; columns that are
+  // constant collapse into a single "shared" line, rather than repeating one
+  // value down every row.
+  // The table is metadata-only short strings in a scrolling box, so show every
+  // selected sweep. A low cap (e.g. 20) is actively misleading: rows are in
+  // sweep order, so the first N can all share one protocol while later sweeps
+  // span others, making a genuinely-varying column look constant. The high cap
+  // is just a DOM-size backstop for pathological flat files; real icephys
+  // scopes are well under it.
   const SELECTION_ROW_CAP = 500;
   const selSweeps = inScopeRows;
   const candidateCols: {
@@ -432,13 +612,35 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
       ? "sweep"
       : resolvedColor;
 
-  const { range: xRangeMs, error: windowError } = parseXWindow(
-    xWindowStr.start,
-    xWindowStr.end,
-  );
+  // Within-sweep x-window crop (ms). Valid only when both ends parse and
+  // start < end; otherwise null (autorange). A reversed/equal window is not
+  // silently swapped: it is flagged with an inline error (see windowError) so a
+  // mistake is surfaced rather than guessed at. Shared across panels.
+  const xwStart = parseFloat(xWindowStr.start);
+  const xwEnd = parseFloat(xWindowStr.end);
+  const bothWindowEndsSet =
+    xWindowStr.start.trim() !== "" && xWindowStr.end.trim() !== "";
+  const windowError: string | null = bothWindowEndsSet
+    ? !Number.isFinite(xwStart) || !Number.isFinite(xwEnd)
+      ? "window bounds must be numbers"
+      : xwStart >= xwEnd
+        ? "window start must be less than end"
+        : null
+    : null;
+  const xRangeMs: [number, number] | null =
+    Number.isFinite(xwStart) && Number.isFinite(xwEnd) && xwEnd > xwStart
+      ? [xwStart, xwEnd]
+      : null;
 
-  // One sample budget: overlay strides over the scope; panels share it evenly,
-  // at least one sweep each. The timeline always shows every sweep.
+  // Sampling: render an evenly-spaced subset so a large family paints fast, and
+  // so a faceted view is bounded overall (not 12 x panels, which ballooned with
+  // panel count and made big grids slow).
+  // - Overlay (Panels by = none): one global stride of up to `sampleLimit`.
+  // - Faceted (Panels by set): spread the SAME total budget (`sampleLimit`) evenly
+  //   across the panels, so the grid loads about as many sweeps as the overlay.
+  //   Every panel still gets at least 1 evenly-spaced sweep, and "plot all"
+  //   (sampleLimit = all sweeps) makes the per-panel share big enough to load all.
+  //   The metadata-only timeline below always shows every sweep regardless.
   let sweepsToLoad: ResolvedSweep[] = [];
   let perPanelCap = 0;
   if (shouldRender) {
@@ -472,7 +674,9 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   const isSampled = shouldRender && sweepsToLoad.length < inScopeRows.length;
   const sweepData = useSweepData(nwbUrl, sweepsToLoad);
 
-  // Shared y range per display unit across panels, once the sample has loaded.
+  // Shared y-range per display unit (mV, pA, ...) across faceted panels, so a
+  // locked y makes amplitudes comparable. Only computed for faceted views, and
+  // only once the sample has loaded (avoids repeated full passes mid-load).
   const yRangeByUnit = useMemo<
     Record<string, [number, number]> | undefined
   >(() => {
@@ -506,8 +710,10 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     return Object.keys(acc).length ? acc : undefined;
   }, [sweepData.loaded, sweepData.loading, resolvedPanels, lockY]);
 
-  // Legend for the panels' colors: the inner color axis when categorical,
-  // else the panel axis, colored the way the panels color them.
+  // Faceted-view color legend, rendered in the sidebar (the plot area is busy).
+  // Keyed to the inner-color axis when it is categorical, otherwise to the panel
+  // axis (whose per-panel hue is the categorical encoding). Colors are computed
+  // the same way the panels assign them, so the legend matches.
   const legendAxis = innerColor !== "sweep" ? innerColor : resolvedPanels;
   const facetLegend =
     resolvedPanels !== "none" &&
@@ -516,7 +722,10 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
       ? facetColors(sweepData.loaded, legendAxis)
       : null;
 
-  // Sweeps per panel (or per row and column) over the whole scope, not the sample.
+  // Per-facet sweep counts for the sidebar grid: how many sweeps fall in each
+  // panel (1-D) or each (row, col) cell (2-D), over the full in-scope set (not
+  // the sample). Mirrors the facet layout so it reads like a tiny contingency
+  // table. Null when not faceted.
   const facetCounts = useMemo(() => {
     if (resolvedPanels === "none" || inScopeRows.length === 0) return null;
     const rowOrder: string[] = [];
@@ -545,13 +754,18 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     return { rowOrder, rowLabel, colOrder, colLabel, count, twoD };
   }, [inScopeRows, resolvedPanels, resolvedPanels2]);
 
-  // The timeline takes the visible categorical encoding: the Color axis,
-  // else the Panels axis when Color resolves to a per-sweep gradient.
+  // The timeline mirrors the visible categorical encoding: color by the Color
+  // axis when it is categorical, otherwise by the Panels axis. So when Color by
+  // = auto resolves to a per-sweep gradient but Panels splits by (say)
+  // repetition, the timeline picks up the same categorical repetition colors.
   const timelineColorRaw =
     resolvedColor === "sweep" && resolvedPanels !== "none"
       ? resolvedPanels
       : resolvedColor;
-  // The timeline has no cell field, so a cell color shows there by electrode.
+  // The timeline strip mirrors the categorical color axis, including custom
+  // "col:<name>" columns. Its lanes are electrodes, and SweepTime has no cell
+  // field, so a cell-colored selection is shown there by electrode; everything
+  // else (built-ins and custom columns) passes through unchanged.
   const timelineColor:
     | "protocol"
     | "sweep"
@@ -561,8 +775,11 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     | (string & {}) =
     timelineColorRaw === "cell" ? "electrode" : timelineColorRaw;
 
-  // Reset picks that no longer vary, but only once loaded, so a shared link's
-  // axis isn't reset before its data arrives.
+  // Reset stale encoding picks (e.g. after switching files or filtering).
+  // Guarded by !table.loading: the *Varies flags come from inScopeRows,
+  // which is empty while loading, so without this guard a URL-seeded encoding
+  // axis would be reset to its default before the data arrives (it would look
+  // like the axis does not vary). Once loaded, the gate runs and validates.
   useEffect(() => {
     if (table.loading) return;
     if (colorBy === "protocol" && !protocolVaries) setColorBy("auto");
@@ -628,52 +845,29 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
     table.loading,
   ]);
 
-  // A new scope starts from the small sample again.
+  // Reset the sample size to the default whenever scope changes, so a new
+  // selection starts from a small evenly-spaced sample rather than a previously
+  // expanded one.
   useEffect(() => {
     setSampleLimit(SAMPLE_SIZE);
   }, [scope.condRow, scope.repRow, scope.protoRow]);
 
-  const frame = useCssVars<HTMLDivElement>({
-    "--icephys-w": width,
-    "--icephys-h": height,
-  });
-  const lockYHelpId = useId();
-  const [open, setOpen] = useState({
-    scope: true,
-    axes: true,
-    sweeps: true,
-    colors: true,
-    counts: false,
-  });
-  const section = (key: keyof typeof open) => ({
-    open: open[key],
-    onToggle: (o: boolean) => setOpen((prev) => ({ ...prev, [key]: o })),
-  });
-  const checkingPhase = useLoadingPhase(isExpanded && hasIcephys === null);
-  const tablePhase = useLoadingPhase(hasIcephys === true && table.loading);
+  const plotWidth = useMemo(() => width - SIDEBAR_WIDTH - 32, [width]);
+  const plotHeight = useMemo(() => height - 32 - STATUS_BAR_H, [height]);
+
+  const timelineHeight = showTimeline ? 84 : 0;
 
   if (!isExpanded) return null;
 
   if (hasIcephys === null) {
-    return (
-      <div ref={frame} className="icephys icephys--state">
-        <LoadingState
-          label="Looking for intracellular recordings"
-          phase={checkingPhase}
-        />
-      </div>
-    );
+    return <div style={{ padding: 20 }}>Loading...</div>;
   }
   if (!hasIcephys) {
     return (
-      <div ref={frame} className="icephys icephys--state">
-        <EmptyState title="No intracellular recordings in this file">
-          There is no{" "}
-          <InlineCode>
-            /general/intracellular_ephys/intracellular_recordings
-          </InlineCode>{" "}
-          table, so there are no sweeps to plot.
-        </EmptyState>
+      <div style={{ padding: 20, color: "#666" }}>
+        This file does not contain intracellular electrophysiology data (no{" "}
+        <code>/general/intracellular_ephys/intracellular_recordings</code>{" "}
+        group).
       </div>
     );
   }
@@ -681,445 +875,549 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   const hasCond = table.chainDepth.includes("experimental_conditions");
   const hasRep = table.chainDepth.includes("repetitions");
   const hasSeq = table.chainDepth.includes("sequential_recordings");
-  const unsupported = table.error === "UNSUPPORTED_ASSET";
-  const ready = !table.loading && !unsupported;
-  const plotting = ready && shouldRender && inScopeRows.length > 0;
 
-  const varies = {
-    protocol: protocolVaries,
-    condition: condVaries,
-    repetition: repVaries,
-    electrode: electrodeVaries,
-    cell: cellVaries,
-  };
-  const windowSet = xWindowStr.start !== "" || xWindowStr.end !== "";
-  const protocolName = isSpecificRow(scope.protoRow)
-    ? selectedProtocolName
-    : scope.protoRow === ALL_ROW
-      ? "All protocols"
-      : undefined;
-  const scopeSummary =
-    [
-      protocolName,
-      isSpecificRow(scope.condRow) && `condition ${scope.condRow}`,
-      isSpecificRow(scope.repRow) && `repetition ${scope.repRow}`,
-    ]
-      .filter(Boolean)
-      .join(" · ") || (shouldRender ? "Whole file" : "Not chosen");
-  const axesSummary = [
-    xRangeMs ? `${xRangeMs[0]} to ${xRangeMs[1]} ms` : "Whole sweep",
-    resolvedPanels !== "none" && lockY && "y locked",
-  ]
-    .filter(Boolean)
-    .join(" · ");
-  const tables = `${table.chainDepth.length} of 5 icephys tables: ${table.chainDepth.map((t) => t.replace("_recordings", "")).join(", ")}`;
-  const summary = [fileSummary(fileSweeps), table.chainDepth.length && tables]
-    .filter(Boolean)
-    .join(" · ");
-  const plural = (n: number, word: string) =>
-    `${n.toLocaleString("en-US")} ${word}${n === 1 ? "" : "s"}`;
-  // The first pick that opens the plot: every protocol, else every condition or repetition.
-  const pickAll = hasSeq
-    ? () => setProtoRow(ALL_ROW)
-    : hasCond
-      ? () => setCondRow(ALL_ROW)
-      : hasRep
-        ? () => setRepRow(ALL_ROW)
-        : undefined;
-
-  const sweepColumns: Column<IcephysRow>[] = [
-    { key: "sweep", label: "Sweep", type: "number", value: (s) => s.irtRow },
-    ...dfVaryingCols.map((c) => ({
-      key: c.header,
-      label: c.header,
-      value: (s: IcephysRow) => c.get(s) ?? "",
-    })),
-  ];
-  const countColumns: Column<string>[] = facetCounts
-    ? [
-        {
-          key: "panel",
-          label: axisLabel(resolvedPanels),
-          value: (rk) => facetCounts.rowLabel.get(rk),
-        },
-        ...(facetCounts.twoD
-          ? facetCounts.colOrder.map((ck) => ({
-              ck,
-              label: facetCounts.colLabel.get(ck) ?? ck,
-            }))
-          : [{ ck: "", label: "Sweeps" }]
-        ).map(({ ck, label }) => ({
-          key: `n:${ck}`,
-          label,
-          type: "number" as const,
-          value: (rk: string) =>
-            facetCounts.count.get(JSON.stringify([rk, ck])) ?? 0,
-        })),
-      ]
-    : [];
-
-  const controls = plotting ? (
-    <>
-      <AxisSelect
-        label="Color by"
-        value={colorBy}
-        onChange={setColorBy}
-        options={axisOptions(
-          { value: "auto", label: "Auto" },
-          varies,
-          customAxisOptions,
-        )}
-      />
-      <AxisSelect
-        label="Panels by"
-        value={panelsBy}
-        onChange={setPanelsBy}
-        options={axisOptions(
-          { value: "none", label: "None" },
-          varies,
-          customAxisOptions,
-        )}
-      />
-      {panelsBy !== "none" && (
-        <AxisSelect
-          label="And by"
-          value={panelsBy2}
-          onChange={setPanelsBy2}
-          options={axisOptions(
-            { value: "none", label: "None" },
-            varies,
-            customAxisOptions,
-            panelsBy,
-          )}
-        />
-      )}
-      {isSampled && (
-        <div className="icephys-sample">
-          <p className="icephys-sample-text">
-            {`Showing ${sweepsToLoad.length} of ${plural(inScopeRows.length, "sweep")}, ${
-              resolvedPanels === "none"
-                ? "evenly spaced"
-                : `up to ${perPanelCap} per panel`
-            }`}
-          </p>
-          <Button
-            size="sm"
-            onClick={() =>
-              setSampleLimit((l) => Math.min(inScopeRows.length, l * 2))
-            }
+  // Encoding bar (Color by / Panels by): how to compare. Rendered both above the
+  // plot and above the "Large scope" cap card, so the comparison controls (e.g.
+  // Color by = Electrode on a dual-electrode file) stay reachable even when the
+  // broad selection is over the auto-render cap. Changing them does not change
+  // the sweep count, so it is safe to keep them visible in the capped state.
+  const encodingBar = (
+    <div style={{ marginBottom: 8, fontSize: 12, color: "#444" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 16,
+          alignItems: "center",
+          minHeight: 28,
+        }}
+      >
+        <label>
+          Color by{" "}
+          <select
+            value={colorBy}
+            onChange={(e) => setColorBy(e.target.value as typeof colorBy)}
+            style={{ fontSize: 12, padding: "2px 4px" }}
           >
-            Plot more
-          </Button>
-          <Button size="sm" onClick={() => setSampleLimit(inScopeRows.length)}>
-            {inScopeRows.length > PLOT_ALL_WARN
-              ? `Plot all ${inScopeRows.length} (slow)`
-              : "Plot all"}
-          </Button>
-        </div>
-      )}
-    </>
-  ) : null;
-
-  const settings = (
-    <>
-      <AccordionItem title="Scope" summary={scopeSummary} {...section("scope")}>
-        <div className="icephys-fields">
-          {hasSeq && (
-            <ProtocolSelector
-              nwbUrl={nwbUrl}
-              repRow={undefined}
-              value={scope.protoRow}
-              onChange={setProtoRow}
-              optionEnabled={
-                haveProvenance
-                  ? (o) => enabledProtoNames.has(o.label)
-                  : undefined
-              }
-            />
-          )}
-          {hasCond && (
-            <ConditionSelector
-              nwbUrl={nwbUrl}
-              value={scope.condRow}
-              onChange={setCondRow}
-              optionEnabled={
-                haveProvenance ? (o) => enabledConds.has(o.row) : undefined
-              }
-            />
-          )}
-          {hasRep && (
-            <RepetitionSelector
-              nwbUrl={nwbUrl}
-              condRow={undefined}
-              value={scope.repRow}
-              onChange={setRepRow}
-              optionEnabled={
-                haveProvenance ? (o) => enabledReps.has(o.row) : undefined
-              }
-            />
-          )}
-        </div>
-      </AccordionItem>
-      {plotting && (
-        <AccordionItem title="Axes" summary={axesSummary} {...section("axes")}>
-          <div className="icephys-fields">
-            <SettingPair>
-              <TextInput
-                label="Window start"
-                unit="ms"
-                size="sm"
-                inputMode="decimal"
-                placeholder="Start"
-                value={xWindowStr.start}
-                onChange={(start) => setXWindowStr((w) => ({ ...w, start }))}
-                error={windowError ?? undefined}
-              />
-              <TextInput
-                label="Window end"
-                unit="ms"
-                size="sm"
-                inputMode="decimal"
-                placeholder="End"
-                value={xWindowStr.end}
-                onChange={(end) => setXWindowStr((w) => ({ ...w, end }))}
-              />
-            </SettingPair>
-            <div className="icephys-actions">
-              <Button
-                size="sm"
-                disabled={!windowSet}
-                onClick={() => setXWindowStr({ start: "", end: "" })}
-              >
-                Whole sweep
-              </Button>
-            </div>
-            {panelsBy !== "none" && (
-              <Checkbox
-                label="Lock y across panels"
-                checked={lockY}
-                onChange={setLockY}
-                aria-describedby={lockYHelpId}
-              />
-            )}
-            {panelsBy !== "none" && (
-              <p id={lockYHelpId} className="icephys-help">
-                One y scale per unit, so amplitudes compare. Off, each panel
-                scales to its own sweeps.
-              </p>
-            )}
-          </div>
-        </AccordionItem>
-      )}
-      {facetLegend && facetLegend.order.length > 0 && (
-        <AccordionItem
-          title="Colors"
-          summary={axisLabel(legendAxis)}
-          {...section("colors")}
-        >
-          <FacetLegend
-            label={`Colors by ${axisLabel(legendAxis)}`}
-            categorical={facetLegend}
-          />
-        </AccordionItem>
-      )}
-      {facetCounts && (
-        <AccordionItem
-          title="Sweeps per panel"
-          summary={plural(
-            facetCounts.rowOrder.length *
-              (facetCounts.twoD ? facetCounts.colOrder.length : 1),
-            "panel",
-          )}
-          {...section("counts")}
-        >
-          <DataTable
-            caption="Sweeps per panel"
-            columns={countColumns}
-            rows={facetCounts.rowOrder}
-            rowKey={(rk) => rk}
-            density="compact"
-          />
-        </AccordionItem>
-      )}
-      {shouldRender &&
-        selSweeps.length > 0 &&
-        (dfShared.length > 0 || dfVaryingCols.length > 0) && (
-          <AccordionItem
-            title={
-              selSweeps.length === 1 ? "Selected sweep" : "Selected sweeps"
-            }
-            summary={plural(selSweeps.length, "sweep")}
-            {...section("sweeps")}
+            <option value="auto">auto</option>
+            {protocolVaries && <option value="protocol">Protocol</option>}
+            {condVaries && <option value="condition">Condition</option>}
+            {repVaries && <option value="repetition">Repetition</option>}
+            {electrodeVaries && <option value="electrode">Electrode</option>}
+            {cellVaries && <option value="cell">Cell</option>}
+            {customAxisOptions.map((o) => (
+              <option key={o.axis} value={o.axis}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Panels by{" "}
+          <select
+            value={panelsBy}
+            onChange={(e) => setPanelsBy(e.target.value as typeof panelsBy)}
+            style={{ fontSize: 12, padding: "2px 4px" }}
           >
-            <div className="icephys-sweeps">
-              {dfShared.length > 0 && (
-                <p className="icephys-help">
-                  {`Same for all: ${dfShared.map((s) => `${s.header} ${s.value}`).join(" · ")}`}
-                </p>
+            <option value="none">none</option>
+            {protocolVaries && <option value="protocol">Protocol</option>}
+            {condVaries && <option value="condition">Condition</option>}
+            {repVaries && <option value="repetition">Repetition</option>}
+            {electrodeVaries && <option value="electrode">Electrode</option>}
+            {cellVaries && <option value="cell">Cell</option>}
+            {customAxisOptions.map((o) => (
+              <option key={o.axis} value={o.axis}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        {panelsBy !== "none" && (
+          <label>
+            &amp; by{" "}
+            <select
+              value={panelsBy2}
+              onChange={(e) => setPanelsBy2(e.target.value as typeof panelsBy2)}
+              style={{ fontSize: 12, padding: "2px 4px" }}
+            >
+              <option value="none">none</option>
+              {protocolVaries && panelsBy !== "protocol" && (
+                <option value="protocol">Protocol</option>
               )}
-              {dfVaryingCols.length > 0 && (
-                <>
-                  {selSweeps.length > dfRows.length && (
-                    <p className="icephys-help">
-                      {`The first ${dfRows.length} of ${selSweeps.length}`}
-                    </p>
-                  )}
-                  <DataTable
-                    caption="Selected sweeps"
-                    columns={sweepColumns}
-                    rows={dfRows}
-                    rowKey={(s) => String(s.irtRow)}
-                    density="compact"
-                  />
-                </>
+              {condVaries && panelsBy !== "condition" && (
+                <option value="condition">Condition</option>
               )}
-            </div>
-          </AccordionItem>
+              {repVaries && panelsBy !== "repetition" && (
+                <option value="repetition">Repetition</option>
+              )}
+              {electrodeVaries && panelsBy !== "electrode" && (
+                <option value="electrode">Electrode</option>
+              )}
+              {cellVaries && panelsBy !== "cell" && (
+                <option value="cell">Cell</option>
+              )}
+              {customAxisOptions
+                .filter((o) => o.axis !== panelsBy)
+                .map((o) => (
+                  <option key={o.axis} value={o.axis}>
+                    {o.name}
+                  </option>
+                ))}
+            </select>
+          </label>
         )}
-    </>
+      </div>
+      <div
+        style={{
+          display: "flex",
+          gap: 16,
+          alignItems: "center",
+          minHeight: 28,
+          marginTop: 4,
+        }}
+      >
+        <label>
+          window (ms){" "}
+          <input
+            type="number"
+            value={xWindowStr.start}
+            placeholder="start"
+            onChange={(e) =>
+              setXWindowStr((w) => ({ ...w, start: e.target.value }))
+            }
+            style={{
+              width: 56,
+              fontSize: 12,
+              padding: "2px 4px",
+              borderColor: windowError ? "#c00" : undefined,
+            }}
+          />
+          {" - "}
+          <input
+            type="number"
+            value={xWindowStr.end}
+            placeholder="end"
+            onChange={(e) =>
+              setXWindowStr((w) => ({ ...w, end: e.target.value }))
+            }
+            style={{
+              width: 56,
+              fontSize: 12,
+              padding: "2px 4px",
+              borderColor: windowError ? "#c00" : undefined,
+            }}
+          />
+          {(xWindowStr.start !== "" || xWindowStr.end !== "") && (
+            <button
+              onClick={() => setXWindowStr({ start: "", end: "" })}
+              style={{ marginLeft: 4, fontSize: 11, padding: "1px 6px" }}
+            >
+              full
+            </button>
+          )}
+          {windowError && (
+            <span style={{ marginLeft: 6, fontSize: 11, color: "#c00" }}>
+              {windowError}
+            </span>
+          )}
+        </label>
+        {panelsBy !== "none" && (
+          <label
+            style={{ display: "flex", alignItems: "center", gap: 4 }}
+            title="Share one y-scale across panels (per unit) so amplitudes are comparable. Off = each panel autoscales."
+          >
+            <input
+              type="checkbox"
+              checked={lockY}
+              onChange={(e) => setLockY(e.target.checked)}
+              style={{ margin: 0 }}
+            />
+            lock y
+          </label>
+        )}
+      </div>
+    </div>
   );
 
-  const drawChart = ({ width, height }: Size) => {
-    const chartHeight = Math.max(0, height - (showTimeline ? TIMELINE_H : 0));
-    return (
-      <>
-        {resolvedPanels === "none" ? (
-          <FamilyOverlayPlot
-            sweeps={sweepData.loaded}
-            width={width}
-            height={chartHeight}
-            groupBy={resolvedColor}
-            xRangeMs={xRangeMs}
-          />
-        ) : resolvedPanels2 === "none" ? (
-          <FamilySeparatePanels
-            sweeps={sweepData.loaded}
-            width={width}
-            height={chartHeight}
-            splitBy={resolvedPanels}
-            innerGroupBy={innerColor}
-            xRangeMs={xRangeMs}
-            yRangeByUnit={yRangeByUnit}
-          />
-        ) : (
-          <FamilyFacetGrid
-            sweeps={sweepData.loaded}
-            width={width}
-            height={chartHeight}
-            rowAxis={resolvedPanels}
-            colAxis={resolvedPanels2}
-            innerGroupBy={innerColor}
-            xRangeMs={xRangeMs}
-            yRangeByUnit={yRangeByUnit}
+  return (
+    <div style={{ display: "flex", width, height, overflow: "hidden" }}>
+      <div
+        style={{
+          width: SIDEBAR_WIDTH,
+          height,
+          borderRight: "1px solid #ddd",
+          padding: 12,
+          boxSizing: "border-box",
+          overflowY: "auto",
+        }}
+      >
+        <h3 style={{ marginTop: 0, marginBottom: 12 }}>Scope</h3>
+
+        {/* Protocol is the anchor (lists all protocols). Condition/Repetition
+            are filters. All three cross-filter: an option is greyed when it
+            does not co-occur with the other axes' current picks. */}
+        {hasSeq && (
+          <ProtocolSelector
+            nwbUrl={nwbUrl}
+            repRow={undefined}
+            value={scope.protoRow}
+            onChange={setProtoRow}
+            optionEnabled={
+              haveProvenance ? (o) => enabledProtoNames.has(o.label) : undefined
+            }
           />
         )}
+        {hasCond && (
+          <ConditionSelector
+            nwbUrl={nwbUrl}
+            value={scope.condRow}
+            onChange={setCondRow}
+            optionEnabled={
+              haveProvenance ? (o) => enabledConds.has(o.row) : undefined
+            }
+          />
+        )}
+        {hasRep && (
+          <RepetitionSelector
+            nwbUrl={nwbUrl}
+            condRow={undefined}
+            value={scope.repRow}
+            onChange={setRepRow}
+            optionEnabled={
+              haveProvenance ? (o) => enabledReps.has(o.row) : undefined
+            }
+          />
+        )}
+
+        <h3 style={{ marginTop: 24, marginBottom: 8 }}>Summary</h3>
+        <div
+          style={{ fontSize: 12, color: "#555", lineHeight: 1.5 }}
+          title={`${table.chainDepth.length}/5 icephys tables present: ${table.chainDepth.join(", ")}`}
+        >
+          {fileSummary.length ? fileSummary.join(" · ") : "..."}{" "}
+          <span style={{ color: "#aaa", cursor: "help" }}>&#9432;</span>
+        </div>
+
+        {shouldRender &&
+          selSweeps.length > 0 &&
+          (dfShared.length > 0 || dfVaryingCols.length > 0) && (
+            <div style={{ marginTop: 12 }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "#666",
+                  marginBottom: 4,
+                }}
+              >
+                {selSweeps.length === 1 ? "Selected sweep" : "Selected sweeps"}
+                {dfVaryingCols.length > 0 && selSweeps.length > dfRows.length
+                  ? ` (first ${dfRows.length} of ${selSweeps.length})`
+                  : ""}
+              </div>
+              {dfShared.length > 0 && (
+                <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>
+                  {dfShared.map((s) => `${s.header}: ${s.value}`).join(" · ")}
+                </div>
+              )}
+              {dfVaryingCols.length > 0 && (
+                <div style={{ maxHeight: 220, overflow: "auto" }}>
+                  <table
+                    style={{
+                      borderCollapse: "collapse",
+                      fontSize: 11,
+                      color: "#444",
+                    }}
+                  >
+                    <thead>
+                      <tr>
+                        <th style={selThStyle}>sweep</th>
+                        {dfVaryingCols.map((c) => (
+                          <th key={c.header} style={selThStyle}>
+                            {c.header}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dfRows.map((s) => (
+                        <tr key={s.irtRow}>
+                          <td style={selTdStyle}>{s.irtRow}</td>
+                          {dfVaryingCols.map((c) => (
+                            <td key={c.header} style={selTdStyle}>
+                              {c.get(s) ?? ""}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+        {facetLegend && facetLegend.order.length > 0 && (
+          <div style={{ marginTop: 12 }}>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: "#666",
+                marginBottom: 2,
+              }}
+            >
+              Colors (
+              {legendAxis.startsWith("col:") ? legendAxis.slice(4) : legendAxis}
+              )
+            </div>
+            <FacetLegend categorical={facetLegend} />
+          </div>
+        )}
+
+        {facetCounts && (
+          <div style={{ marginTop: 12 }}>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: "#666",
+                marginBottom: 2,
+              }}
+            >
+              Sweeps per panel
+            </div>
+            <table style={{ borderCollapse: "collapse", fontSize: 11 }}>
+              <tbody>
+                {facetCounts.twoD && (
+                  <tr>
+                    <td style={fcCell} />
+                    {facetCounts.colOrder.map((ck) => (
+                      <td
+                        key={ck}
+                        style={{ ...fcCell, fontWeight: 600, color: "#666" }}
+                        title={facetCounts.colLabel.get(ck)}
+                      >
+                        {facetCounts.colLabel.get(ck)}
+                      </td>
+                    ))}
+                  </tr>
+                )}
+                {facetCounts.rowOrder.map((rk) => (
+                  <tr key={rk}>
+                    <td
+                      style={{
+                        ...fcCell,
+                        fontWeight: 600,
+                        color: "#666",
+                        textAlign: "left",
+                      }}
+                      title={facetCounts.rowLabel.get(rk)}
+                    >
+                      {facetCounts.rowLabel.get(rk)}
+                    </td>
+                    {(facetCounts.twoD ? facetCounts.colOrder : [""]).map(
+                      (ck) => {
+                        const n =
+                          facetCounts.count.get(JSON.stringify([rk, ck])) ?? 0;
+                        return (
+                          <td
+                            key={ck || "n"}
+                            style={{ ...fcCell, color: "#444" }}
+                          >
+                            {n || "-"}
+                          </td>
+                        );
+                      },
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {table.error && table.error !== "UNSUPPORTED_ASSET" && (
+          <div style={{ marginTop: 12, color: "#b00", fontSize: 12 }}>
+            chain error: {table.error}
+          </div>
+        )}
+        {sweepData.error && (
+          <div style={{ marginTop: 12, color: "#b00", fontSize: 12 }}>
+            data error: {sweepData.error}
+          </div>
+        )}
+      </div>
+
+      <div
+        style={{
+          flex: 1,
+          height,
+          padding: 12,
+          boxSizing: "border-box",
+          overflow: "hidden",
+        }}
+      >
+        {table.loading && (
+          <div style={{ color: "#888" }}>resolving chain...</div>
+        )}
+
+        {!table.loading && table.error === "UNSUPPORTED_ASSET" && (
+          <div
+            style={{
+              padding: 20,
+              fontSize: 15,
+              color: "#b00",
+              maxWidth: 480,
+            }}
+          >
+            Icephys visualization for this asset is not supported yet.
+          </div>
+        )}
+
+        {!table.loading &&
+          table.error !== "UNSUPPORTED_ASSET" &&
+          !shouldRender && (
+            <div style={{ color: "#888", padding: 16, fontSize: 13 }}>
+              Pick anything in the sidebar to start. Each pick narrows the
+              scope; the plot renders once at least one tier is set.
+              {inScopeRows.length > 0 && (
+                <div style={{ marginTop: 6, fontSize: 12, color: "#aaa" }}>
+                  (<strong>{inScopeRows.length}</strong> sweeps in this file)
+                </div>
+              )}
+            </div>
+          )}
+
+        {!table.loading &&
+          shouldRender &&
+          inScopeRows.length > 0 &&
+          encodingBar}
+
+        {!table.loading &&
+          shouldRender &&
+          !table.error &&
+          inScopeRows.length === 0 && (
+            <div style={{ color: "#888", padding: 16, fontSize: 13 }}>
+              No sweeps match this selection — the chosen Protocol isn't
+              recorded in the selected Condition/Repetition. Clear a filter (set
+              it back to "All" / unset) or pick a different one.
+            </div>
+          )}
+
+        {!table.loading && shouldRender && inScopeRows.length > 0 && (
+          <>
+            {isSampled && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: 8,
+                  fontSize: 12,
+                  color: "#666",
+                }}
+              >
+                <span>
+                  showing {sweepsToLoad.length} of{" "}
+                  <strong>{inScopeRows.length}</strong> sweeps{" "}
+                  {resolvedPanels === "none"
+                    ? "(evenly spaced)"
+                    : `(up to ${perPanelCap} per panel)`}
+                </span>
+                <button
+                  onClick={() =>
+                    setSampleLimit((l) => Math.min(inScopeRows.length, l * 2))
+                  }
+                  style={{ fontSize: 12, padding: "2px 8px" }}
+                >
+                  plot more
+                </button>
+                <button
+                  onClick={() => setSampleLimit(inScopeRows.length)}
+                  title={
+                    inScopeRows.length > PLOT_ALL_WARN
+                      ? "Rendering the whole family may be slow."
+                      : undefined
+                  }
+                  style={{
+                    fontSize: 12,
+                    padding: "2px 8px",
+                    ...(inScopeRows.length > PLOT_ALL_WARN
+                      ? {
+                          color: "#92600a",
+                          border: "1px solid #e0a800",
+                          background: "#fffbe6",
+                        }
+                      : {}),
+                  }}
+                >
+                  plot all{inScopeRows.length > PLOT_ALL_WARN ? " (slow)" : ""}
+                </button>
+              </div>
+            )}
+            {sweepData.loading && (
+              <div style={{ color: "#888", marginBottom: 8 }}>
+                loading sweeps ({sweepData.loaded.length}/{sweepsToLoad.length}
+                )...
+              </div>
+            )}
+            {resolvedPanels === "none" ? (
+              <FamilyOverlayPlot
+                sweeps={sweepData.loaded}
+                width={plotWidth}
+                height={
+                  plotHeight -
+                  timelineHeight -
+                  ENCODING_BAR_H -
+                  (sweepData.loading ? 24 : 0)
+                }
+                groupBy={resolvedColor}
+                xRangeMs={xRangeMs}
+              />
+            ) : resolvedPanels2 === "none" ? (
+              <FamilySeparatePanels
+                sweeps={sweepData.loaded}
+                width={plotWidth}
+                height={
+                  plotHeight -
+                  timelineHeight -
+                  ENCODING_BAR_H -
+                  (sweepData.loading ? 24 : 0)
+                }
+                splitBy={resolvedPanels}
+                innerGroupBy={innerColor}
+                xRangeMs={xRangeMs}
+                yRangeByUnit={yRangeByUnit}
+              />
+            ) : (
+              <FamilyFacetGrid
+                sweeps={sweepData.loaded}
+                width={plotWidth}
+                height={
+                  plotHeight -
+                  timelineHeight -
+                  ENCODING_BAR_H -
+                  (sweepData.loading ? 24 : 0)
+                }
+                rowAxis={resolvedPanels}
+                colAxis={resolvedPanels2}
+                innerGroupBy={innerColor}
+                xRangeMs={xRangeMs}
+                yRangeByUnit={yRangeByUnit}
+              />
+            )}
+          </>
+        )}
+
         {showTimeline && (
           <TemporalDistribution
             times={sweepTimes.times}
             contextTimes={contextTimes.times}
             loading={sweepTimes.loading}
-            width={width}
+            width={plotWidth}
             groupBy={timelineColor}
           />
         )}
-      </>
-    );
-  };
-
-  return (
-    <div ref={frame} className="icephys">
-      <ViewPanel
-        label="Intracellular recordings"
-        summary={summary || "Reading the icephys tables…"}
-        controls={controls}
-        settings={settings}
-        busy={table.loading || sweepData.loading}
-      >
-        <div className="icephys-plot">
-          {table.error && !unsupported && (
-            <InlineMessage status="error">
-              {`Couldn’t read the icephys tables: ${table.error}`}
-            </InlineMessage>
-          )}
-          {sweepData.error && (
-            <InlineMessage status="error">
-              {`Couldn’t load the sweeps: ${sweepData.error}`}
-            </InlineMessage>
-          )}
-          {table.loading && (
-            <LoadingState
-              label="Reading the icephys tables"
-              phase={tablePhase}
-            />
-          )}
-          {!table.loading && unsupported && (
-            <EmptyState title="This file can’t be drawn yet">
-              Neurosift plots intracellular recordings from files it reads
-              through LINDI, and this one isn’t.
-            </EmptyState>
-          )}
-          {ready && !shouldRender && (
-            <EmptyState
-              title="Choose what to plot"
-              action={
-                pickAll && inScopeRows.length > 0
-                  ? { label: "Plot all sweeps", onClick: pickAll }
-                  : undefined
-              }
-            >
-              {`Pick a protocol, condition or repetition in Scope. This file has ${plural(inScopeRows.length, "sweep")}.`}
-            </EmptyState>
-          )}
-          {ready &&
-            shouldRender &&
-            !table.error &&
-            inScopeRows.length === 0 && (
-              <EmptyState title="No sweeps match this scope">
-                The chosen protocol isn’t recorded in the chosen condition or
-                repetition. Set a filter back to All, or pick another.
-              </EmptyState>
-            )}
-          {plotting && sweepData.loading && (
-            <ProgressBar
-              label="Loading sweeps"
-              value={sweepData.loaded.length}
-              max={sweepsToLoad.length}
-              unit="sweeps"
-            />
-          )}
-          {plotting && <ChartArea>{drawChart}</ChartArea>}
-        </div>
-      </ViewPanel>
-    </div>
-  );
-};
-
-type Size = { width: number; height: number };
-
-/** A Color or Panels axis, its label beside the field as in the time views. */
-const AxisSelect: FunctionComponent<{
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: SelectOption[];
-}> = ({ label, ...select }) => (
-  <div className="ns-time-group icephys-axis">
-    <span className="ns-time-label" aria-hidden="true">
-      {label}
-    </span>
-    <Select label={label} hideLabel size="sm" {...select} />
-  </div>
-);
-
-/** Measures the space left under the messages, so the charts are drawn to fit it. */
-const ChartArea: FunctionComponent<{ children: (size: Size) => ReactNode }> = ({
-  children,
-}) => {
-  const [ref, size] = useElementSize<HTMLDivElement>();
-  return (
-    <div ref={ref} className="icephys-chart">
-      <div className="icephys-chart-fill">
-        {size.width > 0 && size.height > 0 && children(size)}
       </div>
     </div>
   );

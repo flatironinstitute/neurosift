@@ -6,13 +6,11 @@ export const buildDandisetsSearchUrl = (o: {
   searchQuery: string;
   embargoed: boolean;
   pageSize?: number;
-  page?: number;
-  ordering?: "-modified" | "-id";
 }): string => {
   const params = new URLSearchParams({
-    page: String(o.page ?? 1),
+    page: "1",
     page_size: String(o.pageSize ?? 50),
-    ordering: o.ordering ?? "-modified",
+    ordering: "-modified",
     search: o.searchQuery,
     draft: "true",
     // an empty search lists everything, so hide empty dandisets then

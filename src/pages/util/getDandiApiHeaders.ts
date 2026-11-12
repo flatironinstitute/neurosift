@@ -1,19 +1,24 @@
-import {
-  ARCHIVES,
-  getAuthorizationHeaderForUrl,
-  type Archive,
-} from "./apiKeys";
-
-const headersFor = (name: Archive["name"]) => {
-  const archive = ARCHIVES.find((a) => a.name === name)!;
-  const authorization = getAuthorizationHeaderForUrl(archive.apiPrefix);
-  const headers: { [key: string]: string } = authorization
-    ? { Authorization: authorization }
-    : {};
-  return { headers, apiKeyProvided: !!authorization };
+export const getDandiApiHeaders = (
+  useStaging: boolean,
+): { headers: { [key: string]: string }; apiKeyProvided: boolean } => {
+  const headers: { [key: string]: string } = {};
+  const dandiApiKey = useStaging
+    ? localStorage.getItem("dandiStagingApiKey") || ""
+    : localStorage.getItem("dandiApiKey") || "";
+  if (dandiApiKey) {
+    headers["Authorization"] = `token ${dandiApiKey}`;
+  }
+  return { headers, apiKeyProvided: !!dandiApiKey };
 };
 
-export const getDandiApiHeaders = (useStaging: boolean) =>
-  headersFor(useStaging ? "DANDI sandbox" : "DANDI");
-
-export const getEmberApiHeaders = () => headersFor("EMBER");
+export const getEmberApiHeaders = (): {
+  headers: { [key: string]: string };
+  apiKeyProvided: boolean;
+} => {
+  const headers: { [key: string]: string } = {};
+  const emberApiKey = localStorage.getItem("emberApiKey") || "";
+  if (emberApiKey) {
+    headers["Authorization"] = `token ${emberApiKey}`;
+  }
+  return { headers, apiKeyProvided: !!emberApiKey };
+};

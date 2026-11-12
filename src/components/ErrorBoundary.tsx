@@ -1,10 +1,14 @@
+import { Alert, AlertTitle, Button } from "@mui/material";
 import { Component, ErrorInfo, ReactNode } from "react";
-import ViewError from "./ViewError/ViewError";
-import { reportError } from "../util/reportError";
+import {
+  errorMessage,
+  issueUrlForError,
+  reportError,
+} from "../util/reportError";
 
 type Props = {
-  // What is inside, in plain words, as it reads in "... couldn't be shown",
-  // e.g. "this page" or "the timeseries alignment".
+  // What is inside, as it reads in "Something went wrong in ...", e.g.
+  // "this view" or "the HDF5 tab".
   what: string;
   // The boundary clears its error when this value changes. Use it for content
   // that is replaced without remounting the boundary, such as a route.
@@ -46,7 +50,33 @@ class ErrorBoundary extends Component<Props, State> {
 
     const { error } = this.state;
     const { what } = this.props;
-    return <ViewError what={what} error={error} onRetry={this.reset} />;
+    return (
+      <Alert
+        severity="error"
+        sx={{ m: 1 }}
+        action={
+          <>
+            <Button color="inherit" size="small" onClick={this.reset}>
+              Try again
+            </Button>
+            <Button
+              color="inherit"
+              size="small"
+              href={issueUrlForError(error, what)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Report this
+            </Button>
+          </>
+        }
+      >
+        <AlertTitle>Something went wrong in {what}</AlertTitle>
+        <code style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+          {errorMessage(error)}
+        </code>
+      </Alert>
+    );
   }
 }
 

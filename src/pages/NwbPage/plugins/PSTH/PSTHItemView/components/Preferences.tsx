@@ -1,5 +1,4 @@
-import { Checkbox, Select, TextInput } from "@ui";
-import { FunctionComponent, useState } from "react";
+import { FunctionComponent, useCallback } from "react";
 import { PSTHPrefs, PSTHPrefsAction } from "../types";
 
 type PrefsComponentProps = {
@@ -8,64 +7,114 @@ type PrefsComponentProps = {
   mode: "psth" | "time-aligned-series";
 };
 
-/** What each chart draws: raster, histogram, bins and height. */
 const PrefsComponent: FunctionComponent<PrefsComponentProps> = ({
   prefs,
   prefsDispatch,
   mode,
 }) => {
-  const [bins, setBins] = useState(String(prefs.numBins));
-  const value = Number(bins);
-  const valid = Number.isInteger(value) && value >= 1 && value <= 1000;
-  const toggle = (key: "showRaster" | "showHist" | "smoothedHist") =>
-    prefsDispatch({ type: "TOGGLE_PREF", key });
+  const handleSetNumBins = useCallback(
+    (numBins: number) => {
+      prefsDispatch({ type: "SET_PREF", key: "numBins", value: numBins });
+    },
+    [prefsDispatch],
+  );
+
+  const handleToggleShowRaster = useCallback(() => {
+    prefsDispatch({ type: "TOGGLE_PREF", key: "showRaster" });
+  }, [prefsDispatch]);
+
+  const handleToggleShowHist = useCallback(() => {
+    prefsDispatch({ type: "TOGGLE_PREF", key: "showHist" });
+  }, [prefsDispatch]);
+
+  const handleToggleSmoothedHist = useCallback(() => {
+    prefsDispatch({ type: "TOGGLE_PREF", key: "smoothedHist" });
+  }, [prefsDispatch]);
+
   return (
-    <>
-      <Checkbox
-        label="Raster"
+    <div>
+      <input
+        type="checkbox"
         checked={prefs.showRaster}
-        onChange={() => toggle("showRaster")}
-      />
+        onChange={() => {}}
+        onClick={handleToggleShowRaster}
+      />{" "}
+      Show raster
+      <br />
       {mode === "psth" && (
-        <Checkbox
-          label="Histogram"
-          checked={prefs.showHist}
-          onChange={() => toggle("showHist")}
-        />
+        <>
+          <input
+            type="checkbox"
+            checked={prefs.showHist}
+            onChange={() => {}}
+            onClick={handleToggleShowHist}
+          />{" "}
+          Show histogram
+          <br />
+        </>
       )}
+      <NumBinsComponent numBins={prefs.numBins} setNumBins={handleSetNumBins} />
+      <br />
       {mode === "psth" && (
-        <Checkbox
-          label="Smoothed"
-          checked={prefs.smoothedHist}
-          onChange={() => toggle("smoothedHist")}
-        />
+        <>
+          <input
+            type="checkbox"
+            checked={prefs.smoothedHist}
+            onChange={() => {}}
+            onClick={handleToggleSmoothedHist}
+          />{" "}
+          Smoothed
+          <br />
+        </>
       )}
-      <TextInput
-        label="Number of bins"
-        size="sm"
-        value={bins}
-        error={valid ? undefined : "Use between 1 and 1,000 bins."}
-        onChange={(next) => {
-          setBins(next);
-          const n = Number(next);
-          if (Number.isInteger(n) && n >= 1 && n <= 1000)
-            prefsDispatch({ type: "SET_PREF", key: "numBins", value: n });
-        }}
-      />
-      <Select
-        label="Chart height"
-        size="sm"
+      Height:&nbsp;
+      <select
         value={prefs.height}
-        onChange={(height) =>
-          prefsDispatch({ type: "SET_PREF", key: "height", value: height })
-        }
-        options={[
-          { value: "small", label: "Small" },
-          { value: "medium", label: "Medium" },
-          { value: "large", label: "Large" },
-        ]}
+        onChange={(evt) => {
+          prefsDispatch({
+            type: "SET_PREF",
+            key: "height",
+            value: evt.target.value,
+          });
+        }}
+      >
+        <option value="small">Small</option>
+        <option value="medium">Medium</option>
+        <option value="large">Large</option>
+      </select>
+    </div>
+  );
+};
+
+type NumBinsComponentProps = {
+  numBins: number;
+  setNumBins: (x: number) => void;
+};
+
+const NumBinsComponent: FunctionComponent<NumBinsComponentProps> = ({
+  numBins,
+  setNumBins,
+}) => {
+  const handleChange = useCallback(
+    (value: string) => {
+      const val = parseInt(value);
+      if (!isNaN(val) && val >= 1 && val <= 1000) {
+        setNumBins(val);
+      }
+    },
+    [setNumBins],
+  );
+
+  return (
+    <span>
+      Num. bins:&nbsp;
+      <input
+        style={{ width: 30 }}
+        type="text"
+        value={numBins}
+        onChange={(evt) => handleChange(evt.target.value)}
       />
-    </>
+    </span>
   );
 };
 

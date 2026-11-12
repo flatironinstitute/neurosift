@@ -1,8 +1,0 @@
-.raster-canvas {
-  position: relative;
-}
-
-/* The bare plot is absolute; in flow it takes the space the next view needs. */
-.raster-canvas .tsv--bare {
-  position: relative;
-}

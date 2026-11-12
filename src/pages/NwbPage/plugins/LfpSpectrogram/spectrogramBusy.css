@@ -1,0 +1,68 @@
+/* Non-blocking activity indicators for the LFP spectrogram view: the last
+   computed image stays on screen and readable while a new one is computed. */
+
+.spectrogramBusySpinner {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  flex: 0 0 auto;
+  border: 2px solid rgba(53, 115, 177, 0.25);
+  border-top-color: #3573b1;
+  border-radius: 50%;
+  animation: spectrogramBusySpin 0.8s linear infinite;
+}
+
+/* Small badge pinned inside a plot's top-right corner. */
+.spectrogramBusyBadge {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid #d0d7de;
+  color: #3d4b5a;
+  font-size: 10px;
+  line-height: 14px;
+  pointer-events: none;
+}
+
+/* Status chip in the toolbar above the plots. */
+.spectrogramBusyChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  border: 1px solid #d0d7de;
+  background: #f4f8fc;
+  color: #3d4b5a;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.spectrogramBusyChip button {
+  border: none;
+  background: transparent;
+  color: #3573b1;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0;
+  text-decoration: underline;
+}
+
+@keyframes spectrogramBusySpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spectrogramBusySpinner {
+    animation-duration: 3s;
+  }
+}

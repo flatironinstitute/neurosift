@@ -1,15 +1,13 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import ResponsiveLayout from "@components/ResponsiveLayout";
-import { addRecentDataset } from "../util/recentDatasets";
+import { addRecentOpenNeuroDataset } from "../util/recentOpenNeuroDatasets";
 import OpenNeuroDatasetOverview from "./OpenNeuroDatasetOverview";
 import { DatasetFile } from "../common/DatasetWorkspace/plugins/pluginInterface";
 import DatasetWorkspace from "../common/DatasetWorkspace/DatasetWorkspace";
 import useRegisterOpenNeuroAIComponent from "./useRegisterOpenNeuroAIComponent";
 import { OpenNeuroDatasetInfo } from "./types";
 import { fetchDatasetInfo, fetchDirectoryFiles } from "./openNeuroApi";
-import ViewError from "@components/ViewError/ViewError";
-import { EmptyState, LoadingState } from "@ui";
 
 type OpenNeuroDatasetPageProps = {
   width: number;
@@ -41,7 +39,7 @@ const OpenNeuroDatasetPage: FunctionComponent<OpenNeuroDatasetPageProps> = ({
         setDatasetInfo(info);
         setError(null);
         // Add to recent datasets
-        addRecentDataset("OpenNeuro", info.id);
+        addRecentOpenNeuroDataset(info.id);
       } catch (err) {
         console.error("Error fetching dataset:", err);
         setError(err instanceof Error ? err.message : "Failed to load dataset");
@@ -95,15 +93,9 @@ const OpenNeuroDatasetPage: FunctionComponent<OpenNeuroDatasetPageProps> = ({
     loading,
   });
 
-  if (loading)
-    return <LoadingState label="Loading the dataset" phase="loading" />;
-  if (error) return <ViewError what="this dataset" error={error} />;
-  if (!datasetInfo)
-    return (
-      <EmptyState title="No dataset found">
-        {`OpenNeuro has no dataset called ${datasetId}.`}
-      </EmptyState>
-    );
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (!datasetInfo) return <div>No dataset found</div>;
 
   const initialSplitterPosition = Math.max(300, Math.min(450, width / 3));
   const tabFilePath = searchParams.get("tab");

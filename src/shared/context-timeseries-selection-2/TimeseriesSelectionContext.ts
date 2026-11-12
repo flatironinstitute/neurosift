@@ -13,9 +13,6 @@ export type TimeseriesSelectionState = {
   visibleTimeRangeHasBeenSetAtLeastOnce: boolean;
   visibleStartTimeSec: number | undefined;
   visibleEndTimeSec: number | undefined;
-  /** The window the views open with, before anyone moves it. */
-  defaultVisibleStartTimeSec?: number;
-  defaultVisibleEndTimeSec?: number;
   currentTime: number | undefined;
 };
 
@@ -89,19 +86,13 @@ export const timeseriesSelectionReducer = (
         }
       }
 
-      const moved = state.visibleTimeRangeHasBeenSetAtLeastOnce;
       return {
         startTimeSec: newStartTimeSec,
         endTimeSec: newEndTimeSec,
         visibleStartTimeSec: newVisibleStartTimeSec,
         visibleEndTimeSec: newVisibleEndTimeSec,
-        defaultVisibleStartTimeSec: moved
-          ? state.defaultVisibleStartTimeSec
-          : newVisibleStartTimeSec,
-        defaultVisibleEndTimeSec: moved
-          ? state.defaultVisibleEndTimeSec
-          : newVisibleEndTimeSec,
-        visibleTimeRangeHasBeenSetAtLeastOnce: moved,
+        visibleTimeRangeHasBeenSetAtLeastOnce:
+          state.visibleTimeRangeHasBeenSetAtLeastOnce,
         currentTime: state.currentTime,
       };
     }
@@ -410,6 +401,7 @@ export const useTimeRange = () => {
     [visibleStartTimeSec, visibleEndTimeSec, setVisibleTimeRange],
   );
   const setCurrentTimeFraction = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (fraction: number, _opts: { event: React.MouseEvent }) => {
       if (visibleStartTimeSec === undefined || visibleEndTimeSec === undefined)
         return;

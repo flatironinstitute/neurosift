@@ -8,19 +8,17 @@ import {
 } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import DatasetWorkspace from "../common/DatasetWorkspace/DatasetWorkspace";
-import DatasetFileControls from "../common/DatasetWorkspace/DatasetFileControls";
-import { LoadingState } from "@ui";
 import { DatasetFile } from "../common/DatasetWorkspace/plugins/pluginInterface";
 import {
   AssetsResponseItem,
+  DandisetSearchResultItem,
   DandisetVersionInfo,
 } from "../DandiPage/dandi-types";
-import { addRecentDataset } from "../util/recentDatasets";
+import { addRecentDandiset } from "../util/recentDandisets";
 import DandisetOverview from "./DandisetOverview";
 import { useDandisetVersionInfo } from "./useDandisetVersionInfo";
 import useQueryAssets from "./useQueryAssets";
-import DandisetError from "./DandisetError";
-import { useDandisetResult } from "./useQueryDandiset";
+import useQueryDandiset from "./useQueryDandiset";
 import useRegisterAIComponent from "./useRegisterAIComponent";
 
 type DandisetPageProps = {
@@ -39,11 +37,8 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
   const [searchParams] = useSearchParams();
   const effectiveDandisetId = propDandisetId || urlDandisetId;
   const staging = false;
-  const { dandiset: dandisetResponse, failure } = useDandisetResult(
-    effectiveDandisetId,
-    staging,
-    false,
-  );
+  const dandisetResponse: DandisetSearchResultItem | undefined | null =
+    useQueryDandiset(effectiveDandisetId, staging, false);
 
   const dandisetVersion = searchParams.get("dandisetVersion") || "";
 
@@ -81,7 +76,7 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
 
   useEffect(() => {
     if (effectiveDandisetId) {
-      addRecentDataset("DANDI", effectiveDandisetId);
+      addRecentDandiset(effectiveDandisetId);
     }
   }, [effectiveDandisetId, staging]);
 
@@ -225,20 +220,47 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
   }, [allAssets, nwbFilesOnly, incomplete]);
 
   const mainTabAdditionalControls = (
-    <DatasetFileControls
-      showNwbToggle={nwbFilesOwnlyControlVisible}
-      nwbOnly={nwbFilesOnly}
-      onNwbOnlyChange={setNwbFilesOnly}
-      partial={
-        incomplete
-          ? {
-              loaded: allAssets ? allAssets.length : 0,
-              total: totalCount || undefined,
-              onLoadMore: handleLoadMore,
-            }
-          : undefined
-      }
-    />
+    <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
+      {nwbFilesOwnlyControlVisible && (
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            fontSize: "14px",
+            cursor: "pointer",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={nwbFilesOnly}
+            onChange={(e) => setNwbFilesOnly(e.target.checked)}
+          />
+          Show NWB files only
+        </label>
+      )}
+      {incomplete && (
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span style={{ fontSize: "14px" }}>
+            {allAssets ? allAssets.length : 0} / {totalCount || "?"} files
+          </span>
+          <button
+            onClick={handleLoadMore}
+            style={{
+              padding: "4px 12px",
+              fontSize: "14px",
+              cursor: "pointer",
+              backgroundColor: "#007bff",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+            }}
+          >
+            Load more files
+          </button>
+        </div>
+      )}
+    </div>
   );
 
   const initialTabId = searchParams.get("tab");
@@ -272,11 +294,8 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
     [navigate, searchParams],
   );
 
-  if (failure && effectiveDandisetId) {
-    return <DandisetError dandisetId={effectiveDandisetId} failure={failure} />;
-  }
   if (!dandisetResponse || !dandisetVersionInfo) {
-    return <LoadingState label="Loading the Dandiset" phase="loading" />;
+    return <div>Loading...</div>;
   }
 
   const initialSplitterPosition = Math.max(500, Math.min(650, (width * 2) / 5));

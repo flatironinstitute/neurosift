@@ -1,11 +1,6 @@
 import { useHdf5DatasetData } from "@hdf5Interface";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
-import { LoadingState } from "@ui";
 import { FunctionComponent, useEffect, useMemo } from "react";
-import TimeView, {
-  TIME_VIEW_CHROME,
-  TIME_VIEW_INSET,
-} from "../common/TimeView";
 import EventsWidget from "./EventsWidget";
 
 type Props = {
@@ -13,16 +8,6 @@ type Props = {
   height?: number;
   path: string;
   nwbUrl: string;
-};
-
-/** How many events, and over what span. */
-const eventsSummary = (times: number[]) => {
-  const n = times.length;
-  const span =
-    n > 0
-      ? ` from ${times[0].toLocaleString("en-US", { maximumFractionDigits: 2 })} to ${times[n - 1].toLocaleString("en-US", { maximumFractionDigits: 2 })} s`
-      : "";
-  return `${n.toLocaleString("en-US")} event${n === 1 ? "" : "s"}${span}`;
 };
 
 const EventsPluginView: FunctionComponent<Props> = ({
@@ -57,20 +42,13 @@ const EventsPluginView: FunctionComponent<Props> = ({
   }, [times, initializeTimeseriesSelection]);
 
   if (!times) {
-    return <LoadingState label="Reading the event times" phase="loading" />;
+    return <div>Loading data (EventsPluginView)...</div>;
   }
 
   return (
-    <TimeView
-      label={path.split("/").pop() || path}
-      summary={eventsSummary(times)}
-    >
-      <EventsWidget
-        times={times}
-        width={width - TIME_VIEW_INSET}
-        height={Math.max(height - TIME_VIEW_CHROME, 200)}
-      />
-    </TimeView>
+    <div style={{ position: "relative", width, height }}>
+      <EventsWidget times={times} width={width} height={height} />
+    </div>
   );
 };
 

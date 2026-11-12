@@ -5,8 +5,12 @@ import {
   useSearchParams,
 } from "react-router-dom";
 
-// React Router resolves a search-only destination ("?a=b") with an empty hash;
-// these keep whatever hash the address has when only the search params change.
+// React Router resolves a search-only destination ("?a=b") with an empty hash,
+// so every navigation that merely rewrites the search params silently drops the
+// URL hash. Several views persist their state there (the PSTH and Event Related
+// Signal views) with a raw history.replaceState, which the router never sees, so
+// the router's own location.hash is not a usable copy of it either. The live
+// value in window.location is, so carry that along on those navigations.
 export const currentUrlHash = (): string =>
   typeof window === "undefined" ? "" : window.location.hash;
 

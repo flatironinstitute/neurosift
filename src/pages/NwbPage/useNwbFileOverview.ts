@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-import { errorMessage } from "../../util/reportError";
 import { getHdf5Group } from "./hdf5Interface";
 import { generalLabelMap } from "./nwbConfig";
 import { NwbFileOverview, GeneralLabelMapItem } from "./Types";
@@ -19,7 +18,11 @@ export const useNwbFileOverview = (url: string | null) => {
       try {
         const rootGroup = await getHdf5Group(url, "/");
         if (!rootGroup) {
-          setError("Neurosift couldn’t read an NWB file at this address.");
+          const isDandiUrl = url.includes("dandi");
+          const errorMessage = isDandiUrl
+            ? "Unable to load the root group. If this is an embargoed Dandiset, you must enter your DANDI API Key in the settings page."
+            : "Unable to load the root group.";
+          setError(errorMessage);
           return;
         }
         const generalGroup = await getHdf5Group(url, "/general");
@@ -69,8 +72,8 @@ export const useNwbFileOverview = (url: string | null) => {
         });
         const nwbVersion = rootGroup?.attrs["nwb_version"] || "";
         setNwbFileOverview({ items: itemsSorted, nwbVersion });
-      } catch (err) {
-        setError(errorMessage(err));
+      } catch {
+        setError("Failed to load NWB file overview");
       }
     };
     load();

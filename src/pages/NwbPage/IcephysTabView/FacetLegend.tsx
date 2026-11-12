@@ -1,30 +1,74 @@
-import { useCssVars } from "@components/useCssVars";
-import { FunctionComponent } from "react";
-import type { facetColors } from "./sweepGroups";
+import { CSSProperties, FunctionComponent } from "react";
+import { GroupBy, groupOf } from "./FamilyOverlayPlot";
+import { categorical } from "./palette";
+import { LoadedSweep } from "./useSweepData";
 
-type Categorical = ReturnType<typeof facetColors>;
+// Shared color assignment for a faceted view's inner-color axis. Computed once
+// over all sweeps (global first-appearance order) so every panel and this legend
+// use the same color for the same group. Categorical only; the per-sweep
+// gradient is handled separately (each panel uses its own hue).
+export function facetColors(
+  sweeps: LoadedSweep[],
+  axis: GroupBy,
+): {
+  order: number[];
+  labelOf: Map<number, string>;
+  colorOf: Map<number, string>;
+} {
+  const order: number[] = [];
+  const labelOf = new Map<number, string>();
+  for (const sw of sweeps) {
+    const g = groupOf(sw, axis);
+    if (!labelOf.has(g.id)) {
+      order.push(g.id);
+      labelOf.set(g.id, g.label);
+    }
+  }
+  const colorOf = new Map<number, string>();
+  order.forEach((id, i) => colorOf.set(id, categorical(i)));
+  return { order, labelOf, colorOf };
+}
 
-/** One swatch in the trace's own color, which the chart picks at run time. */
-const Swatch: FunctionComponent<{ color: string }> = ({ color }) => {
-  const ref = useCssVars<HTMLSpanElement>({ "--icephys-swatch": color });
-  return <span ref={ref} className="icephys-swatch" aria-hidden="true" />;
-};
+interface Props {
+  // Categorical legend: ordered ids with labels + colors (swatch + text).
+  categorical?: {
+    order: number[];
+    labelOf: Map<number, string>;
+    colorOf: Map<number, string>;
+  };
+}
 
-/** Names each group beside the color its traces are drawn in. */
-const FacetLegend: FunctionComponent<{
-  label: string;
-  categorical: Categorical;
-}> = ({ label, categorical }) => {
-  if (categorical.order.length === 0) return null;
+const FacetLegend: FunctionComponent<Props> = ({ categorical }) => {
+  const wrap: CSSProperties = {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 12,
+    padding: "2px 6px 6px",
+    fontSize: 11,
+    color: "#444",
+  };
+  if (!categorical || categorical.order.length === 0) return null;
   return (
-    <ul className="icephys-legend" aria-label={label}>
+    <div style={wrap}>
       {categorical.order.map((id) => (
-        <li key={id} className="icephys-legend-item">
-          <Swatch color={categorical.colorOf.get(id) ?? ""} />
+        <span
+          key={id}
+          style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+        >
+          <span
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: 2,
+              background: categorical.colorOf.get(id) || "#444",
+              flex: "0 0 auto",
+            }}
+          />
           {categorical.labelOf.get(id)}
-        </li>
+        </span>
       ))}
-    </ul>
+    </div>
   );
 };
 

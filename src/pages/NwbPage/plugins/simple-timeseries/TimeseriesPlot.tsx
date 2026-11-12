@@ -1,11 +1,5 @@
 import { FunctionComponent, useMemo, useState } from "react";
 import Plot from "@components/LazyPlot";
-import {
-  useTimeAxisRef,
-  type AxisInsets,
-} from "@shared/context-timeseries-selection-2";
-import { panRange, plotInsets } from "./plotlyTimeAxis";
-import "./TimeseriesPlot.css";
 
 import { TimeseriesPlotProps as Props } from "./types";
 
@@ -30,20 +24,7 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
   width = 700,
   height = 300,
   zoomInRequired = false,
-  onVisibleTimeChange,
 }) => {
-  const [insets, setInsets] = useState<AxisInsets>({
-    left: 50,
-    right: 20,
-    top: 20,
-    bottom: 50,
-  });
-  const axisRef = useTimeAxisRef(insets);
-  const readInsets = (_: unknown, graph: HTMLElement) => {
-    const next = plotInsets(graph);
-    if (next && JSON.stringify(next) !== JSON.stringify(insets))
-      setInsets(next);
-  };
   // State for legend visibility
   const [showLegend, setShowLegend] = useState<boolean>(true);
 
@@ -132,10 +113,8 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
         },
         showticklabels: true,
         showgrid: true,
-        fixedrange: true,
       },
       showlegend: showLegend,
-      dragmode: "pan" as const,
     }),
     [
       channelSeparation,
@@ -151,7 +130,6 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
     () => ({
       responsive: true,
       displayModeBar: false,
-      doubleClick: false as const,
     }),
     [],
   );
@@ -207,19 +185,7 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
           {showLegend ? "Hide Legend" : "Show Legend"}
         </button>
       </div>
-      <div ref={axisRef} className="timeseries-plotly">
-        <Plot
-          data={plotData}
-          layout={layout}
-          config={config}
-          onInitialized={readInsets}
-          onUpdate={readInsets}
-          onRelayout={(event) => {
-            const range = panRange(event);
-            if (range) onVisibleTimeChange?.(range[0], range[1]);
-          }}
-        />
-      </div>
+      <Plot data={plotData} layout={layout} config={config} />
     </div>
   );
 };

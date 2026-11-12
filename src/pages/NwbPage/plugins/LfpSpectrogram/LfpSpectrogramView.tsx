@@ -1,43 +1,20 @@
 import { useHdf5Group } from "@hdf5Interface";
-import ViewError from "@components/ViewError/ViewError";
-import { useCssVars } from "@components/useCssVars";
-import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
-import {
-  AccordionItem,
-  Button,
-  Checkbox,
-  DescriptionList,
-  EmptyState,
-  InlineMessage,
-  LoadingState,
-  SegmentedControl,
-  Select,
-  SettingPair,
-  Spinner,
-  useToast,
-} from "@ui";
 import {
   FunctionComponent,
-  ReactNode,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-import NumberSetting from "../common/NumberSetting";
-import { parseOptional } from "../common/parseOptional";
-import TimeView, {
-  TIME_VIEW_CHROME,
-  TIME_VIEW_INSET,
-  TIME_VIEW_SETTINGS,
-  TIME_VIEW_TITLE,
-} from "../common/TimeView";
+import "../common/loadingState.css";
+import "./spectrogramBusy.css";
+import { ControlButton } from "../common/components/ControlButton";
 import TimeseriesClient from "../simple-timeseries/TimeseriesClient";
 import SpectrogramBlockCache from "./blockCache";
 import ChannelSelector from "./ChannelSelector";
 import { colormapNames } from "./colormap";
-import { computeDerived, computeWarnings, DerivedReadouts } from "./derived";
+import { computeDerived, computeWarnings } from "./derived";
 import { plotMargins, PlotMargins } from "./plotConstants";
 import { clampRange as clampRangeTo, zoomRangeAtAnchor } from "./zoomRange";
 import SpectrogramDataClient, {
@@ -55,20 +32,12 @@ import {
   SpectralConfig,
   TaperMethod,
 } from "./spectralConfig";
-import {
-  useLinkedSettings,
-  useShareSettings,
-} from "@shared/shareLink/useShareSettings";
-import {
-  spectrogramFromSettings,
-  spectrogramSettings,
-} from "./spectrogramSettings";
+import { useSpectrogramUrlState } from "./urlState";
 import SpectrogramWorkerClient, {
   ComputeStatus,
   isComputeCanceled,
 } from "./workerClient";
 import { SpectrogramResult } from "./WorkerTypes";
-import "./LfpSpectrogramView.css";
 
 type Props = {
   nwbUrl: string;
@@ -79,50 +48,11 @@ type Props = {
 };
 
 const windowSizeOptions = [128, 256, 512, 1024, 2048, 4096];
-const overlapOptions = [0, 0.25, 0.5, 0.75, 0.9];
 const MAX_BLOCK_SAMPLES = 4_000_000;
 const PER_CHANNEL_PANEL_HEIGHT = 220;
 const COMPUTE_DEBOUNCE_MS = 200;
 // Don't flash a spinner for work that finishes almost immediately (cache hits).
 const BUSY_INDICATOR_DELAY_MS = 150;
-const RANGE_EPSILON = 1e-9;
-
-const taperOptions: { value: TaperMethod; label: string; short: string }[] = [
-  { value: "boxcar", label: "None (boxcar)", short: "Boxcar" },
-  { value: "hann", label: "Hann (neutral baseline)", short: "Hann" },
-  { value: "multitaper", label: "DPSS multitaper", short: "Multitaper" },
-  { value: "morlet", label: "Morlet wavelet", short: "Morlet" },
-];
-
-const normalizationOptions: { value: NormalizationMode; label: string }[] = [
-  { value: "none", label: "None (raw dB)" },
-  { value: "whiten", label: "1/f whitening" },
-  { value: "zscore", label: "Per-frequency z-score" },
-  { value: "baseline", label: "Baseline ratio" },
-];
-
-const normalizationSummary: Record<NormalizationMode, string> = {
-  none: "Raw dB",
-  whiten: "1/f whitening",
-  zscore: "Z-score",
-  baseline: "Baseline ratio",
-};
-
-const powerLabel: Record<NormalizationMode, string> = {
-  none: "power in dB",
-  whiten: "whitened power in dB",
-  zscore: "power as a per-frequency z-score",
-  baseline: "power in dB against the baseline",
-};
-
-const formatNumber = (n: number, maxDigits = 2, minDigits = 0) =>
-  n.toLocaleString("en-US", {
-    minimumFractionDigits: minDigits,
-    maximumFractionDigits: maxDigits,
-  });
-
-const plural = (n: number, word: string) =>
-  `${formatNumber(n, 0)} ${word}${n === 1 ? "" : "s"}`;
 
 const LfpSpectrogramView: FunctionComponent<Props> = ({
   nwbUrl,
@@ -149,11 +79,14 @@ const LfpSpectrogramView: FunctionComponent<Props> = ({
   }, [nwbUrl, group]);
 
   if (clientError)
-    return <ViewError what="the spectrogram" error={clientError} />;
-  if (!group)
-    return <LoadingState label="Reading the LFP series" phase="loading" />;
+    return (
+      <div className="loadingContainer" style={{ color: "#e74c3c" }}>
+        Error: {clientError}
+      </div>
+    );
+  if (!group) return <div className="loadingContainer">Loading info...</div>;
   if (!client)
-    return <LoadingState label="Opening the time series" phase="loading" />;
+    return <div className="loadingContainer">Loading timeseries client...</div>;
 
   return (
     <LfpSpectrogramInner
@@ -318,11 +251,23 @@ const SpectrogramPanel: FunctionComponent<PanelProps> = ({
     : display.nyquistHz;
 
   return (
-    <div className="lfp-spectrogram-panel">
-      {label !== undefined && (
-        <p className="lfp-spectrogram-panel-label">{label}</p>
+    <div>
+      {(label !== undefined || error) && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            fontSize: 11,
+            color: "#495057",
+            padding: "2px 0 0 6px",
+            fontWeight: 500,
+          }}
+        >
+          {label !== undefined && <span>{label}</span>}
+          {error && <span style={{ color: "#c0392b" }}>⚠ {error}</span>}
+        </div>
       )}
-      {error && <InlineMessage status="error">{error}</InlineMessage>}
       <SpectrogramWidget
         result={result}
         width={width}
@@ -363,15 +308,6 @@ type InnerProps = {
   condensed: boolean;
 };
 
-type SectionKey =
-  | "channels"
-  | "estimator"
-  | "preprocessing"
-  | "normalization"
-  | "color"
-  | "frequency"
-  | "readouts";
-
 const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
   client,
   path,
@@ -385,36 +321,26 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
   const dataEnd = client.endTime;
   const totalDuration = dataEnd - dataStart;
   const numChannels = client.numChannels;
-  const toast = useToast();
 
-  const linked = useLinkedSettings();
-  const [fromLink] = useState(() =>
-    spectrogramFromSettings(linked, makeDefaultConfig(nativeNyquist)),
-  );
+  // Settings that a shared URL restores: channels, spectral config, and the
+  // visible time range. Read once at mount to seed the initial state.
+  const { initial: urlInitial, persist: persistUrl } =
+    useSpectrogramUrlState(path);
   const defaultVisRange = useMemo<[number, number]>(
     () => [dataStart, dataStart + Math.min(30, totalDuration || 30)],
     [dataStart, totalDuration],
   );
 
-  const [selectedChannels, setSelectedChannels] = useState<number[]>(() => {
-    const inRange = fromLink.channels.filter((c) => c < numChannels);
-    return inRange.length ? inRange : [0];
-  });
-  const [config, setConfig] = useState<SpectralConfig>(fromLink.config);
+  const [selectedChannels, setSelectedChannels] = useState<number[]>(() =>
+    urlInitial?.channels?.length ? urlInitial.channels : [0],
+  );
+  const [config, setConfig] = useState<SpectralConfig>(() =>
+    urlInitial?.config
+      ? { ...makeDefaultConfig(nativeNyquist), ...urlInitial.config }
+      : makeDefaultConfig(nativeNyquist),
+  );
   const [diagFlip, setDiagFlip] = useState(false);
-  const [open, setOpen] = useState<Record<SectionKey, boolean>>({
-    channels: true,
-    estimator: false,
-    preprocessing: false,
-    normalization: false,
-    color: false,
-    frequency: false,
-    readouts: false,
-  });
-  const section = (key: SectionKey) => ({
-    open: open[key],
-    onToggle: (o: boolean) => setOpen((prev) => ({ ...prev, [key]: o })),
-  });
+  const [copied, setCopied] = useState(false);
 
   const patch = useCallback(
     (p: Partial<SpectralConfig>) => setConfig((c) => ({ ...c, ...p })),
@@ -454,6 +380,44 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
     lastAutoRef.current = [lo, hi];
   }, []);
 
+  const [visRange, setVisRange] = useState<[number, number]>(() => {
+    const v = urlInitial?.visRange;
+    if (v && v.length === 2) {
+      const s = Math.max(dataStart, Math.min(v[0], dataEnd));
+      const e = Math.max(s, Math.min(v[1], dataEnd));
+      if (e > s) return [s, e];
+    }
+    return defaultVisRange;
+  });
+
+  // Mirror the current view into the URL (debounced, history-replacing). When
+  // everything is at its default the slot is cleared, keeping plain links tidy.
+  const defaultConfigJson = useMemo(
+    () => JSON.stringify(makeDefaultConfig(nativeNyquist)),
+    [nativeNyquist],
+  );
+  useEffect(() => {
+    const h = setTimeout(() => {
+      const atDefault =
+        JSON.stringify(config) === defaultConfigJson &&
+        selectedChannels.length === 1 &&
+        selectedChannels[0] === 0 &&
+        visRange[0] === defaultVisRange[0] &&
+        visRange[1] === defaultVisRange[1];
+      persistUrl(
+        atDefault ? null : { config, channels: selectedChannels, visRange },
+      );
+    }, 400);
+    return () => clearTimeout(h);
+  }, [
+    config,
+    selectedChannels,
+    visRange,
+    persistUrl,
+    defaultConfigJson,
+    defaultVisRange,
+  ]);
+
   // One worker client and one block cache per view. The client serializes jobs
   // and can abandon a running one, so changing a setting doesn't have to wait
   // out the computation it replaces. The cache is shared across panels and
@@ -469,7 +433,7 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
     };
   }, []);
 
-  // Aggregate activity across panels, for the status beside the time window.
+  // Aggregate activity across panels, for the toolbar indicator.
   const [computeStatus, setComputeStatus] = useState<ComputeStatus>({
     pending: 0,
     progress: null,
@@ -479,14 +443,14 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
     return worker.onStatusChange(setComputeStatus);
   }, [worker]);
 
-  const plotAreaWidth = Math.max(
-    240,
-    width - TIME_VIEW_INSET - TIME_VIEW_SETTINGS,
+  const sidebarWidth = 250;
+  const plotAreaWidth = Math.max(240, width - sidebarWidth - 12);
+  const plotHeight = Math.max(
+    200,
+    Math.round((height - (condensed ? 8 : 12)) * 0.8),
   );
-  const plotHeight = Math.max(200, height - TIME_VIEW_CHROME - TIME_VIEW_TITLE);
   const margins = plotMargins;
   const plotW = plotAreaWidth - margins.left - margins.right;
-  const plotsRef = useCssVars<HTMLDivElement>({ "--plot-w": plotAreaWidth });
 
   const shownChannels = useMemo(
     () => limitChannels(selectedChannels, MAX_AVG_CHANNELS),
@@ -518,57 +482,23 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
     [rangeBounds],
   );
 
-  // The visible range is the shared time selection, which the Time window and
-  // overview edit; the spectrogram keeps it within the spans it can compute.
-  const {
-    initializeTimeseriesSelection,
-    setVisibleTimeRange,
-    visibleStartTimeSec,
-    visibleEndTimeSec,
-  } = useTimeseriesSelection();
-  useEffect(() => {
-    initializeTimeseriesSelection({
-      startTimeSec: dataStart,
-      endTimeSec: dataEnd,
-      initialVisibleStartTimeSec: defaultVisRange[0],
-      initialVisibleEndTimeSec: defaultVisRange[1],
-    });
-  }, [dataStart, dataEnd, defaultVisRange, initializeTimeseriesSelection]);
-
-  const [visStart, visEnd] = clampRange(
-    visibleStartTimeSec ?? defaultVisRange[0],
-    visibleEndTimeSec ?? defaultVisRange[1],
+  const zoomByFactor = useCallback(
+    (factor: number) =>
+      setVisRange((prev) => {
+        const center = (prev[0] + prev[1]) / 2;
+        const s = (prev[1] - prev[0]) * factor;
+        return clampRange(center - s / 2, center + s / 2);
+      }),
+    [clampRange],
   );
-  const visRange = useMemo<[number, number]>(
-    () => [visStart, visEnd],
-    [visStart, visEnd],
+  const panByFraction = useCallback(
+    (frac: number) =>
+      setVisRange((prev) => {
+        const dt = frac * (prev[1] - prev[0]);
+        return clampRange(prev[0] + dt, prev[1] + dt);
+      }),
+    [clampRange],
   );
-  useEffect(() => {
-    if (visibleStartTimeSec === undefined || visibleEndTimeSec === undefined)
-      return;
-    if (
-      Math.abs(visStart - visibleStartTimeSec) > RANGE_EPSILON ||
-      Math.abs(visEnd - visibleEndTimeSec) > RANGE_EPSILON
-    )
-      setVisibleTimeRange(visStart, visEnd);
-  }, [
-    visStart,
-    visEnd,
-    visibleStartTimeSec,
-    visibleEndTimeSec,
-    setVisibleTimeRange,
-  ]);
-  // Wheel ticks arrive faster than renders, so each builds on the last one.
-  const visRangeRef = useRef(visRange);
-  useEffect(() => {
-    visRangeRef.current = visRange;
-  }, [visRange]);
-
-  const defaults = useMemo(
-    () => makeDefaultConfig(nativeNyquist),
-    [nativeNyquist],
-  );
-  useShareSettings(spectrogramSettings(config, defaults, selectedChannels));
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const dragRef = useRef<{ x: number; range: [number, number] } | null>(null);
@@ -611,22 +541,21 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
       if (!isOverPlotArea(e.clientX)) return; // side margins scroll the page
       e.preventDefault();
       const factor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
-      const prev = visRangeRef.current;
-      // Null at a zoom limit, where the wheel must not move the window at all;
-      // see zoomRangeAtAnchor.
-      const next = zoomRangeAtAnchor(
-        prev,
-        factor,
-        timeAtClientX(e.clientX, prev),
-        rangeBounds,
-      );
-      if (!next) return;
-      visRangeRef.current = next;
-      setVisibleTimeRange(next[0], next[1]);
+      setVisRange((prev) => {
+        // Returns null at a zoom limit, where the wheel must not move the
+        // window at all; see zoomRangeAtAnchor.
+        const next = zoomRangeAtAnchor(
+          prev,
+          factor,
+          timeAtClientX(e.clientX, prev),
+          rangeBounds,
+        );
+        return next ?? prev;
+      });
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [timeAtClientX, isOverPlotArea, rangeBounds, setVisibleTimeRange]);
+  }, [timeAtClientX, isOverPlotArea, rangeBounds]);
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
@@ -635,10 +564,9 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
       const dx = e.clientX - drag.x;
       const span = drag.range[1] - drag.range[0];
       const dt = (dx / plotW) * span;
-      const [s, end] = clampRange(drag.range[0] - dt, drag.range[1] - dt);
-      setVisibleTimeRange(s, end);
+      setVisRange(clampRange(drag.range[0] - dt, drag.range[1] - dt));
     },
-    [plotW, clampRange, setVisibleTimeRange],
+    [plotW, clampRange],
   );
 
   // Diagnostic Hann flip: lock color limits so the comparison is meaningful.
@@ -720,20 +648,17 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
       },
     };
     const text = JSON.stringify(params, null, 2);
-    const copied = () =>
-      toast.show({ status: "success", message: "Settings copied" });
-    const failed = () =>
-      toast.show({
-        status: "error",
-        message: "Couldn't copy the settings; they are in the browser console",
-      });
+    const done = () => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    };
     if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(text).then(copied, failed);
+      navigator.clipboard.writeText(text).then(done, done);
     } else {
-      failed();
+      done();
     }
     console.log("Spectrogram parameters:\n" + text);
-  }, [config, derived, fsNative, shownChannels, toast]);
+  }, [config, derived, fsNative, shownChannels]);
 
   const useManualLimits =
     config.colorLimitMode === "manual" || config.colorLimitLock;
@@ -758,456 +683,666 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
     lowPassHz: config.lowPassHz,
   };
 
-  // Hold the status back briefly so quick recomputations (cache hits while
-  // panning) don't make it blink.
+  const visSpan = visRange[1] - visRange[0];
+  const eps = 1e-6;
+
+  // Hold the toolbar indicator back briefly so quick recomputations (cache hits
+  // while panning) don't make it blink.
   const showComputing = useDelayedFlag(
     computeStatus.pending > 0,
     BUSY_INDICATOR_DELAY_MS,
   );
 
-  const name = path.split("/").filter(Boolean).pop() || path;
-  const summary = `${formatNumber(dataStart, 2, 2)}–${formatNumber(dataEnd, 2, 2)} s · ${formatNumber(fsNative)} Hz · ${plural(numChannels, "channel")}`;
-  const clampedFmax = Math.min(config.fMaxHz, derived.nyquistHz);
-  const taperShort = (t: TaperMethod) =>
-    taperOptions.find((o) => o.value === t)?.short ?? t;
-
   return (
     <div
-      ref={plotsRef}
-      className="lfp-spectrogram"
+      style={{ display: "flex", width, gap: 12, alignItems: "flex-start" }}
       tabIndex={0}
       onKeyDown={(e) => {
-        if ((e.key === "d" || e.key === "D") && !isTextEntry(e.target))
-          toggleDiagFlip();
+        if (e.key === "d" || e.key === "D") toggleDiagFlip();
       }}
     >
-      <TimeView
-        label={name}
-        summary={summary}
-        busy={showComputing}
-        condensed={condensed}
-        chartTitle={chartTitle(shownChannels, config.channelMode, {
-          ...effectiveCompute,
-          normalization: config.normalization,
-        })}
-        controls={
-          showComputing && (
+      <div
+        style={{
+          width: sidebarWidth,
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          padding: "6px 4px",
+          fontSize: 12,
+          boxSizing: "border-box",
+          maxHeight: height,
+          overflowY: "auto",
+          position: "sticky",
+          top: 0,
+          alignSelf: "flex-start",
+        }}
+      >
+        <Section title="Channels">
+          <ChannelSelector
+            numChannels={numChannels}
+            selected={selectedChannels}
+            setSelected={setSelectedChannels}
+            height={220}
+          />
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <span style={{ color: "#555", fontSize: 10 }}>
+              Multiple channels
+              {modified.has("channelMode") && (
+                <span style={{ color: "#b8860b" }}> ●</span>
+              )}
+            </span>
+            <SegmentedToggle
+              value={config.channelMode}
+              options={[
+                { value: "mean", label: "Average" },
+                { value: "perChannel", label: "Split" },
+              ]}
+              onChange={(v) => patch({ channelMode: v })}
+            />
+          </div>
+        </Section>
+
+        <Section title="Estimator">
+          <Labeled label="Taper / method" mod={modified.has("taper")}>
+            <select
+              value={config.taper}
+              onChange={(e) => patch({ taper: e.target.value as TaperMethod })}
+            >
+              <option value="boxcar">none (boxcar)</option>
+              <option value="hann">Hann (neutral baseline)</option>
+              <option value="multitaper">DPSS multitaper</option>
+              <option value="morlet">Morlet wavelet</option>
+            </select>
+          </Labeled>
+          {config.taper === "multitaper" && (
+            <div style={{ display: "flex", gap: 8 }}>
+              <Labeled label="NW" mod={modified.has("nw")}>
+                <input
+                  type="number"
+                  min={1}
+                  step={0.5}
+                  value={config.nw}
+                  onChange={(e) =>
+                    patch({ nw: Math.max(1, parseFloat(e.target.value) || 1) })
+                  }
+                  style={{ width: 60 }}
+                />
+              </Labeled>
+              <Labeled
+                label={`K (≤${maxLegalK(config.nw)})`}
+                mod={modified.has("k")}
+              >
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={config.k}
+                  onChange={(e) =>
+                    patch({ k: Math.max(1, parseInt(e.target.value) || 1) })
+                  }
+                  style={{ width: 60 }}
+                />
+              </Labeled>
+            </div>
+          )}
+          {config.taper === "morlet" && (
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+              <Labeled label="Cycles" mod={modified.has("waveletCycles")}>
+                <input
+                  type="number"
+                  min={2}
+                  step={1}
+                  value={config.waveletCycles}
+                  onChange={(e) =>
+                    patch({
+                      waveletCycles: Math.max(
+                        2,
+                        parseFloat(e.target.value) || 7,
+                      ),
+                    })
+                  }
+                  style={{ width: 60 }}
+                />
+              </Labeled>
+              <label style={{ fontSize: 11 }}>
+                <input
+                  type="checkbox"
+                  checked={config.waveletFreqDependent}
+                  onChange={(e) =>
+                    patch({ waveletFreqDependent: e.target.checked })
+                  }
+                />{" "}
+                f-dep
+              </label>
+            </div>
+          )}
+          <div style={{ display: "flex", gap: 8 }}>
+            <Labeled
+              label="Window (samp)"
+              mod={modified.has("windowSizeSamples")}
+            >
+              <select
+                value={config.windowSizeSamples}
+                onChange={(e) =>
+                  patch({ windowSizeSamples: parseInt(e.target.value) })
+                }
+              >
+                {windowSizeOptions.map((w) => (
+                  <option key={w} value={w}>
+                    {w}
+                  </option>
+                ))}
+              </select>
+            </Labeled>
+            <Labeled label="Overlap" mod={modified.has("overlap")}>
+              <select
+                value={config.overlap}
+                onChange={(e) => patch({ overlap: parseFloat(e.target.value) })}
+              >
+                {[0, 0.25, 0.5, 0.75, 0.9].map((o) => (
+                  <option key={o} value={o}>
+                    {Math.round(o * 100)}%
+                  </option>
+                ))}
+              </select>
+            </Labeled>
+          </div>
+          <Labeled label="Per-window detrend" mod={modified.has("detrend")}>
+            <select
+              value={config.detrend}
+              onChange={(e) =>
+                patch({ detrend: e.target.value as SpectralConfig["detrend"] })
+              }
+            >
+              <option value="none">none</option>
+              <option value="constant">constant</option>
+              <option value="linear">linear</option>
+            </select>
+          </Labeled>
+        </Section>
+
+        <Section title="Preprocessing (off by default)">
+          <div style={{ display: "flex", gap: 8 }}>
+            <Labeled label="High-pass" mod={modified.has("highPassHz")}>
+              <input
+                type="number"
+                placeholder="off"
+                value={config.highPassHz ?? ""}
+                onChange={(e) =>
+                  patch({
+                    highPassHz:
+                      e.target.value === ""
+                        ? null
+                        : Math.max(0, parseFloat(e.target.value)),
+                  })
+                }
+                style={{ width: 60 }}
+              />
+            </Labeled>
+            <Labeled label="Low-pass" mod={modified.has("lowPassHz")}>
+              <input
+                type="number"
+                placeholder="off"
+                value={config.lowPassHz ?? ""}
+                onChange={(e) =>
+                  patch({
+                    lowPassHz:
+                      e.target.value === ""
+                        ? null
+                        : Math.max(0, parseFloat(e.target.value)),
+                  })
+                }
+                style={{ width: 60 }}
+              />
+            </Labeled>
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+            <Labeled label="Order" mod={modified.has("filterOrder")}>
+              <input
+                type="number"
+                min={1}
+                max={12}
+                value={config.filterOrder}
+                onChange={(e) =>
+                  patch({
+                    filterOrder: Math.max(1, parseInt(e.target.value) || 4),
+                  })
+                }
+                style={{ width: 50 }}
+              />
+            </Labeled>
+            <label style={{ fontSize: 11 }}>
+              <input
+                type="checkbox"
+                checked={config.zeroPhase}
+                onChange={(e) => patch({ zeroPhase: e.target.checked })}
+              />{" "}
+              zero-phase
+            </label>
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+            <label style={{ fontSize: 11 }}>
+              <input
+                type="checkbox"
+                checked={config.notchEnabled}
+                onChange={(e) => patch({ notchEnabled: e.target.checked })}
+              />{" "}
+              notch
+            </label>
+            <select
+              value={config.notchBaseHz}
+              onChange={(e) =>
+                patch({ notchBaseHz: parseInt(e.target.value) as 50 | 60 })
+              }
+            >
+              <option value={50}>50 Hz</option>
+              <option value={60}>60 Hz</option>
+            </select>
+            <Labeled label="harm." mod={false}>
+              <input
+                type="number"
+                min={1}
+                max={10}
+                value={config.notchHarmonics}
+                onChange={(e) =>
+                  patch({
+                    notchHarmonics: Math.max(1, parseInt(e.target.value) || 1),
+                  })
+                }
+                style={{ width: 44 }}
+              />
+            </Labeled>
+          </div>
+          {config.taper === "multitaper" && (
+            <label style={{ fontSize: 11 }}>
+              <input
+                type="checkbox"
+                checked={config.fTestRemove}
+                onChange={(e) => patch({ fTestRemove: e.target.checked })}
+              />{" "}
+              F-test line removal
+            </label>
+          )}
+          <div style={{ display: "flex", gap: 8 }}>
+            <Labeled label="Decimate ×" mod={modified.has("decimationFactor")}>
+              <input
+                type="number"
+                min={1}
+                max={32}
+                value={config.decimationFactor}
+                onChange={(e) =>
+                  patch({
+                    decimationFactor: Math.max(
+                      1,
+                      parseInt(e.target.value) || 1,
+                    ),
+                  })
+                }
+                style={{ width: 50 }}
+              />
+            </Labeled>
+            <Labeled
+              label="Artifact σ"
+              mod={modified.has("artifactThresholdSd")}
+            >
+              <input
+                type="number"
+                placeholder="off"
+                value={config.artifactThresholdSd ?? ""}
+                onChange={(e) =>
+                  patch({
+                    artifactThresholdSd:
+                      e.target.value === ""
+                        ? null
+                        : Math.max(0, parseFloat(e.target.value)),
+                  })
+                }
+                style={{ width: 50 }}
+              />
+            </Labeled>
+          </div>
+        </Section>
+
+        <Section title="Normalization">
+          <Labeled label="Mode" mod={modified.has("normalization")}>
+            <select
+              value={config.normalization}
+              onChange={(e) => {
+                const n = e.target.value as NormalizationMode;
+                patch({
+                  normalization: n,
+                  colormap:
+                    n === "baseline" || n === "zscore"
+                      ? "diverging"
+                      : config.colormap === "diverging"
+                        ? "viridis"
+                        : config.colormap,
+                });
+              }}
+            >
+              <option value="none">none / raw dB</option>
+              <option value="whiten">1/f whitening</option>
+              <option value="zscore">per-frequency z-score</option>
+              <option value="baseline">baseline ratio</option>
+            </select>
+          </Labeled>
+          {config.normalization === "baseline" && (
+            <div style={{ fontSize: 10, color: "#666" }}>
+              Baseline = current view.{" "}
+              <button
+                style={miniBtn}
+                onClick={() =>
+                  patch({ baselineWindowSec: [visRange[0], visRange[1]] })
+                }
+              >
+                Set baseline = view
+              </button>
+              {config.baselineWindowSec && (
+                <span>
+                  {" "}
+                  [{config.baselineWindowSec[0].toFixed(1)}–
+                  {config.baselineWindowSec[1].toFixed(1)} s]
+                </span>
+              )}
+            </div>
+          )}
+        </Section>
+
+        <Section title="Color">
+          <Labeled label="Limits" mod={modified.has("colorLimitMode")}>
+            <select
+              value={config.colorLimitMode}
+              onChange={(e) =>
+                patch({
+                  colorLimitMode: e.target.value as "auto" | "manual",
+                })
+              }
+            >
+              <option value="auto">auto percentile</option>
+              <option value="manual">manual</option>
+            </select>
+          </Labeled>
+          {config.colorLimitMode === "manual" ? (
+            <div style={{ display: "flex", gap: 8 }}>
+              <Labeled label="min" mod={false}>
+                <input
+                  type="number"
+                  value={config.colorMinDb ?? ""}
+                  onChange={(e) =>
+                    patch({ colorMinDb: parseFloat(e.target.value) })
+                  }
+                  style={{ width: 56 }}
+                />
+              </Labeled>
+              <Labeled label="max" mod={false}>
+                <input
+                  type="number"
+                  value={config.colorMaxDb ?? ""}
+                  onChange={(e) =>
+                    patch({ colorMaxDb: parseFloat(e.target.value) })
+                  }
+                  style={{ width: 56 }}
+                />
+              </Labeled>
+            </div>
+          ) : (
+            <Labeled label="percentile" mod={false}>
+              <input
+                type="number"
+                min={0}
+                max={20}
+                step={0.5}
+                value={config.autoPercentile}
+                onChange={(e) =>
+                  patch({
+                    autoPercentile: Math.max(
+                      0,
+                      parseFloat(e.target.value) || 0,
+                    ),
+                  })
+                }
+                style={{ width: 56 }}
+              />
+            </Labeled>
+          )}
+          <label style={{ fontSize: 11 }}>
+            <input
+              type="checkbox"
+              checked={config.colorLimitLock}
+              onChange={lockLimits}
+            />{" "}
+            lock limits (no rescale on scroll)
+          </label>
+          <Labeled label="Colormap" mod={modified.has("colormap")}>
+            <select
+              value={config.colormap}
+              onChange={(e) =>
+                patch({
+                  colormap: e.target.value as SpectralConfig["colormap"],
+                })
+              }
+            >
+              {colormapNames.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </Labeled>
+        </Section>
+
+        <Section title="Frequency axis (view only)">
+          <div style={{ display: "flex", gap: 8 }}>
+            <Labeled label="fmin" mod={modified.has("fMinHz")}>
+              <input
+                type="number"
+                min={0}
+                value={config.fMinHz}
+                onChange={(e) =>
+                  patch({
+                    fMinHz: Math.max(
+                      0,
+                      Math.min(config.fMaxHz, parseFloat(e.target.value) || 0),
+                    ),
+                  })
+                }
+                style={{ width: 56 }}
+              />
+            </Labeled>
+            <Labeled label="fmax" mod={modified.has("fMaxHz")}>
+              <input
+                type="number"
+                min={1}
+                max={derived.nyquistHz}
+                value={config.fMaxHz}
+                onChange={(e) =>
+                  patch({
+                    fMaxHz: Math.min(
+                      derived.nyquistHz,
+                      Math.max(config.fMinHz, parseFloat(e.target.value) || 1),
+                    ),
+                  })
+                }
+                style={{ width: 56 }}
+              />
+            </Labeled>
+          </div>
+          <label style={{ fontSize: 11 }}>
+            <input
+              type="checkbox"
+              checked={config.logFreq}
+              onChange={(e) => patch({ logFreq: e.target.checked })}
+            />{" "}
+            log frequency
+          </label>
+        </Section>
+
+        <Section title="Readouts">
+          <Readouts derived={derived} />
+        </Section>
+
+        {warnings.length > 0 && (
+          <Section title="Warnings">
+            {warnings.map((w, i) => (
+              <div
+                key={i}
+                style={{
+                  fontSize: 10,
+                  color: w.severity === "warn" ? "#b03030" : "#7a6000",
+                  marginBottom: 3,
+                }}
+              >
+                {w.severity === "warn" ? "⚠ " : "ⓘ "}
+                {w.text}
+              </div>
+            ))}
+          </Section>
+        )}
+
+        <Section title="Diagnostics / actions">
+          <button style={btn} onClick={toggleDiagFlip}>
+            {diagFlip
+              ? "◀ showing Hann · Press D to untoggle"
+              : "Compare against Hann · Press D to toggle"}
+          </button>
+          <button style={btn} onClick={copyParams}>
+            {copied ? "Copied ✓" : "Copy parameters (JSON)"}
+          </button>
+          <button
+            style={btn}
+            onClick={() => {
+              setConfig(makeDefaultConfig(nativeNyquist));
+            }}
+          >
+            Reset all to defaults
+          </button>
+          <div style={{ fontSize: 10, color: "#666" }}>
+            {modified.size === 0
+              ? "All at defaults (raw power)."
+              : `${modified.size} setting(s) differ from default (dotted).`}
+          </div>
+        </Section>
+      </div>
+
+      {/* Plot area */}
+      <div style={{ flex: 1 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            padding: "2px 0 4px",
+          }}
+        >
+          <ControlButton
+            onClick={() => zoomByFactor(0.5)}
+            disabled={visSpan <= minSpan + eps}
+            title="Zoom in"
+          >
+            🔍+
+          </ControlButton>
+          <ControlButton
+            onClick={() => zoomByFactor(2)}
+            disabled={visSpan >= maxSpan - eps}
+            title="Zoom out"
+          >
+            🔍-
+          </ControlButton>
+          <ControlButton
+            onClick={() => panByFraction(-0.8)}
+            disabled={visRange[0] <= dataStart + eps}
+            title="Scroll back"
+          >
+            ←
+          </ControlButton>
+          <ControlButton
+            onClick={() => panByFraction(0.8)}
+            disabled={visRange[1] >= dataEnd - eps}
+            title="Scroll forward"
+          >
+            →
+          </ControlButton>
+          <ControlButton
+            onClick={() =>
+              setVisRange([dataStart, dataStart + Math.min(30, totalDuration)])
+            }
+            title="Reset view"
+          >
+            ⤢
+          </ControlButton>
+          <span style={{ fontSize: 11, color: "#555", marginLeft: 6 }}>
+            window {visSpan.toFixed(2)} s · {derived.effectiveFs.toFixed(0)} Hz
+            · drag / scroll over plot / buttons
+          </span>
+          {showComputing && (
             <span
-              className="lfp-spectrogram-status"
+              className="spectrogramBusyChip"
               title="Spectrograms are being computed in the background. Changing a setting cancels the work it replaces."
             >
-              <Spinner />
-              Computing
-              {computeStatus.progress != null && computeStatus.progress > 0
-                ? ` ${Math.round(computeStatus.progress * 100)}%`
-                : "…"}
-              {computeStatus.pending > 1
-                ? ` · ${computeStatus.pending - 1} queued`
-                : ""}
+              <span className="spectrogramBusySpinner" />
+              <span>
+                Computing
+                {computeStatus.progress != null && computeStatus.progress > 0
+                  ? ` ${Math.round(computeStatus.progress * 100)}%`
+                  : "…"}
+                {computeStatus.pending > 1
+                  ? ` · ${computeStatus.pending - 1} queued`
+                  : ""}
+              </span>
             </span>
-          )
-        }
-        settings={
-          <>
-            <AccordionItem
-              title="Channels"
-              summary={`${selectedChannels.length} of ${numChannels} · ${config.channelMode === "mean" ? "average" : "split"}`}
-              {...section("channels")}
-            >
-              <ChannelSelector
-                numChannels={numChannels}
-                selected={selectedChannels}
-                setSelected={setSelectedChannels}
-              />
-              <SegmentedControl
-                label="Multiple channels"
-                size="sm"
-                value={config.channelMode}
-                onChange={(v) =>
-                  patch({ channelMode: v as SpectralConfig["channelMode"] })
-                }
-                options={[
-                  { value: "mean", label: "Average" },
-                  { value: "perChannel", label: "Split" },
-                ]}
-              />
-            </AccordionItem>
+          )}
+        </div>
 
-            <AccordionItem
-              title="Estimator"
-              summary={[
-                taperShort(config.taper),
-                formatNumber(config.windowSizeSamples),
-                `${Math.round(config.overlap * 100)}%`,
-                config.detrend !== "none" && `${config.detrend} detrend`,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-              {...section("estimator")}
-            >
-              <Select
-                label="Method"
-                size="sm"
-                value={config.taper}
-                onChange={(v) => patch({ taper: v as TaperMethod })}
-                options={taperOptions}
-              />
-              {config.taper === "multitaper" && (
-                <SettingPair>
-                  <NumberSetting
-                    label="NW"
-                    value={config.nw}
-                    onChange={(t) =>
-                      patch({ nw: Math.max(1, parseFloat(t) || 1) })
-                    }
-                  />
-                  <NumberSetting
-                    label={`Tapers K (max ${maxLegalK(config.nw)})`}
-                    value={config.k}
-                    onChange={(t) =>
-                      patch({ k: Math.max(1, parseInt(t) || 1) })
-                    }
-                  />
-                </SettingPair>
-              )}
-              {config.taper === "morlet" && (
-                <>
-                  <NumberSetting
-                    label="Cycles"
-                    value={config.waveletCycles}
-                    onChange={(t) =>
-                      patch({
-                        waveletCycles: Math.max(2, parseFloat(t) || 7),
-                      })
-                    }
-                  />
-                  <Checkbox
-                    label="Scale cycles with frequency"
-                    checked={config.waveletFreqDependent}
-                    onChange={(c) => patch({ waveletFreqDependent: c })}
-                  />
-                </>
-              )}
-              <SettingPair>
-                <Select
-                  label="Window (samples)"
-                  size="sm"
-                  value={String(config.windowSizeSamples)}
-                  onChange={(v) => patch({ windowSizeSamples: parseInt(v) })}
-                  options={windowSizeOptions.map((w) => ({
-                    value: String(w),
-                    label: formatNumber(w),
-                  }))}
-                />
-                <Select
-                  label="Overlap"
-                  size="sm"
-                  value={String(config.overlap)}
-                  onChange={(v) => patch({ overlap: parseFloat(v) })}
-                  options={overlapOptions.map((o) => ({
-                    value: String(o),
-                    label: `${Math.round(o * 100)}%`,
-                  }))}
-                />
-              </SettingPair>
-              <Select
-                label="Detrend each window"
-                size="sm"
-                value={config.detrend}
-                onChange={(v) =>
-                  patch({ detrend: v as SpectralConfig["detrend"] })
-                }
-                options={[
-                  { value: "none", label: "None" },
-                  { value: "constant", label: "Constant" },
-                  { value: "linear", label: "Linear" },
-                ]}
-              />
-            </AccordionItem>
+        {diagFlip && (
+          <div
+            onClick={toggleDiagFlip}
+            title="Click or press D to return to your configured estimator"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "4px 8px",
+              marginBottom: 4,
+              borderRadius: 3,
+              border: "1px solid #d9a300",
+              background: "#fff6d9",
+              color: "#7a5b00",
+              fontSize: 11,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            <span>
+              ⚠ Diagnostic view — showing Hann taper, not your configured
+              estimator.
+            </span>
+            <span style={{ fontWeight: 400 }}>Press D to return.</span>
+          </div>
+        )}
 
-            <AccordionItem
-              title="Preprocessing"
-              summary={preprocessingSummary(config)}
-              {...section("preprocessing")}
-            >
-              <SettingGroup title="Band-pass filter">
-                <SettingPair>
-                  <NumberSetting
-                    label="High-pass (Hz)"
-                    placeholder="Off"
-                    value={config.highPassHz}
-                    onChange={(t) => patch({ highPassHz: nonNegative(t) })}
-                  />
-                  <NumberSetting
-                    label="Low-pass (Hz)"
-                    placeholder="Off"
-                    value={config.lowPassHz}
-                    onChange={(t) => patch({ lowPassHz: nonNegative(t) })}
-                  />
-                </SettingPair>
-                <NumberSetting
-                  label="Filter order"
-                  value={config.filterOrder}
-                  onChange={(t) =>
-                    patch({ filterOrder: Math.max(1, parseInt(t) || 4) })
-                  }
-                />
-                <Checkbox
-                  label="Zero-phase"
-                  checked={config.zeroPhase}
-                  onChange={(c) => patch({ zeroPhase: c })}
-                />
-              </SettingGroup>
-              <SettingGroup title="Line noise">
-                <Checkbox
-                  label="Notch filter"
-                  checked={config.notchEnabled}
-                  onChange={(c) => patch({ notchEnabled: c })}
-                />
-                <SettingPair>
-                  <Select
-                    label="Mains"
-                    size="sm"
-                    value={String(config.notchBaseHz)}
-                    onChange={(v) =>
-                      patch({ notchBaseHz: parseInt(v) as 50 | 60 })
-                    }
-                    options={[
-                      { value: "50", label: "50 Hz" },
-                      { value: "60", label: "60 Hz" },
-                    ]}
-                  />
-                  <NumberSetting
-                    label="Harmonics"
-                    value={config.notchHarmonics}
-                    onChange={(t) =>
-                      patch({ notchHarmonics: Math.max(1, parseInt(t) || 1) })
-                    }
-                  />
-                </SettingPair>
-                {config.taper === "multitaper" && (
-                  <Checkbox
-                    label="F-test line removal"
-                    checked={config.fTestRemove}
-                    onChange={(c) => patch({ fTestRemove: c })}
-                  />
-                )}
-              </SettingGroup>
-              <SettingGroup title="Speed and artifacts">
-                <SettingPair>
-                  <NumberSetting
-                    label="Decimate by"
-                    value={config.decimationFactor}
-                    onChange={(t) =>
-                      patch({
-                        decimationFactor: Math.max(1, parseInt(t) || 1),
-                      })
-                    }
-                  />
-                  <NumberSetting
-                    label="Artifact threshold (σ)"
-                    placeholder="Off"
-                    value={config.artifactThresholdSd}
-                    onChange={(t) =>
-                      patch({ artifactThresholdSd: nonNegative(t) })
-                    }
-                  />
-                </SettingPair>
-              </SettingGroup>
-            </AccordionItem>
-
-            <AccordionItem
-              title="Normalization"
-              summary={normalizationSummary[config.normalization]}
-              {...section("normalization")}
-            >
-              <Select
-                label="Mode"
-                size="sm"
-                value={config.normalization}
-                onChange={(v) => {
-                  const n = v as NormalizationMode;
-                  patch({
-                    normalization: n,
-                    colormap:
-                      n === "baseline" || n === "zscore"
-                        ? "diverging"
-                        : config.colormap === "diverging"
-                          ? "viridis"
-                          : config.colormap,
-                  });
-                }}
-                options={normalizationOptions}
-              />
-              {config.normalization === "baseline" && (
-                <>
-                  <p className="lfp-spectrogram-note">
-                    {config.baselineWindowSec
-                      ? `Baseline: ${formatNumber(config.baselineWindowSec[0], 1, 1)}–${formatNumber(config.baselineWindowSec[1], 1, 1)} s`
-                      : "No baseline set yet."}
-                  </p>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() =>
-                      patch({ baselineWindowSec: [visRange[0], visRange[1]] })
-                    }
-                  >
-                    Use the current view as baseline
-                  </Button>
-                </>
-              )}
-            </AccordionItem>
-
-            <AccordionItem
-              title="Color"
-              summary={`${
-                config.colorLimitLock
-                  ? "Locked"
-                  : config.colorLimitMode === "manual"
-                    ? `${config.colorMinDb ?? "?"} to ${config.colorMaxDb ?? "?"} dB`
-                    : "Auto"
-              } · ${config.colormap}`}
-              {...section("color")}
-            >
-              <Select
-                label="Limits"
-                size="sm"
-                value={config.colorLimitMode}
-                onChange={(v) =>
-                  patch({ colorLimitMode: v as "auto" | "manual" })
-                }
-                options={[
-                  { value: "auto", label: "Auto percentile" },
-                  { value: "manual", label: "Manual" },
-                ]}
-              />
-              {config.colorLimitMode === "manual" ? (
-                <SettingPair>
-                  <NumberSetting
-                    label="Min (dB)"
-                    value={config.colorMinDb}
-                    onChange={(t) => patch({ colorMinDb: parseOptional(t) })}
-                  />
-                  <NumberSetting
-                    label="Max (dB)"
-                    value={config.colorMaxDb}
-                    onChange={(t) => patch({ colorMaxDb: parseOptional(t) })}
-                  />
-                </SettingPair>
-              ) : (
-                <NumberSetting
-                  label="Clip percentile (%)"
-                  value={config.autoPercentile}
-                  onChange={(t) =>
-                    patch({ autoPercentile: Math.max(0, parseFloat(t) || 0) })
-                  }
-                />
-              )}
-              <Checkbox
-                label="Lock limits (no rescale on scroll)"
-                checked={config.colorLimitLock}
-                onChange={lockLimits}
-              />
-              <Select
-                label="Colormap"
-                size="sm"
-                value={config.colormap}
-                onChange={(v) =>
-                  patch({ colormap: v as SpectralConfig["colormap"] })
-                }
-                options={colormapNames.map((c) => ({ value: c, label: c }))}
-              />
-            </AccordionItem>
-
-            <AccordionItem
-              title="Frequency axis"
-              summary={`${formatNumber(config.fMinHz)} to ${formatNumber(clampedFmax)} Hz · ${config.logFreq ? "log" : "linear"}`}
-              {...section("frequency")}
-            >
-              <SettingPair>
-                <NumberSetting
-                  label="Lowest (Hz)"
-                  value={config.fMinHz}
-                  onChange={(t) =>
-                    patch({
-                      fMinHz: Math.max(
-                        0,
-                        Math.min(config.fMaxHz, parseFloat(t) || 0),
-                      ),
-                    })
-                  }
-                />
-                <NumberSetting
-                  label="Highest (Hz)"
-                  value={config.fMaxHz}
-                  onChange={(t) =>
-                    patch({
-                      fMaxHz: Math.min(
-                        derived.nyquistHz,
-                        Math.max(config.fMinHz, parseFloat(t) || 1),
-                      ),
-                    })
-                  }
-                />
-              </SettingPair>
-              <Checkbox
-                label="Log frequency"
-                checked={config.logFreq}
-                onChange={(c) => patch({ logFreq: c })}
-              />
-            </AccordionItem>
-
-            <AccordionItem
-              title="Readouts"
-              summary={`${formatNumber(derived.timeResolutionSec)} s · ${formatNumber(derived.nyquistHz, 0)} Hz`}
-              {...section("readouts")}
-            >
-              <Readouts derived={derived} />
-              {warnings.map((w) => (
-                <InlineMessage
-                  key={w.text}
-                  status={w.severity === "warn" ? "warning" : "info"}
-                >
-                  {w.text}
-                </InlineMessage>
-              ))}
-            </AccordionItem>
-
-            <div className="lfp-spectrogram-actions">
-              <Button
-                variant="secondary"
-                size="sm"
-                aria-pressed={diagFlip}
-                onClick={toggleDiagFlip}
-              >
-                {diagFlip
-                  ? "Back to your estimator (D)"
-                  : "Compare with Hann (D)"}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={copyParams}>
-                Copy settings as JSON
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={modified.size === 0}
-                onClick={() => setConfig(makeDefaultConfig(nativeNyquist))}
-              >
-                Reset all to defaults
-              </Button>
-            </div>
-          </>
-        }
-      >
-        {selectedChannels.length === 0 ? (
-          <EmptyState title="No channels picked">
-            Pick one or more channels in Channels.
-          </EmptyState>
-        ) : (
+        {/* Framed plot window: hovering a plot zooms on wheel, while the
+            padding around and the gutters between plots are safe places to
+            rest the cursor and scroll the page instead. */}
+        <div
+          style={{
+            border: "1px solid #d0d0d0",
+            borderRadius: 6,
+            padding: 12,
+            background: "#fafafa",
+            width: "fit-content",
+            maxWidth: "100%",
+            boxSizing: "border-box",
+          }}
+        >
           <div
             ref={containerRef}
-            className="lfp-spectrogram-plots"
+            style={{
+              cursor: dragRef.current ? "grabbing" : "grab",
+              width: plotAreaWidth,
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+            }}
             onMouseDown={(e) =>
               (dragRef.current = { x: e.clientX, range: visRange })
             }
@@ -1215,12 +1350,6 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
             onMouseUp={() => (dragRef.current = null)}
             onMouseLeave={() => (dragRef.current = null)}
           >
-            {diagFlip && (
-              <InlineMessage status="warning">
-                Showing a Hann window, not your estimator, to compare. Press D
-                to return.
-              </InlineMessage>
-            )}
             {!worker ? null : config.channelMode === "mean" ? (
               <SpectrogramPanel
                 client={client}
@@ -1255,11 +1384,13 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
               ))
             )}
           </div>
-        )}
-      </TimeView>
+        </div>
+      </div>
     </div>
   );
 };
+
+// --- small UI helpers ---
 
 // Report `active` only once it has stayed true for `delayMs`, so short-lived
 // work doesn't flash an indicator on screen.
@@ -1276,118 +1407,153 @@ const useDelayedFlag = (active: boolean, delayMs: number): boolean => {
   return shown;
 };
 
-/** Typing a "d" into a field must not flip the estimator. */
-const isTextEntry = (target: EventTarget) =>
-  target instanceof HTMLElement &&
-  target.matches(
-    'input:not([type="checkbox"]):not([type="radio"]), textarea, select',
-  );
-
-const nonNegative = (text: string) => {
-  const n = parseOptional(text);
-  return n === null ? null : Math.max(0, n);
+const btn: React.CSSProperties = {
+  padding: "5px 8px",
+  border: "1px solid #dee2e6",
+  borderRadius: 4,
+  background: "#f8f9fa",
+  cursor: "pointer",
+  fontSize: 11,
+  textAlign: "left",
+};
+const miniBtn: React.CSSProperties = {
+  padding: "1px 5px",
+  border: "1px solid #dee2e6",
+  borderRadius: 3,
+  background: "#fff",
+  cursor: "pointer",
+  fontSize: 10,
 };
 
-const chartTitle = (
-  channels: number[],
-  mode: SpectralConfig["channelMode"],
-  c: ComputeConfig & { normalization: NormalizationMode },
-) => {
-  const which =
-    channels.length === 1
-      ? `Channel ${channels[0]}`
-      : mode === "mean"
-        ? `Average of ${channels.length} channels`
-        : `${channels.length} channels, split`;
-  const samples = `${formatNumber(c.windowSizeSamples)} samples`;
-  const estimator = {
-    boxcar: `Boxcar window, ${samples}`,
-    hann: `Hann window, ${samples}`,
-    multitaper: `DPSS multitaper (NW ${c.nw}, K ${c.k}), ${samples}`,
-    morlet: `Morlet wavelet, ${c.waveletCycles} cycles`,
-  }[c.taper];
-  return `${which} · ${estimator} · ${powerLabel[c.normalization]}`;
-};
-
-const preprocessingSummary = (c: SpectralConfig) => {
-  const hp = c.highPassHz;
-  const lp = c.lowPassHz;
-  const parts = [
-    hp != null && lp != null
-      ? `Band-pass ${formatNumber(hp)}–${formatNumber(lp)} Hz`
-      : hp != null
-        ? `High-pass ${formatNumber(hp)} Hz`
-        : lp != null && `Low-pass ${formatNumber(lp)} Hz`,
-    c.notchEnabled &&
-      `Notch ${c.notchBaseHz} Hz · ${plural(c.notchHarmonics, "harmonic")}`,
-    c.taper === "multitaper" && c.fTestRemove && "F-test line removal",
-    c.decimationFactor > 1 && `Decimate by ${c.decimationFactor}`,
-    c.artifactThresholdSd != null &&
-      `Artifacts over ${formatNumber(c.artifactThresholdSd)} σ`,
-  ].filter(Boolean);
-  return parts.length > 0 ? parts.join(", ") : "Off";
-};
-
-const SettingGroup: FunctionComponent<{
+const Section: FunctionComponent<{
   title: string;
-  children: ReactNode;
-}> = ({ title, children }) => (
-  <fieldset className="lfp-spectrogram-group">
-    <legend className="lfp-spectrogram-group-title">{title}</legend>
-    {children}
-  </fieldset>
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}> = ({ title, children, defaultOpen = true }) => (
+  <details open={defaultOpen} style={{ borderTop: "1px solid #eee" }}>
+    <summary
+      style={{
+        fontSize: 10,
+        fontWeight: 700,
+        color: "#888",
+        textTransform: "uppercase",
+        padding: "4px 0 3px",
+        cursor: "pointer",
+        listStyle: "revert",
+      }}
+    >
+      {title}
+    </summary>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 5,
+        paddingBottom: 4,
+      }}
+    >
+      {children}
+    </div>
+  </details>
 );
 
-const Readouts: FunctionComponent<{ derived: DerivedReadouts }> = ({
-  derived: d,
-}) => (
-  <>
-    <DescriptionList
-      label="Readouts"
-      items={[
-        {
-          term: "Time resolution",
-          value: `${formatNumber(d.timeResolutionSec, 3)} s`,
-          code: true,
-        },
-        {
-          term: "Highest frequency (Nyquist)",
-          value: `${formatNumber(d.nyquistHz, 0)} Hz`,
-          code: true,
-        },
-        ...(d.isMultitaper
-          ? [
-              {
-                term: "Half-bandwidth W = NW/T",
-                value: `${(d.halfBandwidthHz ?? 0).toFixed(2)} Hz`,
-                code: true,
-              },
-              {
-                term: "Smoothing 2W",
-                value: `±${(d.halfBandwidthHz ?? 0).toFixed(2)} = ${(d.smoothingBoxHz ?? 0).toFixed(2)} Hz`,
-                code: true,
-              },
-              {
-                term: "Tapers K (max 2NW−1)",
-                value: `${d.effectiveK} of ${d.maxK}`,
-                code: true,
-              },
-              {
-                term: "Degrees of freedom ≈ 2K",
-                value: `${d.dof}`,
-                code: true,
-              },
-            ]
-          : []),
-      ]}
-    />
-    {!d.isMultitaper && (
-      <p className="lfp-spectrogram-note">
-        Bandwidth, tapers and degrees of freedom are reported for the DPSS
-        multitaper method.
-      </p>
-    )}
-  </>
+const Labeled: FunctionComponent<{
+  label: string;
+  mod: boolean;
+  children: React.ReactNode;
+}> = ({ label, mod, children }) => (
+  <label style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <span style={{ color: "#555", fontSize: 10 }}>
+      {label}
+      {mod && <span style={{ color: "#b8860b" }}> ●</span>}
+    </span>
+    {children}
+  </label>
 );
+
+// A two-or-more option segmented control, backed by radio inputs for
+// keyboard/accessibility while presenting as a single toggle strip.
+const SegmentedToggle = <T extends string>({
+  value,
+  options,
+  onChange,
+}: {
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (value: T) => void;
+}) => (
+  <div
+    role="radiogroup"
+    style={{
+      display: "grid",
+      gridTemplateColumns: `repeat(${options.length}, 1fr)`,
+      border: "1px solid #bbb",
+      borderRadius: 4,
+      overflow: "hidden",
+    }}
+  >
+    {options.map((opt, i) => {
+      const active = opt.value === value;
+      return (
+        <label
+          key={opt.value}
+          style={{
+            boxSizing: "border-box",
+            textAlign: "center",
+            padding: "3px 10px",
+            fontSize: 11,
+            cursor: "pointer",
+            background: active ? "#3573b1" : "#fff",
+            color: active ? "#fff" : "#333",
+            borderLeft: i === 0 ? undefined : "1px solid #bbb",
+          }}
+        >
+          <input
+            type="radio"
+            checked={active}
+            onChange={() => onChange(opt.value)}
+            style={{
+              position: "absolute",
+              opacity: 0,
+              width: 0,
+              height: 0,
+            }}
+          />
+          {opt.label}
+        </label>
+      );
+    })}
+  </div>
+);
+
+const Readouts: FunctionComponent<{
+  derived: ReturnType<typeof computeDerived>;
+}> = ({ derived: d }) => {
+  const row = (k: string, v: string) => (
+    <div style={{ display: "flex", justifyContent: "space-between" }}>
+      <span style={{ color: "#666" }}>{k}</span>
+      <span style={{ fontFamily: "monospace" }}>{v}</span>
+    </div>
+  );
+  return (
+    <div style={{ fontSize: 10 }}>
+      {row("Time res. (T)", `${(d.timeResolutionSec * 1000).toFixed(0)} ms`)}
+      {row("Nyquist", `${d.nyquistHz.toFixed(0)} Hz`)}
+      {d.isMultitaper ? (
+        <>
+          {row("Half-bw W = NW/T", `${(d.halfBandwidthHz ?? 0).toFixed(2)} Hz`)}
+          {row(
+            "Smoothing 2W",
+            `±${(d.halfBandwidthHz ?? 0).toFixed(2)} = ${(d.smoothingBoxHz ?? 0).toFixed(2)} Hz`,
+          )}
+          {row("K (max 2NW−1)", `${d.effectiveK} / ${d.maxK}`)}
+          {row("DOF ≈ 2K", `${d.dof}`)}
+        </>
+      ) : (
+        <div style={{ color: "#888" }}>(multitaper only: W, 2W, K, DOF)</div>
+      )}
+    </div>
+  );
+};
 
 export default LfpSpectrogramView;

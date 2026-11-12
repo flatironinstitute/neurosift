@@ -1,14 +1,10 @@
 import ScrollY from "@components/ScrollY";
-import {
-  ShareSettingsPrefix,
-  ShareSettingsProvider,
-} from "@shared/shareLink/ShareSettingsProvider";
-import { objectPrefixes } from "@shared/shareLink/linkSettings";
 import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection-2/ProvideTimeseriesSelection";
 import React from "react";
 import NwbObjectView from "../NwbObjectView";
 import { NwbObjectViewPlugin } from "../plugins/pluginInterface";
 import TabToolbar, { TOOLBAR_HEIGHT } from "../TabToolbar";
+import ObjectHeaderBar from "./ObjectHeaderBar";
 import { ObjectType } from "../Types";
 
 interface MultiTabViewProps {
@@ -38,57 +34,45 @@ const MultiTabView: React.FC<MultiTabViewProps> = ({
   secondaryPathsList,
   onOpenObjectInNewTab,
 }) => {
-  const prefixes = objectPrefixes(
-    paths,
-    plugins.map((p) => p?.name),
-  );
   return (
-    <ShareSettingsProvider tab={tabId}>
-      <ProvideTimeseriesSelection>
-        <div>
-          <TabToolbar
-            tabId={tabId}
-            nwbUrl={nwbUrl}
-            type="Combined view"
-            path={`${paths.length} objects: ${paths.join(", ")}`}
-          />
-          <ScrollY
-            width={width - 20}
-            height={height - TOOLBAR_HEIGHT}
-            top={TOOLBAR_HEIGHT}
+    <ProvideTimeseriesSelection>
+      <div>
+        <TabToolbar width={width - 20} tabId={tabId} nwbUrl={nwbUrl} />
+        <ScrollY
+          width={width - 20}
+          height={height - TOOLBAR_HEIGHT}
+          top={TOOLBAR_HEIGHT}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              padding: 0,
+            }}
           >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                padding: 0,
-              }}
-            >
-              {paths.map((path, index) => (
-                <div
-                  key={plugins[index] ? plugins[index].name + ":" + path : path}
-                  style={{ marginBottom: 8 }}
-                >
-                  <ShareSettingsPrefix prefix={prefixes[index]}>
-                    <NwbObjectView
-                      nwbUrl={nwbUrl}
-                      path={path}
-                      objectType={objectTypes[index]}
-                      onOpenObjectInNewTab={onOpenObjectInNewTab}
-                      width={width - 40} // leave space for the scrollbar
-                      height={undefined}
-                      inMultiView={true}
-                      plugin={plugins[index]}
-                      secondaryPaths={secondaryPathsList[index]}
-                    />
-                  </ShareSettingsPrefix>
-                </div>
-              ))}
-            </div>
-          </ScrollY>
-        </div>
-      </ProvideTimeseriesSelection>
-    </ShareSettingsProvider>
+            {paths.map((path, index) => (
+              <div
+                key={plugins[index] ? plugins[index].name + ":" + path : path}
+                style={{ marginBottom: 8 }}
+              >
+                <ObjectHeaderBar width={width - 40} path={path} />
+                <NwbObjectView
+                  nwbUrl={nwbUrl}
+                  path={path}
+                  objectType={objectTypes[index]}
+                  onOpenObjectInNewTab={onOpenObjectInNewTab}
+                  width={width - 40} // leave space for the scrollbar
+                  height={undefined}
+                  inMultiView={true}
+                  plugin={plugins[index]}
+                  secondaryPaths={secondaryPathsList[index]}
+                />
+              </div>
+            ))}
+          </div>
+        </ScrollY>
+      </div>
+    </ProvideTimeseriesSelection>
   );
 };
 

@@ -1,75 +1,111 @@
-import ViewError from "@components/ViewError/ViewError";
-import { Button, DataTable, EmptyState, LoadingState, type Sort } from "@ui";
-import { FunctionComponent, useMemo, useState } from "react";
+import { Box, Button, Typography, CircularProgress } from "@mui/material";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import { FunctionComponent, useEffect, useState, useMemo } from "react";
 import { DatasetPluginProps } from "../pluginInterface";
-import useCopyText from "../useCopyText";
-import useDatasetFileText from "../useDatasetFileText";
-import { parseTsv, sortRows, tsvColumns } from "./tsvTable";
-import "./TsvView.css";
+import TsvTable from "./components/Table";
+import { resolveDatasetFileUrl } from "@hdf5Interface";
 
 const TsvView: FunctionComponent<DatasetPluginProps> = ({ file }) => {
-  const { text, error } = useDatasetFileText(file.urls[0]);
-  const copy = useCopyText();
-  const [sort, setSort] = useState<Sort>();
-  const table = useMemo(
-    () => (text === undefined ? undefined : parseTsv(text)),
-    [text],
-  );
-  const columns = useMemo(
-    () => (table && "rows" in table ? tsvColumns(table) : []),
-    [table],
-  );
-  const rows = useMemo(
-    () => (table && "rows" in table ? sortRows(table.rows, sort) : []),
-    [table, sort],
-  );
+  const [content, setContent] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [copySuccess, setCopySuccess] = useState(false);
 
-  const failure = error ?? (table && "error" in table ? table.error : null);
-  if (failure) return <ViewError what="this file" error={failure} />;
-  if (text === undefined || !table)
-    return <LoadingState label="Loading the table" phase="loading" />;
-  if (rows.length === 0)
+  useEffect(() => {
+    const fetchTsv = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(await resolveDatasetFileUrl(file.urls[0]));
+        if (!response.ok) {
+          throw new Error("Failed to fetch TSV content");
+        }
+        const data = await response.text();
+        setContent(data);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching TSV:", err);
+        setError(err instanceof Error ? err.message : "Failed to load TSV");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTsv();
+  }, [file.urls]);
+
+  const { headers, rows } = useMemo(() => {
+    if (!content) return { headers: [], rows: [] };
+
+    try {
+      const lines = content.trim().split("\n");
+      if (lines.length === 0) {
+        throw new Error("Empty TSV file");
+      }
+
+      const headers = lines[0].split("\t");
+      const rows = lines.slice(1).map((line) => line.split("\t"));
+
+      // Validate that all rows have the same number of columns
+      const headerCount = headers.length;
+      const invalidRow = rows.find((row) => row.length !== headerCount);
+      if (invalidRow) {
+        throw new Error("Malformed TSV: Inconsistent number of columns");
+      }
+
+      return { headers, rows };
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to parse TSV");
+      return { headers: [], rows: [] };
+    }
+  }, [content]);
+
+  const handleCopy = async () => {
+    if (!content) return;
+
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
+  if (loading) {
     return (
-      <EmptyState icon="data-table" title="This table has no rows">
-        {`${file.filename} has a header row and no data.`}
-      </EmptyState>
+      <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+        <CircularProgress />
+      </Box>
     );
+  }
 
-  const count = `Showing all ${rows.length.toLocaleString("en-US")} rows and ${columns.length.toLocaleString("en-US")} columns`;
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography color="error">Error: {error}</Typography>
+      </Box>
+    );
+  }
+
   return (
-    <section className="tsv-view" aria-label={file.filename}>
-      <div className="tsv-view-bar">
-        <p className="tsv-view-count">{count}</p>
-        {sort && (
-          <Button
-            size="sm"
-            variant="ghost"
-            icon="reset"
-            onClick={() => setSort(undefined)}
-          >
-            Original order
-          </Button>
-        )}
+    <Box sx={{ p: 2 }}>
+      <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-end" }}>
         <Button
-          size="sm"
-          icon="copy"
-          onClick={() => copy(text, "Table copied")}
+          startIcon={<ContentCopyIcon />}
+          onClick={handleCopy}
+          variant="outlined"
+          size="small"
+          color={copySuccess ? "success" : "primary"}
         >
-          Copy table
+          {copySuccess ? "Copied!" : "Copy to Clipboard"}
         </Button>
-      </div>
-      <div className="tsv-view-table">
-        <DataTable
-          caption={file.filename}
-          columns={columns}
-          rows={rows}
-          rowKey={(row) => String(row.index)}
-          density="compact"
-          sort={sort}
-          onSort={setSort}
-        />
-      </div>
-    </section>
+      </Box>
+      {headers.length > 0 && rows.length > 0 ? (
+        <TsvTable headers={headers} rows={rows} />
+      ) : (
+        <Typography>No data available</Typography>
+      )}
+    </Box>
   );
 };
 

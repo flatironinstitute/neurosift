@@ -217,7 +217,6 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
   // Track whether we've already restored non-unit state from the initial state string
   const [initialStateRestored, setInitialStateRestored] = useState(false);
   const [pendingSelectAll, setPendingSelectAll] = useState(false);
-  const [pendingUnitIds, setPendingUnitIds] = useState<string[]>();
 
   useEffect(() => {
     if (!initialStateString || initialStateRestored) return;
@@ -226,7 +225,8 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
     if (a.selectedUnitIds === "__all__") {
       setPendingSelectAll(true);
     } else if (a.selectedUnitIds && Array.isArray(a.selectedUnitIds)) {
-      setPendingUnitIds(a.selectedUnitIds.map(String));
+      const sortedSelectedUnitIds = [...a.selectedUnitIds].sort();
+      setSelectedUnitIds(sortedSelectedUnitIds);
     }
     if (a.selectedRoiIndices) {
       setSelectedRoiIndices(a.selectedRoiIndices);
@@ -279,15 +279,6 @@ const PSTHItemViewChild: FunctionComponent<PSTHItemViewChildProps> = ({
     setSelectedUnitIds,
     prefsDispatch,
   ]);
-
-  // A link names units as text; match them to the file's ids once they load.
-  useEffect(() => {
-    if (!pendingUnitIds || !unitIds) return;
-    setSelectedUnitIds(
-      unitIds.filter((id) => pendingUnitIds.includes(String(id))),
-    );
-    setPendingUnitIds(undefined);
-  }, [pendingUnitIds, unitIds, setSelectedUnitIds]);
 
   // Handle "select all" once unit IDs are loaded
   useEffect(() => {

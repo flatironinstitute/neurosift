@@ -1,4 +1,0 @@
-.ns-prompt-list-text {
-  inline-size: calc(100% + 2 * var(--space-1));
-  overflow-wrap: anywhere;
-}

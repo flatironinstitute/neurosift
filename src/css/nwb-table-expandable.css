@@ -1,0 +1,23 @@
+.nwb-table td {
+  position: relative;
+  vertical-align: top;
+  min-width: 100px;
+  max-width: 300px;
+}
+
+/* Override the default td styles for cells with expanded content */
+.nwb-table td > div {
+  min-width: 100%;
+  z-index: 2;
+}
+
+/* Style for expanded content that overflows */
+.nwb-table td > div:has(span[style*="cursor: pointer"]) {
+  position: relative;
+  display: inline-block;
+}
+
+/* Ensure the collapse button doesn't get cut off */
+.nwb-table td > div button {
+  white-space: nowrap;
+}

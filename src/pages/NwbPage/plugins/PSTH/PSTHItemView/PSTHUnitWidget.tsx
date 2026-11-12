@@ -123,9 +123,9 @@ const PSTHUnitWidget: FunctionComponent<Props> = ({
           marginTop: 2,
         }}
       >
-        {mode === "psth" ? "Unit" : "ROI"} {unitId}
+        Unit {unitId}
       </div>
-      {groupLegendWidth > 0 && (
+      {groupLegendWidth && (
         <div
           className="legend-container"
           style={{

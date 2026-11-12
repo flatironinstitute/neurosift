@@ -1,7 +1,5 @@
-import { useHdf5Group } from "@hdf5Interface";
-import { Checkbox } from "@ui";
 import { FunctionComponent } from "react";
-import "./PSTHControls.css";
+import { useHdf5Group } from "@hdf5Interface";
 
 type AlignToSelectionProps = {
   alignToVariables: string[];
@@ -10,7 +8,6 @@ type AlignToSelectionProps = {
   path: string;
 };
 
-/** The table's time columns to align to; each picked one gets its own chart. */
 const AlignToSelectionComponent: FunctionComponent<AlignToSelectionProps> = ({
   alignToVariables,
   setAlignToVariables,
@@ -21,23 +18,36 @@ const AlignToSelectionComponent: FunctionComponent<AlignToSelectionProps> = ({
   const options = (group?.datasets || [])
     .map((ds) => ds.name)
     .filter((name) => name.endsWith("_time") || name.endsWith("_times"));
+
   return (
-    <div className="psth-checklist">
-      {options.map((option) => (
-        <Checkbox
-          key={option}
-          label={option}
-          checked={alignToVariables.includes(option)}
-          onChange={(on) =>
-            setAlignToVariables(
-              on
-                ? [...alignToVariables, option]
-                : alignToVariables.filter((x) => x !== option),
-            )
-          }
-        />
-      ))}
-    </div>
+    <table className="nwb-table" style={{ tableLayout: "fixed" }}>
+      <colgroup>
+        <col style={{ width: 20 }} />
+      </colgroup>
+      <tbody>
+        {options.map((option) => (
+          <tr key={option}>
+            <td style={{ padding: "4px 2px" }}>
+              <input
+                type="checkbox"
+                checked={alignToVariables.includes(option)}
+                onChange={() => {}}
+                onClick={() => {
+                  if (alignToVariables.includes(option)) {
+                    setAlignToVariables(
+                      alignToVariables.filter((x) => x !== option),
+                    );
+                  } else {
+                    setAlignToVariables([...alignToVariables, option]);
+                  }
+                }}
+              />
+            </td>
+            <td>{option}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 };
 

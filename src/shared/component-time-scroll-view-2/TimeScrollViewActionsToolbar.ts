@@ -1,17 +1,39 @@
 import { useMemo } from "react";
 import TimeWidgetToolbarEntries from "./TimeWidgetToolbarEntries";
-import { ToolbarItem } from "./Toolbars";
+import { Divider, ToolbarItem } from "./Toolbars";
 import { useTimeRange } from "@shared/context-timeseries-selection-2";
 
-const useActionToolbar = (): ToolbarItem[] => {
+export type OptionalToolbarActions = {
+  aboveDefault?: ToolbarItem[];
+  belowDefault?: ToolbarItem[];
+};
+
+const useActionToolbar = (props?: OptionalToolbarActions) => {
+  const { aboveDefault, belowDefault } = props || {};
   const { zoomTimeseriesSelection, panTimeseriesSelection } = useTimeRange();
-  return useMemo(() => {
+
+  const timeControlActions = useMemo(() => {
     if (!zoomTimeseriesSelection || !panTimeseriesSelection) return [];
-    return TimeWidgetToolbarEntries({
+    const preToolbarEntries = aboveDefault ? [...aboveDefault, Divider] : [];
+    const postToolbarEntries = belowDefault ? [Divider, ...belowDefault] : [];
+    const timeControls = TimeWidgetToolbarEntries({
       zoomTimeseriesSelection,
       panTimeseriesSelection,
     });
-  }, [zoomTimeseriesSelection, panTimeseriesSelection]);
+    const actions: ToolbarItem[] = [
+      ...preToolbarEntries,
+      ...timeControls,
+      ...postToolbarEntries,
+    ];
+    return actions;
+  }, [
+    zoomTimeseriesSelection,
+    panTimeseriesSelection,
+    aboveDefault,
+    belowDefault,
+  ]);
+
+  return timeControlActions;
 };
 
 export default useActionToolbar;

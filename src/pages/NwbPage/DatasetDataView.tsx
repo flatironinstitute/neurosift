@@ -61,7 +61,7 @@ const abbreviate = (str: string, maxLength: number) => {
   return str.slice(0, maxLength) + "...";
 };
 
-const valueToString2 = (val: any): string => {
+export const valueToString2 = (val: any): string => {
   // same as valueToString, but don't include the brackets for arrays
   if (typeof val === "string") {
     return val;

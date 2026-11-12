@@ -17,6 +17,7 @@ export const redistributeUnitColors = () => {
   if (num < colors.length - 6) {
     num = colors.length; // but don't let it get too low
   }
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     stride += 1;
     if (isRelativelyPrime(stride, num)) {

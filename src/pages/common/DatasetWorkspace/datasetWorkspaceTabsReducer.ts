@@ -5,7 +5,7 @@ type MainTab = BaseTab & {
   type: "main";
 };
 
-export type FileTab = BaseTab & {
+type FileTab = BaseTab & {
   type: "file";
   file: DatasetFile;
 };

@@ -1,9 +1,19 @@
-import { InlineMessage, LoadingState } from "@ui";
-import { FunctionComponent, useEffect, useState, useMemo } from "react";
+import {
+  FunctionComponent,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
+import Markdown from "react-markdown";
+import SyntaxHighlighter from "react-syntax-highlighter/dist/esm/prism-light";
+import python from "react-syntax-highlighter/dist/esm/languages/prism/python";
+import { vs } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { getLindiUrl } from "../hdf5Interface";
 import createUsageScriptForNwbFile from "./createUsageScriptForNwbFile";
 import { useNwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
-import PythonCode from "./PythonCode";
+
+SyntaxHighlighter.registerLanguage("python", python);
 
 type Props = {
   nwbUrl: string;
@@ -77,18 +87,72 @@ nwb = pynwb.NWBHDF5IO(file=f, mode='r').read()
     getUsageScript();
   }, [nwbUrl, specifications]);
 
+  const handleCopyClick = useCallback(() => {
+    if (!headerContent || !scriptContent) return;
+    navigator.clipboard
+      .writeText(headerContent + scriptContent)
+      .then(() => {
+        const button = document.getElementById("copy-script-button");
+        if (button) {
+          const originalText = button.textContent;
+          button.textContent = "Copied!";
+          setTimeout(() => {
+            button.textContent = originalText;
+          }, 2000);
+        }
+      })
+      .catch((err) => console.error("Failed to copy text: ", err));
+  }, [headerContent, scriptContent]);
+
   if (error) {
-    return <InlineMessage status="error">{error}</InlineMessage>;
+    return <div style={{ color: "gray", padding: 20 }}>{error}</div>;
   }
 
   if (!scriptContent || !headerContent) {
-    return <LoadingState label="Writing the usage script" phase="loading" />;
+    return <div style={{ padding: 20 }}>Loading...</div>;
   }
 
   const fullContent = `\`\`\`python\n${headerContent}${scriptContent}\n\`\`\``;
   onNwbUsage?.(fullContent);
 
-  return <PythonCode script={(headerContent + scriptContent).trimEnd()} />;
+  return (
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      <button
+        id="copy-script-button"
+        onClick={handleCopyClick}
+        style={{
+          padding: "6px 12px",
+          margin: "0 0 10px 0",
+          backgroundColor: "#f0f0f0",
+          border: "1px solid #ccc",
+          borderRadius: "4px",
+          cursor: "pointer",
+        }}
+      >
+        Copy Script
+      </button>
+      <div style={{ overflow: "auto" }}>
+        <Markdown
+          components={{
+            code(props) {
+              const { children, className } = props;
+              const match = /language-(\w+)/.exec(className || "");
+              const language = match ? match[1] : "";
+              return language ? (
+                <SyntaxHighlighter style={vs} language={language} PreTag="div">
+                  {String(children).replace(/\n$/, "")}
+                </SyntaxHighlighter>
+              ) : (
+                <code className={className}>{children}</code>
+              );
+            },
+          }}
+        >
+          {fullContent}
+        </Markdown>
+      </div>
+    </div>
+  );
 };
 
 export default NwbUsageScript;

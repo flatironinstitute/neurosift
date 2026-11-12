@@ -1,3 +1,4 @@
+import { Box, Tab, Tabs } from "@mui/material";
 import {
   FunctionComponent,
   useCallback,
@@ -6,22 +7,16 @@ import {
   useState,
 } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Breadcrumbs, EmptyState, LoadingState } from "@ui";
 import useRegisterNwbAIComponent from "./useRegisterNwbAIComponent";
+import ResponsiveLayout from "@components/ResponsiveLayout";
+import ScrollY from "@components/ScrollY";
 import { useDandisetVersionInfo } from "../DandisetPage/useDandisetVersionInfo";
 import useQueryDandiset from "../DandisetPage/useQueryDandiset";
-import { addRecentDataset } from "../util/recentDatasets";
+import { addRecentDandiset } from "../util/recentDandisets";
 import MainWorkspace from "./MainWorkspace";
-import FileOverview from "./FileOverview";
-import "./FileViewer.css";
-import { useElementSize } from "./useElementSize";
-import { useStoredState } from "./useStoredState";
-import { useAssetPath } from "./useAssetPath";
-import { fileCrumbs } from "./fileCrumbs";
-import FileError from "./components/FileError";
-import FileAccessNotice from "./components/FileAccessNotice";
-import { useFileAccess } from "./components/useFileAccess";
-import { NwbFileOverview } from "./Types";
+import NwbOverview from "./NwbOverview";
+import "@css/NwbPage.css";
+import { TAB_BAR_HEIGHT, tabsStyle, tabStyle } from "./tabStyles";
 import { useNwbFileOverview } from "./useNwbFileOverview";
 import { setCurrentDandisetId, setTryUsingLindi } from "@hdf5Interface";
 import { toWithCurrentHash } from "./urlHash";
@@ -35,6 +30,7 @@ type NwbPageProps = {
 
 const NwbPage: FunctionComponent<NwbPageProps> = ({
   width,
+  height,
   dandisetId: dandisetIdProp,
   nwbUrl: nwbUrlProp,
 }) => {
@@ -117,77 +113,77 @@ const NwbPage: FunctionComponent<NwbPageProps> = ({
   setCurrentDandisetId(dandisetId || "");
   setTryUsingLindi(!doNotTryLindi);
 
+  const initialSplitterPosition = Math.max(200, Math.min(450, width / 3));
+
   useNwbPageAnalytics(nwbUrl, dandisetId, dandisetVersion);
-  const { nwbFileOverview, error: fileError } = useNwbFileOverview(nwbUrl);
 
   useEffect(() => {
     if (dandisetId) {
-      addRecentDataset("DANDI", dandisetId);
+      addRecentDandiset(dandisetId);
     }
   }, [dandisetId]);
 
-  if (isLoadingAssetUrl)
-    return <LoadingState label="Finding the file on DANDI" phase="loading" />;
-
-  if (!nwbUrl)
+  if (isLoadingAssetUrl) {
     return (
-      <EmptyState title="No file to open">
-        Add an NWB file’s address to the link as ?url=, or open a file from a
-        Dandiset.
-      </EmptyState>
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100%"
+      >
+        <div>Loading NWB file URL...</div>
+      </Box>
     );
+  }
 
-  if (fileError)
-    return (
-      <FileError
-        nwbUrl={nwbUrl}
-        dandisetId={dandisetId || undefined}
-        error={fileError}
-      />
-    );
+  if (!nwbUrl) {
+    return "No NWB file URL provided.";
+  }
 
   return (
-    <FileViewer
-      nwbUrl={nwbUrl}
-      nwbFileOverview={nwbFileOverview}
-      dandisetId={dandisetId || undefined}
-      dandisetVersion={dandisetVersion}
-      useEmber={isEmber}
-      narrow={width <= 768}
-      initialTabId={initialTabId || undefined}
-    />
+    <ResponsiveLayout
+      width={width}
+      height={height}
+      initialSplitterPosition={initialSplitterPosition}
+      mobileBreakpoint={768}
+    >
+      <LeftArea
+        nwbUrl={nwbUrl || ""}
+        width={0}
+        height={0}
+        dandisetId={dandisetId || undefined}
+        dandisetVersion={dandisetVersion}
+        useEmber={isEmber}
+      />
+      <MainWorkspace
+        nwbUrl={nwbUrl}
+        width={0}
+        height={0}
+        initialTabId={initialTabId || undefined}
+      />
+    </ResponsiveLayout>
   );
 };
 
-type FileViewerProps = {
+type LeftAreaProps = {
   nwbUrl: string;
-  nwbFileOverview: NwbFileOverview | null;
+  width: number;
+  height: number;
   dandisetId?: string;
   dandisetVersion: string;
   useEmber: boolean;
-  narrow: boolean;
-  initialTabId?: string;
 };
 
-/** The overview panel beside the workspace; the panel’s width and state are kept in this browser. */
-const FileViewer: FunctionComponent<FileViewerProps> = ({
+const LeftArea: FunctionComponent<LeftAreaProps> = ({
   nwbUrl,
-  nwbFileOverview,
+  width,
+  height,
   dandisetId,
   dandisetVersion,
   useEmber,
-  narrow,
-  initialTabId,
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [workspace, size] = useElementSize<HTMLDivElement>();
-  const [width, setWidth] = useStoredState("neurosift-overview-width", 320);
-  const [collapsed, setCollapsed] = useStoredState(
-    "neurosift-overview-collapsed",
-    false,
-  );
-  const [narrowOpen, setNarrowOpen] = useState(false);
   const dandisetResponse = useQueryDandiset(dandisetId, false, useEmber);
   const dandisetVersionInfo = useDandisetVersionInfo(
     dandisetId,
@@ -196,6 +192,9 @@ const FileViewer: FunctionComponent<FileViewerProps> = ({
     dandisetResponse || null,
     useEmber,
   );
+  const { nwbFileOverview } = useNwbFileOverview(nwbUrl);
+  const tabBarHeight = TAB_BAR_HEIGHT;
+  const contentHeight = height - tabBarHeight;
 
   const availableVersions = useMemo(() => {
     if (!dandisetResponse) return [];
@@ -219,68 +218,45 @@ const FileViewer: FunctionComponent<FileViewerProps> = ({
     [navigate, searchParams],
   );
 
-  useRegisterNwbAIComponent({ nwbUrl, dandisetId, dandisetVersion });
-  const authError = useFileAccess(nwbUrl);
-
-  const assetPath = useAssetPath(nwbUrl);
-  const crumbs = fileCrumbs({
-    base: import.meta.env.BASE_URL,
-    archive: dandisetId ? (useEmber ? "EMBER" : "DANDI") : undefined,
-    dandisetId,
-    dandisetVersion: useEmber ? undefined : dandisetVersion,
-    assetPath,
+  useRegisterNwbAIComponent({
     nwbUrl,
+    dandisetId,
+    dandisetVersion,
   });
 
-  const panelOpen = narrow ? narrowOpen : !collapsed;
   return (
-    <div className="file-viewer-frame">
-      <div className="file-viewer-crumbs">
-        <Breadcrumbs items={crumbs} />
-      </div>
-      {authError && (
-        <FileAccessNotice
-          nwbUrl={nwbUrl}
-          dandisetId={dandisetId}
-          authError={authError}
-        />
-      )}
+    <div style={{ position: "absolute", width, height, overflow: "hidden" }}>
       <div
-        className={
-          narrow && panelOpen
-            ? "file-viewer file-viewer--panel-only"
-            : "file-viewer"
-        }
+        style={{
+          position: "absolute",
+          width,
+          height: tabBarHeight,
+          left: 10,
+          top: 12,
+        }}
       >
-        <FileOverview
-          nwbUrl={nwbUrl}
+        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 1 }}>
+          <Tabs value={0} sx={tabsStyle}>
+            <Tab label="OVERVIEW" sx={tabStyle} />
+          </Tabs>
+        </Box>
+      </div>
+
+      <ScrollY
+        width={width - 20}
+        height={contentHeight}
+        top={tabBarHeight}
+        left={10}
+      >
+        <NwbOverview
           nwbFileOverview={nwbFileOverview}
+          nwbUrl={nwbUrl}
           dandisetInfo={dandisetVersionInfo}
-          dandisetPath={
-            dandisetId
-              ? `/${useEmber ? "ember-dandiset" : "dandiset"}/${dandisetId}`
-              : "/"
-          }
+          width={width - 20}
           availableVersions={availableVersions}
           onVersionChange={handleVersionChange}
-          width={width}
-          onWidthChange={setWidth}
-          collapsed={!panelOpen}
-          onCollapsedChange={(c) =>
-            narrow ? setNarrowOpen(!c) : setCollapsed(c)
-          }
         />
-        <div ref={workspace} className="file-viewer-workspace">
-          {size.width > 0 && (
-            <MainWorkspace
-              nwbUrl={nwbUrl}
-              width={size.width}
-              height={size.height}
-              initialTabId={initialTabId}
-            />
-          )}
-        </div>
-      </div>
+      </ScrollY>
     </div>
   );
 };

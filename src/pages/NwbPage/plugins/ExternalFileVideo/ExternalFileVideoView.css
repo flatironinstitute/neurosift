@@ -1,6 +1,0 @@
-.external-video {
-  display: block;
-  inline-size: 100%;
-  max-block-size: var(--video-h);
-  object-fit: contain;
-}
