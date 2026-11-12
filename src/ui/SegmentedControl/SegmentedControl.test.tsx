@@ -48,6 +48,27 @@ describe("SegmentedControl", () => {
     error.mockRestore();
   });
 
+  it("points to a description when given one", () => {
+    render(
+      <>
+        <SegmentedControl
+          label="PSTH height"
+          options={SIZES}
+          value="sm"
+          onChange={() => {}}
+          describedBy="height-note"
+        />
+        <p id="height-note">Taller plots show more detail.</p>
+      </>,
+    );
+    expect(
+      screen.getByRole("radiogroup", {
+        name: "PSTH height",
+        description: "Taller plots show more detail.",
+      }),
+    ).toBeTruthy();
+  });
+
   it("changes on click, and not on a disabled option", () => {
     const onChange = vi.fn();
     render(<Height onChange={onChange} />);

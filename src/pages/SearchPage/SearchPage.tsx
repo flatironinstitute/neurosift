@@ -131,7 +131,7 @@ const SearchPage: FunctionComponent<Props> = ({ archive }) => {
         source={
           mode === "basic"
             ? undefined
-            : "Search by meaning and Contains search DANDI only"
+            : "Meaning and Neurodata types search DANDI only"
         }
         options={ARCHIVES.map((a) => ({
           value: a,
@@ -154,7 +154,7 @@ const SearchPage: FunctionComponent<Props> = ({ archive }) => {
       />
       {mode === "types" && (
         <MultiSelect
-          label="Contains · DANDI"
+          label="Neurodata types · DANDI"
           helper={
             indexFailed
               ? "The types index didn’t load."
@@ -233,8 +233,8 @@ const SearchPage: FunctionComponent<Props> = ({ archive }) => {
           )}
           {catalog.semanticError && (
             <InlineMessage status="error">
-              Search by meaning is unavailable right now, often because of API
-              quota limits. Try Basic search.
+              Searching by meaning is unavailable right now, often because of
+              API quota limits. Try Keywords.
             </InlineMessage>
           )}
           {catalog.loading ? (
@@ -254,8 +254,8 @@ const SearchPage: FunctionComponent<Props> = ({ archive }) => {
                 }
               >
                 {mode === "basic"
-                  ? "Check the spelling, try Semantic search, or clear the filters."
-                  : "Try fewer words or types, or Basic search."}
+                  ? "Check the spelling, try Meaning, or clear the filters."
+                  : "Try fewer words or types, or Keywords."}
               </EmptyState>
             ) : null
           ) : (

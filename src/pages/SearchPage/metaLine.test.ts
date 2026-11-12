@@ -10,7 +10,7 @@ describe("metaLine", () => {
     );
   });
 
-  it("says how many files match in a Contains search", () => {
+  it("says how many files match in a Neurodata types search", () => {
     expect(metaLine({ ...base, files: 101, matchingFiles: 100 })).toBe(
       "101 files · 100 files match",
     );

@@ -12,7 +12,7 @@ const noop = () => {};
 const TODAY = [
   ["Opening an embargoed file without an API key", "“Loading...” in both panels with no end. A 401 shows only in the console", "A page message: “This file is in an embargoed Dandiset. Add your EMBER API key to open it.” With Add API key and Back to Dandiset"],
   ["A URL that doesn’t answer", "“Loading...” with no end", "“Neurosift couldn’t open this file. The server answered 404, not found.” With Check the URL and Open the Dandiset"],
-  ["Semantic search fails", "An error from the search service", "“Semantic search isn’t answering right now. Basic search still works.” With Use basic search"],
+  ["Search by meaning fails", "An error from the search service", "“Searching by meaning isn’t answering right now. Keywords still works.” With Search by keywords"],
   ["An archive changes its API (OpenNeuro, October 8)", "The OpenNeuro pages failed to load", "“OpenNeuro didn’t answer as expected, so the list can’t load.” With Try again and a link to OpenNeuro"],
   ["A view throws an error", "An error in place with Try again and Report this", "Kept. The first line names the view: “This view couldn’t draw LFPs.” The error text moves into details"],
   ["An object Neurosift can’t draw", "“Unexpected neurodata_type: {neurodataType}”", "“Neurosift can’t draw this type yet.” With Open in HDF5 view and Load in Python"],
@@ -23,7 +23,7 @@ const PLACES = [
   ["One view fails", "Inside that view’s panel. The rest of the tab keeps working", "“This view couldn’t draw LFPs.”"],
   ["The file or page can’t open", "A page message in place of the content, with a way back", "An embargoed file, a broken URL"],
   ["An action fails", "A toast, with the fix if there is one", "“Couldn’t copy the link. Your browser blocked it.”"],
-  ["A service is down", "A notice above the affected feature, with an alternative", "Semantic search unavailable"],
+  ["A service is down", "A notice above the affected feature, with an alternative", "Searching by meaning unavailable"],
 ];
 
 const ACCESS = [
@@ -51,7 +51,7 @@ const A11Y = [
 <DocsLayout title="Errors and access" description="Where each error goes, how to word it, and the three API key cases.">
   <Intro
     lead="Neurosift reads data from other people’s servers, so things fail that Neurosift can’t prevent: an embargoed file without an API key, a URL that doesn’t answer, an archive that changed its API. Today many of these fail silently, with “Loading...” forever and the reason only in the browser console."
-    status="Updated November 9, 2026 · Usage guideline · Draws on the November 5 walkthrough and upstream issues"
+    status="Updated November 11, 2026 · Usage guideline · Draws on the November 5 walkthrough and upstream issues"
     rules={[
       { title: "Say it where it happened", text: "In the view, the page or the field that failed. One broken view never blanks the rest of the screen." },
       { title: "Lead with the fix", text: "What to do first, then why. The technical reason goes in details, one click away." },

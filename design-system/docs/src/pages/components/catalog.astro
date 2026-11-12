@@ -10,7 +10,7 @@ import Intro from "../../components/Intro.astro";
 import DocsLayout from "../../layouts/DocsLayout.astro";
 
 const SPECS = [
-  ["Search row", "Search field, Large · the search modes as a Small segmented control · the total in type/body-sm, text/secondary"],
+  ["Search row", "Search field, Large · the search modes as a Small segmented control · the total in type/body-sm, text/secondary · a line on the chosen mode in type/caption, text/secondary, 4px below, up to layout/text-max, tied to the control with aria-describedby"],
   ["Filter group", "A fieldset: the legend in type/label, its source in type/caption, text/muted · a checkbox and count per value · groups 28px apart"],
   ["Applied filters", "Removable tags above the results, with Clear all"],
   ["Results head", "The total in type/h4 · Sort by, a Small select · a 2px border/strong below"],
@@ -56,7 +56,7 @@ const code = `import { ResultRow, SearchRow, ShowMore } from "@ui";
 <DocsLayout title="Catalog" description="Search, filters and result rows for one catalog across DANDI, EMBER and OpenNeuro.">
   <Intro
     lead="Home and Archive search share one catalog of datasets from DANDI, EMBER and OpenNeuro. These pieces build it: the search row with its three modes, filter groups that say where their values come from, the results head, result rows, Show more, the Recently opened list on Home, and the Prompt list that shares its rows."
-    status="Updated November 10, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    status="Updated November 11, 2026 · Components · Every example on this page is the component the app imports from @ui"
     rules={[
       { title: "One catalog, three archives", text: "Each result names its archive, so one list can hold all three." },
       { title: "Every result is reachable", text: "Show more keeps going past today’s 50 and 25 caps, and says how many are shown." },

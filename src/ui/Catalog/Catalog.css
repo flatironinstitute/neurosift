@@ -3,6 +3,15 @@
   gap: var(--space-3);
 }
 
+.ns-catalog-search-mode {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.ns-catalog-search-note {
+  max-inline-size: var(--layout-text-max);
+}
+
 .ns-catalog-search-meta {
   display: flex;
   flex-wrap: wrap;

@@ -5,7 +5,7 @@ export const n = (count: number) => count.toLocaleString("en-US");
 export const plural = (count: number, word: string) =>
   `${n(count)} ${word}${count === 1 ? "" : "s"}`;
 
-/** A row's one line of facts: subjects, files and size, and matching files in a Contains search. */
+/** A row's one line of facts: subjects, files and size, and matching files in a Neurodata types search. */
 export function metaLine(item: CatalogItem): string {
   return [
     item.subjects !== undefined && plural(item.subjects, "subject"),

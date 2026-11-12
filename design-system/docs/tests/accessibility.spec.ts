@@ -826,13 +826,13 @@ test("segmented controls: one stop in the tab order, arrows move the selection a
   await page.goto("components/tabs/");
   const group = page.getByRole("radiogroup", { name: "Search by" });
   await hydrated(group);
-  await group.getByRole("radio", { name: "Basic" }).focus();
+  await group.getByRole("radio", { name: "Keywords" }).focus();
   await page.keyboard.press("ArrowRight");
   const types = group.getByRole("radio", { name: "Neurodata types" });
   await expect(types).toBeFocused();
   await expect(types).toHaveAttribute("aria-checked", "true");
   await page.keyboard.press("ArrowRight");
-  await expect(group.getByRole("radio", { name: "Basic" })).toBeFocused();
+  await expect(group.getByRole("radio", { name: "Keywords" })).toBeFocused();
   await page.keyboard.press("End");
   await expect(types).toBeFocused();
   await expect(group.locator("[tabindex='0']")).toHaveCount(1);

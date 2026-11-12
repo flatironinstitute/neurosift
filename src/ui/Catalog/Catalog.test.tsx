@@ -38,6 +38,61 @@ describe("SearchRow", () => {
     expect(screen.getByRole("radiogroup", { name: "Search by" })).toBeTruthy();
     expect(screen.getByText("118 datasets")).toBeTruthy();
   });
+
+  it("names its modes Keywords, Meaning and Neurodata types, keeping their values", () => {
+    const onModeChange = vi.fn();
+    render(
+      <SearchRow
+        query=""
+        onQueryChange={() => {}}
+        onSearch={() => {}}
+        mode="basic"
+        onModeChange={onModeChange}
+      />,
+    );
+    expect(screen.getAllByRole("radio").map((r) => r.textContent)).toEqual([
+      "Keywords",
+      "Meaning",
+      "Neurodata types",
+    ]);
+    fireEvent.click(screen.getByRole("radio", { name: "Meaning" }));
+    expect(onModeChange).toHaveBeenCalledWith("semantic");
+  });
+
+  it.each([
+    [
+      "basic",
+      "Matches your words in titles, descriptions and other details across DANDI, OpenNeuro and EMBER.",
+    ],
+    [
+      "semantic",
+      "Finds the 20 Dandisets closest in meaning to your words, even when they use different words. Ranked by an AI model.",
+    ],
+    [
+      "types",
+      "Lists Dandisets with an NWB file holding every type you pick, most matching files first.",
+    ],
+  ])(
+    "describes the %s mode under the control and to screen readers",
+    (mode, line) => {
+      render(
+        <SearchRow
+          query=""
+          onQueryChange={() => {}}
+          onSearch={() => {}}
+          mode={mode}
+          onModeChange={() => {}}
+        />,
+      );
+      expect(screen.getByText(line).tagName).toBe("P");
+      expect(
+        screen.getByRole("radiogroup", {
+          name: "Search by",
+          description: line,
+        }),
+      ).toBeTruthy();
+    },
+  );
 });
 
 describe("FilterGroup", () => {

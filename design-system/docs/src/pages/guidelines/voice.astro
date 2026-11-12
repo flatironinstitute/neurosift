@@ -35,7 +35,7 @@ const THREE_WAYS = [
   ["Unauthorized.", "This file needs a DANDI API key.", "This file is in an embargoed Dandiset, so DANDI shares it only with people who have access. Add your API key in Settings to open it."],
   ["Zoom in to view data", "Too much data to draw. Zoom in to see the traces.", "This window holds 70 channels at 400 Hz for 600 s, more than Neurosift draws at once. Zoom in to see the traces, or draw them anyway."],
   ["Select one or more units to plot", "Choose units to plot.", "The PSTH shows how each unit fires around a trial event. Pick units from the list, or select the first five."],
-  ["No search results yet.", "No Dandisets match “place cells”.", "Basic search looks for exact words, and no Dandiset titles contain “place cells”. Semantic search finds related studies."],
+  ["No search results yet.", "No Dandisets match “place cells”.", "Keywords looks for exact words, and no Dandiset titles contain “place cells”. Meaning finds related studies."],
 ];
 
 const TONE = [
@@ -83,7 +83,7 @@ const WORDS = [
 <DocsLayout title="Voice and content" description="Precise, plain and considerate: how Neurosift writes, in two modes of one voice.">
   <Intro
     lead="Neurosift speaks to neuroscientists around the world, many reading English as a second language, who came to look at their data. The voice is precise, plain and considerate: it names the real thing, uses common words, and is as short as the moment allows without being curt."
-    status="Updated November 9, 2026 · Usage guideline · Collects the writing rules for the interface, the guide and error messages"
+    status="Updated November 11, 2026 · Usage guideline · Collects the writing rules for the interface, the guide and error messages"
     rules={[
       { title: "Precise", text: "Name the real thing: the Dandiset, the object path, the number of channels. “Loading LFPs”, not “Loading...”." },
       { title: "Plain", text: "Short sentences and common words. Explain NWB terms where they appear, never internals like “timeseries client”." },

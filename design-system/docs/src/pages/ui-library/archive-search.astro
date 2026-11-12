@@ -20,14 +20,14 @@ const STATES = [
   ["Loading", "Rows show as gray placeholders; the Archive filter keeps its last counts."],
   ["No results", "“No datasets match hippocampus.” With filters on, Clear filters sits beside it."],
   ["One archive doesn’t answer", "Results from the others still show, above them: “OpenNeuro didn’t respond. Showing DANDI and EMBER.” with Try again."],
-  ["Search by meaning unavailable", "An error message names API quota limits and suggests Basic search."],
+  ["Meaning unavailable", "An error message names API quota limits and suggests Keywords."],
   ["Embargoed, private or draft", "The row shows a warning badge: Embargoed, Private or Draft."],
   ["End of results", "Show more gives way to “All 130 shown”."],
 ];
 
 const BEHAVIOR = [
   ["Search", "Enter searches every checked archive at once. The address becomes /search?q=hippocampus, so a search can be shared."],
-  ["Modes", "Basic searches every checked archive; Semantic and Neurodata types search DANDI only, and say so."],
+  ["Modes", "Search by offers Keywords, Meaning and Neurodata types, with a line under it saying what the chosen one does. Keywords searches every checked archive; Meaning and Neurodata types search DANDI only, and say so. Links keep their mode= values: basic, semantic and types."],
   ["Archive", "Pick which archives to search; each shows its total."],
   ["Sort", "Best match takes turns between archives; Recently modified and Newest merge them by date."],
   ["Show more", "Adds the next 25, past today’s caps, until the end."],
@@ -38,7 +38,7 @@ const BEHAVIOR = [
 const DIFFERS = [
   ["Where search lives", "Three archive pages", "One catalog with an Archive filter", "Built"],
   ["Results shown", "DANDI and EMBER 50, OpenNeuro 25, no total", "Every result, 25 at a time, with real totals", "Built"],
-  ["Search modes", "Radio buttons on DANDI; EMBER has only Basic", "One segmented control: Basic, Semantic, Neurodata types", "Built"],
+  ["Search modes", "Radio buttons on DANDI; EMBER has only Basic", "One segmented control: Keywords, Meaning, Neurodata types, each described in a line below", "Built"],
   ["Result layout", "Raised cards of label: value pairs", "Rows: archive badge and ID, a title link, one meta line, tags", "Built"],
   ["Species, Approach, Modality filters", "—", "Counts across every result", "Next: needs each dataset’s metadata"],
   ["Did you mean", "—", "A suggestion above the results for a typo", "Next: no archive offers suggestions"],
@@ -47,7 +47,7 @@ const DIFFERS = [
 
 const SPECS = [
   ["Page", "Full width, 32px margins · filters 260px, then 40px to the results"],
-  ["Search row", "Search field, Large · total in type/body-sm text/secondary"],
+  ["Search row", "Search field, Large · total in type/body-sm text/secondary · mode line in type/caption text/secondary, 4px below the control, up to layout/text-max"],
   ["Filter group", "Legend in type/label · Checkbox with Show count"],
   ["Results head", "Total in type/h4 · Sort by Select, 12rem · 2px border/strong below"],
   ["Result row", "Badge with the archive, ID in type/code-sm · title in type/h4 text/link · meta in type/body-sm"],
@@ -58,11 +58,11 @@ const SPECS = [
 <DocsLayout title="Archive search" description="One search across DANDI, OpenNeuro and EMBER, with their modes and filters.">
   <Intro
     lead="Archive search is where people find a dataset. Today DANDI, EMBER and OpenNeuro each have their own page, each showing the first 25 or 50 results with no total. The rebuild searches all three at once in one catalog: every result is reachable 25 at a time, each archive says how many it holds, and the search lives in the address so it can be shared."
-    status="Updated November 10, 2026 · UI library · Captured at 1440 × 900 · Built from Search row, Filter group, Results head, Result row, Show more, Multi-select, Inline message, Empty state and Skeleton rows"
+    status="Updated November 11, 2026 · UI library · Captured at 1440 × 900 · Built from Search row, Filter group, Results head, Result row, Show more, Multi-select, Inline message, Empty state and Skeleton rows"
     rules={[
       { title: "One catalog, three archives", text: "An Archive filter picks DANDI, OpenNeuro, EMBER or all three." },
       { title: "Every result is reachable", text: "Show more pages on past today’s caps, with real totals." },
-      { title: "Say where a mode applies", text: "Semantic and Neurodata types search DANDI only, and the page says so." },
+      { title: "Say where a mode applies", text: "Meaning and Neurodata types search DANDI only, and the page says so." },
     ]}
   />
 
@@ -82,8 +82,8 @@ const SPECS = [
 
   <DocSection title="The catalog" lead="The redesign with live data from all three archives.">
     <div class="captures">
-      <Screen file="search-proposed" alt="The catalog for hippocampus: 130 datasets, an Archive filter with DANDI 68, OpenNeuro 61 and EMBER 1, Sort by Best match, and rows from each archive with badges, IDs, titles, facts and modality tags." caption="130 datasets for “hippocampus” across the three archives, each with its total." />
-      <Screen file="search-proposed-types" alt="The catalog in Neurodata types mode: 71 datasets contain ElectricalSeries and Units, with a Contains multi-select and rows saying how many files match." caption="Neurodata types: Dandisets with a file holding every picked type, and how many files match." />
+      <Screen file="search-proposed" alt="The catalog for hippocampus: Search by set to Keywords with a line saying what it matches, 131 datasets, an Archive filter with DANDI 68, OpenNeuro 62 and EMBER 1, Sort by Best match, and rows from each archive with badges, IDs, titles, facts and modality tags." caption="131 datasets for “hippocampus” across the three archives, each with its total. The line under Search by says what Keywords matches." />
+      <Screen file="search-proposed-types" alt="The catalog in Neurodata types mode, with its line under Search by: 72 datasets contain ElectricalSeries and Units, with a Neurodata types multi-select and rows saying how many files match." caption="Neurodata types: Dandisets with a file holding every picked type, and how many files match." />
       <Screen file="search-proposed-narrow" alt="The catalog at 768px: the search field, a Filters disclosure, and the results at full width." caption="At 768px the filters fold behind Filters and the results take the width." />
     </div>
     <p class="doc-note">Built from the <a href={withBase("/components/catalog/")}>Catalog</a> pieces and the <a href={withBase("/components/selects/")}>Multi-select</a>.</p>

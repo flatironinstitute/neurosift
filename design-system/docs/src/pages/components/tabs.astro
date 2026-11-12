@@ -29,7 +29,7 @@ const WRITING = [
   ["Timeseries alignment", "Timeseries Alignment", "Sentence case"],
   ["Python usage", "Python Usage", "Sentence case"],
   ["Overview, Main", "OVERVIEW, MAIN", "No all caps"],
-  ["Search by: Basic · Semantic · Neurodata types", "Basic Search · Semantic Search · Neurodata Types Search", "The group label carries “Search”"],
+  ["Search by: Keywords · Meaning · Neurodata types", "Basic Search · Semantic Search · Neurodata Types Search", "The group label carries “Search”"],
 ];
 
 const SPECS = [
@@ -96,7 +96,7 @@ const TAB_STATES = [
 <DocsLayout title="Tabs and segmented controls" description="Tabs move between views of a file; segmented controls choose one of two to four settings.">
   <Intro
     lead="Tabs move between views of the same file: section tabs switch the whole workspace, and object tabs hold the neurodata objects people have opened. Segmented controls choose between two to four settings that are all worth seeing at once, such as sort order or the plot’s pan and zoom mode."
-    status="Updated November 9, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    status="Updated November 11, 2026 · Components · Every example on this page is the component the app imports from @ui"
     rules={[
       { title: "Tabs change the view", text: "A tab shows different content in the same place. It never runs an action or opens a dialog." },
       { title: "Segments change a setting", text: "A segmented control is a visible radio group: one choice, applied right away." },
@@ -127,9 +127,9 @@ const TAB_STATES = [
       <SegmentedDemo client:visible label="Sort order" initial="asc" options={[{ value: "asc", label: "Ascending" }, { value: "desc", label: "Descending" }]} />
       <SegmentedDemo client:visible label="PSTH height" initial="md" options={[{ value: "sm", label: "Small" }, { value: "md", label: "Medium" }, { value: "lg", label: "Large" }]} />
       <SegmentedDemo client:visible label="Notch filter" size="sm" initial="60" options={[{ value: "50", label: "50 Hz" }, { value: "60", label: "60 Hz" }]} />
-      <SegmentedDemo client:visible label="Search by" initial="basic" options={[{ value: "basic", label: "Basic" }, { value: "semantic", label: "Semantic", disabled: true }, { value: "types", label: "Neurodata types" }]} />
+      <SegmentedDemo client:visible label="Search by" initial="basic" options={[{ value: "basic", label: "Keywords" }, { value: "semantic", label: "Meaning", disabled: true }, { value: "types", label: "Neurodata types" }]} />
     </div>
-    <p class="doc-note">Medium is 32px tall and Small is 24px, for plot toolbars. Search by shows a disabled option, as on EMBER, which has no semantic search; arrow keys skip it. Options can carry an icon, and icon-only controls name each option for screen readers and in a tooltip.</p>
+    <p class="doc-note">Medium is 32px tall and Small is 24px, for plot toolbars. Search by shows a disabled option, as on EMBER, which has no search by meaning; arrow keys skip it. A control can point to a line of text that explains the choice, read with it by screen readers, as Search by does in the catalog. Options can carry an icon, and icon-only controls name each option for screen readers and in a tooltip.</p>
   </DocSection>
 
   <DocSection title="Tabs, segments or something else">

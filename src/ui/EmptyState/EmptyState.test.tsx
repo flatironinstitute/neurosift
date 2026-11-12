@@ -42,10 +42,10 @@ describe("EmptyState", () => {
     render(
       <EmptyState
         title="No Dandisets match “place cells”"
-        action={{ label: "Use semantic search", onClick: () => {} }}
+        action={{ label: "Search by meaning", onClick: () => {} }}
         secondary={{ label: "Clear search", onClick: () => {} }}
       >
-        Basic search looks for exact words.
+        Keywords looks for exact words.
       </EmptyState>,
     );
     expect(

@@ -27,7 +27,7 @@ const ANATOMY = [
 const TODAY = [
   ["Select one or more units to plot", "No units chosen yet. Pick units from the list, or select the first five."],
   ["No search text entered.", "Search Dandisets by title, species or method, such as “mouse hippocampus”."],
-  ["No search results yet.", "No Dandisets match “hippocampus place cells”. Try fewer words, or semantic search."],
+  ["No search results yet.", "No Dandisets match “hippocampus place cells”. Try fewer words, or search by meaning."],
   ["No external videos were found in this NWB file.", "Kept as it is: it already says what is missing and where."],
   ["No data available", "This object has no data. Its attributes are listed below."],
   ["No viewer available for this file type", "Neurosift can’t show .mat files yet. Download the file to open it elsewhere."],
@@ -46,10 +46,10 @@ const code = `import { EmptyState } from "@ui";\n\n<EmptyState\n  title="No unit
 <DocsLayout title="Empty states" description="Say why it’s empty and offer one way forward, quietly.">
   <Intro
     lead="An empty state is what people see when there is nothing to show yet: no units chosen, no search results, an object with no data. It is often the first thing someone reads in a view, so it explains the reason and offers one way forward."
-    status="Updated November 9, 2026 · Usage guideline · Uses Buttons and the type styles"
+    status="Updated November 11, 2026 · Usage guideline · Uses Buttons and the type styles"
     rules={[
       { title: "Say why it’s empty", text: "“No units chosen yet” tells people what to do. “No data” leaves them guessing whether something broke." },
-      { title: "One way forward", text: "A single action that fills it, such as Select first 5 units or Use basic search." },
+      { title: "One way forward", text: "A single action that fills it, such as Select first 5 units or Search by keywords." },
       { title: "Quiet, not decorative", text: "Text and an action in the space the content would fill. No illustrations, no shimmer, no animation." },
     ]}
   />
