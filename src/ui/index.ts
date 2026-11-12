@@ -31,7 +31,7 @@ export { ChannelWindow } from "./TimeControls/ChannelWindow";
 export type { ChannelRange } from "./TimeControls/ChannelWindow";
 export { TimeOverview } from "./TimeControls/TimeOverview";
 export { Playback } from "./TimeControls/Playback";
-export { timeKey, formatSeconds } from "./TimeControls/timeMath";
+export { timeKey, formatSeconds, clampWindow } from "./TimeControls/timeMath";
 export type { Session, TimeWindowValue } from "./TimeControls/timeMath";
 
 export { Slider } from "./Slider/Slider";

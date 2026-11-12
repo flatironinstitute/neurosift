@@ -22,7 +22,7 @@ const MUI_REPLACEMENTS = [
   "logo--github",
 ];
 
-// Icons the components draw themselves: status icons, checkbox marks, chevrons, carets, the info button, the app bar, tree and sort icons, time controls, show and hide, and neurodata types.
+// Icons the components draw themselves: status icons, checkbox marks, chevrons, carets, the info button, the app bar, tree and sort icons, time controls and the drag mode, show and hide, and neurodata types.
 const COMPONENT_ICONS = [
   "error",
   "checkmark",
@@ -43,6 +43,8 @@ const COMPONENT_ICONS = [
   "arrow--down",
   "zoom--in",
   "zoom--out",
+  "zoom--area",
+  "pan--horizontal",
   "add",
   "chevron--up",
   "view",

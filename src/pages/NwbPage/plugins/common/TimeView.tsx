@@ -1,6 +1,17 @@
-import { Playback, TimeOverview, TimeWindow, ViewPanel } from "@ui";
+import { useCssVars } from "@components/useCssVars";
+import { TimeAxisContext } from "@shared/context-timeseries-selection-2";
+import {
+  DataTooltip,
+  Playback,
+  SegmentedControl,
+  TimeOverview,
+  TimeWindow,
+  ViewPanel,
+} from "@ui";
 import { FunctionComponent, ReactNode, useEffect } from "react";
+import { selectionLabel, type DragMode } from "./timeSelect";
 import type { WindowPlayback } from "./usePlayback";
+import { useTimeSelect, type Selection } from "./useTimeSelect";
 import { useTimeWindow } from "./useTimeWindow";
 import "./TimeView.css";
 
@@ -29,6 +40,36 @@ type Props = {
   children: ReactNode;
 };
 
+const DRAG_OPTIONS = [
+  { value: "pan", label: "Pan", icon: "pan--horizontal" as const },
+  { value: "select", label: "Select", icon: "zoom--area" as const },
+];
+
+/** The stretch being dragged across: a shaded band and its range. */
+const SelectionBand = ({ selection }: { selection: Selection }) => {
+  const ref = useCssVars<HTMLDivElement>({
+    "--select-left": selection.left,
+    "--select-top": selection.top,
+    "--select-width": selection.width,
+    "--select-height": selection.height,
+  });
+  const label = selection.value && selectionLabel(selection.value);
+  return (
+    <>
+      <div ref={ref} className="time-view-select-band" aria-hidden="true" />
+      {label && (
+        <DataTooltip
+          time={label.range}
+          rows={[{ name: "Length", value: label.length }]}
+          x={selection.left + selection.width}
+          y={selection.top + 8}
+          width={selection.frameWidth}
+        />
+      )}
+    </>
+  );
+};
+
 /** A view on recording time: the shared time window and overview around Neurosift's chart. */
 const TimeView: FunctionComponent<Props> = ({
   label,
@@ -45,6 +86,18 @@ const TimeView: FunctionComponent<Props> = ({
   const time = useTimeWindow();
   const hold = playback?.hold;
   useEffect(() => hold?.(holding), [hold, holding]);
+  const select = useTimeSelect(() => {
+    if (playback?.playing) playback.setPlaying(false);
+  });
+  const title = chartTitle ?? label;
+  const plotLabel = [
+    `${title}.`,
+    select.available &&
+      "Drag across the plot in Select mode, or Shift+drag, to zoom to that stretch of time.",
+    playback && "Space plays and pauses.",
+  ]
+    .filter(Boolean)
+    .join(" ");
   return (
     <ViewPanel
       label={label}
@@ -60,6 +113,15 @@ const TimeView: FunctionComponent<Props> = ({
             cursor={time.cursor}
             onChange={time.onChange}
           />
+          {select.available && (
+            <SegmentedControl
+              label="Drag to"
+              size="sm"
+              value={select.mode}
+              onChange={(v) => select.setMode(v as DragMode)}
+              options={DRAG_OPTIONS}
+            />
+          )}
           {playback && (
             <Playback
               playing={playback.playing}
@@ -85,18 +147,23 @@ const TimeView: FunctionComponent<Props> = ({
         )
       }
     >
-      {playback ? (
+      <TimeAxisContext.Provider value={select.register}>
         <div
-          className="time-view-plot"
-          tabIndex={0}
-          aria-label={`${chartTitle ?? label}. Space plays and pauses.`}
-          onKeyDown={playback.onKeyDown}
+          className={
+            select.available
+              ? `time-view-plot time-view-plot--${select.cursorMode}`
+              : "time-view-plot"
+          }
+          role={playback || select.available ? "group" : undefined}
+          tabIndex={playback ? 0 : undefined}
+          aria-label={playback || select.available ? plotLabel : undefined}
+          onKeyDown={playback?.onKeyDown}
+          {...select.handlers}
         >
           {children}
+          {select.selection && <SelectionBand selection={select.selection} />}
         </div>
-      ) : (
-        children
-      )}
+      </TimeAxisContext.Provider>
     </ViewPanel>
   );
 };

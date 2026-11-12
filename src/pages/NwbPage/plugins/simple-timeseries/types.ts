@@ -25,6 +25,8 @@ export type TimeseriesPlotProps = {
   width: number;
   height: number;
   zoomInRequired?: boolean;
+  /** Called when the plot is panned, with the new visible range. */
+  onVisibleTimeChange?: (start: number, end: number) => void;
 };
 
 export type PlotOpts = {

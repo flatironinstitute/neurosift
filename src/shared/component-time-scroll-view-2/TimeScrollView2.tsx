@@ -17,6 +17,7 @@ import { useTimeTicks } from "./timeTicks";
 import TSV2AxesLayer from "./TSV2AxesLayer";
 import TSV2CursorLayer from "./TSV2CursorLayer";
 import {
+  useTimeAxisRef,
   useTimeRange,
   useTimeseriesSelection,
 } from "@shared/context-timeseries-selection-2";
@@ -204,6 +205,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
   ]);
 
   const [isViewClicked, setIsViewClicked] = useState(false);
+  const axisRef = useTimeAxisRef(margins);
 
   const divRef = useCssVars<HTMLDivElement>({
     "--tsv-width": width,
@@ -317,6 +319,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
   const content = useMemo(() => {
     return (
       <div
+        ref={axisRef}
         className="tsv-content"
         onWheel={!requireClickToZoom || isViewClicked ? handleWheel : undefined}
         onMouseDown={handleMouseDown2}
@@ -350,6 +353,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
     handleMouseOut2,
     requireClickToZoom,
     isViewClicked,
+    axisRef,
   ]);
 
   const timeControlActions = useActionToolbar();
