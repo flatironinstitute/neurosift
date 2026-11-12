@@ -38,6 +38,7 @@ const WRITING = [
 const SPECS = [
   ["App bar", "48px · surface/panel · 1px border/strong below · 16px left · type/h4 name · 28px logo"],
   ["App bar actions", "32px Ghost buttons · 16px icons · icon-only ones named, with a tooltip"],
+  ["App bar, narrow", "At 768px and below, Guide and Open in Neurosift v1 become icon-only, named and with a tooltip, so every action fits down to 320px and at 400% zoom. No menu"],
   ["Crumb", "type/body-sm text/link · current SemiBold text/default · IDs and file names in type/code-sm"],
   ["Separator", "chevron--right 16px · text/muted · hidden from screen readers"],
   ["Overflow", "Below 36rem, the middle levels fold into “…”, which shows them again"],
@@ -54,6 +55,7 @@ const code = `import { AppBar, Breadcrumbs, ObjectPath } from "@ui";
   actions={[
     { label: "Guide", href: "/guide", icon: "help" },
     { label: "Settings", href: "/settings", icon: "settings", iconOnly: true },
+    { label: "Open in Neurosift v1", href: v1Url, icon: "launch", collapses: true },
   ]}
 />
 
@@ -92,14 +94,14 @@ const code = `import { AppBar, Breadcrumbs, ObjectPath } from "@ui";
         homeHref={here}
         logoSrc={logo.src}
         actions={[
-          { label: "Guide", href: here, icon: "help" },
+          { label: "Guide", href: here, icon: "help", collapses: true },
           { label: "GitHub", href: "https://github.com/flatironinstitute/neurosift", icon: "logo--github", iconOnly: true, external: true },
           { label: "Settings", href: here, icon: "settings", iconOnly: true },
-          { label: "Open in v1", href: here },
+          { label: "Open in v1", href: here, icon: "launch", collapses: true },
         ]}
       />
     </div>
-    <p class="doc-note">“Neurosift”, not “Neurosift (v2)”: the status bar already shows the build version. The bare “1” becomes “Open in v1”, and the NWB viewer guide gets a place in the bar. Icon-only actions are named for screen readers and in a tooltip.</p>
+    <p class="doc-note">“Neurosift”, not “Neurosift (v2)”: the status bar already shows the build version. The bare “1” becomes “Open in v1”, and the NWB viewer guide gets a place in the bar. Icon-only actions are named for screen readers and in a tooltip. At 768px and below, Guide and Open in v1 turn icon-only, so nothing clips on a phone or at 400% zoom.</p>
   </DocSection>
 
   <DocSection title="Breadcrumbs" lead="Links to every level above the current page, in link blue, with the current page in SemiBold. IDs and file names use Plex Mono.">
