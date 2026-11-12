@@ -3,6 +3,7 @@ import { Checkbox, LoadingState } from "@ui";
 import { addRecentDataset } from "../util/recentDatasets";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import ResponsiveLayout from "@components/ResponsiveLayout";
+import KeyRefusedFrame from "../DandisetPage/KeyRefusedFrame";
 import DatasetWorkspace from "../common/DatasetWorkspace/DatasetWorkspace";
 import { DatasetFile } from "../common/DatasetWorkspace/plugins/pluginInterface";
 import EmberDandisetOverview from "./EmberDandisetOverview.tsx";
@@ -33,11 +34,11 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
   const staging = false;
 
   // Query the dandiset info
-  const { dandiset: dandisetResponse, failure } = useDandisetResult(
-    effectiveDandisetId,
-    staging,
-    true,
-  );
+  const {
+    dandiset: dandisetResponse,
+    failure,
+    keyRefusedUrl,
+  } = useDandisetResult(effectiveDandisetId, staging, true);
   const dandisetVersion = "";
   const dandisetVersionInfo = useEmberDandisetVersionInfo(
     effectiveDandisetId,
@@ -106,29 +107,33 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
   const initialSplitterPosition = Math.max(500, Math.min(650, (width * 2) / 5));
 
   return (
-    <ResponsiveLayout
-      width={width}
-      height={height}
-      initialSplitterPosition={initialSplitterPosition}
-      mobileBreakpoint={768}
-    >
-      <EmberDandisetOverview
-        width={0}
-        height={0}
-        dandisetVersionInfo={dandisetVersionInfo}
-      />
-      <DatasetWorkspace
-        width={0}
-        height={0}
-        topLevelFiles={topLevelFiles}
-        initialTab={initialTabId}
-        loadFileFromPath={loadFileFromPath}
-        fetchDirectory={fetchDirectory}
-        fetchFolder={fetchFolder}
-        specialOpenFileHandler={specialOpenFileHandler}
-        mainTabAdditionalControls={mainTabAdditionalControls}
-      />
-    </ResponsiveLayout>
+    <KeyRefusedFrame url={keyRefusedUrl} height={height}>
+      {(pageHeight) => (
+        <ResponsiveLayout
+          width={width}
+          height={pageHeight}
+          initialSplitterPosition={initialSplitterPosition}
+          mobileBreakpoint={768}
+        >
+          <EmberDandisetOverview
+            width={0}
+            height={0}
+            dandisetVersionInfo={dandisetVersionInfo}
+          />
+          <DatasetWorkspace
+            width={0}
+            height={0}
+            topLevelFiles={topLevelFiles}
+            initialTab={initialTabId}
+            loadFileFromPath={loadFileFromPath}
+            fetchDirectory={fetchDirectory}
+            fetchFolder={fetchFolder}
+            specialOpenFileHandler={specialOpenFileHandler}
+            mainTabAdditionalControls={mainTabAdditionalControls}
+          />
+        </ResponsiveLayout>
+      )}
+    </KeyRefusedFrame>
   );
 };
 

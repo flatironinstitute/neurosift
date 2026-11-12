@@ -11,7 +11,7 @@ import {
 } from "@remote-h5-file";
 import { getCachedObject, setCachedObject } from "./hdf5Cache";
 import { MAX_READ_BYTES, datasetBytes, tooLargeMessage } from "./datasetSize";
-import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
+import { sendWithApiKey, type NoticeAccess } from "../util/apiKeys";
 import { removeStatusItem, setStatusItem } from "@components/StatusBarContext";
 import {
   addRequestWatermark,
@@ -26,10 +26,9 @@ const hdf5Files: {
   };
 } = {};
 
-// Authentication error tracking
-export const authenticationErrors: {
-  [url: string]: boolean;
-} = {};
+/** An asset download the archive refused, by url: the access state and the status that decided it. */
+export type AuthError = { access: NoticeAccess; status: number };
+export const authenticationErrors: { [url: string]: AuthError } = {};
 
 // for looking up lindi files
 let currentDandisetId = "";
@@ -41,11 +40,8 @@ export const setTryUsingLindi = (val: boolean) => {
   tryUsingLindi = val;
 };
 
-export const hasAuthError = (url: string): boolean => {
-  // Direct match
-  if (authenticationErrors[url]) {
-    return true;
-  }
+export const getAuthError = (url: string): AuthError | undefined => {
+  if (authenticationErrors[url]) return authenticationErrors[url];
 
   // If we get a direct URL but the stored error might be from the pre-redirection URL
   const keys = Object.keys(authenticationErrors);
@@ -55,37 +51,13 @@ export const hasAuthError = (url: string): boolean => {
       const urlAssetId = url.split("/assets/")[1]?.split("/")[0];
       const keyAssetId = key.split("/assets/")[1]?.split("/")[0];
 
-      if (urlAssetId && keyAssetId && urlAssetId === keyAssetId) {
-        console.log("Asset ID match found for auth error:", urlAssetId);
-        return true;
-      }
+      if (urlAssetId && keyAssetId && urlAssetId === keyAssetId)
+        return authenticationErrors[key];
     }
   }
-
-  return false;
+  return undefined;
 };
 
-export const clearAuthError = (url: string): void => {
-  if (authenticationErrors[url]) {
-    delete authenticationErrors[url];
-    return;
-  }
-
-  // Also try to clear by asset ID
-  if (url.includes("/assets/")) {
-    const urlAssetId = url.split("/assets/")[1]?.split("/")[0];
-    const keys = Object.keys(authenticationErrors);
-
-    for (const key of keys) {
-      if (key.includes("/assets/")) {
-        const keyAssetId = key.split("/assets/")[1]?.split("/")[0];
-        if (urlAssetId && keyAssetId && urlAssetId === keyAssetId) {
-          delete authenticationErrors[key];
-        }
-      }
-    }
-  }
-};
 export const isUsingLindi = (url: string) => {
   return hdf5Files[url]?.resolvedUrl.endsWith(".lindi.json");
 };
@@ -224,11 +196,7 @@ const getDirectBlobRemoteH5File = async (
     // Resolve straight to the underlying blob, bypassing any LINDI sidecar.
     let blobUrl = url;
     if (isDandiAssetUrl(url)) {
-      const authorizationHeader = getAuthorizationHeaderForUrl(url);
-      const headers = authorizationHeader
-        ? { Authorization: authorizationHeader }
-        : undefined;
-      blobUrl = (await getRedirectUrl(url, headers)) || url;
+      blobUrl = (await getRedirectUrl(url)) || url;
     }
     directBlobH5Files[url] = new RemoteH5File(addRequestWatermark(blobUrl), {});
   }
@@ -452,11 +420,7 @@ const getResolvedUrl = async (url: string): Promise<{ url: string }> => {
         return { url: lindiUrl };
       }
     }
-    const authorizationHeader = getAuthorizationHeaderForUrl(url);
-    const headers = authorizationHeader
-      ? { Authorization: authorizationHeader }
-      : undefined;
-    const redirectUrl = (await getRedirectUrl(url, headers)) || url;
+    const redirectUrl = (await getRedirectUrl(url)) || url;
     return { url: redirectUrl };
   }
   return { url };
@@ -471,11 +435,7 @@ const getResolvedUrl = async (url: string): Promise<{ url: string }> => {
  */
 export const resolveDatasetFileUrl = async (url: string): Promise<string> => {
   if (!isDandiAssetUrl(url)) return addRequestWatermark(url);
-  const authorizationHeader = getAuthorizationHeaderForUrl(url);
-  const headers = authorizationHeader
-    ? { Authorization: authorizationHeader }
-    : undefined;
-  return (await getRedirectUrl(url, headers)) || addRequestWatermark(url);
+  return (await getRedirectUrl(url)) || addRequestWatermark(url);
 };
 
 export const isDandiAssetUrl = (url: string) => {
@@ -552,37 +512,20 @@ export const watermarkRedirectTarget = async (
   return (await anonymousReadProbes[bareUrl]) ? bareUrl : redirectUrl;
 };
 
-export const getRedirectUrl = async (url: string, headers: any) => {
-  // const response = await fetch(url, {
-  //   method: "HEAD",
-  //   headers,
-  //   redirect: "follow",
-  // });
-  // const redirectUrl = response.headers.get("Location") || response.url;
-  // if (!redirectUrl) {
-  //   console.warn(`No redirect for ${url}`);
-  //   return null;
-  // }
-  // return redirectUrl;
-
-  // This is tricky. Normally we would do a HEAD request with a redirect: 'manual' option.
-  // and then look at the Location response header.
-  // However, we run into mysterious cors problems
-  // So instead, we do a HEAD request with no redirect option, and then look at the response.url
+// Where an archive url redirects, asked with the saved key and again without it if refused.
+// A refusal it can't get past goes in authenticationErrors, so the file page can say why.
+export const getRedirectUrl = async (url: string) => {
+  // HEAD with redirect: "manual" runs into CORS, so an aborted GET is followed instead.
   try {
-    const response = await headRequest(url, headers);
-
-    // Check for authentication errors (typically 401 or 403)
-    if (response.status === 401 || response.status === 403) {
-      console.warn(`Authentication error for ${url}: ${response.status}`);
-      // disable this for now until we can get it right
-      // authenticationErrors[url] = true;
-      console.log("Authentication errors map:", authenticationErrors);
+    const { response, status, access } = await sendWithApiKey(url, (headers) =>
+      headRequest(url, headers),
+    );
+    if (access === "embargoed" || access === "keyRefused") {
+      console.warn(`Authentication error for ${url}: ${status}`);
+      authenticationErrors[url] = { access, status };
     } else if (response.ok) {
-      // Clear any previous auth errors if the request succeeded
       delete authenticationErrors[url];
     }
-
     if (response.url) {
       return await watermarkRedirectTarget(url, response.url);
     } else {
@@ -591,18 +534,8 @@ export const getRedirectUrl = async (url: string, headers: any) => {
     }
   } catch (error) {
     console.error(`Error during request for ${url}:`, error);
-    // If we're getting network errors with embargoed content, mark as auth error
-    if (isDandiAssetUrl(url) && !headers?.Authorization) {
-      authenticationErrors[url] = true;
-    }
     return null;
   }
-
-  // if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
-  //     return response.headers.get('Location')
-  // }
-
-  // return null; // No redirect
 };
 
 export const tryGetLindiUrl = async (url: string, dandisetId: string) => {

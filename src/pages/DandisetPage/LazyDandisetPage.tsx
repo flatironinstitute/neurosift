@@ -9,6 +9,7 @@ import { Checkbox, LoadingState } from "@ui";
 import { addRecentDataset } from "../util/recentDatasets";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import ResponsiveLayout from "@components/ResponsiveLayout";
+import KeyRefusedFrame from "./KeyRefusedFrame";
 import DatasetWorkspace from "../common/DatasetWorkspace/DatasetWorkspace";
 import { DatasetFile } from "../common/DatasetWorkspace/plugins/pluginInterface";
 import DandisetOverview from "./DandisetOverview";
@@ -40,11 +41,11 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
   const staging = false;
 
   // Query the dandiset info
-  const { dandiset: dandisetResponse, failure } = useDandisetResult(
-    effectiveDandisetId,
-    staging,
-    false,
-  );
+  const {
+    dandiset: dandisetResponse,
+    failure,
+    keyRefusedUrl,
+  } = useDandisetResult(effectiveDandisetId, staging, false);
   const dandisetVersion = searchParams.get("dandisetVersion") || "";
   const dandisetVersionInfo = useDandisetVersionInfo(
     effectiveDandisetId,
@@ -135,31 +136,35 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
   const initialSplitterPosition = Math.max(500, Math.min(650, (width * 2) / 5));
 
   return (
-    <ResponsiveLayout
-      width={width}
-      height={height}
-      initialSplitterPosition={initialSplitterPosition}
-      mobileBreakpoint={768}
-    >
-      <DandisetOverview
-        width={0}
-        height={0}
-        dandisetVersionInfo={dandisetVersionInfo}
-        availableVersions={availableVersions}
-        onVersionChange={handleVersionChange}
-      />
-      <DatasetWorkspace
-        width={0}
-        height={0}
-        topLevelFiles={topLevelFiles}
-        initialTab={initialTabId}
-        loadFileFromPath={loadFileFromPath}
-        fetchDirectory={fetchDirectory}
-        fetchFolder={fetchFolder}
-        specialOpenFileHandler={specialOpenFileHandler}
-        mainTabAdditionalControls={mainTabAdditionalControls}
-      />
-    </ResponsiveLayout>
+    <KeyRefusedFrame url={keyRefusedUrl} height={height}>
+      {(pageHeight) => (
+        <ResponsiveLayout
+          width={width}
+          height={pageHeight}
+          initialSplitterPosition={initialSplitterPosition}
+          mobileBreakpoint={768}
+        >
+          <DandisetOverview
+            width={0}
+            height={0}
+            dandisetVersionInfo={dandisetVersionInfo}
+            availableVersions={availableVersions}
+            onVersionChange={handleVersionChange}
+          />
+          <DatasetWorkspace
+            width={0}
+            height={0}
+            topLevelFiles={topLevelFiles}
+            initialTab={initialTabId}
+            loadFileFromPath={loadFileFromPath}
+            fetchDirectory={fetchDirectory}
+            fetchFolder={fetchFolder}
+            specialOpenFileHandler={specialOpenFileHandler}
+            mainTabAdditionalControls={mainTabAdditionalControls}
+          />
+        </ResponsiveLayout>
+      )}
+    </KeyRefusedFrame>
   );
 };
 

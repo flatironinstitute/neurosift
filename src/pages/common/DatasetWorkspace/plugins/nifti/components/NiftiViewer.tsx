@@ -11,7 +11,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import getAuthorizationHeaderForUrl from "../../../../../util/getAuthorizationHeaderForUrl";
 import { addRequestWatermark } from "../../../../../../util/requestWatermark";
 import ViewError from "@components/ViewError/ViewError";
 import "./NiftiViewer.css";
@@ -95,11 +94,7 @@ const NiftiViewer: React.FC<NiftiViewerProps> = ({
         // url handed to it (getRedirectUrl already applies it).
         let redirectUrl: string | null = addRequestWatermark(fileUrl);
         if (isDandiAssetUrl(fileUrl)) {
-          const authorizationHeader = getAuthorizationHeaderForUrl(fileUrl);
-          const headers = authorizationHeader
-            ? { Authorization: authorizationHeader }
-            : undefined;
-          redirectUrl = await getRedirectUrl(fileUrl, headers);
+          redirectUrl = await getRedirectUrl(fileUrl);
           if (!redirectUrl) {
             throw new Error("Failed to get redirect URL");
           }

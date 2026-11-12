@@ -13,6 +13,8 @@ interface SettingsViewProps {
   shown: Record<keyof ApiKeys, boolean>;
   onShownChange: (key: keyof ApiKeys, shown: boolean) => void;
   showReload: boolean;
+  /** Settings was opened from a page that wants the new key, so the reload goes back there. */
+  returning?: boolean;
   onReload: () => void;
 }
 
@@ -22,6 +24,7 @@ export function SettingsView({
   shown,
   onShownChange,
   showReload,
+  returning,
   onReload,
 }: SettingsViewProps) {
   const field = (key: keyof ApiKeys, label: string, helper: string) => (
@@ -63,7 +66,12 @@ export function SettingsView({
         <Alert
           status="info"
           title="Reload to use the new key"
-          actions={[{ label: "Reload page", onClick: onReload }]}
+          actions={[
+            {
+              label: returning ? "Back to the page" : "Reload page",
+              onClick: onReload,
+            },
+          ]}
         >
           Neurosift reads API keys when a page opens.
         </Alert>

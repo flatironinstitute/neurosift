@@ -88,6 +88,12 @@ describe("SettingsView", () => {
     expect(onReload).toHaveBeenCalledTimes(1);
   });
 
+  it("offers to go back to the page that sent people here", () => {
+    const { onReload } = setup({ showReload: true, returning: true });
+    fireEvent.click(screen.getByRole("button", { name: "Back to the page" }));
+    expect(onReload).toHaveBeenCalledTimes(1);
+  });
+
   it("gives each key a show button that reports which key to show", () => {
     const { onShownChange } = setup();
     expect(

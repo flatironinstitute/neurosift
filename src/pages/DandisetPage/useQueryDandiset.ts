@@ -1,13 +1,24 @@
 import { useEffect, useState } from "react";
 import { DandisetSearchResultItem } from "../DandiPage/dandi-types";
-import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
+import {
+  archiveForUrl,
+  sendWithApiKey,
+  type ApiKeyAccess,
+} from "../util/apiKeys";
 
-/** Why a Dandiset couldn't be loaded: the archive's status, when it answered, and a sentence for people. */
-export type DandisetFailure = { status?: number; url: string; message: string };
+/** Why a Dandiset couldn't be loaded: the archive's status, when it answered, the access state, and a sentence for people. */
+export type DandisetFailure = {
+  status?: number;
+  url: string;
+  message: string;
+  access?: ApiKeyAccess;
+};
 
 type DandisetResult = {
   dandiset: DandisetSearchResultItem | undefined;
   failure: DandisetFailure | undefined;
+  /** The url whose archive refused the saved key, when the Dandiset opened without it. */
+  keyRefusedUrl?: string;
 };
 
 const NOTHING: DandisetResult = { dandiset: undefined, failure: undefined };
@@ -29,26 +40,28 @@ export const useDandisetResult = (
     setResult(NOTHING);
     if (!dandisetId) return;
     const url = dandisetUrl(dandisetId, useStaging, useEmber);
-    const archive = useEmber ? "EMBER" : "DANDI";
+    const archive = archiveForUrl(url)?.name;
     const fail = (failure: DandisetFailure) => {
       if (!canceled) setResult({ dandiset: undefined, failure });
     };
     (async () => {
-      const authorization = getAuthorizationHeaderForUrl(url);
       try {
-        const response = await fetch(url, {
-          headers: authorization ? { Authorization: authorization } : undefined,
-        });
+        const { response, status, access } = await sendWithApiKey(
+          url,
+          (headers) => fetch(url, { headers }),
+        );
         if (canceled) return;
         if (response.status === 200) {
           const dandiset = (await response.json()) as DandisetSearchResultItem;
-          if (!canceled) setResult({ dandiset, failure: undefined });
+          const keyRefusedUrl = access === "keyRefusedOpen" ? url : undefined;
+          if (!canceled)
+            setResult({ dandiset, failure: undefined, keyRefusedUrl });
           return;
         }
-        const { status } = response;
         fail({
           status,
           url,
+          access,
           message:
             status === 404
               ? `${archive} has no Dandiset ${dandisetId} (404).`

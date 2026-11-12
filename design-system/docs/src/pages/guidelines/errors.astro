@@ -27,9 +27,11 @@ const PLACES = [
 ];
 
 const ACCESS = [
-  ["No key saved", "“This file needs a DANDI API key. It is in an embargoed Dandiset.”", "Add API key, which opens Settings and returns to the file"],
-  ["Key saved but rejected", "“DANDI didn’t accept the saved API key. It may have expired.”", "Update API key"],
-  ["Key works, but no access to this Dandiset", "“Your API key works, but it doesn’t have access to Dandiset 000200. Ask its owners for access.”", "Back to Dandiset"],
+  ["No key saved, the archive answers 401", "Warning: “This Dandiset is embargoed” or, for a file, “This file needs an EMBER API key”", "Add API key, which opens Settings and returns to the page; Get a key on EMBER"],
+  ["No key saved, DANDI answers 404", "Warning: “DANDI has no public Dandiset 001675. It may be embargoed.” The 404 goes in details", "Add API key; Get a key on DANDI"],
+  ["Key refused, public data", "Neurosift asks again without the key. Warning above the page: “DANDI didn’t accept your API key. Public data still opens; embargoed data needs a working key.”", "Replace API key"],
+  ["Key refused, embargoed data", "Error: “DANDI didn’t accept your API key.” The 401 goes in details", "Replace API key; Get your key on DANDI"],
+  ["Key works, but no access to this Dandiset", "Not built yet: “Your API key works, but it doesn’t have access to Dandiset 000200. Ask its owners for access.”", "Back to Dandiset"],
 ];
 
 const WRITING = [
@@ -48,7 +50,7 @@ const A11Y = [
 ];
 ---
 
-<DocsLayout title="Errors and access" description="Where each error goes, how to word it, and the three API key cases.">
+<DocsLayout title="Errors and access" description="Where each error goes, how to word it, and the API key cases.">
   <Intro
     lead="Neurosift reads data from other people’s servers, so things fail that Neurosift can’t prevent: an embargoed file without an API key, a URL that doesn’t answer, an archive that changed its API. Today many of these fail silently, with “Loading...” forever and the reason only in the browser console."
     status="Updated November 11, 2026 · Usage guideline · Draws on the November 5 walkthrough and upstream issues"
@@ -83,7 +85,7 @@ const A11Y = [
     <p class="doc-note">More on each status and its actions is on <a href={withBase("/components/alerts/")}>Alerts and toasts</a>.</p>
   </DocSection>
 
-  <DocSection title="Access and credentials" lead="DANDI and EMBER need an API key for embargoed Dandisets. Three different problems need three different messages.">
+  <DocSection title="Access and credentials" lead="DANDI and EMBER need an API key for embargoed Dandisets. Each case names the archive (DANDI, EMBER or the DANDI sandbox) and says what to do.">
     <DocTable caption="API key cases" columns={["Case", "Message", "Action"]}>
       <DocRows rows={ACCESS} />
     </DocTable>
