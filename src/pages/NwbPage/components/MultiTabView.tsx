@@ -9,7 +9,6 @@ import React from "react";
 import NwbObjectView from "../NwbObjectView";
 import { NwbObjectViewPlugin } from "../plugins/pluginInterface";
 import TabToolbar, { TOOLBAR_HEIGHT } from "../TabToolbar";
-import ObjectHeaderBar from "./ObjectHeaderBar";
 import { ObjectType } from "../Types";
 
 interface MultiTabViewProps {
@@ -70,7 +69,6 @@ const MultiTabView: React.FC<MultiTabViewProps> = ({
                   key={plugins[index] ? plugins[index].name + ":" + path : path}
                   style={{ marginBottom: 8 }}
                 >
-                  <ObjectHeaderBar path={path} />
                   <ShareSettingsPrefix prefix={prefixes[index]}>
                     <NwbObjectView
                       nwbUrl={nwbUrl}

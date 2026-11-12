@@ -1,11 +1,21 @@
 import ErrorBoundary from "@components/ErrorBoundary";
+import { useCssVars } from "@components/useCssVars";
 import ViewError from "@components/ViewError/ViewError";
 import { objectExists } from "./ObjectTypeUtils";
 import { CircularProgress } from "@mui/material";
-import React, { Suspense, useEffect, useState } from "react";
+import { SegmentedControl } from "@ui";
+import React, { ReactNode, Suspense, useEffect, useState } from "react";
+import ObjectHeaderBar from "./components/ObjectHeaderBar";
 import { NwbObjectViewPlugin } from "./plugins/pluginInterface";
 import { findSuitablePlugins } from "./plugins/registry";
 import { useNwbFileSpecifications } from "./SpecificationsView/SetupNwbFileSpecificationsProvider";
+import {
+  useLinkedSettings,
+  useShareSettings,
+} from "@shared/shareLink/useShareSettings";
+import { findTableOrChart, hiddenPlugin, viewToStore } from "./tableOrChart";
+
+const VIEW_SETTING = "view";
 
 interface NwbObjectViewProps {
   nwbUrl: string;
@@ -34,6 +44,10 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
   height,
   inMultiView,
 }) => {
+  const linked = useLinkedSettings();
+  const [view, setView] = useState<string | undefined>(
+    linked.get(VIEW_SETTING) ?? undefined,
+  );
   // The plugins resolved so far, tagged with the object they were resolved
   // for. When only the specifications change (they arrive after the first
   // render) the previously resolved plugins stay mounted while the new
@@ -108,18 +122,64 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
     objectKey,
   ]);
 
+  const pair =
+    resolved?.key === objectKey
+      ? findTableOrChart(
+          resolved.plugins.map((p) => p.name),
+          !!inMultiView,
+          view,
+        )
+      : undefined;
+  useShareSettings(
+    pair
+      ? [
+          {
+            key: VIEW_SETTING,
+            value: pair.shown,
+            default: pair.defaultView,
+            label: "the view",
+          },
+        ]
+      : [],
+  );
+  const viewSwitch = pair && (
+    <span className="file-object-switch">
+      <span aria-hidden="true">Show</span>
+      <SegmentedControl
+        label={`Show ${path} as`}
+        size="sm"
+        options={pair.options}
+        value={pair.shown}
+        onChange={(value) => setView(viewToStore(pair, value))}
+      />
+    </span>
+  );
+  const withHeader = (content: ReactNode) =>
+    inMultiView ? (
+      <>
+        <ObjectHeaderBar path={path}>{viewSwitch}</ObjectHeaderBar>
+        {content}
+      </>
+    ) : (
+      <>
+        {viewSwitch && <SwitchRow width={width}>{viewSwitch}</SwitchRow>}
+        {content}
+      </>
+    );
+
   if (!resolved || resolved.key !== objectKey) {
-    return <CircularProgress />;
+    return withHeader(<CircularProgress />);
   }
   if (resolved.missing) {
-    return (
-      <ViewError what={path} error={`This file has no object at ${path}.`} />
+    return withHeader(
+      <ViewError what={path} error={`This file has no object at ${path}.`} />,
     );
   }
-  const plugins = resolved.plugins;
+  const hidden = pair && hiddenPlugin(pair);
+  const plugins = resolved.plugins.filter((p) => p.name !== hidden);
 
   if (plugins.length === 0) {
-    return <div>Error: No suitable plugin found</div>;
+    return withHeader(<div>Error: No suitable plugin found</div>);
   }
 
   const componentWidth = width;
@@ -128,7 +188,7 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
     componentHeight = Math.max(500, ((height || 800) * 3) / 4);
   }
 
-  return (
+  return withHeader(
     <div style={{ position: "relative", width, height }}>
       {plugins.slice().map((plugin) => {
         const PluginComponent = plugin.component;
@@ -154,6 +214,21 @@ const NwbObjectView: React.FC<NwbObjectViewProps> = ({
           </div>
         );
       })}
+    </div>,
+  );
+};
+
+/** Above an object in its own tab, ending where the object's views end. */
+const SwitchRow: React.FC<{ width?: number; children: ReactNode }> = ({
+  width,
+  children,
+}) => {
+  const ref = useCssVars<HTMLDivElement>(
+    width ? { "--object-width": width } : {},
+  );
+  return (
+    <div ref={ref} className="file-object-switch-row">
+      {children}
     </div>
   );
 };
