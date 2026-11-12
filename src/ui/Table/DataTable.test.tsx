@@ -193,4 +193,97 @@ describe("DataTable", () => {
       true,
     );
   });
+  describe("list cells and the detail row", () => {
+    type Spikes = { id: number; times: number[] };
+    const SPIKES: Spikes[] = [
+      { id: 0, times: [0.18, 0.32, 1.34, 1.55, 2.62, 2.7] },
+      { id: 1, times: [] },
+      { id: 2, times: [4.1, 5.2] },
+    ];
+    const LIST_COLUMNS: Column<Spikes>[] = [
+      { key: "id", label: "id", type: "code", value: (s) => s.id },
+      {
+        key: "times",
+        label: "spike_times",
+        type: "list",
+        value: (s) => s.times.length,
+        list: (s) => ({
+          count: s.times.length ? String(s.times.length) : "0 values",
+          values: s.id === 2 ? undefined : s.times.join(", "),
+          loading: s.id === 2,
+          expandable: s.times.length > 5,
+        }),
+      },
+    ];
+    const table = (props: {
+      expanded?: { row: string; column: string };
+      onExpandedChange?: (cell?: { row: string; column: string }) => void;
+      onRowVisible?: (key: string) => void;
+    }) => (
+      <DataTable
+        caption="Units"
+        columns={LIST_COLUMNS}
+        rows={SPIKES}
+        rowKey={(s) => String(s.id)}
+        rowLabel={(s) => `row ${s.id}`}
+        detail={(s, column) => (
+          <p>
+            {column}: all {s.times.length}
+          </p>
+        )}
+        {...props}
+      />
+    );
+
+    it("shows the count and values, Reading… while values load, and opens only long lists", () => {
+      render(table({ onExpandedChange: vi.fn() }));
+      const open = screen.getByRole("button", {
+        name: "6 in spike_times, row 0",
+      });
+      expect(open.getAttribute("aria-expanded")).toBe("false");
+      expect(open.closest("td")!.textContent).toContain(
+        "0.18, 0.32, 1.34, 1.55, 2.62, 2.7",
+      );
+      expect(screen.getByText("0 values").closest("button")).toBeNull();
+      expect(screen.getByText("Reading…")).toBeTruthy();
+      expect(screen.getAllByRole("button")).toHaveLength(1);
+    });
+
+    it("opens a full-width detail row under the row, named and controlled by the button", () => {
+      const onExpandedChange = vi.fn();
+      const { rerender } = render(table({ onExpandedChange }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /spike_times, row 0/ }),
+      );
+      expect(onExpandedChange).toHaveBeenLastCalledWith({
+        row: "0",
+        column: "times",
+      });
+      rerender(
+        table({ onExpandedChange, expanded: { row: "0", column: "times" } }),
+      );
+      const open = screen.getByRole("button", { name: /spike_times, row 0/ });
+      expect(open.getAttribute("aria-expanded")).toBe("true");
+      const region = screen.getByRole("region", { name: "spike_times, row 0" });
+      expect(open.getAttribute("aria-controls")).toBe(region.id);
+      expect(region.textContent).toBe("times: all 6");
+      const cell = region.closest("td")!;
+      expect(cell.colSpan).toBe(2);
+      expect(cell.closest("tr")!.previousElementSibling).toBe(
+        open.closest("tr"),
+      );
+      fireEvent.click(open);
+      expect(onExpandedChange).toHaveBeenLastCalledWith(undefined);
+    });
+
+    it("tells the view each row once it is on screen", () => {
+      const onRowVisible = vi.fn();
+      render(table({ onRowVisible }));
+      expect(onRowVisible.mock.calls.map(([key]) => key)).toEqual([
+        "0",
+        "1",
+        "2",
+      ]);
+    });
+  });
 });

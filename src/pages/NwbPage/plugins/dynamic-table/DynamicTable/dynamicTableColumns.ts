@@ -1,4 +1,5 @@
-import type { Column } from "@ui";
+import type { Column, ListCell } from "@ui";
+import { csvList } from "./ragged";
 import type { RowItem } from "./sortRowItems";
 
 const MAX_ITEMS = 200;
@@ -50,20 +51,22 @@ const columnType = (
   return "text";
 };
 
-/** The library table's columns for the loaded columns, read from rows laid out as colnames. */
+/** The library table's columns for the loaded columns, read from rows laid out as colnames; ragged columns are lists. */
 export const tableColumns = (
   colnames: string[],
   names: string[],
   data: { [name: string]: unknown[] },
+  lists: { [name: string]: (row: RowItem) => ListCell } = {},
 ): Column<RowItem>[] =>
   names.map((name) => {
     const index = colnames.indexOf(name);
     return {
       key: name,
       label: name,
-      type: columnType(name, data[name] ?? []),
+      type: lists[name] ? "list" : columnType(name, data[name] ?? []),
       sortable: true,
       value: (row) => cellValue(row.columnValues[index]),
+      list: lists[name],
     };
   });
 
@@ -74,17 +77,23 @@ const csvCell = (value: unknown): string => {
   return "";
 };
 
-/** Strings quoted, numbers as they are; lists and references are left empty. */
+/** Strings quoted, numbers as they are; a ragged column's lists in full, by file row; other lists empty. */
 export const tableCsv = (
   colnames: string[],
   names: string[],
   rows: RowItem[],
+  lists: { [name: string]: unknown[][] | null } = {},
 ): string => {
   const indexes = names.map((name) => colnames.indexOf(name));
+  const cell = (row: RowItem, name: string, i: number) => {
+    if (!(name in lists)) return csvCell(row.columnValues[i]);
+    const values = lists[name]?.[Number(row.id)];
+    return values ? csvList(values) : "";
+  };
   return [
     names.join(","),
     ...rows.map((row) =>
-      indexes.map((i) => csvCell(row.columnValues[i])).join(","),
+      names.map((name, j) => cell(row, name, indexes[j])).join(","),
     ),
   ].join("\n");
 };

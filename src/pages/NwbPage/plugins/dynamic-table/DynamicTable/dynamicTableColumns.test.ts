@@ -79,4 +79,24 @@ describe("tableCsv", () => {
       tableCsv(["id", "note", "depth", "list"], ["id", "note", "depth"], rows),
     ).toBe('id,note,depth\n0,"say ""hi""",1.5\n1,,NaN');
   });
+
+  it("writes a ragged column's full list as one quoted field, and leaves a column too large to write empty", () => {
+    const rows: RowItem[] = [
+      { id: 1, columnValues: [1, 0, 2] },
+      { id: 0, columnValues: [0, 3, 0] },
+    ];
+    expect(
+      tableCsv(
+        ["id", "spike_times", "waveforms"],
+        ["id", "spike_times", "waveforms"],
+        rows,
+        {
+          spike_times: [[0.1793905, 0.315953, 1375.27443225], []],
+          waveforms: null,
+        },
+      ),
+    ).toBe(
+      'id,spike_times,waveforms\n1,"",\n0,"0.1793905; 0.315953; 1375.27443225",',
+    );
+  });
 });

@@ -167,3 +167,81 @@ td.ns-cell--code {
   border: 0;
   cursor: pointer;
 }
+
+/* A list cell: the count, then as many values as fit, cut with an ellipsis. */
+td.ns-cell--list {
+  font: var(--type-code-sm);
+  letter-spacing: var(--type-code-sm-letter-spacing);
+}
+
+.ns-list-cell {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  max-inline-size: 24rem;
+  white-space: nowrap;
+}
+
+.ns-list-values {
+  overflow: hidden;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+}
+
+.ns-list-values--loading {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: center;
+  font: var(--type-body-sm);
+}
+
+.ns-list-toggle {
+  display: inline-flex;
+  flex: none;
+  gap: var(--space-1);
+  align-items: center;
+  min-block-size: var(--layout-target-min);
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-xs);
+}
+
+.ns-list-toggle:focus {
+  outline: none;
+}
+
+.ns-list-toggle:focus-visible {
+  outline: var(--border-width-2) solid var(--border-focus);
+  outline-offset: var(--space-0-5);
+}
+
+.ns-row--selected .ns-list-values {
+  color: inherit;
+}
+
+/* The detail row spans the table; its content stays in view when the table scrolls sideways. */
+.ns-table-scroll {
+  container-type: inline-size;
+}
+
+.ns-table tbody tr.ns-table-detail,
+.ns-table tbody tr.ns-table-detail:hover {
+  background: var(--surface-page);
+}
+
+.ns-table .ns-table-detail > td {
+  padding: 0;
+}
+
+.ns-table-detail-content {
+  position: sticky;
+  inset-inline-start: 0;
+  box-sizing: border-box;
+  max-inline-size: 100cqi;
+  padding: var(--space-3) var(--space-4);
+  white-space: normal;
+}
