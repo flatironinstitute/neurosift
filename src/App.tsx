@@ -5,7 +5,7 @@ import { useWindowDimensions } from "@fi-sci/misc";
 import { CircularProgress } from "@mui/material";
 import { AppBar } from "@ui";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useSyncExternalStore } from "react";
 import {
   Navigate,
   Route,
@@ -16,8 +16,9 @@ import {
 } from "react-router-dom";
 import { AIComponentRegistryProvider } from "./ai-integration/AIComponentRegistry";
 import { sendUrlUpdate } from "./ai-integration/messaging/windowMessaging";
+import { ADDRESS_CHANGED } from "@shared/shareLink/shareAddress";
 import { logPageLoad } from "./util/sendLog";
-import { v1Url } from "./util/v1Url";
+import { v2Url } from "./util/v2Url";
 
 // Each page is its own chunk, so a visit downloads only the page it lands on.
 const DandisetPageContainer = lazy(
@@ -64,6 +65,11 @@ const theme = createTheme({
   },
 });
 
+const subscribeToAddress = (notify: () => void) => {
+  window.addEventListener(ADDRESS_CHANGED, notify);
+  return () => window.removeEventListener(ADDRESS_CHANGED, notify);
+};
+
 const PageLoading = () => (
   <div style={{ padding: 20 }}>
     <CircularProgress />
@@ -99,6 +105,12 @@ const AppContent = () => {
         location.search,
     );
   }, [location]);
+
+  // The query as shown: a file's tabs and their settings rewrite it without the router.
+  const shownSearch = useSyncExternalStore(
+    subscribeToAddress,
+    () => window.location.search,
+  );
 
   const { width, height } = useWindowDimensions();
   const hideAppBar = searchParams.get("embedded") === "1";
@@ -150,8 +162,8 @@ const AppContent = () => {
                 iconOnly: true,
               },
               {
-                label: "Open in Neurosift v1",
-                href: v1Url(location.pathname, location.search),
+                label: "Open in Neurosift v2",
+                href: v2Url(location.pathname, shownSearch),
                 icon: "launch",
                 collapses: true,
               },
