@@ -32,6 +32,9 @@ export const tabSettings = (registry: ShareRegistry): Setting[] => {
 
 const DELAY_MS = 300;
 
+/** Fired on window when a ShareAddress rewrites the address, which the router doesn't see. */
+export const ADDRESS_CHANGED = "neurosift:address-changed";
+
 /** Keeps the address bar on the active tab and its changed settings, replacing the history entry. */
 export class ShareAddress {
   private tabs = new Map<string, ShareRegistry>();
@@ -80,7 +83,8 @@ export class ShareAddress {
     clearTimeout(this.timer);
     if (this.active === undefined) return;
     const next = this.link(this.active);
-    if (next !== window.location.href)
-      window.history.replaceState(window.history.state, "", next);
+    if (next === window.location.href) return;
+    window.history.replaceState(window.history.state, "", next);
+    window.dispatchEvent(new Event(ADDRESS_CHANGED));
   }
 }

@@ -119,3 +119,30 @@ export const legacySpecSettings = (
     );
   return out.filter(([key, value]) => key !== "channels" || value !== "0");
 };
+
+/** A link's spectrogram settings as Neurosift v2's spec={…} parameter, for the path it shows; undefined when the link has none. */
+export const legacySpecParam = (
+  params: URLSearchParams,
+  path: string,
+): string | undefined => {
+  // As in legacySpecSettings, the Nyquist isn't known; v2 fills in its own defaults.
+  const defaults = makeDefaultConfig(NaN);
+  const config: Partial<Record<keyof SpectralConfig, Value>> = {};
+  for (const key of Object.keys(defaults) as (keyof SpectralConfig)[]) {
+    const raw = params.get(key);
+    const value = raw === null ? undefined : decode(key, raw, defaults[key]);
+    if (value !== undefined) config[key] = value;
+  }
+  const spec: LegacySpec = {};
+  if (Object.keys(config).length > 0)
+    spec.config = config as Partial<SpectralConfig>;
+  const channels = parseIndices(params.get("channels"));
+  if (channels?.length) spec.channels = channels;
+  const start = parseNumber(params.get("start"));
+  const duration = parseNumber(params.get("duration")) ?? 30;
+  if (start !== undefined && duration > 0)
+    spec.visRange = [start, start + duration];
+  return Object.keys(spec).length > 0
+    ? JSON.stringify({ [path]: spec })
+    : undefined;
+};

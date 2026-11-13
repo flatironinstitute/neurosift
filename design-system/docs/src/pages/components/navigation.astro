@@ -38,7 +38,7 @@ const WRITING = [
 const SPECS = [
   ["App bar", "48px · surface/panel · 1px border/strong below · 16px left · type/h4 name · 28px logo"],
   ["App bar actions", "32px Ghost buttons · 16px icons · icon-only ones named, with a tooltip"],
-  ["App bar, narrow", "At 768px and below, Guide and Open in Neurosift v1 become icon-only, named and with a tooltip, so every action fits down to 320px and at 400% zoom. No menu"],
+  ["App bar, narrow", "At 768px and below, Guide and Open in Neurosift v2 become icon-only, named and with a tooltip, so every action fits down to 320px and at 400% zoom. No menu"],
   ["Crumb", "type/body-sm text/link · current SemiBold text/default · IDs and file names in type/code-sm"],
   ["Separator", "chevron--right 16px · text/muted · hidden from screen readers"],
   ["Overflow", "Below 36rem, the middle levels fold into “…”, which shows them again"],
@@ -55,7 +55,7 @@ const code = `import { AppBar, Breadcrumbs, ObjectPath } from "@ui";
   actions={[
     { label: "Guide", href: "/guide", icon: "help" },
     { label: "Settings", href: "/settings", icon: "settings", iconOnly: true },
-    { label: "Open in Neurosift v1", href: v1Url, icon: "launch", collapses: true },
+    { label: "Open in Neurosift v2", href: v2Url, icon: "launch", collapses: true },
   ]}
 />
 

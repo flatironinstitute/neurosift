@@ -1,6 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ShareAddress, tabSettings, type ShareRegistry } from "./shareAddress";
+import {
+  ADDRESS_CHANGED,
+  ShareAddress,
+  tabSettings,
+  type ShareRegistry,
+} from "./shareAddress";
 
 const tab = (name: string, linked = ""): ShareRegistry => ({
   tab: name,
@@ -32,6 +37,18 @@ describe("ShareAddress", () => {
     expect(window.location.search).toBe("?url=f&tab=/a&separation=2");
     expect(window.history.length).toBe(length);
     expect(window.history.state).toEqual({ idx: 3 });
+  });
+
+  it("says when it rewrites the address, and only then", () => {
+    const heard = vi.fn();
+    window.addEventListener(ADDRESS_CHANGED, heard);
+    const address = new ShareAddress({ url: "f" });
+    address.add(tab("/a"));
+    address.activate("/a");
+    expect(heard).toHaveBeenCalledTimes(1);
+    address.activate("/a");
+    expect(heard).toHaveBeenCalledTimes(1);
+    window.removeEventListener(ADDRESS_CHANGED, heard);
   });
 
   it("equals what Copy link builds", () => {
