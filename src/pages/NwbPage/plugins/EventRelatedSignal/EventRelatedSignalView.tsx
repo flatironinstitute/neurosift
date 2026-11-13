@@ -1,7 +1,11 @@
+import {
+  useLinkedSettings,
+  useShareSettings,
+} from "@shared/shareLink/useShareSettings";
 import { getHdf5DatasetData, getHdf5Group } from "@hdf5Interface";
 import {
-  CSSProperties,
   FunctionComponent,
+  ReactNode,
   useEffect,
   useMemo,
   useState,
@@ -9,7 +13,6 @@ import {
 import { useNeurodataObjects } from "../../useNeurodataObjects";
 import AlignToSelectionComponent from "../PSTH/PSTHItemView/components/AlignToSelection";
 import GroupBySelectionComponent from "../PSTH/PSTHItemView/components/GroupBySelection";
-import WindowRangeComponent from "../PSTH/PSTHItemView/components/WindowRange";
 import { useCategoricalOptions } from "../PSTH/PSTHItemView/hooks/useGroupByCategories";
 import TrialAlignedSeriesWidget from "../PSTH/PSTHItemView/TrialAlignedSeriesWidget";
 import TimeseriesClient from "../simple-timeseries/TimeseriesClient";
@@ -22,6 +25,22 @@ import {
   loadEventRelatedSnippets,
   plottedRowIndexes,
 } from "./loadEventRelatedSnippets";
+import "./EventRelatedSignalView.css";
+import {
+  AccordionItem,
+  Checkbox,
+  EmptyState,
+  InlineMessage,
+  LoadingState,
+  Select,
+  SegmentedControl,
+  SettingPair,
+  Slider,
+  TextInput,
+  ViewPanel,
+} from "@ui";
+import ViewError from "@components/ViewError/ViewError";
+import { useCssVars } from "@components/useCssVars";
 
 type Props = {
   nwbUrl: string;
@@ -34,15 +53,6 @@ type Props = {
 
 const DEFAULT_MAX_INTERVALS = 200;
 const DEFAULT_WINDOW = { start: -2.5, end: 5 };
-
-const accordionSummaryStyle: CSSProperties = {
-  cursor: "pointer",
-  padding: "4px 8px",
-  fontWeight: "bold",
-  backgroundColor: "#34495e",
-  color: "#fff",
-  userSelect: "none",
-};
 
 const seriesColor = "#1f77b4";
 
@@ -82,14 +92,6 @@ const buildSeriesLabels = (paths: string[]): { [path: string]: string } => {
   return labels;
 };
 
-// The view persists its main selections in the URL hash (like the PSTH view) so
-// a link or reload restores them. Keys are prefixed to avoid colliding with
-// other views' hash params.
-const readHashParams = (): URLSearchParams => {
-  const h = window.location.hash;
-  return new URLSearchParams(h.startsWith("#") ? h.slice(1) : h);
-};
-
 const EventRelatedSignalView: FunctionComponent<Props> = ({
   nwbUrl,
   path,
@@ -115,10 +117,11 @@ const EventRelatedSignalView: FunctionComponent<Props> = ({
     [neurodataObjects],
   );
 
+  const linked = useLinkedSettings();
   const initialSeries = secondaryPaths && secondaryPaths[0];
   const [selectedSeriesPath, setSelectedSeriesPath] = useState<
     string | undefined
-  >(() => readHashParams().get("ta_series") || initialSeries);
+  >(() => linked.get("series") || initialSeries);
 
   // Once the object list is known, make sure a valid series is selected.
   useEffect(() => {
@@ -132,16 +135,24 @@ const EventRelatedSignalView: FunctionComponent<Props> = ({
     if (initialSeries && seriesOptions.length === 0) return;
     if (seriesOptions.length > 0) setSelectedSeriesPath(seriesOptions[0]);
   }, [seriesOptions, initialSeries, selectedSeriesPath]);
+  useShareSettings([
+    {
+      key: "series",
+      value: selectedSeriesPath ?? "",
+      default: initialSeries ?? seriesOptions[0] ?? "",
+      label: "the series",
+    },
+  ]);
 
   if (!selectedSeriesPath) {
     if (seriesOptions.length === 0 && neurodataObjects.length > 0) {
       return (
-        <div style={{ padding: 12 }}>
-          No compatible TimeSeries found in this file.
-        </div>
+        <EmptyState title="No time series to align">
+          This file has no TimeSeries this view can align to its intervals.
+        </EmptyState>
       );
     }
-    return <div style={{ padding: 12 }}>Loading timeseries...</div>;
+    return <LoadingState label="Finding time series" phase="loading" />;
   }
 
   return (
@@ -183,6 +194,7 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
   width,
   height,
 }) => {
+  const linked = useLinkedSettings();
   // Load a client for the selected series. Keep the previous client visible
   // while a new series loads so the controls and existing plots don't flicker.
   const [client, setClient] = useState<TimeseriesClient | null>(null);
@@ -213,7 +225,7 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
 
   // Channel and align-to selections apply live (like the PSTH unit selector).
   const [selectedChannels, setSelectedChannels] = useState<number[]>(() => {
-    const v = readHashParams().get("ta_channels");
+    const v = linked.get("channels");
     if (v) {
       const arr = v
         .split(",")
@@ -224,7 +236,7 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
     return [0];
   });
   const [alignToVariables, setAlignToVariables] = useState<string[]>(() => {
-    const v = readHashParams().get("ta_align");
+    const v = linked.get("alignTo");
     return v ? v.split(",").filter(Boolean) : ["start_time"];
   });
 
@@ -237,13 +249,12 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
     });
   }, [client]);
 
-  // Window range and max intervals require an explicit Update (they trigger
-  // reloading of the snippet data).
+  // Window range and max intervals reload the snippet data.
   const [windowRangeStr, setWindowRangeStr] = useState<{
     start: string;
     end: string;
   }>(() => {
-    const v = readHashParams().get("ta_win");
+    const v = linked.get("window");
     if (v) {
       const parts = v.split(",");
       if (parts.length === 2) return { start: parts[0], end: parts[1] };
@@ -254,13 +265,12 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
     };
   });
   const [maxIntervalsStr, setMaxIntervalsStr] = useState(
-    () => readHashParams().get("ta_max") || String(DEFAULT_MAX_INTERVALS),
+    () => linked.get("maxIntervals") || String(DEFAULT_MAX_INTERVALS),
   );
   const [committed, setCommitted] = useState<CommittedParams>(() => {
-    const p = readHashParams();
     let start = DEFAULT_WINDOW.start;
     let end = DEFAULT_WINDOW.end;
-    const w = p.get("ta_win");
+    const w = linked.get("window");
     if (w) {
       const [s, e] = w.split(",").map(Number);
       if (isFinite(s) && isFinite(e) && e > s) {
@@ -268,32 +278,44 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
         end = e;
       }
     }
-    const mv = parseInt(p.get("ta_max") || "");
+    const mv = parseInt(linked.get("maxIntervals") || "");
     const maxIntervals =
       Number.isFinite(mv) && mv >= 1 ? mv : DEFAULT_MAX_INTERVALS;
     return { windowRange: { start, end }, maxIntervals };
   });
   const [paramError, setParamError] = useState<string | null>(null);
+  const [open, setOpen] = useState({
+    series: true,
+    channels: true,
+    align: true,
+    window: true,
+    group: true,
+    display: false,
+  });
 
-  const handleUpdate = () => {
-    const start = parseFloat(windowRangeStr.start);
-    const end = parseFloat(windowRangeStr.end);
-    if (isNaN(start) || isNaN(end)) {
-      setParamError("Invalid window range.");
-      return;
-    }
-    if (end <= start) {
-      setParamError("Window end must be greater than start.");
-      return;
-    }
-    const maxIntervals = parseInt(maxIntervalsStr);
-    if (isNaN(maxIntervals) || maxIntervals < 1) {
-      setParamError("Invalid maximum number of intervals.");
-      return;
-    }
-    setParamError(null);
-    setCommitted({ windowRange: { start, end }, maxIntervals });
-  };
+  // Window and max intervals apply once they're valid and typing pauses.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const start = parseFloat(windowRangeStr.start);
+      const end = parseFloat(windowRangeStr.end);
+      if (isNaN(start) || isNaN(end)) {
+        setParamError("Invalid window range.");
+        return;
+      }
+      if (end <= start) {
+        setParamError("Window end must be greater than start.");
+        return;
+      }
+      const maxIntervals = parseInt(maxIntervalsStr);
+      if (isNaN(maxIntervals) || maxIntervals < 1) {
+        setParamError("Invalid maximum number of intervals.");
+        return;
+      }
+      setParamError(null);
+      setCommitted({ windowRange: { start, end }, maxIntervals });
+    }, 600);
+    return () => clearTimeout(t);
+  }, [windowRangeStr, maxIntervalsStr]);
 
   // Display options apply live (no data reload). Opacity 0 hides raw traces,
   // so no separate checkbox is needed.
@@ -315,13 +337,13 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
   const stdPending = showStdBand && effectiveStdMultiple !== stdMultiple;
   // How to show groups: overlaid on one plot, or split into side-by-side plots.
   const [groupDisplay, setGroupDisplay] = useState<"overlay" | "split">(() =>
-    readHashParams().get("ta_groupdisp") === "split" ? "split" : "overlay",
+    linked.get("groupDisplay") === "split" ? "split" : "overlay",
   );
 
   // Group by (live). Only offered when the table has categorical columns.
   const categoricalOptions = useCategoricalOptions(nwbUrl, intervalsPath);
   const [groupByVariable, setGroupByVariable] = useState<string>(
-    () => readHashParams().get("ta_groupby") || "",
+    () => linked.get("groupBy") || "",
   );
 
   const [groupByValues, setGroupByValues] = useState<string[] | undefined>(
@@ -415,53 +437,43 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
     alignTimesByVariable,
   ]);
 
-  // Persist the main selections in the URL hash.
-  useEffect(() => {
-    const p = readHashParams();
-    const setOrDelete = (k: string, val: string, isDefault: boolean) => {
-      if (val && !isDefault) p.set(k, val);
-      else p.delete(k);
-    };
-    if (seriesPath) p.set("ta_series", seriesPath);
-    else p.delete("ta_series");
-    setOrDelete(
-      "ta_channels",
-      selectedChannels.join(","),
-      selectedChannels.length === 1 && selectedChannels[0] === 0,
-    );
-    setOrDelete(
-      "ta_align",
-      alignToVariables.join(","),
-      alignToVariables.length === 1 && alignToVariables[0] === "start_time",
-    );
-    setOrDelete(
-      "ta_win",
-      `${committed.windowRange.start},${committed.windowRange.end}`,
-      committed.windowRange.start === DEFAULT_WINDOW.start &&
-        committed.windowRange.end === DEFAULT_WINDOW.end,
-    );
-    setOrDelete(
-      "ta_max",
-      String(committed.maxIntervals),
-      committed.maxIntervals === DEFAULT_MAX_INTERVALS,
-    );
-    setOrDelete("ta_groupby", groupByVariable, groupByVariable === "");
-    setOrDelete(
-      "ta_groupdisp",
-      groupDisplay,
-      !(groupByVariable !== "" && groupDisplay === "split"),
-    );
-    const newHash = "#" + p.toString();
-    if (window.location.hash !== newHash) {
-      window.history.replaceState(null, "", newHash);
-    }
-  }, [
-    seriesPath,
-    selectedChannels,
-    alignToVariables,
-    committed,
-    groupByVariable,
-    groupDisplay,
+  useShareSettings([
+    {
+      key: "channels",
+      value: selectedChannels.join(","),
+      default: "0",
+      label: "channels",
+    },
+    {
+      key: "alignTo",
+      value: alignToVariables.join(","),
+      default: "start_time",
+      label: "the alignment",
+    },
+    {
+      key: "window",
+      value: `${committed.windowRange.start},${committed.windowRange.end}`,
+      default: `${DEFAULT_WINDOW.start},${DEFAULT_WINDOW.end}`,
+      label: "the window",
+    },
+    {
+      key: "maxIntervals",
+      value: String(committed.maxIntervals),
+      default: String(DEFAULT_MAX_INTERVALS),
+      label: "the window",
+    },
+    {
+      key: "groupBy",
+      value: groupByVariable,
+      default: "",
+      label: "the grouping",
+    },
+    {
+      key: "groupDisplay",
+      value: groupByVariable ? groupDisplay : "overlay",
+      default: "overlay",
+      label: "the grouping",
+    },
   ]);
 
   // The list shown in the series dropdown (prepend the selected series if it is
@@ -478,8 +490,8 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
     [seriesRenderPaths],
   );
 
-  const controlsWidth = 260;
-  const plotAreaWidth = width - controlsWidth;
+  const settingsWidth = 352;
+  const plotAreaWidth = Math.max(width - settingsWidth, 320);
   const gap = 8;
   const numAlign = alignToVariables.length || 1;
   const grouping = !!groups && !!groupByValues && groupByVariable !== "";
@@ -496,260 +508,190 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
       ? 320
       : Math.min(Math.max(height - 80, 300), 480);
   const legendActive = !!groups && groupByVariable !== "";
+  const seriesLabel = seriesLabels[seriesPath] ?? shortName(seriesPath);
+  const summary = [
+    client
+      ? `${seriesLabel}: ${numChannels} channel${numChannels === 1 ? "" : "s"} at ${client.samplingFrequency.toFixed(1)} Hz`
+      : seriesLabel,
+    alignToVariables.length > 0 &&
+      `aligned to ${alignToVariables.join(" and ")}`,
+    `${committed.windowRange.start} to ${committed.windowRange.end} s around each`,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const section = (key: keyof typeof open) => ({
+    open: open[key],
+    onToggle: (o: boolean) => setOpen((prev) => ({ ...prev, [key]: o })),
+  });
 
   return (
-    <div style={{ position: "absolute", width, height, overflow: "hidden" }}>
-      <div
-        style={{
-          position: "absolute",
-          width: controlsWidth,
-          height,
-          overflowY: "auto",
-          overflowX: "hidden",
-          fontSize: "0.8em",
-        }}
-      >
-        <details open>
-          <summary style={accordionSummaryStyle}>Timeseries</summary>
-          <div style={{ padding: "6px 8px" }}>
-            <select
+    <ViewPanel
+      label="Event-related signal"
+      summary={`${summary}.`}
+      busy={!client}
+      controls={null}
+      settings={
+        <>
+          <AccordionItem
+            title="Series"
+            summary={seriesLabel}
+            {...section("series")}
+          >
+            <Select
+              label="Time series"
+              size="sm"
               value={seriesPath}
-              onChange={(e) => setSeriesPath(e.target.value)}
-              style={{ width: "100%" }}
+              onChange={setSeriesPath}
               disabled={seriesOptions.length <= 1}
-            >
-              {seriesRenderPaths.map((p) => (
-                <option key={p} value={p} title={p}>
-                  {seriesLabels[p] ?? shortName(p)}
-                </option>
-              ))}
-            </select>
-            <div
-              style={{
-                color: "#666",
-                marginTop: 4,
-                wordBreak: "break-all",
-                fontSize: "0.9em",
-              }}
-            >
-              {client
-                ? `${numChannels} channel${numChannels === 1 ? "" : "s"} · ${client.samplingFrequency.toFixed(1)} Hz`
-                : "Loading series..."}
-            </div>
-          </div>
-        </details>
-        <div style={{ height: 6 }} />
-        <details open>
-          <summary style={accordionSummaryStyle}>Channels</summary>
-          <div style={{ maxHeight: 220, overflowY: "auto" }}>
+              options={seriesRenderPaths.map((p) => ({
+                value: p,
+                label: seriesLabels[p] ?? shortName(p),
+              }))}
+            />
+          </AccordionItem>
+          <AccordionItem
+            title="Channels"
+            summary={`${selectedChannels.length} of ${numChannels}`}
+            {...section("channels")}
+          >
             <ChannelSelection
               numChannels={numChannels}
               selectedChannels={selectedChannels}
               setSelectedChannels={setSelectedChannels}
             />
-          </div>
-        </details>
-        <div style={{ height: 6 }} />
-        <details open>
-          <summary style={accordionSummaryStyle}>Align to</summary>
-          <AlignToSelectionComponent
-            alignToVariables={alignToVariables}
-            setAlignToVariables={setAlignToVariables}
-            nwbUrl={nwbUrl}
-            path={intervalsPath}
-          />
-        </details>
-        <div style={{ height: 6 }} />
-        <details open>
-          <summary style={accordionSummaryStyle}>Controls</summary>
-          <div style={{ padding: "6px 8px" }}>
-            <WindowRangeComponent
-              windowRangeStr={windowRangeStr}
-              setWindowRangeStr={setWindowRangeStr}
+          </AccordionItem>
+          <AccordionItem
+            title="Align to"
+            summary={alignToVariables.join(", ") || "None"}
+            {...section("align")}
+          >
+            <AlignToSelectionComponent
+              alignToVariables={alignToVariables}
+              setAlignToVariables={setAlignToVariables}
+              nwbUrl={nwbUrl}
+              path={intervalsPath}
             />
-            <br />
-            <br />
-            <label>
-              Max intervals:&nbsp;
-              <input
-                type="number"
-                min={1}
-                value={maxIntervalsStr}
-                onChange={(e) => setMaxIntervalsStr(e.target.value)}
-                style={{ width: 70 }}
+          </AccordionItem>
+          <AccordionItem
+            title="Window"
+            summary={`${committed.windowRange.start} to ${committed.windowRange.end} s`}
+            {...section("window")}
+          >
+            <SettingPair>
+              <TextInput
+                label="From (s)"
+                size="sm"
+                value={windowRangeStr.start}
+                onChange={(start) =>
+                  setWindowRangeStr((w) => ({ ...w, start }))
+                }
               />
-            </label>
-            {categoricalOptions && categoricalOptions.length > 0 && (
-              <div style={{ marginTop: 10 }}>
-                <GroupBySelectionComponent
-                  groupByVariable={groupByVariable}
-                  setGroupByVariable={setGroupByVariable}
-                  nwbUrl={nwbUrl}
-                  path={intervalsPath}
-                  label="Group intervals by:"
-                />
+              <TextInput
+                label="To (s)"
+                size="sm"
+                value={windowRangeStr.end}
+                onChange={(end) => setWindowRangeStr((w) => ({ ...w, end }))}
+              />
+            </SettingPair>
+            <TextInput
+              label="Max intervals"
+              size="sm"
+              value={maxIntervalsStr}
+              onChange={setMaxIntervalsStr}
+            />
+            {paramError && (
+              <div className="event-related-param-error">
+                <InlineMessage status="error">{paramError}</InlineMessage>
               </div>
             )}
-            <div style={{ marginTop: 10 }}>
-              <button
-                onClick={handleUpdate}
-                style={{
-                  padding: "6px 16px",
-                  backgroundColor: "#007bff",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 4,
-                  cursor: "pointer",
-                }}
-              >
-                Update
-              </button>
-            </div>
-            {paramError && (
-              <div style={{ color: "#e74c3c", marginTop: 6 }}>{paramError}</div>
-            )}
-          </div>
-        </details>
-        <div style={{ height: 6 }} />
-        <details open>
-          <summary style={accordionSummaryStyle}>Display</summary>
-          <div style={{ padding: "6px 8px" }}>
-            <label>
-              Raw trace opacity: {rawTraceAlpha.toFixed(2)}
-              {rawTraceAlpha === 0 ? " (hidden)" : ""}
-              <br />
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={rawTraceAlpha}
-                onChange={(e) => setRawTraceAlpha(parseFloat(e.target.value))}
-                style={{ width: "100%" }}
+          </AccordionItem>
+          {categoricalOptions && categoricalOptions.length > 0 && (
+            <AccordionItem
+              title="Group by"
+              summary={groupByVariable || "None"}
+              {...section("group")}
+            >
+              <GroupBySelectionComponent
+                groupByVariable={groupByVariable}
+                setGroupByVariable={setGroupByVariable}
+                nwbUrl={nwbUrl}
+                path={intervalsPath}
+                label="Group intervals by"
               />
-            </label>
-            <hr style={{ margin: "8px 0", borderColor: "#dde4ed" }} />
-            <label style={{ display: "block" }}>
-              <input
-                type="checkbox"
-                checked={showStdBand}
-                onChange={(e) => setShowStdBand(e.target.checked)}
-              />
-              &nbsp;&plusmn;Std band (dashed)
-            </label>
-            <div style={{ marginTop: 6, opacity: showStdBand ? 1 : 0.4 }}>
-              <label>
-                Multiple (&sigma;):&nbsp;
-                <input
-                  type="number"
-                  min={0}
-                  step={0.1}
-                  value={stdMultipleStr}
-                  disabled={!showStdBand}
-                  onChange={(e) => setStdMultipleStr(e.target.value)}
-                  style={{ width: 60 }}
+              {groupByVariable !== "" && (
+                <SegmentedControl
+                  label="Groups"
+                  size="sm"
+                  value={groupDisplay}
+                  onChange={(v) => setGroupDisplay(v as "overlay" | "split")}
+                  options={[
+                    { value: "overlay", label: "Overlay" },
+                    { value: "split", label: "Side by side" },
+                  ]}
                 />
-              </label>
-              {stdPending && (
-                <div style={{ color: "#e67e22", marginTop: 3 }}>
-                  Re-computing...
-                </div>
               )}
-            </div>
-            {groupByVariable !== "" && (
-              <>
-                <hr style={{ margin: "8px 0", borderColor: "#dde4ed" }} />
-                <label>
-                  Group display:&nbsp;
-                  <select
-                    value={groupDisplay}
-                    onChange={(e) =>
-                      setGroupDisplay(e.target.value as "overlay" | "split")
-                    }
-                  >
-                    <option value="overlay">Overlay</option>
-                    <option value="split">Split (side by side)</option>
-                  </select>
-                </label>
-              </>
-            )}
-          </div>
-        </details>
-      </div>
-
-      <div
-        style={{
-          position: "absolute",
-          left: controlsWidth,
-          width: plotAreaWidth,
-          height,
-          overflowY: "auto",
-          overflowX: "hidden",
-        }}
-      >
+            </AccordionItem>
+          )}
+          <AccordionItem title="Display" {...section("display")}>
+            <Slider
+              label="Single-trial opacity"
+              min={0}
+              max={1}
+              step={0.05}
+              showValue
+              showField={false}
+              value={rawTraceAlpha}
+              onChange={setRawTraceAlpha}
+            />
+            <Checkbox
+              label="± standard deviation band"
+              checked={showStdBand}
+              onChange={setShowStdBand}
+            />
+            <TextInput
+              label="Band width (σ)"
+              size="sm"
+              value={stdMultipleStr}
+              disabled={!showStdBand}
+              onChange={setStdMultipleStr}
+              helper={stdPending ? "Redrawing shortly…" : undefined}
+            />
+          </AccordionItem>
+        </>
+      }
+    >
+      <div className="event-related-plots">
         {legendActive && (
-          <div
-            style={{
-              display: "flex",
-              gap: 14,
-              flexWrap: "wrap",
-              alignItems: "center",
-              padding: "6px 8px",
-            }}
-          >
-            <span style={{ fontWeight: "bold" }}>{groupByVariable}:</span>
-            {groups!.map((g) => (
-              <span
-                key={g.group}
-                style={{ display: "flex", alignItems: "center", gap: 4 }}
-              >
-                <span
-                  style={{
-                    width: 14,
-                    height: 14,
-                    background: g.color,
-                    display: "inline-block",
-                  }}
-                />
-                <span>
-                  {g.group}
-                  {groupCounts ? ` (${groupCounts[g.group] ?? 0})` : ""}
-                </span>
-              </span>
-            ))}
-          </div>
+          <GroupLegend
+            label={groupByVariable}
+            groups={groups!.map((g) => ({
+              ...g,
+              count: groupCounts ? (groupCounts[g.group] ?? 0) : undefined,
+            }))}
+          />
         )}
         {clientError ? (
-          <div style={{ padding: 12, color: "#e74c3c" }}>
-            Error loading series: {clientError}
-          </div>
+          <ViewError what="the series" error={clientError} />
         ) : !client ? (
-          <div style={{ padding: 12, color: "#555" }}>Loading series...</div>
+          <LoadingState label="Reading the series" phase="loading" />
         ) : selectedChannels.length === 0 ? (
-          <div style={{ padding: 12 }}>Select one or more channels.</div>
+          <EmptyState title="No channels picked">
+            Pick one or more channels in Channels.
+          </EmptyState>
         ) : alignToVariables.length === 0 ? (
-          <div style={{ padding: 12 }}>
-            Select one or more align-to columns.
-          </div>
+          <EmptyState title="Nothing to align to">
+            Pick one or more columns in Align to.
+          </EmptyState>
         ) : (
           selectedChannels.map((ch) => (
-            <div key={ch} style={{ marginBottom: 12 }}>
+            <section key={ch} className="event-related-channel">
+              <h3 className="event-related-channel-title">Channel {ch}</h3>
               <div
-                style={{
-                  fontWeight: "bold",
-                  padding: "2px 8px",
-                  fontSize: 14,
-                }}
-              >
-                Channel {ch}
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  gap,
-                  overflowX: split ? "auto" : "hidden",
-                  maxWidth: plotAreaWidth - 4,
-                }}
+                className={
+                  split
+                    ? "event-related-row event-related-row--split"
+                    : "event-related-row"
+                }
               >
                 {alignToVariables.map((alignToVariable) => (
                   <AlignBlock
@@ -763,7 +705,6 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
                     maxIntervals={committed.maxIntervals}
                     cellWidth={cellWidth}
                     cellHeight={panelHeight}
-                    gap={gap}
                     rawTraceAlpha={rawTraceAlpha}
                     showStdBand={showStdBand}
                     stdMultiple={effectiveStdMultiple}
@@ -774,10 +715,48 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
                   />
                 ))}
               </div>
-            </div>
+            </section>
           ))
         )}
       </div>
+    </ViewPanel>
+  );
+};
+
+/** The chart's group colors beside their names; the swatch takes the chart's own color. */
+const GroupLegend: FunctionComponent<{
+  label: string;
+  groups: { group: string; color: string; count?: number }[];
+}> = ({ label, groups }) => (
+  <ul className="event-related-legend" aria-label={`Groups by ${label}`}>
+    {groups.map((g) => (
+      <li key={g.group} className="event-related-legend-item">
+        <Swatch color={g.color} />
+        {g.count !== undefined ? `${g.group} (${g.count})` : g.group}
+      </li>
+    ))}
+  </ul>
+);
+
+const Swatch: FunctionComponent<{ color: string }> = ({ color }) => {
+  const ref = useCssVars<HTMLSpanElement>({ "--swatch": color });
+  return <span ref={ref} className="event-related-swatch" aria-hidden="true" />;
+};
+
+/** A box of the plot's size, for the plot or a message in its place. */
+const PlotBox: FunctionComponent<{
+  width: number;
+  height: number;
+  className: string;
+  children: ReactNode;
+}> = ({ width, height, className, children }) => {
+  const ref = useCssVars<HTMLDivElement>({
+    "--plot-w": width,
+    "--plot-h": height,
+  });
+  return (
+    <div ref={ref} className={className}>
+      {children}
     </div>
   );
 };
@@ -797,51 +776,32 @@ const ChannelSelection: FunctionComponent<ChannelSelectionProps> = ({
     () => Array.from({ length: numChannels }, (_, i) => i),
     [numChannels],
   );
-  const allSelected =
+  const all =
     channels.length > 0 && selectedChannels.length === channels.length;
   return (
-    <table className="nwb-table" style={{ tableLayout: "fixed" }}>
-      <colgroup>
-        <col style={{ width: 20 }} />
-      </colgroup>
-      <thead>
-        <tr>
-          <th style={{ padding: "4px 2px" }}>
-            <input
-              type="checkbox"
-              checked={allSelected}
-              onChange={() => {}}
-              onClick={() => {
-                if (selectedChannels.length > 0) setSelectedChannels([]);
-                else setSelectedChannels(channels);
-              }}
-            />
-          </th>
-          <th>Channel</th>
-        </tr>
-      </thead>
-      <tbody>
-        {channels.map((ch) => (
-          <tr key={ch}>
-            <td style={{ padding: "4px 2px" }}>
-              <input
-                type="checkbox"
-                checked={selectedChannels.includes(ch)}
-                onChange={() => {}}
-                onClick={() => {
-                  setSelectedChannels((prev) =>
-                    prev.includes(ch)
-                      ? prev.filter((x) => x !== ch)
-                      : [...prev, ch].sort((a, b) => a - b),
-                  );
-                }}
-              />
-            </td>
-            <td>{ch}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="event-related-channels">
+      <Checkbox
+        label="All channels"
+        checked={all ? true : selectedChannels.length > 0 ? "mixed" : false}
+        onChange={() =>
+          setSelectedChannels(selectedChannels.length > 0 ? [] : channels)
+        }
+      />
+      {channels.map((ch) => (
+        <Checkbox
+          key={ch}
+          label={`Channel ${ch}`}
+          checked={selectedChannels.includes(ch)}
+          onChange={() =>
+            setSelectedChannels((prev) =>
+              prev.includes(ch)
+                ? prev.filter((x) => x !== ch)
+                : [...prev, ch].sort((a, b) => a - b),
+            )
+          }
+        />
+      ))}
+    </div>
   );
 };
 
@@ -861,7 +821,6 @@ type AlignBlockProps = {
   maxIntervals: number;
   cellWidth: number;
   cellHeight: number;
-  gap: number;
   rawTraceAlpha: number;
   showStdBand: boolean;
   stdMultiple: number;
@@ -883,7 +842,6 @@ const AlignBlock: FunctionComponent<AlignBlockProps> = ({
   maxIntervals,
   cellWidth,
   cellHeight,
-  gap,
   rawTraceAlpha,
   showStdBand,
   stdMultiple,
@@ -1023,32 +981,34 @@ const AlignBlock: FunctionComponent<AlignBlockProps> = ({
     ];
   }, [allTrials, split, grouping, groups, alignToVariable, countLabel]);
 
-  const statusBox = (color: string, text: string) => (
-    <div
-      style={{
-        flex: "0 0 auto",
-        width: cellWidth,
-        height: cellHeight,
-        padding: 12,
-        color,
-        boxSizing: "border-box",
-      }}
+  const statusBox = (text: ReactNode) => (
+    <PlotBox
+      width={cellWidth}
+      height={cellHeight}
+      className="event-related-status"
     >
       {text}
-    </div>
+    </PlotBox>
   );
 
-  if (error) return statusBox("#e74c3c", `Error: ${error}`);
+  if (error)
+    return statusBox(<ViewError what="the trial snippets" error={error} />);
   if (!allTrials || !cells)
     return statusBox(
-      "#555",
-      `Loading snippets... ${progress.loaded}${progress.total ? ` / ${progress.total}` : ""}`,
+      <LoadingState
+        label="Reading the trial snippets"
+        phase="loading"
+        progress={
+          progress.total
+            ? { value: progress.loaded, max: progress.total, unit: "intervals" }
+            : undefined
+        }
+      />,
     );
-  if (allTrials.length === 0)
-    return statusBox("#555", "No intervals to display.");
+  if (allTrials.length === 0) return statusBox("No intervals to show.");
 
   return (
-    <div style={{ display: "flex", gap, flex: "0 0 auto" }}>
+    <div className="event-related-cells">
       {cells.map((cell) => (
         <TrialPlot
           key={cell.key}
@@ -1105,36 +1065,16 @@ const TrialPlot: FunctionComponent<TrialPlotProps> = ({
   const titleHeight = 22;
   const widgetHeight = height - titleHeight;
   return (
-    <div style={{ position: "relative", width, height, flex: "0 0 auto" }}>
-      <div
-        style={{
-          position: "absolute",
-          width,
-          height: titleHeight,
-          fontWeight: "bold",
-          textAlign: "center",
-          fontSize: 13,
-          overflow: "hidden",
-          whiteSpace: "nowrap",
-          textOverflow: "ellipsis",
-        }}
-        title={title}
-      >
+    <PlotBox width={width} height={height} className="event-related-plot">
+      <p className="event-related-plot-title" title={title}>
         {title}
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          top: titleHeight,
-          width,
-          height: widgetHeight,
-        }}
-      >
+      </p>
+      <div>
         {trials.length === 0 ? (
-          <div style={{ padding: 12, color: "#555" }}>
+          <p className="event-related-status-text">
             No intervals
             {numMissingAlignTimes > 0 ? ` (no ${alignToVariable})` : ""}.
-          </div>
+          </p>
         ) : (
           <TrialAlignedSeriesWidget
             width={width}
@@ -1152,7 +1092,7 @@ const TrialPlot: FunctionComponent<TrialPlotProps> = ({
           />
         )}
       </div>
-    </div>
+    </PlotBox>
   );
 };
 

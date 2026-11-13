@@ -1,0 +1,66 @@
+---
+import { Section, TextInput } from "@ui";
+import CodeSample from "../../components/CodeSample.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const noop = () => {};
+
+const SPECS = [
+  ["Page", "surface/page · 24px margins (layout/page-margin) · a 720px column (layout/text-max) · 24px between blocks (space/6) · scrolls inside the main area"],
+  ["Page title", "The page’s one h1 · type/h2 · text/default"],
+  ["Section", "surface/panel · 1px border/strong · radius/sm · 24px padding (space/6) · 16px between fields (space/4)"],
+  ["Section title", "An h2 that names the section as a region · type/h4"],
+];
+
+const code = `import { Page, Section, TextInput } from "@ui";
+
+<Page title="Settings">
+  <Section title="DANDI API keys">
+    <TextInput
+      type="password"
+      label="DANDI API key"
+      helper="From your account on dandiarchive.org."
+      value={key}
+      onChange={setKey}
+    />
+  </Section>
+</Page>`;
+---
+
+<DocsLayout title="Pages and sections" description="Page and Section: the frame of a page in the main area, and the titled panels on it.">
+  <Intro
+    lead="Page and Section are the frame of a page in the app’s main area, such as Settings: the page title, its margins and column, and titled panels that group related fields."
+    status="Updated November 9, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "One title per page", text: "Page holds the page’s one h1, so every page starts the same way for screen readers." },
+      { title: "Group by task", text: "A section holds the fields for one thing, such as the DANDI keys, under a short title." },
+      { title: "Read at a comfortable width", text: "The column stops at 720px however wide the window is." },
+    ]}
+  />
+
+  <DocSection title="Section" lead="A titled panel. Its title names it as a region, so screen readers can list and jump to it.">
+    <div class="section-demo">
+      <Section title="DANDI API keys">
+        <TextInput type="password" label="DANDI API key" helper="From your account on dandiarchive.org. Opens embargoed Dandisets." value="" onChange={noop} />
+        <TextInput type="password" label="DANDI sandbox API key" helper="From your account on sandbox.dandiarchive.org." value="" onChange={noop} />
+      </Section>
+    </div>
+  </DocSection>
+
+  <DocSection title="Page" lead="The frame of a page in the main area: the page’s one h1, 24px margins and a 720px column, scrolling inside the main area. Sections and alerts go in its content, 24px apart.">
+    <p class="doc-note">Page isn’t shown live here because it holds a page’s h1, and this page already has one. The Settings page in the app is a page with one section: Settings, then DANDI API keys.</p>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Page and Section specs" columns={["Part", "Spec"]}>
+      {SPECS.map(([part, spec]) => <tr><th scope="row">{part}</th><td>{spec}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. Neither takes a className or style, so every page has the same frame.">
+    <CodeSample label="React" code={code} />
+  </DocSection>
+</DocsLayout>

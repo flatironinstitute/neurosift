@@ -1,0 +1,73 @@
+/* Full width with 32px margins; filters 260px, then 40px to the results. */
+.catalog-page {
+  box-sizing: border-box;
+  display: grid;
+  align-content: start;
+  gap: var(--space-5);
+  block-size: 100%;
+  padding: var(--space-6) var(--space-8);
+  overflow-y: auto;
+}
+
+.catalog-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: var(--space-10);
+  align-items: start;
+}
+
+.catalog-filters {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.catalog-filters-narrow {
+  display: none;
+}
+
+.catalog-results {
+  display: grid;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+
+.catalog-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.catalog-site {
+  font: var(--type-body-sm);
+  color: var(--text-link);
+}
+
+.catalog-retry {
+  padding: 0;
+  font: inherit;
+  color: var(--text-link);
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* At 768px and below, the filters fold behind Filters above the results. */
+@media (width <= 768px) {
+  .catalog-page {
+    padding: var(--space-4);
+  }
+
+  .catalog-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+
+  .catalog-filters-narrow {
+    display: block;
+  }
+
+  .catalog-filters-wide {
+    display: none;
+  }
+}

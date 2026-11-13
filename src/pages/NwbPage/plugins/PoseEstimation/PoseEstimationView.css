@@ -1,0 +1,71 @@
+.pose-seek {
+  flex: 1;
+  min-inline-size: 12rem;
+}
+
+.pose-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font: var(--type-caption);
+  color: var(--text-muted);
+}
+
+.pose-stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  inline-size: var(--pose-w);
+  max-inline-size: 100%;
+  block-size: var(--pose-h);
+}
+
+.pose-box {
+  position: relative;
+  flex: 1;
+  min-block-size: 0;
+}
+
+.pose-box:focus-visible {
+  outline: var(--border-width-2) solid var(--border-focus);
+  outline-offset: calc(var(--space-1) * -1);
+}
+
+.pose-layer {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+
+.pose-layer--markers {
+  pointer-events: none;
+}
+
+.pose-markers {
+  display: grid;
+  gap: var(--space-1);
+  max-block-size: 16rem;
+  overflow-y: auto;
+}
+
+.pose-marker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pose-marker-swatch {
+  flex-shrink: 0;
+  inline-size: var(--space-3);
+  block-size: var(--space-3);
+  margin-inline-start: auto;
+  background: var(--marker-color);
+  border: var(--border-width-1) solid var(--border-subtle);
+  border-radius: var(--radius-full);
+}
+
+.pose-marker[data-off] .pose-marker-swatch {
+  background: none;
+}

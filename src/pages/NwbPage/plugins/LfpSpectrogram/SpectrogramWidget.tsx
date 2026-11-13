@@ -1,5 +1,7 @@
+import { useCssVars } from "@components/useCssVars";
+import { Spinner } from "@ui";
 import { FunctionComponent, useEffect, useMemo, useRef } from "react";
-import "./spectrogramBusy.css";
+import "./LfpSpectrogramView.css";
 import { applyColormap, ColormapName } from "./colormap";
 import { plotMargins, PlotMargins } from "./plotConstants";
 import { NormalizationMode } from "./spectralConfig";
@@ -363,8 +365,16 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
     ctx.font = "11px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    for (let i = 0; i <= 6; i++) {
-      const frac = i / 6;
+    const widest = Math.max(
+      ctx.measureText(visibleStartTimeSec.toFixed(2)).width,
+      ctx.measureText(visibleEndTimeSec.toFixed(2)).width,
+    );
+    const xDivisions = Math.max(
+      1,
+      Math.min(6, Math.floor(plotW / (widest + 12))),
+    );
+    for (let i = 0; i <= xDivisions; i++) {
+      const frac = i / xDivisions;
       const x = margins.left + frac * plotW;
       const t = visibleStartTimeSec + frac * visSpan;
       ctx.strokeStyle = "#999";
@@ -482,26 +492,31 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
   // The badge sits inside the plot frame rather than over its middle, so the
   // image underneath stays readable while a new one is being computed.
   const busyLabel = stale ? "Updating" : "Computing";
+  const frameRef = useCssVars<HTMLDivElement>({
+    "--spectrogram-w": width,
+    "--spectrogram-h": height,
+    "--margin-top": margins.top,
+    "--margin-right": margins.right,
+  });
   const pct =
     progress != null && progress > 0 && progress < 1
       ? ` ${Math.round(progress * 100)}%`
       : "";
 
   return (
-    <div style={{ position: "relative", width, height }}>
+    <div ref={frameRef} className="lfp-spectrogram-widget">
       <canvas
         ref={canvasRef}
         width={width}
         height={height}
-        style={{ display: "block" }}
+        className="lfp-spectrogram-canvas"
       />
       {showBusyIndicator && result && (
         <div
-          className="spectrogramBusyBadge"
-          style={{ top: margins.top + 4, right: margins.right + 4 }}
+          className="lfp-spectrogram-badge"
           title="A new spectrogram is being computed; the image shown is the previous one."
         >
-          <span className="spectrogramBusySpinner" />
+          <Spinner />
           <span>
             {busyLabel}
             {pct}

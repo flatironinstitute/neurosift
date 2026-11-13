@@ -1,5 +1,7 @@
+import { EmptyState } from "@ui";
+import { useCssVars } from "@components/useCssVars";
 import { FunctionComponent, useMemo } from "react";
-import { facetColors } from "./FacetLegend";
+import { facetColors } from "./sweepGroups";
 import FamilyOverlayPlot from "./FamilyOverlayPlot";
 import { categorical } from "./palette";
 import { LoadedSweep } from "./useSweepData";
@@ -111,68 +113,47 @@ const FamilyFacetGrid: FunctionComponent<Props> = ({
   const nRows = grid.rowOrder.length;
   const nCols = grid.colOrder.length;
 
+  const cellW = Math.max(
+    MIN_CELL_W,
+    Math.floor((width - ROWLAB_W) / Math.max(1, nCols)),
+  );
+  const ref = useCssVars<HTMLDivElement>({
+    "--icephys-w": width,
+    "--icephys-h": height,
+    "--facet-columns": `${ROWLAB_W}px repeat(${nCols}, ${cellW}px)`,
+    "--facet-cell-h": CELL_H,
+    "--facet-label-h": COLLAB_H,
+  });
+
   if (nRows * nCols > MAX_CELLS) {
     return (
-      <div style={{ width, height, padding: 16, fontSize: 13, color: "#888" }}>
-        {nRows} x {nCols} = {nRows * nCols} facet cells is too many to render
-        legibly (limit {MAX_CELLS}). Narrow the selection, or use a single
-        Panels axis and put the other on Color by.
-      </div>
+      <EmptyState title="Too many panels to draw">
+        {`${nRows} × ${nCols} = ${nRows * nCols} panels is too many to read (the limit is ${MAX_CELLS}). Narrow the scope, or use one Panels by axis and put the other on Color by.`}
+      </EmptyState>
     );
   }
 
-  const cellW = Math.max(MIN_CELL_W, Math.floor((width - ROWLAB_W) / nCols));
   const innerColor = innerGroupBy === rowAxis ? "sweep" : innerGroupBy;
-  // Shared categorical colors (when inner color is categorical) so the cells and
-  // the sidebar legend agree. The legend is rendered in the sidebar by
-  // IcephysTabView, not here.
+  // Shared colors so the cells and the settings legend agree.
   const fc = innerColor !== "sweep" ? facetColors(sweeps, innerColor) : null;
 
   return (
-    <div style={{ width, height, overflow: "auto" }}>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `${ROWLAB_W}px repeat(${nCols}, ${cellW}px)`,
-          alignItems: "start",
-        }}
-      >
-        {/* header row: empty corner + column labels */}
-        <div style={{ height: COLLAB_H }} />
+    <div ref={ref} className="icephys-chart-box">
+      <div className="icephys-facet-grid">
+        <div className="icephys-facet-corner" />
         {grid.colOrder.map((ck) => (
           <div
             key={`col-${ck}`}
-            style={{
-              height: COLLAB_H,
-              fontSize: 11,
-              fontWeight: 600,
-              color: "#444",
-              textAlign: "center",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
+            className="icephys-facet-col"
             title={grid.colLabel.get(ck)}
           >
             {grid.colLabel.get(ck)}
           </div>
         ))}
-
-        {/* one grid row per rowAxis value */}
         {grid.rowOrder.map((rk, ri) => [
           <div
             key={`rowlab-${rk}`}
-            style={{
-              width: ROWLAB_W,
-              height: CELL_H,
-              display: "flex",
-              alignItems: "center",
-              fontSize: 11,
-              fontWeight: 600,
-              color: "#444",
-              overflow: "hidden",
-              wordBreak: "break-word",
-            }}
+            className="icephys-facet-row"
             title={grid.rowLabel.get(rk)}
           >
             {grid.rowLabel.get(rk)}
@@ -180,7 +161,7 @@ const FamilyFacetGrid: FunctionComponent<Props> = ({
           ...grid.colOrder.map((ck) => {
             const cellSweeps = grid.cells.get(JSON.stringify([rk, ck])) ?? [];
             return (
-              <div key={`cell-${rk}-${ck}`} style={{ height: CELL_H }}>
+              <div key={`cell-${rk}-${ck}`} className="icephys-facet-cell">
                 {cellSweeps.length > 0 ? (
                   <FamilyOverlayPlot
                     sweeps={cellSweeps}
@@ -196,19 +177,7 @@ const FamilyFacetGrid: FunctionComponent<Props> = ({
                     compact
                   />
                 ) : (
-                  <div
-                    style={{
-                      width: cellW,
-                      height: CELL_H,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#ccc",
-                      fontSize: 11,
-                    }}
-                  >
-                    -
-                  </div>
+                  <span className="icephys-facet-empty">No sweeps</span>
                 )}
               </div>
             );

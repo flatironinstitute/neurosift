@@ -53,10 +53,14 @@ describe("ErrorBoundary", () => {
 
     expect(screen.getByText("app bar")).toBeTruthy();
     expect(screen.getByText("neighboring view")).toBeTruthy();
-    expect(
-      screen.getByText("Something went wrong in the Raster view of /units"),
-    ).toBeTruthy();
-    expect(screen.getByText("cannot read data of /units")).toBeTruthy();
+    const alert = screen.getByRole("alert");
+    expect(alert.textContent).toContain(
+      "The Raster view of /units couldn’t be shown",
+    );
+    expect(alert.querySelector("code")?.textContent).toBe(
+      "cannot read data of /units",
+    );
+    expect(document.activeElement).toBe(document.body);
   });
 
   it("links to a new issue with the page url and the error filled in", () => {
@@ -66,7 +70,11 @@ describe("ErrorBoundary", () => {
       </ErrorBoundary>,
     );
 
-    const link = screen.getByText("Report this").closest("a")!;
+    const link = screen.getByRole("link", {
+      name: "Report this",
+    }) as HTMLAnchorElement;
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
     const url = new URL(link.href);
     expect(url.origin + url.pathname).toBe(
       "https://github.com/flatironinstitute/neurosift/issues/new",
@@ -118,7 +126,7 @@ describe("ErrorBoundary", () => {
         <Broken />
       </ErrorBoundary>,
     );
-    expect(screen.getByText("Something went wrong in this page")).toBeTruthy();
+    expect(screen.getByText("This page couldn’t be shown")).toBeTruthy();
 
     rerender(
       <ErrorBoundary what="this page" resetKey="/dandi">

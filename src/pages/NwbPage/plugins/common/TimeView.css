@@ -1,0 +1,40 @@
+.time-view-plot {
+  position: relative;
+}
+
+.time-view-plot:focus-visible {
+  outline: var(--border-width-2) solid var(--border-focus);
+  outline-offset: var(--space-0-5);
+}
+
+.time-view-plot--select .tsv-content {
+  cursor: crosshair;
+}
+
+.time-view-plot--pan .tsv-content {
+  cursor: grab;
+}
+
+.time-view-plot--pan .tsv-content:active {
+  cursor: grabbing;
+}
+
+/* Plotly sets its drag layer's cursor with three classes; four outweigh it. */
+.time-view-plot--select .js-plotly-plot .plotly .nsewdrag {
+  cursor: crosshair;
+}
+
+.time-view-plot--pan .js-plotly-plot .plotly .nsewdrag {
+  cursor: grab;
+}
+
+.time-view-select-band {
+  position: absolute;
+  inset-block-start: var(--select-top);
+  inset-inline-start: var(--select-left);
+  inline-size: var(--select-width);
+  block-size: var(--select-height);
+  pointer-events: none;
+  background: var(--data-selection);
+  border: var(--border-width-1) solid var(--border-selected);
+}

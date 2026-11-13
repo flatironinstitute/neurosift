@@ -21,6 +21,10 @@ vi.mock("./SpecificationsView/SetupNwbFileSpecificationsProvider", () => ({
   useNwbFileSpecifications: () => undefined,
 }));
 vi.mock("../../util/sendLog", () => ({ sendLog: vi.fn() }));
+const objectExists = vi.fn(async (_url: string, path: string) =>
+  path.startsWith("/units"),
+);
+vi.mock("./ObjectTypeUtils", () => ({ objectExists }));
 
 const { default: NwbObjectView } = await import("./NwbObjectView");
 
@@ -59,8 +63,27 @@ describe("NwbObjectView", () => {
     );
     expect(screen.getByText("tab bar")).toBeTruthy();
     expect(
-      screen.getByText("Something went wrong in the Raster view of /units"),
+      screen.getByText("The Raster view of /units couldn’t be shown"),
     ).toBeTruthy();
     expect(screen.getByText("spike_times is not a ragged array")).toBeTruthy();
+  });
+
+  it("says when the file has no object at the path, instead of loading forever", async () => {
+    render(
+      <NwbObjectView
+        nwbUrl="https://example.org/a.nwb"
+        path="/acquisition/does_not_exist"
+        objectType="group"
+        width={800}
+        height={600}
+      />,
+    );
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain(
+      "/acquisition/does_not_exist couldn’t be shown",
+    );
+    expect(alert.textContent).toContain(
+      "This file has no object at /acquisition/does_not_exist.",
+    );
   });
 });

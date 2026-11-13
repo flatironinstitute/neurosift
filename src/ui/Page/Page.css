@@ -1,0 +1,34 @@
+.ns-page {
+  block-size: 100%;
+  overflow-y: auto;
+  color: var(--text-default);
+  background: var(--surface-page);
+}
+
+.ns-page-column {
+  display: grid;
+  gap: var(--space-6);
+  max-inline-size: var(--layout-text-max);
+  padding: var(--layout-page-margin);
+}
+
+.ns-page-title {
+  margin: 0;
+  font: var(--type-h2);
+  letter-spacing: var(--type-h2-letter-spacing);
+}
+
+.ns-section {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--surface-panel);
+  border: var(--border-width-1) solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.ns-section-title {
+  margin: 0;
+  font: var(--type-h4);
+  letter-spacing: var(--type-h4-letter-spacing);
+}

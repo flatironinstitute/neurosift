@@ -136,7 +136,6 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({
 
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDrag = useCallback((_evt: DraggableEvent, _ui: DraggableData) => {
     setIsDragging(true);
   }, []);

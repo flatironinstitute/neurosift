@@ -1,0 +1,84 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const SOURCES = [
+  ["Neurosift source", "Controls, labels, defaults and the rules that pick each view", "github.com/flatironinstitute/neurosift, commit c0e9b8c", "October 23, 2026"],
+  ["neurosift.app", "Every “today” capture and edge case", "Playwright, Chromium, 1440 × 900", "November 5–6, 2026"],
+  ["DANDI Archive", "Dandisets and files: 000673, 000231 and others", "api.dandiarchive.org", "November 5–6, 2026"],
+  ["CatalystNeuro dandi-index", "213 neurodata types with Dandiset and file counts", "dandi-index", "November 5, 2026"],
+  ["OpenNeuro and EMBER", "Archive search and dataset edge cases, such as ds008849", "openneuro.org, emberarchive.org", "November 5–6, 2026"],
+  ["Neurosift paper", "Goals: a lower barrier, nothing to install, views shared by link", "JOSS, 2024", "—"],
+];
+
+const AUDIT = [
+  ["Low-contrast text colors", "37"],
+  ["Text sizes under 12px", "48"],
+  ["Click handlers on non-buttons, against real buttons", "178 against 7"],
+  ["Native title tooltips", "116"],
+  ["aria-label attributes", "3"],
+  ["Canvases with no text alternative", "16"],
+  ["Glyphs used as icons", "49"],
+  ["Native selects", "22"],
+];
+
+const FOUND = [
+  ["OpenNeuro derivatives missing from the file tree", "ds008849", "Dataset page", "Confirmed"],
+  ["participants.tsv fails to load (403)", "ds008849", "Dataset page", "Confirmed"],
+  ["Images may be drawn transposed", "000673 StimulusTemplates", "Imaging views", "Candidate"],
+  ["Pose overlay lists 5 of 8 markers", "000231 sub-KM91", "Video and pose", "Candidate"],
+  ["“Permission Required” banner on a public Dandiset", "000231 sub-KM91", "Video and pose", "Confirmed"],
+  ["Skeleton disabled though the file has 7 edges", "000231 sub-KM91", "Video and pose", "Candidate"],
+  ["Videos section shows “-1:-1.-1”", "000231 sub-KM91", "Video and pose", "Confirmed"],
+  ["12 Schema types have no name", "000673 sub-1", "HDF5 and schema", "Confirmed in code"],
+];
+
+const CONFIRM = [
+  ["Views or Widgets as the tab name", "Voice and content, File viewer layout"],
+  ["One catalog across DANDI, EMBER and OpenNeuro", "Archive search"],
+  ["Zero-based channel and unit ranges", "Time controls"],
+  ["Open a file by link, and Recent Dandisets, on home", "Home"],
+  ["Pose alignment bars folded into the warning", "Video and pose"],
+  ["Show first 10 rows in place of the debug-console button", "HDF5 and schema"],
+  ["A Used in this file filter on Schema", "HDF5 and schema"],
+];
+---
+
+<DocsLayout title="Research and audit" description="The evidence behind every page: sources, code counts, findings and open questions.">
+  <Intro
+    lead="Every page in this design system is built from evidence: Neurosift’s source, the live site, and the archives it reads. This page lists those sources, the counts from the code audit, the problems found on the live site, and the questions still open."
+    status="Updated November 10, 2026 · Resources · Captures from neurosift.app with Playwright at 1440 × 900, November 5–6, 2026"
+    rules={[
+      { title: "Source, then live", text: "Each page reads the code first, then checks the live site with real data." },
+      { title: "Counts, not impressions", text: "Audit numbers come from searching the source, not from sampling screens." },
+      { title: "Found, not filed", text: "Problems are recorded on their pages; reports are drafted only on request." },
+    ]}
+  />
+
+  <DocSection title="Sources" lead="Where the facts on each page come from.">
+    <DocTable caption="Sources" columns={["Source", "What it gave", "Where", "When"]}>
+      <DocRows rows={SOURCES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Code audit" lead="Counts from the source at commit c0e9b8c, used on the Accessibility, Dropdowns and Tooltips pages.">
+    <DocTable caption="Code audit" columns={["Measure", "Count"]}>
+      <DocRows rows={AUDIT} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Found on the live site" lead="Recorded on each UI library page’s edge cases. None is filed yet.">
+    <DocTable caption="Found on the live site" columns={["Finding", "Data", "Page", "Status"]}>
+      <DocRows rows={FOUND} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="To confirm" lead="Open questions for Jeremy Magland and Ben Dichter, from the pages that raise them.">
+    <DocTable caption="To confirm" columns={["Question", "Page"]}>
+      <DocRows rows={CONFIRM} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

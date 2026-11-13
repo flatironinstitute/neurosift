@@ -1,0 +1,113 @@
+/* The field shared by TextInput, TextArea, Select and SearchField: label, frame and message. */
+.ns-field {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.ns-field-label {
+  font: var(--type-label);
+  color: var(--text-default);
+}
+
+/* The edge is drawn inside the height, as in Figma. */
+:is(.ns-field-box, .ns-search) {
+  box-sizing: border-box;
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin: 0;
+  color: var(--text-default);
+  background: var(--surface-panel);
+  border: var(--border-width-1) solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.ns-field-box {
+  block-size: var(--button-height-md);
+  padding: 0 var(--space-3);
+}
+
+/* Large uses the Large Search field's height and type. */
+.ns-field--lg .ns-field-box {
+  block-size: var(--input-height-lg);
+}
+
+.ns-field--sm .ns-field-box {
+  block-size: var(--button-height-sm);
+  padding: 0 var(--space-2);
+}
+
+:is(.ns-field-box, .ns-search):hover {
+  background: var(--action-secondary-hover);
+}
+
+/* Focus thickens the edge to 2px without moving the content; it outranks the error edge. */
+:is(.ns-field-box, .ns-search):focus-within {
+  border-color: var(--border-focus);
+  box-shadow: inset 0 0 0 var(--border-width-1) var(--border-focus);
+}
+
+.ns-field-box:has([aria-invalid="true"]):not(:focus-within) {
+  border-color: var(--border-error);
+  box-shadow: inset 0 0 0 var(--border-width-1) var(--border-error);
+}
+
+:is(.ns-field-input, .ns-search-input) {
+  /* Starts at zero and fills the frame, so the font never sets the field width. */
+  flex: 1;
+  inline-size: 0;
+  min-inline-size: 0;
+  padding: 0;
+  color: var(--text-default);
+  background: transparent;
+  border: 0;
+}
+
+.ns-field-input {
+  font: var(--type-body-sm);
+}
+
+.ns-field--lg .ns-field-input {
+  font: var(--type-body);
+}
+
+/* The frame shows focus, so the control inside never draws a ring of its own. */
+:is(.ns-field-input, .ns-search-input, .ns-select):is(:focus, :focus-visible) {
+  outline: none;
+}
+
+:is(.ns-field-input, .ns-search-input)::placeholder {
+  color: var(--text-muted);
+}
+
+.ns-field-message {
+  display: flex;
+  gap: var(--space-1);
+  align-items: flex-start;
+  margin: 0;
+  font: var(--type-caption);
+  color: var(--text-secondary);
+}
+
+.ns-field-error {
+  color: var(--status-error-text);
+}
+
+/* Only a disabled control dims the field; a disabled option inside a select doesn't. */
+.ns-field:has(> .ns-field-box > :is(input, select, textarea):disabled)
+  .ns-field-label,
+.ns-field-box :disabled {
+  color: var(--text-disabled);
+}
+
+.ns-field-box:has(> :is(input, select, textarea):disabled) {
+  background: var(--action-disabled);
+  border-color: var(--border-disabled);
+}
+
+@media (forced-colors: active) {
+  :is(.ns-field-box, .ns-search):focus-within {
+    outline: var(--border-width-2) solid Highlight;
+  }
+}

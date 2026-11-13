@@ -1,0 +1,148 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import Screen from "../../components/Screen.astro";
+import LiveScreen from "../../components/LiveScreen.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const TODAY = [
+  ["Two-photon series", "Frames of a TwoPhotonSeries or OnePhotonSeries, with a plane slider for 3D data", "plugins/TwoPhotonSeries", "Unlabeled frame arrows and display-range slider; no frame readout"],
+  ["Orientation", "xy swap, x flip, y flip", "PlaneTransformSelector.tsx", "Lowercase, abbreviated"],
+  ["Image segmentation", "ROI masks of each PlaneSegmentation, picked from a table of radio buttons", "plugins/ImageSegmentation", "“Loaded 171 regions” under the masks"],
+  ["Image", "One image; brightness and contrast for grayscale", "plugins/Image", "Two unlabeled sliders"],
+  ["Images", "Every image in the collection, side by side", "plugins/Image", "Names as large headings; pictures squeeze when there are many"],
+];
+
+const STATES = [
+  ["Opening a movie", "Frame size and count appear first; “Loading frame 1” in place of the frame."],
+  ["3D data", "A Plane slider joins the controls, 0 to planes − 1."],
+  ["One plane segmentation", "Its name shows in the summary; no picker."],
+  ["Several plane segmentations", "A Plane segmentation select joins the controls."],
+  ["Many images", "The gallery loads images as they scroll into view."],
+  ["Not an image", "“Neurosift can’t draw … as an image.”, in place of a bare sentence."],
+  ["Playing", "Pause replaces Play; the frame, the readout and the overview marker move together."],
+  ["Waiting for data", "Playback holds on the frame shown, never skipping, and says “Waiting for data” until the next frames arrive."],
+  ["Fitted", "Every image, frame and segmentation opens whole; the zoom readout says “Fit · 63%”."],
+  ["Zoomed", "The readout says the scale. Past 100% pixels are drawn as crisp squares. The zoom stays as frames play."],
+  ["Too large to show", "An image over 50 MB isn’t read. A warning takes its place, with the size and the limit: “The dataset “/processing/imaging/confocal/Confocal max z projection” is too large to load (336.69 MB). The limit is 50 MB.” In a gallery it spans the row."],
+];
+
+const BEHAVIOR = [
+  ["Playback", "Steps through frames at the chosen speed, 1× being the series’ own frame rate. The readout says which frame of how many. Speed changes mid-play; stepping, dragging the overview and the last frame pause it. Space plays and pauses when the frame has focus."],
+  ["Frame", "Previous and Next step one frame, and pause playback."],
+  ["Loading ahead", "While playing, frames load in blocks of about half a second, the next block behind the one shown."],
+  ["Time overview", "The bar under the controls shows the frame’s place in the recording."],
+  ["Display range", "Two handles set the darkest and brightest values; the range shows beside the label."],
+  ["Orientation", "Swap x and y, Flip x, Flip y; kept per object."],
+  ["Gallery", "Each image with its name, brightness and contrast for grayscale. Open, beside the name, opens the image alone in a tab, where it zooms."],
+  ["Zoom", "Above every single image, two-photon frame and segmentation: Zoom out, Zoom in, Fit, 100% and the scale. Wheel or pinch zooms around the pointer, drag pans, double-click zooms in."],
+  ["Size limit", "One image is read whole, up to 50 MB; a read of any dataset stops at 500 MB. Nothing over the limit downloads."],
+];
+
+const KEYS = [
+  ["Zoom in", "Zoom in · wheel up · pinch out · double-click", "+ or ="],
+  ["Zoom out", "Zoom out · wheel down · pinch in", "−"],
+  ["Fit", "Fit", "0"],
+  ["Pan", "Drag", "Arrow keys, a tenth of the view"],
+  ["Play or pause", "Play button, on two-photon series", "Space"],
+];
+
+const DIFFERS = [
+  ["Frame controls", "Unlabeled arrows", "Previous frame, Next frame and “Frame 1 of 113,855”", "Built"],
+  ["Display range", "An unlabeled two-thumb slider", "Display range, with its values", "Built"],
+  ["Orientation", "xy swap, x flip, y flip", "Swap x and y, Flip x, Flip y, as a labeled group", "Built"],
+  ["Segmentation picker", "A table of radio buttons beside the masks", "A select, only when there is more than one", "Built"],
+  ["Gallery", "Headings and squeezed pictures", "A grid of named images at their size", "Built"],
+  ["Play and speed", "—", "Play, pause and speed, with “Frame 412 of 113,855”", "Built"],
+  ["Zoom and pan", "—", "Zoom in, Zoom out, Fit, 100%, wheel, pinch, drag and keys", "Built"],
+  ["Too-large images", "A raw count, “88262020 > 10000000”, or a silent download of the whole image", "The size and the limit in words, as a warning", "Built"],
+  ["Preview of a too-large image", "—", "A downsampled read, “Preview at 1/8 resolution”", "Next"],
+  ["Open the ROI table", "—", "Opens the PlaneSegmentation table in a tab", "Next"],
+];
+
+const SPECS = [
+  ["Frame", "View panel · summary in type/body-sm: frames, size, dtype"],
+  ["Playback", "Playback, first in the controls · “Frame n of N” in type/code-sm"],
+  ["Frame controls", "Icon button, Small"],
+  ["Display range", "Range slider, value shown, 14rem"],
+  ["Orientation", "Checkbox group with a type/label legend, beside the frame"],
+  ["Gallery", "Grid, auto-fill at the widest image · names in type/code-sm"],
+  ["Open", "Icon button, Small, Ghost · Carbon launch · “Open maximum_intensity_projection to zoom”"],
+  ["Zoom", "Image zoom, above the picture, in the space the view gives it · pixelated past 100%"],
+  ["Too large", "Alert, warning, in place of the image · sizes from formatBytes, such as 336.69 MB"],
+];
+---
+
+<DocsLayout title="Imaging views" description="Two-photon frames, ROI masks and image collections.">
+  <Intro
+    lead="Imaging views show optical physiology: the frames of a two-photon or one-photon movie, the ROI masks a segmentation found in them, and collections of still images. Neurosift draws the pictures as it does today. Around them, every control gets a name, the frame says which of how many it is, and the orientation options read as words."
+    status="Updated November 11, 2026 · UI library · Captured at 1440 × 900 with Dandiset 000728, sub-491604967, and Dandiset 000294 · Built from View panel, Playback, Image zoom, Icon button, Slider, Range slider, Checkbox, Select, Alert and Empty state"
+    rules={[
+      { title: "Name every control", text: "Previous frame, Display range, Swap x and y: no unlabeled arrows or sliders." },
+      { title: "Say where you are", text: "“Frame 1 of 113,855” beside the frame controls." },
+      { title: "Only when needed", text: "The plane and segmentation pickers appear only when there is more than one." },
+      { title: "Look closely", text: "Every picture zooms to single pixels, and says its scale." },
+    ]}
+  />
+
+  <DocSection title="Imaging views today" lead="neurosift.app with Dandiset 000728, captured with Playwright.">
+    <div class="captures">
+      <Screen file="imaging-2p" alt="Today’s two-photon view: a frame, two tiny arrows, an unlabeled slider and xy swap, x flip and y flip checkboxes under it." caption="Two-photon series: unlabeled arrows and slider under the frame." />
+      <Screen file="imaging-seg" alt="Today’s image segmentation: a table of radio buttons beside colored ROI masks, with “Loaded 171 regions” below." caption="Image segmentation: a radio table and the masks." />
+    </div>
+  </DocSection>
+
+  <DocSection title="What the views do today" lead="Read from the source and checked on the live site.">
+    <DocTable caption="What the views do today" columns={["Part", "Today", "Code", "Notes"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="The rebuilt views" lead="The redesign’s viewer with the same files, with live data. The pictures are drawn as today.">
+    <div class="captures">
+      <Screen file="imaging-proposed-2p" alt="The rebuilt two-photon view: a summary of 113,855 frames at 512 by 512, Previous and Next frame with “Frame 1 of 113,855”, a Display range slider, the zoom bar reading “Fit · 92%”, the frame and Orientation checkboxes beside it." caption="Two-photon series: named controls, a frame readout and Orientation beside the frame." />
+      <Screen file="imaging-2p-playing" alt="The two-photon view playing at 1×: Pause, the speed, “Frame 66 of 113,855” and “Waiting for data”, then Previous and Next frame and the frame." caption="Two-photon series playing: it holds and says so when frames can’t keep up." />
+      <Screen file="imaging-proposed-seg" alt="The rebuilt segmentation: a summary of 171 ROIs, the zoom bar reading Fit, the colored masks and Orientation checkboxes beside them." caption="Image segmentation: the masks, with Orientation beside them." />
+      <Screen file="imaging-image-zoom" alt="A maximum intensity projection opened alone, zoomed to 338%: the zoom bar with Zoom out, Zoom in, Fit, 100% and “338%”, and cells drawn as crisp square pixels." caption="One image, zoomed: pixels stay square past 100%." />
+      <Screen file="imaging-too-large" alt="The confocal Images of Dandiset 000294: a warning, Too large to show here, says the dataset is too large to load (336.69 MB) and the limit is 50 MB." caption="Too large to show: the size and the limit, with nothing downloaded." />
+    </div>
+    <p class="doc-note">Built from the <a href={withBase("/components/view-panel/")}>View panel</a>, <a href={withBase("/components/image-zoom/")}>Image zoom</a>, <a href={withBase("/components/sliders/")}>Sliders</a> and <a href={withBase("/components/alerts/")}>Alerts</a>.</p>
+  </DocSection>
+
+  <DocSection title="Try it" lead="Swap and flip the masks, and zoom into them.">
+    <LiveScreen path="nwb?url=https://api.dandiarchive.org/api/assets/f02db27e-82eb-41dd-865a-a08bb41491da/download/&dandisetId=000728&dandisetVersion=draft&tab=view:ImageSegmentation|/processing/ophys/ImageSegmentation" title="Image segmentation, Dandiset 000728" size="tall" />
+  </DocSection>
+
+  <DocSection title="States">
+    <DocTable caption="States" columns={["When", "What changes"]}>
+      <DocRows rows={STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Behavior">
+    <DocTable caption="Behavior" columns={["Part", "Behavior"]}>
+      <DocRows rows={BEHAVIOR} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Pointer and keyboard" lead="A picture takes keys once it has focus; its name says which keys.">
+    <DocTable caption="Pointer and keyboard" columns={["Action", "Pointer", "Key"]}>
+      {KEYS.map(([action, pointer, key]) => <tr><th scope="row">{action}</th><td>{pointer}</td><td>{key}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="What differs" lead="Built is in the app now. Next comes with a later change.">
+    <DocTable caption="What differs" columns={["Area", "Existing", "Proposed", "Status"]}>
+      <DocRows rows={DIFFERS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Specs" columns={["Property", "Value"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

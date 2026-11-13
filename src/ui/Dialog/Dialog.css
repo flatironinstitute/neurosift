@@ -1,0 +1,134 @@
+.ns-dialog,
+.ns-drawer {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  color: var(--text-default);
+  background: var(--surface-panel);
+  border: var(--border-width-1) solid var(--border-strong);
+}
+
+.ns-dialog {
+  inline-size: min(var(--dialog-width), calc(100vw - var(--space-8)));
+  max-block-size: calc(100vh - var(--space-8));
+  border-radius: var(--radius-sm);
+  box-shadow: var(--elevation-3);
+}
+
+.ns-dialog--sm {
+  --dialog-width: 25rem;
+}
+
+.ns-dialog--md {
+  --dialog-width: 35rem;
+}
+
+:is(.ns-dialog, .ns-drawer--overlay)::backdrop {
+  background: var(--overlay-backdrop);
+}
+
+.ns-dialog-header {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  border-block-end: var(--border-width-1) solid var(--border-subtle);
+}
+
+.ns-dialog-title {
+  flex: 1;
+  min-inline-size: 0;
+  margin: 0;
+  font: var(--type-h4);
+  letter-spacing: var(--type-h4-letter-spacing);
+}
+
+.ns-dialog-title:focus {
+  outline: none;
+}
+
+.ns-dialog-body {
+  display: grid;
+  flex: 1;
+  gap: var(--space-3);
+  align-content: start;
+  padding: var(--space-4);
+  overflow-y: auto;
+  font: var(--type-body-sm);
+  letter-spacing: var(--type-body-sm-letter-spacing);
+}
+
+.ns-dialog-footer {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  padding: var(--space-3) var(--space-4);
+  border-block-start: var(--border-width-1) solid var(--border-subtle);
+}
+
+.ns-drawer {
+  inline-size: min(var(--layout-panel-default), 100vw);
+  border-block: 0;
+}
+
+.ns-drawer--docked {
+  block-size: 100%;
+}
+
+.ns-drawer--left {
+  border-inline-start: 0;
+}
+
+.ns-drawer--right {
+  border-inline-end: 0;
+}
+
+.ns-drawer--overlay {
+  position: fixed;
+  inset-block: 0;
+  block-size: 100vh;
+  max-block-size: none;
+  margin: 0;
+  box-shadow: var(--elevation-3);
+}
+
+.ns-drawer--overlay.ns-drawer--left {
+  inset-inline: 0 auto;
+}
+
+.ns-drawer--overlay.ns-drawer--right {
+  inset-inline: auto 0;
+}
+
+/* Dialogs fade and rise 4px in 150ms; overlay drawers slide in over 200ms. Neither moves with reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .ns-dialog[open] {
+    animation: ns-dialog-in 150ms ease-out;
+  }
+
+  .ns-drawer--overlay.ns-drawer--left[open] {
+    animation: ns-drawer-in-left 200ms ease-out;
+  }
+
+  .ns-drawer--overlay.ns-drawer--right[open] {
+    animation: ns-drawer-in-right 200ms ease-out;
+  }
+}
+
+@keyframes ns-dialog-in {
+  from {
+    opacity: 0;
+    translate: 0 var(--space-1);
+  }
+}
+
+@keyframes ns-drawer-in-left {
+  from {
+    translate: -100% 0;
+  }
+}
+
+@keyframes ns-drawer-in-right {
+  from {
+    translate: 100% 0;
+  }
+}

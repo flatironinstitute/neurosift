@@ -1,0 +1,88 @@
+.ns-code-block {
+  margin: 0;
+  overflow: hidden;
+  background: var(--code-surface);
+  border: var(--border-width-1) solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.ns-code-header {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-3);
+  background: var(--surface-panel);
+  border-block-end: var(--border-width-1) solid var(--border-subtle);
+}
+
+.ns-code-name {
+  flex: 1;
+  min-inline-size: 0;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font: var(--type-code-sm);
+  letter-spacing: var(--type-code-sm-letter-spacing);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Plex Mono 12/20. Lines wrap with a hanging indent, so nothing is cut off and numbers follow real lines. */
+.ns-code-body {
+  margin: 0;
+  padding: var(--space-3);
+  color: var(--code-text);
+  font: var(--type-code-sm);
+  line-height: var(--space-5);
+  white-space: pre-wrap;
+}
+
+.ns-code-line {
+  display: grid;
+  min-block-size: var(--space-5);
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--space-3);
+}
+
+.ns-code-line:not(:has(.ns-code-line-number)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ns-code-line-number {
+  min-inline-size: 2ch;
+  color: var(--text-muted);
+  text-align: end;
+  user-select: none;
+}
+
+.ns-code-text {
+  padding-inline-start: 4ch;
+  overflow-wrap: anywhere;
+  text-indent: -4ch;
+}
+
+.ns-code-keyword {
+  color: var(--code-keyword);
+}
+
+.ns-code-string {
+  color: var(--code-string);
+}
+
+.ns-code-number {
+  color: var(--code-number);
+}
+
+.ns-code-comment {
+  color: var(--code-comment);
+}
+
+.ns-inline-code {
+  padding: var(--border-width-1) var(--space-1);
+  color: var(--code-text);
+  font: var(--type-code-sm);
+  letter-spacing: var(--type-code-sm-letter-spacing);
+  overflow-wrap: anywhere;
+  background: var(--code-surface);
+  border: var(--border-width-1) solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+}

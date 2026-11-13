@@ -1,0 +1,18 @@
+---
+import DocSection from "../../components/DocSection.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+---
+
+<DocsLayout title="About Neurosift" description="What Neurosift is, and what its design system is for.">
+  <Intro
+    lead="Neurosift is a free, open-source browser tool from the Flatiron Institute for exploring neuroscience data. It opens NWB files straight from the DANDI, EMBER and OpenNeuro archives, reading only the parts you look at, so even very large recordings open without a download."
+    status="Updated November 10, 2026 · Get started · Version 0.1, a proposal not yet reviewed by the Neurosift maintainers"
+  />
+
+  <DocSection title="What it is" lead="A shared library of design decisions, reusable components and usage guidance for every part of Neurosift, from the archive browsers to the file viewer and its data views." />
+
+  <DocSection title="Who it is for" lead="Designers, front-end developers, the Neurosift and CatalystNeuro maintainers, and scientists contributing a new view for a neurodata type." />
+
+  <DocSection title="Why it exists" lead="Neurosift grew view by view. A walkthrough in November 2026 found separate patterns for time controls, tabs, loading and errors, and failures that left people on an endless “Loading...”. This system replaces them with one consistent experience." />
+</DocsLayout>

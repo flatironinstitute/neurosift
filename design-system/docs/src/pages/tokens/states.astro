@@ -1,0 +1,56 @@
+---
+import { withBase } from "../../navigation";
+import DocTable from "../../components/DocTable.astro";
+import { Button, Checkbox, TextInput } from "@ui";
+import DocSection from "../../components/DocSection.astro";
+import Intro from "../../components/Intro.astro";
+import TokenTable from "../../components/TokenTable.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { TokenView } from "../../tokens";
+
+const rows = [
+  ["Hover", "action.primary-hover", "Primary button"],
+  ["Hover", "action.secondary-hover", "Secondary button"],
+  ["Hover", "surface.row-hover", "Tree and table rows, tabs"],
+  ["Hover", "text.link-hover", "Links"],
+  ["Pressed", "action.primary-pressed", "Primary button"],
+  ["Pressed", "action.secondary-pressed", "Secondary button"],
+  ["Focus", "border.focus", "Focus ring on every control, input border on focus"],
+  ["Focus", "border.focus-inverse", "Focus ring on navy surfaces: the header, selected rows"],
+  ["Selected", "surface.row-selected", "Open object in the tree: inverted row"],
+  ["Selected", "border.selected", "Selected tab underline"],
+  ["Disabled", "action.disabled", "Disabled button fill"],
+  ["Disabled", "text.disabled", "Disabled text"],
+  ["Disabled", "border.disabled", "Disabled input and secondary button edge"],
+  ["Error", "border.error", "Input with an error"],
+  ["Error", "status.error.text", "Error message under a field"],
+].map(([lead, path, use]) => ({ lead, view: TokenView.of(path), use }));
+const noop = () => {};
+---
+
+<DocsLayout title="State tokens" description="The tokens that carry hover, pressed, focus, selected, disabled and error states.">
+  <Intro
+    lead="Hover, pressed, focus, selected, disabled and error use the same tokens in every component, so a state looks the same wherever it appears."
+    status="Updated November 6, 2026 · Tokens · Semantic tokens"
+    rules={[
+      { title: "Color is the third signal", text: "Selected rows invert, errors add a message, disabled controls lose their edge. Color comes after shape and words." },
+      { title: "Focus always shows", text: "A 2px border/focus ring with a 2px gap on every control, never removed." },
+      { title: "Say why it’s off", text: "If a control is disabled for a reason, such as a missing API key, say why next to it." },
+    ]}
+  />
+
+  <DocSection title="State tokens" lead="The semantic tokens that carry a state.">
+    <TokenTable caption="State tokens" rows={rows} sample="swatch" leadColumn="State" />
+    <p class="doc-note">The matrix of states across components arrives with the components, so each cell can be a real component in that state.</p>
+  </DocSection>
+
+  <DocSection title="States across components" lead="The same states side by side, as the real components draw them. Hover, press or Tab to the ones in the Default column to see the rest; a dash means the state doesn't apply.">
+    <DocTable caption="States across components" columns={["Component", "Default", "Selected", "Disabled", "Error"]}>
+      <tr><th scope="row">Primary button</th><td><Button variant="primary">Open file</Button></td><td>—</td><td><Button variant="primary" disabled>Open file</Button></td><td>—</td></tr>
+      <tr><th scope="row">Secondary button</th><td><Button variant="secondary">Share view</Button></td><td>—</td><td><Button variant="secondary" disabled>Share view</Button></td><td>—</td></tr>
+      <tr><th scope="row">Text input</th><td><TextInput label="Dandiset ID" value="000673" onChange={noop} /></td><td>—</td><td><TextInput label="Dandiset ID" value="000673" disabled onChange={noop} /></td><td><TextInput label="Dandiset ID" value="0006" error="Dandiset IDs have six digits." onChange={noop} /></td></tr>
+      <tr><th scope="row">Checkbox</th><td><Checkbox label="Show NWB files only" checked={false} onChange={noop} /></td><td><Checkbox label="Show NWB files only" checked onChange={noop} /></td><td><Checkbox label="Show NWB files only" checked={false} disabled onChange={noop} /></td><td>—</td></tr>
+    </DocTable>
+    <p class="doc-note">Tabs and tree rows have their own states on <a href={withBase("/components/tabs/")}>Tabs and segmented controls</a> and <a href={withBase("/components/tables/")}>Tables</a>.</p>
+  </DocSection>
+</DocsLayout>

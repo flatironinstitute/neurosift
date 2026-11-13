@@ -1,7 +1,27 @@
-import { getRedirectUrl } from "@hdf5Interface";
 import {
-  CSSProperties,
+  getHdf5DatasetData,
+  getRedirectUrl,
+  useHdf5Group,
+} from "@hdf5Interface";
+import ViewError from "@components/ViewError/ViewError";
+import { useCssVars } from "@components/useCssVars";
+import {
+  AccordionItem,
+  Checkbox,
+  InlineMessage,
+  LoadingState,
+  Playback,
+  SegmentedControl,
+  Select,
+  Slider,
+  Spinner,
+  TimeOverview,
+  ViewPanel,
+} from "@ui";
+import {
   FunctionComponent,
+  KeyboardEvent,
+  ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -9,13 +29,28 @@ import {
   useState,
 } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useSetSearchParamsKeepingHash } from "../../urlHash";
+import {
+  useLinkedSettings,
+  useShareSettings,
+} from "@shared/shareLink/useShareSettings";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
-import { IconButton } from "@mui/material";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import getAuthorizationHeaderForUrl from "../../../util/getAuthorizationHeaderForUrl";
-import { resolveExternalVideoUrl } from "../../externalVideoUtils";
+import {
+  normalizeExternalFileValue,
+  resolveExternalVideoUrl,
+  VideoProblem,
+  videoProblemOf,
+} from "../../externalVideoUtils";
+import VideoUnavailable from "../../VideoUnavailable";
+import NumberSetting from "../common/NumberSetting";
+import { parseOptional } from "../common/parseOptional";
+import {
+  TIME_VIEW_CHROME,
+  TIME_VIEW_INSET,
+  TIME_VIEW_SETTINGS,
+  TIME_VIEW_TITLE,
+} from "../common/TimeView";
+import { usePlaybackOwner } from "../common/usePlayback";
+import { useTimeWindow } from "../common/useTimeWindow";
 import {
   drawPoseFrame,
   findSiblingVideoCandidates,
@@ -30,6 +65,7 @@ import {
   VideoCandidate,
   videoTimeToSessionTime,
 } from "./poseEstimationUtils";
+import "./PoseEstimationView.css";
 
 type Props = {
   width?: number;
@@ -48,55 +84,63 @@ type ResolvedVideo = {
   timestamps: Float64Array | null;
 };
 
-// Shared visual tokens: two text sizes, two muted greys, one hairline color, and
-// a faint panel background, to keep the widget reading as one consistent surface.
-const FS = { body: 13, small: 11 };
-const INK = { muted: "#666", faint: "#999" };
-const HAIRLINE = "#e8e8e8";
-const PANEL_BG = "#fafafa";
+type SectionKey = "view" | "video" | "markers" | "trails" | "confidence";
+
 // Leading-window first paint: rows loaded up front so the overlay renders fast;
 // the full coordinate arrays then stream in the background and swap in.
 const LEADING_FRAMES = 6000;
+const THIS_FILE = "__this__";
+const NO_SOURCE = "__empty__";
+/** The time slider's height under the playback controls. */
+const SEEK_HEIGHT = 48;
 
-// Small inline spinner for the loading / empty states. The keyframe is injected
-// alongside it so it works in the early-return case too (before the main tree).
-const Spinner: FunctionComponent<{ label: string; onDark?: boolean }> = ({
-  label,
-  onDark,
-}) => (
-  <div
-    style={{
-      display: "flex",
-      alignItems: "center",
-      gap: 8,
-      padding: 18,
-      color: onDark ? "#aaa" : INK.muted,
-      fontSize: FS.body,
-    }}
-  >
-    <style>{"@keyframes ns-pose-spin{to{transform:rotate(360deg)}}"}</style>
-    <span
-      style={{
-        width: 14,
-        height: 14,
-        flexShrink: 0,
-        borderRadius: "50%",
-        border: `2px solid ${onDark ? "#444" : "#ddd"}`,
-        borderTopColor: onDark ? "#bbb" : INK.muted,
-        animation: "ns-pose-spin 0.8s linear infinite",
-        display: "inline-block",
-      }}
-    />
-    {label}
-  </div>
-);
+const plural = (n: number, word: string) =>
+  `${n.toLocaleString("en-US")} ${word}${n === 1 ? "" : "s"}`;
 
-// Standalone PoseEstimation overlay widget. Keyed on an ndx-pose PoseEstimation
-// container: loads its keypoints, lets the user pick which external-file video to
-// overlay them on (best name-guess suggested first, always overridable), checks
-// time/resolution compatibility (shown as an obvious banner, warn-and-allow), and
-// draws the keypoints on a canvas over the video, indexed by the shared session
-// clock (no link between pose and video is required).
+const MarkerRow: FunctionComponent<{
+  label: string;
+  color: string;
+  shown: boolean;
+  onShownChange: (shown: boolean) => void;
+  onSolo: () => void;
+}> = ({ label, color, shown, onShownChange, onSolo }) => {
+  const ref = useCssVars<HTMLDivElement>({ "--marker-color": color });
+  return (
+    <div
+      ref={ref}
+      className="pose-marker"
+      data-off={shown ? undefined : ""}
+      title="Double-click to show only this marker"
+      onDoubleClick={onSolo}
+    >
+      <Checkbox label={label} checked={shown} onChange={onShownChange} />
+      <span className="pose-marker-swatch" aria-hidden="true" />
+    </div>
+  );
+};
+
+/** The video area: what the frame, settings and time slider leave of the view. */
+const PoseStage: FunctionComponent<{
+  width: number;
+  height: number;
+  children: ReactNode;
+}> = ({ width, height, children }) => {
+  const ref = useCssVars<HTMLDivElement>({
+    "--pose-w": Math.max(240, width - TIME_VIEW_INSET - TIME_VIEW_SETTINGS),
+    "--pose-h": Math.max(
+      200,
+      height - TIME_VIEW_CHROME - TIME_VIEW_TITLE - SEEK_HEIGHT,
+    ),
+  });
+  return (
+    <div ref={ref} className="pose-stage">
+      {children}
+    </div>
+  );
+};
+
+// The ndx-pose overlay: keypoints drawn over a chosen external-file video, or on
+// their own, on the shared session clock (no link between pose and video needed).
 const PoseEstimationView: FunctionComponent<Props> = ({
   width = 800,
   height = 600,
@@ -104,10 +148,8 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   path,
 }) => {
   const [searchParams] = useSearchParams();
-  const setSearchParams = useSetSearchParamsKeepingHash();
-  // Extract the DANDI identifiers as stable strings. Effects key off these rather
-  // than the whole `searchParams` object, so writing `pose*` params (which mutates
-  // searchParams) does not re-trigger candidate discovery or video resolution.
+  const linked = useLinkedSettings();
+  // Effects key off these stable strings rather than the whole `searchParams`.
   const dandisetId = searchParams.get("dandisetId");
   const dandisetVersion = searchParams.get("dandisetVersion") || "draft";
 
@@ -116,8 +158,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   const [candidates, setCandidates] = useState<VideoCandidate[]>([]);
   const [selectedVideoPath, setSelectedVideoPath] = useState<string>("");
   const [video, setVideo] = useState<ResolvedVideo | null>(null);
-  const [videoError, setVideoError] = useState<string>();
-  const [codecError, setCodecError] = useState(false);
+  const [videoProblem, setVideoProblem] = useState<VideoProblem>();
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   // Skeleton edges are off by default (many files define no edges at all).
   const [showEdges, setShowEdges] = useState(false);
@@ -141,13 +182,46 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   const [discoveryDone, setDiscoveryDone] = useState(false);
   // User toggle to view the pose alone (no video) even when a video exists.
   const [forcePoseOnly, setForcePoseOnly] = useState(false);
-  // Collapse the left controls panel to give the wide video the full width.
-  const [panelCollapsed, setPanelCollapsed] = useState(false);
   // Pose-only playback clock (kept in a ref so the rAF loop does not re-render
   // every frame); the slider mirrors it at ~10 Hz.
   const poseClock = useRef({ t: 0, playing: false, last: 0 });
   const [poseUiTime, setPoseUiTime] = useState(0);
   const [posePlaying, setPosePlaying] = useState(false);
+  const [videoPlaying, setVideoPlaying] = useState(false);
+  const [speed, setSpeed] = useState("1");
+  const speedRef = useRef(1);
+  speedRef.current = Number(speed);
+  const [frameSize, setFrameSize] = useState<{ w: number; h: number } | null>(
+    null,
+  );
+  const [open, setOpen] = useState<Record<SectionKey, boolean>>({
+    view: true,
+    video: true,
+    markers: true,
+    trails: false,
+    confidence: false,
+  });
+  const section = (key: SectionKey) => ({
+    open: open[key],
+    onToggle: (o: boolean) => setOpen((prev) => ({ ...prev, [key]: o })),
+  });
+  const timeWindow = useTimeWindow();
+
+  const group = useHdf5Group(nwbUrl, path);
+  const [sourceSoftware, setSourceSoftware] = useState<string>();
+  useEffect(() => {
+    setSourceSoftware(undefined);
+    if (!group?.datasets.some((d) => d.name === "source_software")) return;
+    let canceled = false;
+    getHdf5DatasetData(nwbUrl, `${path}/source_software`, {})
+      .then(
+        (v) => !canceled && setSourceSoftware(normalizeExternalFileValue(v)),
+      )
+      .catch(() => {});
+    return () => {
+      canceled = true;
+    };
+  }, [group, nwbUrl, path]);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -168,12 +242,14 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   const selectedCandidate = candidates.find(
     (c) => c.path === selectedVideoPath,
   );
-  const noPlayableVideo = !selectedCandidate || codecError || !!videoError;
+  const noPlayableVideo = !selectedCandidate || !!videoProblem;
   // Render the pose alone (on a plain canvas with its own clock) when the user
   // picks "Pose only" (forcePoseOnly), or as a fallback when no playable video
   // exists once the sibling scan has finished. An explicit Pose-only choice wins
   // immediately, even mid-scan, so 3D (which defaults to it) never waits.
   const poseOnlyMode = forcePoseOnly || (!scanning && noPlayableVideo);
+  const playing = poseOnlyMode ? posePlaying : videoPlaying;
+  const disabledReason = usePlaybackOwner(playing);
   const poseExtent = useMemo(() => (pose ? getPoseExtent(pose) : null), [pose]);
 
   // Group discovered videos by their source file for the two-step picker (which
@@ -181,7 +257,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   const sources: { key: string; label: string; videos: VideoCandidate[] }[] =
     [];
   for (const c of candidates) {
-    const key = c.sourceNwbUrl || "__this__";
+    const key = c.sourceNwbUrl || THIS_FILE;
     let s = sources.find((x) => x.key === key);
     if (!s) {
       s = { key, label: c.sourceLabel || "(this file)", videos: [] };
@@ -191,15 +267,13 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   }
   const selectedSource = selectedCandidate
     ? sources.find(
-        (s) => s.key === (selectedCandidate.sourceNwbUrl || "__this__"),
+        (s) => s.key === (selectedCandidate.sourceNwbUrl || THIS_FILE),
       )
     : sources[0];
-  const selectedSourceKey = selectedSource?.key ?? "__empty__";
+  const selectedSourceKey = selectedSource?.key ?? NO_SOURCE;
 
-  // --- URL persistence (static view state). See url_react_router.md for the
-  // param schema and write-timing rules; poseTime is handled separately.
-  // Keypoint series names share a long common prefix (e.g. "PoseEstimationSeries");
-  // strip it for the URL value, shorter and still a stable per-file id.
+  // Keypoint names share a long prefix (e.g. "PoseEstimationSeries"); a link
+  // names them without it.
   const namePrefix = useMemo(() => {
     const names = pose?.keypoints.map((k) => k.name) ?? [];
     if (names.length < 2) return "";
@@ -219,24 +293,22 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   const [hydrated, setHydrated] = useState(false);
   const videoHydratedRef = useRef(false);
 
-  // Hydrate static view state from the URL once the pose (hence keypoint names)
-  // is known. Flipping `hydrated` gates the writer so it cannot clobber the
-  // incoming params before they are applied.
+  // Apply the link's settings once the pose (hence keypoint names) is known.
   useEffect(() => {
     if (!pose || hydrated) return;
-    const g = (k: string) => searchParams.get(k);
-    if (g("poseEdges") === "1") setShowEdges(true);
+    const g = (k: string) => linked.get(k);
+    if (g("edges") === "1") setShowEdges(true);
     // 3D pose defaults to pose-only (overlaying world coordinates on a 2D camera
-    // is meaningless); an explicit poseOnly param or a chosen poseVideo wins.
+    // is meaningless); an explicit poseOnly or a chosen video wins.
     if (g("poseOnly") === "1") setForcePoseOnly(true);
-    else if (pose.is3D && !g("poseVideo")) setForcePoseOnly(true);
-    const conf = g("poseConf");
+    else if (pose.is3D && !g("video")) setForcePoseOnly(true);
+    const conf = g("confidence");
     if (conf !== null) setConfThreshold(Number(conf) || 0);
-    if (g("poseFade") === "1") setFadeByConfidence(true);
-    if (g("poseTrails") === "1") setShowTrails(true);
-    const tw = g("poseTrailSec");
+    if (g("fade") === "1") setFadeByConfidence(true);
+    if (g("trails") === "1") setShowTrails(true);
+    const tw = g("trailSeconds");
     if (tw !== null) setTrailSec(Number(tw) || 1.0);
-    const hid = g("poseHidden");
+    const hid = g("hidden");
     if (hid) {
       const want = new Set(hid.split(",").filter(Boolean));
       const full = pose.keypoints
@@ -245,14 +317,14 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       if (full.length) setHidden(new Set(full));
     }
     setHydrated(true);
-  }, [pose, hydrated, searchParams, shortName]);
+  }, [pose, hydrated, linked, shortName]);
 
-  // Apply the selected video from the URL once candidates are discovered (incl.
+  // Apply the link's video once candidates are discovered (incl.
   // the cross-file sibling scan), matched by series name (+ source asset id).
   useEffect(() => {
     if (videoHydratedRef.current || candidates.length === 0) return;
-    const wantName = searchParams.get("poseVideo");
-    const wantSrc = searchParams.get("poseVideoSource");
+    const wantName = linked.get("video");
+    const wantSrc = linked.get("videoSource");
     if (wantName) {
       const m = candidates.find(
         (c) =>
@@ -262,73 +334,71 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       if (m) setSelectedVideoPath(m.path);
     }
     videoHydratedRef.current = true;
-  }, [candidates, searchParams]);
+  }, [candidates, linked]);
 
-  // Write static view state to the URL live (replace, defaults omitted). poseVideo
-  // is written only after the video has been applied, so the incoming param is
-  // not wiped before it is read.
-  useEffect(() => {
-    if (!hydrated) return;
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        const setDel = (k: string, v: string | null) =>
-          v ? next.set(k, v) : next.delete(k);
-        setDel(
-          "poseHidden",
-          hidden.size ? [...hidden].map(shortName).sort().join(",") : null,
-        );
-        setDel("poseEdges", showEdges ? "1" : null);
-        setDel("poseOnly", forcePoseOnly ? "1" : null);
-        setDel("poseConf", confThreshold > 0 ? String(confThreshold) : null);
-        setDel("poseFade", fadeByConfidence ? "1" : null);
-        setDel("poseTrails", showTrails ? "1" : null);
-        setDel("poseTrailSec", trailSec !== 1.0 ? String(trailSec) : null);
-        if (videoHydratedRef.current) {
-          const cand = candidates.find((c) => c.path === selectedVideoPath);
-          const suggested = candidates[0];
-          const isSuggested =
-            !!cand && !!suggested && cand.path === suggested.path;
-          setDel("poseVideo", cand && !isSuggested ? cand.name : null);
-          const m = cand?.sourceNwbUrl?.match(/\/assets\/([0-9a-fA-F-]{36})\//);
-          setDel("poseVideoSource", m ? m[1] : null);
-        }
-        return next;
-      },
-      { replace: true },
-    );
-  }, [
-    hydrated,
-    offset,
-    hidden,
-    showEdges,
-    forcePoseOnly,
-    confThreshold,
-    fadeByConfidence,
-    showTrails,
-    trailSec,
-    selectedVideoPath,
-    candidates,
-    shortName,
-    setSearchParams,
-  ]);
-
-  // poseTime: written on pause/seek (never live), cleared on play; the loader
-  // accepts any value and seeds it paused (see url_react_router.md).
-  const writePoseTime = useCallback(
-    (t: number | null) => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          if (t === null || !Number.isFinite(t)) next.delete("poseTime");
-          else next.set("poseTime", t.toFixed(3));
-          return next;
-        },
-        { replace: true },
-      );
-    },
-    [setSearchParams],
+  // The paused moment, for a link; playing clears it.
+  const [pausedTime, writePoseTime] = useState<number | null>(() => {
+    const t = Number(linked.get("time") ?? NaN);
+    return Number.isFinite(t) ? t : null;
+  });
+  const videoCandidate = candidates.find((c) => c.path === selectedVideoPath);
+  const videoSource = videoCandidate?.sourceNwbUrl?.match(
+    /\/assets\/([0-9a-fA-F-]{36})\//,
   );
+  const flag = (on: boolean) => (on ? "1" : "");
+  const setting = (key: string, value: string, label: string) => ({
+    key,
+    value,
+    default: "",
+    label,
+  });
+  // Until the pose and its videos load, the link keeps its own settings.
+  const hydratedSettings = hydrated
+    ? [
+        setting(
+          "hidden",
+          [...hidden].map(shortName).sort().join(","),
+          "the keypoints",
+        ),
+        setting("edges", flag(showEdges), "the skeleton"),
+        setting("poseOnly", flag(forcePoseOnly), "pose only"),
+        setting(
+          "confidence",
+          confThreshold > 0 ? String(confThreshold) : "",
+          "the confidence",
+        ),
+        setting("fade", flag(fadeByConfidence), "the confidence"),
+        setting("trails", flag(showTrails), "the trails"),
+        setting(
+          "trailSeconds",
+          trailSec !== 1.0 ? String(trailSec) : "",
+          "the trails",
+        ),
+      ]
+    : [];
+  const videoSettings = videoHydratedRef.current
+    ? [
+        setting(
+          "video",
+          videoCandidate && videoCandidate.path !== candidates[0]?.path
+            ? videoCandidate.name
+            : "",
+          "the video",
+        ),
+        setting("videoSource", videoSource ? videoSource[1] : "", "the video"),
+      ]
+    : [];
+  useShareSettings([
+    ...hydratedSettings,
+    ...videoSettings,
+    setting(
+      "time",
+      pausedTime !== null && Number.isFinite(pausedTime)
+        ? pausedTime.toFixed(3)
+        : "",
+      "the time",
+    ),
+  ]);
   const videoSeededRef = useRef(false);
 
   // True while the full-resolution coordinates are still streaming in the
@@ -439,14 +509,14 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   // the two-phase load swaps `pose` when the full coordinates arrive, and without
   // this guard that swap would jump playback back to start. timeRange comes from
   // the full timestamps in both phases, so leading and full agree on it. Initial
-  // position: a deep-linked poseTime (clamped) if present, else the span start.
+  // position: a linked time (clamped) if present, else the span start.
   const clockSeededKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (!pose) return;
     const key = `${nwbUrl}|${path}`;
     if (clockSeededKeyRef.current === key) return;
     clockSeededKeyRef.current = key;
-    const raw = searchParams.get("poseTime");
+    const raw = linked.get("time");
     const t0 =
       raw !== null && Number.isFinite(Number(raw))
         ? Math.min(
@@ -462,7 +532,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       initialVisibleStartTimeSec: pose.timeRange.start,
       initialVisibleEndTimeSec: pose.timeRange.end,
     });
-  }, [pose, nwbUrl, path, searchParams, initializeTimeseriesSelection]);
+  }, [pose, nwbUrl, path, linked, initializeTimeseriesSelection]);
 
   // Discover + rank candidate videos once per container. In-file first; if none,
   // scan sibling assets of the same session. Gated on the steady boolean
@@ -529,10 +599,10 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     if (!hydrated || edgesDefaultedRef.current) return;
     if (!discoveryDone || !pose || pose.edges.length === 0) return;
     edgesDefaultedRef.current = true;
-    if (candidates.length === 0 && searchParams.get("poseEdges") === null) {
+    if (candidates.length === 0 && linked.get("edges") === null) {
       setShowEdges(true);
     }
-  }, [hydrated, discoveryDone, pose, candidates, searchParams]);
+  }, [hydrated, discoveryDone, pose, candidates, linked]);
 
   // Resolve the selected video to a playable URL + its session-time range. The
   // candidate may live in a sibling asset (cross-file), so resolve against its
@@ -543,8 +613,9 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     const srcUrl = cand?.sourceNwbUrl || nwbUrl;
     let canceled = false;
     setVideo(null);
-    setVideoError(undefined);
-    setCodecError(false);
+    setVideoPlaying(false);
+    setVideoProblem(undefined);
+    setFrameSize(null);
     (async () => {
       try {
         const downloadUrl = await resolveExternalVideoUrl(
@@ -556,11 +627,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
         // A native <video> cannot send the DANDI auth header, so for an embargoed
         // asset the /download/ URL 401s. Pre-resolve the presigned S3 URL (with
         // auth) and play that; a no-op for public assets.
-        const auth = getAuthorizationHeaderForUrl(downloadUrl);
-        const redirected = await getRedirectUrl(
-          downloadUrl,
-          auth ? { Authorization: auth } : undefined,
-        );
+        const redirected = await getRedirectUrl(downloadUrl);
         const range = await getVideoTimeRange(srcUrl, selectedVideoPath);
         const timestamps = await loadVideoTimestamps(srcUrl, selectedVideoPath);
         if (canceled) return;
@@ -571,8 +638,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
           timestamps,
         });
       } catch (err) {
-        if (!canceled)
-          setVideoError(err instanceof Error ? err.message : String(err));
+        if (!canceled) setVideoProblem(videoProblemOf(err));
       }
     })();
     return () => {
@@ -710,7 +776,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       const dt = (now - clk.last) / 1000;
       clk.last = now;
       if (clk.playing) {
-        clk.t += dt;
+        clk.t += dt * speedRef.current;
         // Stop at the end (no loop), matching the native video element.
         if (clk.t >= pose.timeRange.end) {
           clk.t = pose.timeRange.end;
@@ -766,815 +832,457 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     }
   }, [currentTime, poseOnlyMode]);
 
-  if (poseError) {
-    return (
-      <div style={{ padding: 20, color: "#a33" }}>
-        Unable to render PoseEstimation: {poseError}
-      </div>
-    );
-  }
-  if (!pose) return <Spinner label="Loading pose data..." />;
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.playbackRate = Number(speed);
+  }, [speed, video]);
+
+  if (poseError) return <ViewError what="the pose overlay" error={poseError} />;
+  if (!pose) return <LoadingState label="Loading the pose" phase="loading" />;
+
+  const name = path.split("/").pop() || path;
+  const allNames = pose.keypoints.map((k) => k.name);
+  const shownCount = allNames.length - hidden.size;
+  const sampleCounts = pose.keypoints.map((k) => k.timestamps.length);
+  const samples = Math.max(...sampleCounts);
+  const videoName = selectedCandidate?.name;
+  const size =
+    frameSize ??
+    (poseOnlyMode && pose.dimensions[0]?.[0] > 0
+      ? { w: pose.dimensions[0][1], h: pose.dimensions[0][0] }
+      : null);
+  const sizeText = size ? `${size.w} × ${size.h}` : null;
+  const summary = [
+    plural(pose.keypoints.length, "marker"),
+    sampleCounts.every((n) => n === samples)
+      ? `${samples.toLocaleString("en-US")} samples each`
+      : `up to ${samples.toLocaleString("en-US")} samples`,
+    sourceSoftware,
+    poseOnlyMode
+      ? ["pose only", sizeText].filter(Boolean).join(", ")
+      : videoName && ["over " + videoName, sizeText].filter(Boolean).join(", "),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const chartTitle = `${name} · ${plural(pose.keypoints.length, "marker")} ${
+    poseOnlyMode || !videoName ? "on their own" : `over ${videoName}`
+  }`;
+
+  // How the pose and video spans line up on the session clock, once resolved.
+  const videoHasTime = !!video && video.endTime > video.startTime;
+  const overlaps =
+    videoHasTime &&
+    Math.min(pose.timeRange.end, video.endTime) >
+      Math.max(pose.timeRange.start, video.startTime);
+  const alignment =
+    !video || poseOnlyMode
+      ? null
+      : !videoHasTime
+        ? "This video has no frame times, so it starts at session time 0. If the markers don't sit on the whisker, try another video."
+        : !overlaps
+          ? "The pose and this video don't overlap in time. Choose another video."
+          : null;
+
+  const fileOptions = scanning
+    ? [{ value: NO_SOURCE, label: "Searching this session…" }]
+    : sources.map((s) => ({
+        value: s.key,
+        label: s.key === THIS_FILE ? "This file" : s.label,
+      }));
+  const videoOptions = scanning
+    ? [{ value: "", label: "Searching this session…" }]
+    : (selectedSource?.videos ?? []).map((c, index) => ({
+        value: c.path,
+        label: [
+          c.name,
+          selectedSource?.videos.some((o) => o !== c && o.name === c.name)
+            ? c.externalBasename
+            : "",
+          index === 0 && c.score > 0 ? "suggested" : "",
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        meta: c.externalBasename,
+      }));
+
+  const time = poseOnlyMode
+    ? poseUiTime
+    : (currentTime ?? pose.timeRange.start);
+  const setPlaying = (next: boolean) => {
+    if (next && disabledReason) return;
+    if (!poseOnlyMode) {
+      const v = videoRef.current;
+      if (next) v?.play().catch(() => {});
+      else v?.pause();
+      return;
+    }
+    const clk = poseClock.current;
+    // Pressing play at the end restarts from the beginning.
+    if (next && clk.t >= pose.timeRange.end) {
+      clk.t = pose.timeRange.start;
+      setPoseUiTime(pose.timeRange.start);
+    }
+    clk.playing = next;
+    setPosePlaying(next);
+    writePoseTime(next ? null : clk.t);
+  };
+  const seek = (t: number) => {
+    setCurrentTime(t);
+    if (poseOnlyMode) {
+      poseClock.current.t = t;
+      setPoseUiTime(t);
+      if (!poseClock.current.playing) writePoseTime(t);
+      return;
+    }
+    const v = videoRef.current;
+    if (v && video)
+      v.currentTime = sessionTimeToVideoTime(
+        t,
+        v.duration,
+        video.startTime,
+        video.timestamps,
+        offset,
+      );
+  };
+  const onStageKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== " " || e.target !== e.currentTarget) return;
+    e.preventDefault();
+    setPlaying(!playing);
+  };
+
+  const toggleMarker = (kp: string) =>
+    setHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(kp)) next.delete(kp);
+      else next.add(kp);
+      return next;
+    });
+  const soloMarker = (kp: string) =>
+    setHidden((prev) => {
+      const isolated = prev.size === allNames.length - 1 && !prev.has(kp);
+      return isolated ? new Set() : new Set(allNames.filter((n) => n !== kp));
+    });
+
+  const showProblem = !!videoProblem && !forcePoseOnly;
+  const finding = scanning || (!poseOnlyMode && !video);
 
   return (
-    <div
-      style={{
-        width,
-        height,
-        display: "flex",
-        flexDirection: "row",
-        overflow: "hidden",
-      }}
-    >
-      <style>
-        {".ns-pose-btn{padding:3px 10px;border:1px solid #d4d4d4;border-radius:5px;background:#fff;color:#333;font-size:13px;cursor:pointer}" +
-          ".ns-pose-btn:hover{background:#f0f0f0;border-color:#bcbcbc}" +
-          ".ns-pose-btn:disabled{color:#aaa;background:#f7f7f7;cursor:default}"}
-      </style>
-      {/* Left controls panel (collapsible; gives the wide video its height back). */}
-      {!panelCollapsed && (
-        <div
-          style={{
-            width: 260,
-            flexShrink: 0,
-            display: "flex",
-            flexDirection: "column",
-            borderRight: `1px solid ${HAIRLINE}`,
-            background: PANEL_BG,
-            overflow: "hidden",
-          }}
-        >
-          {/* Panel header: identity + collapse toggle. */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 8,
-              padding: "6px 10px",
-              borderBottom: `1px solid ${HAIRLINE}`,
-            }}
-          >
-            <div style={{ minWidth: 0 }}>
-              <div
-                title={path.split("/").pop()}
-                style={{
-                  fontWeight: 600,
-                  fontSize: FS.body,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {path.split("/").pop()}
-              </div>
-              <div style={{ color: INK.muted, fontSize: FS.small }}>
-                {pose.keypoints.length} keypoints
-                {loadingFull ? " - loading full resolution..." : ""}
-                {loadingConf ? " - loading confidence..." : ""}
-              </div>
-            </div>
-            <IconButton
-              size="small"
-              onClick={() => setPanelCollapsed(true)}
-              title="Collapse panel"
-              sx={{ flexShrink: 0 }}
-            >
-              <ChevronLeftIcon fontSize="small" />
-            </IconButton>
-          </div>
-
-          {/* Panel body: scrolls when the keypoint list is long. */}
-          <div
-            style={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: "auto",
-              display: "flex",
-              flexDirection: "column",
-              gap: 12,
-              padding: 10,
-              fontSize: 13,
-            }}
-          >
-            {/* View switch: keypoints overlaid on the video, or the pose on its
-                own. Pose-only is always available; it is also the automatic
-                fallback when no video can play, and the default for 3D pose. */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={{ color: INK.muted, fontSize: FS.small }}>View</span>
-              <div
-                style={{
-                  display: "flex",
-                  width: "fit-content",
-                  border: `1px solid ${HAIRLINE}`,
-                  borderRadius: 6,
-                  overflow: "hidden",
-                }}
-              >
-                <button
-                  onClick={() => setForcePoseOnly(false)}
-                  disabled={!scanning && noPlayableVideo}
-                  style={{
-                    padding: "3px 12px",
-                    fontSize: FS.small,
-                    border: "none",
-                    borderRight: `1px solid ${HAIRLINE}`,
-                    background: !poseOnlyMode ? "#eef2f7" : "#fff",
-                    color:
-                      !scanning && noPlayableVideo
-                        ? "#ccc"
-                        : !poseOnlyMode
-                          ? "#1f3b57"
-                          : INK.muted,
-                    fontWeight: !poseOnlyMode ? 600 : 400,
-                    cursor:
-                      !scanning && noPlayableVideo ? "default" : "pointer",
-                  }}
-                >
-                  Overlay
-                </button>
-                <button
-                  onClick={() => setForcePoseOnly(true)}
-                  style={{
-                    padding: "3px 12px",
-                    fontSize: FS.small,
-                    border: "none",
-                    background: poseOnlyMode ? "#eef2f7" : "#fff",
-                    color: poseOnlyMode ? "#1f3b57" : INK.muted,
-                    fontWeight: poseOnlyMode ? 600 : 400,
-                    cursor: "pointer",
-                  }}
-                >
-                  Pose only
-                </button>
-              </div>
-              {pose.is3D && (
-                <span style={{ color: INK.faint, fontSize: FS.small }}>
-                  3D pose: shown on its own; an overlay would not register on a
-                  2D camera.
-                </span>
+    <ViewPanel
+      label={name}
+      summary={summary}
+      chartTitle={chartTitle}
+      busy={finding}
+      controls={
+        <>
+          <Playback
+            playing={playing}
+            onPlayingChange={setPlaying}
+            speed={speed}
+            onSpeedChange={setSpeed}
+            time={time}
+            disabledReason={disabledReason}
+          />
+          <div className="pose-seek">
+            <Slider
+              label="Time"
+              unit="s"
+              unitName="seconds"
+              min={pose.timeRange.start}
+              max={pose.timeRange.end}
+              step={0.01}
+              value={Math.min(
+                pose.timeRange.end,
+                Math.max(pose.timeRange.start, time),
               )}
-            </div>
-
-            {/* Background video: pick which source file, then which video within
-                it. The pose keypoints are the overlay; the video is the
-                background they are drawn on. Greyed out in pose-only. */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                opacity: poseOnlyMode ? 0.5 : 1,
+              onChange={seek}
+              showValue={false}
+              showField={false}
+            />
+          </div>
+          {(loadingFull || loadingConf) && (
+            <span className="pose-status" role="status">
+              <Spinner />
+              {loadingFull ? "Loading full resolution…" : "Loading confidence…"}
+            </span>
+          )}
+        </>
+      }
+      overview={
+        timeWindow.ready && (
+          <TimeOverview
+            session={timeWindow.session}
+            value={timeWindow.value}
+            cursor={timeWindow.cursor}
+            onChange={timeWindow.onChange}
+          />
+        )
+      }
+      settings={
+        <>
+          <AccordionItem
+            title="View"
+            summary={poseOnlyMode ? "Pose only" : "Overlay"}
+            {...section("view")}
+          >
+            <SegmentedControl
+              label="View"
+              size="sm"
+              value={poseOnlyMode ? "pose" : "overlay"}
+              onChange={(v) => {
+                setVideoPlaying(false);
+                setForcePoseOnly(v === "pose");
               }}
-            >
-              <span style={{ color: INK.muted, fontSize: FS.small }}>
-                Background video
-              </span>
-              <label
-                style={{ display: "flex", flexDirection: "column", gap: 2 }}
-              >
-                <span style={{ color: INK.faint, fontSize: FS.small }}>
-                  File
-                </span>
-                <select
-                  value={selectedSourceKey}
-                  disabled={scanning || poseOnlyMode}
-                  onChange={(e) => {
-                    const k = e.target.value;
+              options={[
+                {
+                  value: "overlay",
+                  label: "Overlay",
+                  disabled: !scanning && noPlayableVideo,
+                },
+                { value: "pose", label: "Pose only" },
+              ]}
+            />
+            {pose.is3D && (
+              <InlineMessage status={poseOnlyMode ? "info" : "warning"}>
+                This is 3D pose
+                {pose.spatialUnit
+                  ? ` (${pose.spatialUnit}, world coordinates)`
+                  : " (world coordinates)"}
+                . Without the camera calibration, which this file doesn't have,
+                the markers can't sit on a 2D video, so it's shown on its own.
+              </InlineMessage>
+            )}
+          </AccordionItem>
+
+          <AccordionItem
+            title="Video"
+            summary={poseOnlyMode ? "Pose only" : (videoName ?? "Pose only")}
+            {...section("video")}
+          >
+            {scanning || candidates.length > 0 ? (
+              <>
+                <Select
+                  label="File"
+                  size="sm"
+                  value={scanning ? NO_SOURCE : selectedSourceKey}
+                  disabled={scanning || forcePoseOnly}
+                  options={fileOptions}
+                  onChange={(k) => {
                     const first = sources.find((s) => s.key === k)?.videos[0];
                     if (first) setSelectedVideoPath(first.path);
                   }}
-                >
-                  {sources.map((s) => (
-                    <option key={s.key} value={s.key}>
-                      {s.label}
-                    </option>
-                  ))}
-                  {sources.length === 0 && (
-                    <option value="__empty__" disabled>
-                      {scanning
-                        ? "(searching other files...)"
-                        : "(no videos found)"}
-                    </option>
-                  )}
-                </select>
-              </label>
-              {selectedSource && (
-                <label
-                  style={{ display: "flex", flexDirection: "column", gap: 2 }}
-                >
-                  <span style={{ color: INK.faint, fontSize: FS.small }}>
-                    Video
-                  </span>
-                  <select
-                    value={selectedVideoPath}
-                    disabled={poseOnlyMode}
-                    onChange={(e) => setSelectedVideoPath(e.target.value)}
-                  >
-                    {selectedSource.videos.map((c, index) => (
-                      <option key={c.path} value={c.path}>
-                        {index === 0 && c.score > 0 ? "[suggested] " : ""}
-                        {c.name}
-                        {c.externalBasename ? ` (${c.externalBasename})` : ""}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-            </div>
-            {/* Video alignment: the offset and how the pose and video spans line
-                up on the session clock (both spans share one neutral color). */}
-            {selectedCandidate &&
-              (() => {
-                const v = video;
-                const hasV = !!v && v.endTime > v.startTime;
-                const vStart =
-                  v && v.endTime > v.startTime
-                    ? v.startTime
-                    : pose.timeRange.start;
-                const vEnd =
-                  v && v.endTime > v.startTime ? v.endTime : pose.timeRange.end;
-                const ovStart = Math.max(pose.timeRange.start, vStart);
-                const ovEnd = Math.min(pose.timeRange.end, vEnd);
-                const hasOverlap = hasV && ovEnd > ovStart;
-                // Distinguish the alignment-status states explicitly so the
-                // "still fetching" case is not mistaken for "no timing".
-                // - resolving: the video URL/range is still being fetched; show
-                //   nothing until it lands (a blank is honest, "unknown" is not).
-                // - videoError: resolution failed outright.
-                // - !hasV (resolved, degenerate range): the ImageSeries carries
-                //   no usable timing metadata, surfaced as a real warning.
-                const resolving = !v && !videoError && !codecError;
-                const status: {
-                  text: string;
-                  color: string;
-                  title?: string;
-                } | null = resolving
-                  ? null
-                  : videoError
-                    ? {
-                        text: "video could not be loaded",
-                        color: "#b26a00",
-                        title: videoError,
-                      }
-                    : !hasV
-                      ? {
-                          text: "no timing metadata in this video",
-                          color: "#b26a00",
-                          title:
-                            "This video's ImageSeries stores neither per-frame timestamps nor a starting_time + rate, so it cannot be placed on the session clock. The overlay is still drawn (assuming the video starts at session time 0), but the pose/video alignment cannot be verified and may be off. Try another video if the keypoints do not sit on the animal.",
-                        }
-                      : hasOverlap
-                        ? {
-                            text: `aligned ${ovStart.toFixed(0)}-${ovEnd.toFixed(0)} s`,
-                            color: "#2e7d32",
-                          }
-                        : {
-                            text: "no overlap - pick another video",
-                            color: "#b26a00",
-                          };
-                const t0 = Math.min(pose.timeRange.start, vStart);
-                const t1 = Math.max(pose.timeRange.end, vEnd);
-                const span = t1 - t0 || 1;
-                const SPAN_COLOR = "#9aa7b5";
-                const rowStyle: CSSProperties = {
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                };
-                const labelStyle: CSSProperties = {
-                  width: 40,
-                  fontSize: 10,
-                  color: INK.muted,
-                  textAlign: "right",
-                };
-                const trackStyle: CSSProperties = {
-                  position: "relative",
-                  flex: 1,
-                  height: 8,
-                  background: HAIRLINE,
-                  borderRadius: 3,
-                };
-                const seg = (a: number, b: number): CSSProperties => ({
-                  position: "absolute",
-                  top: 0,
-                  bottom: 0,
-                  left: `${((a - t0) / span) * 100}%`,
-                  width: `${(Math.max(b - a, 0) / span) * 100}%`,
-                  minWidth: 2,
-                  background: SPAN_COLOR,
-                  borderRadius: 3,
-                });
-                return (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 6,
-                      borderTop: `1px solid ${HAIRLINE}`,
-                      paddingTop: 8,
-                    }}
-                  >
-                    <span style={{ color: INK.muted, fontSize: FS.small }}>
-                      Video alignment
-                    </span>
-                    <div style={rowStyle}>
-                      <span style={labelStyle}>pose</span>
-                      <div style={trackStyle}>
-                        <div
-                          style={seg(pose.timeRange.start, pose.timeRange.end)}
-                        />
-                      </div>
-                    </div>
-                    <div style={rowStyle}>
-                      <span style={labelStyle}>video</span>
-                      <div style={trackStyle}>
-                        {hasV && <div style={seg(vStart, vEnd)} />}
-                      </div>
-                    </div>
-                    {status && (
-                      <span
-                        style={{
-                          fontSize: 10,
-                          paddingLeft: 46,
-                          color: status.color,
-                          cursor: status.title ? "help" : undefined,
-                        }}
-                        title={status.title}
-                      >
-                        {status.text}
-                      </span>
-                    )}
-                    {hasV && (
-                      <span
-                        style={{
-                          color: INK.faint,
-                          fontSize: 10,
-                          paddingLeft: 46,
-                        }}
-                      >
-                        {video?.timestamps
-                          ? "timestamp-aligned"
-                          : "linear-aligned"}
-                      </span>
-                    )}
-                  </div>
-                );
-              })()}
-
-            {/* Keypoint legend / visibility toggles (vertical list, scrolls). */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 4,
-                borderTop: `1px solid ${HAIRLINE}`,
-                paddingTop: 8,
-              }}
-            >
-              <span style={{ color: INK.muted, fontSize: FS.small }}>
-                Keypoints
-              </span>
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  color: pose.edges.length === 0 ? INK.faint : undefined,
-                }}
-                title={
-                  pose.edges.length === 0
-                    ? "This file defines no skeleton edges"
-                    : "Connect keypoints with the skeleton edges"
-                }
-              >
-                <input
-                  type="checkbox"
-                  checked={showEdges}
-                  disabled={pose.edges.length === 0}
-                  onChange={(e) => setShowEdges(e.target.checked)}
                 />
-                Skeleton{pose.edges.length > 0 ? ` (${pose.edges.length})` : ""}
-              </label>
-              <div style={{ display: "flex", gap: 6 }}>
-                <button
-                  className="ns-pose-btn"
-                  onClick={() => setHidden(new Set())}
-                  disabled={hidden.size === 0}
-                  title="Show every keypoint"
-                  style={{ fontSize: FS.small, padding: "1px 8px" }}
-                >
-                  Show all
-                </button>
-                <button
-                  className="ns-pose-btn"
-                  onClick={() =>
-                    setHidden(new Set(pose.keypoints.map((k) => k.name)))
-                  }
-                  disabled={hidden.size === pose.keypoints.length}
-                  title="Hide every keypoint"
-                  style={{ fontSize: FS.small, padding: "1px 8px" }}
-                >
-                  Hide all
-                </button>
-              </div>
-              {/* Compact wrapped chips (alphabetical), not a full-width list. */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                {pose.keypoints.map((kp) => {
-                  const off = hidden.has(kp.name);
-                  return (
-                    <button
-                      key={kp.name}
-                      onClick={() =>
-                        setHidden((prev) => {
-                          const next = new Set(prev);
-                          if (next.has(kp.name)) next.delete(kp.name);
-                          else next.add(kp.name);
-                          return next;
-                        })
-                      }
-                      onDoubleClick={() =>
-                        setHidden((prev) => {
-                          const all = pose.keypoints.map((k) => k.name);
-                          const isolated =
-                            prev.size === all.length - 1 && !prev.has(kp.name);
-                          return isolated
-                            ? new Set()
-                            : new Set(all.filter((n) => n !== kp.name));
-                        })
-                      }
-                      title="Click to toggle; double-click to show only this"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 4,
-                        padding: "1px 6px",
-                        border: `1px solid ${HAIRLINE}`,
-                        borderRadius: 10,
-                        background: off ? "#f4f4f4" : "#fff",
-                        color: off ? INK.faint : "#333",
-                        cursor: "pointer",
-                        fontSize: FS.small,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: "50%",
-                          background: off ? "#ccc" : kp.color,
-                          border: "1px solid #0003",
-                          flexShrink: 0,
-                        }}
-                      />
-                      {shortName(kp.name)}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Trajectories: each keypoint's recent motion path. */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                borderTop: `1px solid ${HAIRLINE}`,
-                paddingTop: 8,
-              }}
-            >
-              <span style={{ color: INK.muted, fontSize: FS.small }}>
-                Trajectories
-              </span>
-              <label
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-                title="Draw each keypoint's recent path (fading trail)"
-              >
-                <input
-                  type="checkbox"
-                  checked={showTrails}
-                  onChange={(e) => setShowTrails(e.target.checked)}
+                <Select
+                  label="Video"
+                  size="sm"
+                  value={scanning ? "" : selectedVideoPath}
+                  disabled={scanning || forcePoseOnly}
+                  options={videoOptions}
+                  onChange={setSelectedVideoPath}
                 />
-                Show trails
-              </label>
-              {showTrails && (
-                <label
-                  style={{ display: "flex", flexDirection: "column", gap: 2 }}
-                  title="How far back in time each trail reaches"
-                >
-                  <span style={{ color: INK.faint, fontSize: FS.small }}>
-                    window: {trailSec.toFixed(2)} s
-                  </span>
-                  <input
-                    type="range"
-                    min={0.25}
-                    max={5}
-                    step={0.25}
-                    value={trailSec}
-                    onChange={(e) => setTrailSec(Number(e.target.value))}
-                  />
-                </label>
-              )}
-            </div>
-
-            {/* Confidence: hide low-confidence points, and/or fade by confidence.
-                Shown when the file stores per-frame confidence (detected from
-                metadata); the arrays are fetched lazily when a control engages. */}
-            {pose.hasConfidence && (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 6,
-                  borderTop: `1px solid ${HAIRLINE}`,
-                  paddingTop: 8,
-                }}
-              >
-                <span style={{ color: INK.muted, fontSize: FS.small }}>
-                  Confidence
-                </span>
-                <label
-                  style={{ display: "flex", flexDirection: "column", gap: 2 }}
-                  title="Keypoints below this confidence are not drawn"
-                >
-                  <span style={{ color: INK.faint, fontSize: FS.small }}>
-                    hide below: {confThreshold.toFixed(2)}
-                  </span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.05}
-                    value={confThreshold}
-                    onChange={(e) => setConfThreshold(Number(e.target.value))}
-                  />
-                </label>
-                <label
-                  style={{ display: "flex", alignItems: "center", gap: 6 }}
-                  title="Fade each shown keypoint's opacity by its confidence"
-                >
-                  <input
-                    type="checkbox"
-                    checked={fadeByConfidence}
-                    onChange={(e) => setFadeByConfidence(e.target.checked)}
-                  />
-                  Fade by confidence
-                </label>
-              </div>
+              </>
+            ) : (
+              discoveryDone && (
+                <InlineMessage status="info">
+                  No video found for this pose, in this file or the rest of the
+                  session, so it's shown on its own.
+                </InlineMessage>
+              )
             )}
-          </div>
-        </div>
-      )}
+            {alignment && (
+              <InlineMessage status="warning">{alignment}</InlineMessage>
+            )}
+          </AccordionItem>
 
-      {/* Right stage: banners, video/canvas overlay, transport. */}
-      <div
-        style={{
-          flex: 1,
-          minWidth: 0,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-      >
-        {panelCollapsed && (
-          <div
-            style={{
-              padding: "4px 8px",
-              borderBottom: `1px solid ${HAIRLINE}`,
-            }}
+          <AccordionItem
+            title="Markers"
+            summary={`${shownCount} of ${allNames.length} shown`}
+            {...section("markers")}
           >
-            <IconButton
-              size="small"
-              onClick={() => setPanelCollapsed(false)}
-              title="Expand panel"
+            <Checkbox
+              label="All markers"
+              checked={
+                hidden.size === 0 ? true : shownCount === 0 ? false : "mixed"
+              }
+              onChange={(all) => setHidden(new Set(all ? [] : allNames))}
+            />
+            <div className="pose-markers">
+              {pose.keypoints.map((kp) => (
+                <MarkerRow
+                  key={kp.name}
+                  label={shortName(kp.name)}
+                  color={kp.color}
+                  shown={!hidden.has(kp.name)}
+                  onShownChange={() => toggleMarker(kp.name)}
+                  onSolo={() => soloMarker(kp.name)}
+                />
+              ))}
+            </div>
+            {pose.edges.length > 0 && (
+              <Checkbox
+                label="Skeleton"
+                count={plural(pose.edges.length, "edge")}
+                checked={showEdges}
+                onChange={setShowEdges}
+              />
+            )}
+          </AccordionItem>
+
+          <AccordionItem
+            title="Trails"
+            summary={showTrails ? `${trailSec.toFixed(2)} s` : "Off"}
+            {...section("trails")}
+          >
+            <Checkbox
+              label="Show trails"
+              checked={showTrails}
+              onChange={setShowTrails}
+            />
+            {showTrails && (
+              <NumberSetting
+                label="Trail length (s)"
+                value={trailSec}
+                onChange={(text) => {
+                  const n = parseOptional(text);
+                  if (n !== null && n > 0) setTrailSec(n);
+                }}
+              />
+            )}
+          </AccordionItem>
+
+          {pose.hasConfidence && (
+            <AccordionItem
+              title="Confidence"
+              summary={
+                confThreshold > 0
+                  ? `Below ${confThreshold.toFixed(2)} hidden`
+                  : "All shown"
+              }
+              {...section("confidence")}
             >
-              <ChevronRightIcon fontSize="small" />
-            </IconButton>
-          </div>
+              <NumberSetting
+                label="Hide below"
+                placeholder="0"
+                value={confThreshold > 0 ? confThreshold : null}
+                onChange={(text) =>
+                  setConfThreshold(
+                    Math.min(1, Math.max(0, parseOptional(text) ?? 0)),
+                  )
+                }
+              />
+              <Checkbox
+                label="Fade by confidence"
+                checked={fadeByConfidence}
+                onChange={setFadeByConfidence}
+              />
+            </AccordionItem>
+          )}
+        </>
+      }
+    >
+      <PoseStage width={width} height={height}>
+        {showProblem && videoProblem && (
+          <VideoUnavailable problem={videoProblem} />
         )}
-
-        {/* Pose-only notice (codec / no-video reason), above the canvas. */}
-        {poseOnlyMode && (
-          <div
-            style={{
-              padding: "6px 10px",
-              fontSize: FS.body,
-              background: "#eef2f8",
-              color: "#33506e",
-            }}
-          >
-            {codecError
-              ? "Video could not be played (codec unsupported), showing the pose on its own."
-              : videoError
-                ? `Video could not be resolved (${videoError}), showing the pose on its own.`
-                : !selectedCandidate
-                  ? "No video found for this pose (here or in sibling files of the session), showing the pose on its own."
-                  : "Pose-only view (video hidden)."}
-          </div>
-        )}
-
-        {/* 3D pose cannot register on a 2D video without camera calibration; warn
-            (the overlay is still drawn, the dots just will not sit on the animal). */}
-        {pose.is3D && !poseOnlyMode && (
-          <div
-            style={{
-              padding: "6px 10px",
-              fontSize: FS.body,
-              background: "#fff4e5",
-              color: "#8a5a00",
-            }}
-          >
-            This is 3D pose
-            {pose.spatialUnit
-              ? ` (${pose.spatialUnit}, world coordinates)`
-              : " (world coordinates)"}
-            ; on a 2D video the keypoints cannot register without the camera
-            calibration, which is not in this file, so the dots will not sit on
-            the animal. Use "Pose only" to view the pose on its own.
-          </div>
-        )}
-
-        {/* Main area: video overlay, pose-only canvas, or a status message. */}
         <div
           ref={boxRef}
-          style={{
-            flex: 1,
-            minHeight: 0,
-            position: "relative",
-            background: "#111",
-          }}
+          className="pose-box"
+          tabIndex={0}
+          aria-label={`${chartTitle}. Space plays and pauses.`}
+          onKeyDown={onStageKeyDown}
         >
-          {scanning ? (
-            <Spinner
-              onDark
-              label="Searching other files in this session for a video..."
-            />
+          {finding ? (
+            <LoadingState label="Finding the video on DANDI" phase="loading" />
           ) : poseOnlyMode ? (
             <canvas
               ref={canvasRef}
+              className="pose-layer"
               width={box.w}
               height={box.h}
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-              }}
             />
-          ) : !video ? (
-            <Spinner onDark label="Resolving video..." />
           ) : (
-            <>
-              <video
-                ref={videoRef}
-                src={video.url}
-                controls
-                muted
-                playsInline
-                onError={(e) => {
-                  const code = e.currentTarget.error?.code;
-                  // ABORTED fires normally when the src is swapped to another
-                  // video; it is not a real failure, so ignore it.
-                  if (code === MediaError.MEDIA_ERR_ABORTED) return;
-                  // A network failure is transient (dropped connection, expired
-                  // presigned URL): report it as such rather than blaming the
-                  // codec, but still fall back to pose-only.
-                  if (code === MediaError.MEDIA_ERR_NETWORK) {
-                    setVideoError("network error while loading the video");
-                    return;
-                  }
-                  // Unsupported container/codec or a decode failure: this element
-                  // genuinely cannot show the frame.
-                  setCodecError(true);
-                }}
-                onLoadedMetadata={(e) => {
-                  if (videoSeededRef.current || !video) return;
-                  videoSeededRef.current = true;
-                  const raw = searchParams.get("poseTime");
-                  if (raw === null || !Number.isFinite(Number(raw))) return;
-                  const v = e.currentTarget;
-                  v.currentTime = sessionTimeToVideoTime(
-                    Number(raw),
-                    v.duration,
-                    video.startTime,
-                    video.timestamps,
-                    offset,
-                  );
-                  v.pause();
-                }}
-                onPause={(e) => {
-                  if (!video) return;
-                  const v = e.currentTarget;
-                  writePoseTime(
-                    videoTimeToSessionTime(
-                      v.currentTime,
+            video && (
+              <>
+                <video
+                  ref={videoRef}
+                  className="pose-layer"
+                  src={video.url}
+                  muted
+                  playsInline
+                  onError={(e) => {
+                    const code = e.currentTarget.error?.code;
+                    // ABORTED fires normally when the src is swapped to another
+                    // video; it is not a real failure, so ignore it.
+                    if (code === MediaError.MEDIA_ERR_ABORTED) return;
+                    setVideoPlaying(false);
+                    // A network failure is transient (dropped connection, expired
+                    // presigned URL), not the codec; both fall back to pose-only.
+                    setVideoProblem({
+                      kind:
+                        code === MediaError.MEDIA_ERR_NETWORK
+                          ? "network"
+                          : "format",
+                    });
+                  }}
+                  onLoadedMetadata={(e) => {
+                    const v = e.currentTarget;
+                    v.playbackRate = Number(speed);
+                    setFrameSize({ w: v.videoWidth, h: v.videoHeight });
+                    if (videoSeededRef.current || !video) return;
+                    videoSeededRef.current = true;
+                    const raw = linked.get("time");
+                    if (raw === null || !Number.isFinite(Number(raw))) return;
+                    v.currentTime = sessionTimeToVideoTime(
+                      Number(raw),
                       v.duration,
                       video.startTime,
                       video.timestamps,
                       offset,
-                    ),
-                  );
-                }}
-                onSeeked={(e) => {
-                  const v = e.currentTarget;
-                  if (!video || !v.paused) return;
-                  writePoseTime(
-                    videoTimeToSessionTime(
-                      v.currentTime,
-                      v.duration,
-                      video.startTime,
-                      video.timestamps,
-                      offset,
-                    ),
-                  );
-                }}
-                onPlay={() => writePoseTime(null)}
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "contain",
-                }}
-              />
-              <canvas
-                ref={canvasRef}
-                width={box.w}
-                height={box.h}
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  width: "100%",
-                  height: "100%",
-                  pointerEvents: "none",
-                }}
-              />
-            </>
+                    );
+                    v.pause();
+                  }}
+                  onPause={(e) => {
+                    setVideoPlaying(false);
+                    if (!video) return;
+                    const v = e.currentTarget;
+                    writePoseTime(
+                      videoTimeToSessionTime(
+                        v.currentTime,
+                        v.duration,
+                        video.startTime,
+                        video.timestamps,
+                        offset,
+                      ),
+                    );
+                  }}
+                  onSeeked={(e) => {
+                    const v = e.currentTarget;
+                    if (!video || !v.paused) return;
+                    writePoseTime(
+                      videoTimeToSessionTime(
+                        v.currentTime,
+                        v.duration,
+                        video.startTime,
+                        video.timestamps,
+                        offset,
+                      ),
+                    );
+                  }}
+                  onPlay={() => {
+                    setVideoPlaying(true);
+                    writePoseTime(null);
+                  }}
+                />
+                <canvas
+                  ref={canvasRef}
+                  className="pose-layer pose-layer--markers"
+                  width={box.w}
+                  height={box.h}
+                />
+              </>
+            )
           )}
         </div>
-
-        {/* Pose-only transport: play/pause + scrub over the pose time span. */}
-        {poseOnlyMode && pose.keypoints.length > 0 && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "5px 10px",
-              borderTop: `1px solid ${HAIRLINE}`,
-              fontSize: FS.body,
-            }}
-          >
-            <button
-              className="ns-pose-btn"
-              onClick={() => {
-                const clk = poseClock.current;
-                const next = !clk.playing;
-                // Pressing play at the end restarts from the beginning.
-                if (next && clk.t >= pose.timeRange.end) {
-                  clk.t = pose.timeRange.start;
-                  setPoseUiTime(pose.timeRange.start);
-                }
-                clk.playing = next;
-                setPosePlaying(next);
-                if (next) writePoseTime(null);
-                else writePoseTime(clk.t);
-              }}
-            >
-              {posePlaying ? "Pause" : "Play"}
-            </button>
-            <input
-              type="range"
-              min={pose.timeRange.start}
-              max={pose.timeRange.end}
-              step={(pose.timeRange.end - pose.timeRange.start) / 2000 || 0.01}
-              value={poseUiTime}
-              onChange={(e) => {
-                const t = Number(e.target.value);
-                poseClock.current.t = t;
-                setPoseUiTime(t);
-                setCurrentTime(t); // scrubbing drives the shared clock
-              }}
-              onPointerUp={() => {
-                if (!poseClock.current.playing)
-                  writePoseTime(poseClock.current.t);
-              }}
-              style={{ flex: 1 }}
-            />
-            <span
-              style={{
-                color: INK.muted,
-                fontSize: FS.small,
-                fontVariantNumeric: "tabular-nums",
-              }}
-            >
-              {poseUiTime.toFixed(1)} / {pose.timeRange.end.toFixed(1)} s
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
+      </PoseStage>
+    </ViewPanel>
   );
 };
 

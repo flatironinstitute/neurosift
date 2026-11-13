@@ -1,0 +1,65 @@
+.ns-menu {
+  display: inline-flex;
+}
+
+/* Opens under its button, as wide as the button at least, and flips when there's no room. */
+.ns-menu-list {
+  inset: auto;
+  min-inline-size: anchor-size(inline);
+  padding: var(--space-1) 0;
+  margin: var(--space-1) 0 0;
+  color: var(--text-default);
+  background: var(--surface-panel);
+  border: var(--border-width-1) solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--elevation-2);
+  position-area: block-end span-inline-end;
+  position-try-fallbacks: flip-block, flip-inline;
+}
+
+.ns-menu-item {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  inline-size: 100%;
+  min-block-size: var(--button-height-md);
+  padding: 0 var(--space-3);
+  font: var(--type-body-sm);
+  color: inherit;
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  outline: none;
+}
+
+.ns-menu-list--sm .ns-menu-item {
+  min-block-size: var(--button-height-sm);
+}
+
+.ns-menu-item:is(:hover, :focus-visible):not(:disabled) {
+  background: var(--action-secondary-hover);
+}
+
+.ns-menu-item:disabled {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.ns-menu-meta {
+  margin-inline-start: auto;
+  font: var(--type-caption);
+  color: var(--text-muted);
+}
+
+.ns-menu-item:disabled .ns-menu-meta {
+  color: var(--text-disabled);
+}
+
+@media (forced-colors: active) {
+  .ns-menu-item:focus-visible {
+    outline: var(--border-width-2) solid Highlight;
+    outline-offset: calc(var(--border-width-2) * -1);
+  }
+}

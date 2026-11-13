@@ -165,6 +165,15 @@ describe("EDFReader.readSamples", () => {
     expect(x[14]).toBeCloseTo(physicalValue(2, 14), 3);
   });
 
+  it("reads a moved window from the bytes it already has", async () => {
+    const r = await EDFReader.fromURL("http://x/f.edf");
+    await r.readSamples(0, 0, 20);
+    const fetched = ranges.length;
+    await r.readSamples(0, 5, 25);
+    await r.readSamples(1, 0, 30);
+    expect(ranges.length).toBe(fetched);
+  });
+
   it("serves concurrent reads of different channels without stalling", async () => {
     const r = await EDFReader.fromURL("http://x/f.edf");
     const results = await Promise.race([

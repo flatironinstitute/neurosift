@@ -1,7 +1,9 @@
-import { Box, Divider, Typography } from "@mui/material";
 import { FunctionComponent } from "react";
-import ScrollY from "@components/ScrollY";
 import { formatBytes } from "@shared/util/formatBytes";
+import DatasetOverview, {
+  type DatasetSection,
+} from "../common/DatasetOverview/DatasetOverview";
+import { shortDate } from "../common/DatasetOverview/dandiOverview";
 import { OpenNeuroDatasetInfo } from "./types";
 import useRegisterOpenNeuroDatasetOverviewAIComponent from "./useRegisterOpenNeuroDatasetOverviewAIComponent";
 
@@ -11,131 +13,92 @@ interface OpenNeuroDatasetOverviewProps {
   datasetInfo: OpenNeuroDatasetInfo;
 }
 
+const count = (n: number) => n.toLocaleString("en-US");
+
+/** An OpenNeuro dataset in the shared dataset overview. */
 const OpenNeuroDatasetOverview: FunctionComponent<
   OpenNeuroDatasetOverviewProps
-> = ({ width, height, datasetInfo }) => {
+> = ({ datasetInfo }) => {
   const { snapshot } = datasetInfo;
-  // Register AI overview component
-  useRegisterOpenNeuroDatasetOverviewAIComponent({
-    datasetInfo,
-  });
+  const { description, summary, analytics } = snapshot;
+  useRegisterOpenNeuroDatasetOverviewAIComponent({ datasetInfo });
+
+  const text = (id: string, title: string, value?: string): DatasetSection[] =>
+    value ? [{ id, title, text: value }] : [];
 
   return (
-    <ScrollY width={width} height={height}>
-      <div style={{ padding: "15px" }}>
-        <Typography variant="h6" gutterBottom>
-          {snapshot.description.Name}
-        </Typography>
-
-        <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 2 }}>
-          <a
-            href={`https://openneuro.org/datasets/${datasetInfo.id}/versions/${snapshot.tag}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: "#0066cc", textDecoration: "none" }}
-          >
-            View on OpenNeuro →
-          </a>
-        </Box>
-
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="subtitle2" color="text.secondary">
-            Dataset Information
-          </Typography>
-          <Box sx={{ ml: 1, mt: 1 }}>
-            <div>ID: {datasetInfo.id}</div>
-            <div>Version: {snapshot.tag}</div>
-            <div>
-              Created: {new Date(snapshot.created).toLocaleDateString()}
-            </div>
-            <div>Total Size: {formatBytes(snapshot.size)}</div>
-            <div>Views: {snapshot.analytics.views}</div>
-            <div>Downloads: {snapshot.analytics.downloads}</div>
-          </Box>
-        </Box>
-
-        <Divider sx={{ my: 3 }} />
-
-        {snapshot.summary && (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary">
-              Summary
-            </Typography>
-            <Box sx={{ ml: 1, mt: 1 }}>
-              <div>Files: {snapshot.summary.totalFiles}</div>
-              <div>Subjects: {snapshot.summary.subjects.length}</div>
-              <div>Sessions: {snapshot.summary.sessions.length}</div>
-              {snapshot.summary.modalities.length > 0 && (
-                <div>Modalities: {snapshot.summary.modalities.join(", ")}</div>
-              )}
-            </Box>
-          </Box>
-        )}
-
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="subtitle2" color="text.secondary">
-            Authors
-          </Typography>
-          <Box sx={{ ml: 1, mt: 1 }}>
-            {snapshot.description.Authors.map((author, index) => (
-              <div key={index}>{author}</div>
-            ))}
-          </Box>
-        </Box>
-
-        {snapshot.description.DatasetDOI && (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary">
-              DOI
-            </Typography>
-            <Box sx={{ ml: 1, mt: 1 }}>{snapshot.description.DatasetDOI}</Box>
-          </Box>
-        )}
-
-        {snapshot.description.License && (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary">
-              License
-            </Typography>
-            <Box sx={{ ml: 1, mt: 1 }}>{snapshot.description.License}</Box>
-          </Box>
-        )}
-
-        {snapshot.description.Acknowledgements && (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary">
-              Acknowledgements
-            </Typography>
-            <Box sx={{ ml: 1, mt: 1 }}>
-              {snapshot.description.Acknowledgements}
-            </Box>
-          </Box>
-        )}
-
-        {snapshot.description.Funding && (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary">
-              Funding
-            </Typography>
-            <Box sx={{ ml: 1, mt: 1 }}>{snapshot.description.Funding}</Box>
-          </Box>
-        )}
-
-        {snapshot.description.ReferencesAndLinks &&
-          snapshot.description.ReferencesAndLinks.length > 0 && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                References and Links
-              </Typography>
-              <Box sx={{ ml: 1, mt: 1 }}>
-                {snapshot.description.ReferencesAndLinks.map((ref, index) => (
-                  <div key={index}>{ref}</div>
-                ))}
-              </Box>
-            </Box>
-          )}
-      </div>
-    </ScrollY>
+    <DatasetOverview
+      archive={{
+        name: "OpenNeuro",
+        href: `${import.meta.env.BASE_URL}openneuro`,
+      }}
+      itemName="Dataset"
+      id={datasetInfo.id}
+      title={description.Name}
+      version={snapshot.tag}
+      external={{
+        label: "View on OpenNeuro",
+        href: `https://openneuro.org/datasets/${datasetInfo.id}/versions/${snapshot.tag}`,
+      }}
+      facts={[
+        { term: "Created", value: shortDate(snapshot.created) },
+        { term: "Size", value: formatBytes(snapshot.size) },
+        { term: "Views", value: count(analytics.views) },
+        { term: "Downloads", value: count(analytics.downloads) },
+        ...(summary
+          ? [
+              { term: "Files", value: count(summary.totalFiles) },
+              { term: "Subjects", value: count(summary.subjects.length) },
+              { term: "Sessions", value: count(summary.sessions.length) },
+            ]
+          : []),
+      ]}
+      sections={[
+        ...(summary?.modalities.length
+          ? [
+              {
+                id: "modalities",
+                title: "Modalities",
+                tags: summary.modalities,
+              },
+            ]
+          : []),
+        ...text("authors", "Authors", description.Authors.join(", ")),
+        ...(description.DatasetDOI || description.License
+          ? [
+              {
+                id: "license",
+                title: "License and DOI",
+                facts: [
+                  ...(description.License
+                    ? [{ term: "License", value: description.License }]
+                    : []),
+                  ...(description.DatasetDOI
+                    ? [
+                        {
+                          term: "DOI",
+                          value: description.DatasetDOI,
+                          code: true,
+                        },
+                      ]
+                    : []),
+                ],
+              },
+            ]
+          : []),
+        ...text(
+          "acknowledgements",
+          "Acknowledgements",
+          description.Acknowledgements,
+        ),
+        ...text("funding", "Funding", description.Funding),
+        ...text(
+          "references",
+          "References and links",
+          description.ReferencesAndLinks?.join("\n"),
+        ),
+      ]}
+    />
   );
 };
 

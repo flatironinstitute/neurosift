@@ -1,0 +1,186 @@
+---
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import DocRows from "../../components/DocRows.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const MERGED: [string, [string, string][]][] = [
+  [
+    "2026-11-10",
+    [
+      [
+        "#87",
+        "Foundations and Tokens sections missing from Figma"
+      ],
+      [
+        "#85",
+        "Component page sections missing from Figma"
+      ],
+      [
+        "#53",
+        "Add TimeWindow, ChannelWindow, TimeOverview and Playback"
+      ],
+      [
+        "#52",
+        "Add Slider and RangeSlider"
+      ],
+      [
+        "#51",
+        "Add DataTable and Tree"
+      ],
+      [
+        "#50",
+        "Add Dialog and Drawer"
+      ],
+      [
+        "#49",
+        "Add AppBar, Breadcrumbs and ObjectPath"
+      ],
+      [
+        "#48",
+        "Add CodeBlock and InlineCode"
+      ],
+      [
+        "#47",
+        "Add AccordionItem and Disclosure"
+      ],
+      [
+        "#46",
+        "Add Badge, Tag and TagLink"
+      ],
+      [
+        "#45",
+        "Add Tabs and Segmented control"
+      ],
+      [
+        "#55",
+        "Usage guidelines pages"
+      ],
+      [
+        "#54",
+        "Foundations pages"
+      ],
+      [
+        "#33",
+        "Show an error instead of loading forever when a request fails"
+      ]
+    ]
+  ],
+  [
+    "2026-11-09",
+    [
+      [
+        "#32",
+        "Show errors in views with Alert and Inline message"
+      ],
+      [
+        "#29",
+        "Use Alert, Toast and Inline message across the app"
+      ],
+      [
+        "#27",
+        "Migrate the Settings page to the design system"
+      ],
+      [
+        "#25",
+        "Add Alert, Toast and Inline message"
+      ],
+      [
+        "#24",
+        "Add Tooltip, Toggletip and Info button"
+      ]
+    ]
+  ],
+  [
+    "2026-11-07",
+    [
+      [
+        "#21",
+        "Track the move off MUI and inline styles in CI"
+      ],
+      [
+        "#20",
+        "Show one focus edge in fields, and correct the select browser support"
+      ],
+      [
+        "#18",
+        "Add Select and Menu components"
+      ],
+      [
+        "#17",
+        "Add Text input, Search field and Checkbox components"
+      ]
+    ]
+  ],
+  [
+    "2026-11-06",
+    [
+      [
+        "#13",
+        "Keep a button's width while it loads"
+      ],
+      [
+        "#12",
+        "Publish the design system docs to GitHub Pages"
+      ],
+      [
+        "#9",
+        "Core components, part 1: Button, Icon button, Icon and Spinner"
+      ],
+      [
+        "#7",
+        "Run CI on pull requests into development"
+      ],
+      [
+        "#5",
+        "Focus ring token for navy surfaces"
+      ],
+      [
+        "#2",
+        "Design tokens as tokens.css, with an Astro page for each token group"
+      ]
+    ]
+  ]
+];
+
+const FIGMA = [
+  ["November 6, 2026", "The UI library pages from the dataset page to HDF5 and schema, the Resources pages, and the Neurodata object tree components on Tables."],
+  ["November 5, 2026", "Foundations, tokens, usage guidelines, 15 component frames and their pages, Checkbox, Home options B and C (C, search first, chosen), What exists today, and Archive search with neurodata types ordered by the dandi-index counts of 213 types."],
+];
+
+const REPO = "https://github.com/jguerrero-prog/neurosift/pull/";
+const date = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
+---
+
+<DocsLayout title="Changelog" description="What changed in the design system, newest first.">
+  <Intro
+    lead="What changed in the design system, newest first: the pull requests that built it in code, in jguerrero-prog/neurosift (the fork where the redesign was built, so the numbers are that repository’s, not this one’s), then the work in Figma that came before. Anything marked “to confirm” on a page stays a proposal until Jeremy Magland and Ben Dichter agree."
+    status="Updated November 10, 2026 · Resources · Code dates are when a pull request merged, in UTC"
+    rules={[
+      { title: "Newest first", text: "Each day lists its changes with the latest at the top." },
+      { title: "By page", text: "Entries name the page or component that changed, so they can be found in the menu." },
+      { title: "Proposals stay marked", text: "A change marked “to confirm” is still a question, not a decision." },
+    ]}
+  />
+
+  {
+    MERGED.map(([day, prs]) => (
+      <DocSection title={`In code, ${date(day)}`}>
+        <ul class="rule-list">
+          {prs.map(([number, title]) => (
+            <li>
+              <a href={`${REPO}${number.slice(1)}`}>jguerrero-prog/neurosift{number}</a> {title}
+            </li>
+          ))}
+        </ul>
+      </DocSection>
+    ))
+  }
+
+  <DocSection title="In Figma" lead="The design work these pages came from, in the Figma file.">
+    <DocTable caption="Figma changes" columns={["Date", "Change"]}>
+      <DocRows rows={FIGMA} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

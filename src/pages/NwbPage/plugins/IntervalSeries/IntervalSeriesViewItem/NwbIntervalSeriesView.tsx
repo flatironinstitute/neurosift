@@ -1,8 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useEffect, useMemo } from "react";
 import { useHdf5DatasetData } from "@hdf5Interface";
 import NwbTimeIntervalsWidget from "../../TimeIntervals/TimeIntervalsViewItem/NwbTimeIntervalsWidget";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
+import { LoadingState } from "@ui";
+import TimeView, {
+  TIME_VIEW_CHROME,
+  TIME_VIEW_INSET,
+} from "../../common/TimeView";
 
 type Props = {
   width: number;
@@ -55,20 +59,23 @@ const NwbIntervalSeriesView: FunctionComponent<Props> = ({
   }, [timestamps, initializeTimeseriesSelection]);
 
   if (!timestamps || !intervalData) {
-    return <div>Loading data (NwbIntervalSeriesView)...</div>;
+    return <LoadingState label="Reading the intervals" phase="loading" />;
   }
 
   return (
-    <div style={{ position: "relative", width, height }}>
+    <TimeView
+      label={path.split("/").pop() || path}
+      summary={`${startTimes.length.toLocaleString("en-US")} interval${startTimes.length === 1 ? "" : "s"}`}
+    >
       <NwbTimeIntervalsWidget
         labels={undefined}
         allDistinctLabels={[]}
         startTimes={startTimes}
         stopTimes={stopTimes}
-        width={width}
-        height={height}
+        width={width - TIME_VIEW_INSET}
+        height={Math.max(height - TIME_VIEW_CHROME, 200)}
       />
-    </div>
+    </TimeView>
   );
 };
 

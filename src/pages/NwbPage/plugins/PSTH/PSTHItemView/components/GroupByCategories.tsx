@@ -1,4 +1,6 @@
+import { Checkbox } from "@ui";
 import { FunctionComponent } from "react";
+import "./PSTHControls.css";
 
 type Props = {
   groupByVariableCategories: string[] | undefined;
@@ -6,73 +8,42 @@ type Props = {
   options: string[];
 };
 
+/** Which values of the grouping column to show; undefined means all. */
 const GroupByCategoriesComponent: FunctionComponent<Props> = ({
-  groupByVariableCategories,
-  setGroupByVariableCategories,
+  groupByVariableCategories: picked,
+  setGroupByVariableCategories: setPicked,
   options,
 }) => {
-  const allSelected =
-    !groupByVariableCategories ||
-    groupByVariableCategories.length === options.length;
-
+  const shown = picked ?? options;
   return (
-    <table className="nwb-table" style={{ tableLayout: "fixed" }}>
-      <colgroup>
-        <col style={{ width: 20 }} />
-      </colgroup>
-      <tbody>
-        <tr>
-          <td style={{ padding: "4px 2px" }}>
-            <input
-              type="checkbox"
-              checked={allSelected}
-              onChange={() => {}}
-              onClick={() => {
-                if (allSelected) {
-                  setGroupByVariableCategories([]);
-                } else {
-                  setGroupByVariableCategories(undefined);
-                }
-              }}
-            />
-          </td>
-          <td style={{ fontStyle: "italic" }}>All</td>
-        </tr>
-        {options.map((option) => (
-          <tr key={option}>
-            <td style={{ padding: "4px 2px" }}>
-              <input
-                type="checkbox"
-                checked={
-                  groupByVariableCategories?.includes(option) ||
-                  !groupByVariableCategories
-                }
-                onChange={() => {}}
-                onClick={() => {
-                  if (groupByVariableCategories) {
-                    if (groupByVariableCategories.includes(option)) {
-                      setGroupByVariableCategories(
-                        groupByVariableCategories.filter((x) => x !== option),
-                      );
-                    } else {
-                      setGroupByVariableCategories([
-                        ...groupByVariableCategories,
-                        option,
-                      ]);
-                    }
-                  } else {
-                    setGroupByVariableCategories(
-                      options.filter((x) => x !== option),
-                    );
-                  }
-                }}
-              />
-            </td>
-            <td>{option}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="psth-checklist">
+      <Checkbox
+        label="All values"
+        checked={
+          shown.length === 0
+            ? false
+            : shown.length === options.length
+              ? true
+              : "mixed"
+        }
+        onChange={() =>
+          setPicked(shown.length === options.length ? [] : undefined)
+        }
+      />
+      {options.map((option) => (
+        <Checkbox
+          key={option}
+          label={option}
+          checked={shown.includes(option)}
+          onChange={(on) => {
+            const next = on
+              ? [...shown, option]
+              : shown.filter((x) => x !== option);
+            setPicked(next.length === options.length ? undefined : next);
+          }}
+        />
+      ))}
+    </div>
   );
 };
 

@@ -1,0 +1,133 @@
+---
+import DoDont from "../../components/DoDont.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const LEVELS = [
+  ["0 · Flat", "none", "Panels, plots, tables, the app bar: a 1px subtle edge instead of a shadow"],
+  ["1 · Overlay", "1", "Menus, select lists"],
+  ["2 · Floating", "2", "Toasts, toggletips"],
+  ["3 · Modal", "3", "Dialogs and overlay drawers, over a 40% navy backdrop"],
+];
+
+const BORDERS_TODAY = [
+  ["1px solid #ddd, #ccc, #dee2e6, #e9ecef, #eee, #d0d7de, #d4d4d4", "36", "border/subtle"],
+  ["1px solid #ced4da", "11", "border/subtle, or border/strong on inputs"],
+  ["1px solid #dde4ed", "6", "border/subtle, already the token value"],
+  ["2px solid #34495e, #dde4ed", "4", "border/selected, 2px link blue"],
+  ["box-shadow 0 1px 3px rgba(43,87,151,.12)", "3", "None: the app bar becomes flat"],
+  ["box-shadow with rgba(0,0,0,…), six recipes", "12", "elevation/1 or elevation/2, by what the element is"],
+  ["Material UI Paper elevation 1 and 2", "5", "elevation/0 with a border, unless it floats"],
+];
+
+const BORDER_COLORS = [
+  ["border/subtle", "1.28 on white, 1.21 on the background", "Panel edges, dividers inside panels. Decorative, so it never carries meaning alone"],
+  ["border/strong", "21.0 on white, 19.9 on the background", "Table rules, inputs, outlined buttons. Controls need 3:1 to be found"],
+  ["border/selected", "7.21 on white, 6.84 on the background", "Selected tab, 3px underline"],
+  ["border/focus", "7.21 on white, 6.84 on the background", "Focus ring: 2px, with a 2px gap"],
+  ["border/error", "6.57 on white, 6.23 on the background", "Input with an error, 2px, always with a message"],
+];
+
+const SURFACES = [
+  ["surface/page", "The tool background behind panels"],
+  ["surface/panel", "Panels and plot areas: white, a subtle edge, flat"],
+  ["surface/overlay", "Menus and popovers: white, a subtle edge, elevation 1"],
+  ["surface/inverse", "Tooltips and toasts: navy with white text, 10.98:1"],
+  ["overlay/backdrop", "Navy at 40% behind dialogs and overlay drawers"],
+];
+
+const ROWS = [
+  ["Default", "White, a light rule below"],
+  ["Hover", "surface/row-hover, navy 50"],
+  ["Selected, the open object", "surface/row-selected, navy 600, with white text, 10.98:1"],
+  ["Focus", "2px link-blue ring inside the row"],
+  ["Disabled", "Neutral 400 text"],
+];
+---
+
+<DocsLayout title="Elevation and borders" description="A flat workspace: rules and edges first, shadows only for what floats.">
+  <Intro
+    lead="Neurosift is flat. Panels sit on the blue-gray background with a subtle edge, and black rules organize tables and controls. Shadows appear only on things that float over the data and can be dismissed: menus, toasts and dialogs."
+    status="Updated November 9, 2026 · Foundations · Shadows use navy at low opacity"
+    rules={[
+      { title: "Rules before shadows", text: "Panels, tables and plots are flat. Edges and rules separate them, so the screen stays quiet around the data." },
+      { title: "A shadow means on top", text: "Only menus, toasts, toggletips and dialogs cast shadows. If it casts a shadow, it can be closed." },
+      { title: "Two border colors", text: "A subtle edge for panels, black rules for tables and controls. Nine grays in the code today become those two." },
+    ]}
+  />
+
+  <DocSection title="Elevation levels" lead="Four levels, from flat to modal. Each shadow pairs a tight shadow that defines the edge with a soft one that shows height.">
+    <div class="elevation-chips">
+      {LEVELS.map(([name, cls]) => <div class={`elevation-chip elevation-chip--${cls}`}><span class="type-label">{name}</span></div>)}
+    </div>
+    <DocTable caption="Elevation levels" columns={["Level", "Use"]}>
+      {LEVELS.map(([name, , use]) => <tr><th scope="row">{name}</th><td>{use}</td></tr>)}
+    </DocTable>
+    <p class="doc-note">The tokens are on <a href={withBase("/tokens/radius-and-elevation/")}>Radius and elevation tokens</a>.</p>
+  </DocSection>
+
+  <DocSection title="Elevation in context" lead="The file viewer with every level in use.">
+    <div class="elevation-context" role="img" aria-label="A flat panel showing LFPs at level 0; the channel menu floating over the plot at level 1; and a Link copied toast at level 2, above everything but dialogs.">
+      <div class="elevation-context-panel">
+        <span class="type-label">LFPs</span>
+        <span class="type-caption">Channels: 0–3 of 70</span>
+        <span class="elevation-context-level">0</span>
+      </div>
+      <div class="elevation-context-menu type-body-sm">
+        <span>0–3 of 70</span><span>4–7 of 70</span><span>8–11 of 70</span><span>All 70</span>
+        <span class="elevation-context-level">1</span>
+      </div>
+      <div class="elevation-context-toast type-body-sm">
+        <span>Link copied. Anyone with the link sees this exact view.</span>
+        <span class="elevation-context-level">2</span>
+      </div>
+    </div>
+    <ul class="rule-list">
+      <li><strong>0.</strong> Panels sit flat on the background.</li>
+      <li><strong>1.</strong> The channel menu floats over the plot.</li>
+      <li><strong>2.</strong> The toast floats over everything but dialogs.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Moving today’s values onto the tokens" lead="Border and shadow values in Neurosift’s source today.">
+    <DocTable caption="Today’s borders and shadows" columns={["Today", "Uses", "Becomes"]}>
+      {BORDERS_TODAY.map(([today, uses, becomes]) => <tr><th scope="row">{today}</th><td>{uses}</td><td>{becomes}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Layer order" lead="Menus, tooltips, toggletips, toasts and dialogs open in the browser’s top layer, so they sit above the page and its panels without z-index numbers. Within the top layer, the one opened last is on top, and a modal dialog makes the rest of the page inert.">
+    <p class="doc-note">Sticky elements inside the page, such as a table header, stay in the page’s own stacking order.</p>
+  </DocSection>
+
+  <DocSection title="Borders" lead="Two widths and five colors. A 1px border separates; a 2px border signals a state, such as selected or focused.">
+    <DocTable caption="Border colors" columns={["Token", "Contrast", "Use"]}>
+      {BORDER_COLORS.map(([token, contrast, use]) => <tr><th scope="row">{token}</th><td>{contrast}</td><td>{use}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Surfaces" lead="Each surface pairs a fill with its edge and elevation, so a layer looks the same wherever it appears.">
+    <DocTable caption="Surfaces" columns={["Token", "Use"]}>
+      {SURFACES.map(([token, use]) => <tr><th scope="row">{token}</th><td>{use}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Row states" lead="How a row in the file tree or a table looks as people use it. The open object is an inverted row: navy with white text. Objects checked for a combined view keep a ticked checkbox and a white row, so the two never look alike.">
+    <DocTable caption="Row states" columns={["State", "Look"]}>
+      {ROWS.map(([state, look]) => <tr><th scope="row">{state}</th><td>{look}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Keep panels, plots and tables flat, with a subtle edge.", "Use black rules for tables and for controls people need to find.", "Give anything that floats a shadow and a way to close it.", "Use navy for shadows and the dialog backdrop."]}
+      donts={["Don’t put shadows on panels or plot areas.", "Don’t add new grays for borders. Use border/subtle or border/strong.", "Don’t use colored glows. A blue or red glow reads as a state or an error.", "Don’t stack shadows: a menu inside a drawer keeps elevation 1."]}
+    />
+  </DocSection>
+
+  <DocSection title="Tokens" lead="Shadows, border widths and colors, the selected row and the dialog backdrop.">
+    <p class="doc-note">Every value is on <a href={withBase("/tokens/radius-and-elevation/")}>Radius and elevation tokens</a> and <a href={withBase("/tokens/color/")}>Color tokens</a>.</p>
+  </DocSection>
+</DocsLayout>

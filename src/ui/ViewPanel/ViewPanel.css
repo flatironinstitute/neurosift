@@ -1,0 +1,64 @@
+.ns-view {
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--space-4);
+  block-size: 100%;
+  padding: var(--space-4);
+}
+
+.ns-view--settings {
+  grid-template-columns: minmax(0, 1fr) var(--layout-panel-default);
+  /* The row fills the panel, so a tall settings column scrolls instead of stretching it. */
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.ns-view-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.ns-view-summary {
+  margin: 0;
+  font: var(--type-caption);
+  color: var(--text-secondary);
+}
+
+.ns-view-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ns-view-chart-title {
+  margin: 0;
+  font: var(--type-label);
+  color: var(--text-default);
+}
+
+.ns-view-plot {
+  flex: 1;
+  min-block-size: 12rem;
+  background: var(--surface-panel);
+  border: var(--border-width-1) solid var(--border-subtle);
+}
+
+.ns-view-settings {
+  min-inline-size: 0;
+  overflow-y: auto;
+}
+
+.ns-setting-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+@media (width <= 1024px) {
+  .ns-view--settings {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+  }
+}

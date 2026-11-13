@@ -1,67 +1,38 @@
+import { Checkbox } from "@ui";
+import type { PlaneTransform } from "./planeTransform";
+import "./PlaneTransformSelector.css";
+
 type Props = {
   planeTransform: PlaneTransform;
   setPlaneTransform: (planeTransform: PlaneTransform) => void;
 };
 
-export type PlaneTransform = {
-  xyswap: boolean;
-  xflip: boolean;
-  yflip: boolean;
-};
-
-export const defaultPlaneTransform: PlaneTransform = {
-  xyswap: false,
-  xflip: false,
-  yflip: false,
-};
-
-const PlaneTransformSelector = (props: Props) => {
-  const topOffset = 6;
+/** How the image is turned: swap x and y, flip either axis. */
+const PlaneTransformSelector = ({
+  planeTransform,
+  setPlaneTransform,
+}: Props) => {
+  const set = (key: keyof PlaneTransform) => (on: boolean) =>
+    setPlaneTransform({ ...planeTransform, [key]: on });
   return (
-    <div style={{ display: "flex" }}>
-      <input
-        type="checkbox"
-        checked={props.planeTransform.xyswap}
-        onChange={(evt) =>
-          props.setPlaneTransform({
-            ...props.planeTransform,
-            xyswap: evt.target.checked,
-          })
-        }
+    <fieldset className="plane-transform">
+      <legend className="plane-transform-legend">Orientation</legend>
+      <Checkbox
+        label="Swap x and y"
+        checked={planeTransform.xyswap}
+        onChange={set("xyswap")}
       />
-      <div style={{ position: "relative", top: topOffset }}>
-        <label>xy swap</label>
-      </div>
-      &nbsp;
-      <input
-        type="checkbox"
-        checked={props.planeTransform.xflip}
-        onChange={(evt) =>
-          props.setPlaneTransform({
-            ...props.planeTransform,
-            xflip: evt.target.checked,
-          })
-        }
+      <Checkbox
+        label="Flip x"
+        checked={planeTransform.xflip}
+        onChange={set("xflip")}
       />
-      <div style={{ position: "relative", top: topOffset }}>
-        <label>x flip</label>
-      </div>
-      &nbsp;
-      <input
-        type="checkbox"
-        checked={props.planeTransform.yflip}
-        onChange={(evt) =>
-          props.setPlaneTransform({
-            ...props.planeTransform,
-            yflip: evt.target.checked,
-          })
-        }
+      <Checkbox
+        label="Flip y"
+        checked={planeTransform.yflip}
+        onChange={set("yflip")}
       />
-      <div style={{ position: "relative", top: topOffset }}>
-        <label>y flip</label>
-      </div>
-      &nbsp;
-    </div>
+    </fieldset>
   );
 };
 

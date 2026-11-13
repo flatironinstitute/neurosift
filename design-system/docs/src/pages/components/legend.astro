@@ -1,0 +1,68 @@
+---
+import { ColorBar, Legend } from "@ui";
+import CodeSample from "../../components/CodeSample.astro";
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const SPECS = [
+  ["Legend", "Beside the plot, top right · one row per series · 12px swatch, 8px before the name · type/axis, text/default"],
+  ["Series colors", "data/series/1 to 6, in order, or pinned with series so a group keeps its color in every view · past six, data/series/other"],
+  ["Color bar", "Beside the plot, the same height · 12px wide · ends printed with their unit in type/axis, text/muted"],
+  ["Scales", "Sequential: viridis, for amounts · Diverging: blue to red, for values around zero"],
+];
+
+const code = `import { ColorBar, Legend } from "@ui";
+
+<Legend label="Load" items={[{ name: "Load 1" }, { name: "Load 3" }]} />
+
+<ColorBar label="Power" scale="sequential" low="−40.3 dB" high="1.4 dB" />`;
+---
+
+<DocsLayout title="Legend and color bar" description="What each color in a plot means, beside the plot it explains.">
+  <Intro
+    lead="A colored mark in a plot always means data, so every plot says what its colors mean. A legend names each series beside its swatch; a color bar shows a continuous scale with its ends printed in units. Both sit beside the plot, never under it."
+    status="Updated November 10, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "Beside, not under", text: "Legends and color bars sit next to the plot they explain, so the eye doesn’t travel." },
+      { title: "Names, never ?", text: "A legend names each group’s value, such as “Load 3”." },
+      { title: "Ends in units", text: "A color bar prints its end values and unit, so it reads without the plot." },
+    ]}
+  />
+
+  <DocSection title="Legend" lead="Series colors in order. Past six series, the rest take the neutral other color; label lines directly or split into small multiples instead.">
+    <div class="demo-row">
+      <Legend label="Load" items={[{ name: "Load 1" }, { name: "Load 2" }, { name: "Load 3" }]} />
+      <Legend label="Channels" items={[{ name: "Ch 0" }, { name: "Ch 1" }, { name: "Ch 2" }, { name: "Ch 3" }, { name: "Ch 4" }, { name: "Ch 5" }, { name: "Ch 6" }]} />
+    </div>
+  </DocSection>
+
+  <DocSection title="Color bar" lead="Viridis for amounts such as power or density; blue to red for values around zero.">
+    <div class="demo-row colorbar-demo">
+      <ColorBar label="Power" scale="sequential" low="−40.3 dB" high="1.4 dB" />
+      <ColorBar label="Signal" scale="diverging" low="−50 µV" high="50 µV" />
+    </div>
+    <p class="doc-note">Both are drawn beside real plots on <a href={withBase("/guidelines/data-visualization/")}>Data visualization</a>.</p>
+  </DocSection>
+
+  <DocSection title="Accessibility">
+    <ul class="rule-list">
+      <li><strong>Never color alone.</strong> Every swatch has its name next to it, and the swatches are hidden from screen readers.</li>
+      <li><strong>The range in words.</strong> A color bar is an image named by its range, such as “Power, from −40.3 dB to 1.4 dB”.</li>
+      <li><strong>Forced colors.</strong> Swatches and ramps keep their colors in high-contrast modes, since the colors are the data.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Legend and color bar specs" columns={["Property", "Value"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. Both render only from props; the chart beside them stays Neurosift’s own.">
+    <CodeSample label="Legend and color bar" code={code} />
+  </DocSection>
+</DocsLayout>

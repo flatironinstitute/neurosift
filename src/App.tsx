@@ -2,38 +2,29 @@ import ErrorBoundary from "@components/ErrorBoundary";
 import StatusBar from "@components/StatusBar";
 import "@css/App.css";
 import { useWindowDimensions } from "@fi-sci/misc";
-import GitHubIcon from "@mui/icons-material/GitHub";
-import SettingsIcon from "@mui/icons-material/Settings";
-import {
-  AppBar,
-  CircularProgress,
-  IconButton,
-  Toolbar,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { CircularProgress } from "@mui/material";
+import { AppBar } from "@ui";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useSyncExternalStore } from "react";
 import {
   Navigate,
   Route,
   BrowserRouter as Router,
   Routes,
   useLocation,
-  useNavigate,
   useSearchParams,
 } from "react-router-dom";
 import { AIComponentRegistryProvider } from "./ai-integration/AIComponentRegistry";
 import { sendUrlUpdate } from "./ai-integration/messaging/windowMessaging";
+import { ADDRESS_CHANGED } from "@shared/shareLink/shareAddress";
 import { logPageLoad } from "./util/sendLog";
+import { v2Url } from "./util/v2Url";
 
 // Each page is its own chunk, so a visit downloads only the page it lands on.
-const DandiPage = lazy(() => import("./pages/DandiPage/DandiPage"));
 const DandisetPageContainer = lazy(
   () => import("./pages/DandisetPage/DandisetPageContainer"),
 );
 const EdfPage = lazy(() => import("./pages/EdfPage/EdfPage"));
-const EmberDandiPage = lazy(() => import("./pages/EmberPage/EmberDandiPage"));
 const EmberDandisetPageContainer = lazy(
   () => import("./pages/EmberDandisetPage/EmberDandisetPageContainer"),
 );
@@ -43,7 +34,7 @@ const NwbPage = lazy(() => import("./pages/NwbPage/NwbPage"));
 const OpenNeuroDatasetPage = lazy(
   () => import("./pages/OpenNeuroDatasetPage/OpenNeuroDatasetPage"),
 );
-const OpenNeuroPage = lazy(() => import("./pages/OpenNeuroPage/OpenNeuroPage"));
+const SearchPage = lazy(() => import("./pages/SearchPage/SearchPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage/SettingsPage"));
 const SlpPage = lazy(() => import("./pages/SlpPage/SlpPage"));
 const VideoPage = lazy(() => import("./pages/VideoPage/VideoPage"));
@@ -74,128 +65,9 @@ const theme = createTheme({
   },
 });
 
-const LegacyUrlHandler = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
-
-  useEffect(() => {
-    const p = searchParams.get("p");
-    if (!p) return;
-
-    let newPath = "";
-    let newSearch = "";
-
-    if (p === "/dandi") {
-      newPath = "/dandi";
-    } else if (p === "/dandiset") {
-      const dandisetId = searchParams.get("dandisetId");
-      const dandisetVersion = searchParams.get("dandisetVersion");
-      if (dandisetId) {
-        newPath = `/dandiset/${dandisetId}`;
-        if (dandisetVersion) {
-          newSearch = `?dandisetVersion=${dandisetVersion}`;
-        }
-      }
-    } else if (p === "/ember") {
-      newPath = "/ember";
-    } else if (p === "/ember-dandiset") {
-      const emberDandisetId = searchParams.get("emberDandisetId");
-      const emberDandisetVersion = searchParams.get("emberDandisetVersion");
-      if (emberDandisetId) {
-        newPath = `/ember-dandiset/${emberDandisetId}`;
-        if (emberDandisetVersion) {
-          newSearch = `?ember-dandisetVersion=${emberDandisetVersion}`;
-        }
-      }
-    } else if (p === "/edf") {
-      newPath = "/edf";
-      const urlParam = searchParams.get("url");
-      const versionParam = searchParams.get("versionId");
-      if (urlParam) {
-        newSearch = `?url=${urlParam}${versionParam ? `&versionId=${versionParam}` : ""}`;
-      }
-    } else if (p === "/nwb") {
-      newPath = "/nwb";
-      const urlParam = searchParams.get("url");
-      const tabParam = searchParams.get("tab");
-
-      // Handle encoded parameters
-      const params = new URLSearchParams();
-      ["dandisetId", "dandisetVersion"].forEach((param) => {
-        const value = searchParams.get(param);
-        if (value) params.append(param, value);
-      });
-
-      // Build query string with parameters in specific order
-      const queryParts = [];
-
-      // 1. url (unencoded)
-      if (urlParam) queryParts.push(`url=${urlParam}`);
-
-      // 2. dandisetId
-      const dandisetId = searchParams.get("dandisetId");
-      if (dandisetId)
-        queryParts.push(`dandisetId=${encodeURIComponent(dandisetId)}`);
-
-      // 3. dandisetVersion
-      const dandisetVersion = searchParams.get("dandisetVersion");
-      if (dandisetVersion)
-        queryParts.push(
-          `dandisetVersion=${encodeURIComponent(dandisetVersion)}`,
-        );
-
-      // 4. tab
-      if (tabParam?.startsWith("neurodata-item:")) {
-        const path = tabParam.split("|")[0].replace("neurodata-item:", "");
-        queryParts.push(`tab=${path}`);
-      }
-      if (tabParam?.startsWith("view:")) {
-        const b = tabParam.slice("view:".length).split("|");
-        if (b[0] === "X/Y") {
-          queryParts.push(`tab=SpatialSeriesXY|${b[1]}`);
-        }
-      }
-      if (tabParam?.startsWith("neurodata-items:")) {
-        const x = tabParam.slice("neurodata-items:".length).split("@");
-        let y = x.map((z) => {
-          if (z.startsWith("neurodata-item")) {
-            const b = z.slice("neurodata-item:".length).split("|");
-            return b[0];
-          } else if (z.startsWith("view:")) {
-            const b = z.slice("view:".length).split("|");
-            if (b[0] === "X/Y") {
-              return `SpatialSeriesXY|${b[1]}`;
-            } else if (b[0] === "RasterPlot") {
-              return `Raster|${b[1]}`;
-            }
-          }
-          return "";
-        });
-        y = y.filter((z) => z !== "");
-        queryParts.push(`tab=${JSON.stringify(y)}`);
-      }
-
-      if (queryParts.length > 0) {
-        newSearch = "?" + queryParts.join("&");
-      }
-    }
-
-    if (newPath) {
-      // Preserve embedded=1 if present
-      const hideParam = searchParams.get("embedded");
-      if (hideParam === "1") {
-        if (newSearch) {
-          newSearch += "&embedded=1";
-        } else {
-          newSearch = "?embedded=1";
-        }
-      }
-      navigate(newPath + newSearch, { replace: true });
-    }
-  }, [location, searchParams, navigate]);
-
-  return null;
+const subscribeToAddress = (notify: () => void) => {
+  window.addEventListener(ADDRESS_CHANGED, notify);
+  return () => window.removeEventListener(ADDRESS_CHANGED, notify);
 };
 
 const PageLoading = () => (
@@ -205,7 +77,6 @@ const PageLoading = () => (
 );
 
 const AppContent = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   // useRegisterAIComponent({ navigate });
@@ -235,9 +106,15 @@ const AppContent = () => {
     );
   }, [location]);
 
+  // The query as shown: a file's tabs and their settings rewrite it without the router.
+  const shownSearch = useSyncExternalStore(
+    subscribeToAddress,
+    () => window.location.search,
+  );
+
   const { width, height } = useWindowDimensions();
   const hideAppBar = searchParams.get("embedded") === "1";
-  const appBarHeight = hideAppBar ? 0 : 50; // hard-coded to match the height of the AppBar
+  const appBarHeight = hideAppBar ? 0 : 48; // layout/appbar-height
   const statusBarHeight = 20;
   const mainHeight = height - appBarHeight - statusBarHeight;
   return (
@@ -255,106 +132,43 @@ const AppContent = () => {
             overflow: "hidden",
           }}
         >
-          <AppBar position="static">
-            <Toolbar>
+          <AppBar
+            homeHref={import.meta.env.BASE_URL}
+            logo={
               <img
-                // Base-relative: under a preview deployed at a sub-path, a
-                // root-absolute "/neurosift-logo.png" is a 404.
                 src={`${import.meta.env.BASE_URL}neurosift-logo.png`}
-                alt="Neurosift Logo"
-                style={{
-                  height: "32px",
-                  marginRight: "10px",
-                  cursor: "pointer",
-                  // filter: "brightness(1.35) contrast(1.15) saturate(1.1)",
-                }}
-                onClick={() => navigate("/")}
+                alt=""
+                className="app-bar-logo"
               />
-              <Typography
-                variant="h6"
-                component="div"
-                sx={{
-                  flexGrow: 1,
-                  cursor: "pointer",
-                  "&:hover": {
-                    opacity: 0.8,
-                  },
-                }}
-                onClick={() => navigate("/")}
-              >
-                Neurosift (v2)
-              </Typography>
-              <Tooltip title="Report issues on GitHub">
-                <IconButton
-                  color="inherit"
-                  onClick={() => {
-                    window.open(
-                      "https://github.com/flatironinstitute/neurosift/issues",
-                      "_blank",
-                    );
-                  }}
-                  sx={{ ml: 2 }}
-                >
-                  <GitHubIcon />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Settings">
-                <IconButton
-                  color="inherit"
-                  onClick={() => navigate("/settings")}
-                  sx={{ ml: 2 }}
-                >
-                  <SettingsIcon />
-                </IconButton>
-              </Tooltip>
-              {/* <Button
-                color="inherit"
-                onClick={() => {
-                  window.open(
-                    "https://github.com/flatironinstitute/neurosift/blob/main/doc/neurosift_v2_migration.md",
-                    "_blank",
-                  );
-                }}
-                sx={{
-                  ml: 2,
-                  textTransform: "none",
-                  border: "1px solid rgba(255, 255, 255, 0.3)",
-                  "&:hover": {
-                    border: "1px solid rgba(255, 255, 255, 0.6)",
-                  },
-                }}
-              >
-                Neurosift was updated
-              </Button> */}
-              <Tooltip title="View this in Neurosift v1">
-                <IconButton
-                  color="inherit"
-                  onClick={() => {
-                    const loc = window.location;
-                    const path = loc.pathname;
-                    const search = loc.search;
-
-                    let v1Url = "https://v1.neurosift.app";
-
-                    if (path === "/dandi") {
-                      v1Url += "?p=/dandi";
-                    } else if (path.startsWith("/dandiset/")) {
-                      const dandisetId = path.split("/").pop();
-                      v1Url += `?p=/dandiset&dandisetId=${dandisetId}`;
-                    } else if (path === "/nwb") {
-                      // Convert search params to append to ?p=/nwb
-                      v1Url += `?p=/nwb${search.replace("?", "&")}`;
-                    }
-
-                    window.location.href = v1Url;
-                  }}
-                  sx={{ ml: 2, fontSize: "0.75rem", padding: "4px" }}
-                >
-                  1
-                </IconButton>
-              </Tooltip>
-            </Toolbar>
-          </AppBar>
+            }
+            actions={[
+              {
+                label: "Guide",
+                href: `${import.meta.env.BASE_URL}guide`,
+                icon: "help",
+                collapses: true,
+              },
+              {
+                label: "Report a problem on GitHub",
+                href: "https://github.com/flatironinstitute/neurosift/issues",
+                icon: "logo--github",
+                iconOnly: true,
+                external: true,
+              },
+              {
+                label: "Settings",
+                href: `${import.meta.env.BASE_URL}settings`,
+                icon: "settings",
+                iconOnly: true,
+              },
+              {
+                label: "Open in Neurosift v2",
+                href: v2Url(location.pathname, shownSearch),
+                icon: "launch",
+                collapses: true,
+              },
+            ]}
+          />
         </div>
       )}
 
@@ -376,8 +190,18 @@ const AppContent = () => {
                 element={<HomePage width={width} height={mainHeight} />}
               />
               <Route
+                path="/search"
+                element={<SearchPage width={width} height={mainHeight} />}
+              />
+              <Route
                 path="/dandi"
-                element={<DandiPage width={width} height={mainHeight} />}
+                element={
+                  <SearchPage
+                    width={width}
+                    height={mainHeight}
+                    archive="DANDI"
+                  />
+                }
               />
               <Route
                 path="/dandiset/:dandisetId"
@@ -387,7 +211,13 @@ const AppContent = () => {
               />
               <Route
                 path="/ember"
-                element={<EmberDandiPage width={width} height={mainHeight} />}
+                element={
+                  <SearchPage
+                    width={width}
+                    height={mainHeight}
+                    archive="EMBER"
+                  />
+                }
               />
               <Route
                 path="/ember-dandiset/:dandisetId"
@@ -400,7 +230,13 @@ const AppContent = () => {
               />
               <Route
                 path="/openneuro"
-                element={<OpenNeuroPage width={width} height={mainHeight} />}
+                element={
+                  <SearchPage
+                    width={width}
+                    height={mainHeight}
+                    archive="OpenNeuro"
+                  />
+                }
               />
               <Route
                 path="/openneuro-dataset/:datasetId"
@@ -412,14 +248,8 @@ const AppContent = () => {
                 path="/nwb"
                 element={<NwbPage width={width} height={mainHeight} />}
               />
-              <Route
-                path="/settings"
-                element={<SettingsPage width={width} height={mainHeight} />}
-              />
-              <Route
-                path="/guide"
-                element={<GuidePage width={width} height={mainHeight} />}
-              />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/guide" element={<GuidePage />} />
               <Route
                 path="/edf"
                 element={<EdfPage width={width} height={mainHeight} />}
@@ -431,12 +261,6 @@ const AppContent = () => {
               <Route
                 path="/slp"
                 element={<SlpPage width={width} height={mainHeight} />}
-              />
-              <Route
-                path="/experimental-neurotile"
-                element={
-                  <Navigate to="/experimental-neurosift-tiles" replace />
-                }
               />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
@@ -465,7 +289,6 @@ function App() {
     <ThemeProvider theme={theme}>
       <Router basename={import.meta.env.BASE_URL}>
         <AIComponentRegistryProvider>
-          <LegacyUrlHandler />
           <AppContent />
         </AIComponentRegistryProvider>
       </Router>

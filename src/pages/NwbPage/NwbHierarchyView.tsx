@@ -1,11 +1,13 @@
+import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import {
-  FunctionComponent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import "@css/NwbHierarchyView.css";
+  Button,
+  InlineMessage,
+  LoadingState,
+  ObjectRow,
+  SelectionBar,
+  SelectionList,
+} from "@ui";
+import "./ObjectTreeView.css";
 import { NeurodataObject, useNeurodataObjects } from "./useNeurodataObjects";
 import { findSuitablePlugins, nwbObjectViewPlugins } from "./plugins/registry";
 import { NwbObjectViewPlugin } from "./plugins/pluginInterface";
@@ -38,9 +40,7 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
     [path: string]: boolean | undefined;
   }>({ "/": true });
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
-    new Set(),
-  );
+  const [selectionListShown, setSelectionListShown] = useState(false);
   const [
     launchablePluginsWithSecondaryPaths,
     setLaunchablePluginsWithSecondaryPaths,
@@ -196,429 +196,176 @@ const NwbHierarchyView: FunctionComponent<Props> = ({
     };
   }, [nwbUrl, neurodataObjects, specifications]);
 
-  const truncateDescription = useCallback(
-    (text: string, path: string) => {
-      if (!text) return "";
-      const maxLength = 200;
-      if (text.length <= maxLength) return text;
+  const neurodataObjectsByPath = useMemo(() => {
+    const byPath: { [key: string]: NeurodataObject } = {};
+    neurodataObjects.forEach((obj) => {
+      byPath[obj.path] = obj;
+    });
+    return byPath;
+  }, [neurodataObjects]);
 
-      if (expandedDescriptions.has(path)) {
-        return (
-          <span>
-            {text}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setExpandedDescriptions((prev) => {
-                  const next = new Set(prev);
-                  next.delete(path);
-                  return next;
-                });
-              }}
-              style={{
-                marginLeft: 8,
-                background: "none",
-                border: "none",
-                color: "#0066cc",
-                cursor: "pointer",
-                padding: "2px 4px",
-                fontSize: "0.9em",
-                whiteSpace: "nowrap",
-              }}
-            >
-              show less
-            </button>
-          </span>
-        );
-      }
-
-      return (
-        <span>
-          {text.slice(0, maxLength)}...
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setExpandedDescriptions((prev) => {
-                const next = new Set(prev);
-                next.add(path);
-                return next;
-              });
-            }}
-            style={{
-              marginLeft: 8,
-              background: "none",
-              border: "none",
-              color: "#0066cc",
-              cursor: "pointer",
-              padding: "2px 4px",
-              fontSize: "0.9em",
-              whiteSpace: "nowrap",
-            }}
-          >
-            read more
-          </button>
-        </span>
-      );
-    },
-    [expandedDescriptions],
-  );
-
-  const renderRow = (path: string) => {
+  const nameOf = (path: string) => {
     const obj = neurodataObjectsByPath[path];
-    if (!obj) return null;
+    if (!obj || path === "/") return path;
+    return path.slice((obj.parent?.path || "").length).replace(/^\//, "");
+  };
 
-    // Calculate depth by counting ancestors
-    // Calculate depth by counting ancestors, but subtract 1 since we're not showing root
-    let depth = -1; // start at -1 so root's children start at 0
-    let current = obj;
-    while (current.parent) {
-      depth++;
-      current = current.parent;
+  const pluginKey = (
+    path: string,
+    plugin: NwbObjectViewPlugin,
+    secondaryPaths: string[],
+  ) => `${plugin.name}|${[path, ...secondaryPaths].join("^")}`;
+
+  // The same view can appear twice with different partners, so name the partner.
+  const viewName = (plugin: NwbObjectViewPlugin, secondaryPaths: string[]) =>
+    secondaryPaths.length > 0 && !plugin.requiredDefaultUnits
+      ? `${plugin.label || plugin.name}: ${secondaryPaths.map((p) => p.split("/").pop()).join(", ")}`
+      : plugin.label || plugin.name;
+
+  const parseKey = (key: string) => {
+    if (!key.includes("|")) return { path: key };
+    const [pluginName, rest] = key.split("|");
+    const [path, ...secondaryPaths] = rest.split("^");
+    const plugin = launchablePluginsWithSecondaryPaths[path]?.find(
+      (p) => p.plugin.name === pluginName,
+    )?.plugin;
+    return { path, plugin, secondaryPaths };
+  };
+
+  const labelOf = (key: string) => {
+    const { path, plugin, secondaryPaths } = parseKey(key);
+    return plugin
+      ? `${nameOf(path)}, ${viewName(plugin, secondaryPaths ?? [])}`
+      : nameOf(path);
+  };
+
+  const toggleSelected = (key: string) => (on: boolean) =>
+    setSelectedItems((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+
+  const openSelection = () => {
+    const selections = Array.from(selectedItems);
+    if (selections.length === 1) {
+      const { path, plugin, secondaryPaths } = parseKey(selections[0]);
+      if (plugin) onOpenObjectInNewTab?.(path, plugin, secondaryPaths);
+      else onOpenObjectInNewTab?.(path);
+    } else if (selections.length > 1) {
+      onOpenObjectsInNewTab?.(selections);
     }
-    const indentation = Math.max(0, depth * 20);
-    // For root, show just '/'
-    // For other nodes, show the path difference from parent
-    const name =
-      obj.path === "/"
-        ? "/"
-        : (() => {
-            const parentPath = obj.parent?.path || "";
-            // Remove parent path from the start, and also remove leading slash
-            const relativePath = obj.path
-              .slice(parentPath.length)
-              .replace(/^\//, "");
-            return relativePath;
-          })();
+    setSelectedItems(new Set());
+    setSelectionListShown(false);
+  };
 
-    // If expanded, check for actual children
-    // If not expanded, check if it has any subgroups that could potentially be children
-    const isVisiblyExpanded = visiblyExpanded[obj.path];
-    const showExpansionControl = obj.children.length > 0;
-
+  const renderObject = (obj: NeurodataObject, level: number) => {
+    const expanded = Boolean(visiblyExpanded[obj.path]);
+    const isUnits = neurodataTypeInheritsFrom(
+      obj.attrs.neurodata_type,
+      "Units",
+      specifications,
+    );
+    const isDefaultUnits = obj.path === defaultUnitsPath;
     return (
-      <tr key={obj.path}>
-        <td>
-          <div
-            style={{
-              marginLeft: indentation,
-              display: "flex",
-              alignItems: "center",
-              gap: "5px",
-            }}
-          >
-            {showExpansionControl ? (
-              <span
-                onClick={() => {
-                  setVisiblyExpanded((prev) => {
-                    const next = { ...prev };
-                    if (prev[obj.path]) {
-                      next[obj.path] = false; // important to set false rather than undefined so it doesn't get auto-expanded
-                    } else {
-                      next[obj.path] = true;
-                    }
-                    return next;
-                  });
-                }}
-                style={{ cursor: "pointer", width: "20px", userSelect: "none" }}
-              >
-                {
-                  //obj.expanding ? "..." : isVisiblyExpanded ? "▼" : "►"
-                  isVisiblyExpanded ? "▼" : "►"
-                }
-              </span>
-            ) : (
-              <span style={{ width: "20px" }}></span>
-            )}
-            <input
-              type="checkbox"
-              checked={selectedItems.has(obj.path)}
-              onChange={(e) => {
-                e.stopPropagation();
-                setSelectedItems((prev) => {
-                  const next = new Set(prev);
-                  if (e.target.checked) {
-                    next.add(obj.path);
-                  } else {
-                    next.delete(obj.path);
-                  }
-                  return next;
-                });
-              }}
-              style={{ marginRight: "5px" }}
-            />
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-                flexWrap: "wrap",
-              }}
-            >
-              <span
-                style={{ display: "flex", alignItems: "center", gap: "5px" }}
-              >
-                {obj.dataset && (
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      color: "#666",
-                      fontFamily: "monospace",
-                      position: "relative",
-                      top: "-1px",
-                    }}
-                  >
-                    ▪️
-                  </span>
-                )}
-                <span>{name}</span>
-              </span>
-              {onOpenObjectInNewTab && (
-                <span
-                  title="Open item in new tab"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenObjectInNewTab(obj.path);
-                  }}
-                  style={{
-                    cursor: "pointer",
-                    opacity: 0.7,
-                    fontSize: "16px",
-                    marginLeft: "4px",
-                    padding: "2px 4px",
-                    borderRadius: "4px",
-                    transition: "all 0.2s ease",
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.opacity = "1";
-                    e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.05)";
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.opacity = "0.7";
-                    e.currentTarget.style.backgroundColor = "transparent";
-                  }}
-                >
-                  ⧉
-                </span>
-              )}
-              {launchablePluginsWithSecondaryPaths[obj.path]?.map(
-                ({ plugin, secondaryPaths }) => {
-                  const pluginString = `${plugin.name}|${[obj.path, ...secondaryPaths].join("^")}`;
-                  return (
-                    <div
-                      key={pluginString}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedItems.has(pluginString)}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          setSelectedItems((prev) => {
-                            const next = new Set(prev);
-                            if (e.target.checked) {
-                              next.add(pluginString);
-                            } else {
-                              next.delete(pluginString);
-                            }
-                            return next;
-                          });
-                        }}
-                      />
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onOpenObjectInNewTab?.(
-                            obj.path,
-                            plugin,
-                            secondaryPaths,
-                          );
-                        }}
-                        style={{
-                          padding: "2px 6px",
-                          fontSize: "12px",
-                          backgroundColor: "#f8f9fa",
-                          border: "1px solid #dee2e6",
-                          borderRadius: "4px",
-                          cursor: "pointer",
-                          color: "#6c757d",
-                        }}
-                        title={`Open in ${plugin.name}`}
-                      >
-                        {plugin.label || plugin.name}
-                      </button>
-                    </div>
-                  );
-                },
-              )}
-            </div>
-          </div>
-        </td>
-        <td>
-          <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-            <span
-              className={
-                obj.attrs.neurodata_type && objectsWithInteractiveViews
-                  ? objectsWithInteractiveViews.has(obj.path)
-                    ? "neurodata-type-interactive"
-                    : "neurodata-type-generic"
-                  : undefined
-              }
-              title={
-                obj.attrs.neurodata_type && objectsWithInteractiveViews
-                  ? objectsWithInteractiveViews.has(obj.path)
-                    ? "Has interactive data view"
-                    : "No dedicated view available"
-                  : undefined
+      <ObjectRow
+        key={obj.path}
+        name={nameOf(obj.path)}
+        path={obj.path}
+        type={obj.attrs.neurodata_type || ""}
+        description={obj.attrs.description || undefined}
+        level={level}
+        kind={
+          obj.children.length === 0
+            ? "leaf"
+            : expanded
+              ? "expanded"
+              : "collapsed"
+        }
+        // false, not undefined, so a closed group isn't auto-expanded again
+        onToggle={() =>
+          setVisiblyExpanded((prev) => ({
+            ...prev,
+            [obj.path]: !prev[obj.path],
+          }))
+        }
+        checked={selectedItems.has(obj.path)}
+        onCheck={toggleSelected(obj.path)}
+        onOpen={() => onOpenObjectInNewTab?.(obj.path)}
+        hasView={objectsWithInteractiveViews?.has(obj.path) ?? false}
+        views={(launchablePluginsWithSecondaryPaths[obj.path] ?? []).map(
+          ({ plugin, secondaryPaths }) => {
+            const key = pluginKey(obj.path, plugin, secondaryPaths);
+            return {
+              name: viewName(plugin, secondaryPaths),
+              checked: selectedItems.has(key),
+              onCheck: toggleSelected(key),
+              onOpen: () =>
+                onOpenObjectInNewTab?.(obj.path, plugin, secondaryPaths),
+            };
+          },
+        )}
+        badge={
+          isUnits ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-pressed={isDefaultUnits}
+              onClick={() =>
+                onSetDefaultUnitsPath?.(isDefaultUnits ? undefined : obj.path)
               }
             >
-              {obj.attrs.neurodata_type || "-"}
-            </span>
-            {neurodataTypeInheritsFrom(
-              obj.attrs.neurodata_type,
-              "Units",
-              specifications,
-            ) && (
-              <span
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSetDefaultUnitsPath?.(
-                    obj.path === defaultUnitsPath ? undefined : obj.path,
-                  );
-                }}
-                style={{
-                  marginLeft: "4px",
-                  fontSize: "12px",
-                  cursor: "pointer",
-                  color: obj.path === defaultUnitsPath ? "#007bff" : "#6c757d",
-                  opacity: obj.path === defaultUnitsPath ? 1 : 0.6,
-                }}
-                title={
-                  obj.path === defaultUnitsPath
-                    ? "Default units"
-                    : "Set as default units"
-                }
-              >
-                {obj.path === defaultUnitsPath ? "(default)" : "(set default)"}
-              </span>
-            )}
-          </div>
-        </td>
-        <td style={{ width: "100%" }}>
-          {truncateDescription(obj.attrs.description || "", obj.path)}
-        </td>
-      </tr>
+              {isDefaultUnits ? "Default units" : "Set as default units"}
+            </Button>
+          ) : undefined
+        }
+      >
+        {expanded &&
+          obj.children.map((child) => renderObject(child, level + 1))}
+      </ObjectRow>
     );
   };
 
-  const neurodataObjectsByPath = useMemo(() => {
-    // create a map of neurodata objects by path
-    const neurodataObjectsByPath: { [key: string]: NeurodataObject } = {};
-    neurodataObjects.forEach((obj) => {
-      neurodataObjectsByPath[obj.path] = obj;
-    });
-    return neurodataObjectsByPath;
-  }, [neurodataObjects]);
-
-  const visiblePaths = useMemo(() => {
-    // Recursively get all visible paths
-    const getVisiblePaths = (path: string): string[] => {
-      const obj = neurodataObjectsByPath[path];
-      if (!obj) return [];
-
-      const result: string[] = [];
-      // Don't include root in the result, but check its expanded state
-      if (path === "/") {
-        if (visiblyExpanded[obj.path]) {
-          const children = obj.children;
-          children.forEach((child) => {
-            result.push(...getVisiblePaths(child.path));
-          });
-        }
-        return result;
-      }
-      result.push(path);
-      if (visiblyExpanded[obj.path]) {
-        const children = obj.children;
-        children.forEach((child) => {
-          result.push(...getVisiblePaths(child.path));
-        });
-      }
-      return result;
-    };
-    return getVisiblePaths("/");
-  }, [visiblyExpanded, neurodataObjectsByPath]);
+  const root = neurodataObjectsByPath["/"];
+  const selection = Array.from(selectedItems);
 
   return (
-    <div style={{ margin: "10px" }}>
+    <div className="object-tree">
       {partialLoad && (
-        <div className="nwb-hierarchy-partial-load">
-          Only a subset of objects is being shown because there are too many
-          objects to load.
-        </div>
+        <InlineMessage status="info">
+          Only some objects are shown: this file has too many to list them all.
+        </InlineMessage>
       )}
-      {selectedItems.size > 0 && (
-        <div style={{ marginBottom: "10px", display: "flex", gap: "10px" }}>
-          {onOpenObjectInNewTab && (
-            <button
-              title="Open selected in new tab"
-              onClick={() => {
-                const selections: string[] = Array.from(selectedItems);
-                if (selections.length === 1) {
-                  const selection = selections[0];
-                  if (selection.includes("|")) {
-                    // Plugin selection
-                    const [pluginName, pathWithSecondary] =
-                      selection.split("|");
-                    const [path, ...secondaryPaths] =
-                      pathWithSecondary.split("^");
-                    const plugin = launchablePluginsWithSecondaryPaths[
-                      path
-                    ]?.find((p) => p.plugin.name === pluginName)?.plugin;
-                    if (plugin) {
-                      onOpenObjectInNewTab?.(path, plugin, secondaryPaths);
-                    }
-                  } else {
-                    // Regular path selection
-                    onOpenObjectInNewTab?.(selection);
-                  }
-                } else if (selections.length > 1) {
-                  onOpenObjectsInNewTab?.(selections);
-                }
-                setSelectedItems(new Set()); // Clear selection after opening
-              }}
-              style={{
-                padding: "4px 8px",
-                backgroundColor: "#007bff",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-                fontSize: "14px",
-              }}
-            >
-              View {selectedItems.size} selected
-            </button>
-          )}
-        </div>
+      {selection.length > 0 && (
+        <SelectionBar
+          names={selection.map(labelOf)}
+          onShowList={() => setSelectionListShown((shown) => !shown)}
+          onClear={() => {
+            setSelectedItems(new Set());
+            setSelectionListShown(false);
+          }}
+          onViewTogether={openSelection}
+        />
       )}
-      <table className="nwb-hierarchy-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Neurodata Type</th>
-            <th>Description</th>
-          </tr>
-        </thead>
-        <tbody>{visiblePaths.map((path) => renderRow(path))}</tbody>
-      </table>
-      {loading && <div>Loading...</div>}
+      {selectionListShown && selection.length > 2 && (
+        <SelectionList
+          items={selection.map((key) => ({
+            id: key,
+            label: labelOf(key),
+            context: parseKey(key).path,
+          }))}
+          onRemove={(key) => toggleSelected(key)(false)}
+        />
+      )}
+      <ul className="object-tree-list" aria-label="Objects in this file">
+        {root &&
+          visiblyExpanded["/"] &&
+          root.children.map((child) => renderObject(child, 1))}
+      </ul>
+      {loading && (
+        <LoadingState label="Reading the file’s objects" phase="loading" />
+      )}
     </div>
   );
 };

@@ -1,0 +1,67 @@
+/* Short enough that a view below it, such as the units raster, stays in reach. */
+.dynamic-table > .ns-table-scroll {
+  max-block-size: 22rem;
+}
+
+/* One line per row; long paths and lists scroll sideways instead. */
+.dynamic-table td {
+  white-space: nowrap;
+}
+
+.dynamic-table-footer {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.dynamic-table-footer:empty {
+  display: none;
+}
+
+.ragged-detail {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.ragged-detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.ragged-detail-title {
+  margin: 0;
+  font: var(--type-label);
+  letter-spacing: var(--type-label-letter-spacing);
+}
+
+.ragged-detail-values {
+  margin: 0;
+  font: var(--type-code-sm);
+  letter-spacing: var(--type-code-sm-letter-spacing);
+  overflow-wrap: anywhere;
+}
+
+.ragged-detail-reading {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  margin: 0;
+  font: var(--type-body-sm);
+}
+
+.ragged-detail-lists {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ragged-detail-list-name {
+  color: var(--text-secondary);
+  font: var(--type-caption);
+}

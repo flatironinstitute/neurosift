@@ -23,6 +23,8 @@ A few notes on choosing the example:
 
 ## Development Setup
 
+The interface is built from Neurosift's design system: tokens, components and usage guidelines are documented at https://neurosift.app/design-system/ (source in `design-system/`; see `AGENTS.md`).
+
 ```bash
 git clone https://github.com/flatironinstitute/neurosift
 cd neurosift

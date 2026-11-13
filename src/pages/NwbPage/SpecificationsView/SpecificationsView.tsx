@@ -1,282 +1,219 @@
-import { FunctionComponent } from "react";
-import { useNwbFileSpecifications } from "./SetupNwbFileSpecificationsProvider";
-import ExpandableTableCell from "../../../components/ExpandableTableCell";
-import "../../../css/nwb-table-expandable.css";
+import {
+  DataTable,
+  EmptyState,
+  LoadingState,
+  SearchField,
+  SegmentedControl,
+} from "@ui";
+import { FunctionComponent, useMemo, useState } from "react";
+import {
+  useNeurodataObjects,
+  type NeurodataObject,
+} from "../useNeurodataObjects";
+import "../Hdf5View/ReferenceView.css";
+import { useElementSize } from "../useElementSize";
+import { NamespaceDetails, TypeDetails } from "./SchemaDetails";
+import {
+  useNwbFileSpecifications,
+  type NwbFileSpecifications,
+} from "./SetupNwbFileSpecificationsProvider";
+import {
+  firstSentence,
+  inheritance,
+  matchesType,
+  schemaTypes,
+  type SchemaType,
+} from "./schemaTypes";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-type SpecificationsViewProps = {};
+type Props = {
+  nwbUrl: string;
+  /** Opens a path in the HDF5 tab. */
+  onOpenPath: (path: string) => void;
+};
 
-// type SelectedItem =
-//   | {
-//       type: "group";
-//       group: SpecificationsGroup;
-//     }
-//   | {
-//       type: "dataset";
-//       dataset: SpecificationsDataset;
-//     }
-//   | {
-//       type: "namespace";
-//       namespace: SpecificationsNamespace;
-//     };
+const typeKey = (t: SchemaType) => `type:${t.namespace}:${t.name}`;
 
-const SpecificationsView: FunctionComponent<SpecificationsViewProps> = () => {
+/** Where each neurodata type is used in the file. */
+function pathsByType(objects: NeurodataObject[]): Map<string, string[]> {
+  const map = new Map<string, string[]>();
+  const walk = (list: NeurodataObject[]) =>
+    list.forEach((o) => {
+      const type = o.attrs?.neurodata_type;
+      const paths = map.get(type) ?? [];
+      if (type && !paths.includes(o.path)) map.set(type, [...paths, o.path]);
+      walk(o.children);
+    });
+  walk(objects);
+  return map;
+}
+
+/** The NWB specifications stored in the file, once they are read. */
+const SpecificationsView: FunctionComponent<Props> = (props) => {
   const specifications = useNwbFileSpecifications();
-  // const {
-  //   handleOpen: openItem,
-  //   handleClose: closeItem,
-  //   visible: itemVisible,
-  // } = useModalWindow();
-  // const [selectedItem, setSelectedItem] = useState<SelectedItem | undefined>(
-  //   undefined,
-  // );
-  // const openGroup = useCallback(
-  //   (group: SpecificationsGroup) => {
-  //     setSelectedItem({ type: "group", group });
-  //     openItem();
-  //   },
-  //   [setSelectedItem, openItem],
-  // );
-  // const openDataset = useCallback(
-  //   (dataset: any) => {
-  //     setSelectedItem({ type: "dataset", dataset });
-  //     openItem();
-  //   },
-  //   [setSelectedItem, openItem],
-  // );
-  // const openNamespace = useCallback(
-  //   (namespace: SpecificationsNamespace) => {
-  //     setSelectedItem({ type: "namespace", namespace });
-  //     openItem();
-  //   },
-  //   [setSelectedItem, openItem],
-  // );
+  if (!specifications)
+    return <LoadingState label="Reading the specifications" phase="loading" />;
+  return <SchemaBrowser {...props} specifications={specifications} />;
+};
+
+/** Namespaces and types, with the selected one's details. */
+const SchemaBrowser: FunctionComponent<
+  Props & { specifications: NwbFileSpecifications }
+> = ({ nwbUrl, onOpenPath, specifications }) => {
+  const { neurodataObjects, loading } = useNeurodataObjects(nwbUrl);
+  const [query, setQuery] = useState("");
+  const [scope, setScope] = useState("all");
+  const [active, setActive] = useState<string>();
+  const [mainRef, mainSize] = useElementSize<HTMLDivElement>();
+
+  const types = useMemo(() => schemaTypes(specifications), [specifications]);
+  const used = useMemo(() => pathsByType(neurodataObjects), [neurodataObjects]);
+
+  const namespaces = specifications.allNamespaces;
+  const shown = types.filter(
+    (t) => matchesType(t, query) && (scope === "all" || used.has(t.name)),
+  );
+  const groups = types.filter((t) => t.kind === "Group").length;
+  const summary = `The specifications stored in this file: ${namespaces.length} namespaces, ${types.length} types (${groups} groups, ${types.length - groups} datasets)`;
+
+  const activeType = types.find((t) => typeKey(t) === active);
+  const activeNamespace = namespaces.find((ns) => `ns:${ns.name}` === active);
+
   return (
-    <div style={{ position: "relative" }}>
-      <h3>Namespaces</h3>
-      <table className="nwb-table">
-        <thead>
-          <tr>
-            <th>Namespace</th>
-            <th>Version</th>
-            <th>Author</th>
-            <th>Contact</th>
-            <th>Doc</th>
-            <th>Full Name</th>
-            <th>Schema</th>
-          </tr>
-        </thead>
-        <tbody>
-          {specifications?.allNamespaces?.map((ns, i) => (
-            <tr key={i}>
-              <td>
-                {/* <Hyperlink onClick={() => openNamespace(ns)}> */}
-                {ns.name}
-                {/* </Hyperlink> */}
-              </td>
-              <td>{ns.version}</td>
-              <td>
-                {typeof ns.author === "string"
-                  ? ns.author
-                  : ns.author.join(", ")}
-              </td>
-              <td>
-                {typeof ns.contact === "string"
-                  ? ns.contact
-                  : ns.contact.join(", ")}
-              </td>
-              <td>
-                <ExpandableTableCell content={ns.doc} />
-              </td>
-              <td>
-                <ExpandableTableCell content={ns.full_name} />
-              </td>
-              <td>
-                <ExpandableTableCell
-                  content={ns.schema
-                    .map((s) =>
-                      "namespace" in s
-                        ? s.namespace
-                        : "source" in s
-                          ? s.source
-                          : "",
-                    )
-                    .join(", ")}
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <h3>Datasets</h3>
-      <table className="nwb-table">
-        <thead>
-          <tr>
-            <th>neurodata_type_def</th>
-            <th>neurodata_type_inc</th>
-            <th>dtype</th>
-            <th>dims</th>
-            <th>attributes</th>
-          </tr>
-        </thead>
-        <tbody>
-          {specifications?.allDatasets?.map((ds, i) => (
-            <tr key={i}>
-              <td>
-                {/* <Hyperlink onClick={() => openDataset(ds)}> */}
-                {ds.neurodata_type_def}
-                {/* </Hyperlink> */}
-              </td>
-              <td>{ds.neurodata_type_inc}</td>
-              <td>
-                <ExpandableTableCell
-                  content={JSON.stringify(ds.dtype, null, 2)}
-                  preformatted
-                />
-              </td>
-              <td>
-                <ExpandableTableCell
-                  content={JSON.stringify(ds.dims, null, 2)}
-                  preformatted
-                />
-              </td>
-              <td>
-                <ExpandableTableCell
-                  content={JSON.stringify(ds.attributes, null, 2)}
-                  preformatted
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <h3>Groups</h3>
-      <table className="nwb-table">
-        <thead>
-          <tr>
-            <th>neurodata_type_def</th>
-            <th>neurodata_type_inc</th>
-            <th>default_name</th>
-            <th>doc</th>
-            <th>datasets</th>
-            <th>groups</th>
-          </tr>
-        </thead>
-        <tbody>
-          {specifications?.allGroups?.map((g, i) => (
-            <tr key={i}>
-              <td>
-                {/* <Hyperlink onClick={() => openGroup(g)}> */}
-                {g.neurodata_type_def}
-                {/* </Hyperlink> */}
-              </td>
-              <td>{g.neurodata_type_inc}</td>
-              <td>{g.default_name}</td>
-              <td>
-                <ExpandableTableCell content={g.doc} />
-              </td>
-              <td>
-                <ExpandableTableCell
-                  content={JSON.stringify(g.datasets, null, 2)}
-                  preformatted
-                />
-              </td>
-              <td>
-                <ExpandableTableCell
-                  content={JSON.stringify(g.groups, null, 2)}
-                  preformatted
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {/* <ModalWindow visible={itemVisible} onClose={closeItem}>
-        <SelectedItemView selectedItem={selectedItem} closeItem={closeItem} />
-      </ModalWindow> */}
+    <div className="reference-view">
+      <p className="reference-summary">{summary}</p>
+      <div className="reference-find">
+        <SearchField
+          label="Find a type"
+          placeholder="Find a type"
+          size="md"
+          value={query}
+          onChange={setQuery}
+          onSearch={setQuery}
+        />
+        <SegmentedControl
+          label="Which types"
+          size="sm"
+          value={scope}
+          onChange={setScope}
+          options={[
+            { value: "all", label: "All types" },
+            { value: "used", label: "Used in this file" },
+          ]}
+        />
+      </div>
+      <div className="reference-split">
+        <div className="reference-main" ref={mainRef}>
+          <div className="reference-group">
+            <h2 className="reference-section-title">Namespaces</h2>
+            <DataTable
+              caption="Namespaces"
+              rows={namespaces}
+              rowKey={(ns) => `ns:${ns.name}`}
+              active={active}
+              onActivate={setActive}
+              columns={[
+                {
+                  key: "name",
+                  label: "Namespace",
+                  type: "code",
+                  value: (ns) => ns.name,
+                },
+                { key: "version", label: "Version", value: (ns) => ns.version },
+                {
+                  key: "full",
+                  label: "Full name",
+                  value: (ns) => ns.full_name,
+                },
+                { key: "doc", label: "Description", value: (ns) => ns.doc },
+              ]}
+            />
+          </div>
+          <div className="reference-group">
+            <h2 className="reference-section-title">Types</h2>
+            {shown.length === 0 ? (
+              <EmptyState
+                title={
+                  query.trim()
+                    ? `No type matches “${query.trim()}”.`
+                    : "No types are used in this file yet."
+                }
+                action={{
+                  label: "Show all types",
+                  onClick: () => {
+                    setQuery("");
+                    setScope("all");
+                  },
+                }}
+              >
+                {scope === "used" && loading
+                  ? "The file is still being read."
+                  : "Find looks at type names."}
+              </EmptyState>
+            ) : (
+              <DataTable
+                caption="Types"
+                rows={shown}
+                rowKey={typeKey}
+                active={active}
+                onActivate={setActive}
+                columns={[
+                  {
+                    key: "name",
+                    label: "Type",
+                    type: "code",
+                    value: (t) => t.name,
+                  },
+                  // A narrow pane drops Extends; the details still say it.
+                  ...(mainSize.width === 0 || mainSize.width >= 760
+                    ? [
+                        {
+                          key: "extends",
+                          label: "Extends",
+                          type: "code" as const,
+                          value: (t: SchemaType) => t.extends,
+                        },
+                      ]
+                    : []),
+                  { key: "kind", label: "Kind", value: (t) => t.kind },
+                  {
+                    key: "namespace",
+                    label: "Namespace",
+                    type: "code",
+                    value: (t) => t.namespace,
+                  },
+                  {
+                    key: "doc",
+                    label: "Description",
+                    value: (t) => firstSentence(t.doc),
+                  },
+                ]}
+              />
+            )}
+            {shown.length > 0 && shown.length < types.length && (
+              <p className="reference-note">{`${shown.length} of ${types.length} types shown.`}</p>
+            )}
+          </div>
+        </div>
+        <aside className="reference-details" aria-label="Details">
+          {activeType ? (
+            <TypeDetails
+              key={active}
+              type={activeType}
+              chain={inheritance(types, activeType.name)}
+              paths={used.get(activeType.name) ?? (loading ? undefined : [])}
+              onOpenPath={onOpenPath}
+            />
+          ) : activeNamespace ? (
+            <NamespaceDetails key={active} namespace={activeNamespace} />
+          ) : (
+            <p className="reference-note">
+              Pick a namespace or type to see its details.
+            </p>
+          )}
+        </aside>
+      </div>
     </div>
   );
 };
-
-// type SelectedItemViewProps = {
-//   selectedItem: SelectedItem | undefined;
-//   closeItem: () => void;
-// };
-
-// const SelectedItemView: FunctionComponent<SelectedItemViewProps> = ({
-//   selectedItem,
-//   closeItem,
-// }) => {
-//   if (!selectedItem) return null;
-//   switch (selectedItem.type) {
-//     case "group":
-//       return <GroupView group={selectedItem.group} closeItem={closeItem} />;
-//     case "dataset":
-//       return (
-//         <DatasetView dataset={selectedItem.dataset} closeItem={closeItem} />
-//       );
-//     case "namespace":
-//       return (
-//         <NamespaceView
-//           namespace={selectedItem.namespace}
-//           closeItem={closeItem}
-//         />
-//       );
-//   }
-// };
-
-// type GroupViewProps = {
-//   group: SpecificationsGroup;
-//   closeItem: () => void;
-// };
-
-// const GroupView: FunctionComponent<GroupViewProps> = ({ group, closeItem }) => {
-//   return (
-//     <div>
-//       <h3>{group.neurodata_type_def}</h3>
-//       <div>
-//         <pre>{JSON.stringify(group, null, 2)}</pre>
-//       </div>
-//     </div>
-//   );
-// };
-
-// type DatasetViewProps = {
-//   dataset: any;
-//   closeItem: () => void;
-// };
-
-// const DatasetView: FunctionComponent<DatasetViewProps> = ({
-//   dataset,
-//   closeItem,
-// }) => {
-//   return (
-//     <div>
-//       <h3>{dataset.neurodata_type_def}</h3>
-//       <div>
-//         <pre>{JSON.stringify(dataset, null, 2)}</pre>
-//       </div>
-//     </div>
-//   );
-// };
-
-// type NamespaceViewProps = {
-//   namespace: SpecificationsNamespace;
-//   closeItem: () => void;
-// };
-
-// const NamespaceView: FunctionComponent<NamespaceViewProps> = ({
-//   namespace,
-//   closeItem,
-// }) => {
-//   return (
-//     <div>
-//       <h3>{namespace.name}</h3>
-//       <div>
-//         <pre>{JSON.stringify(namespace, null, 2)}</pre>
-//       </div>
-//     </div>
-//   );
-// };
 
 export default SpecificationsView;

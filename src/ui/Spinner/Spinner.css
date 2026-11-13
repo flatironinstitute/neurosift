@@ -1,0 +1,23 @@
+.ns-spinner {
+  display: inline-flex;
+  flex: none;
+}
+
+.ns-spinner-arc {
+  inline-size: var(--icon-size-sm);
+  block-size: var(--icon-size-sm);
+  animation: ns-spin 0.8s linear infinite;
+}
+
+@keyframes ns-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* Under reduced motion the arc stays still; the label still says it is loading. */
+@media (prefers-reduced-motion: reduce) {
+  .ns-spinner-arc {
+    animation: none;
+  }
+}

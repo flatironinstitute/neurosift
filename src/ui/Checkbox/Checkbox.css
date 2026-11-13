@@ -1,0 +1,94 @@
+.ns-checkbox {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-block-size: var(--layout-target-min);
+  font: var(--type-body-sm);
+  color: var(--text-default);
+  cursor: pointer;
+}
+
+.ns-checkbox-box {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  inline-size: var(--icon-size-sm);
+  block-size: var(--icon-size-sm);
+}
+
+.ns-checkbox-input {
+  margin: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  background: var(--surface-panel);
+  border: var(--border-width-1) solid var(--border-strong);
+  border-radius: var(--radius-xs);
+  cursor: inherit;
+  appearance: none;
+}
+
+.ns-checkbox:hover .ns-checkbox-input:not(:disabled) {
+  border-color: var(--border-selected);
+}
+
+.ns-checkbox-input:is(:checked, [data-mixed]) {
+  background: var(--action-primary);
+  border-color: var(--action-primary);
+}
+
+.ns-checkbox:hover
+  .ns-checkbox-input:not(:disabled):is(:checked, [data-mixed]) {
+  background: var(--action-primary-hover);
+  border-color: var(--action-primary-hover);
+}
+
+.ns-checkbox-input:focus-visible {
+  outline: var(--border-width-2) solid var(--focus-ring, var(--border-focus));
+  outline-offset: var(--space-0-5);
+}
+
+/* The marks sit over the box; the one that matches the state shows. */
+.ns-checkbox-mark {
+  position: absolute;
+  inset: 0;
+  display: none;
+  color: var(--text-on-inverse);
+  pointer-events: none;
+}
+
+.ns-checkbox-input:checked ~ .ns-checkbox-mark--on,
+.ns-checkbox-input[data-mixed]:not(:checked) ~ .ns-checkbox-mark--mixed {
+  display: flex;
+}
+
+.ns-checkbox-count {
+  margin-inline-start: auto;
+  font: var(--type-caption);
+  color: var(--text-muted);
+}
+
+.ns-checkbox:has(.ns-checkbox-input:disabled) {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.ns-checkbox-input:disabled,
+.ns-checkbox-input:disabled:is(:checked, [data-mixed]) {
+  background: var(--action-disabled);
+  border-color: var(--border-disabled);
+}
+
+.ns-checkbox-input:disabled ~ .ns-checkbox-mark,
+.ns-checkbox:has(.ns-checkbox-input:disabled) .ns-checkbox-count {
+  color: var(--text-disabled);
+}
+
+@media (forced-colors: active) {
+  .ns-checkbox-input:is(:checked, [data-mixed]) {
+    background: Highlight;
+  }
+
+  .ns-checkbox-mark {
+    color: HighlightText;
+  }
+}

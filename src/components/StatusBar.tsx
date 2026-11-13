@@ -1,71 +1,19 @@
+import { StatusBar as Bar } from "@ui";
 import { useEffect, useState } from "react";
 import buildInfo from "../build-info.json";
-import {
-  getStatusItems,
-  registerStatusCallback,
-  type StatusBarItem,
-} from "./StatusBarContext";
+import { getStatusItems, registerStatusCallback } from "./StatusBarContext";
+import { statusWords } from "./statusWords";
 
+/** The app’s status bar: the build, and what the open file has read so far. */
 const StatusBar: React.FC = () => {
   const [items, setItems] = useState(getStatusItems());
-
-  useEffect(() => {
-    // Register callback and store cleanup function
-    const unregister = registerStatusCallback((newItems) => {
-      setItems(newItems);
-    });
-    // Cleanup on unmount
-    return unregister;
-  }, []);
-
+  useEffect(() => registerStatusCallback(setItems), []);
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        backgroundColor: "#f0f0f0",
-        display: "flex",
-        alignItems: "center",
-        padding: "0 10px",
-        gap: 15,
-        boxSizing: "border-box",
-        fontSize: 10,
-      }}
-    >
-      <span style={{ color: "#aaa" }}>v{buildInfo.version}</span>
-      {Object.entries(items).map(([name, item]) => (
-        <StatusBarItemView key={name} item={item} />
-      ))}
-    </div>
-  );
-};
-
-const StatusBarItemView: React.FC<{ item: StatusBarItem }> = ({ item }) => {
-  if (item.type === "text") {
-    return <span title={item.tooltip}>{item.text}</span>;
-  }
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-      <span>{item.label}</span>
-      <div
-        style={{
-          width: 100,
-          height: 10,
-          backgroundColor: "#ddd",
-          borderRadius: 5,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            width: `${item.progress}%`,
-            height: "100%",
-            backgroundColor: "#007bff",
-            transition: "width 0.3s ease",
-          }}
-        />
-      </div>
-    </div>
+    <Bar
+      version={`v${buildInfo.version}`}
+      items={statusWords(items)}
+      details="Counts of the HDF5 groups and datasets Neurosift has read from the open file, and the requests for data the open views have made. Files are read a piece at a time, through LINDI where an index exists."
+    />
   );
 };
 

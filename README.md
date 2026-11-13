@@ -10,9 +10,9 @@
 
 Neurosift is a browser-based tool designed for the visualization of neuroscience data with a focus on NWB (Neurodata Without Borders) files, and enables interactive exploration of the [DANDI Archive](https://dandiarchive.org/), [EMBER Archive](https://emberarchive.org/), and [OpenNeuro](https://openneuro.org/) online repositories.
 
-This branch contains the current (v2) version of neurosift. The previous (v1) version is available on the [main-v1 branch](https://github.com/flatironinstitute/neurosift/tree/main-v1).
+This branch contains v3 of neurosift, rebuilt on a design system (see https://main-v3.neurosift.pages.dev/design-system/). The current (v2) version is on the [main branch](https://github.com/flatironinstitute/neurosift/tree/main), and v1 on the [main-v1 branch](https://github.com/flatironinstitute/neurosift/tree/main-v1).
 
-The live application is hosted at [https://neurosift.app](https://neurosift.app).
+This version is published at [https://main-v3.neurosift.pages.dev](https://main-v3.neurosift.pages.dev). The live application (v2) is at [https://neurosift.app](https://neurosift.app).
 
 The video below demonstrates how to view the contents of a NWB file that is hosted on [DANDI Archive](https://dandiarchive.org/) in Neurosift.  Please note that this video has no sound.
 
