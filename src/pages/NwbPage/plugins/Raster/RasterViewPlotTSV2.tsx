@@ -114,6 +114,7 @@ const RasterViewPlotTSV2: FunctionComponent<Props> = ({
       gridlineOpts={{ hideX: false, hideY: true }}
       yAxisInfo={yAxisInfo}
       hideToolbar
+      barePosition="relative"
     />
   );
 };
