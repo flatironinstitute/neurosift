@@ -50,8 +50,13 @@
   flex: 1;
   min-block-size: 12rem;
   color: var(--text-default);
-  background: var(--plot-surface);
+  background: var(--surface-panel);
   border: var(--border-width-1) solid var(--border-subtle);
+}
+
+/* Only charts take the chart surface; tables and images keep the app's panel. */
+.ns-view-plot[data-plot-theme] {
+  background: var(--plot-surface);
 }
 
 .ns-view-settings {
