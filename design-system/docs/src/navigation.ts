@@ -51,6 +51,12 @@ export const navigation: NavSection[] = [
           "The colors people know, the scales around them, and colors for data.",
       },
       {
+        label: "Themes",
+        href: "/foundations/themes/",
+        summary:
+          "Light, Dark and High contrast, and a light or dark theme for every chart.",
+      },
+      {
         label: "Iconography",
         href: "/foundations/iconography/",
         summary: "IBM Carbon icons, their sizes and what they replace.",

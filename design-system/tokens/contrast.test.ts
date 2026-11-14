@@ -1,53 +1,15 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { PLOT_THEMES, THEMES, TokenSet } from "./build.mjs";
+import { contrastRatio } from "./contrast.mjs";
 
 const set = TokenSet.load(new URL("./", import.meta.url));
 
-interface Color {
-  hex: string;
-  alpha?: number;
-}
-
+// Each describe block sets the theme its pairings are measured in.
 class Contrast {
   static theme: string | undefined;
 
-  static resolve(path: string): Color {
-    return set.resolve(path, Contrast.theme) as Color;
-  }
-
-  static channels(hex: string): number[] {
-    return [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
-  }
-
-  // A translucent color is flattened onto what it sits on, as the browser draws it.
-  static flatten(color: Color, under: string): string {
-    const alpha = color.alpha ?? 1;
-    const top = Contrast.channels(color.hex);
-    const base = Contrast.channels(under);
-    return `#${top
-      .map((v, i) =>
-        Math.round(v * alpha + base[i] * (1 - alpha))
-          .toString(16)
-          .padStart(2, "0"),
-      )
-      .join("")}`;
-  }
-
-  static luminance(hex: string): number {
-    const [r, g, b] = Contrast.channels(hex)
-      .map((v) => v / 255)
-      .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  }
-
   static ratio(foreground: string, background: string): number {
-    const page = Contrast.resolve("surface.page").hex;
-    const bg = Contrast.flatten(Contrast.resolve(background), page);
-    const fg = Contrast.flatten(Contrast.resolve(foreground), bg);
-    const [light, dark] = [Contrast.luminance(fg), Contrast.luminance(bg)].sort(
-      (a, b) => b - a,
-    );
-    return (light + 0.05) / (dark + 0.05);
+    return contrastRatio(set, foreground, background, Contrast.theme);
   }
 }
 

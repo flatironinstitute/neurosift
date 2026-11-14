@@ -81,15 +81,8 @@ export class TokenSet {
       const name = TokenSet.kebabName(path);
       return `.${name} {\n  font: var(--${name});\n  letter-spacing: var(--${name}-letter-spacing);\n}`;
     });
-    const block = (selector, scheme, overrides) =>
-      `${selector} {\n  color-scheme: ${scheme};\n${[...overrides]
-        .map(
-          ([path, token]) =>
-            `  ${TokenSet.cssName(path)}: ${this.#color(token.$value)};`,
-        )
-        .join("\n")}\n}`;
     const themes = THEMES.map((name) =>
-      block(themeSelector(name), "dark", this.themes.get(name)),
+      this.#block(themeSelector(name), "dark", this.themes.get(name)),
     );
     // A chart and whatever sits on it (empty states, legends, checkboxes) take its own theme, so a dark
     // chart carries the dark app colors too, and a light chart restates the light ones inside a dark app.
@@ -104,10 +97,18 @@ export class TokenSet {
       ].map((path) => [path, this.tokens.get(path)]),
     );
     const charts = [
-      block(PLOT_THEMES["plot-dark"], "dark", plotDark),
-      block('[data-plot-theme="light"]', "light", plotLight),
+      this.#block(PLOT_THEMES["plot-dark"], "dark", plotDark),
+      this.#block('[data-plot-theme="light"]', "light", plotLight),
     ];
     return `${HEADER}\n:root {\n  color-scheme: light;\n${lines.join("\n")}\n}\n\n${[...themes, ...charts, ...typeClasses].join("\n\n")}\n`;
+  }
+
+  #block(selector, scheme, overrides) {
+    const values = [...overrides].map(
+      ([path, token]) =>
+        `  ${TokenSet.cssName(path)}: ${this.#color(token.$value)};`,
+    );
+    return `${selector} {\n  color-scheme: ${scheme};\n${values.join("\n")}\n}`;
   }
 
   // Docs only: one class per token that exposes it as --token, so specimens need no inline styles.
@@ -116,7 +117,25 @@ export class TokenSet {
       const name = TokenSet.kebabName(path);
       return `.token-${name} {\n  --token: var(--${name});\n}`;
     });
-    return `${HEADER}\n${rules.join("\n\n")}\n`;
+    // A preview box shows an app theme inside a page of another, as the docs Themes page does.
+    const appPaths = [...(this.themes.get("dark")?.keys() ?? [])];
+    const previews = this.themes.size
+      ? [
+          this.#block(
+            ".theme-preview-light",
+            "light",
+            new Map(appPaths.map((path) => [path, this.tokens.get(path)])),
+          ),
+          ...THEMES.map((name) =>
+            this.#block(
+              `.theme-preview-${name}`,
+              "dark",
+              this.themes.get(name),
+            ),
+          ),
+        ]
+      : [];
+    return `${HEADER}\n${[...rules, ...previews].join("\n\n")}\n`;
   }
 
   #paths(...types) {
