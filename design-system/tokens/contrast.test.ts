@@ -1,55 +1,15 @@
-import { describe, expect, it } from "vitest";
-import { TokenSet } from "./build.mjs";
+import { beforeAll, describe, expect, it } from "vitest";
+import { PLOT_THEMES, THEMES, TokenSet } from "./build.mjs";
+import { contrastRatio } from "./contrast.mjs";
 
 const set = TokenSet.load(new URL("./", import.meta.url));
 
-interface Color {
-  hex: string;
-  alpha?: number;
-}
-
+// Each describe block sets the theme its pairings are measured in.
 class Contrast {
-  static resolve(path: string): Color {
-    let token = set.tokens.get(path);
-    while (token && typeof token.$value === "string")
-      token = set.tokens.get(token.$value.slice(1, -1));
-    if (!token) throw new Error(`No token ${path}`);
-    return token.$value as Color;
-  }
-
-  static channels(hex: string): number[] {
-    return [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
-  }
-
-  // A translucent color is flattened onto what it sits on, as the browser draws it.
-  static flatten(color: Color, under: string): string {
-    const alpha = color.alpha ?? 1;
-    const top = Contrast.channels(color.hex);
-    const base = Contrast.channels(under);
-    return `#${top
-      .map((v, i) =>
-        Math.round(v * alpha + base[i] * (1 - alpha))
-          .toString(16)
-          .padStart(2, "0"),
-      )
-      .join("")}`;
-  }
-
-  static luminance(hex: string): number {
-    const [r, g, b] = Contrast.channels(hex)
-      .map((v) => v / 255)
-      .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  }
+  static theme: string | undefined;
 
   static ratio(foreground: string, background: string): number {
-    const page = Contrast.resolve("surface.page").hex;
-    const bg = Contrast.flatten(Contrast.resolve(background), page);
-    const fg = Contrast.flatten(Contrast.resolve(foreground), bg);
-    const [light, dark] = [Contrast.luminance(fg), Contrast.luminance(bg)].sort(
-      (a, b) => b - a,
-    );
-    return (light + 0.05) / (dark + 0.05);
+    return contrastRatio(set, foreground, background, Contrast.theme);
   }
 }
 
@@ -107,31 +67,73 @@ const pairs: [string, string, number][] = [
   ...["border.strong", "border.selected", "border.error"].map(
     (fg): [string, string, number] => [fg, "surface.panel", NON_TEXT],
   ),
+];
+
+// Charts theme on their own, so their pairs are checked in plot light and plot dark.
+const plotPairs: [string, string, number][] = [
+  ["plot.text", "plot.surface", TEXT],
+  ["plot.text-muted", "plot.surface", TEXT],
+  ["plot.mark", "plot.surface", NON_TEXT],
+  ["plot.grid-major", "plot.surface", 1.5],
+  ["data.cursor", "plot.surface", NON_TEXT],
   ...["1", "2", "3", "4", "5", "6", "other"].map(
     (n): [string, string, number] => [
       `data.series.${n}`,
-      "surface.panel",
+      "plot.surface",
       NON_TEXT,
     ],
   ),
-  ["data.cursor", "surface.panel", NON_TEXT],
 ];
 
-describe("contrast of the intended token pairings (WCAG 2.2 AA)", () => {
-  it.each(pairs)("%s on %s reaches %s:1", (foreground, background, minimum) => {
-    expect(Contrast.ratio(foreground, background)).toBeGreaterThanOrEqual(
-      minimum,
+describe.each(["light", ...THEMES])(
+  "contrast of the intended token pairings in %s (WCAG 2.2 AA)",
+  (theme) => {
+    beforeAll(() => {
+      Contrast.theme = theme === "light" ? undefined : theme;
+    });
+
+    it.each(pairs)(
+      "%s on %s reaches %s:1",
+      (foreground, background, minimum) => {
+        expect(Contrast.ratio(foreground, background)).toBeGreaterThanOrEqual(
+          minimum,
+        );
+      },
     );
+
+    it.each(NAVY)("border/focus-inverse on %s reaches 3:1", (background) => {
+      expect(
+        Contrast.ratio("border.focus-inverse", background),
+      ).toBeGreaterThanOrEqual(NON_TEXT);
+    });
+  },
+);
+
+describe.each(["plot-light", ...Object.keys(PLOT_THEMES)])(
+  "contrast of chart pairings in %s",
+  (theme) => {
+    beforeAll(() => {
+      Contrast.theme = theme === "plot-light" ? undefined : theme;
+    });
+
+    it.each(plotPairs)(
+      "%s on %s reaches %s:1",
+      (foreground, background, minimum) => {
+        expect(Contrast.ratio(foreground, background)).toBeGreaterThanOrEqual(
+          minimum,
+        );
+      },
+    );
+  },
+);
+
+describe("light-theme pairings the Color page rules out", () => {
+  beforeAll(() => {
+    Contrast.theme = undefined;
   });
 
   it("flags text/muted on the selection tint, which the Color page rules out", () => {
     expect(Contrast.ratio("text.muted", "data.selection")).toBeLessThan(TEXT);
-  });
-
-  it.each(NAVY)("border/focus-inverse on %s reaches 3:1", (background) => {
-    expect(
-      Contrast.ratio("border.focus-inverse", background),
-    ).toBeGreaterThanOrEqual(NON_TEXT);
   });
 
   it("flags border/focus on navy, which is why the inverse ring exists", () => {

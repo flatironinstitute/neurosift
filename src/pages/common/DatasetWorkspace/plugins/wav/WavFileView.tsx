@@ -4,6 +4,8 @@ import {
   useTimeRange,
   useTimeseriesSelection,
 } from "@shared/context-timeseries-selection-2";
+import { readableOn } from "@shared/plotColors";
+import { usePlotColors, usePlotTheme } from "@shared/plotTheme";
 import { FunctionComponent, useEffect, useState } from "react";
 import { DatasetPluginProps } from "../pluginInterface";
 import AudioPlayer from "./AudioPlayer";
@@ -11,7 +13,12 @@ import WaveformCanvas from "./WaveformCanvas";
 import { resolveDatasetFileUrl } from "@hdf5Interface";
 import ViewError from "@components/ViewError/ViewError";
 import { useCssVars } from "@components/useCssVars";
-import { DescriptionList, formatSeconds, LoadingState } from "@ui";
+import {
+  DescriptionList,
+  formatSeconds,
+  LoadingState,
+  PlotThemeSwitch,
+} from "@ui";
 import "./WavFileView.css";
 
 // The player's block size; the waveform gets the rest of the plugin's height.
@@ -117,6 +124,12 @@ const WavFileView: FunctionComponent<DatasetPluginProps> = ({
     });
   }, [waveformData, initializeTimeseriesSelection]);
 
+  const { plotTheme, onPlotThemeChange } = usePlotTheme();
+  const plotColors = usePlotColors();
+  const waveColor =
+    plotTheme === "dark"
+      ? readableOn("#2196f3", plotColors.surface)
+      : "#2196f3";
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
   const root = useCssVars<HTMLDivElement>({
     "--wav-width": width,
@@ -139,6 +152,7 @@ const WavFileView: FunctionComponent<DatasetPluginProps> = ({
       margins,
       visibleStartTimeSec,
       visibleEndTimeSec,
+      color: waveColor,
     });
   }, [
     context,
@@ -148,6 +162,7 @@ const WavFileView: FunctionComponent<DatasetPluginProps> = ({
     margins,
     visibleStartTimeSec,
     visibleEndTimeSec,
+    waveColor,
   ]);
 
   return (
@@ -176,7 +191,13 @@ const WavFileView: FunctionComponent<DatasetPluginProps> = ({
               },
             ]}
           />
-          <AudioPlayer audioUrl={audioUrl} duration={waveformData.duration} />
+          <AudioPlayer
+            audioUrl={audioUrl}
+            duration={waveformData.duration}
+            actions={
+              <PlotThemeSwitch theme={plotTheme} onChange={onPlotThemeChange} />
+            }
+          />
           <div className="wav-view-waveform">
             <TimeScrollView2
               width={width}

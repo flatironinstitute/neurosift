@@ -1,4 +1,7 @@
 import { Alert, Page, Section, TabPanel, Tabs, TextInput } from "@ui";
+import type { PlotThemeChoice } from "@shared/plotTheme";
+import type { ThemeChoice } from "../../theme";
+import { DisplaySettings } from "./DisplaySettings";
 import { McpGuide } from "./McpGuide";
 import "./SettingsView.css";
 
@@ -10,16 +13,21 @@ export interface ApiKeys {
 }
 
 /** The Settings tabs, by the ?tab= value that opens each. */
-export type SettingsTab = "keys" | "mcp";
+export type SettingsTab = "keys" | "display" | "mcp";
 
 const TABS = [
   { id: "keys", label: "API keys" },
+  { id: "display", label: "Display" },
   { id: "mcp", label: "MCP" },
 ];
 
 interface SettingsViewProps {
   tab: SettingsTab;
   onTabChange: (tab: SettingsTab) => void;
+  theme: ThemeChoice;
+  onThemeChange: (theme: ThemeChoice) => void;
+  chartTheme: PlotThemeChoice;
+  onChartThemeChange: (theme: PlotThemeChoice) => void;
   keys: ApiKeys;
   onChange: (key: keyof ApiKeys, value: string) => void;
   shown: Record<keyof ApiKeys, boolean>;
@@ -33,6 +41,10 @@ interface SettingsViewProps {
 export function SettingsView({
   tab,
   onTabChange,
+  theme,
+  onThemeChange,
+  chartTheme,
+  onChartThemeChange,
   keys,
   onChange,
   shown,
@@ -99,6 +111,20 @@ export function SettingsView({
               Neurosift reads API keys when a page opens.
             </Alert>
           )}
+        </div>
+      </TabPanel>
+      <TabPanel
+        tabsId="settings-tabs"
+        tabId="display"
+        selected={tab === "display"}
+      >
+        <div className="settings-panel">
+          <DisplaySettings
+            theme={theme}
+            onThemeChange={onThemeChange}
+            chartTheme={chartTheme}
+            onChartThemeChange={onChartThemeChange}
+          />
         </div>
       </TabPanel>
       <TabPanel tabsId="settings-tabs" tabId="mcp" selected={tab === "mcp"}>

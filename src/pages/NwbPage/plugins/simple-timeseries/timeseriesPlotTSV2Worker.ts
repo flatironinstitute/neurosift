@@ -29,7 +29,7 @@ const draw = async () => {
     // Clear canvas
     ctx.clearRect(0, 0, plotOpts.canvasWidth, plotOpts.canvasHeight);
     // Draw zoom warning message
-    ctx.fillStyle = "#dc3545"; // Bootstrap danger red
+    ctx.fillStyle = plotOpts.textColor;
     ctx.font = "14px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -88,16 +88,7 @@ const draw = async () => {
 
   // Draw traces
   ctx.lineWidth = 1;
-  const colors = [
-    "#1f77b4", // blue
-    "#ff7f0e", // orange
-    "#2ca02c", // green
-    "#d62728", // red
-    "#9467bd", // purple
-    "#8c564b", // brown
-    "#e377c2", // pink
-    "#7f7f7f", // gray
-  ];
+  const colors = plotOpts.traceColors;
 
   // Draw each channel
   let timer = Date.now();

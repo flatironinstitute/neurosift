@@ -1,0 +1,100 @@
+.ts-selection-bar {
+  background: var(--surface-panel);
+  user-select: none;
+}
+
+.ts-selection-track {
+  background: var(--border-subtle);
+}
+
+.ts-selection-cursor {
+  background: var(--border-error);
+}
+
+.ts-selection-range {
+  background: var(--border-strong);
+}
+
+.ts-selection-visible {
+  background: var(--text-muted);
+}
+
+.ts-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface-panel);
+}
+
+.ts-controls-fields {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 3px;
+  padding-inline-start: 4px;
+  font: var(--type-caption);
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.ts-controls-input {
+  inline-size: 50px;
+  padding: 1px 3px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  font: inherit;
+  color: var(--text-default);
+  background: var(--surface-panel);
+}
+
+.ts-controls-label {
+  cursor: pointer;
+  text-decoration: underline dashed;
+  text-decoration-color: var(--text-muted);
+  text-underline-offset: 2px;
+}
+
+.ts-controls-at {
+  color: var(--text-muted);
+}
+
+.ts-controls-buttons {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+}
+
+.ts-controls-button {
+  min-inline-size: 22px;
+  block-size: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  font-size: 0.75rem;
+  line-height: 1;
+  color: var(--text-default);
+  background: var(--surface-panel);
+  cursor: pointer;
+  user-select: none;
+}
+
+.ts-controls-button:hover:not(:disabled) {
+  background: var(--surface-row-hover);
+  border-color: var(--border-strong);
+}
+
+.ts-controls-button:focus-visible {
+  outline: var(--border-width-2) solid var(--border-focus);
+}
+
+.ts-controls-button:disabled {
+  color: var(--text-disabled);
+  border-color: var(--border-disabled);
+  cursor: not-allowed;
+}
+
+.ts-controls-bar {
+  position: relative;
+  flex: 1;
+}

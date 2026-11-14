@@ -15,19 +15,54 @@ export const TOKEN_FILES = [
   "effects",
 ];
 
+// App themes override semantic colors under :root[data-theme]; light is :root itself.
+export const THEMES = ["dark", "high-contrast"];
+// A chart's own theme, set by data-plot-theme on the chart whatever the app theme.
+export const PLOT_THEMES = { "plot-dark": '[data-plot-theme="dark"]' };
+
+const themeSelector = (name) =>
+  PLOT_THEMES[name] ?? `:root[data-theme="${name}"]`;
+
 export class TokenSet {
   tokens = new Map();
+  themes = new Map();
 
-  constructor(trees) {
+  constructor(trees, themes = {}) {
     for (const tree of trees) this.#collect(tree, [], undefined);
+    for (const [name, tree] of Object.entries(themes))
+      this.themes.set(name, this.#overrides(name, tree));
   }
 
   static load(dir) {
+    const read = (file) => JSON.parse(readFileSync(new URL(file, dir), "utf8"));
     return new TokenSet(
-      TOKEN_FILES.map((name) =>
-        JSON.parse(readFileSync(new URL(`${name}.tokens.json`, dir), "utf8")),
+      TOKEN_FILES.map((name) => read(`${name}.tokens.json`)),
+      Object.fromEntries(
+        [...THEMES, ...Object.keys(PLOT_THEMES)].map((name) => [
+          name,
+          read(`themes/${name}.tokens.json`),
+        ]),
       ),
     );
+  }
+
+  /** A token's value in a theme, falling back to light; references are followed to the color. */
+  resolve(path, theme) {
+    let token = this.themes.get(theme)?.get(path) ?? this.tokens.get(path);
+    while (token && typeof token.$value === "string")
+      token = this.tokens.get(token.$value.slice(1, -1));
+    if (!token) throw new Error(`No token ${path}`);
+    return token.$value;
+  }
+
+  #overrides(name, tree) {
+    const overrides = new TokenSet([tree]).tokens;
+    for (const [path, token] of overrides)
+      if (this.tokens.get(path)?.$type !== "color" || token.$type !== "color")
+        throw new Error(
+          `Theme ${name} overrides ${path}, which is not a color`,
+        );
+    return overrides;
   }
 
   static kebabName(path) {
@@ -46,7 +81,34 @@ export class TokenSet {
       const name = TokenSet.kebabName(path);
       return `.${name} {\n  font: var(--${name});\n  letter-spacing: var(--${name}-letter-spacing);\n}`;
     });
-    return `${HEADER}\n:root {\n${lines.join("\n")}\n}\n\n${typeClasses.join("\n\n")}\n`;
+    const themes = THEMES.map((name) =>
+      this.#block(themeSelector(name), "dark", this.themes.get(name)),
+    );
+    // A chart and whatever sits on it (empty states, legends, checkboxes) take its own theme, so a dark
+    // chart carries the dark app colors too, and a light chart restates the light ones inside a dark app.
+    const plotDark = new Map([
+      ...this.themes.get("dark"),
+      ...this.themes.get("plot-dark"),
+    ]);
+    const plotLight = new Map(
+      [
+        ...plotDark.keys(),
+        ...this.#paths("color").filter((p) => p.startsWith("plot.")),
+      ].map((path) => [path, this.tokens.get(path)]),
+    );
+    const charts = [
+      this.#block(PLOT_THEMES["plot-dark"], "dark", plotDark),
+      this.#block('[data-plot-theme="light"]', "light", plotLight),
+    ];
+    return `${HEADER}\n:root {\n  color-scheme: light;\n${lines.join("\n")}\n}\n\n${[...themes, ...charts, ...typeClasses].join("\n\n")}\n`;
+  }
+
+  #block(selector, scheme, overrides) {
+    const values = [...overrides].map(
+      ([path, token]) =>
+        `  ${TokenSet.cssName(path)}: ${this.#color(token.$value)};`,
+    );
+    return `${selector} {\n  color-scheme: ${scheme};\n${values.join("\n")}\n}`;
   }
 
   // Docs only: one class per token that exposes it as --token, so specimens need no inline styles.
@@ -55,7 +117,25 @@ export class TokenSet {
       const name = TokenSet.kebabName(path);
       return `.token-${name} {\n  --token: var(--${name});\n}`;
     });
-    return `${HEADER}\n${rules.join("\n\n")}\n`;
+    // A preview box shows an app theme inside a page of another, as the docs Themes page does.
+    const appPaths = [...(this.themes.get("dark")?.keys() ?? [])];
+    const previews = this.themes.size
+      ? [
+          this.#block(
+            ".theme-preview-light",
+            "light",
+            new Map(appPaths.map((path) => [path, this.tokens.get(path)])),
+          ),
+          ...THEMES.map((name) =>
+            this.#block(
+              `.theme-preview-${name}`,
+              "dark",
+              this.themes.get(name),
+            ),
+          ),
+        ]
+      : [];
+    return `${HEADER}\n${[...rules, ...previews].join("\n\n")}\n`;
   }
 
   #paths(...types) {

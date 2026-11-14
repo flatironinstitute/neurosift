@@ -31,24 +31,6 @@ function debounce(f: () => void, msec: number) {
   };
 }
 
-const altneratingColors = ["#ececec", "#dfdfdf"];
-
-const categoryColors = [
-  "#000",
-  "#00f",
-  "#0f0",
-  "#f00",
-  "#ff0",
-  "#f0f",
-  "#0ff",
-  "#800",
-  "#080",
-  "#008",
-  "#880",
-  "#808",
-  "#088",
-];
-
 let drawCode = 0;
 async function draw() {
   if (!canvas) return;
@@ -63,6 +45,7 @@ async function draw() {
     canvasHeight,
     visibleStartTimeSec,
     visibleEndTimeSec,
+    colors,
   } = opts;
 
   // this is important because main thread no longer has control of canvas (it seems)
@@ -91,7 +74,7 @@ async function draw() {
 
   for (let i = 0; i < beData.seriesNames.length; i++) {
     // fill a rect for this row
-    const color = altneratingColors[i % altneratingColors.length];
+    const color = colors.stripes[i % colors.stripes.length];
     ctx.fillStyle = color;
     const p1 = coordToPix(visibleStartTimeSec, i - 0.5);
     const p2 = coordToPix(visibleEndTimeSec, i + 0.5);
@@ -100,7 +83,7 @@ async function draw() {
     const seriesName = beData.seriesNames[i];
     const p = coordToPix(visibleStartTimeSec, i);
     // draw label right-aligned at p.x, p.y
-    ctx.fillStyle = "black";
+    ctx.fillStyle = colors.text;
     ctx.font = "12px sans-serif";
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
@@ -116,7 +99,8 @@ async function draw() {
     const colorsForCategories: { [category: string]: string } = {};
     for (let j = 0; j < categories.length; j++) {
       const category = categories[j] + "";
-      colorsForCategories[category] = categoryColors[j % categoryColors.length];
+      colorsForCategories[category] =
+        colors.categories[j % colors.categories.length];
     }
     ctx.font = "12px sans-serif";
     ctx.textAlign = "left";
@@ -128,7 +112,7 @@ async function draw() {
       if (t > visibleEndTimeSec) continue;
       const p = coordToPix(t, i);
       // fill a circle centered at p.x, p.y
-      ctx.fillStyle = colorsForCategories[v + ""] || "black";
+      ctx.fillStyle = colorsForCategories[v + ""] || colors.mark;
       ctx.beginPath();
       ctx.arc(p.x, p.y, 3, 0, 2 * Math.PI);
       ctx.fill();

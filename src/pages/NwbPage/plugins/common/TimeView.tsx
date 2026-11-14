@@ -14,6 +14,7 @@ import type { WindowPlayback } from "./usePlayback";
 import { useTimeSelect, type Selection } from "./useTimeSelect";
 import { useTimeWindow } from "./useTimeWindow";
 import "./TimeView.css";
+import { usePlotTheme } from "@shared/plotTheme";
 
 /** Height the frame takes above the chart: summary, controls and overview. */
 export const TIME_VIEW_CHROME = 150;
@@ -98,11 +99,13 @@ const TimeView: FunctionComponent<Props> = ({
   ]
     .filter(Boolean)
     .join(" ");
+  const plotTheme = usePlotTheme();
   return (
     <ViewPanel
       label={label}
       summary={summary}
       busy={busy}
+      {...plotTheme}
       settings={settings}
       chartTitle={chartTitle}
       controls={

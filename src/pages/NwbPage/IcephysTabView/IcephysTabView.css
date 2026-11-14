@@ -18,6 +18,7 @@
 
 .icephys-chart {
   position: relative;
+  background: var(--plot-surface);
   flex: 1;
   min-block-size: 0;
 }
@@ -42,7 +43,7 @@
   display: grid;
   place-items: center;
   font: var(--type-caption);
-  color: var(--text-secondary);
+  color: var(--plot-text-muted);
 }
 
 .icephys-panels {
@@ -62,7 +63,7 @@
   margin: 0;
   overflow: hidden;
   font: var(--type-label-sm);
-  color: var(--text-default);
+  color: var(--plot-text);
 }
 
 .icephys-panel-title,
@@ -105,7 +106,7 @@
   flex: none;
   inline-size: var(--icephys-w);
   block-size: var(--timeline-h);
-  border-block-start: var(--border-width-1) solid var(--border-subtle);
+  border-block-start: var(--border-width-1) solid var(--plot-grid-minor);
 }
 
 .icephys-timeline-head {
@@ -118,8 +119,25 @@
   padding-inline: var(--space-3);
   overflow: hidden;
   font: var(--type-caption);
-  color: var(--text-secondary);
+  color: var(--plot-text-muted);
   white-space: nowrap;
+}
+
+.icephys-timeline-context {
+  fill: var(--plot-grid-major);
+  fill-opacity: 0.22;
+}
+
+.icephys-timeline-axis {
+  stroke: var(--plot-grid-minor);
+}
+
+.icephys-timeline-tick {
+  stroke: var(--plot-grid-major);
+}
+
+.icephys-timeline-label {
+  fill: var(--plot-text-muted);
 }
 
 .icephys-timeline-plot {

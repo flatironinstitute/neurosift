@@ -13,6 +13,8 @@
 .psth-chart {
   position: relative;
   block-size: var(--chart-h);
+  background: var(--plot-surface);
+  color: var(--plot-text);
 }
 
 .psth-chart-frame {

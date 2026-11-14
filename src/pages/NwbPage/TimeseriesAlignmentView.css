@@ -10,6 +10,12 @@
   align-items: start;
   gap: var(--space-6);
   padding: var(--space-4);
+  background: var(--plot-surface);
+  color: var(--plot-text);
+  --text-default: var(--plot-text);
+  --text-secondary: var(--plot-text);
+  --text-muted: var(--plot-text-muted);
+  --border-strong: var(--plot-text-muted);
 }
 
 .alignment-list {
@@ -34,25 +40,26 @@
 
 .alignment-path {
   font: var(--type-code-sm);
-  color: var(--text-default);
+  color: var(--plot-text);
   overflow-wrap: anywhere;
 }
 
 .alignment-meta {
   font: var(--type-caption);
-  color: var(--text-secondary);
+  color: var(--plot-text-muted);
 }
 
 .alignment-item--hidden .alignment-path,
 .alignment-item--hidden .alignment-meta {
-  color: var(--text-disabled);
+  color: var(--plot-text-muted);
+  opacity: 0.6;
 }
 
 .alignment-track {
   position: relative;
   display: block;
   block-size: var(--space-2);
-  background: var(--surface-page);
+  background: var(--plot-grid-minor);
 }
 
 .alignment-bar {

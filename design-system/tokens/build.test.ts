@@ -1,12 +1,55 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { OUTPUT, SPECIMENS, TokenSet } from "./build.mjs";
+import { OUTPUT, SPECIMENS, THEMES, TokenSet } from "./build.mjs";
 
 const set = TokenSet.load(new URL("./", import.meta.url));
 
 describe("design tokens", () => {
   it("reads every token from the five files", () => {
-    expect(set.tokens.size).toBe(72 + 53 + 41 + 17 + 3);
+    expect(set.tokens.size).toBe(86 + 62 + 41 + 17 + 3);
+  });
+
+  it("gives each app theme every semantic color but the chart colors, which only charts change", () => {
+    for (const theme of THEMES) {
+      const overrides = set.themes.get(theme)!;
+      expect(overrides.size).toBe(52);
+      expect([...overrides.keys()].some((p) => p.startsWith("plot."))).toBe(
+        false,
+      );
+      expect(set.css()).toContain(`:root[data-theme="${theme}"] {`);
+    }
+  });
+
+  it("gives a dark chart the dark app colors as well, and restates the light ones on a light chart", () => {
+    const css = set.css();
+    const dark = css.slice(css.indexOf('[data-plot-theme="dark"] {'));
+    const darkBlock = dark.slice(0, dark.indexOf("}"));
+    expect(darkBlock).toContain("--plot-surface: var(--color-navy-900);");
+    expect(darkBlock).toContain("--text-default: var(--color-navy-50);");
+    const light = css.slice(css.indexOf('[data-plot-theme="light"] {'));
+    const lightBlock = light.slice(0, light.indexOf("}"));
+    expect(lightBlock).toContain("--plot-surface: var(--color-white);");
+    expect(lightBlock).toContain("--text-default: var(--color-neutral-900);");
+    for (const path of set.themes.get("plot-dark")!.keys())
+      expect(path.startsWith("plot.") || path.startsWith("data.")).toBe(true);
+  });
+
+  it("rejects a theme that overrides something other than a color", () => {
+    expect(
+      () =>
+        new TokenSet(
+          [
+            {
+              space: {
+                1: { $type: "dimension", $value: { value: 4, unit: "px" } },
+              },
+            },
+          ],
+          {
+            dark: { space: { 1: { $type: "color", $value: "#000000" } } },
+          },
+        ),
+    ).toThrow("not a color");
   });
 
   it("gives every token one CSS name", () => {

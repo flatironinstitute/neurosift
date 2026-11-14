@@ -2,7 +2,7 @@
   position: relative;
   inline-size: var(--tsv-width);
   block-size: var(--tsv-height);
-  background: var(--surface-panel);
+  background: var(--plot-surface);
 }
 
 .tsv--bare {

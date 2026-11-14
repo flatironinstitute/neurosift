@@ -1,0 +1,5 @@
+.display-settings-help {
+  margin: 0;
+  font: var(--type-caption);
+  color: var(--text-secondary);
+}

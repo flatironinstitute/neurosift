@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCssVars } from "@components/useCssVars";
+import { usePlotTheme } from "@shared/plotTheme";
 import {
   Button,
   Checkbox,
@@ -425,6 +426,7 @@ const TimeseriesAlignmentView: FunctionComponent<Props> = ({
 
   return (
     <ViewPanel
+      {...usePlotTheme()}
       label="Timeseries alignment"
       summary={summary}
       busy={!!loadingMessage}

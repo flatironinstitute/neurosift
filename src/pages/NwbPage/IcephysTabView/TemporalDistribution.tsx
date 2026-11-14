@@ -1,7 +1,8 @@
 import { DataTooltip } from "@ui";
 import { useCssVars } from "@components/useCssVars";
 import { FunctionComponent, useMemo, useState } from "react";
-import { colorsForGroups, internId } from "./palette";
+import { usePlotColors, usePlotTheme } from "@shared/plotTheme";
+import { colorsForGroups, internId, onChart } from "./palette";
 import { SweepTime } from "./useSweepTimes";
 
 interface Props {
@@ -52,6 +53,8 @@ const TemporalDistribution: FunctionComponent<Props> = ({
   width,
   groupBy,
 }) => {
+  const { plotTheme } = usePlotTheme();
+  const colors = usePlotColors();
   const [hover, setHover] = useState<{
     x: number;
     y: number;
@@ -186,8 +189,7 @@ const TemporalDistribution: FunctionComponent<Props> = ({
                 y={laneTop}
                 width={Math.max(1.5, x1 - x0)}
                 height={laneAreaH}
-                fill="#c0c0c0"
-                fillOpacity={0.22}
+                className="icephys-timeline-context"
               />
             );
           })}
@@ -199,7 +201,11 @@ const TemporalDistribution: FunctionComponent<Props> = ({
           {sel &&
             times.map((t) => {
               const id = sel.idOf(t);
-              const color = sel.colorOf.get(id) || "#2171b5";
+              const color = onChart(
+                sel.colorOf.get(id) || "#2171b5",
+                plotTheme,
+                colors,
+              );
               const cy = laneCenter(t);
               const x0 = xOf(t.startSec);
               const x1 = xOf(t.startSec + (t.durationSec || 0));
@@ -236,7 +242,7 @@ const TemporalDistribution: FunctionComponent<Props> = ({
                   y1={axisY}
                   x2={MARGIN_L + plotW}
                   y2={axisY}
-                  stroke="#ddd"
+                  className="icephys-timeline-axis"
                 />
                 {axisTicks(rangeT0, rangeT1).map((tk, i) => (
                   <g key={i}>
@@ -245,14 +251,14 @@ const TemporalDistribution: FunctionComponent<Props> = ({
                       y1={axisY}
                       x2={xOf(tk)}
                       y2={axisY + 4}
-                      stroke="#ccc"
+                      className="icephys-timeline-tick"
                     />
                     <text
                       x={xOf(tk)}
                       y={axisY + 15}
                       textAnchor="middle"
                       fontSize={9}
-                      fill="#888"
+                      className="icephys-timeline-label"
                     >
                       {fmtClock(tk)}
                     </text>

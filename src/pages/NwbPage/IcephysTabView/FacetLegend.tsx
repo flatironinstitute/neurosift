@@ -1,5 +1,7 @@
 import { useCssVars } from "@components/useCssVars";
 import { FunctionComponent } from "react";
+import { usePlotColors, usePlotTheme } from "@shared/plotTheme";
+import { onChart } from "./palette";
 import type { facetColors } from "./sweepGroups";
 
 type Categorical = ReturnType<typeof facetColors>;
@@ -15,12 +17,20 @@ const FacetLegend: FunctionComponent<{
   label: string;
   categorical: Categorical;
 }> = ({ label, categorical }) => {
+  const { plotTheme } = usePlotTheme();
+  const colors = usePlotColors();
   if (categorical.order.length === 0) return null;
   return (
     <ul className="icephys-legend" aria-label={label}>
       {categorical.order.map((id) => (
         <li key={id} className="icephys-legend-item">
-          <Swatch color={categorical.colorOf.get(id) ?? ""} />
+          <Swatch
+            color={onChart(
+              categorical.colorOf.get(id) ?? "",
+              plotTheme,
+              colors,
+            )}
+          />
           {categorical.labelOf.get(id)}
         </li>
       ))}

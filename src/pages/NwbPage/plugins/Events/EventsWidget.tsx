@@ -6,6 +6,11 @@ import {
 import TimeScrollView2 from "@shared/component-time-scroll-view-2/TimeScrollView2";
 import { useTimeScrollView2 } from "@shared/component-time-scroll-view-2/useTimeScrollView2";
 import { timeSelectionBarHeight } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
+import { usePlotTheme } from "@shared/plotTheme";
+import { plotColors, readableOn } from "@shared/plotColors";
+
+/** Each event is drawn as a blue line with a dot on top. */
+const EVENT_COLOR = "#2196f3";
 
 type Props = {
   width: number;
@@ -61,6 +66,12 @@ const EventsWidget: FunctionComponent<Props> = ({ width, height, times }) => {
     hideToolbar,
   });
 
+  const { plotTheme } = usePlotTheme();
+  const eventColor =
+    plotTheme === "dark"
+      ? readableOn(EVENT_COLOR, plotColors("dark").surface)
+      : EVENT_COLOR;
+
   const timeToPixel = useMemo(
     () => (t: number) => {
       if (visibleStartTimeSec === undefined) return 0;
@@ -115,14 +126,14 @@ const EventsWidget: FunctionComponent<Props> = ({ width, height, times }) => {
         ctx.beginPath();
         ctx.moveTo(x, y1);
         ctx.lineTo(x, y2);
-        ctx.strokeStyle = "#2196f3"; // Use a blue color for events
+        ctx.strokeStyle = eventColor;
         ctx.lineWidth = 2;
         ctx.stroke();
 
         // Draw a small circle at the top of the line
         ctx.beginPath();
         ctx.arc(x, y1 + 5, 4, 0, 2 * Math.PI);
-        ctx.fillStyle = "#2196f3";
+        ctx.fillStyle = eventColor;
         ctx.fill();
       }
     })();
@@ -139,6 +150,7 @@ const EventsWidget: FunctionComponent<Props> = ({ width, height, times }) => {
     times,
     timeToPixel,
     margins,
+    eventColor,
   ]);
 
   return (

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Alert } from "../Alert/Alert";
+import { PlotThemeSwitch } from "../PlotThemeSwitch/PlotThemeSwitch";
 import "../base.css";
 import "./ViewPanel.css";
 
@@ -17,6 +18,9 @@ interface ViewPanelProps {
   chartTitle?: string;
   /** Set while the plot’s data loads, so screen readers don’t read half-drawn content. */
   busy?: boolean;
+  /** The chart's own theme, whatever the app theme; with onPlotThemeChange, a switch sits beside the summary. */
+  plotTheme?: "light" | "dark";
+  onPlotThemeChange?: (theme: "light" | "dark") => void;
   /** The chart, or the loading, empty or too-much-data state in its place. */
   children: ReactNode;
 }
@@ -30,6 +34,8 @@ export function ViewPanel({
   settings,
   chartTitle,
   busy = false,
+  plotTheme,
+  onPlotThemeChange,
   children,
 }: ViewPanelProps) {
   return (
@@ -38,11 +44,20 @@ export function ViewPanel({
       aria-label={label}
     >
       <div className="ns-view-main">
-        <p className="ns-view-summary">{summary}</p>
+        <div className="ns-view-head">
+          <p className="ns-view-summary">{summary}</p>
+          {plotTheme && onPlotThemeChange && (
+            <PlotThemeSwitch theme={plotTheme} onChange={onPlotThemeChange} />
+          )}
+        </div>
         {controls && <div className="ns-view-controls">{controls}</div>}
         {overview}
         {chartTitle && <p className="ns-view-chart-title">{chartTitle}</p>}
-        <div className="ns-view-plot" aria-busy={busy || undefined}>
+        <div
+          className="ns-view-plot"
+          aria-busy={busy || undefined}
+          data-plot-theme={plotTheme}
+        >
           {children}
         </div>
       </div>

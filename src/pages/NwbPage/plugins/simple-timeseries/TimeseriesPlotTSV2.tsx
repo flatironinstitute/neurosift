@@ -1,6 +1,9 @@
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import TimeScrollView2 from "@shared/component-time-scroll-view-2/TimeScrollView2";
 import { PlotData, PlotOpts, TimeseriesPlotProps as Props } from "./types";
+import { usePlotTheme } from "@shared/plotTheme";
+import { plotColors } from "@shared/plotColors";
+import { traceColors } from "@shared/tracePalette";
 
 const defaultMargins = {
   left: 50,
@@ -60,6 +63,13 @@ const TimeseriesPlotTSV2: FunctionComponent<Props> = ({
     };
   }, [canvasElement]);
 
+  const { plotTheme } = usePlotTheme();
+  const colors = plotColors(plotTheme);
+  const traces = useMemo(
+    () => traceColors(colors, plotTheme === "dark"),
+    [colors, plotTheme],
+  );
+
   // Update plot opts
   useEffect(() => {
     if (!worker) return;
@@ -72,10 +82,14 @@ const TimeseriesPlotTSV2: FunctionComponent<Props> = ({
       visibleEndTimeSec: visibleEndTime,
       channelSeparation,
       zoomInRequired,
+      traceColors: traces,
+      textColor: colors.text,
     };
 
     worker.postMessage({ plotOpts });
   }, [
+    traces,
+    colors.text,
     worker,
     width,
     height,

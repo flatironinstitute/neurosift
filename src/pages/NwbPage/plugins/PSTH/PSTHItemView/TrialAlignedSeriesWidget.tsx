@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import { usePlotColors, usePlotTheme } from "@shared/plotTheme";
+import { faintOn } from "@shared/plotColors";
 import { getTicks } from "./getTicks";
 
 type TrialAlignedSeriesWidgetProps = {
@@ -87,6 +89,7 @@ const TrialAlignedSeriesWidget: FunctionComponent<
   yAxisLabel = "ROI",
   perGroupStats = false,
 }) => {
+  const colors = usePlotColors();
   const plots: {
     times: number[];
     values: number[];
@@ -118,7 +121,7 @@ const TrialAlignedSeriesWidget: FunctionComponent<
     }
     if (!perGroupStats) {
       const { values, stds } = computeMeanStd(plots, times);
-      return [{ color: "black", times, values, stds }];
+      return [{ color: colors.mark, times, values, stds }];
     }
     // Group the traces by color (each group has a distinct color).
     const byColor = new Map<string, { times: number[]; values: number[] }[]>();
@@ -133,7 +136,7 @@ const TrialAlignedSeriesWidget: FunctionComponent<
       curves.push({ color, times, values, stds });
     }
     return curves;
-  }, [plots, windowRange, perGroupStats]);
+  }, [plots, windowRange, perGroupStats, colors.mark]);
   return (
     <PlotChild
       width={width}
@@ -181,6 +184,8 @@ const PlotChild: FunctionComponent<PlotChildProps> = ({
   yAxisLabel,
   perGroupStats,
 }) => {
+  const dark = usePlotTheme().plotTheme === "dark";
+  const colors = usePlotColors();
   const [canvasElement, setCanvasElement] = useState<
     HTMLCanvasElement | undefined
   >(undefined);
@@ -259,7 +264,9 @@ const PlotChild: FunctionComponent<PlotChildProps> = ({
     if (showRawTraces) {
       ctx.globalAlpha = rawTraceAlpha;
       plotsSampled.forEach((p) => {
-        ctx.strokeStyle = p.color;
+        ctx.strokeStyle = dark
+          ? faintOn(p.color, colors.surface, rawTraceAlpha)
+          : p.color;
         ctx.lineWidth = 0.5;
         ctx.beginPath();
         if (p.values.length === 0) return;
@@ -327,7 +334,7 @@ const PlotChild: FunctionComponent<PlotChildProps> = ({
       ctx.setLineDash([5, 4]);
       ctx.lineWidth = 1.5;
       for (const curve of averageCurves) {
-        ctx.strokeStyle = perGroupStats ? curve.color : "#333";
+        ctx.strokeStyle = perGroupStats ? curve.color : colors.text;
         drawBand(curve, 1);
         drawBand(curve, -1);
       }
@@ -335,7 +342,7 @@ const PlotChild: FunctionComponent<PlotChildProps> = ({
     }
 
     // y axis
-    ctx.strokeStyle = "gray";
+    ctx.strokeStyle = colors.gridMajor;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(margins.left, margins.top);
@@ -343,7 +350,7 @@ const PlotChild: FunctionComponent<PlotChildProps> = ({
     ctx.stroke();
 
     // y axis label
-    ctx.fillStyle = "black";
+    ctx.fillStyle = colors.text;
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
     ctx.save();
@@ -355,7 +362,7 @@ const PlotChild: FunctionComponent<PlotChildProps> = ({
     ctx.restore();
 
     // draw y axis ticks
-    ctx.strokeStyle = "gray";
+    ctx.strokeStyle = colors.gridMajor;
     ctx.lineWidth = 1;
     ticks.forEach((tick) => {
       const p0 = coordToPixel(windowRange.start, tick.value);
@@ -369,7 +376,7 @@ const PlotChild: FunctionComponent<PlotChildProps> = ({
     });
 
     // x axis labels
-    ctx.fillStyle = "black";
+    ctx.fillStyle = colors.text;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     const p00 = coordToPixel(0, minValue);
@@ -392,7 +399,7 @@ const PlotChild: FunctionComponent<PlotChildProps> = ({
     );
 
     // x axis
-    ctx.strokeStyle = "gray";
+    ctx.strokeStyle = colors.gridMajor;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(margins.left, height - margins.bottom);
@@ -400,7 +407,7 @@ const PlotChild: FunctionComponent<PlotChildProps> = ({
     ctx.stroke();
 
     // vertical line at zero
-    ctx.strokeStyle = "lightgray";
+    ctx.strokeStyle = colors.gridMinor;
     ctx.lineWidth = 3;
     ctx.beginPath();
     const p1 = coordToPixel(0, minValue);
@@ -410,7 +417,7 @@ const PlotChild: FunctionComponent<PlotChildProps> = ({
     ctx.stroke();
 
     // vertical line at zero
-    ctx.strokeStyle = "black";
+    ctx.strokeStyle = colors.mark;
     ctx.lineWidth = 1;
     ctx.beginPath();
     const p001 = coordToPixel(0, minValue);
@@ -436,6 +443,8 @@ const PlotChild: FunctionComponent<PlotChildProps> = ({
     stdMultiple,
     yAxisLabel,
     perGroupStats,
+    colors,
+    dark,
   ]);
 
   return (

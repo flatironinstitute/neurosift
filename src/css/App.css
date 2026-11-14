@@ -6,8 +6,8 @@ body {
     "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #2c3e50;
-  background-color: #f7f9fc;
+  color: var(--text-default);
+  background-color: var(--surface-page);
 }
 
 code {
@@ -42,8 +42,8 @@ code {
 }
 
 .StatusBarDiv {
-  background-color: rgba(43, 87, 151, 0.05);
-  border-top: 1px solid #dde4ed;
+  background-color: var(--surface-row-hover);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .app-bar-logo {

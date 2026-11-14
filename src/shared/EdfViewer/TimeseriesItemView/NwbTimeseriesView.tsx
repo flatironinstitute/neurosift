@@ -18,6 +18,8 @@ import {
   useTimeseriesTimestampsClient,
 } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
 import { useCssVars } from "@components/useCssVars";
+import { readableOn } from "@shared/plotColors";
+import { usePlotColors, usePlotTheme } from "@shared/plotTheme";
 import { LoadingState, useLoadingPhase } from "@ui";
 import { loadedSpan } from "./loadedSpan";
 import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient";
@@ -326,22 +328,27 @@ export const NwbTimeseriesViewChild: FunctionComponent<
   const [loading, setLoading] = useState<boolean>(false);
   const loadingPhase = useLoadingPhase(loading && !zoomInRequired);
 
+  const { plotTheme } = usePlotTheme();
+  const plotColors = usePlotColors();
   const colorForChannel = useMemo(
     () => (i: number) => {
-      if (!colorChannels) return "black";
+      if (!colorChannels) return plotColors.mark;
       const colors = [
-        "black",
-        "darkred",
-        "darkgreen",
-        "darkblue",
-        "darkorange",
-        "purple",
-        "brown",
-        "pink",
+        plotColors.mark,
+        "#8b0000",
+        "#006400",
+        "#00008b",
+        "#ff8c00",
+        "#800080",
+        "#a52a2a",
+        "#ffc0cb",
       ];
-      return colors[i % colors.length];
+      const color = colors[i % colors.length];
+      return plotTheme === "dark"
+        ? readableOn(color, plotColors.surface)
+        : color;
     },
-    [colorChannels],
+    [colorChannels, plotColors, plotTheme],
   );
 
   const renderSubsampleFactor = useMemo(() => {
@@ -515,11 +522,16 @@ export const NwbTimeseriesViewChild: FunctionComponent<
       minValue: valueRange ? valueRange.min : 0,
       maxValue: valueRange ? valueRange.max : 1,
       zoomInRequired,
+      textColor: plotColors.text,
+      surfaceColor: plotColors.surface,
+      borderColor: plotColors.gridMajor,
+      markColor: plotColors.mark,
     };
     worker.postMessage({
       opts,
     });
   }, [
+    plotColors,
     canvasWidth,
     canvasHeight,
     margins,

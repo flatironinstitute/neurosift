@@ -42,6 +42,10 @@ export type PlotOpts = {
   visibleEndTimeSec: number;
   channelSeparation: number;
   zoomInRequired?: boolean;
+  /** One color per channel, cycled; from the chart's theme. */
+  traceColors: string[];
+  /** The zoom-in message's color. */
+  textColor: string;
 };
 
 export type PlotData = {

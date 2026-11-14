@@ -12,3 +12,7 @@
   font: var(--type-code-sm);
   color: var(--text-muted);
 }
+
+.audio-player-actions {
+  margin-inline-start: auto;
+}

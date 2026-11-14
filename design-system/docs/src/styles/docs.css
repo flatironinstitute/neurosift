@@ -1668,3 +1668,83 @@ main {
 .live-screen-caption {
   color: var(--text-secondary);
 }
+
+/* Themes page: each preview and swatch cell takes one theme's tokens from its theme-preview class. */
+.themes-previews {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--space-4);
+}
+
+.themes-preview {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  margin: 0;
+  padding: var(--space-5);
+  color: var(--text-default);
+  background: var(--surface-panel);
+  border: var(--border-width-1) solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.themes-preview a {
+  color: var(--text-link);
+}
+
+.themes-preview-label {
+  font: var(--type-label-sm);
+  color: var(--text-secondary);
+}
+
+.themes-preview-title {
+  margin: 0;
+  font: var(--type-h4);
+}
+
+.themes-preview-text,
+.themes-preview-muted {
+  margin: 0;
+  font: var(--type-body-sm);
+  color: var(--text-secondary);
+}
+
+.themes-preview-muted {
+  color: var(--text-muted);
+}
+
+.themes-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.themes-cell {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  color: var(--text-default);
+  background: var(--surface-panel);
+  border-radius: var(--radius-sm);
+}
+
+.themes-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--space-4);
+}
+
+.themes-chart {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.themes-chart .themes-preview-label {
+  margin: 0;
+}
+
+.themes-chart .example-plot {
+  color: var(--text-default);
+  background: var(--plot-surface);
+}

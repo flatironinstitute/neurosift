@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AccordionItem, EmptyState, ViewPanel } from "@ui";
+import { usePlotTheme } from "@shared/plotTheme";
 import { useCssVars } from "@components/useCssVars";
 import LazyFrame from "@components/LazyFrame";
 import { FunctionComponent, ReactNode, useState } from "react";
@@ -83,6 +84,7 @@ const PSTHLayout: FunctionComponent<Props> = ({
   trialIndices,
   unitIdsOrRoiIndicesToPlot,
 }) => {
+  const plotThemeProps = usePlotTheme();
   const settingsWidth = 352;
   const plotWidth = Math.max(width - settingsWidth, 320);
   const categoriesForGroupBy = useCategoriesForVariable(
@@ -131,6 +133,7 @@ const PSTHLayout: FunctionComponent<Props> = ({
 
   return (
     <ViewPanel
+      {...plotThemeProps}
       label={mode === "psth" ? "PSTH" : "Trial-aligned series"}
       summary={summary}
       controls={null}

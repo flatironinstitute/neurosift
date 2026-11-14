@@ -1,16 +1,25 @@
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
-import { FunctionComponent, useEffect, useRef, useState } from "react";
+import {
+  FunctionComponent,
+  ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { formatSeconds, IconButton } from "@ui";
 import "./AudioPlayer.css";
 
 interface AudioPlayerProps {
   audioUrl: string;
   duration: number;
+  /** Controls for the waveform below, at the end of the bar, such as its Light/Dark switch. */
+  actions?: ReactNode;
 }
 
 const AudioPlayer: FunctionComponent<AudioPlayerProps> = ({
   audioUrl,
   duration,
+  actions,
 }) => {
   const { currentTime, setCurrentTime } = useTimeseriesSelection();
   const [isPlaying, setIsPlaying] = useState(false);
@@ -91,6 +100,7 @@ const AudioPlayer: FunctionComponent<AudioPlayerProps> = ({
       <span className="audio-player-time">
         {formatSeconds(currentTime ?? 0)} s of {formatSeconds(duration)} s
       </span>
+      {actions && <div className="audio-player-actions">{actions}</div>}
     </section>
   );
 };

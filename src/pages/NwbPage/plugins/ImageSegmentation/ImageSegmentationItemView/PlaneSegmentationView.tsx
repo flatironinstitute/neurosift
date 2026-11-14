@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ImageZoom, LoadingState, ViewPanel, type ImageZoomValue } from "@ui";
 import { FunctionComponent, ReactNode, useEffect, useState } from "react";
+import { usePlotTheme } from "@shared/plotTheme";
 import { TIME_VIEW_CHROME } from "../../common/TimeView";
 import "./PlaneSegmentationView.css";
 import PlaneTransformSelector from "./PlaneTransformSelector";
@@ -268,6 +269,7 @@ const Test1: FunctionComponent<{
   name: string;
   picker?: ReactNode;
 }> = ({ client, width, height, name, picker }) => {
+  const themeProps = usePlotTheme();
   const [canvasElement, setCanvasElement] = useState<
     HTMLCanvasElement | undefined
   >(undefined);
@@ -389,6 +391,7 @@ const Test1: FunctionComponent<{
         !loadingMessage.endsWith("regions")
       }
       controls={picker}
+      {...themeProps}
     >
       <div className="segmentation-view">
         <ImageZoom

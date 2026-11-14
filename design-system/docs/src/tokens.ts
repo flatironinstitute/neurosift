@@ -4,14 +4,14 @@ import semantic from "../../tokens/semantic.tokens.json";
 import dimensions from "../../tokens/dimensions.tokens.json";
 import typography from "../../tokens/typography.tokens.json";
 import effects from "../../tokens/effects.tokens.json";
+import dark from "../../tokens/themes/dark.tokens.json";
+import highContrast from "../../tokens/themes/high-contrast.tokens.json";
+import plotDark from "../../tokens/themes/plot-dark.tokens.json";
 
-export const tokenSet = new TokenSet([
-  primitives,
-  semantic,
-  dimensions,
-  typography,
-  effects,
-]);
+export const tokenSet = new TokenSet(
+  [primitives, semantic, dimensions, typography, effects],
+  { dark, "high-contrast": highContrast, "plot-dark": plotDark },
+);
 
 const CSS_VALUES = new Map(tokenSet.declarations());
 

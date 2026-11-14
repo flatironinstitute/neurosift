@@ -30,6 +30,7 @@ import {
   useLinkedSettings,
   useShareSettings,
 } from "@shared/shareLink/useShareSettings";
+import { usePlotTheme } from "@shared/plotTheme";
 import { getHdf5Group } from "../hdf5Interface";
 import { useElementSize } from "../useElementSize";
 import ConditionSelector from "./ConditionSelector";
@@ -86,6 +87,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
   height,
   isExpanded,
 }) => {
+  const themeProps = usePlotTheme();
   const linked = useLinkedSettings();
 
   const [hasIcephys, setHasIcephys] = useState<boolean | null>(null);
@@ -1033,6 +1035,7 @@ const IcephysTabView: FunctionComponent<IcephysTabViewProps> = ({
         summary={summary || "Reading the icephys tables…"}
         controls={controls}
         settings={settings}
+        {...themeProps}
         busy={table.loading || sweepData.loading}
       >
         <div className="icephys-plot">

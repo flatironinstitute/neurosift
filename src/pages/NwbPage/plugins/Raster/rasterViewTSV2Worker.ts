@@ -18,6 +18,8 @@ type PlotOpts = {
   visibleStartTimeSec: number;
   visibleEndTimeSec: number;
   zoomInRequired?: boolean;
+  /** The spike color, from the chart's theme. */
+  markColor: string;
 };
 
 let plotData: PlotData | null = null;
@@ -32,6 +34,7 @@ const paint = () => {
     margins,
     visibleStartTimeSec,
     visibleEndTimeSec,
+    markColor,
   } = plotOpts;
 
   // Clear canvas
@@ -44,7 +47,7 @@ const paint = () => {
     (canvasHeight - margins.top - margins.bottom) / plotData.unitIds.length;
 
   // Draw spikes as vertical lines
-  ctx!.strokeStyle = "black";
+  ctx!.strokeStyle = markColor;
   ctx!.lineWidth = 1;
 
   const markerHeight = Math.max(2, Math.min(12, pixelsPerUnit * 0.8));

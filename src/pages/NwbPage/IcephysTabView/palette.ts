@@ -1,3 +1,13 @@
+import { readableOn, type PlotColors } from "@shared/plotColors";
+import type { PlotTheme } from "@shared/plotTheme";
+
+/** A data color as the chart draws it: unchanged on light, lightened only as far as needed on dark. */
+export const onChart = (
+  color: string,
+  theme: PlotTheme,
+  colors: PlotColors,
+): string => (theme === "dark" ? readableOn(color, colors.surface) : color);
+
 // Shared color palettes for the icephys family overlay and the temporal
 // distribution view, so a sweep gets the same color in both places.
 

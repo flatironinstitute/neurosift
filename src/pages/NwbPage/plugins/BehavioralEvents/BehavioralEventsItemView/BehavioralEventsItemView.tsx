@@ -15,7 +15,14 @@ import TimeView, {
   TIME_VIEW_CHROME,
   TIME_VIEW_INSET,
 } from "../../common/TimeView";
-import { BehavioralEventsData, EventSeries, Opts } from "./WorkerTypes";
+import { usePlotTheme } from "@shared/plotTheme";
+import { plotColors as plotColorsFor, readableOn } from "@shared/plotColors";
+import {
+  BehavioralEventsData,
+  CATEGORY_COLORS,
+  EventSeries,
+  Opts,
+} from "./WorkerTypes";
 
 type Props = {
   width: number;
@@ -155,6 +162,8 @@ const BehavioralEventsItemViewChild: FunctionComponent<ChildProps> = ({
     HTMLCanvasElement | undefined
   >();
   const [worker, setWorker] = useState<Worker | null>(null);
+  const { plotTheme } = usePlotTheme();
+  const plotColors = plotColorsFor(plotTheme);
 
   const { startTime, endTime } = useMemo(() => {
     const x = Object.values(beData.series);
@@ -237,6 +246,18 @@ const BehavioralEventsItemViewChild: FunctionComponent<ChildProps> = ({
       margins,
       visibleStartTimeSec,
       visibleEndTimeSec,
+      colors: {
+        stripes: [plotColors.gridMinor, plotColors.surface],
+        text: plotColors.text,
+        mark: plotColors.mark,
+        categories: CATEGORY_COLORS.map((c, i) =>
+          plotTheme === "light"
+            ? c
+            : i === 0
+              ? plotColors.mark
+              : readableOn(c, plotColors.surface),
+        ),
+      },
     };
     worker.postMessage({
       opts,
@@ -248,6 +269,8 @@ const BehavioralEventsItemViewChild: FunctionComponent<ChildProps> = ({
     margins,
     visibleStartTimeSec,
     visibleEndTimeSec,
+    plotColors,
+    plotTheme,
   ]);
 
   // Set beData
