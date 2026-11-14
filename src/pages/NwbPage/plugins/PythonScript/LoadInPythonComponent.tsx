@@ -8,6 +8,8 @@ import {
 import { neurodataTypeInheritsFrom } from "../../neurodataTypeInheritance";
 import { useNwbFileSpecifications } from "../../SpecificationsView/SetupNwbFileSpecificationsProvider";
 import PythonCode from "../../components/PythonCode";
+import { useAssetPath } from "../../useAssetPath";
+import { notebookIntro } from "../../components/notebookIntro";
 
 type Props = {
   nwbUrl: string;
@@ -16,6 +18,7 @@ type Props = {
 
 const LoadInPythonWindow: FunctionComponent<Props> = ({ nwbUrl, path }) => {
   const group = useHdf5Group(nwbUrl, path);
+  const assetPath = useAssetPath(nwbUrl);
   const specifications = useNwbFileSpecifications();
 
   const customCode = useMemo(() => {
@@ -42,6 +45,12 @@ const LoadInPythonWindow: FunctionComponent<Props> = ({ nwbUrl, path }) => {
       install="pip install --upgrade lindi"
       script={source}
       expandLabel="Load in Python"
+      notebook={{
+        file: assetPath ?? nwbUrl,
+        objectPath: path,
+        title: `${path} in ${(assetPath ?? nwbUrl).split("/").pop()}`,
+        intro: notebookIntro(assetPath ?? nwbUrl, "LINDI"),
+      }}
     />
   );
 };

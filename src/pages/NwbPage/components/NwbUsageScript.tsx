@@ -4,6 +4,8 @@ import { getLindiUrl } from "../hdf5Interface";
 import createUsageScriptForNwbFile from "./createUsageScriptForNwbFile";
 import { useNwbFileSpecifications } from "../SpecificationsView/SetupNwbFileSpecificationsProvider";
 import PythonCode from "./PythonCode";
+import { useAssetPath } from "../useAssetPath";
+import { notebookIntro } from "./notebookIntro";
 
 type Props = {
   nwbUrl: string;
@@ -12,6 +14,7 @@ type Props = {
 
 const NwbUsageScript: FunctionComponent<Props> = ({ nwbUrl, onNwbUsage }) => {
   const specifications = useNwbFileSpecifications();
+  const assetPath = useAssetPath(nwbUrl);
   const [scriptContent, setScriptContent] = useState<string | undefined>(
     undefined,
   );
@@ -88,7 +91,18 @@ nwb = pynwb.NWBHDF5IO(file=f, mode='r').read()
   const fullContent = `\`\`\`python\n${headerContent}${scriptContent}\n\`\`\``;
   onNwbUsage?.(fullContent);
 
-  return <PythonCode script={(headerContent + scriptContent).trimEnd()} />;
+  const file = assetPath ?? nwbUrl;
+  return (
+    <PythonCode
+      script={(headerContent + scriptContent).trimEnd()}
+      notebook={{
+        file,
+        title: file.split("/").pop() ?? file,
+        intro: notebookIntro(file),
+        install: "pip install pynwb lindi",
+      }}
+    />
+  );
 };
 
 export default NwbUsageScript;
