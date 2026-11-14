@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { SettingsView, type ApiKeys } from "./SettingsView";
 
 afterEach(cleanup);
+// jsdom has no scrollIntoView, which Tabs calls to keep the selected tab in view.
+Element.prototype.scrollIntoView = () => {};
 
 const KEYS: ApiKeys = {
   dandiApiKey: "dandi-key",
@@ -13,6 +15,8 @@ const KEYS: ApiKeys = {
 
 const setup = (overrides = {}) => {
   const props = {
+    tab: "keys" as const,
+    onTabChange: vi.fn(),
     keys: KEYS,
     onChange: vi.fn(),
     shown: {
@@ -78,7 +82,9 @@ describe("SettingsView", () => {
     expect(screen.queryByText("Reload to use the new key")).toBeNull();
     cleanup();
     const { onReload } = setup({ showReload: true });
-    const notice = screen.getByRole("status");
+    const notice = screen
+      .getAllByRole("status")
+      .find((el) => el.textContent?.includes("Reload to use the new key"))!;
     expect(notice.textContent).toContain("Reload to use the new key");
     expect(notice.textContent).toContain(
       "Neurosift reads API keys when a page opens.",
@@ -86,6 +92,30 @@ describe("SettingsView", () => {
     expect(document.activeElement).toBe(document.body);
     fireEvent.click(screen.getByRole("button", { name: "Reload page" }));
     expect(onReload).toHaveBeenCalledTimes(1);
+  });
+
+  it("splits API keys and MCP into tabs", () => {
+    const { onTabChange } = setup();
+    const keysTab = screen.getByRole("tab", { name: "API keys" });
+    expect(keysTab.getAttribute("aria-selected")).toBe("true");
+    expect(
+      screen.queryByRole("region", {
+        name: "Neurosift tools for AI assistants",
+      }),
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "MCP" }));
+    expect(onTabChange).toHaveBeenCalledWith("mcp");
+  });
+
+  it("explains how to connect the Neurosift tools MCP server", () => {
+    setup({ tab: "mcp" });
+    const mcp = screen.getByRole("region", {
+      name: "Neurosift tools for AI assistants",
+    });
+    expect(mcp.textContent).toContain("claude mcp add --transport stdio");
+    expect(mcp.textContent).toContain("nwb_file_info");
+    const guide = screen.getByRole("link", { name: "Read the full guide" });
+    expect(guide.getAttribute("href")).toContain("docs/mcp-neurosift-tools.md");
   });
 
   it("offers to go back to the page that sent people here", () => {

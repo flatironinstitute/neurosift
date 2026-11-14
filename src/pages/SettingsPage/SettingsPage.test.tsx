@@ -6,6 +6,8 @@ import SettingsPage from "./SettingsPage";
 
 beforeEach(() => localStorage.clear());
 afterEach(cleanup);
+// jsdom has no scrollIntoView, which Tabs calls to keep the selected tab in view.
+Element.prototype.scrollIntoView = () => {};
 
 describe("SettingsPage", () => {
   it("shows the keys saved in this browser", () => {
@@ -43,6 +45,23 @@ describe("SettingsPage", () => {
     expect(localStorage.getItem("dandiStagingApiKey")).toBe("b");
     expect(localStorage.getItem("emberApiKey")).toBe("c");
     expect(screen.getByText("Reload to use the new key")).toBeTruthy();
+  });
+
+  it("opens the MCP tab from ?tab=mcp", () => {
+    render(
+      <MemoryRouter initialEntries={["/settings?tab=mcp"]}>
+        <SettingsPage />
+      </MemoryRouter>,
+    );
+    expect(
+      screen.getByRole("tab", { name: "MCP" }).getAttribute("aria-selected"),
+    ).toBe("true");
+    fireEvent.click(screen.getByRole("tab", { name: "API keys" }));
+    expect(
+      screen
+        .getByRole("tab", { name: "API keys" })
+        .getAttribute("aria-selected"),
+    ).toBe("true");
   });
 
   it("goes back to the page that opened Settings once a key is typed", () => {

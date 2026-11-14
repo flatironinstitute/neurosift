@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { returnPath } from "./returnPath";
-import { SettingsView, type ApiKeys } from "./SettingsView";
+import { SettingsView, type ApiKeys, type SettingsTab } from "./SettingsView";
 
 const readKeys = (): ApiKeys => ({
   dandiApiKey: localStorage.getItem("dandiApiKey") || "",
@@ -9,9 +9,21 @@ const readKeys = (): ApiKeys => ({
   emberApiKey: localStorage.getItem("emberApiKey") || "",
 });
 
-/** Keeps the API keys in this browser's localStorage, saving each as it's typed, then goes back to ?return= if given. */
+/** Keeps the API keys in this browser's localStorage; ?tab=mcp opens the MCP tab. Saves each key as it's typed, then goes back to ?return= if given. */
 export default function SettingsPage() {
-  const back = returnPath(useSearchParams()[0].get("return"));
+  const [searchParams, setSearchParams] = useSearchParams();
+  const back = returnPath(searchParams.get("return"));
+  const tab: SettingsTab = searchParams.get("tab") === "mcp" ? "mcp" : "keys";
+  const onTabChange = (next: SettingsTab) =>
+    setSearchParams(
+      (current) => {
+        const params = new URLSearchParams(current);
+        if (next === "keys") params.delete("tab");
+        else params.set("tab", next);
+        return params;
+      },
+      { replace: true },
+    );
   const [keys, setKeys] = useState(readKeys);
   const [showReload, setShowReload] = useState(false);
   const [shown, setShown] = useState<Record<keyof ApiKeys, boolean>>({
@@ -26,6 +38,8 @@ export default function SettingsPage() {
   };
   return (
     <SettingsView
+      tab={tab}
+      onTabChange={onTabChange}
       keys={keys}
       onChange={onChange}
       shown={shown}

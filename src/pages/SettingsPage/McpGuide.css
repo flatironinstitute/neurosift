@@ -1,0 +1,5 @@
+.mcp-guide-text {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--text-default);
+}
