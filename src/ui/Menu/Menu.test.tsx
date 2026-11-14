@@ -5,6 +5,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { Menu } from "./Menu";
@@ -112,5 +113,45 @@ describe("Menu", () => {
     )!;
     act(() => menu.hidePopover());
     expect(document.activeElement).toBe(trigger);
+  });
+
+  it("titles groups of choices and marks the current one with aria-checked", () => {
+    const onSelect = vi.fn();
+    render(
+      <Menu
+        label="Display"
+        groups={[
+          {
+            label: "Theme",
+            items: [
+              { label: "Light", checked: false, onSelect },
+              { label: "Dark", checked: true, onSelect },
+            ],
+          },
+          {
+            label: "Charts",
+            items: [{ label: "Match theme", checked: true, onSelect }],
+          },
+        ]}
+      />,
+    );
+    const theme = screen.getByRole("group", { name: "Theme", hidden: true });
+    const choices = within(theme).getAllByRole("menuitemradio", {
+      hidden: true,
+    });
+    expect(choices.map((c) => c.getAttribute("aria-checked"))).toEqual([
+      "false",
+      "true",
+    ]);
+    expect(
+      screen.getByRole("group", { name: "Charts", hidden: true }),
+    ).toBeTruthy();
+    fireEvent.click(choices[0]);
+    expect(onSelect).toHaveBeenCalledOnce();
+  });
+
+  it("can show only its icon and keep its name", () => {
+    render(<Menu label="Display" icon="light" iconOnly items={items()} />);
+    expect(screen.getByRole("button", { name: "Display" })).toBeTruthy();
   });
 });

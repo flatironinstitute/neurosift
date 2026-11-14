@@ -41,6 +41,7 @@ const CHOOSING = [
   ["Two to four, one at a time", "Segmented control or radio buttons", "Sort order (Ascending, Descending) · Notch at 50 Hz or 60 Hz · PSTH height"],
   ["Five or more, one at a time", "Select", "Group trials by · Sort units by · Version · Playback speed (0.1× to 8×)"],
   ["Actions on the current item", "Menu", "Share, export and open-in options"],
+  ["A few settings to change from anywhere", "Menu with groups of choices", "The Display menu in the app bar: Theme and Charts"],
 ];
 
 const BROWSERS = [
@@ -57,7 +58,7 @@ const SELECT_KEYS = [
 ];
 
 const MENU_KEYS = [
-  ["Enter or Space on the button", "Opens the Menu and moves focus to the first item"],
+  ["Enter or Space on the button", "Opens the Menu and moves focus to the first item, or to the current choice in a menu of choices"],
   ["Up and Down arrows", "Move between items, skipping disabled ones, and wrap at the ends"],
   ["Home and End", "Go to the first or last item"],
   ["Enter or Space on an item", "Runs it, closes the Menu and returns focus to the button"],
@@ -82,7 +83,8 @@ const SPECS = [
   ["Highlighted option", "action/secondary-hover", "Same"],
   ["Chosen option", "Carbon checkmark and type/label (SemiBold)", "Same"],
   ["Meta text", "type/caption · text/muted, at the end of the row", "Same"],
-  ["Menu item padding", "12px at both sides · space/3, as there is no check column", "Same"],
+  ["Menu item padding", "12px at both sides · space/3; action items have no check column", "Same"],
+  ["Menu of choices", "Items are menuitemradio with aria-checked; a 16px check column keeps them aligned; groups are titled in type/caption · text/muted and ruled apart with border/subtle", "Same"],
 ];
 
 const code = `import { Menu, Select } from "@ui";
@@ -97,6 +99,11 @@ const code = `import { Menu, Select } from "@ui";
 <Menu label="Share" icon="share" items={[
   { label: "Copy link", onSelect: copyLink },
   { label: "Download NWB file", meta: "1.2 GB", onSelect: download },
+]} />
+
+<Menu label="Display" icon="light" groups={[
+  { label: "Theme", items: THEME_OPTIONS.map(({ value, label }) => ({
+      label, checked: theme === value, onSelect: () => applyTheme(value) })) },
 ]} />`;
 ---
 

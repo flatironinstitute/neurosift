@@ -59,7 +59,7 @@ export function Button(props: ButtonProps) {
     return (
       <a {...link} className={classes(variant, size)}>
         {icon && <Icon name={icon} />}
-        {children}
+        <span className="ns-button-label">{children}</span>
       </a>
     );
   }

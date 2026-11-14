@@ -5,6 +5,13 @@ import { plotColors } from "./plotColors";
 export type PlotThemeChoice = "auto" | "light" | "dark";
 export type PlotTheme = "light" | "dark";
 
+/** The chart choices as Settings and the Display menu offer them. */
+export const PLOT_THEME_OPTIONS: { value: PlotThemeChoice; label: string }[] = [
+  { value: "auto", label: "Match theme" },
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+];
+
 const KEY = "neurosiftPlotTheme";
 const listeners = new Set<() => void>();
 

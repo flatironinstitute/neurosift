@@ -1,21 +1,8 @@
 import { useId } from "react";
 import { Section, SegmentedControl } from "@ui";
-import type { PlotThemeChoice } from "@shared/plotTheme";
-import type { ThemeChoice } from "../../theme";
+import { PLOT_THEME_OPTIONS, type PlotThemeChoice } from "@shared/plotTheme";
+import { THEME_OPTIONS, type ThemeChoice } from "../../theme";
 import "./DisplaySettings.css";
-
-const THEMES = [
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-  { value: "high-contrast", label: "High contrast" },
-  { value: "system", label: "Match system" },
-];
-
-const CHART_THEMES = [
-  { value: "auto", label: "Match theme" },
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-];
 
 interface DisplaySettingsProps {
   theme: ThemeChoice;
@@ -38,7 +25,7 @@ export function DisplaySettings({
       <Section title="Theme">
         <SegmentedControl
           label="Theme"
-          options={THEMES}
+          options={THEME_OPTIONS}
           value={theme}
           onChange={(value) => onThemeChange(value as ThemeChoice)}
           describedBy={help}
@@ -51,7 +38,7 @@ export function DisplaySettings({
       <Section title="Charts">
         <SegmentedControl
           label="Charts"
-          options={CHART_THEMES}
+          options={PLOT_THEME_OPTIONS}
           value={chartTheme}
           onChange={(value) => onChartThemeChange(value as PlotThemeChoice)}
           describedBy={chartHelp}

@@ -1,5 +1,7 @@
 /* Color states shared by Button and IconButton. Variants set the --control-* values; states swap them. */
 :is(.ns-button, .ns-icon-button) {
+  /* Links and buttons alike: the border sits inside the control's height. */
+  box-sizing: border-box;
   --control-bg: transparent;
   --control-bg-hover: var(--action-secondary-hover);
   --control-bg-pressed: var(--action-secondary-pressed);
