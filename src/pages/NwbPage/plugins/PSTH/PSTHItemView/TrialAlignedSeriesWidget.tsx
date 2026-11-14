@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import { usePlotColors } from "@shared/plotTheme";
+import { usePlotColors, usePlotTheme } from "@shared/plotTheme";
+import { faintOn } from "@shared/plotColors";
 import { getTicks } from "./getTicks";
 
 type TrialAlignedSeriesWidgetProps = {
@@ -183,6 +184,7 @@ const PlotChild: FunctionComponent<PlotChildProps> = ({
   yAxisLabel,
   perGroupStats,
 }) => {
+  const dark = usePlotTheme().plotTheme === "dark";
   const colors = usePlotColors();
   const [canvasElement, setCanvasElement] = useState<
     HTMLCanvasElement | undefined
@@ -262,7 +264,9 @@ const PlotChild: FunctionComponent<PlotChildProps> = ({
     if (showRawTraces) {
       ctx.globalAlpha = rawTraceAlpha;
       plotsSampled.forEach((p) => {
-        ctx.strokeStyle = p.color;
+        ctx.strokeStyle = dark
+          ? faintOn(p.color, colors.surface, rawTraceAlpha)
+          : p.color;
         ctx.lineWidth = 0.5;
         ctx.beginPath();
         if (p.values.length === 0) return;
@@ -440,6 +444,7 @@ const PlotChild: FunctionComponent<PlotChildProps> = ({
     yAxisLabel,
     perGroupStats,
     colors,
+    dark,
   ]);
 
   return (

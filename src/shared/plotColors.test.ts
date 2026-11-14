@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readableOn } from "./plotColors";
+import { faintOn, readableOn } from "./plotColors";
 
 describe("readableOn", () => {
   it("keeps a color that already reads on the chart", () => {
@@ -24,5 +24,17 @@ describe("readableOn", () => {
 
   it("leaves colors it can't parse alone", () => {
     expect(readableOn("rgba(0,0,0,0.5)", "#ffffff")).toBe("rgba(0,0,0,0.5)");
+  });
+});
+
+describe("faintOn", () => {
+  it("keeps a see-through trace as visible on dark as it is on white", () => {
+    const lifted = faintOn("#1f77b4", "#111921", 0.4);
+    expect(lifted).not.toBe("#1f77b4");
+    const [r, g, b] = [1, 3, 5].map((i) =>
+      parseInt(lifted.slice(i, i + 2), 16),
+    );
+    expect(b).toBeGreaterThan(r);
+    expect(b).toBeGreaterThan(g);
   });
 });

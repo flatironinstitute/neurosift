@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Alert } from "../Alert/Alert";
-import { IconButton } from "../IconButton/IconButton";
+import { PlotThemeSwitch } from "../PlotThemeSwitch/PlotThemeSwitch";
 import "../base.css";
 import "./ViewPanel.css";
 
@@ -38,7 +38,6 @@ export function ViewPanel({
   onPlotThemeChange,
   children,
 }: ViewPanelProps) {
-  const next = plotTheme === "dark" ? "light" : "dark";
   return (
     <section
       className={settings ? "ns-view ns-view--settings" : "ns-view"}
@@ -48,14 +47,7 @@ export function ViewPanel({
         <div className="ns-view-head">
           <p className="ns-view-summary">{summary}</p>
           {plotTheme && onPlotThemeChange && (
-            <IconButton
-              size="sm"
-              variant="ghost"
-              icon={next === "dark" ? "asleep" : "light"}
-              label={next === "dark" ? "Dark chart" : "Light chart"}
-              tooltip
-              onClick={() => onPlotThemeChange(next)}
-            />
+            <PlotThemeSwitch theme={plotTheme} onChange={onPlotThemeChange} />
           )}
         </div>
         {controls && <div className="ns-view-controls">{controls}</div>}

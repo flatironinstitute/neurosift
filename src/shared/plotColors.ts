@@ -81,3 +81,24 @@ export const readableOn = (color: string, background: string): string => {
   }
   return toHex(toward);
 };
+
+const over = (fg: number[], bg: number[], alpha: number) =>
+  fg.map((v, i) => v * alpha + bg[i] * (1 - alpha));
+
+/**
+ * A see-through trace color for a dark chart that stands out from it as much as the original does from white
+ * at the same opacity, so faint single-trial traces stay faint, not invisible.
+ */
+export const faintOn = (color: string, darkSurface: string, alpha: number) => {
+  if (!/^#[0-9a-f]{6}$/i.test(color) || !/^#[0-9a-f]{6}$/i.test(darkSurface))
+    return color;
+  const white = [255, 255, 255];
+  const fg = channels(color);
+  const bg = channels(darkSurface);
+  const target = contrast(over(fg, white, alpha), white);
+  for (let step = 0; step <= 20; step++) {
+    const mixed = fg.map((v, i) => v + ((white[i] - v) * step) / 20);
+    if (contrast(over(mixed, bg, alpha), bg) >= target) return toHex(mixed);
+  }
+  return "#ffffff";
+};

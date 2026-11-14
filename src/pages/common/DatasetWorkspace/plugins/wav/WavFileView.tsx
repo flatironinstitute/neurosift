@@ -13,7 +13,12 @@ import WaveformCanvas from "./WaveformCanvas";
 import { resolveDatasetFileUrl } from "@hdf5Interface";
 import ViewError from "@components/ViewError/ViewError";
 import { useCssVars } from "@components/useCssVars";
-import { DescriptionList, formatSeconds, LoadingState } from "@ui";
+import {
+  DescriptionList,
+  formatSeconds,
+  LoadingState,
+  PlotThemeSwitch,
+} from "@ui";
 import "./WavFileView.css";
 
 // The player's block size; the waveform gets the rest of the plugin's height.
@@ -119,7 +124,7 @@ const WavFileView: FunctionComponent<DatasetPluginProps> = ({
     });
   }, [waveformData, initializeTimeseriesSelection]);
 
-  const { plotTheme } = usePlotTheme();
+  const { plotTheme, onPlotThemeChange } = usePlotTheme();
   const plotColors = usePlotColors();
   const waveColor =
     plotTheme === "dark"
@@ -161,7 +166,7 @@ const WavFileView: FunctionComponent<DatasetPluginProps> = ({
   ]);
 
   return (
-    <div className="wav-view" ref={root} data-plot-theme={plotTheme}>
+    <div className="wav-view" ref={root}>
       {isLoading ? (
         <LoadingState label="Loading the audio file" phase="loading" />
       ) : error || !waveformData || !audioUrl ? (
@@ -186,7 +191,13 @@ const WavFileView: FunctionComponent<DatasetPluginProps> = ({
               },
             ]}
           />
-          <AudioPlayer audioUrl={audioUrl} duration={waveformData.duration} />
+          <AudioPlayer
+            audioUrl={audioUrl}
+            duration={waveformData.duration}
+            actions={
+              <PlotThemeSwitch theme={plotTheme} onChange={onPlotThemeChange} />
+            }
+          />
           <div className="wav-view-waveform">
             <TimeScrollView2
               width={width}
