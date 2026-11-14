@@ -105,3 +105,13 @@
     color: LinkText;
   }
 }
+
+/* IBM Plex Sans JP sits high in its line box; trimming the label to its capitals centers the text on the icon. */
+.ns-button:not(.ns-button--link) .ns-button-label {
+  text-box: trim-both cap alphabetic;
+}
+
+/* An icon-only button's hidden label takes no gap, so the icon stays centered. */
+.ns-button:has(> .ns-button-label > .ns-visually-hidden:only-child) {
+  gap: 0;
+}

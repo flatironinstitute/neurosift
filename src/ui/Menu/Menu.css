@@ -42,6 +42,12 @@
   background: var(--action-secondary-hover);
 }
 
+/* The ring sits inside the item, so the list's edge never clips it. */
+.ns-menu-item:focus-visible {
+  outline: var(--border-width-2) solid var(--border-focus);
+  outline-offset: calc(var(--border-width-2) * -1);
+}
+
 .ns-menu-item:disabled {
   color: var(--text-disabled);
   cursor: not-allowed;

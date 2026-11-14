@@ -48,6 +48,12 @@
   align-items: center;
 }
 
+/* 8px from the edge to the icon or text, as an icon-only action has (its border included),
+   so every action sits the same distance apart. */
+.ns-app-bar-actions .ns-button {
+  padding-inline: calc(var(--space-2) - var(--border-width-1));
+}
+
 .ns-app-bar-actions .ns-button:has(.ns-visually-hidden) {
   inline-size: var(--button-height-md);
   padding: 0;
