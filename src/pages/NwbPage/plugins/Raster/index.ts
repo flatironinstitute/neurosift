@@ -7,7 +7,9 @@ const RasterView = lazy(() => import("./RasterView"));
 
 export const rasterPlugin: NwbObjectViewPlugin = {
   name: "Raster",
-  canHandle: async ({ nwbUrl, path, secondaryPaths, specifications }) => {
+  canHandle: async ({ nwbUrl, path, objectType, secondaryPaths, specifications }) => {
+    // Raster views require a Units group; never request a group for a dataset path.
+    if (objectType !== "group") return false;
     if (secondaryPaths && secondaryPaths.length > 0) return false;
     const group = await getHdf5Group(nwbUrl, path);
     if (!group) return false;

@@ -12,7 +12,9 @@ const FigpackPoseEstimationView = lazy(
 export const figpackRasterPlotPlugin: NwbObjectViewPlugin = {
   name: "FigpackRasterPlot",
   label: "Figpack Raster",
-  canHandle: async ({ nwbUrl, path, secondaryPaths, specifications }) => {
+  canHandle: async ({ nwbUrl, path, objectType, secondaryPaths, specifications }) => {
+    // Figpack raster views also require a Units group, not a dataset.
+    if (objectType !== "group") return false;
     if (secondaryPaths && secondaryPaths.length > 0) return false;
     const group = await getHdf5Group(nwbUrl, path);
     if (!group) return false;
