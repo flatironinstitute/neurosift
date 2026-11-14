@@ -80,8 +80,8 @@ export const findSuitablePlugins = async (
     if (plugin.requiredDefaultUnits && !o.defaultUnitsPath) {
       continue;
     }
-    if (
-      await plugin.canHandle({
+    try {
+      const canHandle = await plugin.canHandle({
         nwbUrl,
         objectType,
         path,
@@ -89,9 +89,17 @@ export const findSuitablePlugins = async (
         secondaryPaths: plugin.requiredDefaultUnits
           ? [o.defaultUnitsPath!]
           : [],
-      })
-    ) {
-      ret.push(plugin);
+      });
+      if (canHandle) {
+        ret.push(plugin);
+      }
+    } catch (err) {
+      // A plugin that cannot inspect one object must not prevent other plugins
+      // from being checked for that object.
+      console.warn(
+        `Plugin "${plugin.name}" failed while checking ${path}:`,
+        err,
+      );
     }
   }
   return ret;
