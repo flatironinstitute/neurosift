@@ -1,11 +1,12 @@
 import { useSyncExternalStore, type ReactNode } from "react";
 import { Button } from "../Button/Button";
 import type { IconName } from "../Icon/Icon";
+import { Menu, type MenuGroup } from "../Menu/Menu";
 import { Tooltip } from "../Tooltip/Tooltip";
 import "../base.css";
 import "./Navigation.css";
 
-export interface AppBarAction {
+export interface AppBarLink {
   label: string;
   href: string;
   icon?: IconName;
@@ -15,6 +16,16 @@ export interface AppBarAction {
   collapses?: boolean;
   external?: boolean;
 }
+
+/** An action that opens a menu of choices instead of a page. */
+export interface AppBarMenu {
+  label: string;
+  menu: MenuGroup[];
+  icon?: IconName;
+  collapses?: boolean;
+}
+
+export type AppBarAction = AppBarLink | AppBarMenu;
 
 interface AppBarProps {
   homeHref: string;
@@ -55,35 +66,54 @@ export function AppBar({
         <span className="ns-app-bar-name">{name}</span>
       </a>
       <div className="ns-app-bar-actions">
-        {actions.map(
-          ({ label, href, icon, iconOnly: always, collapses, external }) => {
-            const iconOnly = always || (collapses && narrow);
-            const link = (
-              <Button
+        {actions.map((action) => {
+          if ("menu" in action) {
+            const { label, menu, icon, collapses } = action;
+            return (
+              <Menu
                 key={label}
-                href={href}
-                variant="ghost"
+                label={label}
+                groups={menu}
                 icon={icon}
-                target={external ? "_blank" : undefined}
-                rel={external ? "noopener noreferrer" : undefined}
-                aria-label={iconOnly ? label : undefined}
-              >
-                {iconOnly ? (
-                  <span className="ns-visually-hidden">{label}</span>
-                ) : (
-                  label
-                )}
-              </Button>
+                iconOnly={collapses && narrow}
+                variant="ghost"
+              />
             );
-            return iconOnly ? (
-              <Tooltip key={label} label={label} placement="bottom">
-                {link}
-              </Tooltip>
-            ) : (
-              link
-            );
-          },
-        )}
+          }
+          const {
+            label,
+            href,
+            icon,
+            iconOnly: always,
+            collapses,
+            external,
+          } = action;
+          const iconOnly = always || (collapses && narrow);
+          const link = (
+            <Button
+              key={label}
+              href={href}
+              variant="ghost"
+              icon={icon}
+              target={external ? "_blank" : undefined}
+              rel={external ? "noopener noreferrer" : undefined}
+              aria-label={iconOnly ? label : undefined}
+            >
+              {iconOnly ? (
+                <span className="ns-visually-hidden">{label}</span>
+              ) : (
+                label
+              )}
+            </Button>
+          );
+          return iconOnly ? (
+            <Tooltip key={label} label={label} placement="bottom">
+              {link}
+            </Tooltip>
+          ) : (
+            link
+          );
+        })}
       </div>
     </header>
   );

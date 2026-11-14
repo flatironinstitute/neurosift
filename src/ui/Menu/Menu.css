@@ -63,3 +63,24 @@
     outline-offset: calc(var(--border-width-2) * -1);
   }
 }
+
+/* Groups of choices are titled and ruled apart. */
+.ns-menu-group + .ns-menu-group {
+  padding-block-start: var(--space-1);
+  margin-block-start: var(--space-1);
+  border-block-start: var(--border-width-1) solid var(--border-subtle);
+}
+
+.ns-menu-group-label {
+  padding: var(--space-1) var(--space-3);
+  font: var(--type-caption);
+  color: var(--text-muted);
+}
+
+/* A fixed column for the checkmark, so choices line up whether or not they're checked. */
+.ns-menu-check {
+  display: inline-flex;
+  flex: none;
+  inline-size: var(--icon-size-sm);
+  margin-inline-end: calc(var(--space-2) - var(--space-4));
+}

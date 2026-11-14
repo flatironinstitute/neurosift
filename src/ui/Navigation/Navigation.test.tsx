@@ -107,6 +107,42 @@ describe("AppBar", () => {
   });
 });
 
+describe("AppBar menus", () => {
+  it("renders a menu action as a button that opens a menu, between its neighbours", () => {
+    render(
+      <AppBar
+        homeHref="/"
+        logo={<span />}
+        actions={[
+          { label: "Guide", href: "/guide" },
+          {
+            label: "Display",
+            icon: "light",
+            menu: [
+              {
+                label: "Theme",
+                items: [{ label: "Dark", checked: false, onSelect: () => {} }],
+              },
+            ],
+          },
+          { label: "Settings", href: "/settings" },
+        ]}
+      />,
+    );
+    const names = [
+      ...screen
+        .getByRole("banner")
+        .querySelectorAll("a, button:not([role^=menuitem])"),
+    ].map((el) => el.getAttribute("aria-label") ?? el.textContent);
+    expect(names.slice(1)).toEqual(["Guide", "Display", "Settings"]);
+    expect(
+      screen
+        .getByRole("button", { name: "Display" })
+        .getAttribute("aria-haspopup"),
+    ).toBe("menu");
+  });
+});
+
 describe("Breadcrumbs", () => {
   const ITEMS = [
     { label: "DANDI", href: "/dandi?search=memory" },

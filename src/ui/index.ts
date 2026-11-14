@@ -9,7 +9,7 @@ export { SearchField } from "./SearchField/SearchField";
 export { TextInput } from "./TextInput/TextInput";
 export { TextArea } from "./TextArea/TextArea";
 export { Menu } from "./Menu/Menu";
-export type { MenuItem } from "./Menu/Menu";
+export type { MenuGroup, MenuItem } from "./Menu/Menu";
 export { Select } from "./Select/Select";
 export type { SelectOption } from "./Select/Select";
 export { Toggletip } from "./Toggletip/Toggletip";

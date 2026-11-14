@@ -19,6 +19,12 @@ import { sendUrlUpdate } from "./ai-integration/messaging/windowMessaging";
 import { ADDRESS_CHANGED } from "@shared/shareLink/shareAddress";
 import { logPageLoad } from "./util/sendLog";
 import { v2Url } from "./util/v2Url";
+import { applyTheme, THEME_OPTIONS, useThemeChoice } from "./theme";
+import {
+  PLOT_THEME_OPTIONS,
+  setPlotTheme,
+  usePlotThemeChoice,
+} from "@shared/plotTheme";
 
 // Each page is its own chunk, so a visit downloads only the page it lands on.
 const DandisetPageContainer = lazy(
@@ -112,6 +118,28 @@ const AppContent = () => {
     () => window.location.search,
   );
 
+  const theme = useThemeChoice();
+  const chartTheme = usePlotThemeChoice();
+  // The same choices as Settings → Display, reachable from any page.
+  const displayMenu = [
+    {
+      label: "Theme",
+      items: THEME_OPTIONS.map(({ value, label }) => ({
+        label,
+        checked: theme === value,
+        onSelect: () => applyTheme(value),
+      })),
+    },
+    {
+      label: "Charts",
+      items: PLOT_THEME_OPTIONS.map(({ value, label }) => ({
+        label,
+        checked: chartTheme === value,
+        onSelect: () => setPlotTheme(value),
+      })),
+    },
+  ];
+
   const { width, height } = useWindowDimensions();
   const hideAppBar = searchParams.get("embedded") === "1";
   const appBarHeight = hideAppBar ? 0 : 48; // layout/appbar-height
@@ -147,6 +175,12 @@ const AppContent = () => {
                 href: `${import.meta.env.BASE_URL}guide`,
                 icon: "help",
                 collapses: true,
+              },
+              {
+                label: "Display",
+                icon: "light",
+                collapses: true,
+                menu: displayMenu,
               },
               {
                 label: "Report a problem on GitHub",
