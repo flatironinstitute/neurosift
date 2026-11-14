@@ -118,12 +118,14 @@ export function SettingsView({
         tabId="display"
         selected={tab === "display"}
       >
-        <DisplaySettings
-          theme={theme}
-          onThemeChange={onThemeChange}
-          chartTheme={chartTheme}
-          onChartThemeChange={onChartThemeChange}
-        />
+        <div className="settings-panel">
+          <DisplaySettings
+            theme={theme}
+            onThemeChange={onThemeChange}
+            chartTheme={chartTheme}
+            onChartThemeChange={onChartThemeChange}
+          />
+        </div>
       </TabPanel>
       <TabPanel tabsId="settings-tabs" tabId="mcp" selected={tab === "mcp"}>
         <McpGuide />

@@ -1,6 +1,8 @@
 .ns-segmented {
   display: inline-flex;
   flex: none;
+  /* Sized to its options, even in a grid cell, which would stretch it. */
+  justify-self: start;
   overflow: hidden;
   vertical-align: middle;
   background: var(--surface-panel);
