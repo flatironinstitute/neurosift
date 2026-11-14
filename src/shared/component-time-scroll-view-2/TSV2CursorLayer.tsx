@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import BaseCanvas from "./BaseCanvas";
+import type { PlotColors } from "../plotColors";
+import { usePlotColors } from "../plotTheme";
 
 export type TSVCursorLayerProps = {
   timeRange: [number, number];
@@ -12,15 +14,16 @@ export type TSVCursorLayerProps = {
 
 const paintCursor = (
   context: CanvasRenderingContext2D,
-  props: TSVCursorLayerProps,
+  props: TSVCursorLayerProps & { colors: PlotColors },
 ) => {
+  const { colors } = props;
   const { margins, currentTimePixels, currentTimeIntervalPixels } = props;
   context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
   // current time interval
   if (currentTimeIntervalPixels !== undefined) {
-    context.fillStyle = "rgba(255, 225, 225, 0.4)";
-    context.strokeStyle = "rgba(150, 50, 50, 0.9)";
+    context.fillStyle = colors.cursorFill;
+    context.strokeStyle = colors.cursor;
     const x = currentTimeIntervalPixels[0];
     const y = margins.top;
     const w = currentTimeIntervalPixels[1] - currentTimeIntervalPixels[0];
@@ -35,7 +38,7 @@ const paintCursor = (
     currentTimeIntervalPixels === undefined
   ) {
     // Draw highlight region
-    context.fillStyle = "rgba(255, 255, 0, 0.1)";
+    context.fillStyle = colors.selectionFill;
     const highlightWidth = 4; // Width of highlight region
     context.fillRect(
       currentTimePixels - highlightWidth / 2,
@@ -45,7 +48,7 @@ const paintCursor = (
     );
 
     // Draw border line
-    context.strokeStyle = "rgba(200, 200, 0, 0.4)";
+    context.strokeStyle = colors.selectionStroke;
     context.lineWidth = 1;
     context.beginPath();
     context.moveTo(currentTimePixels, margins.top);
@@ -63,8 +66,10 @@ const TSV2CursorLayer = (props: TSVCursorLayerProps) => {
     currentTimeIntervalPixels,
     margins,
   } = props;
+  const colors = usePlotColors();
   const drawData = useMemo(
     () => ({
+      colors,
       width,
       height,
       timeRange,
@@ -73,6 +78,7 @@ const TSV2CursorLayer = (props: TSVCursorLayerProps) => {
       margins,
     }),
     [
+      colors,
       width,
       height,
       timeRange,

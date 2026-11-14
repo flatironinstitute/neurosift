@@ -2,8 +2,7 @@
   position: relative;
   inline-size: var(--tsv-width);
   block-size: var(--tsv-height);
-  /* The plot draws light-theme colors, so it stays on white in every theme. */
-  background: var(--surface-plot);
+  background: var(--plot-surface);
 }
 
 .tsv--bare {

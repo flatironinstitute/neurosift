@@ -109,7 +109,7 @@ describe("SettingsView", () => {
     expect(onTabChange).toHaveBeenCalledWith("mcp");
   });
 
-  it("offers Light, Dark and High contrast on the Display tab", () => {
+  it("offers Light, Dark, High contrast and Match system on the Display tab", () => {
     const { onThemeChange } = setup({ tab: "display" });
     const group = screen.getByRole("radiogroup", { name: "Theme" });
     expect(group.getAttribute("aria-describedby")).toBeTruthy();
@@ -118,6 +118,8 @@ describe("SettingsView", () => {
     ).toBe("true");
     fireEvent.click(screen.getByRole("radio", { name: "High contrast" }));
     expect(onThemeChange).toHaveBeenCalledWith("high-contrast");
+    fireEvent.click(screen.getByRole("radio", { name: "Match system" }));
+    expect(onThemeChange).toHaveBeenCalledWith("system");
   });
 
   it("explains how to connect the Neurosift tools MCP server", () => {

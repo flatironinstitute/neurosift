@@ -3,6 +3,7 @@ import { TickSet } from "./YAxisTicks";
 import BaseCanvas from "./BaseCanvas";
 import { TimeTick } from "./timeTicks";
 import { paintAxes } from "./TSV2PaintAxes";
+import { usePlotColors } from "../plotTheme";
 
 export type TSV2AxesLayerProps = {
   timeRange: [number, number];
@@ -19,12 +20,13 @@ const emptyDrawData = {};
 
 const TSV2AxesLayer: FunctionComponent<TSV2AxesLayerProps> = (props) => {
   const { width, height } = props;
+  const colors = usePlotColors();
 
   const paint = useCallback(
     (context: CanvasRenderingContext2D) => {
-      paintAxes(context, props);
+      paintAxes(context, props, colors);
     },
-    [props],
+    [props, colors],
   );
 
   return (

@@ -6,16 +6,27 @@ const set = TokenSet.load(new URL("./", import.meta.url));
 
 describe("design tokens", () => {
   it("reads every token from the five files", () => {
-    expect(set.tokens.size).toBe(78 + 54 + 41 + 17 + 3);
+    expect(set.tokens.size).toBe(86 + 62 + 41 + 17 + 3);
   });
 
-  it("gives each theme an override for every semantic color but the plot surface", () => {
+  it("gives each app theme every semantic color but the chart colors, which only charts change", () => {
     for (const theme of THEMES) {
       const overrides = set.themes.get(theme)!;
       expect(overrides.size).toBe(52);
-      expect(overrides.has("surface.plot")).toBe(false);
+      expect([...overrides.keys()].some((p) => p.startsWith("plot."))).toBe(
+        false,
+      );
       expect(set.css()).toContain(`:root[data-theme="${theme}"] {`);
     }
+  });
+
+  it("scopes the dark chart colors to data-plot-theme, without changing the page's color scheme", () => {
+    const css = set.css();
+    const block = css.slice(css.indexOf('[data-plot-theme="dark"] {'));
+    expect(block).toContain("--plot-surface: var(--color-navy-900);");
+    expect(block.slice(0, block.indexOf("}"))).not.toContain("color-scheme");
+    for (const path of set.themes.get("plot-dark")!.keys())
+      expect(path.startsWith("plot.") || path.startsWith("data.")).toBe(true);
   });
 
   it("rejects a theme that overrides something other than a color", () => {

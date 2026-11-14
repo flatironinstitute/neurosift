@@ -32,6 +32,12 @@
       // Applies the theme saved in Settings before the first paint; src/theme.ts writes the same key.
       try {
         var theme = localStorage.getItem("neurosiftTheme");
+        if (theme === "system")
+          theme = matchMedia("(prefers-contrast: more)").matches
+            ? "high-contrast"
+            : matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "";
         if (theme === "dark" || theme === "high-contrast")
           document.documentElement.dataset.theme = theme;
       } catch (e) {}

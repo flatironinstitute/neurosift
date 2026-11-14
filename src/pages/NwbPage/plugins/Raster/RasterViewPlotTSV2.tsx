@@ -1,5 +1,6 @@
 import TimeScrollView2 from "@shared/component-time-scroll-view-2/TimeScrollView2";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import { usePlotColors } from "@shared/plotTheme";
 
 type Props = {
   width: number;
@@ -65,6 +66,8 @@ const RasterViewPlotTSV2: FunctionComponent<Props> = ({
     };
   }, [canvasElement]);
 
+  const colors = usePlotColors();
+
   // Update plot opts
   useEffect(() => {
     if (!worker) return;
@@ -75,10 +78,11 @@ const RasterViewPlotTSV2: FunctionComponent<Props> = ({
       margins: defaultMargins,
       visibleStartTimeSec: startTime,
       visibleEndTimeSec: startTime + duration,
+      markColor: colors.mark,
     };
 
     worker.postMessage({ plotOpts });
-  }, [worker, width, height, startTime, duration]);
+  }, [worker, width, height, startTime, duration, colors.mark]);
 
   // Update plot data
   useEffect(() => {

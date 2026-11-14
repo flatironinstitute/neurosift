@@ -973,6 +973,156 @@
           "scopes": []
         }
       }
+    },
+    "red-50-a40": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          1.0,
+          0.8824,
+          0.8824
+        ],
+        "hex": "#ffe1e1",
+        "alpha": 0.4
+      },
+      "$extensions": {
+        "com.figma": {
+          "collection": "Primitives",
+          "scopes": []
+        }
+      }
+    },
+    "red-200-a25": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.9882,
+          0.8118,
+          0.7961
+        ],
+        "hex": "#fccfcb",
+        "alpha": 0.25
+      },
+      "$extensions": {
+        "com.figma": {
+          "collection": "Primitives",
+          "scopes": []
+        }
+      }
+    },
+    "yellow-300-a10": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          1.0,
+          1.0,
+          0.0
+        ],
+        "hex": "#ffff00",
+        "alpha": 0.1
+      },
+      "$extensions": {
+        "com.figma": {
+          "collection": "Primitives",
+          "scopes": []
+        }
+      }
+    },
+    "yellow-300-a14": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          1.0,
+          0.8667,
+          0.2
+        ],
+        "hex": "#ffdd33",
+        "alpha": 0.14
+      },
+      "$extensions": {
+        "com.figma": {
+          "collection": "Primitives",
+          "scopes": []
+        }
+      }
+    },
+    "yellow-600-a40": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.7843,
+          0.7843,
+          0.0
+        ],
+        "hex": "#c8c800",
+        "alpha": 0.4
+      },
+      "$extensions": {
+        "com.figma": {
+          "collection": "Primitives",
+          "scopes": []
+        }
+      }
+    },
+    "yellow-300-a50": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          1.0,
+          0.8667,
+          0.2
+        ],
+        "hex": "#ffdd33",
+        "alpha": 0.5
+      },
+      "$extensions": {
+        "com.figma": {
+          "collection": "Primitives",
+          "scopes": []
+        }
+      }
+    },
+    "sienna-300": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.851,
+          0.549,
+          0.3725
+        ],
+        "hex": "#d98c5f"
+      },
+      "$extensions": {
+        "com.figma": {
+          "collection": "Primitives",
+          "scopes": []
+        }
+      }
+    },
+    "teal-300": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.3098,
+          0.7647,
+          0.8
+        ],
+        "hex": "#4fc3cc"
+      },
+      "$extensions": {
+        "com.figma": {
+          "collection": "Primitives",
+          "scopes": []
+        }
+      }
     }
   },
   "data": {

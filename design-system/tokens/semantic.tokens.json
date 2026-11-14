@@ -90,20 +90,6 @@
           ]
         }
       }
-    },
-    "plot": {
-      "$type": "color",
-      "$value": "{color.white}",
-      "$description": "Behind plots and canvases. Stays white in every theme, since the plots draw their own light colors.",
-      "$extensions": {
-        "com.figma": {
-          "collection": "Semantic",
-          "scopes": [
-            "FRAME_FILL",
-            "SHAPE_FILL"
-          ]
-        }
-      }
     }
   },
   "text": {
@@ -700,6 +686,132 @@
           "collection": "Semantic",
           "scopes": [
             "TEXT_FILL"
+          ]
+        }
+      }
+    }
+  },
+  "plot": {
+    "surface": {
+      "$type": "color",
+      "$value": "{color.white}",
+      "$description": "Behind a chart. Light by default; [data-plot-theme=dark] turns it dark.",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
+    },
+    "text": {
+      "$type": "color",
+      "$value": "{color.neutral.900}",
+      "$description": "Axis titles and major tick labels.",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "TEXT_FILL"
+          ]
+        }
+      }
+    },
+    "text-muted": {
+      "$type": "color",
+      "$value": "{color.neutral.500}",
+      "$description": "Minor tick labels.",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "TEXT_FILL"
+          ]
+        }
+      }
+    },
+    "grid-major": {
+      "$type": "color",
+      "$value": "{color.neutral.400}",
+      "$description": "Major gridlines and ticks.",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "SHAPE_FILL",
+            "STROKE_COLOR"
+          ]
+        }
+      }
+    },
+    "grid-minor": {
+      "$type": "color",
+      "$value": "{color.neutral.200}",
+      "$description": "Minor gridlines.",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "SHAPE_FILL",
+            "STROKE_COLOR"
+          ]
+        }
+      }
+    },
+    "mark": {
+      "$type": "color",
+      "$value": "{color.black}",
+      "$description": "A single-color mark, such as raster spikes.",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "SHAPE_FILL",
+            "STROKE_COLOR"
+          ]
+        }
+      }
+    },
+    "cursor-fill": {
+      "$type": "color",
+      "$value": "{color.red-50-a40}",
+      "$description": "The time cursor's band.",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "SHAPE_FILL",
+            "STROKE_COLOR"
+          ]
+        }
+      }
+    },
+    "selection-fill": {
+      "$type": "color",
+      "$value": "{color.yellow-300-a10}",
+      "$description": "A selected time range.",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "SHAPE_FILL",
+            "STROKE_COLOR"
+          ]
+        }
+      }
+    },
+    "selection-stroke": {
+      "$type": "color",
+      "$value": "{color.yellow-600-a40}",
+      "$description": "The edges of a selected time range.",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "SHAPE_FILL",
+            "STROKE_COLOR"
           ]
         }
       }

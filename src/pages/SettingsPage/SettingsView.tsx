@@ -1,5 +1,5 @@
 import { Alert, Page, Section, TabPanel, Tabs, TextInput } from "@ui";
-import type { Theme } from "../../theme";
+import type { ThemeChoice } from "../../theme";
 import { DisplaySettings } from "./DisplaySettings";
 import { McpGuide } from "./McpGuide";
 import "./SettingsView.css";
@@ -23,8 +23,8 @@ const TABS = [
 interface SettingsViewProps {
   tab: SettingsTab;
   onTabChange: (tab: SettingsTab) => void;
-  theme: Theme;
-  onThemeChange: (theme: Theme) => void;
+  theme: ThemeChoice;
+  onThemeChange: (theme: ThemeChoice) => void;
   keys: ApiKeys;
   onChange: (key: keyof ApiKeys, value: string) => void;
   shown: Record<keyof ApiKeys, boolean>;

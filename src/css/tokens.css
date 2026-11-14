@@ -54,6 +54,14 @@
   --color-yellow-300: #ffdd33;
   --color-white-a10: #ffffff1a;
   --color-black-a60: #00000099;
+  --color-red-50-a40: #ffe1e166;
+  --color-red-200-a25: #fccfcb40;
+  --color-yellow-300-a10: #ffff001a;
+  --color-yellow-300-a14: #ffdd3324;
+  --color-yellow-600-a40: #c8c80066;
+  --color-yellow-300-a50: #ffdd3380;
+  --color-sienna-300: #d98c5f;
+  --color-teal-300: #4fc3cc;
   --data-cursor: #963232e6;
   --data-series-1: #0072b2;
   --data-series-2: #d55e00;
@@ -86,7 +94,6 @@
   --surface-inverse: var(--color-navy-600);
   --surface-row-hover: var(--color-navy-50);
   --surface-row-selected: var(--color-navy-600);
-  --surface-plot: var(--color-white);
   --text-default: var(--color-neutral-900);
   --text-secondary: var(--color-neutral-700);
   --text-muted: var(--color-neutral-500);
@@ -133,6 +140,15 @@
   --code-string: var(--color-green-700);
   --code-number: var(--color-amber-700);
   --code-comment: var(--color-neutral-600);
+  --plot-surface: var(--color-white);
+  --plot-text: var(--color-neutral-900);
+  --plot-text-muted: var(--color-neutral-500);
+  --plot-grid-major: var(--color-neutral-400);
+  --plot-grid-minor: var(--color-neutral-200);
+  --plot-mark: var(--color-black);
+  --plot-cursor-fill: var(--color-red-50-a40);
+  --plot-selection-fill: var(--color-yellow-300-a10);
+  --plot-selection-stroke: var(--color-yellow-600-a40);
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -321,6 +337,23 @@
   --code-string: var(--color-green-200);
   --code-number: var(--color-amber-200);
   --code-comment: var(--color-neutral-300);
+}
+
+[data-plot-theme="dark"] {
+  --plot-surface: var(--color-navy-900);
+  --plot-text: var(--color-navy-50);
+  --plot-text-muted: var(--color-navy-300);
+  --plot-grid-major: var(--color-navy-500);
+  --plot-grid-minor: var(--color-navy-700);
+  --plot-mark: var(--color-navy-50);
+  --plot-cursor-fill: var(--color-red-200-a25);
+  --plot-selection-fill: var(--color-yellow-300-a14);
+  --plot-selection-stroke: var(--color-yellow-300-a50);
+  --data-cursor: var(--color-red-200);
+  --data-series-4: var(--color-sienna-300);
+  --data-series-5: var(--color-teal-300);
+  --data-series-6: var(--color-navy-50);
+  --data-series-other: var(--color-navy-300);
 }
 
 .type-display {

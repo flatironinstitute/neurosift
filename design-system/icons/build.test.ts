@@ -24,6 +24,9 @@ const MUI_REPLACEMENTS = [
 
 // Icons the components draw themselves: status icons, checkbox marks, chevrons, carets, the info button, the app bar, tree and sort icons, time controls and the drag mode, show and hide, and neurodata types.
 const COMPONENT_ICONS = [
+  // The chart Light/Dark switch in ViewPanel.
+  "light",
+  "asleep",
   "error",
   "checkmark",
   "subtract",

@@ -15,8 +15,13 @@ export const TOKEN_FILES = [
   "effects",
 ];
 
-// Each theme overrides semantic colors under :root[data-theme]; light is :root itself.
+// App themes override semantic colors under :root[data-theme]; light is :root itself.
 export const THEMES = ["dark", "high-contrast"];
+// A chart's own theme, set by data-plot-theme on the chart whatever the app theme.
+export const PLOT_THEMES = { "plot-dark": '[data-plot-theme="dark"]' };
+
+const themeSelector = (name) =>
+  PLOT_THEMES[name] ?? `:root[data-theme="${name}"]`;
 
 export class TokenSet {
   tokens = new Map();
@@ -33,7 +38,10 @@ export class TokenSet {
     return new TokenSet(
       TOKEN_FILES.map((name) => read(`${name}.tokens.json`)),
       Object.fromEntries(
-        THEMES.map((name) => [name, read(`themes/${name}.tokens.json`)]),
+        [...THEMES, ...Object.keys(PLOT_THEMES)].map((name) => [
+          name,
+          read(`themes/${name}.tokens.json`),
+        ]),
       ),
     );
   }
@@ -78,7 +86,8 @@ export class TokenSet {
         ([path, token]) =>
           `  ${TokenSet.cssName(path)}: ${this.#color(token.$value)};`,
       );
-      return `:root[data-theme="${name}"] {\n  color-scheme: dark;\n${values.join("\n")}\n}`;
+      const scheme = name in PLOT_THEMES ? [] : ["  color-scheme: dark;"];
+      return `${themeSelector(name)} {\n${[...scheme, ...values].join("\n")}\n}`;
     });
     return `${HEADER}\n:root {\n  color-scheme: light;\n${lines.join("\n")}\n}\n\n${[...themes, ...typeClasses].join("\n\n")}\n`;
   }

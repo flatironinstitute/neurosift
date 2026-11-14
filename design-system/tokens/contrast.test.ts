@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { THEMES, TokenSet } from "./build.mjs";
+import { PLOT_THEMES, THEMES, TokenSet } from "./build.mjs";
 
 const set = TokenSet.load(new URL("./", import.meta.url));
 
@@ -105,14 +105,22 @@ const pairs: [string, string, number][] = [
   ...["border.strong", "border.selected", "border.error"].map(
     (fg): [string, string, number] => [fg, "surface.panel", NON_TEXT],
   ),
+];
+
+// Charts theme on their own, so their pairs are checked in plot light and plot dark.
+const plotPairs: [string, string, number][] = [
+  ["plot.text", "plot.surface", TEXT],
+  ["plot.text-muted", "plot.surface", TEXT],
+  ["plot.mark", "plot.surface", NON_TEXT],
+  ["plot.grid-major", "plot.surface", 1.5],
+  ["data.cursor", "plot.surface", NON_TEXT],
   ...["1", "2", "3", "4", "5", "6", "other"].map(
     (n): [string, string, number] => [
       `data.series.${n}`,
-      "surface.plot",
+      "plot.surface",
       NON_TEXT,
     ],
   ),
-  ["data.cursor", "surface.plot", NON_TEXT],
 ];
 
 describe.each(["light", ...THEMES])(
@@ -136,6 +144,24 @@ describe.each(["light", ...THEMES])(
         Contrast.ratio("border.focus-inverse", background),
       ).toBeGreaterThanOrEqual(NON_TEXT);
     });
+  },
+);
+
+describe.each(["plot-light", ...Object.keys(PLOT_THEMES)])(
+  "contrast of chart pairings in %s",
+  (theme) => {
+    beforeAll(() => {
+      Contrast.theme = theme === "plot-light" ? undefined : theme;
+    });
+
+    it.each(plotPairs)(
+      "%s on %s reaches %s:1",
+      (foreground, background, minimum) => {
+        expect(Contrast.ratio(foreground, background)).toBeGreaterThanOrEqual(
+          minimum,
+        );
+      },
+    );
   },
 );
 

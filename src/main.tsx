@@ -9,10 +9,12 @@ import "@css/nwb-table.css";
 import { installGlobalErrorReporting } from "./util/reportError";
 import { installStaleChunkReload } from "./util/reloadOnStaleChunk";
 import { redirectLegacyUrl } from "./util/legacyUrl";
+import { watchSystemTheme } from "./theme";
 
 installGlobalErrorReporting();
 installStaleChunkReload();
 redirectLegacyUrl();
+watchSystemTheme();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

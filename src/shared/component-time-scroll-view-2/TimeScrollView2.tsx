@@ -27,6 +27,7 @@ import TimeseriesSelectionBar, {
 import { Splitter } from "@fi-sci/splitter";
 import "./TimeScrollView2.css";
 import { useTimeScrollView2 } from "./useTimeScrollView2";
+import { usePlotTheme } from "../plotTheme";
 
 type Props = {
   width: number;
@@ -207,6 +208,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
   const [isViewClicked, setIsViewClicked] = useState(false);
   const axisRef = useTimeAxisRef(margins);
 
+  const { plotTheme } = usePlotTheme();
   const divRef = useCssVars<HTMLDivElement>({
     "--tsv-width": width,
     "--tsv-height": height,
@@ -374,14 +376,14 @@ const TimeScrollView2: FunctionComponent<Props> = ({
 
   if (hideToolbar) {
     return (
-      <div ref={divRef} className="tsv tsv--bare">
+      <div ref={divRef} className="tsv tsv--bare" data-plot-theme={plotTheme}>
         {content2}
       </div>
     );
   }
 
   return (
-    <div ref={divRef} className="tsv">
+    <div ref={divRef} className="tsv" data-plot-theme={plotTheme}>
       <Splitter
         // ref={divRef} // removed on 2.1.24, let's see if it causes problems
         width={width}

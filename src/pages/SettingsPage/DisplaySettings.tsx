@@ -1,17 +1,18 @@
 import { useId } from "react";
 import { Section, SegmentedControl } from "@ui";
-import type { Theme } from "../../theme";
+import type { ThemeChoice } from "../../theme";
 import "./DisplaySettings.css";
 
 const THEMES = [
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
   { value: "high-contrast", label: "High contrast" },
+  { value: "system", label: "Match system" },
 ];
 
 interface DisplaySettingsProps {
-  theme: Theme;
-  onThemeChange: (theme: Theme) => void;
+  theme: ThemeChoice;
+  onThemeChange: (theme: ThemeChoice) => void;
 }
 
 /** The theme picker; a choice applies at once and is kept in this browser. */
@@ -26,11 +27,13 @@ export function DisplaySettings({
         label="Theme"
         options={THEMES}
         value={theme}
-        onChange={(value) => onThemeChange(value as Theme)}
+        onChange={(value) => onThemeChange(value as ThemeChoice)}
         describedBy={help}
       />
       <p className="display-settings-help" id={help}>
-        Saved in this browser. Plots keep a white background in every theme.
+        Match system follows your computer’s dark mode and increased contrast
+        settings. Saved in this browser. Plots keep a white background in every
+        theme.
       </p>
     </Section>
   );

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Alert } from "../Alert/Alert";
+import { IconButton } from "../IconButton/IconButton";
 import "../base.css";
 import "./ViewPanel.css";
 
@@ -17,6 +18,9 @@ interface ViewPanelProps {
   chartTitle?: string;
   /** Set while the plot’s data loads, so screen readers don’t read half-drawn content. */
   busy?: boolean;
+  /** The chart's own theme, whatever the app theme; with onPlotThemeChange, a switch sits beside the summary. */
+  plotTheme?: "light" | "dark";
+  onPlotThemeChange?: (theme: "light" | "dark") => void;
   /** The chart, or the loading, empty or too-much-data state in its place. */
   children: ReactNode;
 }
@@ -30,19 +34,38 @@ export function ViewPanel({
   settings,
   chartTitle,
   busy = false,
+  plotTheme,
+  onPlotThemeChange,
   children,
 }: ViewPanelProps) {
+  const next = plotTheme === "dark" ? "light" : "dark";
   return (
     <section
       className={settings ? "ns-view ns-view--settings" : "ns-view"}
       aria-label={label}
     >
       <div className="ns-view-main">
-        <p className="ns-view-summary">{summary}</p>
+        <div className="ns-view-head">
+          <p className="ns-view-summary">{summary}</p>
+          {plotTheme && onPlotThemeChange && (
+            <IconButton
+              size="sm"
+              variant="ghost"
+              icon={next === "dark" ? "asleep" : "light"}
+              label={next === "dark" ? "Dark chart" : "Light chart"}
+              tooltip
+              onClick={() => onPlotThemeChange(next)}
+            />
+          )}
+        </div>
         {controls && <div className="ns-view-controls">{controls}</div>}
         {overview}
         {chartTitle && <p className="ns-view-chart-title">{chartTitle}</p>}
-        <div className="ns-view-plot" aria-busy={busy || undefined}>
+        <div
+          className="ns-view-plot"
+          aria-busy={busy || undefined}
+          data-plot-theme={plotTheme}
+        >
           {children}
         </div>
       </div>

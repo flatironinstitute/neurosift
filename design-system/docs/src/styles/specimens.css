@@ -211,6 +211,38 @@
   --token: var(--color-black-a60);
 }
 
+.token-color-red-50-a40 {
+  --token: var(--color-red-50-a40);
+}
+
+.token-color-red-200-a25 {
+  --token: var(--color-red-200-a25);
+}
+
+.token-color-yellow-300-a10 {
+  --token: var(--color-yellow-300-a10);
+}
+
+.token-color-yellow-300-a14 {
+  --token: var(--color-yellow-300-a14);
+}
+
+.token-color-yellow-600-a40 {
+  --token: var(--color-yellow-600-a40);
+}
+
+.token-color-yellow-300-a50 {
+  --token: var(--color-yellow-300-a50);
+}
+
+.token-color-sienna-300 {
+  --token: var(--color-sienna-300);
+}
+
+.token-color-teal-300 {
+  --token: var(--color-teal-300);
+}
+
 .token-data-cursor {
   --token: var(--data-cursor);
 }
@@ -337,10 +369,6 @@
 
 .token-surface-row-selected {
   --token: var(--surface-row-selected);
-}
-
-.token-surface-plot {
-  --token: var(--surface-plot);
 }
 
 .token-text-default {
@@ -525,6 +553,42 @@
 
 .token-code-comment {
   --token: var(--code-comment);
+}
+
+.token-plot-surface {
+  --token: var(--plot-surface);
+}
+
+.token-plot-text {
+  --token: var(--plot-text);
+}
+
+.token-plot-text-muted {
+  --token: var(--plot-text-muted);
+}
+
+.token-plot-grid-major {
+  --token: var(--plot-grid-major);
+}
+
+.token-plot-grid-minor {
+  --token: var(--plot-grid-minor);
+}
+
+.token-plot-mark {
+  --token: var(--plot-mark);
+}
+
+.token-plot-cursor-fill {
+  --token: var(--plot-cursor-fill);
+}
+
+.token-plot-selection-fill {
+  --token: var(--plot-selection-fill);
+}
+
+.token-plot-selection-stroke {
+  --token: var(--plot-selection-stroke);
 }
 
 .token-space-1 {
