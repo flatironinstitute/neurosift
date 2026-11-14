@@ -7,7 +7,7 @@
     sans-serif;
   text-align: left;
   margin: 0;
-  background-color: #fff;
+  background-color: var(--surface-panel);
 }
 
 .nwb-table td {
@@ -18,8 +18,8 @@
 }
 
 .nwb-table thead tr {
-  background-color: #34495e;
-  color: #ffffff;
+  background-color: var(--surface-inverse);
+  color: var(--text-on-inverse);
   text-align: left;
   box-shadow: 0 1px 3px rgba(43, 87, 151, 0.12);
 }
@@ -30,19 +30,19 @@
 }
 
 .nwb-table tbody tr {
-  border-bottom: 1px solid #dde4ed;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .nwb-table tbody tr:nth-of-type(even) {
-  background-color: rgba(43, 87, 151, 0.02);
+  background-color: color-mix(in srgb, var(--surface-row-hover) 40%, transparent);
 }
 
 .nwb-table tbody tr:last-of-type {
-  border-bottom: 2px solid #34495e;
+  border-bottom: 2px solid var(--border-strong);
 }
 
 .nwb-table tbody tr:hover {
-  background-color: rgba(43, 87, 151, 0.05);
+  background-color: var(--surface-row-hover);
   transition: background-color 0.2s ease;
 }
 

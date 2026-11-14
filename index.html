@@ -28,6 +28,14 @@
         }
       })(window.location);
     </script>
+    <script>
+      // Applies the theme saved in Settings before the first paint; src/theme.ts writes the same key.
+      try {
+        var theme = localStorage.getItem("neurosiftTheme");
+        if (theme === "dark" || theme === "high-contrast")
+          document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

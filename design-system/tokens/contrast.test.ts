@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { TokenSet } from "./build.mjs";
+import { beforeAll, describe, expect, it } from "vitest";
+import { THEMES, TokenSet } from "./build.mjs";
 
 const set = TokenSet.load(new URL("./", import.meta.url));
 
@@ -9,12 +9,10 @@ interface Color {
 }
 
 class Contrast {
+  static theme: string | undefined;
+
   static resolve(path: string): Color {
-    let token = set.tokens.get(path);
-    while (token && typeof token.$value === "string")
-      token = set.tokens.get(token.$value.slice(1, -1));
-    if (!token) throw new Error(`No token ${path}`);
-    return token.$value as Color;
+    return set.resolve(path, Contrast.theme) as Color;
   }
 
   static channels(hex: string): number[] {
@@ -110,28 +108,44 @@ const pairs: [string, string, number][] = [
   ...["1", "2", "3", "4", "5", "6", "other"].map(
     (n): [string, string, number] => [
       `data.series.${n}`,
-      "surface.panel",
+      "surface.plot",
       NON_TEXT,
     ],
   ),
-  ["data.cursor", "surface.panel", NON_TEXT],
+  ["data.cursor", "surface.plot", NON_TEXT],
 ];
 
-describe("contrast of the intended token pairings (WCAG 2.2 AA)", () => {
-  it.each(pairs)("%s on %s reaches %s:1", (foreground, background, minimum) => {
-    expect(Contrast.ratio(foreground, background)).toBeGreaterThanOrEqual(
-      minimum,
+describe.each(["light", ...THEMES])(
+  "contrast of the intended token pairings in %s (WCAG 2.2 AA)",
+  (theme) => {
+    beforeAll(() => {
+      Contrast.theme = theme === "light" ? undefined : theme;
+    });
+
+    it.each(pairs)(
+      "%s on %s reaches %s:1",
+      (foreground, background, minimum) => {
+        expect(Contrast.ratio(foreground, background)).toBeGreaterThanOrEqual(
+          minimum,
+        );
+      },
     );
+
+    it.each(NAVY)("border/focus-inverse on %s reaches 3:1", (background) => {
+      expect(
+        Contrast.ratio("border.focus-inverse", background),
+      ).toBeGreaterThanOrEqual(NON_TEXT);
+    });
+  },
+);
+
+describe("light-theme pairings the Color page rules out", () => {
+  beforeAll(() => {
+    Contrast.theme = undefined;
   });
 
   it("flags text/muted on the selection tint, which the Color page rules out", () => {
     expect(Contrast.ratio("text.muted", "data.selection")).toBeLessThan(TEXT);
-  });
-
-  it.each(NAVY)("border/focus-inverse on %s reaches 3:1", (background) => {
-    expect(
-      Contrast.ratio("border.focus-inverse", background),
-    ).toBeGreaterThanOrEqual(NON_TEXT);
   });
 
   it("flags border/focus on navy, which is why the inverse ring exists", () => {

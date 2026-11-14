@@ -1,12 +1,39 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { OUTPUT, SPECIMENS, TokenSet } from "./build.mjs";
+import { OUTPUT, SPECIMENS, THEMES, TokenSet } from "./build.mjs";
 
 const set = TokenSet.load(new URL("./", import.meta.url));
 
 describe("design tokens", () => {
   it("reads every token from the five files", () => {
-    expect(set.tokens.size).toBe(72 + 53 + 41 + 17 + 3);
+    expect(set.tokens.size).toBe(78 + 54 + 41 + 17 + 3);
+  });
+
+  it("gives each theme an override for every semantic color but the plot surface", () => {
+    for (const theme of THEMES) {
+      const overrides = set.themes.get(theme)!;
+      expect(overrides.size).toBe(52);
+      expect(overrides.has("surface.plot")).toBe(false);
+      expect(set.css()).toContain(`:root[data-theme="${theme}"] {`);
+    }
+  });
+
+  it("rejects a theme that overrides something other than a color", () => {
+    expect(
+      () =>
+        new TokenSet(
+          [
+            {
+              space: {
+                1: { $type: "dimension", $value: { value: 4, unit: "px" } },
+              },
+            },
+          ],
+          {
+            dark: { space: { 1: { $type: "color", $value: "#000000" } } },
+          },
+        ),
+    ).toThrow("not a color");
   });
 
   it("gives every token one CSS name", () => {

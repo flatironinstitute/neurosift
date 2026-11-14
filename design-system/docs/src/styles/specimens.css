@@ -163,6 +163,10 @@
   --token: var(--color-red-900);
 }
 
+.token-color-red-950 {
+  --token: var(--color-red-950);
+}
+
 .token-color-amber-50 {
   --token: var(--color-amber-50);
 }
@@ -175,6 +179,10 @@
   --token: var(--color-amber-700);
 }
 
+.token-color-amber-950 {
+  --token: var(--color-amber-950);
+}
+
 .token-color-green-50 {
   --token: var(--color-green-50);
 }
@@ -185,6 +193,22 @@
 
 .token-color-green-700 {
   --token: var(--color-green-700);
+}
+
+.token-color-green-950 {
+  --token: var(--color-green-950);
+}
+
+.token-color-yellow-300 {
+  --token: var(--color-yellow-300);
+}
+
+.token-color-white-a10 {
+  --token: var(--color-white-a10);
+}
+
+.token-color-black-a60 {
+  --token: var(--color-black-a60);
 }
 
 .token-data-cursor {
@@ -313,6 +337,10 @@
 
 .token-surface-row-selected {
   --token: var(--surface-row-selected);
+}
+
+.token-surface-plot {
+  --token: var(--surface-plot);
 }
 
 .token-text-default {

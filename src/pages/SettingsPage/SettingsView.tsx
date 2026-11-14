@@ -1,4 +1,6 @@
 import { Alert, Page, Section, TabPanel, Tabs, TextInput } from "@ui";
+import type { Theme } from "../../theme";
+import { DisplaySettings } from "./DisplaySettings";
 import { McpGuide } from "./McpGuide";
 import "./SettingsView.css";
 
@@ -10,16 +12,19 @@ export interface ApiKeys {
 }
 
 /** The Settings tabs, by the ?tab= value that opens each. */
-export type SettingsTab = "keys" | "mcp";
+export type SettingsTab = "keys" | "display" | "mcp";
 
 const TABS = [
   { id: "keys", label: "API keys" },
+  { id: "display", label: "Display" },
   { id: "mcp", label: "MCP" },
 ];
 
 interface SettingsViewProps {
   tab: SettingsTab;
   onTabChange: (tab: SettingsTab) => void;
+  theme: Theme;
+  onThemeChange: (theme: Theme) => void;
   keys: ApiKeys;
   onChange: (key: keyof ApiKeys, value: string) => void;
   shown: Record<keyof ApiKeys, boolean>;
@@ -33,6 +38,8 @@ interface SettingsViewProps {
 export function SettingsView({
   tab,
   onTabChange,
+  theme,
+  onThemeChange,
   keys,
   onChange,
   shown,
@@ -100,6 +107,13 @@ export function SettingsView({
             </Alert>
           )}
         </div>
+      </TabPanel>
+      <TabPanel
+        tabsId="settings-tabs"
+        tabId="display"
+        selected={tab === "display"}
+      >
+        <DisplaySettings theme={theme} onThemeChange={onThemeChange} />
       </TabPanel>
       <TabPanel tabsId="settings-tabs" tabId="mcp" selected={tab === "mcp"}>
         <McpGuide />

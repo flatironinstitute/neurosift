@@ -90,6 +90,20 @@
           ]
         }
       }
+    },
+    "plot": {
+      "$type": "color",
+      "$value": "{color.white}",
+      "$description": "Behind plots and canvases. Stays white in every theme, since the plots draw their own light colors.",
+      "$extensions": {
+        "com.figma": {
+          "collection": "Semantic",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ]
+        }
+      }
     }
   },
   "text": {

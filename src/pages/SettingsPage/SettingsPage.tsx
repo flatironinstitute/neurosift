@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { applyTheme, readTheme } from "../../theme";
 import { returnPath } from "./returnPath";
 import { SettingsView, type ApiKeys, type SettingsTab } from "./SettingsView";
 
@@ -9,11 +10,14 @@ const readKeys = (): ApiKeys => ({
   emberApiKey: localStorage.getItem("emberApiKey") || "",
 });
 
-/** Keeps the API keys in this browser's localStorage; ?tab=mcp opens the MCP tab. Saves each key as it's typed, then goes back to ?return= if given. */
+/** Keeps the API keys in this browser's localStorage; ?tab=display and ?tab=mcp open those tabs. Saves each key as it's typed, then goes back to ?return= if given. */
 export default function SettingsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const back = returnPath(searchParams.get("return"));
-  const tab: SettingsTab = searchParams.get("tab") === "mcp" ? "mcp" : "keys";
+  const asked = searchParams.get("tab");
+  const tab: SettingsTab =
+    asked === "mcp" || asked === "display" ? asked : "keys";
+  const [theme, setTheme] = useState(readTheme);
   const onTabChange = (next: SettingsTab) =>
     setSearchParams(
       (current) => {
@@ -40,6 +44,11 @@ export default function SettingsPage() {
     <SettingsView
       tab={tab}
       onTabChange={onTabChange}
+      theme={theme}
+      onThemeChange={(next) => {
+        applyTheme(next);
+        setTheme(next);
+      }}
       keys={keys}
       onChange={onChange}
       shown={shown}

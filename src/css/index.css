@@ -3,8 +3,8 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color: #2c3e50;
-  background-color: #f7f9fc;
+  color: var(--text-default);
+  background-color: var(--surface-page);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -14,11 +14,11 @@
 
 a {
   font-weight: 500;
-  color: #2b5797;
+  color: var(--text-link);
   text-decoration: inherit;
 }
 a:hover {
-  color: #34495e;
+  color: var(--text-link-hover);
 }
 
 body {
@@ -37,21 +37,21 @@ h1 {
 
 button {
   border-radius: 8px;
-  border: 1px solid #dde4ed;
+  border: 1px solid var(--border-subtle);
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #fff;
-  color: #2c3e50;
+  background-color: var(--action-secondary);
+  color: var(--text-default);
   cursor: pointer;
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #2b5797;
+  border-color: var(--border-selected);
 }
 button:focus,
 button:focus-visible {
-  outline: 2px solid #2b5797;
+  outline: 2px solid var(--border-focus);
   outline-offset: 2px;
 }

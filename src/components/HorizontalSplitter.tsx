@@ -146,7 +146,7 @@ const HorizontalSplitter: FunctionComponent<HorizontalSplitterProps> = ({
             top: 0,
             width: 1,
             height: "100%",
-            backgroundColor: "#ccc",
+            backgroundColor: "var(--border-subtle)",
             display: isLeftPanelCollapsed ? "none" : "block",
           }}
         />
@@ -155,10 +155,11 @@ const HorizontalSplitter: FunctionComponent<HorizontalSplitterProps> = ({
           onClick={toggleLeftPanel}
           size="small"
           sx={{
-            backgroundColor: "#f0f0f0",
-            border: "1px solid #ccc",
+            backgroundColor: "var(--action-secondary)",
+            border: "1px solid var(--border-strong)",
+            color: "var(--text-default)",
             boxShadow: "0 0 4px rgba(0, 0, 0, 0.2)",
-            "&:hover": { backgroundColor: "#e0e0e0" },
+            "&:hover": { backgroundColor: "var(--action-secondary-hover)" },
             position: "absolute",
             top: 12,
             left: isLeftPanelCollapsed ? 4 : -16,

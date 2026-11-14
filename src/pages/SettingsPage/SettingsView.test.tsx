@@ -17,6 +17,8 @@ const setup = (overrides = {}) => {
   const props = {
     tab: "keys" as const,
     onTabChange: vi.fn(),
+    theme: "light" as const,
+    onThemeChange: vi.fn(),
     keys: KEYS,
     onChange: vi.fn(),
     shown: {
@@ -105,6 +107,17 @@ describe("SettingsView", () => {
     ).toBeNull();
     fireEvent.click(screen.getByRole("tab", { name: "MCP" }));
     expect(onTabChange).toHaveBeenCalledWith("mcp");
+  });
+
+  it("offers Light, Dark and High contrast on the Display tab", () => {
+    const { onThemeChange } = setup({ tab: "display" });
+    const group = screen.getByRole("radiogroup", { name: "Theme" });
+    expect(group.getAttribute("aria-describedby")).toBeTruthy();
+    expect(
+      screen.getByRole("radio", { name: "Light" }).getAttribute("aria-checked"),
+    ).toBe("true");
+    fireEvent.click(screen.getByRole("radio", { name: "High contrast" }));
+    expect(onThemeChange).toHaveBeenCalledWith("high-contrast");
   });
 
   it("explains how to connect the Neurosift tools MCP server", () => {

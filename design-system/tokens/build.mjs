@@ -15,19 +15,46 @@ export const TOKEN_FILES = [
   "effects",
 ];
 
+// Each theme overrides semantic colors under :root[data-theme]; light is :root itself.
+export const THEMES = ["dark", "high-contrast"];
+
 export class TokenSet {
   tokens = new Map();
+  themes = new Map();
 
-  constructor(trees) {
+  constructor(trees, themes = {}) {
     for (const tree of trees) this.#collect(tree, [], undefined);
+    for (const [name, tree] of Object.entries(themes))
+      this.themes.set(name, this.#overrides(name, tree));
   }
 
   static load(dir) {
+    const read = (file) => JSON.parse(readFileSync(new URL(file, dir), "utf8"));
     return new TokenSet(
-      TOKEN_FILES.map((name) =>
-        JSON.parse(readFileSync(new URL(`${name}.tokens.json`, dir), "utf8")),
+      TOKEN_FILES.map((name) => read(`${name}.tokens.json`)),
+      Object.fromEntries(
+        THEMES.map((name) => [name, read(`themes/${name}.tokens.json`)]),
       ),
     );
+  }
+
+  /** A token's value in a theme, falling back to light; references are followed to the color. */
+  resolve(path, theme) {
+    let token = this.themes.get(theme)?.get(path) ?? this.tokens.get(path);
+    while (token && typeof token.$value === "string")
+      token = this.tokens.get(token.$value.slice(1, -1));
+    if (!token) throw new Error(`No token ${path}`);
+    return token.$value;
+  }
+
+  #overrides(name, tree) {
+    const overrides = new TokenSet([tree]).tokens;
+    for (const [path, token] of overrides)
+      if (this.tokens.get(path)?.$type !== "color" || token.$type !== "color")
+        throw new Error(
+          `Theme ${name} overrides ${path}, which is not a color`,
+        );
+    return overrides;
   }
 
   static kebabName(path) {
@@ -46,7 +73,14 @@ export class TokenSet {
       const name = TokenSet.kebabName(path);
       return `.${name} {\n  font: var(--${name});\n  letter-spacing: var(--${name}-letter-spacing);\n}`;
     });
-    return `${HEADER}\n:root {\n${lines.join("\n")}\n}\n\n${typeClasses.join("\n\n")}\n`;
+    const themes = [...this.themes].map(([name, overrides]) => {
+      const values = [...overrides].map(
+        ([path, token]) =>
+          `  ${TokenSet.cssName(path)}: ${this.#color(token.$value)};`,
+      );
+      return `:root[data-theme="${name}"] {\n  color-scheme: dark;\n${values.join("\n")}\n}`;
+    });
+    return `${HEADER}\n:root {\n  color-scheme: light;\n${lines.join("\n")}\n}\n\n${[...themes, ...typeClasses].join("\n\n")}\n`;
   }
 
   // Docs only: one class per token that exposes it as --token, so specimens need no inline styles.
