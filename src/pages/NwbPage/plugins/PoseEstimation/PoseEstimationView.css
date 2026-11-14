@@ -26,6 +26,10 @@
   min-block-size: 0;
 }
 
+.pose-box--plain {
+  background: var(--plot-surface);
+}
+
 .pose-box:focus-visible {
   outline: var(--border-width-2) solid var(--border-focus);
   outline-offset: calc(var(--space-1) * -1);

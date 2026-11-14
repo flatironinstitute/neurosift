@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { setPlotTheme, usePlotThemeChoice } from "@shared/plotTheme";
 import { applyTheme, readTheme } from "../../theme";
 import { returnPath } from "./returnPath";
 import { SettingsView, type ApiKeys, type SettingsTab } from "./SettingsView";
@@ -18,6 +19,7 @@ export default function SettingsPage() {
   const tab: SettingsTab =
     asked === "mcp" || asked === "display" ? asked : "keys";
   const [theme, setTheme] = useState(readTheme);
+  const chartTheme = usePlotThemeChoice();
   const onTabChange = (next: SettingsTab) =>
     setSearchParams(
       (current) => {
@@ -45,6 +47,8 @@ export default function SettingsPage() {
       tab={tab}
       onTabChange={onTabChange}
       theme={theme}
+      chartTheme={chartTheme}
+      onChartThemeChange={setPlotTheme}
       onThemeChange={(next) => {
         applyTheme(next);
         setTheme(next);

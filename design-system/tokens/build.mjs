@@ -81,15 +81,33 @@ export class TokenSet {
       const name = TokenSet.kebabName(path);
       return `.${name} {\n  font: var(--${name});\n  letter-spacing: var(--${name}-letter-spacing);\n}`;
     });
-    const themes = [...this.themes].map(([name, overrides]) => {
-      const values = [...overrides].map(
-        ([path, token]) =>
-          `  ${TokenSet.cssName(path)}: ${this.#color(token.$value)};`,
-      );
-      const scheme = name in PLOT_THEMES ? [] : ["  color-scheme: dark;"];
-      return `${themeSelector(name)} {\n${[...scheme, ...values].join("\n")}\n}`;
-    });
-    return `${HEADER}\n:root {\n  color-scheme: light;\n${lines.join("\n")}\n}\n\n${[...themes, ...typeClasses].join("\n\n")}\n`;
+    const block = (selector, scheme, overrides) =>
+      `${selector} {\n  color-scheme: ${scheme};\n${[...overrides]
+        .map(
+          ([path, token]) =>
+            `  ${TokenSet.cssName(path)}: ${this.#color(token.$value)};`,
+        )
+        .join("\n")}\n}`;
+    const themes = THEMES.map((name) =>
+      block(themeSelector(name), "dark", this.themes.get(name)),
+    );
+    // A chart and whatever sits on it (empty states, legends, checkboxes) take its own theme, so a dark
+    // chart carries the dark app colors too, and a light chart restates the light ones inside a dark app.
+    const plotDark = new Map([
+      ...this.themes.get("dark"),
+      ...this.themes.get("plot-dark"),
+    ]);
+    const plotLight = new Map(
+      [
+        ...plotDark.keys(),
+        ...this.#paths("color").filter((p) => p.startsWith("plot.")),
+      ].map((path) => [path, this.tokens.get(path)]),
+    );
+    const charts = [
+      block(PLOT_THEMES["plot-dark"], "dark", plotDark),
+      block('[data-plot-theme="light"]', "light", plotLight),
+    ];
+    return `${HEADER}\n:root {\n  color-scheme: light;\n${lines.join("\n")}\n}\n\n${[...themes, ...charts, ...typeClasses].join("\n\n")}\n`;
   }
 
   // Docs only: one class per token that exposes it as --token, so specimens need no inline styles.

@@ -1,6 +1,9 @@
 import { FunctionComponent, useEffect, useRef, useState } from "react";
 import Plot from "@components/LazyPlot";
 import { Data } from "plotly.js";
+import { usePlotColors, usePlotTheme } from "@shared/plotTheme";
+import { themedLayout } from "@shared/plotlyTheme";
+import { traceColors } from "@shared/tracePalette";
 import { distinctLabelValues, labeledEventPoints } from "./labeledEventsPoints";
 
 type Props = {
@@ -18,6 +21,8 @@ const LabeledEventsPlot: FunctionComponent<Props> = ({
   visibleEndTime,
   labels,
 }) => {
+  const plotColors = usePlotColors();
+  const { plotTheme } = usePlotTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number>(800);
 
@@ -49,16 +54,7 @@ const LabeledEventsPlot: FunctionComponent<Props> = ({
     return Math.max(40, maxLabelLength * 6 + 15); // minimum 40px, 6px per char + 15px padding
   };
 
-  const colors = [
-    "#1f77b4", // blue
-    "#ff7f0e", // orange
-    "#2ca02c", // green
-    "#d62728", // red
-    "#9467bd", // purple
-    "#8c564b", // brown
-    "#e377c2", // pink
-    "#7f7f7f", // gray
-  ];
+  const colors = traceColors(plotColors, plotTheme === "dark");
 
   // For labeled events, we want to create scatter plots where each unique value (label)
   // gets its own color and appears in the legend
@@ -85,7 +81,7 @@ const LabeledEventsPlot: FunctionComponent<Props> = ({
     <div ref={containerRef} style={{ width: "100%" }}>
       <Plot
         data={[trace]}
-        layout={{
+        layout={themedLayout(plotColors, {
           width: containerWidth - 20,
           height: 400,
           margin: {
@@ -97,10 +93,7 @@ const LabeledEventsPlot: FunctionComponent<Props> = ({
           xaxis: {
             title: {
               text: "Time (s)",
-              font: {
-                size: 14,
-                color: "#000",
-              },
+              font: { size: 14 },
               standoff: 10,
             },
             showticklabels: true,
@@ -117,7 +110,7 @@ const LabeledEventsPlot: FunctionComponent<Props> = ({
           },
           showlegend: false,
           hovermode: "closest",
-        }}
+        })}
         config={{
           responsive: true,
           displayModeBar: false,

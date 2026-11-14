@@ -1,4 +1,5 @@
 import { getHdf5DatasetData, getHdf5Group } from "@hdf5Interface";
+import { readableOn, type PlotColors } from "@shared/plotColors";
 import {
   getSeriesTimeRange,
   normalizeExternalFileValue,
@@ -780,6 +781,15 @@ export type DrawOptions = {
   confThreshold: number;
   // Fade shown keypoints' opacity by their confidence.
   fadeByConfidence: boolean;
+  // Pose alone on a chart surface: edges, outlines and dim data colors follow the chart theme.
+  // Over video the overlay keeps its own light-on-dark look.
+  plain?: { colors: PlotColors; dark: boolean };
+};
+
+const rgbToHex = (rgb: string): string => {
+  const m = /^rgb\((\d+), (\d+), (\d+)\)$/.exec(rgb);
+  if (!m) return rgb;
+  return `#${[m[1], m[2], m[3]].map((v) => Number(v).toString(16).padStart(2, "0")).join("")}`;
 };
 
 // Draw the keypoints for `sessionTime` onto a canvas, mapping pose coordinates
@@ -799,7 +809,10 @@ export const drawPoseFrame = (
     trailSec,
     confThreshold,
     fadeByConfidence,
+    plain,
   } = opts;
+  const dotColor = (color: string) =>
+    plain?.dark ? readableOn(rgbToHex(color), plain.colors.surface) : color;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -845,7 +858,7 @@ export const drawPoseFrame = (
       const n = end - start;
       if (n <= 1) continue;
       const step = Math.max(1, Math.floor(n / TRAIL_MAX_POINTS));
-      ctx.strokeStyle = kp.color;
+      ctx.strokeStyle = dotColor(kp.color);
       const conf = kp.confidence;
       let prevX = NaN;
       let prevY = NaN;
@@ -885,8 +898,11 @@ export const drawPoseFrame = (
     const lineW = Math.max(1.5, r * 0.45);
     ctx.lineCap = "round";
     for (const pass of [
-      { w: lineW + 2, color: "rgba(0,0,0,0.55)" },
-      { w: lineW, color: "rgba(255,255,255,0.9)" },
+      {
+        w: lineW + 2,
+        color: plain ? plain.colors.surface : "rgba(0,0,0,0.55)",
+      },
+      { w: lineW, color: plain ? plain.colors.mark : "rgba(255,255,255,0.9)" },
     ]) {
       ctx.lineWidth = pass.w;
       ctx.strokeStyle = pass.color;
@@ -908,10 +924,10 @@ export const drawPoseFrame = (
     ctx.globalAlpha = p.alpha;
     ctx.beginPath();
     ctx.arc(p.x, p.y, r, 0, 2 * Math.PI);
-    ctx.fillStyle = pose.keypoints[i].color;
+    ctx.fillStyle = dotColor(pose.keypoints[i].color);
     ctx.fill();
     ctx.lineWidth = 1.5;
-    ctx.strokeStyle = "#000";
+    ctx.strokeStyle = plain ? plain.colors.mark : "#000";
     ctx.stroke();
   }
   ctx.globalAlpha = 1;

@@ -95,3 +95,13 @@
   font: var(--type-body-sm);
   color: var(--text-muted);
 }
+
+.event-related-plot,
+.event-related-status {
+  background: var(--plot-surface);
+  color: var(--plot-text);
+}
+
+.event-related-status-text {
+  color: var(--plot-text-muted);
+}

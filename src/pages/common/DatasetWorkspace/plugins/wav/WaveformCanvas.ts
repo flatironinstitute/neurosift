@@ -18,6 +18,7 @@ interface WaveformCanvasProps {
   };
   visibleStartTimeSec: number;
   visibleEndTimeSec: number;
+  color: string;
 }
 
 const WaveformCanvas = ({
@@ -28,6 +29,7 @@ const WaveformCanvas = ({
   margins,
   visibleStartTimeSec,
   visibleEndTimeSec,
+  color,
 }: WaveformCanvasProps) => {
   const { data, sampleRate } = waveformData;
   const plotWidth = width - margins.left - margins.right;
@@ -40,7 +42,7 @@ const WaveformCanvas = ({
   const samplesPerPixel = Math.max(1, Math.floor(visibleSamples / plotWidth));
 
   // Drawing style
-  context.strokeStyle = "#2196f3";
+  context.strokeStyle = color;
   context.lineWidth = 1;
   context.beginPath();
 

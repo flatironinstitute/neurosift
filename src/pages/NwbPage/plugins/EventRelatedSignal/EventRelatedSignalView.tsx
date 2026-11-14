@@ -41,6 +41,8 @@ import {
 } from "@ui";
 import ViewError from "@components/ViewError/ViewError";
 import { useCssVars } from "@components/useCssVars";
+import { usePlotTheme } from "@shared/plotTheme";
+import { plotColors, readableOn } from "@shared/plotColors";
 
 type Props = {
   nwbUrl: string;
@@ -68,7 +70,12 @@ const groupPalette = [
   "#bcbd22",
   "#7f7f7f",
 ];
-const colorForGroupIndex = (i: number) => groupPalette[i % groupPalette.length];
+/** Light keeps the palette as is; dark lifts each hue only as far as it needs to read on the dark chart. */
+const chartColor = (color: string, plotTheme: "light" | "dark") =>
+  plotTheme === "dark" ? readableOn(color, plotColors("dark").surface) : color;
+
+const colorForGroupIndex = (i: number, plotTheme: "light" | "dark") =>
+  chartColor(groupPalette[i % groupPalette.length], plotTheme);
 
 const shortName = (path: string) =>
   path.split("/").filter(Boolean).pop() || path;
@@ -194,6 +201,8 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
   width,
   height,
 }) => {
+  const plotThemeProps = usePlotTheme();
+  const { plotTheme } = plotThemeProps;
   const linked = useLinkedSettings();
   // Load a client for the selected series. Keep the previous client visible
   // while a new series loads so the controls and existing plots don't flicker.
@@ -381,8 +390,11 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
       : groupByValues
         ? [...new Set(groupByValues)].sort()
         : [];
-    return cats.map((c, i) => ({ group: c, color: colorForGroupIndex(i) }));
-  }, [groupByVariable, categoricalOptions, groupByValues]);
+    return cats.map((c, i) => ({
+      group: c,
+      color: colorForGroupIndex(i, plotTheme),
+    }));
+  }, [groupByVariable, categoricalOptions, groupByValues, plotTheme]);
 
   // Alignment times for each selected align-to column, so the legend can count
   // the rows that are actually plotted rather than every row of the table.
@@ -526,6 +538,7 @@ const EventRelatedSignalInner: FunctionComponent<InnerProps> = ({
 
   return (
     <ViewPanel
+      {...plotThemeProps}
       label="Event-related signal"
       summary={`${summary}.`}
       busy={!client}
@@ -850,6 +863,7 @@ const AlignBlock: FunctionComponent<AlignBlockProps> = ({
   split,
   yAxisLabel,
 }) => {
+  const { plotTheme } = usePlotTheme();
   const [rawTrials, setRawTrials] = useState<AlignedTrial[] | null>(null);
   const [numAlignTimes, setNumAlignTimes] = useState<number | null>(null);
   // Rows whose alignment time is NaN, so they are not plotted at all.
@@ -972,14 +986,22 @@ const AlignBlock: FunctionComponent<AlignBlockProps> = ({
         trials: allTrials,
         widgetGroups: (grouping
           ? groups!
-          : [{ group: 0, color: seriesColor }]) as (
+          : [{ group: 0, color: chartColor(seriesColor, plotTheme) }]) as (
           | Group
           | { group: number; color: string }
         )[],
         perGroupStats: grouping,
       },
     ];
-  }, [allTrials, split, grouping, groups, alignToVariable, countLabel]);
+  }, [
+    allTrials,
+    split,
+    grouping,
+    groups,
+    alignToVariable,
+    countLabel,
+    plotTheme,
+  ]);
 
   const statusBox = (text: ReactNode) => (
     <PlotBox

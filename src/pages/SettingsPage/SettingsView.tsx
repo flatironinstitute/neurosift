@@ -1,4 +1,5 @@
 import { Alert, Page, Section, TabPanel, Tabs, TextInput } from "@ui";
+import type { PlotThemeChoice } from "@shared/plotTheme";
 import type { ThemeChoice } from "../../theme";
 import { DisplaySettings } from "./DisplaySettings";
 import { McpGuide } from "./McpGuide";
@@ -25,6 +26,8 @@ interface SettingsViewProps {
   onTabChange: (tab: SettingsTab) => void;
   theme: ThemeChoice;
   onThemeChange: (theme: ThemeChoice) => void;
+  chartTheme: PlotThemeChoice;
+  onChartThemeChange: (theme: PlotThemeChoice) => void;
   keys: ApiKeys;
   onChange: (key: keyof ApiKeys, value: string) => void;
   shown: Record<keyof ApiKeys, boolean>;
@@ -40,6 +43,8 @@ export function SettingsView({
   onTabChange,
   theme,
   onThemeChange,
+  chartTheme,
+  onChartThemeChange,
   keys,
   onChange,
   shown,
@@ -113,7 +118,12 @@ export function SettingsView({
         tabId="display"
         selected={tab === "display"}
       >
-        <DisplaySettings theme={theme} onThemeChange={onThemeChange} />
+        <DisplaySettings
+          theme={theme}
+          onThemeChange={onThemeChange}
+          chartTheme={chartTheme}
+          onChartThemeChange={onChartThemeChange}
+        />
       </TabPanel>
       <TabPanel tabsId="settings-tabs" tabId="mcp" selected={tab === "mcp"}>
         <McpGuide />

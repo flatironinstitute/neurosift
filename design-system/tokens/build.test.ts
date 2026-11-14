@@ -20,11 +20,16 @@ describe("design tokens", () => {
     }
   });
 
-  it("scopes the dark chart colors to data-plot-theme, without changing the page's color scheme", () => {
+  it("gives a dark chart the dark app colors as well, and restates the light ones on a light chart", () => {
     const css = set.css();
-    const block = css.slice(css.indexOf('[data-plot-theme="dark"] {'));
-    expect(block).toContain("--plot-surface: var(--color-navy-900);");
-    expect(block.slice(0, block.indexOf("}"))).not.toContain("color-scheme");
+    const dark = css.slice(css.indexOf('[data-plot-theme="dark"] {'));
+    const darkBlock = dark.slice(0, dark.indexOf("}"));
+    expect(darkBlock).toContain("--plot-surface: var(--color-navy-900);");
+    expect(darkBlock).toContain("--text-default: var(--color-navy-50);");
+    const light = css.slice(css.indexOf('[data-plot-theme="light"] {'));
+    const lightBlock = light.slice(0, light.indexOf("}"));
+    expect(lightBlock).toContain("--plot-surface: var(--color-white);");
+    expect(lightBlock).toContain("--text-default: var(--color-neutral-900);");
     for (const path of set.themes.get("plot-dark")!.keys())
       expect(path.startsWith("plot.") || path.startsWith("data.")).toBe(true);
   });

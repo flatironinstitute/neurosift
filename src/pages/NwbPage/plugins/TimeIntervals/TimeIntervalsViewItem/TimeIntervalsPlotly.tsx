@@ -3,6 +3,8 @@ import { useTimeRange } from "@shared/context-timeseries-selection-2";
 import { Data, Layout, Shape } from "plotly.js";
 import { FunctionComponent, useMemo } from "react";
 import Plot from "@components/LazyPlot";
+import { usePlotColors } from "@shared/plotTheme";
+import { themedLayout } from "@shared/plotlyTheme";
 
 type Props = {
   width: number;
@@ -23,6 +25,7 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
   stopTimes,
   additionalData,
 }) => {
+  const colors = usePlotColors();
   // Get the visible time range from the context
   const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
 
@@ -137,59 +140,56 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
 
   // Layout configuration
   const layout: Partial<Layout> = useMemo(
-    () => ({
-      width,
-      height,
-      margin: {
-        l: 30, // Further reduced from 50
-        r: 10, // Further reduced from 20
-        t: 10, // Kept the same
-        b: 50, // Kept the same for x-axis label
-      },
-      xaxis: {
-        title: {
-          text: "Time (s)",
-          font: {
-            size: 14,
-            color: "#000",
-          },
-          standoff: 15, // Add some space between the axis and the title
+    () =>
+      themedLayout(colors, {
+        width,
+        height,
+        margin: {
+          l: 30, // Further reduced from 50
+          r: 10, // Further reduced from 20
+          t: 10, // Kept the same
+          b: 50, // Kept the same for x-axis label
         },
-        showgrid: true,
-        // Set the range to match the visible time range from the context
-        range:
-          visibleStartTimeSec !== undefined && visibleEndTimeSec !== undefined
-            ? [visibleStartTimeSec, visibleEndTimeSec]
-            : undefined,
-        zeroline: false, // Remove the zero line
-        showline: true, // Show the axis line
-        linecolor: "#000", // Black line color
-        linewidth: 2, // Make the axis line thicker
-        mirror: false, // Don't mirror the axis line to the top
-      },
-      yaxis: {
-        showgrid: false,
-        tickmode: "array",
-        tickvals: allDistinctLabels.map((_, i) => i),
-        ticktext: allDistinctLabels,
-        // Position all rectangles just above the x-axis
-        range: [0, allDistinctLabels.length],
-        zeroline: false, // Remove the zero line
-        showticklabels: false, // Hide y-axis tick labels
-        showline: false, // Hide the y-axis line
-      },
-      hovermode: "closest",
-      showlegend: true,
-      legend: {
-        orientation: "h",
-        y: -0.15,
-        xanchor: "center",
-        x: 0.5,
-        font: { size: 10 },
-        tracegroupgap: 5,
-      },
-      shapes: shapes,
-    }),
+        xaxis: {
+          title: {
+            text: "Time (s)",
+            font: { size: 14 },
+            standoff: 15, // Add some space between the axis and the title
+          },
+          showgrid: true,
+          // Set the range to match the visible time range from the context
+          range:
+            visibleStartTimeSec !== undefined && visibleEndTimeSec !== undefined
+              ? [visibleStartTimeSec, visibleEndTimeSec]
+              : undefined,
+          zeroline: false, // Remove the zero line
+          showline: true, // Show the axis line
+          linewidth: 2, // Make the axis line thicker
+          mirror: false, // Don't mirror the axis line to the top
+        },
+        yaxis: {
+          showgrid: false,
+          tickmode: "array",
+          tickvals: allDistinctLabels.map((_, i) => i),
+          ticktext: allDistinctLabels,
+          // Position all rectangles just above the x-axis
+          range: [0, allDistinctLabels.length],
+          zeroline: false, // Remove the zero line
+          showticklabels: false, // Hide y-axis tick labels
+          showline: false, // Hide the y-axis line
+        },
+        hovermode: "closest",
+        showlegend: true,
+        legend: {
+          orientation: "h",
+          y: -0.15,
+          xanchor: "center",
+          x: 0.5,
+          font: { size: 10 },
+          tracegroupgap: 5,
+        },
+        shapes: shapes,
+      }),
     [
       width,
       height,
@@ -197,6 +197,7 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
       shapes,
       visibleStartTimeSec,
       visibleEndTimeSec,
+      colors,
     ],
   );
 
@@ -288,11 +289,11 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
         legendgroup: label,
         hoverinfo: "text" as const,
         hoverlabel: {
-          bgcolor: "#FFF",
+          bgcolor: colors.surface,
           bordercolor: darkenColor(
             lightColors[labelIndex % lightColors.length],
           ),
-          font: { family: "Arial", size: 12 },
+          font: { family: "Arial", size: 12, color: colors.text },
         },
         showlegend: true,
       } as Data;
@@ -305,6 +306,7 @@ const TimeIntervalsPlotly: FunctionComponent<Props> = ({
     filteredAdditionalData,
     visibleStartTimeSec,
     visibleEndTimeSec,
+    colors,
   ]);
 
   return (

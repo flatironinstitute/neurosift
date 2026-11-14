@@ -2,6 +2,9 @@
 import { Layout, PlotData } from "plotly.js";
 import { FunctionComponent, useMemo } from "react";
 import Plot from "@components/LazyPlot";
+import { readableOn } from "@shared/plotColors";
+import { usePlotColors, usePlotTheme } from "@shared/plotTheme";
+import { themedLayout } from "@shared/plotlyTheme";
 
 type Props = {
   data: {
@@ -34,6 +37,9 @@ const PlotlyComponent: FunctionComponent<Props> = ({
   // const currentIndex =
   //   currentTime !== undefined ? data.t.findIndex((t) => t === currentTime) : -1;
 
+  const colors = usePlotColors();
+  const { plotTheme } = usePlotTheme();
+  const dark = plotTheme === "dark";
   // Create a gradient based on the time values
   const colorScale = useMemo(
     () => data.t.map((_t, i) => Math.round((i / (data.t.length - 1)) * 100)),
@@ -68,10 +74,12 @@ const PlotlyComponent: FunctionComponent<Props> = ({
           opacity: 0.6,
           showscale: true,
           colorbar: {
-            title: "Time Progress",
             tickmode: "array",
             ticktext: ["Start", "End"],
             tickvals: [0, 100],
+            tickfont: { color: colors.text },
+            title: { text: "Time Progress", font: { color: colors.text } },
+            outlinecolor: colors.gridMajor,
           },
         },
         showlegend: false,
@@ -82,7 +90,7 @@ const PlotlyComponent: FunctionComponent<Props> = ({
         type: "scatter",
         mode: "lines",
         line: {
-          color: "#2E8B57",
+          color: dark ? readableOn("#2E8B57", colors.surface) : "#2E8B57",
           width: 1,
         },
         showlegend: false,
@@ -98,50 +106,51 @@ const PlotlyComponent: FunctionComponent<Props> = ({
         mode: "markers",
         marker: {
           size: 10,
-          color: "red",
+          color: dark ? readableOn("#ff0000", colors.surface) : "red",
           opacity: 1,
         },
         name: "Current",
       });
     }
     return traces;
-  }, [data.x, data.y, colorScale, currentIndex]);
+  }, [data.x, data.y, colorScale, currentIndex, colors, dark]);
 
   const layout: Partial<Layout> = useMemo(
-    () => ({
-      width,
-      height,
-      margin: {
-        l: 80, // Increased left margin for y-axis title
-        r: 80, // Right margin for colorbar
-        t: 20,
-        b: 60, // Increased bottom margin for x-axis title
-        pad: 0,
-      },
-      showlegend: false,
-      xaxis: {
-        title: {
-          text: unit ? `X (${unit})` : "X",
-          standoff: 20, // Add some space between axis and title
+    () =>
+      themedLayout(colors, {
+        width,
+        height,
+        margin: {
+          l: 80, // Increased left margin for y-axis title
+          r: 80, // Right margin for colorbar
+          t: 20,
+          b: 60, // Increased bottom margin for x-axis title
+          pad: 0,
         },
-        range: valueRange ? [valueRange.xMin, valueRange.xMax] : undefined,
-        showgrid: true,
-        zeroline: true,
-      },
-      yaxis: {
-        title: {
-          text: unit ? `Y (${unit})` : "Y",
-          standoff: 20, // Add some space between axis and title
+        showlegend: false,
+        xaxis: {
+          title: {
+            text: unit ? `X (${unit})` : "X",
+            standoff: 20, // Add some space between axis and title
+          },
+          range: valueRange ? [valueRange.xMin, valueRange.xMax] : undefined,
+          showgrid: true,
+          zeroline: true,
         },
-        range: valueRange ? [valueRange.yMin, valueRange.yMax] : undefined,
-        scaleanchor: "x",
-        scaleratio: 1,
-        showgrid: true,
-        zeroline: true,
-      },
-      hovermode: "closest",
-    }),
-    [valueRange, unit, width, height],
+        yaxis: {
+          title: {
+            text: unit ? `Y (${unit})` : "Y",
+            standoff: 20, // Add some space between axis and title
+          },
+          range: valueRange ? [valueRange.yMin, valueRange.yMax] : undefined,
+          scaleanchor: "x",
+          scaleratio: 1,
+          showgrid: true,
+          zeroline: true,
+        },
+        hovermode: "closest",
+      }),
+    [valueRange, unit, width, height, colors],
   );
 
   // const handleClick = useCallback(

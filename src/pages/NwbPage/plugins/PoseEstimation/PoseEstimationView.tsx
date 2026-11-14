@@ -34,6 +34,7 @@ import {
   useShareSettings,
 } from "@shared/shareLink/useShareSettings";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
+import { usePlotColors, usePlotTheme } from "@shared/plotTheme";
 import {
   normalizeExternalFileValue,
   resolveExternalVideoUrl,
@@ -152,6 +153,13 @@ const PoseEstimationView: FunctionComponent<Props> = ({
   // Effects key off these stable strings rather than the whole `searchParams`.
   const dandisetId = searchParams.get("dandisetId");
   const dandisetVersion = searchParams.get("dandisetVersion") || "draft";
+
+  const themeProps = usePlotTheme();
+  const plotColors = usePlotColors();
+  const plain = useMemo(
+    () => ({ colors: plotColors, dark: themeProps.plotTheme === "dark" }),
+    [plotColors, themeProps.plotTheme],
+  );
 
   const [pose, setPose] = useState<PoseData | null>(null);
   const [poseError, setPoseError] = useState<string>();
@@ -787,6 +795,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       const c = canvasRef.current;
       if (c)
         drawPoseFrame(c, poseExtent, pose, clk.t, {
+          plain,
           hidden,
           showEdges,
           showTrails,
@@ -811,6 +820,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
     pose,
     poseExtent,
     poseOnlyMode,
+    plain,
     hidden,
     showEdges,
     showTrails,
@@ -970,6 +980,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
       label={name}
       summary={summary}
       chartTitle={chartTitle}
+      {...themeProps}
       busy={finding}
       controls={
         <>
@@ -1184,7 +1195,7 @@ const PoseEstimationView: FunctionComponent<Props> = ({
         )}
         <div
           ref={boxRef}
-          className="pose-box"
+          className={poseOnlyMode ? "pose-box pose-box--plain" : "pose-box"}
           tabIndex={0}
           aria-label={`${chartTitle}. Space plays and pauses.`}
           onKeyDown={onStageKeyDown}

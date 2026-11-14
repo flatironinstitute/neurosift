@@ -4,6 +4,8 @@ import {
   useTimeRange,
   useTimeseriesSelection,
 } from "@shared/context-timeseries-selection-2";
+import { readableOn } from "@shared/plotColors";
+import { usePlotColors, usePlotTheme } from "@shared/plotTheme";
 import { FunctionComponent, useEffect, useState } from "react";
 import { DatasetPluginProps } from "../pluginInterface";
 import AudioPlayer from "./AudioPlayer";
@@ -117,6 +119,12 @@ const WavFileView: FunctionComponent<DatasetPluginProps> = ({
     });
   }, [waveformData, initializeTimeseriesSelection]);
 
+  const { plotTheme } = usePlotTheme();
+  const plotColors = usePlotColors();
+  const waveColor =
+    plotTheme === "dark"
+      ? readableOn("#2196f3", plotColors.surface)
+      : "#2196f3";
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
   const root = useCssVars<HTMLDivElement>({
     "--wav-width": width,
@@ -139,6 +147,7 @@ const WavFileView: FunctionComponent<DatasetPluginProps> = ({
       margins,
       visibleStartTimeSec,
       visibleEndTimeSec,
+      color: waveColor,
     });
   }, [
     context,
@@ -148,10 +157,11 @@ const WavFileView: FunctionComponent<DatasetPluginProps> = ({
     margins,
     visibleStartTimeSec,
     visibleEndTimeSec,
+    waveColor,
   ]);
 
   return (
-    <div className="wav-view" ref={root}>
+    <div className="wav-view" ref={root} data-plot-theme={plotTheme}>
       {isLoading ? (
         <LoadingState label="Loading the audio file" phase="loading" />
       ) : error || !waveformData || !audioUrl ? (

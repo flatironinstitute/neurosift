@@ -2,6 +2,9 @@
 import { FunctionComponent, useMemo } from "react";
 import Plot from "@components/LazyPlot";
 import { useCssVars } from "@components/useCssVars";
+import { readableOn } from "@shared/plotColors";
+import { usePlotColors, usePlotTheme } from "@shared/plotTheme";
+import { themedLayout } from "@shared/plotlyTheme";
 import { pickDisplayUnit } from "./displayUnit";
 import { shadesOf } from "./palette";
 import { GroupBy, groupOf } from "./sweepGroups";
@@ -91,7 +94,11 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
   xRangeMs,
   yRangeByUnit,
 }) => {
+  const colors = usePlotColors();
+  const { plotTheme } = usePlotTheme();
   const { data, layout } = useMemo(() => {
+    const onChart = (c: string) =>
+      plotTheme === "dark" ? readableOn(c, colors.surface) : c;
     const data: any[] = [];
 
     // Pick display units from the first sweep (assumed consistent across sweeps).
@@ -146,7 +153,7 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
 
     sweeps.forEach((sw) => {
       const g = gOf(sw);
-      const color = colorOfGroup.get(g.id) || "#444";
+      const color = onChart(colorOfGroup.get(g.id) || "#444");
       const showInLegend = !legendShownFor.has(g.id);
       if (showInLegend) legendShownFor.add(g.id);
 
@@ -215,7 +222,7 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
     const yStim = yrStim ? { range: yrStim, autorange: false } : {};
     // No-stimulus families (IZeroClamp) get a single response panel filling the
     // height, with the time axis on the response plot itself.
-    const layout: any = noStimulus
+    const base: any = noStimulus
       ? {
           width,
           height,
@@ -293,6 +300,8 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
           hovermode: "closest",
         };
 
+    const layout = themedLayout(colors, base);
+
     return { data, layout };
   }, [
     sweeps,
@@ -304,6 +313,8 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
     baseColor,
     xRangeMs,
     yRangeByUnit,
+    colors,
+    plotTheme,
   ]);
 
   const box = useCssVars<HTMLDivElement>({

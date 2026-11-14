@@ -1,4 +1,5 @@
 import { idToNum } from "./idToNum";
+import { PlotColors, readableOn } from "../plotColors";
 
 let offset = 0; // so that we change which is the 0th unit
 let stride = 1;
@@ -8,6 +9,16 @@ export const getUnitColor = (unitId: number | string) => {
   if (num === undefined) num = colors.length;
   const i = (offset + idToNum(unitId) * stride) % num;
   return colors[i];
+};
+
+/** The unit's color on a chart: unchanged on light, lifted only as far as it needs to read on dark. */
+export const getThemedUnitColor = (
+  unitId: number | string,
+  colors: PlotColors,
+  dark: boolean,
+) => {
+  const color = getUnitColor(unitId);
+  return dark ? readableOn(color, colors.surface) : color;
 };
 
 export const redistributeUnitColors = () => {

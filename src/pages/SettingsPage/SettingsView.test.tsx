@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SettingsView, type ApiKeys } from "./SettingsView";
 
@@ -19,6 +25,8 @@ const setup = (overrides = {}) => {
     onTabChange: vi.fn(),
     theme: "light" as const,
     onThemeChange: vi.fn(),
+    chartTheme: "auto" as const,
+    onChartThemeChange: vi.fn(),
     keys: KEYS,
     onChange: vi.fn(),
     shown: {
@@ -114,12 +122,20 @@ describe("SettingsView", () => {
     const group = screen.getByRole("radiogroup", { name: "Theme" });
     expect(group.getAttribute("aria-describedby")).toBeTruthy();
     expect(
-      screen.getByRole("radio", { name: "Light" }).getAttribute("aria-checked"),
+      within(group)
+        .getByRole("radio", { name: "Light" })
+        .getAttribute("aria-checked"),
     ).toBe("true");
-    fireEvent.click(screen.getByRole("radio", { name: "High contrast" }));
+    fireEvent.click(
+      within(group).getByRole("radio", { name: "High contrast" }),
+    );
     expect(onThemeChange).toHaveBeenCalledWith("high-contrast");
-    fireEvent.click(screen.getByRole("radio", { name: "Match system" }));
+    fireEvent.click(within(group).getByRole("radio", { name: "Match system" }));
     expect(onThemeChange).toHaveBeenCalledWith("system");
+    const charts = screen.getByRole("radiogroup", { name: "Charts" });
+    expect(charts.querySelector('[aria-checked="true"]')?.textContent).toBe(
+      "Match theme",
+    );
   });
 
   it("explains how to connect the Neurosift tools MCP server", () => {
