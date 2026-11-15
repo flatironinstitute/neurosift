@@ -3,12 +3,14 @@
   vertical-align: middle;
 }
 
-/* Opens under its info button and flips when there's no room. */
+/* Opens under its info button and flips when there's no room. Anchored by its edges rather than position-area:
+   Safari (WebKit 26) doesn't tie position-area to the button that opened the popover, and it ignores
+   block-size: max-content there, so the panel filled the window's height. */
 .ns-toggletip-panel {
   inset: auto;
+  inset-block-start: anchor(end);
+  inset-inline-start: anchor(start);
   inline-size: calc(var(--layout-panel-min) + var(--space-10));
-  /* Without a height of its own, a panel placed by position-area stretches to fill the area below its button. */
-  block-size: max-content;
   padding: var(--space-3);
   margin: var(--space-2) 0 0;
   color: var(--text-default);
@@ -16,7 +18,6 @@
   border: var(--border-width-1) solid var(--border-strong);
   border-radius: var(--radius-sm);
   box-shadow: var(--elevation-2);
-  position-area: block-end span-inline-end;
   position-try-fallbacks: flip-block, flip-inline;
 }
 
