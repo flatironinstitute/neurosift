@@ -23,6 +23,7 @@ import {
   EventSeries,
   Opts,
 } from "./WorkerTypes";
+import { useWindowPlayback } from "../../common/usePlayback";
 
 type Props = {
   width: number;
@@ -82,6 +83,8 @@ const BehavioralEventsItemView: FunctionComponent<Props> = ({
   nwbUrl,
   path,
 }) => {
+  // Plays the shared time window forward, as every view on recording time does.
+  const playback = useWindowPlayback();
   const [beData, beDataDispatch] = useReducer(behavioralEventsReducer, {
     seriesNames: [],
     series: {},
@@ -133,6 +136,7 @@ const BehavioralEventsItemView: FunctionComponent<Props> = ({
   const n = beData.seriesNames.length;
   return (
     <TimeView
+      playback={playback}
       label={path.split("/").pop() || path}
       summary={`${n.toLocaleString("en-US")} event series`}
     >

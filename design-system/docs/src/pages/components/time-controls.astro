@@ -184,6 +184,7 @@ const PLAYBACK_STATES = [
     <div class="demo-row">
       <Playback playing={false} onPlayingChange={noop} speed="4" onSpeedChange={noop} time={50.92} disabledReason="Playing in another view" />
     </div>
+    <p class="doc-note">Every view on recording time plays: timeseries traces, Spatial X/Y, EDF, intervals and interval series, events and behavioral events, the raster and the LFP spectrogram, plus two-photon frames and video with pose, which step through their own frames. Views that load data in chunks, the raster and the spectrogram, hold playback while the next window loads.</p>
     <p class="doc-note">Playback never starts by itself, and only one player moves a time window at a time, so views never drift apart at different speeds. Editing the window, dragging the overview, zooming or stepping pauses it, and so does the end. Under reduced motion it still plays, since people start it, with no extra animation.</p>
   </DocSection>
 

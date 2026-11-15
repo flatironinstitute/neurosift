@@ -69,6 +69,7 @@ import SpectrogramWorkerClient, {
 } from "./workerClient";
 import { SpectrogramResult } from "./WorkerTypes";
 import "./LfpSpectrogramView.css";
+import { useWindowPlayback } from "../common/usePlayback";
 
 type Props = {
   nwbUrl: string;
@@ -379,6 +380,8 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
   height,
   condensed,
 }) => {
+  // Plays the shared time window forward, as every view on recording time does.
+  const playback = useWindowPlayback();
   const fsNative = client.samplingFrequency;
   const nativeNyquist = fsNative / 2;
   const dataStart = client.startTime;
@@ -782,6 +785,8 @@ const LfpSpectrogramInner: FunctionComponent<InnerProps> = ({
       }}
     >
       <TimeView
+        playback={condensed ? undefined : playback}
+        holding={showComputing}
         label={name}
         summary={summary}
         busy={showComputing}

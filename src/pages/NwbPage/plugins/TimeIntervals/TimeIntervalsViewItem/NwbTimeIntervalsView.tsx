@@ -15,6 +15,7 @@ import TimeView, {
   TIME_VIEW_INSET,
 } from "../../common/TimeView";
 import "./NwbTimeIntervalsView.css";
+import { useWindowPlayback } from "../../common/usePlayback";
 
 type Props = {
   width: number;
@@ -31,6 +32,8 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
   nwbUrl,
   path,
 }) => {
+  // Plays the shared time window forward, as every view on recording time does.
+  const playback = useWindowPlayback();
   // Default to Plotly view now that we've fixed the hover functionality
   const [viewMode, setViewMode] = useState<ViewMode>("plotly");
 
@@ -112,6 +115,7 @@ const NwbTimeIntervalsView: FunctionComponent<Props> = ({
 
   return (
     <TimeView
+      playback={playback}
       label={path.split("/").pop() || path}
       summary={`${n.toLocaleString("en-US")} interval${n === 1 ? "" : "s"} · ${seconds(timeRange.startTime)}–${seconds(timeRange.endTime)} s`}
       controls={
