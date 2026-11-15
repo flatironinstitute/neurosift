@@ -14,6 +14,7 @@ import "./RasterView.css";
 import { ChunkedDirectSpikeTrainsClient } from "../PSTH/PSTHItemView/DirectSpikeTrainsClient";
 import RasterViewPlot from "./RasterViewPlot";
 import RasterViewPlotTSV2 from "./RasterViewPlotTSV2";
+import { useWindowPlayback } from "../common/usePlayback";
 
 type Props = {
   width?: number;
@@ -59,6 +60,8 @@ const RasterViewChild = ({
   width: number;
   condensed?: boolean;
 }) => {
+  // Plays the shared time window forward, as every view on recording time does.
+  const playback = useWindowPlayback();
   const [plotData, setPlotData] = useState<PlotData | null>(null);
   const linked = useLinkedSettings();
   const [usePlotly, setUsePlotly] = useState(
@@ -163,6 +166,8 @@ const RasterViewChild = ({
   const height = condensed ? 200 : 350;
   return (
     <TimeView
+      playback={condensed ? undefined : playback}
+      holding={isLoading}
       label="Raster"
       summary={rasterSummary(
         spikeTrainsClient.startTimeSec,

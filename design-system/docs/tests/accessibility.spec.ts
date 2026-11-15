@@ -378,24 +378,46 @@ test("the spinner stops moving under reduced motion", async ({ page }) => {
   expect(animation).toBe("none");
 });
 
+// The Select is a native select where the browser draws its list in the design, and a listbox where it can't.
+const isOpen = (select: Locator) =>
+  select.evaluate((s) =>
+    s instanceof HTMLSelectElement
+      ? s.matches(":open")
+      : s.getAttribute("aria-expanded") === "true",
+  );
+const expectValue = async (select: Locator, value: string) =>
+  (await select.evaluate((s) => s instanceof HTMLSelectElement))
+    ? expect(select).toHaveValue(value)
+    : expect(select).toHaveText(value);
+const isNativeIn = async (
+  select: Locator,
+  browserName: string,
+  browser: string,
+) =>
+  browserName === browser &&
+  (await select.evaluate((s) => s instanceof HTMLSelectElement));
+
 test("selects: Space opens the list, Escape closes it and keeps the value and focus", async ({
   page,
   browserName,
 }) => {
   await page.goto("components/selects/");
+  await page.waitForFunction(
+    () => !document.querySelector("astro-island[ssr]"),
+  );
   const select = page.getByRole("combobox", { name: "Playback speed" });
   await select.focus();
   await page.keyboard.press("Space");
-  expect(await select.evaluate((s) => s.matches(":open"))).toBe(true);
+  expect(await isOpen(select)).toBe(true);
   test.skip(
-    browserName === "firefox",
+    await isNativeIn(select, browserName, "firefox"),
     "Firefox's native list doesn't take synthetic keys",
   );
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Escape");
-  expect(await select.evaluate((s) => s.matches(":open"))).toBe(false);
+  expect(await isOpen(select)).toBe(false);
   await expect(select).toBeFocused();
-  await expect(select).toHaveValue("1×");
+  await expectValue(select, "1×");
 });
 
 test("selects: arrows and Enter pick from the styled list; typing jumps to an option", async ({
@@ -403,18 +425,21 @@ test("selects: arrows and Enter pick from the styled list; typing jumps to an op
   browserName,
 }) => {
   await page.goto("components/selects/");
+  await page.waitForFunction(
+    () => !document.querySelector("astro-island[ssr]"),
+  );
   const select = page.getByRole("combobox", { name: "Playback speed" });
   await select.focus();
-  if (browserName !== "firefox") {
-    // Firefox's native list doesn't take synthetic keys; the others pick from the styled list.
+  if (!(await isNativeIn(select, browserName, "firefox"))) {
+    // Firefox's native list doesn't take synthetic keys; the styled list and the listbox do.
     await page.keyboard.press("Space");
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("Enter");
-    await expect(select).toHaveValue("2×");
-    expect(await select.evaluate((s) => s.matches(":open"))).toBe(false);
+    await expectValue(select, "2×");
+    expect(await isOpen(select)).toBe(false);
   }
   await page.keyboard.type("8");
-  await expect(select).toHaveValue("8×");
+  await expectValue(select, "8×");
 });
 
 test("menus: Enter opens on the first item, arrows skip disabled items, Escape returns focus", async ({

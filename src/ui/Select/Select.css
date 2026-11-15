@@ -13,6 +13,9 @@
 .ns-select {
   flex: 1;
   inline-size: 0;
+  /* A native select won't shrink below its longest option unless told to; Safari then pushed the field
+     past its group, as "Label by" did with "response_choice (3 values)". */
+  min-inline-size: 0;
   block-size: 100%;
   padding: 0 calc(var(--chevron-end) + var(--icon-size-sm) + var(--space-2)) 0
     var(--space-3);
@@ -34,7 +37,7 @@
   pointer-events: none;
 }
 
-.ns-field-box:has(.ns-select:open) .ns-icon {
+.ns-field-box:has(.ns-select:open) > .ns-icon {
   rotate: 180deg;
 }
 
@@ -114,4 +117,87 @@
   .ns-select option:disabled[data-meta]::after {
     color: var(--text-disabled);
   }
+}
+
+/* The listbox, for desktop browsers without customizable selects: the same field and list, drawn by us. */
+.ns-select--listbox {
+  display: flex;
+  align-items: center;
+  min-inline-size: 0;
+  text-align: start;
+}
+
+.ns-select-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Only the field's chevron: the list, and its checkmark, sit inside the same box. */
+.ns-field-box:has(.ns-select--listbox[aria-expanded="true"]) > .ns-icon {
+  rotate: 180deg;
+}
+
+/* Anchored by its edges and sized by its content, which Safari needs (see Toggletip); at least as wide as the field. */
+.ns-select-list {
+  inset: auto;
+  inset-block-start: anchor(end);
+  inset-inline-start: anchor(start);
+  box-sizing: border-box;
+  min-inline-size: anchor-size(inline);
+  block-size: auto;
+  max-block-size: calc(var(--button-height-md) * 8 + var(--space-2));
+  padding: var(--space-1) 0;
+  margin: var(--space-1) 0 0;
+  overflow-y: auto;
+  color: var(--text-default);
+  background: var(--surface-panel);
+  border: var(--border-width-1) solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--elevation-2);
+  position-try-fallbacks: flip-block;
+}
+
+.ns-select-option {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-block-size: var(--button-height-md);
+  padding: 0 var(--space-3) 0 var(--space-2);
+  font: var(--type-body-sm);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ns-field--sm .ns-select-option {
+  min-block-size: var(--button-height-sm);
+}
+
+.ns-select-option[data-active] {
+  background: var(--action-secondary-hover);
+}
+
+.ns-select-option[aria-selected="true"] {
+  font: var(--type-label);
+}
+
+.ns-select-option[aria-disabled="true"] {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.ns-select-check {
+  display: flex;
+  flex: none;
+  inline-size: var(--icon-size-sm);
+}
+
+.ns-select-option-meta {
+  margin-inline-start: auto;
+  font: var(--type-caption);
+  color: var(--text-muted);
+}
+
+.ns-select-option[aria-disabled="true"] .ns-select-option-meta {
+  color: var(--text-disabled);
 }

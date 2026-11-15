@@ -3,10 +3,15 @@
   vertical-align: middle;
 }
 
-/* Opens under its info button and flips when there's no room. */
+/* Opens under its info button and flips when there's no room. Anchored by its edges rather than position-area,
+   and sized by its content: Safari (WebKit 26) doesn't tie position-area to the button that opened the popover,
+   and its default popover height stretches a positioned panel to fill the window. */
 .ns-toggletip-panel {
   inset: auto;
+  inset-block-start: anchor(end);
+  inset-inline-start: anchor(start);
   inline-size: calc(var(--layout-panel-min) + var(--space-10));
+  block-size: auto;
   padding: var(--space-3);
   margin: var(--space-2) 0 0;
   color: var(--text-default);
@@ -14,7 +19,6 @@
   border: var(--border-width-1) solid var(--border-strong);
   border-radius: var(--radius-sm);
   box-shadow: var(--elevation-2);
-  position-area: block-end span-inline-end;
   position-try-fallbacks: flip-block, flip-inline;
 }
 

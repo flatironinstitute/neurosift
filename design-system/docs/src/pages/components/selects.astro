@@ -46,13 +46,15 @@ const CHOOSING = [
 
 const BROWSERS = [
   ["Chrome and Edge", "Customizable select", "The list is drawn as the Menu: tokens, the Carbon checkmark, meta text, eight options before it scrolls"],
-  ["Safari and Firefox", "Native list", "The closed field looks the same; the open list is the browser’s own, without meta text, until the browser ships customizable selects"],
+  ["Safari, and Firefox with anchor positioning, on desktop", "Listbox", "The same field and list, drawn by the Select itself as a WAI-ARIA select-only combobox: tokens, the checkmark, meta text, the same keys"],
+  ["Phones and tablets without customizable selects", "Native picker", "The browser’s own picker, which suits touch; the closed field looks the same"],
 ];
 
 const SELECT_KEYS = [
   ["Space or Down arrow", "Opens the list"],
   ["Up and Down arrows, while open", "Move through the options"],
   ["Typing", "Jumps to the first option starting with those letters, open or closed"],
+  ["Home, End, Page Up, Page Down, while open", "First, last, or ten options up or down"],
   ["Enter", "Picks the highlighted option and closes the list"],
   ["Escape", "Closes the list and keeps the last value"],
 ];
@@ -148,14 +150,14 @@ const code = `import { Menu, Select } from "@ui";
     </div>
   </DocSection>
 
-  <DocSection title="Browser support" lead="The Select is a native select, styled with appearance: base-select where the browser supports it. Elsewhere the open list is the browser’s own, still labelled and fully usable.">
+  <DocSection title="Browser support" lead="The Select is a native select, styled with appearance: base-select where the browser supports it. On desktop browsers without it, the Select draws the same list itself as a listbox, so Safari matches Chrome. Touch screens keep the native picker.">
     <div class="field-grid">
       <Select label="Group trials by, styled" value="trial_type" onChange={noop} options={GROUPS} />
       <div class="select-fallback">
         <Select label="Group trials by, fallback" value="trial_type" onChange={noop} options={GROUPS} />
       </div>
     </div>
-    <p class="doc-note">The second field turns the styling off, so it opens the list Safari and Firefox show. The tests run Playwright’s Chromium 158, Firefox 159 and WebKit 27.2; that WebKit is ahead of shipping Safari and already draws the styled list, while Safari 26.6 still shows its own.</p>
+    <p class="doc-note">The second field turns the styling off, so it opens the browser’s own list, as phones and tablets show it. Desktop Safari 26 draws the listbox for both. The tests run Playwright’s Chromium 158, Firefox 159 and WebKit 27.2; that WebKit is ahead of shipping Safari and already draws the styled list.</p>
     <DocTable caption="What each browser shows" columns={["Browsers", "Open list", "What people see"]}>
       {BROWSERS.map(([browsers, list, see]) => <tr><th scope="row">{browsers}</th><td>{list}</td><td>{see}</td></tr>)}
     </DocTable>

@@ -7,6 +7,7 @@ import TimeView, {
   TIME_VIEW_INSET,
 } from "../common/TimeView";
 import EventsWidget from "./EventsWidget";
+import { useWindowPlayback } from "../common/usePlayback";
 
 type Props = {
   width?: number;
@@ -31,6 +32,8 @@ const EventsPluginView: FunctionComponent<Props> = ({
   path,
   nwbUrl,
 }) => {
+  // Plays the shared time window forward, as every view on recording time does.
+  const playback = useWindowPlayback();
   // Fetch timestamps and data
   const { data: timestamps } = useHdf5DatasetData(nwbUrl, `${path}/timestamps`);
 
@@ -62,6 +65,7 @@ const EventsPluginView: FunctionComponent<Props> = ({
 
   return (
     <TimeView
+      playback={playback}
       label={path.split("/").pop() || path}
       summary={eventsSummary(times)}
     >
