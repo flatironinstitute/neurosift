@@ -13,6 +13,9 @@
 .ns-select {
   flex: 1;
   inline-size: 0;
+  /* A native select won't shrink below its longest option unless told to; Safari then pushed the field
+     past its group, as "Label by" did with "response_choice (3 values)". */
+  min-inline-size: 0;
   block-size: 100%;
   padding: 0 calc(var(--chevron-end) + var(--icon-size-sm) + var(--space-2)) 0
     var(--space-3);
