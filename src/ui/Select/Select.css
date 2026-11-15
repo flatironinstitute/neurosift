@@ -34,7 +34,7 @@
   pointer-events: none;
 }
 
-.ns-field-box:has(.ns-select:open) .ns-icon {
+.ns-field-box:has(.ns-select:open) > .ns-icon {
   rotate: 180deg;
 }
 
@@ -130,7 +130,8 @@
   white-space: nowrap;
 }
 
-.ns-field-box:has(.ns-select--listbox[aria-expanded="true"]) .ns-icon {
+/* Only the field's chevron: the list, and its checkmark, sit inside the same box. */
+.ns-field-box:has(.ns-select--listbox[aria-expanded="true"]) > .ns-icon {
   rotate: 180deg;
 }
 
