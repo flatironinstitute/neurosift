@@ -7,6 +7,8 @@
 .ns-toggletip-panel {
   inset: auto;
   inline-size: calc(var(--layout-panel-min) + var(--space-10));
+  /* Without a height of its own, a panel placed by position-area stretches to fill the area below its button. */
+  block-size: max-content;
   padding: var(--space-3);
   margin: var(--space-2) 0 0;
   color: var(--text-default);
