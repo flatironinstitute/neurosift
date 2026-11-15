@@ -82,6 +82,12 @@
   text-decoration: underline;
 }
 
+/* BRAIN in capitals on screen; the link's text stays a word for screen readers. */
+.home-link-brain {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .home-link-button {
   padding: 0;
   font: inherit;

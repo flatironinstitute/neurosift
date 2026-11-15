@@ -55,6 +55,11 @@ function useRecent() {
   return items;
 }
 
+/** Neurosift Brain: DANDI data by brain region, in 3D. Opens dark unless someone chose another theme there. */
+const BRAIN_URL =
+  import.meta.env.VITE_NEUROSIFT_BRAIN_URL ??
+  "https://jguerrero-prog.github.io/dandi-atlas/";
+
 /** One search across the archives, a way to open a file by link, and what was opened last. */
 const HomePage: FunctionComponent<HomePageProps> = () => {
   const navigate = useNavigate();
@@ -134,6 +139,10 @@ const HomePage: FunctionComponent<HomePageProps> = () => {
           <a href={`${base}search?sort=newest`}>Browse all datasets</a>
           <a href={`${base}search?archive=dandi&sort=newest`}>
             Browse DANDI datasets
+          </a>
+          {/* Written "Brain" so screen readers say the word; the class sets it in capitals. */}
+          <a href={BRAIN_URL} className="home-link-brain">
+            Brain
           </a>
           <button
             ref={linkToggle}
