@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 export const BRAIN_URL = (() => {
   const url =
     import.meta.env.VITE_NEUROSIFT_BRAIN_URL ??
-    "https://jguerrero-prog.github.io/dandi-atlas/";
+    "https://jguerrero-prog.github.io/neurosift-brain/";
   return url.endsWith("/") ? url : `${url}/`;
 })();
 
