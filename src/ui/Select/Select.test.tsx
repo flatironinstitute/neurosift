@@ -148,3 +148,128 @@ describe("Select", () => {
     expect(select.closest(".ns-field")?.classList).toContain("ns-field--sm");
   });
 });
+
+describe("Select in browsers without customizable selects", () => {
+  const SPEEDS = [
+    { value: "0.5", label: "0.5×" },
+    { value: "1", label: "1×" },
+    { value: "2", label: "2×", meta: "Fast" },
+    { value: "4", label: "4×", disabled: true },
+    { value: "8", label: "8×" },
+  ];
+
+  const stubBrowser = () => {
+    vi.stubGlobal("CSS", {
+      supports: (property: string) => property === "anchor-name",
+    });
+    vi.stubGlobal(
+      "matchMedia",
+      (query: string) =>
+        ({ matches: query === "(pointer: fine)" }) as MediaQueryList,
+    );
+    Element.prototype.scrollIntoView = () => {};
+    // jsdom has no popovers; these mimic the toggle events browsers send.
+    HTMLElement.prototype.showPopover = function () {
+      this.dataset.open = "";
+      this.dispatchEvent(
+        Object.assign(new Event("toggle"), { newState: "open" }),
+      );
+    };
+    HTMLElement.prototype.hidePopover = function () {
+      delete this.dataset.open;
+      this.dispatchEvent(
+        Object.assign(new Event("toggle"), { newState: "closed" }),
+      );
+    };
+  };
+
+  const Speed = ({
+    onChange = noop,
+  }: {
+    onChange?: (value: string) => void;
+  }) => (
+    <Select
+      label="Playback speed"
+      value="1"
+      onChange={onChange}
+      options={SPEEDS}
+    />
+  );
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("draws its own list: a combobox named by the label, showing the value", () => {
+    stubBrowser();
+    render(<Speed />);
+    const field = screen.getByRole("combobox", { name: "Playback speed" });
+    expect(field.tagName).toBe("BUTTON");
+    expect(field.textContent).toBe("1×");
+    expect(field.getAttribute("aria-expanded")).toBe("false");
+    expect(
+      screen.getByRole("listbox", { hidden: true }).getAttribute("aria-label"),
+    ).toBe("Playback speed");
+  });
+
+  it("opens on the chosen option, moves past disabled ones and picks with Enter", () => {
+    stubBrowser();
+    const onChange = vi.fn<(value: string) => void>();
+    render(<Speed onChange={onChange} />);
+    const field = screen.getByRole("combobox");
+    fireEvent.keyDown(field, { key: "ArrowDown" });
+    expect(field.getAttribute("aria-expanded")).toBe("true");
+    const active = () =>
+      document.getElementById(field.getAttribute("aria-activedescendant") ?? "")
+        ?.textContent;
+    expect(active()).toBe("1×");
+    fireEvent.keyDown(field, { key: "ArrowDown" });
+    fireEvent.keyDown(field, { key: "ArrowDown" });
+    expect(active()).toBe("8×");
+    fireEvent.keyDown(field, { key: "Enter" });
+    expect(onChange).toHaveBeenCalledWith("8");
+    expect(field.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("closes on Escape without changing the value", () => {
+    stubBrowser();
+    const onChange = vi.fn<(value: string) => void>();
+    render(<Speed onChange={onChange} />);
+    const field = screen.getByRole("combobox");
+    fireEvent.keyDown(field, { key: " " });
+    fireEvent.keyDown(field, { key: "End" });
+    fireEvent.keyDown(field, { key: "Escape" });
+    expect(field.getAttribute("aria-expanded")).toBe("false");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("picks by typing while closed, as a native select does", () => {
+    stubBrowser();
+    const onChange = vi.fn<(value: string) => void>();
+    render(<Speed onChange={onChange} />);
+    fireEvent.keyDown(screen.getByRole("combobox"), { key: "2" });
+    expect(onChange).toHaveBeenCalledWith("2");
+  });
+
+  it("marks the chosen option, shows meta text and ignores clicks on disabled options", () => {
+    stubBrowser();
+    const onChange = vi.fn<(value: string) => void>();
+    render(<Speed onChange={onChange} />);
+    fireEvent.click(screen.getByRole("combobox"));
+    const options = screen.getAllByRole("option", { hidden: true });
+    expect(options[1].getAttribute("aria-selected")).toBe("true");
+    expect(options[2].textContent).toBe("2×Fast");
+    fireEvent.click(options[3]);
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.click(options[4]);
+    expect(onChange).toHaveBeenCalledWith("8");
+  });
+
+  it("keeps the native select on touch screens", () => {
+    stubBrowser();
+    vi.stubGlobal(
+      "matchMedia",
+      () => ({ matches: false }) as unknown as MediaQueryList,
+    );
+    render(<Speed />);
+    expect(screen.getByRole("combobox").tagName).toBe("SELECT");
+  });
+});
