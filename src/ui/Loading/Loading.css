@@ -1,0 +1,81 @@
+.ns-loading {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--space-3);
+  block-size: 100%;
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+}
+
+.ns-loading-text {
+  margin: 0;
+  font: var(--type-body-sm);
+  color: var(--text-secondary);
+}
+
+.ns-loading-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ns-loading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.ns-progress {
+  display: grid;
+  gap: var(--space-2);
+  inline-size: min(100%, 20rem);
+  font: var(--type-body-sm);
+  color: var(--text-secondary);
+}
+
+.ns-progress-bar {
+  inline-size: 100%;
+  block-size: var(--space-1);
+  appearance: none;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--surface-row-hover);
+  color: var(--action-primary);
+}
+
+.ns-progress-bar::-webkit-progress-bar {
+  border-radius: var(--radius-full);
+  background: var(--surface-row-hover);
+}
+
+.ns-progress-bar::-webkit-progress-value {
+  border-radius: var(--radius-full);
+  background: var(--action-primary);
+}
+
+.ns-progress-bar::-moz-progress-bar {
+  border-radius: var(--radius-full);
+  background: var(--action-primary);
+}
+
+.ns-skeleton {
+  display: grid;
+}
+
+.ns-skeleton-row {
+  block-size: var(--layout-row-default);
+  border-block-end: 1px solid var(--border-subtle);
+  background: linear-gradient(
+      var(--surface-row-hover),
+      var(--surface-row-hover)
+    )
+    var(--space-3) center / 40% var(--space-3) no-repeat;
+}
+
+@media (forced-colors: active) {
+  .ns-progress-bar {
+    border: 1px solid CanvasText;
+  }
+}

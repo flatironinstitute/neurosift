@@ -1,51 +1,25 @@
+import { ObjectPath } from "@ui";
+import { useCopy, useCopyLink } from "@shared/shareLink/useShareSettings";
 import { FunctionComponent } from "react";
-import ShareTabButton from "./ShareTabButton";
 import { DatasetFile } from "./plugins/pluginInterface";
 
-const TOOLBAR_HEIGHT = 24;
+const TOOLBAR_HEIGHT = 32;
 
 type TabToolbarProps = {
-  width: number;
   file: DatasetFile;
 };
 
-const TabToolbar: FunctionComponent<TabToolbarProps> = ({ width, file }) => {
+/** The open file’s type and path, with Copy path and Copy link. */
+const TabToolbar: FunctionComponent<TabToolbarProps> = ({ file }) => {
+  const copy = useCopy();
+  const copyLink = useCopyLink();
   return (
-    <div
-      style={{
-        position: "relative",
-        width,
-        height: TOOLBAR_HEIGHT,
-        backgroundColor: "#f5f5f5",
-        borderBottom: "1px solid #ddd",
-        display: "flex",
-        alignItems: "center",
-        padding: "0 8px",
-      }}
-    >
-      <div
-        style={{
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-          minWidth: 0,
-          fontSize: "12px",
-          color: "#666",
-        }}
-      >
-        {file.filepath}
-      </div>
-      <div
-        style={{
-          marginLeft: 12,
-          display: "flex",
-          alignItems: "center",
-          minWidth: 28,
-        }}
-      >
-        <ShareTabButton file={file} />
-      </div>
-    </div>
+    <ObjectPath
+      type={file.filename.split(".").slice(1).join(".").toUpperCase()}
+      path={file.filepath}
+      onCopyPath={() => copy(file.filepath, "Path copied")}
+      onCopyLink={() => copyLink({ tab: `${file.filepath}|${file.parentId}` })}
+    />
   );
 };
 

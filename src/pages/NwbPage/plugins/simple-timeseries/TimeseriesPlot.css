@@ -1,0 +1,22 @@
+/* As wide as the plot, so its box is the plot's for drag to select. */
+.timeseries-plotly {
+  inline-size: fit-content;
+}
+
+.timeseries-plotly-legend-toggle {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-end: var(--space-2);
+}
+
+.timeseries-plotly-zoom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  background: var(--plot-surface);
+  border: 1px solid var(--plot-grid-major);
+  border-radius: var(--radius-sm);
+  color: var(--plot-text);
+  font-size: 0.875rem;
+}

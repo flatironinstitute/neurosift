@@ -1,0 +1,46 @@
+.ns-dl {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.ns-dl-row {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.ns-dl--beside .ns-dl-row {
+  grid-template-columns: 6rem minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.ns-dl--stacked {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+  gap: var(--space-4) var(--space-8);
+}
+
+.ns-dl--code .ns-dl-row {
+  grid-template-columns: minmax(7.5rem, 8.75rem) minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.ns-dl-term {
+  font: var(--type-caption);
+  color: var(--text-muted);
+}
+
+.ns-dl--code .ns-dl-term {
+  font: var(--type-code-sm);
+}
+
+.ns-dl-value {
+  margin: 0;
+  font: var(--type-body-sm);
+  color: var(--text-default);
+  overflow-wrap: anywhere;
+}
+
+.ns-dl-value--code,
+.ns-dl--code .ns-dl-value {
+  font: var(--type-code-sm);
+}

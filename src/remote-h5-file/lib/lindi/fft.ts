@@ -1,7 +1,5 @@
 // jfm changed Float32Array to Float32Array
 
-/* eslint-disable @typescript-eslint/no-inferrable-types */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prefer-const */
 /*
  * Free FFT and convolution (TypeScript)

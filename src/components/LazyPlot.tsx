@@ -7,7 +7,7 @@ const Plot = lazy(() => import("react-plotly.js"));
 
 const LazyPlot = (props: PlotParams) => (
   <Suspense fallback={<div style={props.style} className={props.className} />}>
-    <Plot {...props} />
+    <Plot {...props} config={{ displaylogo: false, ...props.config }} />
   </Suspense>
 );
 

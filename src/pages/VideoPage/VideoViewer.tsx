@@ -2,6 +2,7 @@ import { FunctionComponent, useEffect, useState } from "react";
 import getAuthorizationHeaderForUrl from "../util/getAuthorizationHeaderForUrl";
 import { watermarkRedirectTarget } from "@hdf5Interface";
 import { addRequestWatermark } from "../../util/requestWatermark";
+import ViewError from "@components/ViewError/ViewError";
 
 type Props = {
   videoUrl: string;
@@ -70,7 +71,7 @@ const VideoViewer: FunctionComponent<Props> = ({ videoUrl, width, height }) => {
   }
 
   if (error) {
-    return <div style={{ padding: "20px", color: "red" }}>{error}</div>;
+    return <ViewError what="the video" error={error} />;
   }
 
   if (!resolvedUrl) {

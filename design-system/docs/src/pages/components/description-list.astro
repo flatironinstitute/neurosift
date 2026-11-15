@@ -1,0 +1,93 @@
+---
+import { DescriptionList } from "@ui";
+import CodeSample from "../../components/CodeSample.astro";
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const SESSION = [
+  { term: "Identifier", value: "sub-1_ses-1_P55CS", code: true },
+  { term: "Description", value: "SBCAT_ID: 1" },
+  { term: "Start", value: "2018-01-01T00:00:00−08:00", code: true },
+  { term: "Experimenter", value: "Kyzar, Michael" },
+  { term: "Institution", value: "Cedars-Sinai Medical Center" },
+];
+
+const FACTS = [
+  { term: "Dandiset", value: "000673", code: true },
+  { term: "Version", value: "0.250122.0110", code: true },
+  { term: "Size", value: "6.5 GB" },
+  { term: "Files", value: "44" },
+  { term: "License", value: "CC-BY-4.0" },
+];
+
+const ATTRIBUTES = [
+  { term: "neurodata_type", value: "ElectricalSeries" },
+  { term: "namespace", value: "core" },
+  { term: "description", value: "These are LFP recordings that have spike potentials removed and is downsampled to 400Hz" },
+  { term: "comments", value: "no comments" },
+  { term: "object_id", value: "ead74922-4f69-407b-9eea-a8339bb4edac" },
+];
+
+const SPECS = [
+  ["Beside", "Key in type/caption text/muted, 96px wide · value in type/body-sm · 12px between them · 8px between rows"],
+  ["Stacked", "Key in type/caption text/muted over the value in type/body-sm · facts 32px apart, wrapping"],
+  ["Code", "Keys in type/code-sm text/muted, 120 to 140px · values in type/code-sm"],
+  ["Identifiers", "type/code-sm in any layout, so they copy exactly"],
+  ["Missing values", "An em dash and a reason, such as “— No start time in this file”"],
+  ["Long values", "Wrap at any character, never cut off. Very long text goes in a Disclosure"],
+];
+
+const code = `import { DescriptionList } from "@ui";
+
+<DescriptionList
+  label="Session"
+  items={[
+    { term: "Identifier", value: "sub-1_ses-1_P55CS", code: true },
+    { term: "Start", value: undefined, missing: "No start time in this file" },
+  ]}
+/>`;
+---
+
+<DocsLayout title="Description list" description="Keys and values: panel fields, dataset facts and HDF5 attributes.">
+  <Intro
+    lead="Key and value pairs appear on four screens in three layouts: the fields in the overview panel, the facts about a Dataset, and the attributes of an HDF5 object. One component draws all three, so a session’s start time reads the same wherever it appears."
+    status="Updated November 10, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "A real list", text: "A dl with dt and dd, so screen readers announce each key with its value." },
+      { title: "Identifiers in code", text: "IDs, paths and versions are set in Plex Mono and copy exactly." },
+      { title: "Nothing missing silently", text: "A missing value shows an em dash and the reason, never “undefined”." },
+    ]}
+  />
+
+  <DocSection title="Beside" lead="For panel fields, such as the session group in the overview panel. The key column is 96px wide.">
+    <div class="section-demo"><DescriptionList label="Session" items={SESSION} /></div>
+  </DocSection>
+
+  <DocSection title="Stacked" lead="For facts at the top of a Dataset page, where each value is short.">
+    <div class="section-demo"><DescriptionList label="Facts" items={FACTS} layout="stacked" /></div>
+  </DocSection>
+
+  <DocSection title="Code" lead="For the attributes of an HDF5 object, where keys are names from the file.">
+    <div class="section-demo"><DescriptionList label="Attributes of /acquisition/LFPs" items={ATTRIBUTES} layout="code" /></div>
+  </DocSection>
+
+  <DocSection title="Accessibility">
+    <ul class="rule-list">
+      <li><strong>Named.</strong> Each list has an accessible name, such as “Session”, so a panel with several groups can be told apart.</li>
+      <li><strong>No truncation.</strong> Values wrap instead of being cut off, so nothing needs a hover to be read.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Description list specs" columns={["Property", "Value"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. The list renders only from its items.">
+    <CodeSample label="Description list" code={code} />
+  </DocSection>
+</DocsLayout>

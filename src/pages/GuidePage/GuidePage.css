@@ -1,0 +1,29 @@
+/* Lets the sections stay items of the Page column while their text takes the body style. */
+.guide {
+  display: contents;
+}
+
+.guide-topic {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.guide p,
+.guide-topic-title {
+  margin: 0;
+}
+
+.guide-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-inline-start: var(--space-6);
+}
+
+.guide-list .ns-code-block {
+  margin-block-start: var(--space-2);
+}
+
+.guide-topic + .guide-topic {
+  margin-block-start: var(--space-4);
+}

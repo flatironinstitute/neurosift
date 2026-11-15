@@ -1,0 +1,84 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const FILE = "https://www.figma.com/design/y9VzpJj2NEltB7LUhQOzgE/?node-id=";
+
+const FRAMES = [
+  ["Components: Button", "Button / Medium, Button / Small, Icon button", "137-134", "Buttons", "/components/buttons/"],
+  ["Components: Inputs", "Text input, Search field", "140-311", "Text inputs and search", "/components/text-inputs/"],
+  ["Components: Selects", "Select, Menu item, Menu, Tag / Removable, Multi-select", "147-460", "Dropdowns and selects", "/components/selects/"],
+  ["Components: Checkbox", "Checkbox", "217-2517", "Checkboxes", "/components/checkboxes/"],
+  ["Components: Time controls", "Time window, Channel window, Time overview, Playback", "151-701", "Time controls", "/components/time-controls/"],
+  ["Components: Sliders", "Slider, Range slider", "155-1063", "Sliders", "/components/sliders/"],
+  ["Components: Tabs", "Tab, Segment, Segmented control", "159-1385", "Tabs and segmented controls", "/components/tabs/"],
+  ["Components: Accordions", "Accordion item, Disclosure", "163-1523", "Accordions", "/components/accordions/"],
+  ["Components: Tables", "Table header cell, Table cell, Tree row, View chip, Object row, Selection list item, Selection list, Selection bar", "166-1614", "Tables", "/components/tables/"],
+  ["Components: Alerts", "Alert, Toast, Inline message", "170-1736", "Alerts and toasts", "/components/alerts/"],
+  ["Components: Modals", "Dialog, Drawer", "173-1863", "Modals and drawers", "/components/modals/"],
+  ["Components: Tooltips", "Tooltip, Data tooltip, Toggletip, Info button", "176-1983", "Tooltips", "/components/tooltips/"],
+  ["Components: Navigation", "App bar, Breadcrumb item, Breadcrumbs, Object path", "179-2036", "Navigation and breadcrumbs", "/components/navigation/"],
+  ["Components: Badges", "Badge, Tag / Link, Tag / Static", "182-2152", "Badges and tags", "/components/badges/"],
+  ["Components: Code", "Code block, Inline code", "186-2197", "Code block", "/components/code/"],
+  ["Components: Icons (IBM Carbon)", "62 icons: 47 interface, 15 neurodata types", "110-265", "Iconography", "/foundations/iconography/"],
+];
+
+const COLLECTIONS = [
+  ["Primitives", "72 variables, hidden from pickers: the color scales behind every semantic color"],
+  ["Semantic", "59 variables, mode Light: text, surfaces, borders, actions, status, data and code colors, each an alias of a primitive"],
+  ["Dimensions", "40 variables: space, radius, border width, icon size and layout"],
+  ["Text styles", "15 styles, type/display to type/code-sm: IBM Plex Sans JP for reading, IBM Plex Mono for paths and code"],
+  ["Effect styles", "3 styles, elevation/1 to elevation/3, navy shadows"],
+  ["Wireframe", "18 variables from the wireframe stage, left as they are"],
+];
+
+const PAGES = [
+  ["Design system", "Every page of this site side by side, the component frames, and the home and catalog options"],
+  ["Existing screens", "Captures of today’s Neurosift"],
+  ["Logos", "The logo directions"],
+  ["Cover", "The file’s cover"],
+];
+---
+
+<DocsLayout title="Figma library" description="The Figma file behind this system: component frames, variables and pages.">
+  <Intro
+    lead="The design work behind these pages lives in one Figma file: the pages, the components and the variables. This page maps each component frame to the page that documents it in code, and lists the variables and styles to use instead of raw values."
+    status="Updated November 10, 2026 · Resources · The coded pages are the source of truth when the two differ"
+    rules={[
+      { title: "Instances, not copies", text: "Place components as instances. Detach only placed examples on documentation pages." },
+      { title: "Variables, not values", text: "Color, spacing, radius and type come from variables and styles, never raw values." },
+      { title: "Documented first", text: "Each component has a documentation page; screens use only documented parts." },
+    ]}
+  />
+
+  <DocSection title="Component frames" lead="16 frames on the Design system page: 110 components and component sets, 62 of them IBM Carbon icons.">
+    <DocTable caption="Component frames" columns={["Frame", "Components", "In Figma", "Documented on"]}>
+      {
+        FRAMES.map(([frame, components, node, page, href]) => (
+          <tr>
+            <th scope="row">{frame}</th>
+            <td>{components}</td>
+            <td><a href={`${FILE}${node}`}>{node.replace("-", ":")}</a></td>
+            <td><a href={withBase(href)}>{page}</a></td>
+          </tr>
+        ))
+      }
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Variables and styles" lead="Use these in place of raw values. Every variable has scopes and var(--…) code syntax, and the token files in the repository are exported from them.">
+    <DocTable caption="Variable collections and styles" columns={["Collection", "Contents"]}>
+      <DocRows rows={COLLECTIONS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Pages in the file" lead="The file has four pages.">
+    <DocTable caption="Pages in the Figma file" columns={["Page", "What it holds"]}>
+      <DocRows rows={PAGES} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

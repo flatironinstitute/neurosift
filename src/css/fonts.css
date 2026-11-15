@@ -1,0 +1,52 @@
+/* IBM Plex for the app and the docs: Sans JP for text, Mono for code and values. */
+@import "@fontsource/ibm-plex-sans-jp/400.css";
+@import "@fontsource/ibm-plex-sans-jp/500.css";
+@import "@fontsource/ibm-plex-sans-jp/600.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+
+/* IBM Plex Sans JP draws … − × ± σ → as wide CJK glyphs; these faces take them from IBM Plex Sans.
+   Declared after the Plex Sans JP faces, so they win for these characters only. */
+@font-face {
+  font-family: "IBM Plex Sans JP";
+  font-weight: 400;
+  font-display: swap;
+  src: url("@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-400-normal.woff2")
+    format("woff2");
+  unicode-range: U+00B1, U+00D7, U+2026, U+2212;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans JP";
+  font-weight: 500;
+  font-display: swap;
+  src: url("@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-500-normal.woff2")
+    format("woff2");
+  unicode-range: U+00B1, U+00D7, U+2026, U+2212;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans JP";
+  font-weight: 600;
+  font-display: swap;
+  src: url("@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-600-normal.woff2")
+    format("woff2");
+  unicode-range: U+00B1, U+00D7, U+2026, U+2212;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans JP";
+  font-weight: 400;
+  font-display: swap;
+  src: url("@fontsource/ibm-plex-sans/files/ibm-plex-sans-greek-400-normal.woff2")
+    format("woff2");
+  unicode-range: U+03C3;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans JP";
+  font-weight: 600;
+  font-display: swap;
+  src: url("@fontsource/ibm-plex-sans/files/ibm-plex-sans-greek-600-normal.woff2")
+    format("woff2");
+  unicode-range: U+03C3;
+}

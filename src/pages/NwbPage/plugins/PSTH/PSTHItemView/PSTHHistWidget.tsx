@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import { usePlotColors } from "@shared/plotTheme";
 import { getTicks } from "./getTicks";
 import { PSTHPrefs } from "./types";
 
@@ -24,6 +25,7 @@ const PSTHHistWidget: FunctionComponent<PSTHWidgetProps> = ({
   alignmentVariableName,
   prefs,
 }) => {
+  const colors = usePlotColors();
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(
     null,
   );
@@ -112,7 +114,7 @@ const PSTHHistWidget: FunctionComponent<PSTHWidgetProps> = ({
     ctx.clearRect(0, 0, width, height);
 
     // vertical line at zero
-    ctx.strokeStyle = "lightgray";
+    ctx.strokeStyle = colors.gridMinor;
     ctx.lineWidth = 3;
     ctx.beginPath();
     const p1 = coordToPixel(0, 0);
@@ -124,7 +126,7 @@ const PSTHHistWidget: FunctionComponent<PSTHWidgetProps> = ({
     ctx.font = "12px sans-serif";
 
     // y axis
-    ctx.strokeStyle = "gray";
+    ctx.strokeStyle = colors.gridMajor;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(margins.left, margins.top);
@@ -133,7 +135,7 @@ const PSTHHistWidget: FunctionComponent<PSTHWidgetProps> = ({
 
     // y axis label
     const yAxisLabel = "Firing rate (Hz)";
-    ctx.fillStyle = "black";
+    ctx.fillStyle = colors.text;
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
     ctx.save();
@@ -145,7 +147,7 @@ const PSTHHistWidget: FunctionComponent<PSTHWidgetProps> = ({
     ctx.restore();
 
     // draw y axis ticks
-    ctx.strokeStyle = "gray";
+    ctx.strokeStyle = colors.gridMajor;
     ctx.lineWidth = 1;
     ticks.forEach((tick) => {
       const p0 = coordToPixel(windowRange.start, tick.value);
@@ -159,7 +161,7 @@ const PSTHHistWidget: FunctionComponent<PSTHWidgetProps> = ({
     });
 
     // x axis labels
-    ctx.fillStyle = "black";
+    ctx.fillStyle = colors.text;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.fillText("0", p1.x, p1.y + 4);
@@ -181,7 +183,7 @@ const PSTHHistWidget: FunctionComponent<PSTHWidgetProps> = ({
     );
 
     // x axis
-    ctx.strokeStyle = "gray";
+    ctx.strokeStyle = colors.gridMajor;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(margins.left, height - margins.bottom);
@@ -222,6 +224,7 @@ const PSTHHistWidget: FunctionComponent<PSTHWidgetProps> = ({
     coordToPixel,
     margins,
     ticks,
+    colors,
   ]);
 
   return (

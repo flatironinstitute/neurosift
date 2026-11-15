@@ -1,0 +1,163 @@
+---
+import { Button } from "@ui";
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const WEIGHTS = [
+  ["Regular 400", "Body text, table cells, axes", "400"],
+  ["Medium 500", "Page and section titles", "500"],
+  ["SemiBold 600", "Panel titles, labels, buttons", "600"],
+  ["Bold 700", "Active navigation only", "700"],
+];
+
+const LOOK_ALIKES = [
+  ["0 O o", "zero, O, o"],
+  ["1 l I", "one, l, I"],
+  ["5 S", "five, S"],
+  ["2 Z", "two, Z"],
+  ["65a7e913-45c7-48db-bf19-b9f5e910110a", "DANDI asset ID"],
+  ["/processing/ophys/ImageSegmentation", "Object path in an NWB file"],
+];
+
+const SCALE = [
+  ["Display", "56px · line 105% · letter spacing −2%", "Home page title, once per page"],
+  ["Heading 1", "36px Medium · line 120% · −1%", "Page titles: Dandiset and file names"],
+  ["Heading 2", "28px Medium · line 125% · −1%", "Section titles"],
+  ["Heading 3", "22px SemiBold · line 130%", "Panel and view titles"],
+  ["Heading 4", "18px SemiBold · line 135%", "Small headings, control groups"],
+  ["Lead", "20px · line 150%", "Introductions on the home and archive pages"],
+  ["Body large", "18px · line 155%", "Help text and guides"],
+  ["Body", "16px · line 155%", "Default text, descriptions, form inputs"],
+  ["Body small", "14px · line 150%", "File tree, metadata panel, dense tables"],
+  ["Caption", "13px · line 145%", "Captions, status line, timestamps"],
+  ["Label", "14px SemiBold · line 130%", "Buttons, tabs, form labels"],
+  ["Label small", "12px SemiBold · line 130% · 6%", "Table headers and eyebrows"],
+  ["Axis", "12px · line 120%", "Plot ticks and legends, tabular figures"],
+  ["Code", "Plex Mono 14px · line 155%", "Python snippets, paths in running text"],
+  ["Code small", "Plex Mono 12px · line 150%", "Paths and IDs in the file tree and tables"],
+];
+
+const TEXT_COLORS = [
+  ["Primary text", "text/default", "17.4:1 on white", "Headings, body text, table cells", "default"],
+  ["Secondary text", "text/secondary", "8.9:1 on white", "Descriptions, help text", "secondary"],
+  ["Muted text", "text/muted", "5.3:1 on white", "Captions, metadata, axis labels", "muted"],
+  ["Link", "text/link", "7.2:1 on white", "Text links, always underlined", "link"],
+];
+
+const SCIENCE = [
+  ["Neurodata types", "Units · TimeIntervals", "Write types exactly as the NWB schema names them: CamelCase, no spaces, in Plex Mono."],
+  ["Object paths", "/processing/ecephys/LFP", "Show the full path from the root of the file. If it has to shorten, keep the last segment and drop from the start: …/ecephys/LFP."],
+  ["Identifiers", "000673 · 0.250122.0110", "Keep Dandiset IDs and versions exactly as DANDI writes them, leading zeros included. Never reformat or round an ID."],
+  ["Time and units", "400 Hz · 1,375.28 s · 30 ms", "SI symbols with a space before the unit. One unit per axis or column, the same decimals throughout, tabular figures so digits line up."],
+  ["Species names", "Mus musculus · Homo sapiens", "Latin names in IBM Plex Sans Italic. Common names such as mouse and human stay upright."],
+  ["Missing values", "—", "Never show NaN, undefined or null. Show an em dash and say why, in a caption or a toggletip."],
+];
+const IN_USE_UNITS = [
+  [
+    "0",
+    "1,652",
+    "1.20 Hz"
+  ],
+  [
+    "1",
+    "382",
+    "0.28 Hz"
+  ],
+  [
+    "2",
+    "1,149",
+    "0.84 Hz"
+  ]
+];
+---
+
+<DocsLayout title="Typography" description="IBM Plex Sans JP and Plex Mono: the type scale and how Neurosift sets scientific text.">
+  <Intro
+    lead="Neurosift uses two typefaces from one family. IBM Plex Sans JP sets everything people read: titles, help text, labels, table cells and plot axes. IBM Plex Mono sets what people copy or match character by character: object paths, IDs and Python code."
+    status="Updated November 9, 2026 · Foundations · Both typefaces are free under the SIL Open Font License"
+    rules={[
+      { title: "One family, two voices", text: "Plex Sans for reading. Plex Mono for anything copied, typed or matched exactly." },
+      { title: "Use the scale, not sizes", text: "Pick a named style from the scale. Never set a one-off size or weight." },
+      { title: "Dense, still readable", text: "Body text is 16px. Tables and the file tree can drop to 14px, axis ticks to 12px. Nothing goes smaller." },
+    ]}
+  />
+
+  <DocSection title="Typefaces" lead="Two families, each with a clear job. The weights listed are the only ones in use.">
+    <div class="typeface-cards">
+      <article class="typeface-card">
+        <p class="typeface-sample">Aa</p>
+        <h3 class="type-h4">IBM Plex Sans JP</h3>
+        <p class="type-body-sm">For reading: headings, body, labels, data. IBM Plex Sans with Japanese added; its Latin letters match Plex Sans, with clear numbers and open shapes that hold up in dense tables and small plot labels.</p>
+      </article>
+      <article class="typeface-card">
+        <p class="typeface-sample typeface-sample--mono">Aa</p>
+        <h3 class="type-h4">IBM Plex Mono</h3>
+        <p class="type-body-sm">For anything exact: paths, IDs, code. Built on the same skeleton as Plex Sans, so a path sits comfortably inside a sentence, and every character is the same width, so IDs and code line up.</p>
+      </article>
+    </div>
+    <DocTable caption="Plex Sans weights" columns={["Weight", "Sample", "Use"]}>
+      {WEIGHTS.map(([weight, use, w]) => <tr><th scope="row">{weight}</th><td><span class={`weight-sample weight-sample--${w}`}>Spike sorting</span></td><td>{use}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Look-alikes and italics" lead="Look-alike characters stay distinct in Plex Mono, so IDs and paths can be read and typed exactly.">
+    <DocTable caption="Look-alike characters in Plex Mono" columns={["In Plex Mono", "Reads as"]}>
+      {LOOK_ALIKES.map(([chars, reads]) => <tr><th scope="row"><code class="type-code">{chars}</code></th><td>{reads}</td></tr>)}
+    </DocTable>
+    <p class="doc-note">IBM Plex Sans JP has no italic. Species names, the one place italics are required, use IBM Plex Sans Italic, whose letters match the JP cut. Neurodata types, which the Neurosift paper sets in italics, use Plex Mono in the interface.</p>
+  </DocSection>
+
+  <DocSection title="Type scale" lead="Fifteen styles cover every case. They run one step smaller than a reading-first site because Neurosift is a dense data tool, but body text stays at 16px.">
+    <DocTable caption="Type scale and where each style goes" columns={["Style", "Specs", "Use"]}>
+      {SCALE.map(([style, specs, use]) => <tr><th scope="row">{style}</th><td>{specs}</td><td>{use}</td></tr>)}
+    </DocTable>
+    <p class="doc-note">Every style is drawn at size with a real Neurosift string on <a href={withBase("/tokens/typography/")}>Typography tokens</a>, which also lists the CSS classes.</p>
+  </DocSection>
+
+  <DocSection title="Text colors" lead="Three grays set the reading order, and every one passes WCAG AA on white. Links are always underlined.">
+    <DocTable caption="Text colors" columns={["Color", "Sample", "Token", "Contrast", "Use"]}>
+      {TEXT_COLORS.map(([name, token, contrast, use, cls]) => <tr><th scope="row">{name}</th><td><span class={`text-sample text-sample--${cls}`}>Spikes sorted from 384 channels.</span></td><td>{token}</td><td>{contrast}</td><td>{use}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Scientific text" lead="Neurosift is read by neuroscientists, so text follows the conventions of NWB and DANDI. These rules keep types, paths, IDs and units consistent in every view.">
+    <DocTable caption="Scientific text" columns={["For", "Example", "Rule"]}>
+      {SCIENCE.map(([topic, example, rule]) => <tr><th scope="row">{topic}</th><td><span class={topic === "Species names" ? "species" : topic === "Missing values" ? "" : "type-code-sm"}>{example}</span></td><td>{rule}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Readability">
+    <ul class="rule-list">
+      <li><strong>Line length.</strong> Keep running text between 45 and 75 characters, about 720px at 16px. Long Dataset descriptions show three lines and a disclosure for the rest.</li>
+      <li><strong>Minimum sizes.</strong> 16px for body text and inputs. 14px in the file tree, metadata panel and dense tables. 12px only for axis ticks, table headers and code in the tree.</li>
+      <li><strong>Spacing.</strong> Line height of at least 1.5 for running text. Every panel, including plot labels, must survive 200% zoom without text overlapping.</li>
+      <li><strong>Emphasis.</strong> Use SemiBold for emphasis, never color alone. Uppercase only for small labels. Underline only links.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="The scale in use" lead="A synced view, the feature the Neurosift paper leads with, set only in the styles on this page.">
+    <div class="type-in-use">
+      <p class="type-label-sm type-in-use-eyebrow">Synced view</p>
+      <p class="type-h3">LFPs and units</p>
+      <p class="type-code-sm">/acquisition/LFPs + /units</p>
+      <p class="type-body-sm type-in-use-secondary">Zoom or pan either plot and the other follows. Times are seconds from the start of the session.</p>
+      <p class="type-axis type-in-use-secondary">LFP · Units · 0 s · 1 s · 2 s · 3 s</p>
+      <DocTable caption="Units in the synced view" columns={["Unit ID", "Spikes", "Mean rate"]}>
+        <DocRows rows={IN_USE_UNITS} />
+      </DocTable>
+      <p class="type-caption type-in-use-secondary">Showing units 0–2 of 46 · Dandiset 000673, session 1</p>
+      <div class="demo-row">
+        <Button variant="secondary" icon="share">Share view</Button>
+        <Button variant="ghost">Load in Python</Button>
+      </div>
+    </div>
+  </DocSection>
+
+  <DocSection title="Type tokens" lead="In code, each style is one token that bundles family, weight, size, line height and letter spacing.">
+    <p class="doc-note">Every style, with its values, is on <a href={withBase("/tokens/typography/")}>Typography tokens</a>.</p>
+  </DocSection>
+</DocsLayout>

@@ -31,3 +31,12 @@ src/build-info.json
 
 .vite/**
 .codex
+
+# Design system docs (Astro)
+design-system/docs/.astro
+design-system/docs/test-results
+design-system/docs/playwright-report
+
+# Old-link end-to-end tests (Playwright)
+e2e/test-results
+e2e/playwright-report

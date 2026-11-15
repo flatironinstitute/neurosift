@@ -1,0 +1,91 @@
+---
+import CodeSample from "../../components/CodeSample.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { tokensIn } from "../../tokens";
+
+// Real Neurosift strings, the same samples as the Figma page.
+const SAMPLES: Record<string, string> = {
+  display: "See inside every recording",
+  h1: "IBL Brain Wide Map",
+  h2: "Neurodata objects",
+  h3: "Units",
+  h4: "Align to",
+  lead: "Open any NWB file on DANDI in your browser.",
+  "body-lg": "Neurosift reads only the parts of a file you look at.",
+  body: "LFP recordings with spike potentials removed.",
+  "body-sm": "Session start 2018-01-01 · NWB 2.6.0",
+  caption: "Showing units 0–3 of 46",
+  label: "Load in Python",
+  "label-sm": "NEURODATA TYPE",
+  axis: "0 s   1 s   2 s   3 s",
+  code: 'nwb.acquisition["LFPs"]',
+  "code-sm": "/intervals/trials",
+};
+
+const styles = tokensIn("type").map((view) => ({ view, sample: SAMPLES[view.step], ...view.textStyle }));
+const families = tokensIn("font.family");
+const code = `.type-body {
+  font: var(--type-body);
+  letter-spacing: var(--type-body-letter-spacing);
+}
+
+/* --type-body: 400 16px/1.55 var(--font-family-sans); */`;
+---
+
+<DocsLayout title="Typography tokens" description="The fifteen text styles and two font stacks of the Neurosift design system.">
+  <Intro
+    lead={`${styles.length} text styles carry the type scale. Each bundles family, weight, size, line height and letter spacing, and its description says where it is used.`}
+    status="Updated November 6, 2026 · Tokens · Every sample on this page is set with its own class"
+    rules={[
+      { title: "Styles, not sizes", text: "Apply type-body, never 16px by hand, so a change to the scale reaches every screen." },
+      { title: "Shape, not color", text: "Styles set the shape of text. Color comes from text/ tokens, so one style works on any surface." },
+      { title: "Mono for data names", text: "type-code and type-code-sm set paths, IDs, neurodata types and Python." },
+    ]}
+  />
+
+  <DocSection title="Text styles" lead="The Figma text styles named type/…, each available as a class and as custom properties of the same name.">
+    <DocTable caption="Text styles" columns={["Sample", "Style", "Font", "Size / line height", "Letter spacing", "Use"]}>
+      {
+        styles.map(({ view, sample, font, size, tracking }) => (
+          <tr>
+            <td>
+              <span class={view.kebabName}>{sample}</span>
+            </td>
+            <th scope="row">
+              <code>{view.name}</code>
+            </th>
+            <td>{font}</td>
+            <td>{size}</td>
+            <td>{tracking}</td>
+            <td>{view.use}</td>
+          </tr>
+        ))
+      }
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Font families" lead="IBM Plex Sans JP for reading, IBM Plex Mono for code. The fallbacks keep text readable before the fonts load.">
+    <DocTable caption="Font families" columns={["Token", "Stack", "CSS"]}>
+      {
+        families.map((view) => (
+          <tr>
+            <th scope="row">
+              <code>{view.name}</code>
+            </th>
+            <td>{(view.token.$value as string[]).join(", ")}</td>
+            <td>
+              <code>{view.cssVar}</code>
+            </td>
+          </tr>
+        ))
+      }
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Each style is a class that sets font and letter spacing from two custom properties. The class names are the contract with Figma, since Figma text styles carry no code syntax.">
+    <CodeSample label="tokens.css" code={code} />
+  </DocSection>
+</DocsLayout>

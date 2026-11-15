@@ -1,0 +1,81 @@
+.ns-multiselect .ns-field-box {
+  position: relative;
+  flex-wrap: wrap;
+  block-size: auto;
+  min-block-size: var(--button-height-md);
+  padding-block: var(--space-1);
+}
+
+.ns-multiselect-input {
+  flex: 1;
+  min-inline-size: 6rem;
+}
+
+.ns-tag--removable {
+  gap: 0;
+  padding-inline-end: 0;
+}
+
+.ns-tag--code {
+  font: var(--type-code-sm);
+}
+
+.ns-multiselect-list {
+  position: absolute;
+  inset-block-start: calc(100% + var(--space-1));
+  inset-inline: calc(var(--border-width-1) * -1);
+  z-index: 1;
+  max-block-size: calc(var(--layout-row-default) * 8);
+  margin: 0;
+  overflow-y: auto;
+  background: var(--surface-overlay);
+  border: var(--border-width-1) solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--elevation-1);
+}
+
+.ns-multiselect-list[hidden] {
+  display: none;
+}
+
+.ns-multiselect-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-block-size: var(--layout-row-default);
+  padding-inline: var(--space-3);
+  font: var(--type-body-sm);
+  cursor: pointer;
+}
+
+.ns-multiselect-option--code > span:first-child {
+  font: var(--type-code-sm);
+}
+
+.ns-multiselect-option:hover,
+.ns-multiselect-option[aria-selected="true"] {
+  background: var(--surface-row-hover);
+}
+
+.ns-multiselect-option[aria-selected="true"] {
+  box-shadow: inset var(--border-width-2) 0 0 var(--border-focus);
+}
+
+.ns-multiselect-meta,
+.ns-multiselect-empty {
+  font: var(--type-caption);
+  color: var(--text-muted);
+}
+
+.ns-multiselect-empty {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+}
+
+@media (forced-colors: active) {
+  .ns-multiselect-option[aria-selected="true"] {
+    outline: var(--border-width-2) solid Highlight;
+    outline-offset: calc(var(--border-width-2) * -1);
+  }
+}

@@ -1,0 +1,94 @@
+.ns-accordion {
+  border-block-start: var(--border-width-1) solid var(--border-strong);
+}
+
+.ns-accordion-header {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  block-size: var(--layout-row-default);
+  padding: 0 var(--space-2) 0 var(--space-1);
+  color: var(--text-default);
+  cursor: pointer;
+  list-style: none;
+}
+
+.ns-accordion-header::-webkit-details-marker {
+  display: none;
+}
+
+.ns-accordion-header:hover {
+  background: var(--action-secondary-hover);
+}
+
+.ns-accordion-header:focus {
+  outline: none;
+}
+
+.ns-accordion-header:focus-visible {
+  outline: var(--border-width-2) solid var(--border-focus);
+  outline-offset: calc(var(--space-0-5) * -1);
+  border-radius: var(--radius-xs);
+}
+
+.ns-accordion-chevron {
+  display: flex;
+}
+
+.ns-accordion-chevron .ns-icon:last-child,
+.ns-accordion[open] .ns-accordion-chevron .ns-icon:first-child {
+  display: none;
+}
+
+.ns-accordion[open] .ns-accordion-chevron .ns-icon:last-child {
+  display: inline-block;
+}
+
+.ns-accordion-title {
+  flex: 1 0 auto;
+  font: var(--type-label);
+  letter-spacing: var(--type-label-letter-spacing);
+}
+
+.ns-accordion-summary {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font: var(--type-code-sm);
+  letter-spacing: var(--type-code-sm-letter-spacing);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ns-accordion-content {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2) var(--space-3) var(--space-6);
+}
+
+.ns-disclosure {
+  display: inline-flex;
+  gap: var(--space-0-5);
+  align-items: center;
+  min-block-size: var(--layout-target-min);
+  padding: 0 var(--space-1) 0 var(--space-0-5);
+  color: var(--text-link);
+  font: var(--type-body-sm);
+  letter-spacing: var(--type-body-sm-letter-spacing);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-xs);
+}
+
+.ns-disclosure:hover {
+  background: var(--action-secondary-hover);
+}
+
+.ns-disclosure:focus {
+  outline: none;
+}
+
+.ns-disclosure:focus-visible {
+  outline: var(--border-width-2) solid var(--border-focus);
+  outline-offset: 0;
+}

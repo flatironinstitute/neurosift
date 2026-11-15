@@ -1,4 +1,5 @@
 import { idToNum } from "./idToNum";
+import { PlotColors, readableOn } from "../plotColors";
 
 let offset = 0; // so that we change which is the 0th unit
 let stride = 1;
@@ -10,6 +11,16 @@ export const getUnitColor = (unitId: number | string) => {
   return colors[i];
 };
 
+/** The unit's color on a chart: unchanged on light, lifted only as far as it needs to read on dark. */
+export const getThemedUnitColor = (
+  unitId: number | string,
+  colors: PlotColors,
+  dark: boolean,
+) => {
+  const color = getUnitColor(unitId);
+  return dark ? readableOn(color, colors.surface) : color;
+};
+
 export const redistributeUnitColors = () => {
   if (num === undefined) num = colors.length;
   offset += 1; // so that we change which is the 0th unit
@@ -17,7 +28,6 @@ export const redistributeUnitColors = () => {
   if (num < colors.length - 6) {
     num = colors.length; // but don't let it get too low
   }
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     stride += 1;
     if (isRelativelyPrime(stride, num)) {

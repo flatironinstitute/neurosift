@@ -1,0 +1,150 @@
+---
+import Existing from "../../components/Existing.astro";
+import { CodeBlock, InlineCode } from "@ui";
+import CodeSample from "../../components/CodeSample.astro";
+import DoDont from "../../components/DoDont.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const SCRIPT = `import lindi
+
+url = 'https://api.dandiarchive.org/api/assets/65a7e913-45c7-48db-bf19-b9f5e910110a/download/'
+
+local_cache = lindi.LocalCache()
+
+# Load the remote file
+f = lindi.LindiH5pyFile.from_hdf5_file(url, local_cache=local_cache)
+
+# Load the neurodata object (ElectricalSeries)
+X = f['/acquisition/LFPs']
+
+starting_time = X['starting_time'][()]
+rate = X['starting_time'].attrs['rate']
+data = X['data']`;
+
+const JSON_SAMPLE = `{
+  "dandiset": "000728",
+  "version": "0.240827.1809",
+  "assets": 12
+}`;
+
+const OUTPUT = `Units: 412
+Sampling rate: 30000.0 Hz
+Duration: 1375.28 s`;
+
+const COLORS = [
+  ["code/text", "neutral/900", "Names, operators, punctuation", "16.50:1"],
+  ["code/keyword", "blue/600", "import, from, def, for, in, as", "6.84:1"],
+  ["code/string", "green/700", "Strings, including paths and URLs", "5.13:1"],
+  ["code/number", "amber/700", "Numbers", "4.92:1"],
+  ["code/comment", "neutral/600", "Comments, upright, not italic", "6.96:1"],
+  ["code/surface", "base/page", "Block background", "—"],
+];
+
+const WRITING = [
+  ["Copy", "Copy Script", "The header already says what’s copied"],
+  ["Copied", "Copied!", "No exclamation"],
+  ["Load in Python, as a disclosure with the code icon", "+ Load in Python / − Load in Python", "The icon replaces typed + and −"],
+  ["A Shell block for the install step", "# Prerequisites: in the code", "The step is a block, not a comment"],
+];
+
+const SPECS = [
+  ["Block", "code/surface · 1px border/strong · radius/sm"],
+  ["Header", "surface/panel · 1px border/subtle below · name in type/code-sm text/secondary · Button, Small, Ghost"],
+  ["Body", "12px padding · space/3 · Plex Mono 12/20"],
+  ["Line numbers", "text/muted · right-aligned · 12px gap · not selectable"],
+  ["Long lines", "Wrap with a 4-character hanging indent"],
+  ["Inline code", "code/surface · 1px border/subtle · radius/xs · 1px 4px padding · type/code-sm"],
+];
+
+const code = `import { CodeBlock, InlineCode } from "@ui";
+
+<CodeBlock language="shell" code="$ pip install --upgrade lindi" />
+<CodeBlock language="python" title={fileName} code={script} />
+<CodeBlock title="JSON" code={response} />
+<CodeBlock title="Output" code={result} />
+
+<p>Open <InlineCode>/acquisition/LFPs</InlineCode> in Python.</p>`;
+---
+
+<DocsLayout title="Code block" description="Code block and Inline code: Python people can copy, read and run.">
+  <Intro
+    lead="Code blocks hand people the Python they need to load what they’re looking at: the Python usage tab writes a script for the whole file, and Load in Python gives the lines for one object. It’s how people move from looking at data in Neurosift to analyzing it, so the code has to be easy to read, copy and run."
+    status="Updated November 10, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "Ready to paste", text: "Every block has a Copy button. Install steps get their own Shell block so they don’t end up in Python." },
+      { title: "Readable colors", text: "Four syntax colors from tokens, each 4.9:1 or more on the code surface. Red stays for errors." },
+      { title: "Nothing cut off", text: "Long lines wrap with a hanging indent, and line numbers follow the real lines." },
+    ]}
+  />
+
+  <Existing page="code" />
+
+  <DocSection title="Code block" lead="Two kinds: Script, with line numbers, and Shell, one command with a $ prompt that isn’t copied. Both have a header and a Copy button that confirms for 2 seconds.">
+    <div class="code-demo">
+      <CodeBlock client:visible language="shell" code="$ pip install --upgrade lindi" />
+      <CodeBlock client:visible language="python" code={SCRIPT} />
+    </div>
+    <p class="doc-note">The Load in Python lines for /acquisition/LFPs, as Neurosift writes them today: a Shell block for the install, then a Script block for the object. Each copies on its own. The Python usage tab uses one Script block for the whole file, with the file name in the header.</p>
+  </DocSection>
+
+  <DocSection title="Any language, and output" lead="Without a language, a block shows its code as plain text, named by its title: another language such as JSON or JavaScript, or what a script printed. It keeps the header, Copy and wrapping, without line numbers or syntax colors.">
+    <div class="code-demo">
+      <CodeBlock client:visible title="JSON" code={JSON_SAMPLE} />
+      <CodeBlock client:visible title="Output" code={OUTPUT} />
+    </div>
+    <p class="doc-note">Neurosift Chat shows the code it ran and what it printed this way. Its Copy button is named by the title, such as “Copy Output”, and copies every line as written, $ included.</p>
+  </DocSection>
+
+  <DocSection title="In Neurosift">
+    <ul class="rule-list">
+      <li><strong>Load in Python.</strong> A Shell block for pip install, then a Script block for the object. Both copy on their own.</li>
+      <li><strong>Python usage tab.</strong> One Script block for the whole file, with the file name in the header and Copy at the top right, replacing the full-width button.</li>
+      <li><strong>Same blocks everywhere.</strong> Usage scripts, Load in Python and any future code use the same component and colors.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Syntax colors" lead="The code tokens alias existing primitives. Contrast is measured on code/surface.">
+    <DocTable caption="Syntax colors" columns={["Token", "Primitive", "Used for", "Contrast"]}>
+      {COLORS.map(([token, primitive, use, contrast]) => <tr><th scope="row">{token}</th><td>{primitive}</td><td>{use}</td><td>{contrast}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Inline code" lead="A path, function or value inside a sentence.">
+    <p class="type-body inline-code-demo">Open <InlineCode>/acquisition/LFPs</InlineCode> with <InlineCode>lindi.LindiH5pyFile.from_hdf5_file()</InlineCode> and a local cache.</p>
+  </DocSection>
+
+  <DocSection title="Writing" lead="Rewrites of strings in the app today.">
+    <DocTable caption="Writing code blocks" columns={["Use", "Instead of", "Why"]}>
+      {WRITING.map(([use, instead, why]) => <tr><th scope="row">{use}</th><td>{instead}</td><td>{why}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Accessibility">
+    <ul class="rule-list">
+      <li><strong>Real text.</strong> Code is selectable text in pre and code, so screen readers and search can read it. Line numbers are hidden from both and can’t be selected.</li>
+      <li><strong>A named copy button.</strong> “Copy Python code” is the accessible name, or “Copy Output” for a plain block; “Copied” is announced in a status region.</li>
+      <li><strong>Not color alone.</strong> Syntax colors help scanning, but meaning never depends on them.</li>
+      <li><strong>Nothing to scroll.</strong> Lines wrap, so a block never scrolls sideways.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Give every block a Copy button.", "Split install commands from Python.", "Wrap long lines.", "Use real paths and URLs from the open file."]}
+      donts={["Don’t include the $ prompt in what’s copied.", "Don’t use italic or red for syntax.", "Don’t cut lines off at the edge.", "Don’t put code in a tooltip or alert()."]}
+    />
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Code block specs" columns={["Property", "Value"]}>
+      {SPECS.map(([property, value]) => <tr><th scope="row">{property}</th><td>{value}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. The block highlights Python and shell itself, from the code tokens. Leave out language for anything else, and give it a title.">
+    <CodeSample label="React" code={code} />
+  </DocSection>
+</DocsLayout>

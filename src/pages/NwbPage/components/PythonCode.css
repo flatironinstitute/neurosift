@@ -1,0 +1,24 @@
+.python-code,
+.python-code-frame {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.python-code-frame {
+  padding-block: var(--space-4);
+}
+
+.python-code-note {
+  margin: 0;
+  font: var(--type-caption);
+  color: var(--text-muted);
+}
+
+.python-code-note a {
+  color: var(--text-link);
+}
+
+.python-code-note a:hover {
+  color: var(--text-link-hover);
+}

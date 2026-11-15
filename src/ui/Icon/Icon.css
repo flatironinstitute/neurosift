@@ -1,0 +1,25 @@
+.ns-icon {
+  display: inline-block;
+  flex: none;
+  vertical-align: middle;
+}
+
+.ns-icon--sm {
+  inline-size: var(--icon-size-sm);
+  block-size: var(--icon-size-sm);
+}
+
+.ns-icon--md {
+  inline-size: var(--icon-size-md);
+  block-size: var(--icon-size-md);
+}
+
+.ns-icon--lg {
+  inline-size: var(--icon-size-lg);
+  block-size: var(--icon-size-lg);
+}
+
+.ns-icon--xl {
+  inline-size: var(--icon-size-xl);
+  block-size: var(--icon-size-xl);
+}

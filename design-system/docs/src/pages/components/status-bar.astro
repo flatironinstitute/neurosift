@@ -1,0 +1,66 @@
+---
+import { StatusBar } from "@ui";
+import CodeSample from "../../components/CodeSample.astro";
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const TODAY = [
+  ["19484 / 1267 / 97", "19,484 groups · 1,267 datasets · 97 data reads"],
+  ["g and d", "Spelled out: groups and datasets"],
+  ["Meaning only in a hover tooltip", "Words on the bar; more in Details"],
+];
+
+const SPECS = [
+  ["Height", "20px, layout/statusbar-height; 24px when it holds the Details button"],
+  ["Surface", "surface/panel with a 1px border/subtle above"],
+  ["Version", "type/code-sm, text/secondary"],
+  ["Items", "type/caption, text/muted, 16px apart, wrapping on narrow windows"],
+  ["Embedded", "Hidden when embedded=1"],
+];
+
+const code = `import { StatusBar } from "@ui";
+
+<StatusBar
+  version="v2.0.1"
+  items={["1,267 datasets", "97 data reads"]}
+  details="Counts of HDF5 groups and datasets read so far, through LINDI."
+/>`;
+---
+
+<DocsLayout title="Status bar" description="The build version and what the file has loaded, in words.">
+  <Intro
+    lead="The thin bar under the file viewer shows the build version and how much of the file has been read. Today its counts are bare numbers with single letters; here every count says what it counts."
+    status="Updated November 10, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "Numbers say what they count", text: "“1,267 datasets”, never “1267” or “d”." },
+      { title: "Detail on request", text: "Anything longer goes behind Details, not into a hover." },
+      { title: "Out of the way", text: "20px tall, muted text, and hidden when Neurosift is embedded." },
+    ]}
+  />
+
+  <DocSection title="Status bar" lead="While a file is read, and once it has loaded.">
+    <div class="section-demo">
+      <StatusBar version="v2.0.1" items={["Reading file structure, 1,267 datasets"]} />
+      <StatusBar version="v2.0.1" items={["19,484 groups", "1,267 datasets", "97 data reads"]} details="Counts of HDF5 groups and datasets read so far, through LINDI, and the data requests made for the open views." />
+    </div>
+  </DocSection>
+
+  <DocSection title="Today, rewritten">
+    <DocTable caption="Status bar today" columns={["Today", "With this component"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Status bar specs" columns={["Property", "Value"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. The file viewer words each count; the bar renders only from props.">
+    <CodeSample label="Status bar" code={code} />
+  </DocSection>
+</DocsLayout>

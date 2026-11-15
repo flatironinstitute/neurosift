@@ -1,0 +1,23 @@
+---
+import type { TokenView } from "../tokens";
+
+export type SampleKind = "swatch" | "bar" | "square" | "radius" | "border";
+
+interface Props {
+  view: TokenView;
+  kind: SampleKind;
+  extra?: string;
+}
+
+const CLASSES: Record<SampleKind, string> = {
+  swatch: "swatch",
+  bar: "space-bar",
+  square: "icon-square",
+  radius: "radius-sample",
+  border: "border-sample",
+};
+
+const { view, kind, extra } = Astro.props;
+---
+
+<span class:list={[CLASSES[kind], view.specimenClass, extra]} aria-hidden="true"></span>

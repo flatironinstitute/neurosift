@@ -1,0 +1,21 @@
+---
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+
+interface Props {
+  /** A file in assets/screens, without .png. */
+  file: string;
+  alt: string;
+  caption: string;
+}
+
+const screens = import.meta.glob<{ default: ImageMetadata }>("../assets/screens/*.png", { eager: true });
+const { file, alt, caption } = Astro.props;
+const found = screens[`../assets/screens/${file}.png`];
+if (!found) throw new Error(`Missing screen: ${file}.png`);
+---
+
+<figure class="capture screen">
+  <Image src={found.default} alt={alt} />
+  <figcaption class="type-body-sm">{caption}</figcaption>
+</figure>

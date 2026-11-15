@@ -1,0 +1,235 @@
+{
+  "$description": "High contrast: black surfaces, white text and rules, yellow focus. Plots stay on surface/plot.",
+  "surface": {
+    "page": {
+      "$type": "color",
+      "$value": "{color.black}"
+    },
+    "panel": {
+      "$type": "color",
+      "$value": "{color.black}"
+    },
+    "header": {
+      "$type": "color",
+      "$value": "{color.white}"
+    },
+    "overlay": {
+      "$type": "color",
+      "$value": "{color.black}"
+    },
+    "inverse": {
+      "$type": "color",
+      "$value": "{color.white}"
+    },
+    "row-hover": {
+      "$type": "color",
+      "$value": "{color.neutral.800}"
+    },
+    "row-selected": {
+      "$type": "color",
+      "$value": "{color.white}"
+    }
+  },
+  "text": {
+    "default": {
+      "$type": "color",
+      "$value": "{color.white}"
+    },
+    "secondary": {
+      "$type": "color",
+      "$value": "{color.white}"
+    },
+    "muted": {
+      "$type": "color",
+      "$value": "{color.neutral.300}"
+    },
+    "table-head": {
+      "$type": "color",
+      "$value": "{color.white}"
+    },
+    "link": {
+      "$type": "color",
+      "$value": "{color.blue.200}"
+    },
+    "link-hover": {
+      "$type": "color",
+      "$value": "{color.white}"
+    },
+    "on-inverse": {
+      "$type": "color",
+      "$value": "{color.black}"
+    },
+    "disabled": {
+      "$type": "color",
+      "$value": "{color.neutral.400}"
+    }
+  },
+  "action": {
+    "primary": {
+      "$type": "color",
+      "$value": "{color.white}"
+    },
+    "primary-hover": {
+      "$type": "color",
+      "$value": "{color.neutral.200}"
+    },
+    "primary-pressed": {
+      "$type": "color",
+      "$value": "{color.neutral.300}"
+    },
+    "secondary": {
+      "$type": "color",
+      "$value": "{color.black}"
+    },
+    "secondary-hover": {
+      "$type": "color",
+      "$value": "{color.neutral.800}"
+    },
+    "secondary-pressed": {
+      "$type": "color",
+      "$value": "{color.neutral.700}"
+    },
+    "disabled": {
+      "$type": "color",
+      "$value": "{color.neutral.800}"
+    },
+    "destructive": {
+      "$type": "color",
+      "$value": "{color.red.200}"
+    },
+    "destructive-hover": {
+      "$type": "color",
+      "$value": "{color.red.50}"
+    },
+    "destructive-pressed": {
+      "$type": "color",
+      "$value": "{color.white}"
+    }
+  },
+  "border": {
+    "subtle": {
+      "$type": "color",
+      "$value": "{color.neutral.400}"
+    },
+    "strong": {
+      "$type": "color",
+      "$value": "{color.white}"
+    },
+    "selected": {
+      "$type": "color",
+      "$value": "{color.yellow.300}"
+    },
+    "focus": {
+      "$type": "color",
+      "$value": "{color.yellow.300}"
+    },
+    "focus-inverse": {
+      "$type": "color",
+      "$value": "{color.black}"
+    },
+    "error": {
+      "$type": "color",
+      "$value": "{color.red.200}"
+    },
+    "disabled": {
+      "$type": "color",
+      "$value": "{color.neutral.600}"
+    }
+  },
+  "status": {
+    "error": {
+      "bg": {
+        "$type": "color",
+        "$value": "{color.black}"
+      },
+      "border": {
+        "$type": "color",
+        "$value": "{color.red.200}"
+      },
+      "text": {
+        "$type": "color",
+        "$value": "{color.red.200}"
+      }
+    },
+    "warning": {
+      "bg": {
+        "$type": "color",
+        "$value": "{color.black}"
+      },
+      "border": {
+        "$type": "color",
+        "$value": "{color.amber.200}"
+      },
+      "text": {
+        "$type": "color",
+        "$value": "{color.amber.200}"
+      }
+    },
+    "success": {
+      "bg": {
+        "$type": "color",
+        "$value": "{color.black}"
+      },
+      "border": {
+        "$type": "color",
+        "$value": "{color.green.200}"
+      },
+      "text": {
+        "$type": "color",
+        "$value": "{color.green.200}"
+      }
+    },
+    "info": {
+      "bg": {
+        "$type": "color",
+        "$value": "{color.black}"
+      },
+      "border": {
+        "$type": "color",
+        "$value": "{color.blue.200}"
+      },
+      "text": {
+        "$type": "color",
+        "$value": "{color.blue.200}"
+      }
+    }
+  },
+  "data": {
+    "selection": {
+      "$type": "color",
+      "$value": "{color.white-a10}"
+    }
+  },
+  "overlay": {
+    "backdrop": {
+      "$type": "color",
+      "$value": "{color.black-a60}"
+    }
+  },
+  "code": {
+    "surface": {
+      "$type": "color",
+      "$value": "{color.black}"
+    },
+    "text": {
+      "$type": "color",
+      "$value": "{color.white}"
+    },
+    "keyword": {
+      "$type": "color",
+      "$value": "{color.blue.200}"
+    },
+    "string": {
+      "$type": "color",
+      "$value": "{color.green.200}"
+    },
+    "number": {
+      "$type": "color",
+      "$value": "{color.amber.200}"
+    },
+    "comment": {
+      "$type": "color",
+      "$value": "{color.neutral.300}"
+    }
+  }
+}

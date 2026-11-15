@@ -1,0 +1,33 @@
+---
+import DocSection from "../../components/DocSection.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const PRINCIPLES = [
+  { title: "Start from the data, not the file", text: "Lead with what a recording contains, such as spikes, imaging and behavior, before the HDF5 paths that store it." },
+  { title: "Never leave people waiting in silence", text: "Every load shows progress, and every failure says what happened and what to do next, including missing credentials." },
+  { title: "Keep people’s place", text: "Searches, selections and plot settings live in the URL, so Back works and a shared link shows exactly what you saw." },
+  { title: "Accessible by default", text: "Meet WCAG 2.2 AA: visible focus, sufficient contrast, labelled controls and never color alone." },
+  { title: "One pattern, every view", text: "Time controls, channel pickers and plot settings work the same way in every view, and new views get them for free." },
+];
+---
+
+<DocsLayout title="Vision and principles" description="What Neurosift is for, and five rules that settle design decisions.">
+  <Intro
+    lead="Any researcher can open a neuroscience recording in their browser, find the signal they came for, and share exactly what they see."
+    status="Updated November 10, 2026 · Get started · The vision every page of this system serves"
+  />
+
+  <DocSection title="Design principles" lead="Five rules that settle decisions when two options both seem reasonable.">
+    <ol class="principles">
+      {
+        PRINCIPLES.map(({ title, text }) => (
+          <li>
+            <h3 class="type-h4">{title}</h3>
+            <p class="type-body">{text}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </DocSection>
+</DocsLayout>

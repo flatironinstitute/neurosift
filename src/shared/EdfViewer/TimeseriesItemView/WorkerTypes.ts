@@ -10,6 +10,11 @@ export type Opts = {
   hideLegend: boolean;
   legendOpts: { location: "northwest" | "northeast" };
   zoomInRequired: boolean;
+  // Chart palette, posted because a worker cannot read the CSS tokens.
+  textColor: string;
+  surfaceColor: string;
+  borderColor: string;
+  markColor: string;
 };
 
 export type DataSeries = {

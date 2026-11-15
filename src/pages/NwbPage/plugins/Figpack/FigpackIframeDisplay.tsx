@@ -1,4 +1,6 @@
+import { useCssVars } from "@components/useCssVars";
 import { FunctionComponent } from "react";
+import "./Figpack.css";
 
 type Props = {
   width?: number;
@@ -13,25 +15,13 @@ const FigpackIframeDisplay: FunctionComponent<Props> = ({
   figpackUrl,
   title,
 }) => {
+  const ref = useCssVars<HTMLDivElement>({
+    "--figpack-width": width ? `${width - 40}px` : "100%",
+    "--figpack-height": height ? `${height - 100}px` : "calc(100vh - 200px)",
+  });
   return (
-    <div
-      style={{
-        width: width ? width - 40 : "100%",
-        height: height ? height - 100 : "calc(100vh - 200px)",
-        border: "1px solid #d9d9d9",
-        borderRadius: "4px",
-        overflow: "hidden",
-      }}
-    >
-      <iframe
-        src={figpackUrl}
-        style={{
-          width: "100%",
-          height: "100%",
-          border: "none",
-        }}
-        title={title}
-      />
+    <div ref={ref} className="figpack-frame">
+      <iframe src={figpackUrl} title={title} />
     </div>
   );
 };

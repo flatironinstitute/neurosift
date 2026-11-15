@@ -1,3 +1,4 @@
+import { SettingPair, TextInput } from "@ui";
 import { FunctionComponent } from "react";
 
 type WindowRangeProps = {
@@ -5,37 +6,30 @@ type WindowRangeProps = {
   setWindowRangeStr: (x: { start: string; end: string }) => void;
 };
 
+/** Seconds before and after each aligned time. */
 const WindowRangeComponent: FunctionComponent<WindowRangeProps> = ({
   windowRangeStr,
   setWindowRangeStr,
 }) => {
+  const invalid = !(
+    parseFloat(windowRangeStr.end) > parseFloat(windowRangeStr.start)
+  );
   return (
-    <>
-      Window range (s):&nbsp;
-      <input
-        style={{ width: 50 }}
-        type="text"
+    <SettingPair>
+      <TextInput
+        label="From (s)"
+        size="sm"
         value={windowRangeStr.start}
-        onChange={(evt) => {
-          setWindowRangeStr({
-            start: evt.target.value,
-            end: windowRangeStr.end,
-          });
-        }}
+        onChange={(start) => setWindowRangeStr({ ...windowRangeStr, start })}
+        error={invalid ? "Use a number below To." : undefined}
       />
-      &nbsp;to&nbsp;
-      <input
-        style={{ width: 50 }}
-        type="text"
+      <TextInput
+        label="To (s)"
+        size="sm"
         value={windowRangeStr.end}
-        onChange={(evt) => {
-          setWindowRangeStr({
-            start: windowRangeStr.start,
-            end: evt.target.value,
-          });
-        }}
+        onChange={(end) => setWindowRangeStr({ ...windowRangeStr, end })}
       />
-    </>
+    </SettingPair>
   );
 };
 

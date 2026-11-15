@@ -1,0 +1,41 @@
+.nifti-viewer {
+  display: grid;
+  gap: var(--space-2);
+  inline-size: var(--nifti-width);
+  padding: var(--space-4);
+}
+
+.nifti-viewer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-2) var(--space-3);
+}
+
+.nifti-viewer-frames {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.nifti-viewer-controls > .ns-field {
+  min-inline-size: 9rem;
+}
+
+.nifti-viewer-canvas {
+  position: relative;
+  block-size: var(--nifti-height);
+}
+
+.nifti-viewer-canvas > canvas {
+  inline-size: 100%;
+  block-size: 100%;
+  border: var(--border-width-1) solid var(--border-subtle);
+}
+
+.nifti-viewer-location {
+  margin: 0;
+  padding-block-start: var(--space-2);
+  font: var(--type-body-sm);
+  color: var(--text-muted);
+  border-block-start: var(--border-width-1) solid var(--border-subtle);
+}

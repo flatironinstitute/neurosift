@@ -1,0 +1,8 @@
+.timeseries-canvas {
+  position: relative;
+  block-size: var(--plot-height);
+}
+
+.timeseries-separation {
+  inline-size: 12rem;
+}

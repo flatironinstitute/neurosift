@@ -1,0 +1,12 @@
+.object-tree {
+  display: grid;
+  gap: var(--space-2);
+  padding-block: var(--space-3);
+}
+
+.object-tree-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-block-start: var(--border-width-1) solid var(--border-subtle);
+}

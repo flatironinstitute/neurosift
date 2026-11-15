@@ -1,0 +1,59 @@
+/* An object's attributes, then its contents in a tree beside the selected item's details. */
+.default-view {
+  container-type: inline-size;
+  display: grid;
+  gap: var(--space-4);
+  padding-block: var(--space-4);
+}
+
+.default-view-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+}
+
+@container (width > 760px) {
+  .default-view-split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 400px);
+  }
+}
+
+.default-view-details {
+  min-inline-size: 0;
+}
+
+.default-view-object {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.default-view-header {
+  display: flex;
+  align-items: start;
+  gap: var(--space-2);
+}
+
+.default-view-title {
+  display: grid;
+  flex: 1;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.default-view-name {
+  margin: 0;
+  font: var(--type-label);
+  color: var(--text-default);
+}
+
+.default-view-path,
+.default-view-note {
+  margin: 0;
+  font: var(--type-caption);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.default-view-path {
+  font: var(--type-code-sm);
+}

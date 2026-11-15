@@ -1,20 +1,25 @@
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2";
-import { FunctionComponent, useEffect, useRef, useState } from "react";
-import { IconButton } from "@mui/material";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import PauseIcon from "@mui/icons-material/Pause";
-import SkipPreviousIcon from "@mui/icons-material/SkipPrevious";
+import {
+  FunctionComponent,
+  ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { formatSeconds, IconButton } from "@ui";
+import "./AudioPlayer.css";
 
 interface AudioPlayerProps {
   audioUrl: string;
   duration: number;
-  height: number;
+  /** Controls for the waveform below, at the end of the bar, such as its Light/Dark switch. */
+  actions?: ReactNode;
 }
 
 const AudioPlayer: FunctionComponent<AudioPlayerProps> = ({
   audioUrl,
   duration,
-  height,
+  actions,
 }) => {
   const { currentTime, setCurrentTime } = useTimeseriesSelection();
   const [isPlaying, setIsPlaying] = useState(false);
@@ -78,31 +83,25 @@ const AudioPlayer: FunctionComponent<AudioPlayerProps> = ({
   };
 
   return (
-    <div
-      style={{
-        height,
-        display: "flex",
-        alignItems: "center",
-        padding: "0 20px",
-        gap: 10,
-        backgroundColor: "#f5f5f5",
-        borderBottom: "1px solid #ddd",
-      }}
-    >
+    <section className="audio-player" aria-label="Audio player">
       <audio ref={audioRef} src={audioUrl} />
-      <IconButton onClick={handlePlayPause} size="small" sx={{ color: "#666" }}>
-        {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-      </IconButton>
-      <IconButton onClick={handleReset} size="small" sx={{ color: "#666" }}>
-        <SkipPreviousIcon />
-      </IconButton>
-      <span style={{ fontSize: "12px", color: "#666" }}>
-        {currentTime !== undefined
-          ? `${Math.floor(currentTime * 10) / 10}s`
-          : "0.0s"}{" "}
-        / {Math.floor(duration * 10) / 10}s
+      <IconButton
+        icon={isPlaying ? "pause" : "play"}
+        label={isPlaying ? "Pause" : "Play"}
+        size="sm"
+        onClick={handlePlayPause}
+      />
+      <IconButton
+        icon="skip--back"
+        label="Back to the start"
+        size="sm"
+        onClick={handleReset}
+      />
+      <span className="audio-player-time">
+        {formatSeconds(currentTime ?? 0)} s of {formatSeconds(duration)} s
       </span>
-    </div>
+      {actions && <div className="audio-player-actions">{actions}</div>}
+    </section>
   );
 };
 

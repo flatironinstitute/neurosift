@@ -1,0 +1,134 @@
+---
+import { Alert, Button, LoadingState, SkeletonRows } from "@ui";
+import CodeSample from "../../components/CodeSample.astro";
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const noop = () => {};
+
+const TODAY = [
+  ["Opening the DANDI archive list", "About 17 seconds before results, with no indicator", "Header and search appear at once; still skeleton rows; a count when the list arrives"],
+  ["Opening a two-photon movie (Dandiset 000728)", "“loading...” for over 3 minutes in a headless browser, with no progress. Needs checking in a normal browser", "The frame size and count appear first; progress for the first frame; after 15 s, what is slow and a way out"],
+  ["Any view loading", "“Loading...” in 16 places, plus internals like “Loading timeseries client...”", "“Loading LFPs…”, with chunk progress where it is known"],
+  ["The status bar", "Unlabeled numbers such as 19484 / 1267 / 97 and single letters g and d; their meaning is only in a hover tooltip", "Labeled in words, or tucked behind a Details control"],
+  ["Too much data at this zoom", "“Zoom in to view data”, with a hidden Shift+O shortcut to draw anyway", "Say why, and offer Zoom in and Draw anyway as buttons"],
+];
+
+const TIMING = [
+  ["0 to 100ms", "The control responds: pressed, opened, or the tab switches."],
+  ["100 to 300ms", "Nothing new. Most metadata arrives here, so no spinner flashes."],
+  ["300ms to 1 s", "A spinner in the place that is loading, held for at least 500ms."],
+  ["1 to 15 s", "The spinner plus what is loading, and progress when the chunk count is known."],
+  ["Over 15 s", "Stop spinning. Say what is slow or what failed, and offer Try again, a smaller window, or Load in Python."],
+];
+
+const INDICATORS = [
+  ["A button’s action", "A 16px spinner inside the button; the label stays", "Copying a link, saving an API key"],
+  ["One view", "A spinner and a label in the view, axes already drawn", "Loading LFPs…"],
+  ["Known number of chunks", "A progress bar with words", "Loading LFPs, 12 of 40 chunks"],
+  ["A list of Dandisets or files", "Still skeleton rows, no shimmer", "The DANDI archive list"],
+  ["The whole file’s structure", "Progress in the status bar, labeled", "Reading file structure, 1,267 datasets"],
+];
+
+const WRITING = [
+  ["Say what is loading", "Loading LFPs…", "Loading..."],
+  ["Give real progress", "12 of 40 chunks", "A bar that fills on a timer"],
+  ["Name what is slow", "DANDI is answering slowly. This is taking longer than usual.", "Please wait…"],
+  ["Offer a way out after 15 s", "Try a 1 s window, or Load in Python.", "An endless spinner"],
+];
+
+const A11Y = [
+  ["Mark the loading area", "aria-busy=true on the view while it loads, so screen readers don’t read half-drawn content."],
+  ["Announce start and end once", "“Loading LFPs.” Then “LFPs loaded”, or what failed. Never repeated while it spins."],
+  ["Progress has words", "A progress bar always has a text equivalent, such as “12 of 40 chunks”."],
+];
+const code = `import { LoadingState, useLoadingPhase } from "@ui";\n\nconst phase = useLoadingPhase(loading);\n\n<LoadingState\n  label="Loading LFPs"\n  phase={phase}\n  progress={{ value: chunks, max: total, unit: "chunks" }}\n/>`;
+---
+
+<DocsLayout title="Loading and large data" description="Say what is loading and how far along it is, and what very large data is doing.">
+  <Intro
+    lead="Neurosift streams parts of files that can be tens of gigabytes, from servers it doesn’t control. Waiting is normal; waiting without knowing why is not. Every load says what is loading and how far along it is, and very large data says what it is doing instead of silently refusing."
+    status="Updated November 9, 2026 · Usage guideline · Timing from the Motion page"
+    rules={[
+      { title: "Answer within 100ms", text: "Every click shows a response at once, even when the data takes longer." },
+      { title: "Show what you know", text: "Titles, paths, channel counts and axes appear first. Only the data itself waits." },
+      { title: "Say what and how much", text: "“Loading LFPs, 12 of 40 chunks”, not “Loading...”. Progress is real or absent, never invented." },
+    ]}
+  />
+
+  <DocSection title="What Neurosift does today" lead="From the November 5 walkthrough and the source.">
+    <DocTable caption="Loading today and with this guideline" columns={["Moment", "Today", "With this guideline"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Timing" lead="Fast answers need no indicator at all.">
+    <DocTable caption="Timing" columns={["Wait", "What people see"]}>
+      <DocRows rows={TIMING} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Which indicator" lead="Match the indicator to what is loading.">
+    <DocTable caption="Indicators" columns={["What’s loading", "Indicator", "Example"]}>
+      <DocRows rows={INDICATORS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="A view while it loads" lead="Everything known from the file is real. Only the traces wait.">
+    <div class="loading-demo">
+      <p class="type-h4">LFPs</p>
+      <p class="type-code-sm">/acquisition/LFPs · 70 channels at 400 Hz · 1,375.28 s</p>
+      <LoadingState label="Loading LFPs" phase="loading" progress={{ value: 12, max: 40, unit: "chunks" }} />
+      <div class="demo-row">
+        <Button variant="secondary" icon="copy" loading>Copy link</Button>
+      </div>
+    </div>
+    <p class="doc-note">Chunks that have arrived draw at once; the rest of the window waits. A button keeps its label while it works; see <a href={withBase("/components/buttons/")}>Buttons</a>.</p>
+  </DocSection>
+
+  <DocSection title="When it’s slow" lead="After 15 seconds the spinner stops, and the view says what is slow and offers a way out.">
+    <div class="loading-demo">
+      <LoadingState label="Loading LFPs" phase="slow" slow={{ message: "DANDI is answering slowly. This is taking longer than usual.", actions: [{ label: "Try again", onClick: noop }, { label: "Try a 1 s window", onClick: noop }] }} />
+    </div>
+  </DocSection>
+
+  <DocSection title="Lists while they load" lead="Still skeleton rows hold the space of a list, such as the DANDI archive list, until it arrives. They never shimmer, and screen readers skip them.">
+    <div class="loading-demo">
+      <SkeletonRows rows={4} />
+    </div>
+  </DocSection>
+
+  <DocSection title="Too much to draw" lead="Some windows hold more samples than a browser can draw quickly. Neurosift says so, and lets people choose.">
+    <div class="alert-demo">
+      <Alert status="warning" title="Too much data to draw at this zoom" actions={[{ label: "Zoom in to 1 s", onClick: noop }, { label: "Draw anyway", onClick: noop }]}>
+        This window holds 384 channels at 30 kHz for 60 s, about 691 million samples. Zoom in to see the traces, or draw them anyway, which may be slow.
+      </Alert>
+    </div>
+    <ul class="rule-list">
+      <li>Say how much and why, in the units people know: channels, rate and seconds.</li>
+      <li>Offer the fix as buttons. Today’s Shift+O override becomes Draw anyway.</li>
+      <li>Start with a window that draws quickly, and remember the reader’s choice for the session.</li>
+      <li>Never drop or average samples silently. If a view downsamples, it says so beside the axis.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Writing while people wait" lead="Say what is happening, in the data’s own terms.">
+    <DocTable caption="Writing while loading" columns={["Guideline", "Write", "Not"]}>
+      <DocRows rows={WRITING} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Accessibility">
+    <DocTable caption="Loading accessibility" columns={["Rule", "Detail"]}>
+      <DocRows rows={A11Y} />
+    </DocTable>
+    <p class="doc-note">Chunk counts depend on how each file is chunked; where Neurosift can’t know the total, it shows a spinner and words instead of a progress bar.</p>
+  </DocSection>
+  <DocSection title="In code" lead="Import from @ui. useLoadingPhase turns “is it loading?” into the guideline’s timing; LoadingState, ProgressBar and SkeletonRows render only from props.">
+    <CodeSample label="Loading state" code={code} />
+  </DocSection>
+</DocsLayout>

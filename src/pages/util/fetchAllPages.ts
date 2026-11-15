@@ -11,6 +11,16 @@ export type PaginatedResponse<T> = {
 // client looping; a directory of this many pages is not a realistic case.
 export const MAX_PAGES = 200;
 
+/** A failed page request, with its HTTP status, such as 404 for a path that isn't there. */
+export class FetchPageError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
 export const fetchAllPages = async <T>(
   firstUrl: string,
   headers?: { [key: string]: string },
@@ -20,7 +30,10 @@ export const fetchAllPages = async <T>(
   for (let page = 0; url && page < MAX_PAGES; page++) {
     const response = await fetch(url, { headers });
     if (!response.ok) {
-      throw new Error(`Request failed (${response.status}) for ${url}`);
+      throw new FetchPageError(
+        `Request failed (${response.status}) for ${url}`,
+        response.status,
+      );
     }
     const data = (await response.json()) as PaginatedResponse<T>;
     results.push(...data.results);

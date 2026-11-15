@@ -1,5 +1,8 @@
+import { useCssVars } from "@components/useCssVars";
+import { usePlotColors } from "@shared/plotTheme";
+import { Spinner } from "@ui";
 import { FunctionComponent, useEffect, useMemo, useRef } from "react";
-import "./spectrogramBusy.css";
+import "./LfpSpectrogramView.css";
 import { applyColormap, ColormapName } from "./colormap";
 import { plotMargins, PlotMargins } from "./plotConstants";
 import { NormalizationMode } from "./spectralConfig";
@@ -47,6 +50,15 @@ type Props = {
 
 const GAP_RGB: [number, number, number] = [70, 70, 76];
 
+const hexToRgb = (hex: string): [number, number, number] =>
+  /^#[0-9a-f]{6}$/i.test(hex)
+    ? ([1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as [
+        number,
+        number,
+        number,
+      ])
+    : [255, 255, 255];
+
 const percentile = (sorted: Float64Array, p: number): number => {
   if (sorted.length === 0) return 0;
   const idx = Math.min(
@@ -85,6 +97,7 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
   margins = plotMargins,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const colors = usePlotColors();
 
   const plotW = width - margins.left - margins.right;
   const plotH = height - margins.top - margins.bottom;
@@ -233,7 +246,7 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
         if (isGap) {
           [rr, gg, bb] = GAP_RGB;
         } else if (bin < 0) {
-          rr = gg = bb = 255;
+          [rr, gg, bb] = hexToRgb(colors.surface);
         } else {
           const raw = powers[w * numFreqs + bin];
           if (!Number.isFinite(raw)) {
@@ -266,6 +279,7 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
     colormap,
     vMin,
     vMax,
+    colors.surface,
   ]);
 
   useEffect(() => {
@@ -318,7 +332,7 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
       );
       ctx.restore();
     } else {
-      ctx.fillStyle = "#888";
+      ctx.fillStyle = colors.textMuted;
       ctx.font = "14px sans-serif";
       ctx.textAlign = "center";
       const computingText =
@@ -354,20 +368,28 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
     ctx.restore();
 
     // Axes frame
-    ctx.strokeStyle = "#333";
+    ctx.strokeStyle = colors.mark;
     ctx.lineWidth = 1;
     ctx.strokeRect(margins.left, margins.top, plotW, plotH);
 
     // Time axis (x)
-    ctx.fillStyle = "#222";
+    ctx.fillStyle = colors.text;
     ctx.font = "11px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    for (let i = 0; i <= 6; i++) {
-      const frac = i / 6;
+    const widest = Math.max(
+      ctx.measureText(visibleStartTimeSec.toFixed(2)).width,
+      ctx.measureText(visibleEndTimeSec.toFixed(2)).width,
+    );
+    const xDivisions = Math.max(
+      1,
+      Math.min(6, Math.floor(plotW / (widest + 12))),
+    );
+    for (let i = 0; i <= xDivisions; i++) {
+      const frac = i / xDivisions;
       const x = margins.left + frac * plotW;
       const t = visibleStartTimeSec + frac * visSpan;
-      ctx.strokeStyle = "#999";
+      ctx.strokeStyle = colors.gridMajor;
       ctx.beginPath();
       ctx.moveTo(x, margins.top + plotH);
       ctx.lineTo(x, margins.top + plotH + 4);
@@ -382,12 +404,12 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
     const yticks = logFreq ? logTicks(fLo, fHi) : linTicks(fLo, fHi, 6);
     for (const f of yticks) {
       const y = freqToY(f);
-      ctx.strokeStyle = "#999";
+      ctx.strokeStyle = colors.gridMajor;
       ctx.beginPath();
       ctx.moveTo(margins.left - 4, y);
       ctx.lineTo(margins.left, y);
       ctx.stroke();
-      ctx.fillStyle = "#222";
+      ctx.fillStyle = colors.text;
       ctx.fillText(
         f >= 100 ? f.toFixed(0) : f.toFixed(f < 10 ? 1 : 0),
         margins.left - 6,
@@ -407,7 +429,7 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
       const yA = freqToY(Math.max(fLo, fc - smoothingBoxHz / 2));
       const yB = freqToY(Math.min(fHi, fc + smoothingBoxHz / 2));
       const barX = margins.left + 10;
-      ctx.strokeStyle = "#000";
+      ctx.strokeStyle = colors.mark;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(barX, yA);
@@ -419,7 +441,7 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
       ctx.moveTo(barX - 3, yB);
       ctx.lineTo(barX + 3, yB);
       ctx.stroke();
-      ctx.fillStyle = "#000";
+      ctx.fillStyle = colors.mark;
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
       ctx.font = "10px sans-serif";
@@ -439,9 +461,9 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
       }
       ctx.fillStyle = grad;
       ctx.fillRect(barX, barTop, barW, barH);
-      ctx.strokeStyle = "#333";
+      ctx.strokeStyle = colors.mark;
       ctx.strokeRect(barX, barTop, barW, barH);
-      ctx.fillStyle = "#222";
+      ctx.fillStyle = colors.text;
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
       ctx.font = "10px sans-serif";
@@ -477,31 +499,37 @@ const SpectrogramWidget: FunctionComponent<Props> = ({
     loading,
     progress,
     margins,
+    colors,
   ]);
 
   // The badge sits inside the plot frame rather than over its middle, so the
   // image underneath stays readable while a new one is being computed.
   const busyLabel = stale ? "Updating" : "Computing";
+  const frameRef = useCssVars<HTMLDivElement>({
+    "--spectrogram-w": width,
+    "--spectrogram-h": height,
+    "--margin-top": margins.top,
+    "--margin-right": margins.right,
+  });
   const pct =
     progress != null && progress > 0 && progress < 1
       ? ` ${Math.round(progress * 100)}%`
       : "";
 
   return (
-    <div style={{ position: "relative", width, height }}>
+    <div ref={frameRef} className="lfp-spectrogram-widget">
       <canvas
         ref={canvasRef}
         width={width}
         height={height}
-        style={{ display: "block" }}
+        className="lfp-spectrogram-canvas"
       />
       {showBusyIndicator && result && (
         <div
-          className="spectrogramBusyBadge"
-          style={{ top: margins.top + 4, right: margins.right + 4 }}
+          className="lfp-spectrogram-badge"
           title="A new spectrogram is being computed; the image shown is the previous one."
         >
-          <span className="spectrogramBusySpinner" />
+          <Spinner />
           <span>
             {busyLabel}
             {pct}

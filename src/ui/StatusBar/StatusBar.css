@@ -1,0 +1,17 @@
+.ns-statusbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-4);
+  min-block-size: var(--layout-statusbar-height);
+  padding-inline: var(--space-3);
+  font: var(--type-caption);
+  color: var(--text-muted);
+  background: var(--surface-panel);
+  border-block-start: var(--border-width-1) solid var(--border-subtle);
+}
+
+.ns-statusbar-version {
+  font: var(--type-code-sm);
+  color: var(--text-secondary);
+}

@@ -1,14 +1,6 @@
 export type StatusBarItem =
-  | {
-      type: "progress";
-      label: string;
-      progress: number; // out of 100
-    }
-  | {
-      type: "text";
-      text: string;
-      tooltip?: string; // Optional tooltip for text items
-    };
+  | { type: "stats"; groups: number; datasets: number; reads: number }
+  | { type: "reading"; what: "group" | "dataset" | "data"; path: string };
 
 type StatusItems = { [key: string]: StatusBarItem };
 type Callback = (items: StatusItems) => void;

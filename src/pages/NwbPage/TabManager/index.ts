@@ -19,7 +19,7 @@ interface UseTabManagerResult {
     plugin?: NwbObjectViewPlugin,
     secondaryPaths?: string[],
   ) => Promise<void>;
-  handleCloseTab: (id: string, event: React.MouseEvent) => void;
+  handleCloseTab: (id: string, event?: React.MouseEvent) => void;
   handleSwitchTab: (id: string) => void;
 }
 
@@ -142,8 +142,8 @@ export const useTabManager = ({
     });
   };
 
-  const handleCloseTab = (id: string, event: React.MouseEvent) => {
-    event.stopPropagation();
+  const handleCloseTab = (id: string, event?: React.MouseEvent) => {
+    event?.stopPropagation();
     dispatch({ type: "CLOSE_TAB", id });
   };
 

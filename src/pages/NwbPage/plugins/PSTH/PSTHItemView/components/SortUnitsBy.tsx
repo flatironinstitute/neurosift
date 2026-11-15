@@ -1,5 +1,6 @@
-import { FunctionComponent, useMemo } from "react";
 import { useHdf5Group } from "@hdf5Interface";
+import { SegmentedControl, Select } from "@ui";
+import { FunctionComponent, useMemo } from "react";
 
 type SortUnitsBySelectionProps = {
   sortUnitsByVariable: [string, "asc" | "desc"] | undefined;
@@ -8,55 +9,46 @@ type SortUnitsBySelectionProps = {
   unitsPath: string;
 };
 
+/** A column of the units table to sort by, then the direction. */
 const SortUnitsBySelectionComponent: FunctionComponent<
   SortUnitsBySelectionProps
 > = ({ sortUnitsByVariable, setSortUnitsByVariable, nwbUrl, unitsPath }) => {
   const group = useHdf5Group(nwbUrl, unitsPath);
-  const colnames = useMemo(() => group?.attrs?.colnames || undefined, [group]);
-  const variableNames: string[] | undefined = useMemo(
+  const variableNames: string[] = useMemo(
     () =>
-      colnames
-        ? colnames.filter(
-            (name: string) =>
-              !["spike_times", "spike_times_index", "id"].includes(name),
-          )
-        : [],
-    [colnames],
+      (group?.attrs?.colnames ?? []).filter(
+        (name: string) =>
+          !["spike_times", "spike_times_index", "id"].includes(name),
+      ),
+    [group],
   );
-
+  const [column, direction] = sortUnitsByVariable ?? ["", "asc"];
   return (
     <>
-      Sort units by:&nbsp;
-      <select
-        value={sortUnitsByVariable ? sortUnitsByVariable[0] : ""}
-        onChange={(evt) => {
-          setSortUnitsByVariable([
-            evt.target.value,
-            sortUnitsByVariable ? sortUnitsByVariable[1] : "asc",
-          ]);
-        }}
-        style={{ maxWidth: 150 }}
-      >
-        <option value="">(none)</option>
-        {variableNames?.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-      &nbsp;
-      <select
-        value={sortUnitsByVariable ? sortUnitsByVariable[1] : "asc"}
-        onChange={(evt) => {
-          setSortUnitsByVariable([
-            sortUnitsByVariable ? sortUnitsByVariable[0] : "",
-            evt.target.value as "asc" | "desc",
-          ]);
-        }}
-      >
-        <option value="asc">Ascending</option>
-        <option value="desc">Descending</option>
-      </select>
+      <Select
+        label="Sort units by"
+        size="sm"
+        value={column}
+        onChange={(c) => setSortUnitsByVariable(c ? [c, direction] : undefined)}
+        options={[
+          { value: "", label: "None" },
+          ...variableNames.map((v) => ({ value: v, label: v })),
+        ]}
+      />
+      {column && (
+        <SegmentedControl
+          label="Order"
+          size="sm"
+          value={direction}
+          onChange={(d) =>
+            setSortUnitsByVariable([column, d as "asc" | "desc"])
+          }
+          options={[
+            { value: "asc", label: "Ascending" },
+            { value: "desc", label: "Descending" },
+          ]}
+        />
+      )}
     </>
   );
 };

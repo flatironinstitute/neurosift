@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import Plot from "@components/LazyPlot";
 import { Data } from "plotly.js";
+import { usePlotColors } from "@shared/plotTheme";
+import { themedLayout } from "@shared/plotlyTheme";
 
 type Props = {
   plotData: {
@@ -13,6 +15,7 @@ type Props = {
 };
 
 const RasterViewPlot = ({ plotData }: Props) => {
+  const colors = usePlotColors();
   const { traces, layout } = useMemo(() => {
     // Calculate marker size based on number of units
     // More units -> smaller markers, fewer units -> larger markers
@@ -35,22 +38,19 @@ const RasterViewPlot = ({ plotData }: Props) => {
           symbol: "line-ns", // vertical line marker
           line: {
             width: Math.max(1, markerSize / 4), // Scale line width with marker size
-            color: "black",
+            color: colors.mark,
           },
         },
         hoverinfo: "x+name" as const,
       };
     });
 
-    const layout = {
-      title: "Spike Raster Plot",
+    const layout = themedLayout(colors, {
+      title: { text: "Spike Raster Plot" },
       xaxis: {
         title: {
           text: "Time (s)",
-          font: {
-            size: 14,
-            color: "#000",
-          },
+          font: { size: 14 },
           standoff: 15,
         },
         showgrid: false,
@@ -61,10 +61,7 @@ const RasterViewPlot = ({ plotData }: Props) => {
       yaxis: {
         title: {
           text: "Unit",
-          font: {
-            size: 14,
-            color: "#000",
-          },
+          font: { size: 14 },
           standoff: 15,
         },
         ticktext: plotData.unitIds,
@@ -84,10 +81,10 @@ const RasterViewPlot = ({ plotData }: Props) => {
         t: 50,
         b: 50,
       },
-    };
+    });
 
     return { traces, layout };
-  }, [plotData]);
+  }, [plotData, colors]);
 
   return (
     <div style={{ width: "100%", height: "100%" }}>

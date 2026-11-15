@@ -1,18 +1,17 @@
 import { FunctionComponent, useMemo, useState } from "react";
 import Plot from "@components/LazyPlot";
+import {
+  useTimeAxisRef,
+  type AxisInsets,
+} from "@shared/context-timeseries-selection-2";
+import { panRange, plotInsets } from "./plotlyTimeAxis";
+import { Button } from "@ui";
+import "./TimeseriesPlot.css";
+import { usePlotColors, usePlotTheme } from "@shared/plotTheme";
+import { themedLayout } from "@shared/plotlyTheme";
+import { traceColors } from "@shared/tracePalette";
 
 import { TimeseriesPlotProps as Props } from "./types";
-
-const colors = [
-  "#1f77b4", // blue
-  "#ff7f0e", // orange
-  "#2ca02c", // green
-  "#d62728", // red
-  "#9467bd", // purple
-  "#8c564b", // brown
-  "#e377c2", // pink
-  "#7f7f7f", // gray
-];
 
 const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
   timestamps = [],
@@ -24,7 +23,26 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
   width = 700,
   height = 300,
   zoomInRequired = false,
+  onVisibleTimeChange,
 }) => {
+  const plotColors = usePlotColors();
+  const { plotTheme } = usePlotTheme();
+  const colors = useMemo(
+    () => traceColors(plotColors, plotTheme === "dark"),
+    [plotColors, plotTheme],
+  );
+  const [insets, setInsets] = useState<AxisInsets>({
+    left: 50,
+    right: 20,
+    top: 20,
+    bottom: 50,
+  });
+  const axisRef = useTimeAxisRef(insets);
+  const readInsets = (_: unknown, graph: HTMLElement) => {
+    const next = plotInsets(graph);
+    if (next && JSON.stringify(next) !== JSON.stringify(insets))
+      setInsets(next);
+  };
   // State for legend visibility
   const [showLegend, setShowLegend] = useState<boolean>(true);
 
@@ -76,46 +94,44 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
         },
         name: channelNames ? channelNames[i] : `Channel ${i}`,
       })),
-    [channelNames, separatedChannelData, timestamps],
+    [channelNames, separatedChannelData, timestamps, colors],
   );
 
   const layout = useMemo(
-    () => ({
-      width: width || 700,
-      height: height || 300,
-      margin: {
-        l: 50,
-        r: 20,
-        t: 20,
-        b: 50,
-      },
-      xaxis: {
-        title: {
-          text: "Time (s)",
-          font: {
-            size: 14,
-            color: "#000",
-          },
-          standoff: 10,
+    () =>
+      themedLayout(plotColors, {
+        width: width || 700,
+        height: height || 300,
+        margin: {
+          l: 50,
+          r: 20,
+          t: 20,
+          b: 50,
         },
-        range: [visibleStartTime, visibleEndTime],
-        showticklabels: true,
-        showgrid: true,
-      },
-      yaxis: {
-        title: {
-          text: channelSeparation > 0 ? "Value (channels separated)" : "Value",
-          font: {
-            size: 14,
-            color: "#000",
+        xaxis: {
+          title: {
+            text: "Time (s)",
+            font: { size: 14 },
+            standoff: 10,
           },
-          standoff: 5,
+          range: [visibleStartTime, visibleEndTime],
+          showticklabels: true,
+          showgrid: true,
         },
-        showticklabels: true,
-        showgrid: true,
-      },
-      showlegend: showLegend,
-    }),
+        yaxis: {
+          title: {
+            text:
+              channelSeparation > 0 ? "Value (channels separated)" : "Value",
+            font: { size: 14 },
+            standoff: 5,
+          },
+          showticklabels: true,
+          showgrid: true,
+          fixedrange: true,
+        },
+        showlegend: showLegend,
+        dragmode: "pan" as const,
+      }),
     [
       channelSeparation,
       height,
@@ -123,6 +139,7 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
       visibleStartTime,
       width,
       showLegend,
+      plotColors,
     ],
   );
 
@@ -130,28 +147,14 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
     () => ({
       responsive: true,
       displayModeBar: false,
+      doubleClick: false as const,
     }),
     [],
   );
 
   if (zoomInRequired) {
     return (
-      <div
-        style={{
-          width: width - 20,
-          height,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#f8f9fa",
-          border: "1px solid #dee2e6",
-          borderRadius: "4px",
-          padding: "20px",
-          margin: "10px",
-          color: "#dc3545",
-          fontSize: "14px",
-        }}
-      >
+      <div className="timeseries-plotly-zoom">
         Please zoom in to view the data - current view would load too many
         points
       </div>
@@ -164,28 +167,28 @@ const TimeseriesPlot: FunctionComponent<Partial<Props>> = ({
 
   return (
     <div>
-      <div
-        style={{
-          marginBottom: "10px",
-          display: "flex",
-          justifyContent: "flex-end",
-        }}
-      >
-        <button
+      <div className="timeseries-plotly-legend-toggle">
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => setShowLegend(!showLegend)}
-          style={{
-            padding: "5px 10px",
-            backgroundColor: "#f8f9fa",
-            border: "1px solid #dee2e6",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontSize: "12px",
-          }}
         >
           {showLegend ? "Hide Legend" : "Show Legend"}
-        </button>
+        </Button>
       </div>
-      <Plot data={plotData} layout={layout} config={config} />
+      <div ref={axisRef} className="timeseries-plotly">
+        <Plot
+          data={plotData}
+          layout={layout}
+          config={config}
+          onInitialized={readInsets}
+          onUpdate={readInsets}
+          onRelayout={(event) => {
+            const range = panRange(event);
+            if (range) onVisibleTimeChange?.(range[0], range[1]);
+          }}
+        />
+      </div>
     </div>
   );
 };

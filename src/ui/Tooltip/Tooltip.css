@@ -1,0 +1,93 @@
+/* The wrapper draws no box, so the trigger lays out as if it weren't there. */
+.ns-tooltip-anchor {
+  display: contents;
+}
+
+.ns-tooltip {
+  --arrow-length: calc(var(--space-1) + var(--space-0-5));
+  --arrow-width: calc(var(--space-2) + var(--space-0-5));
+  --offset: calc(var(--arrow-length) + var(--space-1));
+
+  inset: auto;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  margin: 0;
+  overflow: visible;
+  font: var(--type-caption);
+  color: var(--text-on-inverse);
+  white-space: nowrap;
+  background: var(--surface-inverse);
+  border: 0;
+  border-radius: var(--radius-xs);
+  outline: var(--border-width-1) solid transparent;
+}
+
+.ns-tooltip:popover-open {
+  display: flex;
+}
+
+.ns-tooltip-key {
+  padding: 0 var(--space-1);
+  font: var(--type-code-sm);
+  border: var(--border-width-1) solid currentcolor;
+  border-radius: var(--radius-xs);
+}
+
+.ns-tooltip-arrow {
+  position: absolute;
+  background: inherit;
+}
+
+/* The caller picks the side with room, as in Figma: above by default, below in the app bar. */
+.ns-tooltip--top {
+  position-area: top;
+  margin-block-end: var(--offset);
+}
+
+.ns-tooltip--bottom {
+  position-area: bottom;
+  margin-block-start: var(--offset);
+}
+
+.ns-tooltip--left {
+  position-area: left;
+  margin-inline-end: var(--offset);
+}
+
+.ns-tooltip--right {
+  position-area: right;
+  margin-inline-start: var(--offset);
+}
+
+:is(.ns-tooltip--top, .ns-tooltip--bottom) .ns-tooltip-arrow {
+  inset-inline-start: calc(50% - var(--arrow-width) / 2);
+  inline-size: var(--arrow-width);
+  block-size: var(--arrow-length);
+}
+
+:is(.ns-tooltip--left, .ns-tooltip--right) .ns-tooltip-arrow {
+  inset-block-start: calc(50% - var(--arrow-width) / 2);
+  inline-size: var(--arrow-length);
+  block-size: var(--arrow-width);
+}
+
+.ns-tooltip--top .ns-tooltip-arrow {
+  inset-block-start: 100%;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.ns-tooltip--bottom .ns-tooltip-arrow {
+  inset-block-end: 100%;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.ns-tooltip--left .ns-tooltip-arrow {
+  inset-inline-start: 100%;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+.ns-tooltip--right .ns-tooltip-arrow {
+  inset-inline-end: 100%;
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
+}

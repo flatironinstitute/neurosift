@@ -1,0 +1,200 @@
+.ns-object-children,
+.ns-selection-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ns-object-row--level-2 > .ns-object-line {
+  padding-inline-start: calc(var(--space-4) * 1);
+}
+
+.ns-object-row--level-3 > .ns-object-line {
+  padding-inline-start: calc(var(--space-4) * 2);
+}
+
+.ns-object-row--level-4 > .ns-object-line {
+  padding-inline-start: calc(var(--space-4) * 3);
+}
+
+.ns-object-row--level-5 > .ns-object-line {
+  padding-inline-start: calc(var(--space-4) * 4);
+}
+
+.ns-object-row--level-6 > .ns-object-line {
+  padding-inline-start: calc(var(--space-4) * 5);
+}
+
+.ns-object-line {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-block-size: var(--layout-row-default);
+  padding-block: var(--space-1);
+  border-block-end: var(--border-width-1) solid var(--border-subtle);
+}
+
+.ns-object-line:hover {
+  background: var(--surface-row-hover);
+}
+
+.ns-object-line:has(> .ns-checkbox input:checked) {
+  background: var(--surface-row-hover);
+}
+
+.ns-object-toggle {
+  flex: none;
+  inline-size: var(--layout-target-min);
+}
+
+.ns-object-icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  block-size: var(--layout-target-min);
+  color: var(--text-muted);
+}
+
+.ns-object-main {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-1);
+  min-inline-size: 0;
+  padding-block: var(--space-0-5);
+}
+
+.ns-object-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-3);
+}
+
+.ns-object-name,
+.ns-view-chip-name {
+  min-block-size: var(--layout-target-min);
+  padding: 0;
+  font: var(--type-body-sm);
+  font-weight: 600;
+  color: var(--text-default);
+  text-align: start;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.ns-object-name:hover,
+.ns-view-chip-name:hover {
+  color: var(--text-link);
+  text-decoration: underline;
+}
+
+.ns-object-name:focus-visible,
+.ns-view-chip-name:focus-visible {
+  outline: var(--border-width-2) solid var(--border-focus);
+  outline-offset: var(--space-0-5);
+}
+
+.ns-object-name,
+.ns-object-type {
+  flex: none;
+}
+
+.ns-object-type {
+  font: var(--type-code-sm);
+  color: var(--text-muted);
+}
+
+.ns-object-type--view {
+  color: var(--text-link);
+}
+
+.ns-object-views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ns-view-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-inline: var(--space-1) var(--space-2);
+  border: var(--border-width-1) solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.ns-view-chip-name {
+  font-weight: 400;
+}
+
+/* Takes what the line has left; with less than 8rem it moves to a line of its own. */
+.ns-object-description {
+  flex: 1 1 0;
+  min-inline-size: min(calc(var(--space-16) * 2), 100%);
+  overflow: hidden;
+  font: var(--type-caption);
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ns-selection-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  font: var(--type-body-sm);
+  background: var(--surface-row-hover);
+  border-block-end: var(--border-width-1) solid var(--border-subtle);
+}
+
+.ns-selection-names {
+  min-inline-size: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.ns-selection-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-inline-start: auto;
+}
+
+.ns-selection-total {
+  display: none;
+}
+
+@media (width <= 768px) {
+  .ns-selection-names {
+    display: none;
+  }
+
+  .ns-selection-total {
+    display: inline;
+  }
+}
+
+.ns-selection-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-block-size: var(--layout-row-default);
+  padding-inline: var(--space-3) var(--space-1);
+  border-block-end: var(--border-width-1) solid var(--border-subtle);
+}
+
+.ns-selection-item-text {
+  display: grid;
+  min-inline-size: 0;
+  font: var(--type-body-sm);
+}
+
+.ns-selection-item-context {
+  font: var(--type-code-sm);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}

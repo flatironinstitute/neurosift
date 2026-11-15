@@ -9,6 +9,7 @@ import React, {
   useState,
 } from "react";
 import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
+import "./TimeseriesSelectionBar.css";
 
 type Props = {
   width: number;
@@ -136,7 +137,6 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({
 
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDrag = useCallback((_evt: DraggableEvent, _ui: DraggableData) => {
     setIsDragging(true);
   }, []);
@@ -193,13 +193,13 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({
   ) {
     return (
       <div
+        className="ts-selection-bar"
         style={{
           position: "absolute",
           left: 0,
           top: 0,
           width,
           height,
-          backgroundColor: "white",
         }}
       />
     );
@@ -207,35 +207,34 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({
 
   return (
     <div
+      className="ts-selection-bar"
       style={{
         position: "absolute",
         left: 0,
         top: 0,
         width,
         height,
-        backgroundColor: "white",
-        userSelect: "none",
       }}
       onMouseUp={handleMouseUp}
     >
       <div
+        className="ts-selection-track"
         style={{
           position: "absolute",
           left: 0,
           top: a0,
           width,
           height: height - a0 * 2,
-          backgroundColor: "lightgray",
         }}
       />
       <div
+        className="ts-selection-cursor"
         style={{
           position: "absolute",
           left: x0 - 1,
           top: 0,
           width: 3,
           height: height,
-          backgroundColor: "red",
         }}
       />
       {x1 !== undefined &&
@@ -254,23 +253,23 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({
             position={dragPosition}
           >
             <div
+              className="ts-selection-range"
               style={{
                 position: "absolute",
                 left: y1,
                 top: a1,
                 width: y2 - y1 + 1,
                 height: height - a1 * 2,
-                backgroundColor: "black",
               }}
             >
               <div
+                className="ts-selection-visible"
                 style={{
                   position: "absolute",
                   left: x1 - y1,
                   top: 0,
                   width: x2 - x1 + 1,
                   height: height - a1 * 2,
-                  backgroundColor: "gray",
                 }}
               />
             </div>

@@ -1,0 +1,58 @@
+---
+import type { TokenView } from "../tokens";
+import DocTable from "./DocTable.astro";
+import Sample, { type SampleKind } from "./Sample.astro";
+
+export interface TokenRow {
+  view: TokenView;
+  lead?: string;
+  use?: string;
+  extra?: string;
+}
+
+interface Props {
+  caption: string;
+  rows: TokenRow[];
+  sample?: SampleKind;
+  leadColumn?: string;
+  showAlias?: boolean;
+}
+
+const { caption, rows, sample, leadColumn, showAlias = false } = Astro.props;
+const columns = [
+  ...(leadColumn ? [leadColumn] : []),
+  "Token",
+  ...(showAlias ? ["Points at"] : []),
+  "Value",
+  "CSS",
+  "Use",
+];
+---
+
+<DocTable caption={caption} columns={columns}>
+  {
+    rows.map(({ view, lead, use, extra }) => (
+      <tr>
+        {lead !== undefined && <td>{lead}</td>}
+        <th scope="row">
+          <code>{view.name}</code>
+        </th>
+        {showAlias && (
+          <td>
+            <code>{view.alias?.name ?? "—"}</code>
+          </td>
+        )}
+        <td>
+          <span class="cell-value">
+            {sample && <Sample view={view} kind={sample} extra={extra} />}
+            {view.value}
+          </span>
+        </td>
+        <td>
+          <code>{view.cssVar}</code>
+        </td>
+        <td>{use ?? view.use}</td>
+      </tr>
+    ))
+  }
+</DocTable>

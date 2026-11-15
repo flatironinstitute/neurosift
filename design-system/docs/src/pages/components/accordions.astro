@@ -1,0 +1,154 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import Existing from "../../components/Existing.astro";
+import { ControlPanelDemo, DisclosureDemo } from "../../components/AccordionDemo";
+import CodeSample from "../../components/CodeSample.astro";
+import DoDont from "../../components/DoDont.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const WHICH = [
+  ["Group settings in a side panel", "Accordion item", "PSTH and event-related signal panels, spectrogram preprocessing"],
+  ["Show the rest of one block of text", "Disclosure", "Dandiset description and contributors"],
+  ["Show an object’s details under its plot", "Disclosure", "Attributes under a timeseries"],
+  ["Browse a hierarchy of groups and datasets", "Tree, documented with Tables", "The file tree and the HDF5 view"],
+  ["Switch between peer views", "Tabs", "Widgets, Python usage, Schema"],
+];
+
+const KEYS = [
+  ["Enter or Space", "Opens or closes the section, or shows and hides the disclosure"],
+  ["Tab", "Moves to the next header, or into an open section’s controls"],
+];
+
+const WRITING = [
+  ["Preprocessing, with the summary “Off”", "PREPROCESSING (OFF BY DEFAULT)", "No caps; the summary carries the state"],
+  ["Show full description / Show less", "… read more / show less", "Says what will appear"],
+  ["Units, with the summary “3 of 46 selected”", "Units, with no count", "The selection shows while closed"],
+  ["LFPs as the view title; Show attributes (5) below the plot", "▼ LFPs as a heading", "Headings name things; disclosures reveal them"],
+];
+
+const SPECS = [
+  ["Height", "32px header · layout/row-default", "24px"],
+  ["Rule", "1px border/strong above each item", "—"],
+  ["Icon", "chevron--right / chevron--down, 16px", "caret--right / caret--down, 16px, text/link"],
+  ["Title", "type/label · text/default", "type/body-sm · text/link"],
+  ["Summary", "type/code-sm · text/secondary", "—"],
+  ["Content padding", "24px left · space/6, 4px top, 12px bottom", "—"],
+  ["Hover", "action/secondary-hover", "Same"],
+  ["Focus", "2px border/focus inside", "Same"],
+];
+
+const code = `import { AccordionItem, Disclosure } from "@ui";
+
+<AccordionItem
+  title="Align to"
+  summary="start_time"
+  open={open.align}
+  onToggle={(next) => setOpen({ ...open, align: next })}
+>
+  …
+</AccordionItem>
+
+<Disclosure
+  label="Show full description"
+  expandedLabel="Show less"
+  open={showAll}
+  onToggle={setShowAll}
+>
+  <p>{description}</p>
+</Disclosure>`;
+const ITEM_STATES = [
+  [
+    "Open",
+    "Content is indented to line up with the title."
+  ],
+  [
+    "Closed",
+    "The summary on the right keeps the setting visible."
+  ],
+  [
+    "Closed, hover",
+    "Navy 50 behind the header row."
+  ],
+  [
+    "Closed, focus",
+    "Link-blue ring inside the header."
+  ]
+];
+---
+
+<DocsLayout title="Accordions" description="Accordion item and Disclosure: named sections of a panel, and show-and-hide for one block.">
+  <Intro
+    lead="Accordions fold a control panel into named sections, so a PSTH or event-related signal view can hold units, alignment, controls and display options without a long scroll. Disclosures do the same for a single block of text or detail, such as a Dandiset’s full description or an object’s attributes."
+    status="Updated November 9, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "Light, not heavy", text: "A black rule and a SemiBold title mark each section. No filled bars, so the data stays the loudest thing." },
+      { title: "Summary when closed", text: "Each header shows the current setting on the right, so a closed section still says what it’s set to." },
+      { title: "Open what matters", text: "Sections people need first start open; rarely changed ones, like preprocessing, start closed." },
+    ]}
+  />
+
+  <Existing page="accordions" />
+
+  <DocSection title="Accordion item" lead="A header button and a content area. The header shows a chevron, the title and a one-line summary of the setting, such as Align to: start_time.">
+    <DocTable caption="Accordion item states" columns={["State","Look"]}>
+      <DocRows rows={ITEM_STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In a control panel" lead="The PSTH panel rebuilt from accordion items, 320px wide, the default panel width. Change a setting and its summary follows, even while closed.">
+    <ControlPanelDemo client:visible />
+    <p class="doc-note">Sections are independent: opening one never closes another, and each view remembers which are open. Content lines up with the title.</p>
+  </DocSection>
+
+  <DocSection title="Disclosure" lead="An inline show-and-hide for one block. Link blue, with a caret, and a label that says what will appear.">
+    <DisclosureDemo client:visible />
+    <p class="doc-note">Replaces “read more” after a cut-off description. For an object’s attributes under its plot, the label carries a count: “Show attributes (5)”.</p>
+  </DocSection>
+
+  <DocSection title="Accordion, disclosure or something else">
+    <DocTable caption="Accordion, disclosure or something else" columns={["To…", "Use", "In Neurosift"]}>
+      {WHICH.map(([to, use, where]) => <tr><th scope="row">{to}</th><td>{use}</td><td>{where}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Keyboard" lead="The header is the native summary of a details element, so it works without extra code.">
+    <DocTable caption="Keyboard" columns={["Key", "Does"]}>
+      {KEYS.map(([key, does]) => <tr><th scope="row">{key}</th><td>{does}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Writing" lead="Rewrites of strings in the app today.">
+    <DocTable caption="Writing accordions and disclosures" columns={["Use", "Instead of", "Why"]}>
+      {WRITING.map(([use, instead, why]) => <tr><th scope="row">{use}</th><td>{instead}</td><td>{why}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Accessibility">
+    <ul class="rule-list">
+      <li><strong>State is announced.</strong> The summary exposes expanded and collapsed, and the disclosure button has aria-expanded; chevrons and carets are decorative and hidden.</li>
+      <li><strong>The whole row is the target.</strong> The 32px header toggles, not just the chevron, unlike the ► arrows in the file tree today.</li>
+      <li><strong>The summary is read too.</strong> The title and summary are both in the header, so “Align to, start_time, collapsed” is read.</li>
+      <li><strong>No surprise motion.</strong> Sections open at once, with no animation.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Show the current setting in the header.", "Open the sections people need first.", "Keep titles to one or two words.", "Remember what each view had open."]}
+      donts={["Don’t use filled bars for section headers.", "Don’t use typed triangles as icons.", "Don’t nest accordions inside accordions.", "Don’t hide errors inside a closed section; open it."]}
+    />
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Accordion and disclosure specs" columns={["Property", "Accordion item", "Disclosure"]}>
+      {SPECS.map(([property, item, disclosure]) => <tr><th scope="row">{property}</th><td>{item}</td><td>{disclosure}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. Both are controlled: the view keeps which sections are open, so it can remember them.">
+    <CodeSample label="React" code={code} />
+  </DocSection>
+</DocsLayout>

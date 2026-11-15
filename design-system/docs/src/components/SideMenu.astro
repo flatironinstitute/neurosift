@@ -1,0 +1,31 @@
+---
+import { navigation, withBase } from "../navigation";
+
+const current = Astro.url.pathname;
+---
+
+<nav class="side-menu" aria-label="Design system">
+  {
+    navigation.map(({ heading, items }, index) => (
+      <section class="side-menu-section">
+        {heading && (
+          <p id={`menu-${index}`} class="side-menu-heading">
+            {heading}
+          </p>
+        )}
+        <ul aria-labelledby={heading ? `menu-${index}` : undefined}>
+          {items.map(({ label, href }) => (
+            <li>
+              <a
+                href={withBase(href)}
+                aria-current={current === withBase(href) ? "page" : undefined}
+              >
+                {label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+</nav>

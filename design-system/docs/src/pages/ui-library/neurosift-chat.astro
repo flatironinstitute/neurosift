@@ -1,0 +1,181 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import Screen from "../../components/Screen.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const TODAY = [
+  ["New Chat", "Light-blue “+ New Chat” button, top left; half opacity and off until the chat has a message", "Goes back to /chat with an empty chat. Earlier chats keep their /chat/:id address."],
+  ["Download", "Light-blue “⬇️ Download” beside it; off until there is a message", "Saves the transcript as Markdown, with the model, tokens and cost. Nothing confirms it."],
+  ["Source link", "GitHub mark, top right, titled “View source code and report issues”", "Opens magland/qp (now served as bendichter/qp), not Neurosift. No visible label."],
+  ["Saved-conversation notice", "Cyan box with bold centered text: “This conversation is saved for internal development purposes. Do not share personal or sensitive information.”", "First thing in the transcript; it scrolls away with the conversation."],
+  ["Description", "One centered sentence: an assistant for DANDI Archive, OpenNeuro and EBRAINS that searches datasets, analyzes NWB files and makes visualizations", "Names EBRAINS; Neurosift’s catalog names DANDI, EMBER and OpenNeuro."],
+  ["Suggested prompts", "“Suggested prompts:” and ten cards in a three-column grid", "A card sends its prompt at once. The grid goes away after the first message."],
+  ["Message input", "Pill-shaped text area, “Type your message here... (Enter to send, Shift+Enter for new line)”, and a round ➤ Send button", "The placeholder is the only label. Send is off while the field is empty or the assistant is working."],
+  ["Question", "Dark-gray bubble on the right", "—"],
+  ["Working", "“Thinking...” in a bubble with a pulsing dot", "Shows until the first words of the answer arrive. The input and prompts are off."],
+  ["Tool call", "“▶ Executed script.” row; opened, Script in a highlighted block with Copy, then Output", "The output is one unwrapped line that runs past the panel. The row doesn’t say which tool ran."],
+  ["Answer", "Light-gray bubble with Markdown: bold, inline code, tables", "Tables have no rules or caption."],
+  ["Feedback", "👍 Helpful and 👎 Not helpful under each answer, then an optional comment", "Saved with the conversation."],
+  ["Figures", "Image parts of a message render as images in the transcript", "Not seen in these captures."],
+  ["Footer readout", "“openai/gpt-6-luna • 0 in • 0 out • $0.000”", "The model name opens a model list with prices per million tokens. Tokens and cost add up over the conversation."],
+  ["Settings", "⚙️ at bottom right opens a dialog: OpenRouter API Key, “Required for premium models”, a key field with Show, Cancel and Save", "Save is off until a key is typed. The key is kept in this browser’s localStorage."],
+  ["Dataset-page chat", "“Ask about this dataset in Chat” on a DANDI dataset page opens dandiset-explorer.vercel.app/chat in a new tab", "Returned 404 DEPLOYMENT_NOT_FOUND on November 10, 2026. The chat moved to dandiset-explorer.neurosift.app; the redesign links there with the Dandiset ID and version."],
+];
+
+const PROPOSED = [
+  ["Frame", "Page and Section", "A top bar with the h1 “Neurosift Chat” and an Experimental badge. The transcript is one Section; the message box sits below it."],
+  ["Header actions", "Button, Secondary, Small", "New chat, Download and Source on GitHub at the end of the top bar. New chat and Download are off, with the reason in a tooltip, until there is a message."],
+  ["Experimental", "Badge, neutral", "Beside the title, in place of “(experimental)” in running text."],
+  ["Saved-conversation notice", "Inline message, info", "“Conversations are saved to help develop Neurosift Chat. Don’t share personal or sensitive information.” Right under the message box, not inside the transcript, so it stays in view."],
+  ["Context line", "Inline message, info", "“Looking at Dandiset 000673, version 0.250122.0110” when Neurosift sends context; hidden when it doesn’t."],
+  ["New chat", "Hero, as on Neurosift’s Home, then Prompt list", "Centered like Home: the empty-state title “Ask about DANDI, EMBER and OpenNeuro datasets” and one line on what the assistant can do, then the message box, the saved-conversation notice, and “Suggested prompts”, a page heading over the first four prompts as a Prompt list styled like Home’s Recently opened. After the first message the hero and prompts go away and the box moves to the bottom."],
+  ["Question", "Section content, type/body", "Right-aligned, on surface/subtle, with “You” as a visually hidden label."],
+  ["Tool call", "Disclosure, then Code block", "A row “Running a script · getOpenNeuroDatasets” with a Spinner while it runs, then “Ran a script · …”. Opened, it shows the script (Code block, Script) and its output (Code block, wrapped)."],
+  ["Answer", "Section content, type/body", "Markdown in the system’s type; tables use the Table component, code uses Code block."],
+  ["Message input", "Text area, Large, and Button, Primary, Large", "A Large Text area, 40px for one row like the Large Search field, that grows with the message. Label “Ask Neurosift Chat” (visually hidden), helper “Enter to send, Shift+Enter for a new line”, and Send as a Large Primary button beside it, also 40px."],
+  ["Download", "Toast", "“Transcript downloaded” after the file is saved."],
+  ["Footer readout", "type/caption, text/muted", "A footer with model, tokens and cost on one line, if the team keeps it, and Settings as a labeled Button."],
+  ["Settings", "Dialog with Text input as an API key field", "The same field as Neurosift’s own Settings page, with Show and Hide."],
+];
+
+const STATES = [
+  ["New chat", "Description and ten prompt cards; New Chat and Download off", "Centered hero with the title and description, the Large message box, then four suggested prompts as a Prompt list; New chat and Download off"],
+  ["After the first message", "The prompt grid goes away", "The hero and prompts go away and the message box sits at the bottom, under the transcript"],
+  ["Working", "“Thinking...” bubble; input and prompts off", "“Working…” with a Spinner in the transcript, announced politely; the field stays typable and Send is off"],
+  ["Tool call", "“▶ Executed script.”", "“Ran a script · tool name”, closed; opening it shows the script and output"],
+  ["Answer with a figure", "The image in the transcript", "The figure with a caption the assistant writes; the caption doubles as alt text (to confirm)"],
+  ["Tool asks permission", "Yellow box: “🔒 The assistant wants to use the tool: name” with Allow and Deny", "Alert, warning, with Allow and Deny buttons"],
+  ["Error", "Red box above the input: “⚠️ Error: message”; the input turns off", "Alert, error, that says what happened and offers Try again"],
+  ["Limits reached", "The server’s message as an error, such as “Rate limit exceeded: N requests per minute” or “Too many messages”", "Alert, error, that names the limit and when it resets, or offers New chat"],
+  ["Needs an API key", "Yellow box: “This model requires an OpenRouter API key…”; the input turns off", "Inline message, warning, under the input, with a link that opens Settings"],
+  ["Chat stopped", "Red box when the assistant marks the chat irrelevant, personal or manipulative; the input turns off", "Alert, warning, with the same reason and a New chat button"],
+  ["Download", "The file saves with no confirmation", "Toast: “Transcript downloaded”"],
+  ["Inside Neurosift", "Nothing shows", "The context line names the dataset or file"],
+];
+
+const BEHAVIOR = [
+  ["Ask", "Enter sends; Shift+Enter adds a line. Send is off while the field is empty or the assistant is working."],
+  ["Suggested prompts", "A prompt sends at once, as today. Each is a button in a Prompt list, so Tab reaches it and Enter or Space sends it. Prompts and the hero hide after the first message, and the box moves to the bottom."],
+  ["Tool calls", "Closed by default. The row is a button with aria-expanded; Copy on each Code block copies the script or output."],
+  ["Links in answers", "A link to a Neurosift view, such as a dataset page or /nwb?url=, opens in the Neurosift pane when the chat embeds one, otherwise in a new tab (to confirm)."],
+  ["Context line", "Built from the latest aiContextUpdate and aiUrlUpdate. It names what the page registered, such as the dandiset and version, and updates as people move around Neurosift."],
+  ["Download", "Saves the Markdown transcript, then shows a Toast."],
+  ["New chat", "Starts an empty chat; the last one keeps its address."],
+  ["Feedback", "Helpful and Not helpful as toggle buttons with visible labels, then an optional comment."],
+];
+
+const MESSAGES = [
+  ["aiContextUpdate", "Neurosift → chat", "title (“Neurosift”) and components: id, context text, and availableCallbacks with id, description and parameters", "Each time a page registers or unregisters a component. HomePage and DandisetPage (DANDI and EMBER) register context, with no callbacks."],
+  ["aiUrlUpdate", "Neurosift → chat", "url, the full address of the current view", "On every route change (App.tsx)."],
+  ["aiCallback", "Chat → Neurosift", "componentId, callbackId, parameters", "Runs a registered callback. No page registers one today."],
+  ["reportNeurosiftChat", "Chat → Neurosift", "Nothing else", "Marks Neurosift as running inside Neurosift Chat (isInNeurosiftChat)."],
+  ["setChat", "Neurosift → chat", "chatJson", "Defined; nothing in this repo sends it today."],
+  ["requestChat and reportChat", "Neurosift asks, chat answers", "reportChat carries chatJson", "Neurosift waits up to 5 seconds for the answer. Nothing calls it today."],
+];
+
+const DIFFERS = [
+  ["Look", "Its own: light-blue buttons, cyan notice, pill input, emoji icons", "Neurosift’s tokens and @ui components", "Proposed"],
+  ["Notice", "A bold cyan box that scrolls away", "An info Inline message under the title that stays", "Proposed"],
+  ["Experimental", "Not marked in the chat; Home said “(experimental)”", "An Experimental badge beside the title", "Proposed"],
+  ["Suggested prompts", "Ten cards in a grid", "The first four as a Prompt list under a “Suggested prompts” heading, in Home’s Recently opened rows", "Proposed"],
+  ["Tool calls", "“Executed script.”, output on one line", "Names the tool; wrapped output in a Code block", "Proposed"],
+  ["What it’s looking at", "Not shown", "A context line from Neurosift’s messages", "To confirm"],
+  ["Input label", "Placeholder only", "A label, a helper and a Large Send button with text, beside a Large Text area", "Proposed"],
+  ["Model and cost readout", "Always visible", "Kept, moved or hidden", "To confirm"],
+  ["Archives named", "DANDI Archive, OpenNeuro, EBRAINS", "The archives the assistant searches, named as Neurosift names them", "To confirm"],
+  ["Dataset-page chat", "A second assistant, now at dandiset-explorer.neurosift.app, that reads the Dandiset ID from the address", "Neurosift Chat opened with that dataset", "To confirm"],
+];
+
+const WHERE = [
+  ["A pull request to magland/qp", "qp builds every assistant from one ChatPage, so a restyle there reaches the DANDI, NWB, BIDS and other assistants too. It keeps one codebase for the team. qp has no @ui, so the components would be copied or published as a package, and the change needs the qp owners’ review."],
+  ["A fork of qp", "Neurosift Chat could take @ui and Neurosift’s tokens without changing the other assistants. The fork then has to follow qp’s fixes to tools, models, storage and rate limits by hand."],
+  ["A chat built in this repo from @ui", "The chat would look and behave like the rest of Neurosift, and the context line could read the registry directly instead of through postMessage. It means a new client for qp’s completion and chat-storage API, and two chat front ends to keep in step."],
+];
+
+const QUESTIONS = [
+  ["Should the dataset-page chat and Neurosift Chat become one?", "The dataset page’s “Ask about this dataset in Chat” link, which opens the Dandiset explorer chat in the redesign"],
+  ["Should the model and cost readout stay visible to everyone?", "Footer readout"],
+  ["Does today’s chat still embed Neurosift? The qp source has no listener for Neurosift’s messages.", "Context line and links in answers"],
+  ["Should the chat name EBRAINS or EMBER?", "Description and Empty state"],
+];
+---
+
+<DocsLayout title="Neurosift Chat" description="The assistant for searching and asking about datasets, today and as proposed.">
+  <Intro
+    lead="Neurosift Chat is an assistant at chat.neurosift.app that answers questions about DANDI, OpenNeuro and EBRAINS datasets by writing and running scripts against the archives. It is built from magland/qp, not this repo, so it still has its own look, and it doesn’t say what it’s looking at. This page records the chat as it is and specifies a rebuild from @ui. Nothing is built yet; where the code goes is still open."
+    status="Updated November 10, 2026 · UI library · Captured at 1440 × 900 from chat.neurosift.app and dandiset-explorer.vercel.app · Proposed from Page and Section, Button, Text input, Text area, Prompt list, Inline message, Disclosure, Code block, Badge, Toast, Empty state, Alert and Dialog · Not built"
+    rules={[
+      { title: "Say what it’s looking at", text: "Inside Neurosift, the chat names the dataset or file it has as context." },
+      { title: "Show the work", text: "Each tool call names the tool and opens to the script and its output." },
+      { title: "The same parts as Neurosift", text: "Buttons, notices, code and errors are the documented components." },
+    ]}
+  />
+
+  <DocSection title="Chat today" lead="chat.neurosift.app and the dataset page’s chat link, captured with Playwright. Two suggested prompts were sent.">
+    <div class="captures">
+      <Screen file="chat-empty" alt="Today’s Neurosift Chat on load: light-blue New Chat and Download buttons, a GitHub mark, a cyan notice that conversations are saved, a one-line description, Suggested prompts as ten cards in three columns, a pill-shaped message field with a round send button, and a footer reading openai/gpt-6-luna, 0 in, 0 out, $0.000, with a gear." caption="A new chat: the notice, a description and ten prompt cards. New Chat and Download are off." />
+      <Screen file="chat-working" alt="Neurosift Chat after sending How many dandisets are published?: the question in a dark-gray bubble on the right and a Thinking... bubble with a dot on the left." caption="Working: “Thinking...” until the answer starts." />
+      <Screen file="chat-conversation" alt="The answered question: a collapsed Executed script. row, then an answer bubble saying 472 published dandisets, thumbs-up and thumbs-down buttons, and a footer reading 8,664 in, 33 out, $0.000." caption="An answer: one tool call, closed, and the answer with feedback buttons." />
+      <Screen file="chat-tool-call" alt="An opened tool call for Break down OpenNeuro datasets by modality: Script in a highlighted block, then Output as a single line of JSON that runs off the right edge, then the start of an answer with a table of modalities." caption="An opened tool call: the script, and output on one line that runs past the panel." />
+      <Screen file="chat-settings" alt="The Settings dialog over the chat: OpenRouter API Key, Required for premium models with a link to openrouter.ai/keys, a key field with a Show button, and Cancel and Save buttons." caption="Settings: an OpenRouter API key, kept in this browser." />
+      <Screen file="chat-dandiset" alt="dandiset-explorer.vercel.app/chat for Dandiset 000673: a Vercel page reading This page doesn’t exist, 404 DEPLOYMENT_NOT_FOUND." caption="The address the dataset page’s link used, dandiset-explorer.vercel.app, is offline. The chat now lives at dandiset-explorer.neurosift.app." />
+    </div>
+  </DocSection>
+
+  <DocSection title="What the chat does today" lead="Read from the qp source and checked on the live site.">
+    <DocTable caption="What the chat does today" columns={["Part", "Today", "Notes"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="The proposed chat" lead="Each region uses a documented component. The new chat follows Neurosift’s Home: a centered hero, a Large message box, then suggested prompts listed the way Home lists Recently opened. It is built on qp and offered to qp as a pull request.">
+    <DocTable caption="The proposed chat" columns={["Region", "Component", "What it shows"]}>
+      <DocRows rows={PROPOSED} />
+    </DocTable>
+    <p class="doc-note">From <a href={withBase("/components/pages/")}>Page and Section</a>, <a href={withBase("/components/buttons/")}>Buttons</a>, <a href={withBase("/components/text-inputs/")}>Text inputs</a>, <a href={withBase("/components/alerts/")}>Alerts, Toast and Inline message</a>, <a href={withBase("/components/code/")}>Code</a>, <a href={withBase("/components/accordions/")}>Disclosure</a>, <a href={withBase("/components/badges/")}>Badges</a>, <a href={withBase("/components/modals/")}>Dialog</a> and <a href={withBase("/guidelines/empty-states/")}>Empty states</a>, with the Prompt list from <a href={withBase("/components/catalog/")}>Catalog</a>. The screens are in Figma: <a href="https://www.figma.com/design/y9VzpJj2NEltB7LUhQOzgE/?node-id=567-9921">Neurosift Chat: Proposed new chat</a>.</p>
+  </DocSection>
+
+  <DocSection title="Preview">
+    <p class="type-body">
+      <a href="https://chat.neurosift.app/" target="_blank" rel="noopener noreferrer">Open Neurosift Chat</a>. It shows this redesign once the pull request to qp merges and the chat is deployed again.
+    </p>
+  </DocSection>
+
+  <DocSection title="States">
+    <DocTable caption="States" columns={["When", "Today", "Proposed"]}>
+      <DocRows rows={STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Behavior">
+    <DocTable caption="Behavior" columns={["Part", "Behavior"]}>
+      <DocRows rows={BEHAVIOR} />
+    </DocTable>
+    <p class="doc-note">The context line reads what Neurosift already sends. When Neurosift runs in a frame inside the chat (embedded=1 hides its app bar), the two exchange these messages through postMessage. Neurosift sends nothing outside a frame, and it acts on a message only from its parent window at chat.neurosift.app or localhost. From src/ai-integration/messaging/windowMessaging.ts and src/ai-integration/types.ts.</p>
+    <DocTable caption="Messages between Neurosift and the chat" columns={["Message", "Direction", "Carries", "When"]}>
+      <DocRows rows={MESSAGES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="What differs" lead="Proposed is specified here and in Figma. To confirm needs the Neurosift team.">
+    <DocTable caption="What differs" columns={["Area", "Existing", "Proposed", "Status"]}>
+      <DocRows rows={DIFFERS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Where the code lands" lead="Three options. The redesign was built in a fork of qp and is offered back to qp as a pull request, so merging it changes the look of every qp assistant.">
+    <DocTable caption="Where the code lands" columns={["Option", "Trade-offs"]}>
+      <DocRows rows={WHERE} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Questions for the Neurosift team">
+    <DocTable caption="Questions for the Neurosift team" columns={["Question", "Where it matters"]}>
+      <DocRows rows={QUESTIONS} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

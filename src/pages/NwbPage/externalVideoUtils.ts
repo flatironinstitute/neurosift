@@ -16,6 +16,30 @@ export type ExternalVideoCandidate = {
   endTime: number;
 };
 
+/** Why a video can't be shown: an HTTP status, a network failure, a format the browser can't play, or another error. */
+export type VideoProblem =
+  | { kind: "http"; status: number }
+  | { kind: "network" }
+  | { kind: "format" }
+  | { kind: "other"; message: string };
+
+export class VideoAccessError extends Error {
+  constructor(readonly status: number) {
+    super(
+      `Could not access the external video on DANDI (status ${status}). ` +
+        `If this is an embargoed dandiset, set your DANDI API key in Settings.`,
+    );
+  }
+}
+
+export const videoProblemOf = (err: unknown): VideoProblem =>
+  err instanceof VideoAccessError
+    ? { kind: "http", status: err.status }
+    : {
+        kind: "other",
+        message: err instanceof Error ? err.message : String(err),
+      };
+
 const assetPathCache = new Map<string, Promise<string>>();
 const resolvedVideoUrlCache = new Map<string, Promise<string>>();
 
@@ -74,12 +98,7 @@ const resolveDandiDownloadRedirect = async (
     signal: controller.signal,
   });
   controller.abort(); // status/url already settled; we only wanted the redirect target
-  if (!response.ok) {
-    throw new Error(
-      `Could not access the external video on DANDI (status ${response.status}). ` +
-        `If this is an embargoed dandiset, set your DANDI API key in Settings.`,
-    );
-  }
+  if (!response.ok) throw new VideoAccessError(response.status);
   // presigned S3 URL after the followed 302, watermarked where possible
   return watermarkRedirectTarget(downloadUrl, response.url);
 };
@@ -261,25 +280,16 @@ export const getExternalFileForSeries = async (
  */
 export const describeVideoPlaybackError = async (
   videoUrl: string,
-): Promise<string> => {
+): Promise<VideoProblem> => {
   try {
     const controller = new AbortController();
     const response = await fetch(videoUrl, { signal: controller.signal });
     controller.abort();
-    if (!response.ok) {
-      return (
-        `This video could not be retrieved (HTTP ${response.status}). ` +
-        `The link may have expired or the asset may require a DANDI API key set in Settings.`
-      );
-    }
+    if (!response.ok) return { kind: "http", status: response.status };
   } catch {
-    return "This video could not be retrieved due to a network or access error.";
+    return { kind: "network" };
   }
-  return (
-    "This video could not be played because its container or codec is not " +
-    "supported by the browser. Most likely, the uploaded video uses a format " +
-    "like AVI with a non-browser-friendly codec."
-  );
+  return { kind: "format" };
 };
 
 /** Reads the start and end session time for an ImageSeries from timestamps or starting_time + rate. */

@@ -1,9 +1,10 @@
-import TimeScrollView2, {
-  useTimeScrollView2,
-} from "@shared/component-time-scroll-view-2/TimeScrollView2";
+import TimeScrollView2 from "@shared/component-time-scroll-view-2/TimeScrollView2";
+import { useTimeScrollView2 } from "@shared/component-time-scroll-view-2/useTimeScrollView2";
 import { useTimeRange } from "@shared/context-timeseries-selection-2";
 import { timeSelectionBarHeight } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import { usePlotTheme } from "@shared/plotTheme";
+import { plotColors, readableOn } from "@shared/plotColors";
 
 type Props = {
   width: number;
@@ -39,6 +40,8 @@ const NwbTimeIntervalsWidget: FunctionComponent<Props> = ({
   const [canvasElement, setCanvasElement] = useState<
     HTMLCanvasElement | undefined
   >();
+  const { plotTheme } = usePlotTheme();
+  const colors = plotColors(plotTheme);
 
   // We don't need to initialize the time range here as it's already initialized in the parent component
   // and we want to maintain the same time range when switching between views
@@ -73,9 +76,10 @@ const NwbTimeIntervalsWidget: FunctionComponent<Props> = ({
   const colorForLabel = useMemo(
     () => (label: string) => {
       const index = allDistinctLabels.indexOf(label);
-      return lightColors[index % lightColors.length];
+      const color = lightColors[index % lightColors.length];
+      return plotTheme === "dark" ? readableOn(color, colors.surface) : color;
     },
-    [allDistinctLabels],
+    [allDistinctLabels, plotTheme, colors.surface],
   );
 
   const fracPositionForLabel = useMemo(
@@ -119,7 +123,9 @@ const NwbTimeIntervalsWidget: FunctionComponent<Props> = ({
           const rect = [x1, y1, x2 - x1, y2 - y1];
 
           if (pass === 1) {
-            ctx.fillStyle = labels ? colorForLabel(labels[i]) : "gray";
+            ctx.fillStyle = labels
+              ? colorForLabel(labels[i])
+              : colors.gridMajor;
             ctx.fillRect(rect[0], rect[1], rect[2], rect[3]);
           }
 
@@ -128,7 +134,8 @@ const NwbTimeIntervalsWidget: FunctionComponent<Props> = ({
             const text = labels[i];
             ctx.textBaseline = "middle";
             ctx.textAlign = "center";
-            ctx.fillStyle = "black";
+            // The text sits on the colored block, so it takes the opposite end of the palette.
+            ctx.fillStyle = plotTheme === "dark" ? colors.surface : colors.mark;
             ctx.font = `16px sans-serif`;
             const yPos = y1 + (y2 - y1) * fracPositionForLabel(labels[i]);
             ctx.fillText(text, rect[0] + rect[2] / 2, yPos);
@@ -153,6 +160,8 @@ const NwbTimeIntervalsWidget: FunctionComponent<Props> = ({
     labels,
     colorForLabel,
     fracPositionForLabel,
+    plotTheme,
+    colors,
   ]);
 
   return (

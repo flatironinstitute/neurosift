@@ -1,0 +1,81 @@
+name: Design System
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    name: Docs type check and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: design-system/docs/package-lock.json
+
+      - name: Install docs dependencies
+        run: npm run docs:install
+
+      - name: Type check the docs
+        run: npm run docs:check
+
+      - name: Build the docs
+        run: npm run docs:build
+
+  accessibility:
+    name: Docs accessibility
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: design-system/docs/package-lock.json
+
+      - name: Install docs dependencies
+        run: npm run docs:install
+
+      - name: Install Chromium, Firefox and WebKit for Playwright
+        working-directory: design-system/docs
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Run the accessibility suite
+        run: npm run docs:test
+
+  migration:
+    name: Migration progress
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Check out the base branch beside this one
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --depth=1 origin "$BASE_REF"
+          git worktree add --detach "$RUNNER_TEMP/base" FETCH_HEAD
+
+      # Informational: the step is marked when this pull request adds an MUI import, an inline
+      # style or an sx prop, and the table goes to the summary, but the pull request doesn't fail.
+      - name: Count MUI imports and inline styles against the base branch
+        continue-on-error: true
+        run: node design-system/migration/count.mjs src "$RUNNER_TEMP/base/src" | tee -a "$GITHUB_STEP_SUMMARY"

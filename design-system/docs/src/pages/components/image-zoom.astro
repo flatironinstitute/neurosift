@@ -1,0 +1,102 @@
+---
+import CodeSample from "../../components/CodeSample.astro";
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import ImageZoomDemo from "../../components/ImageZoomDemo";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const STATES = [
+  ["Fit", "The whole image, centered; the readout says “Fit · 63%”. Fit is disabled. It follows the viewport as it resizes."],
+  ["Zoomed", "The readout says the percentage; Fit is enabled. Pan keeps the image over the viewport, never past its edges."],
+  ["Past 100%", "Pixels are drawn as crisp squares, image-rendering: pixelated, so single pixels stay readable."],
+  ["At the limits", "Zoom out is disabled at fit, or at 100% for an image smaller than the viewport. Zoom in is disabled at 3,200%. 100% is disabled at 100%."],
+];
+
+const BEHAVIOR = [
+  ["Zoom in, Zoom out", "1.5× per press, around the viewport’s center."],
+  ["Fit", "The whole image in the viewport."],
+  ["100%", "One image pixel per screen pixel, around the center."],
+  ["Readout", "The scale in percent, with Fit when fitted. A status, so screen readers hear it."],
+  ["Wheel", "Zooms around the pointer; the page doesn’t scroll while the pointer is over the image."],
+  ["Drag", "Pans. Two fingers pinch to zoom around their midpoint."],
+  ["Double-click", "Zooms in 1.5× around the pointer."],
+  ["Motion", "None: zoom and pan jump to the new view, so reduced motion needs no change."],
+];
+
+const KEYS = [
+  ["Zoom in", "Zoom in button · wheel up · pinch out · double-click", "+ or ="],
+  ["Zoom out", "Zoom out button · wheel down · pinch in", "−"],
+  ["Fit", "Fit button", "0"],
+  ["Pan", "Drag", "Arrow keys move a tenth of the viewport"],
+];
+
+const SPECS = [
+  ["Zoom bar", "Same group as the Time window: surface/panel · 1px border/subtle · radius/sm"],
+  ["Buttons", "Icon button, Small (Carbon zoom--out, zoom--in) · Button, Small, Ghost for Fit and 100%"],
+  ["Readout", "type/code-sm · text/secondary · 80px wide, so the bar doesn’t jump"],
+  ["Viewport", "surface/row-hover behind the image · the size the view gives it, narrower on small screens · focus ring border/focus, 2px"],
+  ["Gap", "8px between the bar and the viewport · space/2"],
+];
+
+const code = `import { ImageZoom, type ImageZoomValue } from "@ui";
+
+const [zoom, setZoom] = useState<ImageZoomValue>("fit");
+
+<ImageZoom
+  label="maximum_intensity_projection"
+  width={512}
+  height={512}
+  value={zoom}
+  onChange={setZoom}
+  viewWidth={600}
+  viewHeight={600}
+>
+  <canvas width={512} height={512} />
+</ImageZoom>`;
+---
+
+<DocsLayout title="Image zoom" description="Zoom and pan over one image: buttons, wheel, pinch, drag and keys.">
+  <Intro
+    lead="Image zoom wraps one picture, such as a summary image, a two-photon frame or ROI masks, so people can look at single pixels. The picture draws at its own size; Image zoom scales and moves it. It never changes the data: display range, brightness and orientation stay with the view."
+    status="Updated November 11, 2026 · Components · The example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "Start fitted", text: "Every image opens whole, and Fit or 0 always brings it back." },
+      { title: "Say the scale", text: "The readout says the percentage, with Fit when fitted." },
+      { title: "Every way in", text: "Buttons, wheel, pinch, drag, double-click and keys do the same things." },
+    ]}
+  />
+
+  <DocSection title="Image zoom" lead="A made-up image, live. Scroll or pinch over it, drag it, or focus it and press + and −.">
+    <ImageZoomDemo client:visible />
+  </DocSection>
+
+  <DocSection title="States">
+    <DocTable caption="Image zoom states" columns={["State", "Look and behavior"]}>
+      <DocRows rows={STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Behavior">
+    <DocTable caption="Image zoom behavior" columns={["Part", "Behavior"]}>
+      <DocRows rows={BEHAVIOR} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Pointer and keyboard" lead="The image takes keys once it has focus; its name says which keys, and other keys, such as Space to play, pass to the view.">
+    <DocTable caption="Image zoom pointer and keyboard" columns={["Action", "Pointer", "Key"]}>
+      {KEYS.map(([action, pointer, key]) => <tr><th scope="row">{action}</th><td>{pointer}</td><td>{key}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Image zoom specs" columns={["Part", "Spec"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. The view keeps the zoom in state; Fit is the string “fit”, so it follows resizes.">
+    <CodeSample label="Image zoom" code={code} />
+  </DocSection>
+</DocsLayout>

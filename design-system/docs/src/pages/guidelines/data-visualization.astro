@@ -1,0 +1,107 @@
+---
+import ExamplePlot from "../../components/ExamplePlot.astro";
+import DoDont from "../../components/DoDont.astro";
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const SCALES = [
+  { name: "Series: groups", cls: "series", use: "Channels, units, trial groups, conditions. In order; past six, label directly or split." },
+  { name: "Sequential: amounts", cls: "sequential", use: "Power, density, firing-rate maps, correlation strength. Darker is less." },
+  { name: "Diverging: around zero", cls: "diverging", use: "Values above and below a midpoint, such as a signal around 0 µV." },
+];
+
+const AXES = [
+  ["Tick labels", "12px, tabular figures, muted", "type/axis, text/muted"],
+  ["Axis line", "1px, at the bottom and left only", "border/strong"],
+  ["Gridlines", "1px, only where they help reading values", "border/subtle"],
+  ["Axis title", "Name and unit once: “Frequency (Hz)”", "type/caption, text/secondary"],
+  ["Legend", "Beside the plot, top right, one row per series", "type/axis, text/default"],
+  ["Time cursor", "1px vertical line, 90% opacity", "data/cursor"],
+  ["Selected window", "A band behind the data", "data/selection"],
+  ["Hover readout", "Value and time at the pointer, in a tooltip", "surface/inverse, text/on-inverse"],
+];
+---
+
+<DocsLayout title="Data visualization" description="One set of rules for traces, rasters, spectrograms and imaging, so the data is the brightest thing on screen.">
+  <Intro
+    lead="Neurosift is mostly plots: traces, rasters, PSTHs, spectrograms and imaging frames, often several on one time axis. They follow one set of rules so a unit, a channel or a trial group looks the same in every view, and so the plot itself is the brightest thing on the screen."
+    status="Updated November 9, 2026 · Usage guideline · Colors come from the data tokens"
+    rules={[
+      { title: "Data gets the hue", text: "Navy and link blue belong to the interface. A colored mark in a plot is always data." },
+      { title: "One scale per kind of data", text: "Series colors for groups, viridis for amounts, blue to red for values around zero." },
+      { title: "Every plot has words", text: "A summary sentence, labeled axes with units, and a legend beside the plot, not under it." },
+    ]}
+  />
+
+  <DocSection title="Color scales" lead="Three scales. Pick by what the number means, not by what looks good.">
+    <DocTable caption="Color scales" columns={["Scale", "Colors", "Use"]}>
+      {
+        SCALES.map(({ name, cls, use }) => (
+          <tr>
+            <th scope="row">{name}</th>
+            <td><span class={`scale-ramp scale-ramp--${cls}`} aria-hidden="true" /></td>
+            <td>{use}</td>
+          </tr>
+        ))
+      }
+    </DocTable>
+    <p class="doc-note">Each scale’s values are on <a href={withBase("/tokens/color/")}>Color tokens</a>.</p>
+  </DocSection>
+
+  <DocSection title="Time series" lead="LFPs, ElectricalSeries and other signals over time.">
+    <ExamplePlot kind="traces" />
+    <ul class="rule-list">
+      <li>One color per channel, from data/series in order. With more than six channels, draw all traces in ink and label them on the left.</li>
+      <li>Channel labels sit at the left edge, beside their trace, in type/axis.</li>
+      <li>The y unit appears once, in the axis title: “µV”.</li>
+      <li>Separation between channels is set by the reader and kept when they zoom or pan.</li>
+      <li>Single traces are ink (data/series/6), not blue.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Rasters and PSTH" lead="Spike times, alone or aligned to trial events.">
+    <ExamplePlot kind="raster" />
+    <ul class="rule-list">
+      <li>Spike ticks are 2px wide and as tall as the row. Ungrouped rasters are ink.</li>
+      <li>Grouped trials take series colors, and the legend names each group’s value, such as “Load 3”, never “?”.</li>
+      <li>The alignment event is a vertical line in border/subtle, labeled “0”.</li>
+      <li>Raster and histogram share the x axis and the colors, so each group reads as one.</li>
+      <li>The histogram’s y axis is labeled with its unit, Hz.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Spectrograms and heat maps" lead="Amounts across two dimensions, in viridis.">
+    <ExamplePlot kind="spectrogram" />
+    <ul class="rule-list">
+      <li>Viridis for every continuous scale. It reads in grayscale and with color blindness.</li>
+      <li>The color bar sits beside the plot, prints its end values and unit (dB), and keeps the same height as the plot.</li>
+      <li>Cells stay square-cornered. No smoothing that hides the grid unless the reader turns it on.</li>
+      <li>Frequency axis in Hz, with the unit once.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Imaging frames and masks" lead="Two-photon and one-photon movies, and segmentation masks.">
+    <ul class="rule-list">
+      <li>Frames are grayscale by default, with the brightness range shown and adjustable beside the frame.</li>
+      <li>ROI masks are outlines in series colors at 1px, so the cells beneath stay visible. Filled masks are 40% at most.</li>
+      <li>Frames keep their aspect ratio. Pixel size and orientation come from the file; flips are explicit controls, labeled.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Axes, legends and gridlines">
+    <DocTable caption="Plot parts" columns={["Part", "Spec", "Token"]}>
+      <DocRows rows={AXES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Keep a unit’s or group’s color the same in every view of a synced tab.", "Label every axis with its unit, once.", "Put legends and color bars beside the plot they explain.", "Start every plot with a summary sentence."]}
+      donts={["Don’t use rainbow or jet scales; yellow looks highest when it isn’t.", "Don’t use navy, link blue or status colors for data.", "Don’t animate data, smooth it silently, or drop samples without saying so.", "Don’t rely on color alone to tell series apart."]}
+    />
+  </DocSection>
+</DocsLayout>

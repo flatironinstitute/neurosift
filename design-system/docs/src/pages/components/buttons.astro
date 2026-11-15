@@ -1,0 +1,252 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import FeedbackDemo from "../../components/FeedbackDemo";
+import Existing from "../../components/Existing.astro";
+import { Button, IconButton, type ButtonVariant } from "@ui";
+import CodeSample from "../../components/CodeSample.astro";
+import DoDont from "../../components/DoDont.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const STYLES: { variant: ButtonVariant; label: string; name: string; use: string; examples: string }[] = [
+  { variant: "primary", label: "Open file", name: "Primary", use: "The main action on a page, panel or dialog. Only one per view.", examples: "Open file, Browse DANDI, Add API key" },
+  { variant: "secondary", label: "Share view", name: "Secondary", use: "Supporting actions next to what they act on, such as sharing, loading in Python or downloading.", examples: "Share view, Load in Python, Download" },
+  { variant: "ghost", label: "Show all", name: "Ghost", use: "Lower-priority actions in toolbars and panels, next to a Primary or Secondary.", examples: "Show all, Clear selection, Reset view" },
+  { variant: "destructive", label: "Remove API key", name: "Destructive", use: "Actions that delete or lose something. Always confirm first.", examples: "Remove API key, Clear recent Dandisets" },
+];
+
+const SIZES = [
+  { size: "lg", name: "Large, 40px tall", use: "Large · 40px · beside a Large input, such as the chat’s Send" },
+  { size: "md", name: "Medium, 32px tall", use: "Medium · 32px · pages, panels, dialogs, toolbars" },
+  { size: "sm", name: "Small, 24px tall", use: "Small · 24px · table rows, the file tree, side panels" },
+] as const;
+
+const LABELS = [
+  ["Browse DANDI", "BROWSE DANDI", "Sentence case is easier to read than all caps"],
+  ["Load in Python", "+ Load in Python", "The plus sign isn’t an action; a code icon can carry the meaning"],
+  ["Remove API key", "OK", "A confirmation repeats the action, so nobody removes a key by accident"],
+  ["Open file", "Click here", "Says what happens, and works out of context for screen readers"],
+  ["Share view", "A share icon alone, outside a toolbar", "Words where there is room; icon-only only in toolbars"],
+  ["Draw anyway", "Shift+O", "A visible button replaces a hidden shortcut"],
+];
+
+const SPECS = [
+  ["Height", "32px · button/height/md", "24px · button/height/sm"],
+  ["Large", "40px · button/height/lg, an alias of input/height/lg; padding, gap, type and states as Medium", "—"],
+  ["Padding at the sides", "16px · space/4", "12px · space/3"],
+  ["Gap to icon or spinner", "8px · space/2", "4px · space/1"],
+  ["Label", "type/label, SemiBold 14px", "Same"],
+  ["Corner radius", "3px · radius/sm", "Same"],
+  ["Icon and spinner", "16px · icon/size/sm", "Same"],
+  ["Focus ring", "2px border/focus, 2px outside; border/focus-inverse on navy", "Same"],
+  ["Primary", "action/primary, hover and pressed one and two steps darker", "Same"],
+  ["Secondary", "action/secondary with a 1px border/strong edge", "Same"],
+  ["Ghost", "No fill; hover action/secondary-hover", "Same"],
+  ["Destructive", "action/destructive, hover and pressed darker", "Same"],
+  ["Disabled", "action/disabled with text/disabled; Secondary keeps white with border/disabled", "Same"],
+  ["Pressed toggle", "The style’s pressed fill, action/*-pressed; Ghost adds a 1px border/strong edge", "Same"],
+  ["Link", "The surrounding text’s font and size, no padding; text/link underlined, text/link-hover on hover and pressed, a 2px underline while pressed; disabled text/disabled with no underline", "Same; size doesn’t apply"],
+];
+
+const code = `import { Button, IconButton } from "@ui";
+
+<Button variant="primary" icon="download">Download</Button>
+<Button size="sm" loading={saving}>Save</Button>
+<Button size="sm" variant="ghost" pressed={helpful}
+  onClick={() => setHelpful(!helpful)}>Helpful</Button>
+<Button href="https://dandiarchive.org" icon="launch">View on DANDI</Button>
+<p>Add an API key in <Button variant="link"
+  onClick={openSettings}>Settings</Button>.</p>
+<IconButton icon="settings" label="Settings" variant="ghost" />`;
+const ANATOMY = [
+  [
+    "Container",
+    "32px tall (button/height/md), 3px corners (radius/sm), action/primary"
+  ],
+  [
+    "Padding",
+    "16px at the sides (space/4). Height is fixed, so the content centers"
+  ],
+  [
+    "Icon",
+    "16px Carbon icon, only when there is one. The spinner takes its place while loading"
+  ],
+  [
+    "Gap",
+    "8px between the icon or spinner and the label (space/2)"
+  ],
+  [
+    "Label",
+    "type/label, IBM Plex Sans JP SemiBold 14px, text/on-inverse: 10.98:1 on navy"
+  ]
+];
+---
+
+<DocsLayout title="Buttons" description="Button and Icon button: four styles, three sizes and every state.">
+  <Intro
+    lead="Buttons start actions: opening a file, sharing a view, loading data in Python, adding an API key. Neurosift has four styles in three sizes, a link button for actions inside a sentence, plus an icon button for toolbars, and every button shows a clear state when people hover, press, focus it with the keyboard, or wait for it."
+    status="Updated November 10, 2026 · Components · Every button on this page is the component the app imports from @ui"
+    rules={[
+      { title: "One primary per view", text: "Each page, panel or dialog has at most one Primary button: the action most people came to take." },
+      { title: "Labels are verbs", text: "Say what will happen: “Open file”, “Share view”. Never “OK” or “Submit” on their own." },
+      { title: "States are always visible", text: "Hover, pressed, focus, disabled and loading each look different, so people always know what the button is doing." },
+    ]}
+  />
+
+  <Existing page="buttons" />
+
+  <DocSection title="Styles" lead="Four styles, from most to least emphasis. Choose by how important the action is, not by which color fits the layout. Secondary is the default, so Primary is always a choice.">
+    <DocTable caption="Button styles" columns={["Button", "Style", "Use", "In Neurosift"]}>
+      {
+        STYLES.map(({ variant, label, name, use, examples }) => (
+          <tr>
+            <td><Button variant={variant}>{label}</Button></td>
+            <th scope="row">{name}</th>
+            <td>{use}</td>
+            <td>{examples}</td>
+          </tr>
+        ))
+      }
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Sizes" lead="Medium is the default. Small is for dense places: table rows, the file tree and side panels, where it lines up with 24px compact rows. Large is only for a button beside a Large input, such as Send next to Neurosift Chat’s message box, so the two line up at 40px.">
+    {
+      SIZES.map(({ size, name, use }) => (
+        <div class="demo-row" role="group" aria-label={name}>
+          <Button variant="primary" size={size}>{size === "lg" ? "Send" : "Open file"}</Button>
+          <Button size={size} icon="share">Share view</Button>
+          <Button variant="ghost" size={size}>Show all</Button>
+          <span class="type-caption muted">{use}</span>
+        </div>
+      ))
+    }
+  </DocSection>
+
+  <DocSection title="States" lead="Hover darkens one step and pressed two, focus adds a ring with a 2px gap, disabled turns gray, and loading swaps the icon for a spinner while keeping the label. Hover, press or Tab to the buttons here to see them.">
+    <DocTable caption="Button states" columns={["Style", "Default", "Disabled", "Loading"]}>
+      {
+        STYLES.map(({ variant, name }) => (
+          <tr>
+            <th scope="row">{name}</th>
+            <td><Button variant={variant} icon="download">Download</Button></td>
+            <td><Button variant={variant} icon="download" disabled>Download</Button></td>
+            <td><Button variant={variant} icon="download" loading>Download</Button></td>
+          </tr>
+        ))
+      }
+    </DocTable>
+    <DocTable caption="Loading without an icon" columns={["Style", "Default", "Loading"]}>
+      {
+        STYLES.map(({ variant, name, label }) => (
+          <tr>
+            <th scope="row">{name}</th>
+            <td><Button variant={variant}>{label}</Button></td>
+            <td><Button variant={variant} loading>{label}</Button></td>
+          </tr>
+        ))
+      }
+    </DocTable>
+    <p class="doc-note">A loading button never changes width. With an icon, the spinner takes the icon’s place. Without one, the spinner sits in the middle and the label stays in place, unseen, so the width holds and screen readers still hear the label. Loading keeps focus on the button, sets aria-busy and ignores clicks. Disabled buttons can’t be focused, so always say nearby why an action isn’t available, such as “Add an API key first”.</p>
+  </DocSection>
+
+  <DocSection title="Toggle buttons" lead="A button that stays on until pressed again, such as Helpful and Not helpful under an answer in Neurosift Chat. pressed keeps the style’s pressed fill, and a pressed Ghost gains the Secondary edge, so on and off differ by more than color. Press them here.">
+    <FeedbackDemo client:visible />
+    <DocTable caption="Pressed toggles" columns={["Style", "Off", "On"]}>
+      {
+        STYLES.map(({ variant, name, label }) => (
+          <tr>
+            <th scope="row">{name}</th>
+            <td><Button variant={variant} pressed={false}>{label}</Button></td>
+            <td><Button variant={variant} pressed>{label}</Button></td>
+          </tr>
+        ))
+      }
+    </DocTable>
+    <p class="doc-note">Use a toggle only for a state that stays, never for an action. The label stays the same when pressed; the button says “pressed” to screen readers through aria-pressed.</p>
+  </DocSection>
+
+  <DocSection title="Link button" lead={`variant="link" is a button that reads as a link, for an action inside running text, such as Settings in a notice or Add a comment? after an answer. It takes the size and font of the sentence around it, so size doesn’t apply. Hover, press or Tab to the links here to see their states.`}>
+    <DocTable caption="Link button states" columns={["State", "In a sentence"]}>
+      <tr>
+        <th scope="row">Default</th>
+        <td><p class="type-body-sm">Embargoed Dandisets need a DANDI API key. Add one in <Button variant="link">Settings</Button>.</p></td>
+      </tr>
+      <tr>
+        <th scope="row">Disabled</th>
+        <td><p class="type-body-sm">Thanks for the feedback. <Button variant="link" disabled>Add a comment?</Button></p></td>
+      </tr>
+    </DocTable>
+    <DocTable caption="Link button or link" columns={["Use", "When", "Example"]}>
+      <tr><th scope="row">Link button, variant=&quot;link&quot;</th><td>An action in a sentence that changes something on this page: opens a dialog, a drawer or a field</td><td>Add one in Settings · Add a comment?</td></tr>
+      <tr><th scope="row">A real &lt;a&gt;, or Button with href</th><td>Anything that goes somewhere: another page, another site, a file</td><td>Read the guide · View on DANDI</td></tr>
+      <tr><th scope="row">Button, Ghost or Secondary</th><td>An action that stands on its own, outside running text</td><td>Show all · Share view</td></tr>
+    </DocTable>
+    <p class="doc-note">Text/link with an underline, text/link-hover on hover and while pressed, where the underline thickens to 2px. Focus is the button ring. Disabled turns text/disabled and loses the underline, so it doesn’t read as something to press; say nearby why it isn’t available.</p>
+  </DocSection>
+
+  <DocSection title="Anatomy" lead="A Medium Primary button with an icon. Every value comes from the spacing, radius and color tokens.">
+    <div class="demo-row"><Button variant="primary" icon="folder--open">Open file</Button></div>
+    <DocTable caption="Button anatomy" columns={["Part","Value"]}>
+      <DocRows rows={ANATOMY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Icon button" lead="For familiar actions in tight toolbars. Secondary or Ghost, 32px with a 20px icon or 24px with a 16px icon. Every icon button is named by its label.">
+    <div class="demo-row" role="group" aria-label="Icon buttons">
+      <IconButton icon="search" label="Search" />
+      <IconButton icon="settings" label="Settings" variant="ghost" />
+      <IconButton icon="copy" label="Copy path" size="sm" />
+      <IconButton icon="close" label="Close tab" variant="ghost" size="sm" />
+      <IconButton icon="download" label="Download" disabled />
+    </div>
+    <p class="doc-note">The label is the button’s accessible name. A visible tooltip with the same words comes with the Tooltip component.</p>
+  </DocSection>
+
+  <DocSection title="Writing labels" lead="Labels start with a verb, use sentence case and stay short, usually two or three words. The label should still make sense if someone reads only the button.">
+    <DocTable caption="Writing labels" columns={["Use", "Instead of", "Why"]}>
+      {LABELS.map(([use, instead, why]) => <tr><th scope="row">{use}</th><td>{instead}</td><td>{why}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Placement and groups" lead="Group related buttons 8px apart (space/2). In dialogs the Primary or Destructive button goes last, so it sits where the eye ends up.">
+    <div class="demo-stage">
+      <p class="type-label">Remove your DANDI API key?</p>
+      <p class="type-body-sm">Embargoed files won’t open until you add it again.</p>
+      <div class="demo-row demo-row-end" role="group" aria-label="Dialog actions">
+        <Button>Keep key</Button>
+        <Button variant="destructive">Remove API key</Button>
+      </div>
+    </div>
+    <p class="doc-note">The way out first, the action last, on the right. In table rows, Small Ghost buttons keep the row calm.</p>
+  </DocSection>
+
+  <DocSection title="Accessibility" lead="Buttons are native elements, so the keyboard and screen readers work without extra code.">
+    <ul class="rule-list">
+      <li><strong>Real buttons.</strong> A &lt;button&gt; for actions, a link for navigation. Button renders an &lt;a&gt; when given href. Enter works on both, Space on buttons. A link button is still a &lt;button&gt;, so screen readers announce it as one and it never navigates.</li>
+      <li><strong>Visible focus.</strong> The ring appears for keyboard focus on every style and is never removed. On navy surfaces it turns white.</li>
+      <li><strong>Contrast.</strong> White on navy 10.98:1, ink on white 17.40:1, white on red 6.57:1. Secondary edges are black, 21:1.</li>
+      <li><strong>Toggles.</strong> pressed sets aria-pressed, so screen readers say “Helpful, toggle button, pressed”. In forced colors a pressed button takes the system’s selected colors.</li>
+      <li><strong>Loading and disabled.</strong> Loading sets aria-busy and keeps focus. Disabled is the native attribute, so it leaves the tab order.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Use one Primary button per view.", "Keep labels short, starting with a verb.", "Show a loading state for anything that takes more than a second.", "Confirm before any Destructive action."]}
+      donts={["Don’t put two Primary buttons side by side.", "Don’t use buttons as tabs; use Tabs and segmented controls.", "Don’t use buttons to move between pages; use links.", "Don’t add a className or style to change a button’s look; add a variant to the component."]}
+    />
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Button specs" columns={["Property", "Medium", "Small"]}>
+      {SPECS.map(([property, medium, small]) => <tr><th scope="row">{property}</th><td>{medium}</td><td>{small}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. Buttons take no className or style, so every button in the app looks like this page.">
+    <CodeSample label="React" code={code} />
+  </DocSection>
+</DocsLayout>

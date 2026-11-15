@@ -1,0 +1,41 @@
+name: Old Links
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  old-links:
+    name: Saved links open the same thing
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            e2e/package-lock.json
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Install end-to-end test dependencies
+        run: npm run e2e:install
+
+      - name: Install Chromium for Playwright
+        working-directory: e2e
+        run: npx playwright install --with-deps chromium
+
+      # Loads saved links against live DANDI, EMBER and OpenNeuro data.
+      - name: Run the old-link suite
+        run: npm run e2e

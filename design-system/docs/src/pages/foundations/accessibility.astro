@@ -1,0 +1,163 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const AUDIT = [
+  ["Text colors below 4.5:1, such as #888, #aaa and #999", "37 uses", "1.4.3 Contrast", "Text color tokens"],
+  ["Text smaller than 12px, down to 8px", "48 sizes", "1.4.4 Resize Text", "The type scale’s 12px minimum"],
+  ["Click handlers on elements that aren’t buttons or links", "178 handlers", "2.1.1 Keyboard", "Buttons, links and every component"],
+  ["Tooltips that need a mouse: the title attribute", "116", "1.4.13 Content on Hover or Focus", "Tooltip and Toggletip"],
+  ["Icon-only controls without an accessible name", "3 aria-labels in all", "4.1.2 Name, Role, Value", "Icon buttons"],
+  ["Plots drawn on canvas with no text alternative", "16 canvases", "1.1.1 Non-text Content", "A summary sentence and the data, below"],
+  ["Emoji and symbols used as icons, read aloud", "49", "1.1.1 Non-text Content", "Carbon icons, hidden from screen readers"],
+  ["Loading that never ends; errors only in the console", "Seen in the walkthrough", "4.1.3 Status Messages", "Alerts, toasts and announcements"],
+  ["Reduced motion honored in one component", "1", "2.3.3 Animation from Interactions", "Motion"],
+];
+
+const CONTRAST = [
+  ["text/default", "17.40", "16.50", "4.5:1 text", "Pass"],
+  ["text/secondary", "8.86", "8.40", "4.5:1 text", "Pass"],
+  ["text/table-head", "7.34", "6.96", "4.5:1 text", "Pass"],
+  ["text/muted", "5.33", "5.05", "4.5:1 text", "Pass"],
+  ["text/link", "7.21", "6.84", "4.5:1 text", "Pass"],
+  ["White on navy: buttons, selected rows", "10.98", "—", "4.5:1 text", "Pass"],
+  ["border/strong: inputs, buttons", "21.00", "19.91", "3:1 controls", "Pass"],
+  ["data/cursor", "7.50", "7.11", "3:1 graphics", "Pass"],
+  ["Neutral 400: disabled", "2.68", "2.54", "Exempt", "Disabled only"],
+  ["border/subtle", "1.28", "1.21", "None", "Decorative only"],
+];
+
+const KEYS = [
+  ["Controls", "Tab and Shift+Tab move between controls. Enter or Space activates buttons. Everything clickable is a real button or link."],
+  ["File tree", "Up and Down move between rows. Right opens a folder, Left closes it. Enter opens the object; Space selects it."],
+  ["Section bar and object tabs", "Left and Right move between tabs and open them. Delete closes an object tab."],
+  ["Plots", "A plot takes focus like a control. Left and Right step, = and − zoom, Home and End jump."],
+  ["Menus and selects", "Up and Down move through options, Enter chooses, Escape closes and returns focus to the control that opened it."],
+  ["Dialogs and drawers", "Focus moves inside when they open and stays there. Escape and a close button always work. Focus returns to where it was."],
+];
+
+const ANNOUNCE = [
+  ["A view fails to load", "What couldn’t be shown and why", "role=alert, from the error Alert"],
+  ["Missing credentials", "This Dandiset is embargoed, with Add API key", "role=status, from the warning Alert"],
+  ["Link copied", "Link copied", "role=status, from the toast"],
+  ["The time window changes", "3.75 s from 412.00 s, once it settles", "role=status"],
+];
+
+const CHECKS = [
+  "Every text pair uses tokens and passes 4.5:1. Nothing is smaller than 12px.",
+  "Every control is a real button or link, with a visible label, or an aria-label and a tooltip.",
+  "Every state has a second signal besides color.",
+  "Tab through the screen: the order matches reading order and focus is always visible.",
+  "Every plot has a summary sentence and a way to the numbers.",
+  "Targets are at least 24px, and 32px in toolbars.",
+  "Loading says what is loading, and failures say what happened and what to do.",
+  "With reduced motion on, nothing slides.",
+];
+
+const SUITE = [
+  "axe at WCAG 2.2 AA on every page",
+  "One h1 first, no skipped heading levels, labelled landmarks",
+  "Tab order reaches the skip link first, and every stop shows a 2px focus ring",
+  "Links and controls at least 24 by 24px",
+  "Reflow at 320px wide, and text spacing overrides without clipping",
+  "Text at 200% without overflow or clipping",
+  "Forced colors and reduced motion",
+  "Keyboard checks for each interactive component",
+];
+const TARGETS = [
+  [
+    "Toolbar buttons: zoom, pan, channels",
+    "32 × 32px",
+    "Pass. Today's buttons are smaller, about 22px"
+  ],
+  [
+    "File tree and HDF5 rows",
+    "24px tall, full width",
+    "Pass. The whole row is the target"
+  ],
+  [
+    "Table rows",
+    "32px tall",
+    "Pass"
+  ],
+  [
+    "Checkboxes in the tree",
+    "16px box, 24px target",
+    "Pass, with padding"
+  ]
+];
+---
+
+<DocsLayout title="Accessibility" description="WCAG 2.2 AA as the floor, and plots that come with words and numbers.">
+  <Intro
+    lead="Neurosift meets WCAG 2.2 AA. Its paper promises to lower the barrier to entry, and that includes people who use a keyboard, a screen reader, a magnifier or no color vision. Plots are the hardest part, so every plot comes with words and a way to the numbers."
+    status="Updated November 9, 2026 · Foundations · Audit counts come from Neurosift’s source on November 5, 2026"
+    rules={[
+      { title: "AA is the floor", text: "Text 4.5:1, plot lines and control edges 3:1, targets 24px. Measured, not judged by eye." },
+      { title: "Never color alone", text: "Every series has a label, and every state a second signal, such as a word, icon, weight or inversion." },
+      { title: "Every plot has words and numbers", text: "A one-line summary above each plot, and the values one step away: as a table, or with Load in Python." },
+    ]}
+  />
+
+  <DocSection title="Where Neurosift stands today" lead="An audit of the code: each gap, how often it occurs, the WCAG 2.2 criterion it fails, and the part of this system that fixes it.">
+    <DocTable caption="Accessibility audit" columns={["Gap", "How often", "WCAG 2.2", "Fixed by"]}>
+      {AUDIT.map(([gap, often, wcag, fix]) => <tr><th scope="row">{gap}</th><td>{often}</td><td>{wcag}</td><td>{fix}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Contrast" lead="Every text and control pair in the tokens, measured with the WCAG formula on white panels and on the tool background.">
+    <DocTable caption="Contrast" columns={["Pair", "On panel", "On background", "Needs", "Result"]}>
+      {CONTRAST.map(([pair, panel, page, needs, result]) => <tr><th scope="row">{pair}</th><td>{panel}</td><td>{page}</td><td>{needs}</td><td>{result}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Color in charts" lead="Series colors are the six on the Color palette page, chosen to stay distinct with deuteranopia and protanopia and to pass 3:1 on white. Continuous data uses viridis.">
+    <ul class="rule-list">
+      <li><strong>Labeled.</strong> Every series is labeled in a legend or directly on the line, so color is never the only way to tell them apart.</li>
+      <li><strong>Six at most.</strong> Past six series, label lines directly or split into small multiples instead of adding colors.</li>
+      <li><strong>More than color.</strong> Selected and hovered series change weight or opacity as well as color.</li>
+      <li><strong>Scales say their ends.</strong> Color bars on spectrograms and heat maps print their end values and units.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Keyboard and focus" lead="Everything a mouse can do, a keyboard can do. Tab order follows reading order, and focus is always visible: a 2px link-blue ring with a 2px gap.">
+    <DocTable caption="Keyboard" columns={["Where", "Keys and behavior"]}>
+      {KEYS.map(([where, keys]) => <tr><th scope="row">{where}</th><td>{keys}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Text alternatives for plots" lead="Plots are drawn on canvas, which screen readers can’t read. Each plot carries three things, so the data is never only a picture.">
+    <ul class="rule-list">
+      <li><strong>A summary sentence.</strong> Above each plot and read first, such as “LFPs: 70 channels at 400 Hz, 1,375 s long. Showing channels 0 to 3, from 0 to 3.75 s.” It updates when the window or channels change.</li>
+      <li><strong>The values in view.</strong> A View as table button swaps the plot for a table of the samples or spike times in the current window, which can be copied.</li>
+      <li><strong>The full data.</strong> Load in Python: Neurosift already writes the code to load any object, the complete and exact data.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Screen reader announcements" lead="Changes that happen without a page load are announced once, in the same words people see. Errors interrupt; everything else waits.">
+    <DocTable caption="Announcements" columns={["Moment", "What is announced", "How"]}>
+      {ANNOUNCE.map(([moment, said, how]) => <tr><th scope="row">{moment}</th><td>{said}</td><td>{how}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Target size" lead="WCAG 2.2 asks for at least 24 × 24px. The sizes come from Spacing and layout grid.">
+    <DocTable caption="Target sizes" columns={["Control","Size","Result"]}>
+      <DocRows rows={TARGETS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="How the docs check it" lead="Every page of this site runs through an automated suite in Chromium, Firefox and WebKit, on every pull request.">
+    <ul class="rule-list">
+      {SUITE.map((check) => <li>{check}</li>)}
+    </ul>
+  </DocSection>
+
+  <DocSection title="Before a screen is handed off" lead="Check each one in the design, then again in the build.">
+    <ol class="rule-list">
+      {CHECKS.map((check) => <li>{check}</li>)}
+    </ol>
+  </DocSection>
+</DocsLayout>

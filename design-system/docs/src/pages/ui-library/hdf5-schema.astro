@@ -1,0 +1,125 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import Screen from "../../components/Screen.astro";
+import LiveScreen from "../../components/LiveScreen.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const TODAY = [
+  ["Schema tab", "Namespaces, Datasets and Groups as three wide tables of raw JSON, with expandable cells; hdmf-common types leave the first cell blank", "SpecificationsView.tsx"],
+  ["Type names", "neurodata_type_def only; hdmf-common’s data_type_def isn’t read", "SpecificationsView.tsx"],
+  ["HDF5 tab", "Top-level groups with ▸, orange folders and “N items”; datasets with dtype, shape, chunks and compressor on one line", "Hdf5View.tsx, TopLevelGroupContentPanel.tsx"],
+  ["Attributes", "Tag icons with name = value, mixed into the tree under the root and each open dataset", "TopLevelGroupContentPanel.tsx"],
+  ["Dataset details", "A small table under the row; data up to 100 values; larger ones get an unlabeled circle that logs every value to the console", "TopLevelGroupContentPanel.tsx"],
+  ["Empty groups", "analysis, processing and scratch show a name and can’t open; nothing says they’re empty", "Hdf5View.tsx"],
+  ["Loading", "“Loading...”", "Hdf5View.tsx"],
+  ["Find", "None", "—"],
+];
+
+const STATES = [
+  ["Loading", "“Reading the file” over the tree; Find works once the root arrives."],
+  ["No match", "“No group or dataset matches “spikes”.” with Clear search."],
+  ["Empty group", "“Empty” in the tree, with no chevron; the details say “This group has no datasets or groups.” and list its attributes."],
+  ["Small dataset", "Ten values or fewer show in Values directly."],
+  ["Large dataset", "The count and size, with Show first 10 rows."],
+  ["Reading rows", "“Reading 10 rows…” in Values, then a table of up to 20 columns."],
+  ["Long string", "Cut at 500 characters with Show all."],
+  ["Type not in this file", "The schema details say “Not used in this file.”"],
+];
+
+const BEHAVIOR = [
+  ["Find (HDF5)", "Filters the tree to names or paths that match, keeping their parents. The first search reads every group, up to 5,000."],
+  ["Tree", "Arrow keys move; Right opens, Left closes; Enter selects, as in the Neurodata object tree."],
+  ["Details", "A group shows its type, counts and attributes; a dataset shows type, shape, chunks, compression or filters, attributes and values."],
+  ["Copy path", "Copies the selected path and says so."],
+  ["Show first 10 rows", "Reads 10 rows only and shows them as a table."],
+  ["Find a type", "Filters the Types table by name."],
+  ["All types, Used in this file", "Used in this file lists only types found in the file."],
+  ["Namespace or type row", "Selecting one shows its details. A type shows its description, inheritance, own datasets, groups and attributes, where it’s used and the entry as stored; paths open in HDF5."],
+];
+
+const DIFFERS = [
+  ["HDF5 layout", "One indented list mixing groups, datasets and attributes", "A tree beside a details panel", "Built"],
+  ["Empty groups", "Name only", "“Empty”, and the details say so", "Built"],
+  ["Large datasets", "An unlabeled circle that logs to the console", "Count and size; Show first 10 rows", "Built"],
+  ["Find", "None", "By name or path, and by type name", "Built"],
+  ["Schema tables", "Namespaces, Datasets and Groups with raw JSON cells", "Namespaces and Types; details beside, with the entry as stored", "Built"],
+  ["hdmf-common types", "Blank first cell", "Named from data_type_def", "Built"],
+  ["Used in this file", "—", "A filter for the types the file uses; built, wording to confirm", "To confirm"],
+  ["Load in Python", "—", "Opens Python usage at this object", "To confirm"],
+];
+
+const SPECS = [
+  ["Summary", "type/caption"],
+  ["Find", "Search field, Medium, 480px"],
+  ["Tree", "Tree row · right-aligned meta: type and shape, item count, or Empty"],
+  ["Details panel", "440px · type/label name over a type/code-sm path · Accordion items"],
+  ["Key and value", "Description list, code layout"],
+  ["Tables", "Data table, Default density; names and types as Code; a row opens its details"],
+  ["Filter", "Segmented control, Small: All types, Used in this file"],
+];
+---
+
+<DocsLayout title="HDF5 and schema" description="The file as stored and the NWB specifications inside it, each with a details panel.">
+  <Intro
+    lead="HDF5 and Schema are the two tabs at the right of the file viewer. HDF5 shows the file as stored: every group, dataset and attribute, read through LINDI when the file has an index. Schema shows the NWB specifications stored in the file. Both are reference views for people who know the format, so the rebuild keeps every fact and changes how they’re arranged: a tree or tables on the left, details for the selection beside it, and Find on top."
+    status="Updated November 10, 2026 · UI library · Captured at 1440 × 900 with Dandiset 000673, sub-1 · Built from Tree, Search field, Accordion, Description list, Data table, Segmented control and Button"
+    rules={[
+      { title: "List, then details", text: "A tree or tables on the left; the selected item’s details on the right." },
+      { title: "Say what’s there", text: "Empty groups say Empty; a large dataset gives its count and size, not a console button." },
+      { title: "Name every type", text: "Types from hdmf-common get their names from data_type_def." },
+    ]}
+  />
+
+  <DocSection title="HDF5 and schema today" lead="neurosift.app with sub-1 of Dandiset 000673, captured with Playwright.">
+    <div class="captures">
+      <Screen file="reference-hdf5" alt="Today’s HDF5 tab: orange folders with item counts, datasets with dtype, shape, chunks and values on one line, and the root attributes with tag icons." caption="HDF5: groups, datasets and attributes in one indented list. Empty groups can’t open and don’t say why." />
+      <Screen file="reference-schema" alt="Today’s Schema tab: wide tables of namespaces and datasets with raw JSON in expandable cells." caption="Schema: three tables of raw JSON, with the first cell blank for hdmf-common types." />
+    </div>
+  </DocSection>
+
+  <DocSection title="What the page does today" lead="Read from the source and checked on the live site.">
+    <DocTable caption="What the page does today" columns={["Part", "Today", "Code"]}>
+      <DocRows rows={TODAY} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="The rebuilt tabs" lead="The redesign’s viewer with the same file, with live data.">
+    <div class="captures">
+      <Screen file="reference-proposed-hdf5" alt="The rebuilt HDF5 tab: a summary line, Find, a tree with acquisition and LFPs open and data selected, and a details panel with Dataset, Attributes and Values sections, the first ten rows shown as a table." caption="HDF5: a tree with type and shape on the right; the selected dataset’s facts, attributes and first rows beside it." />
+      <Screen file="reference-proposed-schema" alt="The rebuilt Schema tab: Find a type with All types and Used in this file, tables of namespaces and types, and details for ElectricalSeries: description, inheritance and its own datasets." caption="Schema: namespaces and types; ElectricalSeries’s description, inheritance and own datasets beside them." />
+    </div>
+    <p class="doc-note">Built from the <a href={withBase("/components/tables/")}>Data table and Tree</a>, the <a href={withBase("/components/accordions/")}>Accordion</a> and the <a href={withBase("/components/description-list/")}>Description list</a>.</p>
+  </DocSection>
+
+  <DocSection title="Try it" lead="Find a group or dataset, open it, and switch to Schema.">
+    <LiveScreen path="nwb?url=https://api.dandiarchive.org/api/assets/65a7e913-45c7-48db-bf19-b9f5e910110a/download/&dandisetId=000673&dandisetVersion=0.250122.0110&tab=hdf5" title="HDF5 tab, Dandiset 000673 sub-1" size="tall" />
+  </DocSection>
+
+  <DocSection title="States">
+    <DocTable caption="States" columns={["When", "What changes"]}>
+      <DocRows rows={STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Behavior">
+    <DocTable caption="Behavior" columns={["Part", "Behavior"]}>
+      <DocRows rows={BEHAVIOR} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="What differs" lead="Built is in the app now. To confirm needs Jeremy or Ben.">
+    <DocTable caption="What differs" columns={["Area", "Existing", "Proposed", "Status"]}>
+      <DocRows rows={DIFFERS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Specs" columns={["Property", "Value"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

@@ -1,0 +1,68 @@
+---
+import DocSection from "../../components/DocSection.astro";
+import Intro from "../../components/Intro.astro";
+import TokenTable from "../../components/TokenTable.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { bySize, TokenView, tokensIn } from "../../tokens";
+
+const radiusRows = bySize(tokensIn("radius")).map((view) => ({ view }));
+const borderRows = [
+  ["border-width.1", "border-strong", "With border/strong: section rules and table heads"],
+  ["border-width.1", "border-subtle", "With border/subtle: panels and rows"],
+  ["border-width.2", "border-selected", "With border/selected: the selected tab underline"],
+  ["border-width.2", "border-error", "With border/error: an input with an error"],
+].map(([path, extra, use]) => ({ view: TokenView.of(path), extra, use }));
+const elevations = tokensIn("elevation");
+---
+
+<DocsLayout title="Radius and elevation tokens" description="Corner radius, border width, elevation and focus of the Neurosift design system.">
+  <Intro
+    lead={`Corner radius and border width are dimension tokens; elevation is ${elevations.length} shadow tokens. Every sample here is drawn with its token.`}
+    status="Updated November 6, 2026 · Tokens · Dimensions collection and elevation/ effect styles"
+    rules={[
+      { title: "Small corners", text: "radius/sm is the default for controls. Data stays at radius/none." },
+      { title: "Rules separate", text: "border-width/1 with border/subtle or border/strong separates; a shadow means something floats." },
+      { title: "Navy, low opacity", text: "elevation/ shadows use navy at low opacity, never colored glows." },
+    ]}
+  />
+
+  <DocSection title="Radius" lead="Corners drawn with radius/ tokens.">
+    <TokenTable caption="Radius tokens" rows={radiusRows} sample="radius" />
+  </DocSection>
+
+  <DocSection title="Border width" lead="Strokes drawn with border-width/ tokens, paired with the border colors they go with.">
+    <TokenTable caption="Border width tokens" rows={borderRows} sample="border" />
+  </DocSection>
+
+  <DocSection title="Elevation" lead="Shadow tokens, shown on surface/page.">
+    <ul class="elevation-grid" aria-label="Elevation levels">
+      <li class="elevation-flat">
+        <code>elevation/0</code>
+        <span class="muted">No shadow: panels, plots, tables</span>
+      </li>
+      {
+        elevations.map((view) => (
+          <li class={view.specimenClass}>
+            <code>{view.name}</code>
+            <span class="muted">{view.use}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </DocSection>
+
+  <DocSection title="Focus ring" lead="A 2px border/focus outline drawn 2px outside the control. It shows for keyboard focus only (:focus-visible), never on a mouse click, and it is never removed.">
+    <div class="focus-stage">
+      <span class="focus-sample">Open file</span>
+    </div>
+    <div class="focus-stage focus-stage-navy">
+      <span class="focus-sample focus-sample-inverse">/acquisition/LFPs</span>
+    </div>
+    <p class="doc-note">On navy surfaces, such as the header and selected rows, the ring is border/focus-inverse, white at 11:1. border/focus is only 1.5:1 there.</p>
+    <p class="doc-note">Text inputs show focus by thickening their own border to 2px border/focus instead of adding a ring around it.</p>
+  </DocSection>
+
+  <DocSection title="Pinned edge" lead="When a table’s first column or header row is pinned and content scrolls under it, its edge becomes a 1px border/strong rule. No shadow: Neurosift separates with rules. The rule shows only while something is scrolled under it.">
+    <p class="doc-note">radius/full is 9999px, so any element becomes a full pill or circle.</p>
+  </DocSection>
+</DocsLayout>

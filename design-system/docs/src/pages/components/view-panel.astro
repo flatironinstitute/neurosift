@@ -1,0 +1,75 @@
+---
+import { EmptyState, LoadingState, TooMuchData, ViewPanel } from "@ui";
+import CodeSample from "../../components/CodeSample.astro";
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import ViewPanelDemo from "../../components/ViewPanelDemo";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const noop = () => {};
+
+const SPECS = [
+  ["Summary line", "type/caption, text/secondary, above the controls · says what is drawn and updates with the window"],
+  ["Controls", "Time controls first, then the view’s options · 12px gaps, wrapping"],
+  ["Time overview", "Full width under the controls, on views whose x axis is recording time"],
+  ["Settings panel", "320px, layout/panel-default · Accordion items with content indented 24px · below the plot under 1,024px"],
+  ["Settings", "Select, Small for choices · Text input, Small for numbers · Checkbox for on and off · pairs side by side, 8px apart"],
+  ["Chart title", "type/label, above the chart"],
+  ["Plot frame", "surface/panel · 1px border/subtle · fills the rest of the view · aria-busy while it loads"],
+];
+
+const code = `import { TooMuchData, ViewPanel } from "@ui";
+
+<ViewPanel
+  label="LFPs"
+  summary={summary}
+  controls={<TimeWindow … />}
+  overview={<TimeOverview … />}
+  settings={sections}
+  busy={loading}
+>
+  {tooMuch ? <TooMuchData … /> : <Chart />}
+</ViewPanel>`;
+---
+
+<DocsLayout title="View panel" description="The frame every view of a neurodata object shares, around Neurosift’s own charts.">
+  <Intro
+    lead="Every view of an object, from traces to spectrograms, sits in the same frame: a summary sentence, the time controls, the overview strip, a settings panel and the chart. Today each view arranges these its own way. The chart inside stays Neurosift’s own; only the frame around it changes."
+    status="Updated November 10, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "Summary, then controls", text: "One sentence says what is drawn before any control asks for attention." },
+      { title: "The panel says what’s set", text: "Closed settings sections still show their value, so nothing hides." },
+      { title: "Say why nothing is drawn", text: "Loading, empty and too-much-data states take the chart’s place, in words." },
+    ]}
+  />
+
+  <DocSection title="View panel" lead="A spectrogram’s frame, live. Change the window, or open Preprocessing and set a filter: the closed section keeps saying what is set.">
+    <ViewPanelDemo client:visible />
+  </DocSection>
+
+  <DocSection title="In place of the chart" lead="The chart’s space holds the state the view is in, so the layout never jumps.">
+    <div class="view-states">
+      <ViewPanel label="LFPs, while loading" summary="LFPs: 70 channels at 400 Hz, 1,375.28 s." controls={null} busy>
+        <LoadingState label="Loading LFPs" phase="loading" progress={{ value: 12, max: 40, unit: "chunks" }} />
+      </ViewPanel>
+      <ViewPanel label="PSTH, nothing chosen" summary="Units: 46 units, aligned to start_time." controls={null}>
+        <EmptyState title="No units chosen yet" action={{ label: "Select first 5 units", onClick: noop }}>Pick units from the list to plot their firing around each trial.</EmptyState>
+      </ViewPanel>
+      <ViewPanel label="ElectricalSeries, too much data" summary="ElectricalSeries: 384 channels at 30 kHz, 3,600 s." controls={null}>
+        <TooMuchData zoomLabel="Zoom in to 1 s" onZoom={noop} onDrawAnyway={noop}>This window holds 384 channels at 30 kHz for 60 s, about 691 million samples. Zoom in to see the traces, or draw them anyway, which may be slow.</TooMuchData>
+      </ViewPanel>
+    </div>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="View panel specs" columns={["Part", "Spec"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. The view holds its data and settings; the panel only arranges them.">
+    <CodeSample label="View panel" code={code} />
+  </DocSection>
+</DocsLayout>

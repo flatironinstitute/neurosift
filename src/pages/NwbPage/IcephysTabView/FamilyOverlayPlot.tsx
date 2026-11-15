@@ -1,28 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useMemo } from "react";
 import Plot from "@components/LazyPlot";
-import { internId, shadesOf } from "./palette";
+import { useCssVars } from "@components/useCssVars";
+import { readableOn } from "@shared/plotColors";
+import { usePlotColors, usePlotTheme } from "@shared/plotTheme";
+import { themedLayout } from "@shared/plotlyTheme";
+import { pickDisplayUnit } from "./displayUnit";
+import { shadesOf } from "./palette";
+import { GroupBy, groupOf } from "./sweepGroups";
 import { LoadedSweep } from "./useSweepData";
-
-// Map NWB SI units to a display unit + scale factor. NWB stores values in SI
-// after applying `conversion`, but in icephys the conventional units used in
-// figures are mV and pA. If the file's unit string is already an offset unit
-// (e.g. "millivolts"), we leave the data untouched.
-export function pickDisplayUnit(siUnit: string): {
-  label: string;
-  scale: number;
-} {
-  const u = siUnit.toLowerCase().trim();
-  if (u === "volts" || u === "v") return { label: "mV", scale: 1e3 };
-  if (u === "amperes" || u === "ampere" || u === "a")
-    return { label: "pA", scale: 1e12 };
-  // already-scaled units pass through
-  if (u === "millivolts" || u === "mv") return { label: "mV", scale: 1 };
-  if (u === "picoamperes" || u === "pa") return { label: "pA", scale: 1 };
-  if (u === "nanoamperes" || u === "na") return { label: "nA", scale: 1 };
-  // unknown unit: pass through, no scale
-  return { label: siUnit || "(arb)", scale: 1 };
-}
 
 // Sequential palette (ColorBrewer single-hue Blues, 9-class with the
 // lightest stop dropped to keep traces visible on a white background).
@@ -64,62 +50,6 @@ function categorical(i: number): string {
   return OKABE_ITO[
     ((i % OKABE_ITO.length) + OKABE_ITO.length) % OKABE_ITO.length
   ];
-}
-
-export type GroupBy =
-  | "protocol"
-  | "sweep"
-  | "condition"
-  | "repetition"
-  | "electrode"
-  | "cell"
-  // A custom intracellular_recordings column axis, encoded as "col:<name>".
-  // `(string & {})` keeps autocomplete for the built-ins while accepting these.
-  | (string & {});
-
-// Stable (id, label) for a sweep under a grouping axis. The ids are global
-// (condRow/repRow/seqRow, or internId for string axes), so the same group maps
-// to the same id across panels — which lets a shared legend's colors match.
-export function groupOf(
-  sw: LoadedSweep,
-  groupBy: GroupBy,
-): { id: number; label: string } {
-  if (groupBy === "condition")
-    return {
-      id: sw.condRow ?? -1,
-      label:
-        sw.condRow !== undefined ? `condition ${sw.condRow}` : "(no condition)",
-    };
-  if (groupBy === "repetition")
-    return {
-      id: sw.repRow ?? -1,
-      label:
-        sw.repRow !== undefined ? `repetition ${sw.repRow}` : "(no repetition)",
-    };
-  if (groupBy === "electrode")
-    return {
-      id: internId(sw.electrode ?? "?"),
-      label: sw.electrode ?? "(no electrode)",
-    };
-  if (groupBy === "cell")
-    return {
-      id: internId("cell:" + (sw.cell ?? "?")),
-      label: sw.cell ?? "(no cell)",
-    };
-  if (groupBy === "protocol" && sw.seqRow !== undefined) {
-    // Key by protocol name, not seqRow: the same protocol run across several
-    // sequential recordings (i.e. repetitions) should share one color and one
-    // legend entry, not get a fresh color per recording.
-    const name = sw.protocolLabel || `seq ${sw.seqRow}`;
-    return { id: internId("p:" + name), label: name };
-  }
-  if (groupBy.startsWith("col:")) {
-    // Custom intracellular_recordings column: group by its per-sweep value.
-    const colName = groupBy.slice(4);
-    const v = sw.custom?.[colName];
-    return { id: internId(groupBy + "=" + (v ?? "?")), label: v ?? "(none)" };
-  }
-  return { id: sw.irtRow, label: `sweep ${sw.irtRow}` };
 }
 
 interface Props {
@@ -164,7 +94,11 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
   xRangeMs,
   yRangeByUnit,
 }) => {
+  const colors = usePlotColors();
+  const { plotTheme } = usePlotTheme();
   const { data, layout } = useMemo(() => {
+    const onChart = (c: string) =>
+      plotTheme === "dark" ? readableOn(c, colors.surface) : c;
     const data: any[] = [];
 
     // Pick display units from the first sweep (assumed consistent across sweeps).
@@ -219,7 +153,7 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
 
     sweeps.forEach((sw) => {
       const g = gOf(sw);
-      const color = colorOfGroup.get(g.id) || "#444";
+      const color = onChart(colorOfGroup.get(g.id) || "#444");
       const showInLegend = !legendShownFor.has(g.id);
       if (showInLegend) legendShownFor.add(g.id);
 
@@ -288,7 +222,7 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
     const yStim = yrStim ? { range: yrStim, autorange: false } : {};
     // No-stimulus families (IZeroClamp) get a single response panel filling the
     // height, with the time axis on the response plot itself.
-    const layout: any = noStimulus
+    const base: any = noStimulus
       ? {
           width,
           height,
@@ -366,6 +300,8 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
           hovermode: "closest",
         };
 
+    const layout = themedLayout(colors, base);
+
     return { data, layout };
   }, [
     sweeps,
@@ -377,21 +313,18 @@ const FamilyOverlayPlot: FunctionComponent<Props> = ({
     baseColor,
     xRangeMs,
     yRangeByUnit,
+    colors,
+    plotTheme,
   ]);
 
+  const box = useCssVars<HTMLDivElement>({
+    "--icephys-w": width,
+    "--icephys-h": height,
+  });
   if (sweeps.length === 0) {
     return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width,
-          height,
-          color: "#888",
-        }}
-      >
-        Pick a protocol to render its sweep family.
+      <div ref={box} className="icephys-chart-box icephys-chart-empty">
+        No sweeps to draw yet.
       </div>
     );
   }

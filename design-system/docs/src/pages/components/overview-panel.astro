@@ -1,0 +1,57 @@
+---
+import CodeSample from "../../components/CodeSample.astro";
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import OverviewDemo from "../../components/OverviewDemo";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const SPECS = [
+  ["Width", "Opens at 320px, layout/panel-default · drags between 240 and 480px, layout/panel-min and max"],
+  ["Surface", "surface/panel · 1px border/subtle on the right · 20px padding · scrolls on its own"],
+  ["Header", "The title as an eyebrow in type/label-sm · Hide overview, a Small Ghost icon button"],
+  ["Groups", "Title in type/label · fields in a Description list beside their keys"],
+  ["Rail", "24px wide, layout/target-min · one Show overview button"],
+  ["Smaller screens", "At 768px and below, the same content opens in a Drawer, closed by default"],
+];
+
+const code = `import { OverviewPanel } from "@ui";
+
+<OverviewPanel
+  title="Overview"
+  groups={groups}
+  width={width}
+  onWidthChange={setWidth}
+  collapsed={collapsed}
+  onCollapsedChange={setCollapsed}
+/>`;
+---
+
+<DocsLayout title="Overview panel" description="The session and Dandiset details beside the file viewer, resizable and collapsible.">
+  <Intro
+    lead="The overview panel sits on the left of the file viewer and every view: what the Dandiset and session are, in groups of fields. Today it opens at a third of the window and can’t be collapsed. Here it opens at 320px, drags between 240 and 480, and folds to a rail with one button."
+    status="Updated November 10, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "The data gets the room", text: "A fixed default width, so the view area is predictable and plots get the rest." },
+      { title: "Collapse in one click", text: "Hide overview folds it to a rail; Show overview brings it back." },
+      { title: "Resize by keyboard too", text: "The edge is a separator that the arrow keys move, 16px at a time." },
+    ]}
+  />
+
+  <DocSection title="Overview panel" lead="Drag the right edge, or focus it and use the arrow keys, Home and End. Hide it with the chevron.">
+    <OverviewDemo client:visible />
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Overview panel specs" columns={["Property", "Value"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+    <p class="doc-note">Fields use the <a href={withBase("/components/description-list/")}>Description list</a>. The file viewer remembers the width and collapsed state in this browser.</p>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. The panel is controlled: the file viewer holds its width and whether it’s collapsed.">
+    <CodeSample label="Overview panel" code={code} />
+  </DocSection>
+</DocsLayout>

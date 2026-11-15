@@ -1,0 +1,21 @@
+.ns-inline-message {
+  display: flex;
+  gap: var(--space-1);
+  align-items: flex-start;
+  color: var(--status-info-text);
+  font: var(--type-caption);
+  letter-spacing: var(--type-caption-letter-spacing);
+}
+
+.ns-inline-message--warning {
+  color: var(--status-warning-text);
+}
+
+.ns-inline-message--error {
+  color: var(--status-error-text);
+}
+
+/* Centers the 16px icon on the first line of caption text. */
+.ns-inline-message > .ns-icon {
+  margin-block-start: calc((1lh - var(--icon-size-sm)) / 2);
+}

@@ -1,0 +1,65 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import Screen from "../../components/Screen.astro";
+import LiveScreen from "../../components/LiveScreen.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const DIFFERS = [
+  ["Fields", "Material UI outlined fields with floating labels", "Text input: label above, help below, 1px edge", "Changed"],
+  ["Labels and help", "“DANDI Staging API Key”; “Enter your … for accessing protected resources”", "“DANDI sandbox API key”; “From your account on …”", "Changed"],
+  ["EMBER help", "Repeats the DANDI help", "“From your account on the EMBER archive.”", "Changed"],
+  ["Show and hide", "None", "An eye button on each key, “Show API key” and “Hide API key”", "New"],
+  ["Panels", "Material UI Papers with a shadow", "Sections: 1px border/strong, no shadow", "Changed"],
+  ["Reload notice", "Light blue alert inside the EMBER card: “API key saved. Please reload…”", "Info Alert under both sections, with a Reload page button", "Changed"],
+  ["Saving", "Each key saves in this browser as it’s typed", "The same, under the same names", "Same"],
+];
+
+const SPECS = [
+  ["Page", "Page: 24px margins, layout/page-margin · 720px column, layout/text-max · 24px between blocks · type/h2 title"],
+  ["Sections", "Section: surface/panel · 1px border/strong · radius/sm · 24px padding · type/h4 title · 16px between fields"],
+  ["Fields", "Text input, Medium, as password fields with show and hide · helper text under each"],
+  ["Reload notice", "Alert, Info, with a title and one Small Secondary button, Reload page · shown after the first change"],
+  ["Top bar", "48px App bar, unchanged in this step"],
+];
+---
+
+<DocsLayout title="Settings" description="The API keys Neurosift sends to DANDI, the DANDI sandbox and EMBER.">
+  <Intro
+    lead="Settings holds the API keys Neurosift sends to DANDI, the DANDI sandbox and EMBER, so people can open embargoed Dandisets. Keys stay in this browser and save as people type. It’s the first app page built only from the design system."
+    status="Updated November 10, 2026 · UI library · Captured at 1440px wide, after typing an EMBER key · Built from Page, Section, Text input, Alert and Button"
+    rules={[
+      { title: "Keys stay here", text: "Keys are saved in this browser only, under the same names the app has always read." },
+      { title: "Say where keys come from", text: "Each field says which account the key comes from, in words, under the field." },
+      { title: "Reload, then use", text: "Neurosift reads keys when a page opens, so a changed key asks for a reload, with a button." },
+    ]}
+  />
+
+  <DocSection title="Existing settings" lead="neurosift.app/settings today, after typing a key.">
+    <Screen file="settings-today" alt="Today’s Settings page: two Material UI cards with floating-label fields, and a light blue notice inside the EMBER card." caption="Material UI fields with floating labels, help that says “Enter your… for accessing protected resources”, the EMBER field repeating the DANDI help, and the reload notice inside the EMBER card." />
+  </DocSection>
+
+  <DocSection title="Proposed settings" lead="The redesign’s Settings page, after typing the EMBER key. The page below the top bar is what the app shows now; the App bar comes with the file viewer’s migration.">
+    <Screen file="settings-proposed" alt="The rebuilt Settings page: two bordered sections with labelled password fields, each with a show button, and an info alert with a Reload page button." caption="Labels above the fields, help that names each account, a show and hide button on every key, and the reload notice under both sections." />
+    <p class="doc-note">The fields are the <a href={withBase("/components/text-inputs/")}>Text input</a> as an API key field, inside <a href={withBase("/components/pages/")}>Page and Section</a>.</p>
+  </DocSection>
+
+  <DocSection title="What differs" lead="Same works the same way. Changed looks or reads differently but does the same thing. New adds something.">
+    <DocTable caption="What differs" columns={["Area", "Existing", "Proposed", "Status"]}>
+      <DocRows rows={DIFFERS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Settings specs" columns={["Part", "Spec"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+  <DocSection title="Try it" lead="Show and hide a key; nothing is saved until you type one.">
+    <LiveScreen path="settings" title="Settings" size="default" />
+  </DocSection>
+
+</DocsLayout>

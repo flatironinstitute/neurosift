@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import fetchOpenNeuroDatasets from "./fetchOpenNeuroDatasets";
+import fetchOpenNeuroDatasets, {
+  fetchOpenNeuroPage,
+} from "./fetchOpenNeuroDatasets";
 
 // OpenNeuro's search schema as of October 2026 (API version 5.8.0), from an
 // introspection query: the arguments of Query.advancedSearch, a few of the
@@ -80,5 +82,46 @@ describe("fetchOpenNeuroDatasets", () => {
     await expect(fetchOpenNeuroDatasets("balloon")).rejects.toThrow(
       "Failed to fetch OpenNeuro datasets",
     );
+  });
+
+  it("pages on with a cursor and reports the total", async () => {
+    const searches = mockOpenNeuro();
+    vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
+      const { variables } = JSON.parse(String(init.body));
+      searches.push(variables);
+      return new Response(
+        JSON.stringify({
+          data: {
+            datasets: {
+              pageInfo: { hasNextPage: true, endCursor: "abc", count: 61 },
+              edges: [{ node: node("ds008942") }],
+            },
+          },
+        }),
+      );
+    });
+    const page = await fetchOpenNeuroPage("hippocampus", "relevance", "xyz");
+    expect(page).toMatchObject({ count: 61, cursor: "abc" });
+    expect(searches[0]).toMatchObject({
+      cursor: "xyz",
+      query: { sortBy: "relevance", keywords: ["hippocampus"] },
+    });
+  });
+
+  it("skips a deleted dataset that comes back as a null node", async () => {
+    vi.stubGlobal(
+      "fetch",
+      async () =>
+        new Response(
+          JSON.stringify({
+            errors: [{ message: "Dataset ds008958 has been deleted." }],
+            data: {
+              datasets: { edges: [{ node: node("ds1") }, { node: null }] },
+            },
+          }),
+        ),
+    );
+    const datasets = await fetchOpenNeuroDatasets("");
+    expect(datasets.map((d) => d.id)).toEqual(["ds1"]);
   });
 });

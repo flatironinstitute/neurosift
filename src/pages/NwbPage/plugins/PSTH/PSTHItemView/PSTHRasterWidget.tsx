@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import { usePlotColors } from "@shared/plotTheme";
 
 type PSTHWidgetProps = {
   width: number;
@@ -20,6 +21,7 @@ const PSTHRasterWidget: FunctionComponent<PSTHWidgetProps> = ({
   alignmentVariableName,
   showXAxisLabels,
 }) => {
+  const colors = usePlotColors();
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(
     null,
   );
@@ -56,7 +58,7 @@ const PSTHRasterWidget: FunctionComponent<PSTHWidgetProps> = ({
     ctx.clearRect(0, 0, width, height);
 
     // vertical line at zero
-    ctx.strokeStyle = "lightgray";
+    ctx.strokeStyle = colors.gridMinor;
     ctx.lineWidth = 3;
     ctx.beginPath();
     const p1 = coordToPixel(0, 0);
@@ -68,7 +70,7 @@ const PSTHRasterWidget: FunctionComponent<PSTHWidgetProps> = ({
     ctx.font = "12px sans-serif";
 
     // y axis
-    ctx.strokeStyle = "gray";
+    ctx.strokeStyle = colors.gridMajor;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(margins.left, margins.top);
@@ -77,7 +79,7 @@ const PSTHRasterWidget: FunctionComponent<PSTHWidgetProps> = ({
 
     // y axis label
     const yAxisLabel = "Trial";
-    ctx.fillStyle = "black";
+    ctx.fillStyle = colors.text;
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
     ctx.save();
@@ -91,12 +93,12 @@ const PSTHRasterWidget: FunctionComponent<PSTHWidgetProps> = ({
     // trial count at top of y axis
     ctx.textAlign = "right";
     ctx.textBaseline = "top";
-    ctx.fillStyle = "black";
+    ctx.fillStyle = colors.text;
     ctx.fillText(trials.length.toString(), margins.left - 6, margins.top);
 
     // x axis labels
     if (showXAxisLabels) {
-      ctx.fillStyle = "black";
+      ctx.fillStyle = colors.text;
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
       ctx.fillText("0", p2.x, p2.y + 4);
@@ -119,7 +121,7 @@ const PSTHRasterWidget: FunctionComponent<PSTHWidgetProps> = ({
     }
 
     // x axis
-    ctx.strokeStyle = "gray";
+    ctx.strokeStyle = colors.gridMajor;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(margins.left, height - margins.bottom);
@@ -152,6 +154,7 @@ const PSTHRasterWidget: FunctionComponent<PSTHWidgetProps> = ({
     alignmentVariableName,
     groups,
     showXAxisLabels,
+    colors,
   ]);
 
   return (

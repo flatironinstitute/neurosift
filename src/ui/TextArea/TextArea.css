@@ -1,0 +1,28 @@
+/* One row is exactly as tall as a Text input of the same size. */
+.ns-field-box:has(> .ns-text-area) {
+  align-items: stretch;
+  block-size: auto;
+  min-block-size: var(--button-height-md);
+  padding-block: var(--space-1);
+}
+
+/* One row centers in the 40px frame; more rows keep 6px above and below. */
+.ns-field--lg .ns-field-box:has(> .ns-text-area) {
+  align-items: center;
+  min-block-size: var(--input-height-lg);
+  padding-block: calc(var(--space-1) + var(--space-0-5));
+}
+
+.ns-field--sm .ns-field-box:has(> .ns-text-area) {
+  min-block-size: var(--button-height-sm);
+  padding-block: 0;
+}
+
+/* Sizes to its content between rows and maxRows; where field-sizing isn't supported, rows sets the height. */
+.ns-text-area {
+  field-sizing: content;
+  min-block-size: calc(var(--ns-text-area-rows, 3) * 1lh);
+  max-block-size: calc(var(--ns-text-area-max-rows, 3) * 1lh);
+  overflow-y: auto;
+  resize: none;
+}

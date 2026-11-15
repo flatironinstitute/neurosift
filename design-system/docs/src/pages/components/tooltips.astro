@@ -1,0 +1,132 @@
+---
+import DataTooltipDemo from "../../components/DataTooltipDemo";
+import Existing from "../../components/Existing.astro";
+import { Checkbox, IconButton, Toggletip } from "@ui";
+import CodeSample from "../../components/CodeSample.astro";
+import DoDont from "../../components/DoDont.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const noop = () => {};
+
+const WHICH = [
+  ["Name an icon button or show its key", "Tooltip, built into every icon button"],
+  ["Explain a setting in a sentence or two", "Toggletip with an Info button"],
+  ["Say what a field expects", "Helper text under the field (Text inputs)"],
+  ["Report status, such as background work", "Inline message (Alerts and toasts)"],
+  ["Read values on a plot", "Data tooltip"],
+];
+
+const WRITING = [
+  ["Zoom in, with the = key", "Zoom in (decrease time window)", "Tooltip with key"],
+  ["Earlier, with the Left arrow key", "Move backward in time", "Tooltip with key"],
+  ["Copy link to this tab", "Share tab URL", "Tooltip"],
+  ["Shared y-scale, with an Info button", "Share one y-scale across panels (per unit)…", "Toggletip"],
+  ["Computing spectrograms…", "Spectrograms are being computed in the background…", "Inline message"],
+  ["Nothing: the field looks editable", "Click to edit duration", "No tooltip needed"],
+];
+
+const SPECS = [
+  ["Surface", "surface/inverse · radius/xs", "surface/panel · 1px border/strong · radius/sm · elevation/2"],
+  ["Padding", "4px 8px · space/1 space/2", "12px · space/3"],
+  ["Text", "type/caption · text/on-inverse; key in type/code-sm with a 1px border", "type/label title · type/body-sm"],
+  ["Width", "One line", "280px · layout/panel-min + space/10"],
+  ["Timing", "500ms hover delay; at once on keyboard focus", "On click, until closed"],
+  ["Offset", "6px arrow, then 4px to the target", "8px under the Info button · space/2"],
+  ["Info button", "—", "24px Ghost icon button · Carbon information, 16px"],
+];
+
+const code = `import { IconButton, Toggletip } from "@ui";
+
+<IconButton icon="skip--back" label="Earlier" shortcut="ArrowLeft" />
+<IconButton icon="settings" label="Settings" tooltipPlacement="bottom" />
+
+<Checkbox label="Shared y-scale" checked={shared} onChange={setShared} />
+<Toggletip title="Shared y-scale">
+  All panels use one y-scale per unit, so amplitudes can be compared.
+</Toggletip>`;
+---
+
+<DocsLayout title="Tooltips" description="Tooltip, Toggletip and Info button: names on hover and focus, help when asked.">
+  <Intro
+    lead="Tooltips name things: an icon button and its keyboard key. Toggletips explain a setting in a sentence or two when people ask. Neither holds anything people must read to use Neurosift, and both work from the keyboard. They replace 114 native title attributes and 7 Material UI tooltips."
+    status="Updated November 6, 2026 · Components · Every example on this page is the component the app imports from @ui"
+    rules={[
+      { title: "Name, don’t explain", text: "A tooltip is a short name and a key. Anything longer goes in a toggletip or helper text." },
+      { title: "Never the only place", text: "If people need it to finish a task, it belongs on the page, not in hover text." },
+      { title: "Reachable without a mouse", text: "Tooltips show on keyboard focus; toggletips open with Enter. No native title attributes." },
+    ]}
+  />
+
+  <Existing page="tooltips" />
+
+  <DocSection title="Tooltip" lead="Every icon button has one, showing its label and its key when there is one. Hover a button here, or Tab to it. It appears at once on keyboard focus and after 500ms on hover, and Escape hides it.">
+    <div class="demo-row tooltip-demo">
+      <IconButton client:load icon="skip--back" label="Earlier" shortcut="ArrowLeft" />
+      <IconButton client:load icon="settings" label="Settings" tooltipPlacement="bottom" />
+      <IconButton client:load icon="share" label="Copy link to this tab" tooltipPlacement="left" />
+      <IconButton client:load icon="download" label="Download NWB file" tooltipPlacement="right" />
+    </div>
+    <p class="doc-note">Above by default; below where there’s no room above, such as in the app bar; left for controls at the right edge and right for controls at the left edge. Tooltips don’t appear on touch, so the name is always in the button’s label too.</p>
+  </DocSection>
+
+  <DocSection title="Toggletip" lead="Longer help that people open on purpose with the Info button next to a setting. It stays until closed with Escape, a click outside or the button, and can hold a link.">
+    <div class="toggletip-demo">
+      <Checkbox label="Shared y-scale" checked onChange={noop} />
+      <Toggletip client:visible title="Shared y-scale">
+        All panels use one y-scale per unit, so amplitudes can be compared.
+      </Toggletip>
+    </div>
+    <p class="doc-note">Replaces a two-sentence title on the setting. The label stays short; the Info button opens the explanation.</p>
+  </DocSection>
+
+  <DocSection title="Data tooltip" lead="Follows the cursor over a plot and reads out the values under it: the time first, then each series with its color, name and value with unit. Move the pointer over the plot, or focus it and use the arrow keys.">
+    <DataTooltipDemo client:visible />
+    <ul class="rule-list">
+      <li><strong>Values with units.</strong> Every value carries its unit, in Plex Mono like the axis labels.</li>
+      <li><strong>Stays out of the way.</strong> It sits 12px right of the cursor and flips left near the edge; it never covers the cursor line.</li>
+      <li><strong>Also by keyboard.</strong> With the plot focused, arrow keys move the cursor and the readout follows, announced politely.</li>
+    </ul>
+    <p class="doc-note">The traces are illustrative, not a recording. The charts stay Neurosift’s own; each view passes its values to DataTooltip.</p>
+  </DocSection>
+
+  <DocSection title="Which one to use" lead="A tooltip names a control, a toggletip explains it, and a data tooltip reads out values on a plot.">
+    <DocTable caption="Which one to use" columns={["To…", "Use"]}>
+      {WHICH.map(([to, use]) => <tr><th scope="row">{to}</th><td>{use}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Writing" lead="Rewrites of title attributes in the app today.">
+    <DocTable caption="Writing tooltips" columns={["Use", "Instead of", "As"]}>
+      {WRITING.map(([use, instead, as]) => <tr><th scope="row">{use}</th><td>{instead}</td><td>{as}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Accessibility">
+    <ul class="rule-list">
+      <li><strong>Named once.</strong> An icon button’s tooltip repeats its label, so it’s hidden from screen readers and the name isn’t read twice. The key is announced with aria-keyshortcuts.</li>
+      <li><strong>Hoverable and dismissible.</strong> People can move the pointer onto a tooltip without it closing, and Escape hides it (WCAG 1.4.13).</li>
+      <li><strong>Toggletips are buttons.</strong> The Info button has aria-expanded and a label like “About shared y-scale”, and focus returns to it when the toggletip closes.</li>
+      <li><strong>No touch dead ends.</strong> On touch, tooltips don’t appear; the name is also in the label or the toggletip.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Give every icon button a label; its tooltip comes with it.", "Show the keyboard key when there is one.", "Use a toggletip for help longer than a few words."]}
+      donts={["Don’t use native title attributes.", "Don’t put links or buttons in a tooltip.", "Don’t hide instructions or status in hover text.", "Don’t add tooltips to things that already have a visible label."]}
+    />
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Tooltip and Toggletip specs" columns={["Property", "Tooltip", "Toggletip"]}>
+      {SPECS.map(([property, tip, toggle]) => <tr><th scope="row">{property}</th><td>{tip}</td><td>{toggle}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. Icon buttons bring their own tooltip; tooltip={false} leaves it off for a button that opens its own explanation.">
+    <CodeSample label="React" code={code} />
+  </DocSection>
+</DocsLayout>

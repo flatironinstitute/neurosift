@@ -1,0 +1,213 @@
+.ns-slider {
+  --thumb: calc(var(--space-3) + var(--space-0-5));
+  display: grid;
+  gap: var(--space-1);
+  color: var(--text-default);
+}
+
+.ns-slider-header {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.ns-slider-label {
+  font: var(--type-label);
+  letter-spacing: var(--type-label-letter-spacing);
+}
+
+.ns-slider-value,
+.ns-slider-scale {
+  color: var(--text-secondary);
+  font: var(--type-code-sm);
+  letter-spacing: var(--type-code-sm-letter-spacing);
+}
+
+.ns-slider-control {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.ns-slider-track {
+  display: grid;
+  flex: 1;
+  align-items: center;
+  min-inline-size: 0;
+  block-size: var(--layout-target-min);
+}
+
+.ns-slider-track > * {
+  grid-area: 1 / 1;
+}
+
+/* The fill is a hidden progress bar, inset by half a thumb so it ends at the thumb's center. */
+.ns-slider-fill {
+  inline-size: calc(100% - var(--thumb));
+  block-size: var(--space-1);
+  margin-inline: calc(var(--thumb) / 2);
+  overflow: hidden;
+  appearance: none;
+  background: var(--border-subtle);
+  border: 0;
+  border-radius: var(--radius-xs);
+}
+
+.ns-slider-fill::-webkit-progress-bar {
+  background: var(--border-subtle);
+}
+
+.ns-slider-fill::-webkit-progress-value {
+  background: var(--action-primary);
+}
+
+.ns-slider-fill::-moz-progress-bar {
+  background: var(--action-primary);
+}
+
+/* In a range, the low bar is drawn in the rail's color, so only the span between the thumbs is filled. */
+.ns-slider-fill--mask,
+.ns-slider-fill--mask::-webkit-progress-bar {
+  background: transparent;
+}
+
+.ns-slider-fill--mask::-webkit-progress-value {
+  background: var(--border-subtle);
+}
+
+.ns-slider-fill--mask::-moz-progress-bar {
+  background: var(--border-subtle);
+}
+
+.ns-slider-input {
+  inline-size: 100%;
+  block-size: var(--layout-target-min);
+  margin: 0;
+  cursor: pointer;
+  appearance: none;
+  background: transparent;
+}
+
+.ns-slider-input::-webkit-slider-runnable-track {
+  block-size: var(--space-1);
+  background: transparent;
+}
+
+.ns-slider-input::-moz-range-track {
+  background: transparent;
+}
+
+.ns-slider-input::-webkit-slider-thumb {
+  box-sizing: border-box;
+  inline-size: var(--thumb);
+  block-size: var(--thumb);
+  margin-block-start: calc((var(--space-1) - var(--thumb)) / 2);
+  appearance: none;
+  background: var(--surface-panel);
+  border: var(--border-width-1) solid var(--border-strong);
+  border-radius: var(--radius-xs);
+}
+
+.ns-slider-input::-moz-range-thumb {
+  box-sizing: border-box;
+  inline-size: var(--thumb);
+  block-size: var(--thumb);
+  background: var(--surface-panel);
+  border: var(--border-width-1) solid var(--border-strong);
+  border-radius: var(--radius-xs);
+}
+
+.ns-slider-input:hover::-webkit-slider-thumb {
+  border-width: var(--border-width-2);
+}
+
+.ns-slider-input:hover::-moz-range-thumb {
+  border-width: var(--border-width-2);
+}
+
+.ns-slider-input:active {
+  --thumb: var(--space-4);
+}
+
+.ns-slider-input:focus {
+  outline: none;
+}
+
+.ns-slider-input:focus-visible {
+  outline: var(--border-width-2) solid var(--border-focus);
+  outline-offset: var(--space-0-5);
+  border-radius: var(--radius-sm);
+}
+
+/* Two stacked ranges: only their thumbs take the pointer, so each can be grabbed. */
+.ns-slider--range .ns-slider-input {
+  pointer-events: none;
+}
+
+.ns-slider--range .ns-slider-input::-webkit-slider-thumb {
+  pointer-events: auto;
+}
+
+.ns-slider--range .ns-slider-input::-moz-range-thumb {
+  pointer-events: auto;
+}
+
+/* 80px, so values like 3,400 stay readable with text spacing overrides. */
+.ns-slider-field {
+  flex: none;
+  inline-size: calc(var(--space-16) + var(--space-4));
+}
+
+.ns-slider-field .ns-field-message {
+  inline-size: max-content;
+  max-inline-size: 16rem;
+}
+
+.ns-slider-scale {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+}
+
+.ns-slider[data-disabled] .ns-slider-label {
+  color: var(--text-disabled);
+}
+
+.ns-slider[data-disabled] .ns-slider-input {
+  cursor: not-allowed;
+}
+
+.ns-slider[data-disabled] .ns-slider-fill::-webkit-progress-value {
+  background: var(--text-disabled);
+}
+
+.ns-slider[data-disabled] .ns-slider-fill::-moz-progress-bar {
+  background: var(--text-disabled);
+}
+
+.ns-slider[data-disabled] .ns-slider-input::-webkit-slider-thumb {
+  background: var(--action-disabled);
+  border-color: var(--border-disabled);
+}
+
+.ns-slider[data-disabled] .ns-slider-input::-moz-range-thumb {
+  background: var(--action-disabled);
+  border-color: var(--border-disabled);
+}
+
+@media (forced-colors: active) {
+  .ns-slider-fill {
+    forced-color-adjust: none;
+    background: Canvas;
+    border: var(--border-width-1) solid CanvasText;
+  }
+
+  .ns-slider-fill::-webkit-progress-value {
+    background: Highlight;
+  }
+
+  .ns-slider-fill::-moz-progress-bar {
+    background: Highlight;
+  }
+}

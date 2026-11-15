@@ -1,0 +1,40 @@
+---
+import DocSection from "../../components/DocSection.astro";
+import Intro from "../../components/Intro.astro";
+import TokenTable from "../../components/TokenTable.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { bySize, countTokens, tokensIn } from "../../tokens";
+
+const rows = (prefix: string) => bySize(tokensIn(prefix)).map((view) => ({ view }));
+const layoutRows = tokensIn("layout").map((view) => ({ view }));
+const controlRows = [...tokensIn("button.height"), ...tokensIn("input.height")].map((view) => ({ view }));
+---
+
+<DocsLayout title="Spacing tokens" description="Space, icon size and layout dimensions of the Neurosift design system.">
+  <Intro
+    lead={`${countTokens("Dimensions", "dimension")} dimension tokens hold every spacing, layout and icon size. Bars and squares on this page are sized by the tokens themselves.`}
+    status="Updated November 6, 2026 · Tokens · Dimensions collection"
+    rules={[
+      { title: "On the scale", text: "Padding and gaps use space/ tokens, so a change to the scale moves every screen together." },
+      { title: "One job each", text: "space/ appears only for gaps and padding, radius/ only for corners, icon/ only for sizes." },
+      { title: "Named regions", text: "Bar heights, panel widths and row heights are tokens, not numbers in code." },
+    ]}
+  />
+
+  <DocSection title="Space" lead={`${rows("space").length} steps on a 4px base. Each bar’s width is its token.`}>
+    <TokenTable caption="Space tokens" rows={rows("space")} sample="bar" />
+  </DocSection>
+
+  <DocSection title="Icon sizes" lead="Squares sized by icon/size/ tokens.">
+    <TokenTable caption="Icon size tokens" rows={rows("icon.size")} sample="square" />
+  </DocSection>
+
+  <DocSection title="Layout" lead="Workspace regions, panel limits, rows and touch targets.">
+    <TokenTable caption="Layout tokens" rows={layoutRows} />
+  </DocSection>
+
+  <DocSection title="Control heights" lead="Fixed heights for buttons and the large search field.">
+    <TokenTable caption="Control height tokens" rows={controlRows} />
+    <p class="doc-note">Figma holds pixels; tokens.css writes them in rem at 16px = 1rem, so sizes follow the reader’s font-size setting. Border widths and shadows stay in pixels so hairlines stay sharp.</p>
+  </DocSection>
+</DocsLayout>

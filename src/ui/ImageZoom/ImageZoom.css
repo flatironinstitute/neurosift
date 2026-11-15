@@ -1,0 +1,55 @@
+.ns-image-zoom {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-rows: auto minmax(0, 1fr);
+  justify-items: start;
+  inline-size: min(100%, var(--zoom-view-width, 100%));
+  block-size: var(--zoom-view-height, auto);
+}
+
+.ns-image-zoom-readout {
+  min-inline-size: calc(var(--space-16) + var(--space-4));
+  color: var(--text-secondary);
+}
+
+.ns-image-zoom-view {
+  position: relative;
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: 12rem;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  background: var(--surface-row-hover);
+}
+
+.ns-image-zoom-view:active {
+  cursor: grabbing;
+}
+
+.ns-image-zoom-view:focus-visible {
+  outline: var(--border-width-2) solid var(--border-focus);
+  outline-offset: var(--space-0-5);
+}
+
+/* No transition: zoom and pan jump, so reduced motion needs nothing more. */
+.ns-image-zoom-content {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  inline-size: var(--zoom-image-width);
+  block-size: var(--zoom-image-height);
+  transform: translate(var(--zoom-x), var(--zoom-y)) scale(var(--zoom-scale));
+  transform-origin: 0 0;
+}
+
+.ns-image-zoom-content > * {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.ns-image-zoom-content--pixels {
+  image-rendering: pixelated;
+}

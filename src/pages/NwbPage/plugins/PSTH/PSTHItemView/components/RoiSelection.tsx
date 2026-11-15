@@ -1,5 +1,7 @@
+import { Checkbox } from "@ui";
 import { FunctionComponent } from "react";
 import { RoiClient } from "../ROIClient";
+import "./PSTHControls.css";
 
 type RoiSelectionProps = {
   roiClient: RoiClient | null;
@@ -7,64 +9,36 @@ type RoiSelectionProps = {
   setSelectedRoiIndices: (x: number[]) => void;
 };
 
+/** ROIs to plot; the first box picks all or none. */
 const RoiSelectionComponent: FunctionComponent<RoiSelectionProps> = ({
   roiClient,
   selectedRoiIndices,
   setSelectedRoiIndices,
 }) => {
   const roiIndices = roiClient ? roiClient.getRoiIndices() : [];
-
+  const n = selectedRoiIndices.length;
   return (
-    <table className="nwb-table" style={{ tableLayout: "fixed" }}>
-      <colgroup>
-        <col style={{ width: 20 }} />
-      </colgroup>
-      <thead>
-        <tr>
-          <th style={{ padding: "4px 2px" }}>
-            <input
-              type="checkbox"
-              checked={
-                roiIndices.length > 0 &&
-                selectedRoiIndices.length === roiIndices.length
-              }
-              onChange={() => {}}
-              onClick={() => {
-                if (selectedRoiIndices.length > 0) {
-                  setSelectedRoiIndices([]);
-                } else {
-                  setSelectedRoiIndices(roiIndices);
-                }
-              }}
-            />
-          </th>
-          <th>ROI Index</th>
-        </tr>
-      </thead>
-      <tbody>
-        {roiIndices.map((roiIndex) => (
-          <tr key={roiIndex}>
-            <td style={{ padding: "4px 2px" }}>
-              <input
-                type="checkbox"
-                checked={selectedRoiIndices.includes(roiIndex)}
-                onChange={() => {}}
-                onClick={() => {
-                  if (selectedRoiIndices.includes(roiIndex)) {
-                    setSelectedRoiIndices(
-                      selectedRoiIndices.filter((x) => x !== roiIndex),
-                    );
-                  } else {
-                    setSelectedRoiIndices([...selectedRoiIndices, roiIndex]);
-                  }
-                }}
-              />
-            </td>
-            <td>{roiIndex}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="psth-checklist">
+      <Checkbox
+        label="All ROIs"
+        checked={n === 0 ? false : n === roiIndices.length ? true : "mixed"}
+        onChange={() => setSelectedRoiIndices(n > 0 ? [] : roiIndices)}
+      />
+      {roiIndices.map((i) => (
+        <Checkbox
+          key={i}
+          label={`ROI ${i}`}
+          checked={selectedRoiIndices.includes(i)}
+          onChange={(on) =>
+            setSelectedRoiIndices(
+              on
+                ? [...selectedRoiIndices, i]
+                : selectedRoiIndices.filter((x) => x !== i),
+            )
+          }
+        />
+      ))}
+    </div>
   );
 };
 

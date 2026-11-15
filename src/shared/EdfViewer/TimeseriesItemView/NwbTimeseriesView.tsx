@@ -11,14 +11,17 @@ import {
   useTimeRange,
   useTimeseriesSelection,
 } from "@shared/context-timeseries-selection-2";
-import { timeSelectionBarHeight } from "@shared/TimeseriesSelectionBar/TimeseriesSelectionBar";
-import TimeScrollView2, {
-  useTimeScrollView2,
-} from "@shared/component-time-scroll-view-2/TimeScrollView2";
+import TimeScrollView2 from "@shared/component-time-scroll-view-2/TimeScrollView2";
+import { useTimeScrollView2 } from "@shared/component-time-scroll-view-2/useTimeScrollView2";
 import {
   TimeseriesTimestampsClient,
   useTimeseriesTimestampsClient,
 } from "@shared/TimeseriesTimestampsClient/TimeseriesTimestampsClient";
+import { useCssVars } from "@components/useCssVars";
+import { readableOn } from "@shared/plotColors";
+import { usePlotColors, usePlotTheme } from "@shared/plotTheme";
+import { LoadingState, useLoadingPhase } from "@ui";
+import { loadedSpan } from "./loadedSpan";
 import TimeseriesDatasetChunkingClient from "./TimeseriesDatasetChunkingClient";
 import { DataSeries, Opts } from "./WorkerTypes";
 
@@ -34,8 +37,6 @@ type Props = {
   startZoomedOut?: boolean;
   annotations?: TimeseriesAnnotation[];
   yLabel?: string;
-  showTimeseriesToolbar?: boolean;
-  showTimeseriesNavbar?: boolean;
 };
 
 export type TimeseriesAnnotation = {
@@ -64,8 +65,6 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
   startZoomedOut,
   annotations,
   yLabel,
-  showTimeseriesToolbar,
-  showTimeseriesNavbar,
 }) => {
   const dataset = useHdf5Dataset(nwbUrl, `${objectPath}/data`);
   const numChannels = dataset ? dataset.shape[1] : 0;
@@ -148,8 +147,6 @@ const NwbTimeseriesView: FunctionComponent<Props> = ({
       yLabel={yLabel0}
       maxVisibleDuration={maxVisibleDuration}
       annotations={annotations}
-      showTimeseriesToolbar={showTimeseriesToolbar}
-      showTimeseriesNavbar={showTimeseriesNavbar}
     />
   );
 };
@@ -177,8 +174,10 @@ type NwbTimeseriesViewChildProps = {
   yLabel: string;
   maxVisibleDuration?: number;
   annotations?: TimeseriesAnnotation[];
-  showTimeseriesToolbar?: boolean;
-  showTimeseriesNavbar?: boolean;
+  /** Seconds past the window to load as well, as playback runs ahead. */
+  lookahead?: number;
+  /** The span of time drawn data covers, or undefined while there is none. */
+  onLoadedRange?: (range: { start: number; end: number } | undefined) => void;
 };
 
 export const NwbTimeseriesViewChild: FunctionComponent<
@@ -197,8 +196,8 @@ export const NwbTimeseriesViewChild: FunctionComponent<
   yLabel,
   maxVisibleDuration,
   annotations,
-  showTimeseriesToolbar,
-  showTimeseriesNavbar,
+  lookahead = 0,
+  onLoadedRange,
 }) => {
   const [worker, setWorker] = useState<Worker | null>(null);
   const [canvasElement, setCanvasElement] = useState<
@@ -237,12 +236,15 @@ export const NwbTimeseriesViewChild: FunctionComponent<
     chunkSize,
   ]);
 
-  const hideToolbar = false; // this is tricky... hideToolbar removes the space for the toolbar, whereas showTimeseriesToolbar=false just hides the toolbar
-
+  // The surrounding time controls replace the toolbar and selection bar.
   const { canvasWidth, canvasHeight, margins } = useTimeScrollView2({
     width,
-    height: height - timeSelectionBarHeight,
-    hideToolbar,
+    height,
+    hideToolbar: true,
+  });
+  const plotRef = useCssVars<HTMLDivElement>({
+    "--edf-plot-width": width,
+    "--edf-plot-height": height,
   });
 
   const [overrideMaxVisibleDuration, setOverrideMaxVisibleDuration] = useState<
@@ -285,8 +287,13 @@ export const NwbTimeseriesViewChild: FunctionComponent<
           visibleStartTimeSec,
         );
       if (canceled) return;
-      let iEnd =
-        await timeseriesTimestampsClient.getDataIndexForTime(visibleEndTimeSec);
+      const loadEnd = Math.min(
+        visibleEndTimeSec + lookahead,
+        timeseriesTimestampsClient.endTime ?? Infinity,
+      );
+      let iEnd = await timeseriesTimestampsClient.getDataIndexForTime(
+        Math.max(loadEnd, visibleEndTimeSec),
+      );
       if (canceled) return;
 
       // give a buffer of one point on each side
@@ -311,6 +318,7 @@ export const NwbTimeseriesViewChild: FunctionComponent<
     numVisibleChannels,
     maxVisibleDuration,
     overrideMaxVisibleDuration,
+    lookahead,
   ]);
 
   const [dataseriesMode, setDataseriesMode] = useState<"line" | "marker">(
@@ -318,23 +326,29 @@ export const NwbTimeseriesViewChild: FunctionComponent<
   );
 
   const [loading, setLoading] = useState<boolean>(false);
+  const loadingPhase = useLoadingPhase(loading && !zoomInRequired);
 
+  const { plotTheme } = usePlotTheme();
+  const plotColors = usePlotColors();
   const colorForChannel = useMemo(
     () => (i: number) => {
-      if (!colorChannels) return "black";
+      if (!colorChannels) return plotColors.mark;
       const colors = [
-        "black",
-        "darkred",
-        "darkgreen",
-        "darkblue",
-        "darkorange",
-        "purple",
-        "brown",
-        "pink",
+        plotColors.mark,
+        "#8b0000",
+        "#006400",
+        "#00008b",
+        "#ff8c00",
+        "#800080",
+        "#a52a2a",
+        "#ffc0cb",
       ];
-      return colors[i % colors.length];
+      const color = colors[i % colors.length];
+      return plotTheme === "dark"
+        ? readableOn(color, plotColors.surface)
+        : color;
     },
-    [colorChannels],
+    [colorChannels, plotColors, plotTheme],
   );
 
   const renderSubsampleFactor = useMemo(() => {
@@ -419,6 +433,11 @@ export const NwbTimeseriesViewChild: FunctionComponent<
             });
           }
           setDataSeries(dataSeries);
+          onLoadedRange?.(
+            completed
+              ? loadedSpan(tt, concatenatedChunk[0]?.length ?? tt.length)
+              : undefined,
+          );
         } catch (err: any) {
           if (err.message !== "canceled") {
             throw err;
@@ -444,6 +463,7 @@ export const NwbTimeseriesViewChild: FunctionComponent<
     width,
     renderSubsampleFactor,
     channelIndicesForColor,
+    onLoadedRange,
   ]);
 
   // Set valueRange
@@ -474,11 +494,12 @@ export const NwbTimeseriesViewChild: FunctionComponent<
     // refresh the value range when applyConversion or datasetChunkingClient changes
     setValueRange(undefined);
     setDataSeries(undefined);
+    onLoadedRange?.(undefined);
     setTimeout(() => {
       // not ideal
       setRefreshValueRangeCode((old) => old + 1);
     }, 100);
-  }, [applyConversion, datasetChunkingClient]);
+  }, [applyConversion, datasetChunkingClient, onLoadedRange]);
 
   useEffect(() => {
     // reset the value range
@@ -501,11 +522,16 @@ export const NwbTimeseriesViewChild: FunctionComponent<
       minValue: valueRange ? valueRange.min : 0,
       maxValue: valueRange ? valueRange.max : 1,
       zoomInRequired,
+      textColor: plotColors.text,
+      surfaceColor: plotColors.surface,
+      borderColor: plotColors.gridMajor,
+      markColor: plotColors.mark,
     };
     worker.postMessage({
       opts,
     });
   }, [
+    plotColors,
     canvasWidth,
     canvasHeight,
     margins,
@@ -594,54 +620,32 @@ export const NwbTimeseriesViewChild: FunctionComponent<
     });
   }, [worker, annotations]);
 
-  if (visibleStartTimeSec === undefined) {
-    return <div>visibleStartTimeSec is undefined</div>;
-  }
-  if (visibleEndTimeSec === undefined) {
-    return <div>visibleEndTimeSec is undefined</div>;
-  }
-  if (startChunkIndex === undefined && !zoomInRequired) {
-    return <div>Loading timestamps...</div>;
-  }
-  if (endChunkIndex === undefined && !zoomInRequired) {
-    return <div>endChunkIndex is undefined</div>;
-  }
-  if (timeseriesTimestampsClient === undefined) {
-    return <div>timeseriesTimestampsClient is undefined</div>;
-  }
-
+  const ready =
+    visibleStartTimeSec !== undefined &&
+    visibleEndTimeSec !== undefined &&
+    timeseriesTimestampsClient !== undefined &&
+    (zoomInRequired ||
+      (startChunkIndex !== undefined && endChunkIndex !== undefined));
   return (
-    <div
-      style={{ position: "absolute", width, height }}
-      onKeyDown={handleKeyDown2}
-    >
-      <div style={{ position: "absolute", width, height: height }}>
+    <div ref={plotRef} className="edf-plot" onKeyDown={handleKeyDown2}>
+      {ready && (
         <TimeScrollView2
           width={width}
           height={height}
           onCanvasElement={setCanvasElement}
           gridlineOpts={gridlineOpts}
           yAxisInfo={yAxisInfo}
-          hideToolbar={hideToolbar}
-          showTimeseriesToolbar={showTimeseriesToolbar} // see comment above
+          hideToolbar
           onKeyDown={handleKeyDown}
-          showTimeSelectionBar={showTimeseriesNavbar !== false}
+          showTimeSelectionBar={false}
+        />
+      )}
+      <div className="edf-plot-loading">
+        <LoadingState
+          label="Loading the recording"
+          phase={ready ? loadingPhase : "loading"}
         />
       </div>
-      {loading && !zoomInRequired && (
-        <div
-          style={{
-            position: "absolute",
-            top: timeSelectionBarHeight + margins.top,
-            left: margins.left,
-            userSelect: "none",
-          }}
-        >
-          <div style={{ fontSize: 20, color: "blue" }}>
-            Loading timeseries data...
-          </div>
-        </div>
-      )}
     </div>
   );
 };

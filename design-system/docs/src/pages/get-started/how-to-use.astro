@@ -1,0 +1,29 @@
+---
+import DocSection from "../../components/DocSection.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+---
+
+<DocsLayout title="How to use the system" description="Where designers, developers and scientists adding views start.">
+  <Intro
+    lead="Every page here is built from the same tokens and components the app imports, so what you read is what ships. Start from your role below; the Overview lists every page by section."
+    status="Updated November 10, 2026 · Get started · Every component documents its default, hover, focus, active, disabled, loading and error states"
+  />
+
+  <DocSection title="Designers" lead="Start from the Figma library. Use components and styles as they are, and propose changes instead of detaching them." />
+
+  <DocSection title="Developers" lead="Build with tokens, not hard-coded values. New views sit inside the shared viewer layout and controls, so a plugin only has to supply its plot." />
+
+  <DocSection title="Scientists adding views" lead="Follow the notation and data visualization guides, so units, time axes and channel labels read the same in every view.">
+    <p class="doc-note">See <a href={withBase("/guidelines/notation/")}>Scientific notation and units</a> and <a href={withBase("/guidelines/data-visualization/")}>Data visualization</a>.</p>
+  </DocSection>
+
+  <DocSection title="What the system includes" lead="Foundations, tokens, usage guidelines and components, each with its own pages in the menu.">
+    <p class="doc-note">Every page, with a one-line summary, is on the <a href={withBase("/")}>Overview</a>.</p>
+  </DocSection>
+
+  <DocSection title="Questions or proposals" lead="Open an issue on the Neurosift GitHub repository.">
+    <p class="doc-note"><a href="https://github.com/flatironinstitute/neurosift/issues">Neurosift issues on GitHub</a></p>
+  </DocSection>
+</DocsLayout>

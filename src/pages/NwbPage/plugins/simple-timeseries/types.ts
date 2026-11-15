@@ -25,6 +25,8 @@ export type TimeseriesPlotProps = {
   width: number;
   height: number;
   zoomInRequired?: boolean;
+  /** Called when the plot is panned, with the new visible range. */
+  onVisibleTimeChange?: (start: number, end: number) => void;
 };
 
 export type PlotOpts = {
@@ -40,6 +42,10 @@ export type PlotOpts = {
   visibleEndTimeSec: number;
   channelSeparation: number;
   zoomInRequired?: boolean;
+  /** One color per channel, cycled; from the chart's theme. */
+  traceColors: string[];
+  /** The zoom-in message's color. */
+  textColor: string;
 };
 
 export type PlotData = {

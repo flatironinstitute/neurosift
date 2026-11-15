@@ -1,0 +1,65 @@
+{
+  "$description": "Dark charts: applied by [data-plot-theme=dark] on a chart, whatever the app theme. Data hues stay; only marks too dark to read are lightened.",
+  "plot": {
+    "surface": {
+      "$type": "color",
+      "$value": "{color.navy.900}"
+    },
+    "text": {
+      "$type": "color",
+      "$value": "{color.navy.50}"
+    },
+    "text-muted": {
+      "$type": "color",
+      "$value": "{color.navy.300}"
+    },
+    "grid-major": {
+      "$type": "color",
+      "$value": "{color.navy.500}"
+    },
+    "grid-minor": {
+      "$type": "color",
+      "$value": "{color.navy.700}"
+    },
+    "mark": {
+      "$type": "color",
+      "$value": "{color.navy.50}"
+    },
+    "cursor-fill": {
+      "$type": "color",
+      "$value": "{color.red-200-a25}"
+    },
+    "selection-fill": {
+      "$type": "color",
+      "$value": "{color.yellow-300-a14}"
+    },
+    "selection-stroke": {
+      "$type": "color",
+      "$value": "{color.yellow-300-a50}"
+    }
+  },
+  "data": {
+    "cursor": {
+      "$type": "color",
+      "$value": "{color.red.200}"
+    },
+    "series": {
+      "4": {
+        "$type": "color",
+        "$value": "{color.sienna-300}"
+      },
+      "5": {
+        "$type": "color",
+        "$value": "{color.teal-300}"
+      },
+      "6": {
+        "$type": "color",
+        "$value": "{color.navy.50}"
+      },
+      "other": {
+        "$type": "color",
+        "$value": "{color.navy.300}"
+      }
+    }
+  }
+}

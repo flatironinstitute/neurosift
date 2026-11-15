@@ -7,6 +7,8 @@ import { RoiClient } from "./ROIClient";
 import TrialAlignedSeriesWidget from "./TrialAlignedSeriesWidget";
 import { DirectSpikeTrainsClient } from "./DirectSpikeTrainsClient";
 import { getHdf5DatasetData } from "@hdf5Interface";
+import { usePlotTheme } from "@shared/plotTheme";
+import { plotColors, readableOn } from "@shared/plotColors";
 
 type Props = {
   width: number;
@@ -123,9 +125,9 @@ const PSTHUnitWidget: FunctionComponent<Props> = ({
           marginTop: 2,
         }}
       >
-        Unit {unitId}
+        {mode === "psth" ? "Unit" : "ROI"} {unitId}
       </div>
-      {groupLegendWidth && (
+      {groupLegendWidth > 0 && (
         <div
           className="legend-container"
           style={{
@@ -240,6 +242,7 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
   prefs,
   mode,
 }) => {
+  const { plotTheme } = usePlotTheme();
   const [alignToTimes, setAlignToTimes] = useState<number[] | undefined>(
     undefined,
   );
@@ -366,9 +369,9 @@ const PSTHUnitAlignToWidget: FunctionComponent<PSTHUnitAlignToWidgetProps> = ({
     const lighterMode = mode === "time-aligned-series";
     return uniqueVals2.map((val, i) => ({
       group: val,
-      color: groupColorForIndex(i, lighterMode),
+      color: groupColorForIndex(i, lighterMode, plotTheme),
     }));
-  }, [trials, groupByVariableCategories, mode]);
+  }, [trials, groupByVariableCategories, mode, plotTheme]);
 
   const filteredTrials = useMemo(() => {
     if (!trials) return trials;
@@ -526,6 +529,7 @@ const PSTHGroupLegend: FunctionComponent<PSTHGroupLegendProps> = ({
   groupByVariableCategories,
   mode,
 }) => {
+  const { plotTheme } = usePlotTheme();
   const [values, setValues] = useState<any[] | undefined>(undefined);
   useEffect(() => {
     let canceled = false;
@@ -556,9 +560,9 @@ const PSTHGroupLegend: FunctionComponent<PSTHGroupLegendProps> = ({
     const lighterMode = mode === "time-aligned-series";
     return uniqueVals.map((val, i) => ({
       group: val,
-      color: groupColorForIndex(i, lighterMode),
+      color: groupColorForIndex(i, lighterMode, plotTheme),
     }));
-  }, [values, mode]);
+  }, [values, mode, plotTheme]);
 
   const itemHeight = 20;
   const itemWidth = 20;
@@ -635,38 +639,44 @@ const GroupLabel: FunctionComponent<GroupLabelProps> = ({ group }) => {
 };
 
 const groupColors = [
-  "black",
-  "red",
-  "green",
-  "blue",
-  "orange",
-  "purple",
-  "cyan",
-  "magenta",
-  "yellow",
-  "pink",
-  "brown",
-  "gray",
+  "#000000",
+  "#ff0000",
+  "#008000",
+  "#0000ff",
+  "#ffa500",
+  "#800080",
+  "#00ffff",
+  "#ff00ff",
+  "#ffff00",
+  "#ffc0cb",
+  "#a52a2a",
+  "#808080",
 ];
 
 const lighterGroupColors = [
-  "#ccc",
-  "#f00",
-  "#0f0",
-  "#00f",
-  "#f80",
-  "#80f",
-  "#0ff",
-  "#f0f",
-  "#ff0",
+  "#cccccc",
+  "#ff0000",
+  "#00ff00",
+  "#0000ff",
+  "#ff8800",
+  "#8800ff",
+  "#00ffff",
+  "#ff00ff",
+  "#ffff00",
 ];
 
-const groupColorForIndex = (i: number, lighterMode: boolean) => {
-  if (!lighterMode) {
-    return groupColors[i % groupColors.length];
-  } else {
-    return lighterGroupColors[i % lighterGroupColors.length];
-  }
+/** Light keeps the original group colors; dark swaps the first (black) for the mark color and lifts the rest to 3:1. */
+const groupColorForIndex = (
+  i: number,
+  lighterMode: boolean,
+  plotTheme: "light" | "dark",
+) => {
+  const palette = lighterMode ? lighterGroupColors : groupColors;
+  const color = palette[i % palette.length];
+  if (plotTheme === "light") return color;
+  const colors = plotColors("dark");
+  if (!lighterMode && i % palette.length === 0) return colors.mark;
+  return readableOn(color, colors.surface);
 };
 
 export default PSTHUnitWidget;

@@ -1,0 +1,35 @@
+---
+import DocSection from "../components/DocSection.astro";
+import Intro from "../components/Intro.astro";
+import DocsLayout from "../layouts/DocsLayout.astro";
+import { navigation, withBase } from "../navigation";
+
+const sections = navigation.filter(({ heading }) => heading);
+---
+
+<DocsLayout title="Neurosift design system" description="The coded Neurosift design system: tokens, foundations and components.">
+  <Intro
+    lead="The coded half of the Neurosift design system. Tokens come from the Figma variables and styles as W3C design tokens, and the components on these pages are the same ones the app imports, so the pages can’t drift from the code."
+    status="Updated November 6, 2026 · Tokens, then components, one Figma page at a time"
+    rules={[
+      { title: "One source", text: "Figma variables become *.tokens.json, which build tokens.css for the app and these pages." },
+      { title: "No inline styles", text: "Components use classes in CSS files that read the tokens." },
+      { title: "Charts stay Neurosift’s", text: "The system dresses what surrounds a chart, never the chart itself." },
+    ]}
+  />
+
+  {
+    sections.map(({ heading, items }) => (
+      <DocSection title={heading ?? ""}>
+        <ul class="page-list">
+          {items.filter(({ href }) => href !== "/").map(({ label, href, summary }) => (
+            <li>
+              <a href={withBase(href)}>{label}</a>
+              <p class="type-body-sm">{summary}</p>
+            </li>
+          ))}
+        </ul>
+      </DocSection>
+    ))
+  }
+</DocsLayout>

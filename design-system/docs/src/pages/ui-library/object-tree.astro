@@ -1,0 +1,91 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import Screen from "../../components/Screen.astro";
+import LiveScreen from "../../components/LiveScreen.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+
+const STATES = [
+  ["Reading the file", "“Reading the file’s objects…” under the tree; the status bar says what it’s reading."],
+  ["Finding views", "Chips appear as each view is confirmed, without moving the rows."],
+  ["Nothing checked", "No selection bar."],
+  ["One or two checked", "The bar names each checked object or view."],
+  ["Three or more checked", "The bar names the first two and a count that opens the full list, with × to uncheck each. At 768px, only the count."],
+  ["No neurodata type", "No type is shown, and the row gets the document icon."],
+  ["Long description", "One line after the type, cut with an ellipsis; the name and type keep their full width. The full text stays in the page for screen readers and shows on hover."],
+  ["Narrow panel", "With under 8rem left after the type, the description moves to the next line, still one line and cut with an ellipsis."],
+  ["Too many objects", "An info message says only some objects are shown."],
+];
+
+const BEHAVIOR = [
+  ["Name", "Opens the object in a new tab. Today only a small ⧉ beside it does."],
+  ["Description", "Plain text after the type and badge, in caption secondary; hovering shows the full text."],
+  ["Chevron", "Opens or closes the group; groups with a single child open on their own, as today."],
+  ["Checkbox", "Adds the object to the selection."],
+  ["View chip", "The name opens that view; the checkbox adds that view to the selection. A view that pairs with another object names it, such as “Event Related Signal: StimulusPresentation”."],
+  ["View together", "Opens everything checked in one tab, as “View N selected” does today. Clear unchecks all."],
+  ["Default units", "A pressed “Default units” button marks the Units table that views such as PSTH use; other Units tables offer “Set as default units”."],
+];
+
+const DIFFERS = [
+  ["Rows", "A table: navy uppercase header, Name, Neurodata type, Description", "Object rows: chevron, checkbox, type icon, name, type and a one-line description, then views", "Built"],
+  ["Opening an object", "⧉ only", "The name", "Built"],
+  ["Views", "Gray buttons with separate checkboxes", "View chips: checkbox and name in one outline", "Built"],
+  ["Type color", "Blue or gray, explained only in a tooltip", "The same colors, explained here", "Built"],
+  ["Combined view", "A blue “View 2 selected” button", "A selection bar with names, Clear and View together, and a list past two", "Built"],
+  ["Default units", "“(default)” and “(set default)” text", "A pressed toggle button", "Built"],
+  ["Descriptions", "200 characters, then read more", "One line after the type, cut with an ellipsis; the full text on hover and in the object’s tab", "Built"],
+  ["Column header", "Name, Neurodata type, Description", "Figma keeps a header row; the rows here carry their own labels", "To confirm"],
+  ["Keyboard", "Tab through every control", "Up and Down between rows, Right and Left open and close, as on Tables", "Next"],
+  ["Large groups", "Cut at 200 without saying so", "Showing 200 of N, with Show all", "Next, to confirm"],
+];
+---
+
+<DocsLayout title="Neurodata object tree" description="The Main tab: every object in the file, its type, its views and its description.">
+  <Intro
+    lead="The object tree is the Main tab: every group and dataset in the NWB file, with its neurodata type, its description and the views Neurosift can draw for it. It’s where people find out what a file holds and open it. The rebuilt tree keeps every checkbox and view, lets a name open its object, and draws each row with the Object row component."
+    status="Updated November 10, 2026 · UI library · Captured at 1440 × 900 with sub-1 of Dandiset 000673 · Built from Object row, View chip, Selection bar, Selection list, Checkbox and Button"
+    rules={[
+      { title: "Names open things", text: "Clicking an object’s name opens it, as clicking a file does on the dataset page." },
+      { title: "Every view is one click", text: "A view chip’s name opens that view; its checkbox adds the view to a combined one." },
+      { title: "Read before opening", text: "The type is link blue when there’s a view. The description follows it on the same line." },
+    ]}
+  />
+
+  <DocSection title="Object tree today" lead="neurosift.app, sub-1 of Dandiset 000673.">
+    <Screen file="viewer-main" alt="Today’s object tree: a navy uppercase header, typed triangles, checkboxes, ⧉ icons and gray view buttons." caption="A table under a navy header. Folders open from typed triangles, objects open from ⧉, and views are gray buttons with their own checkboxes." />
+  </DocSection>
+
+  <DocSection title="The rebuilt tree" lead="The redesign’s tree with the same file and live data.">
+    <div class="captures">
+      <Screen file="tree-proposed" alt="The rebuilt tree: rows with chevrons, checkboxes, type icons, names, blue types and one-line descriptions, with view chips below." caption="Each row: chevron, checkbox, the type’s icon, the name that opens it, the type in link blue when it has a view and a one-line description, with view chips below." />
+      <Screen file="tree-proposed-checked" alt="The rebuilt tree with LFPs and units checked: a selection bar reads acquisition/LFPs and units, with Clear and View together." caption="Two objects checked: the selection bar names them, with Clear and View together." />
+    </div>
+    <p class="doc-note">The rows are the <a href={withBase("/components/tables/")}>Object tree components on Tables</a>.</p>
+  </DocSection>
+
+  <DocSection title="Try it" lead="Open groups, check objects for a combined view, and open a view.">
+    <LiveScreen path="nwb?url=https://api.dandiarchive.org/api/assets/65a7e913-45c7-48db-bf19-b9f5e910110a/download/&dandisetId=000673&dandisetVersion=0.250122.0110" title="Object tree, Dandiset 000673 sub-1" size="tall" />
+  </DocSection>
+
+  <DocSection title="States">
+    <DocTable caption="States" columns={["When", "What changes"]}>
+      <DocRows rows={STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Behavior">
+    <DocTable caption="Behavior" columns={["Part", "Behavior"]}>
+      <DocRows rows={BEHAVIOR} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="What differs" lead="Built is in the app now. Next is planned. To confirm needs Jeremy or Ben.">
+    <DocTable caption="What differs" columns={["Area", "Existing", "Proposed", "Status"]}>
+      <DocRows rows={DIFFERS} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

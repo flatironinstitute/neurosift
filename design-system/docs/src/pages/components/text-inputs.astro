@@ -1,0 +1,194 @@
+---
+import ApiKeyDemo from "../../components/ApiKeyDemo";
+import MessageBoxDemo from "../../components/MessageBoxDemo";
+import TextAreaDemo from "../../components/TextAreaDemo";
+import Existing from "../../components/Existing.astro";
+import { SearchField, TextInput } from "@ui";
+import CodeSample from "../../components/CodeSample.astro";
+import DoDont from "../../components/DoDont.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const noop = () => {};
+const HELPER = "Seconds from the start of the session.";
+
+const AREA_PROPS = [
+  ["label", "string", "Required", "Names the field. Visible above it unless hideLabel is set."],
+  ["value", "string", "Required", "The text, line breaks included. The field is controlled."],
+  ["onChange", "(value: string) => void", "Required", "Reports each change as the new text."],
+  ["rows", "number", "3", "How many lines the empty field shows."],
+  ["maxRows", "number", "rows", "The field grows with its text up to this many lines, then scrolls."],
+  ["size", "\"lg\" | \"md\" | \"sm\"", "\"md\"", "Large for a message box, matching the Large Search field. Small for dense control panels."],
+  ["helper", "string", "—", "A sentence below the field, tied to it with aria-describedby."],
+  ["error", "string", "—", "Replaces the helper, with the error icon, and marks the field invalid."],
+  ["hideLabel", "boolean", "false", "Keeps the label for screen readers only, where something nearby already names the field."],
+  ["disabled", "boolean", "false", "The field can’t be edited. Give the reason nearby."],
+  ["onKeyDown, placeholder, name, aria-* …", "textarea attributes", "—", "Passed to the <textarea>, so callers can handle keys such as Enter."],
+];
+
+const MESSAGES = [
+  ["Start must come before the end, 1.00 s.", "On leaving either field"],
+  ["Use between 1 and 1,000 bins.", "On leaving the field"],
+  ["Dandiset IDs are six digits, such as 000728.", "On submit"],
+  ["This URL doesn’t point to an NWB file. Neurosift opens .nwb, .nwb.lindi.json and .zarr files.", "After the file check fails"],
+  ["DANDI didn’t accept this key. Copy it again from your DANDI account page.", "After the archive answers"],
+];
+
+const WRITING = [
+  ["Opens embargoed Dandisets on dandiarchive.org. Saved in this browser only.", "Enter your DANDI API key for accessing protected resources on api.dandiarchive.org", "Says what it does and where it’s kept"],
+  ["Search Dandisets, for example “mouse hippocampus”", "Search for Dandisets...", "An example helps more than an ellipsis"],
+  ["Number of bins", "Num. bins", "Name the thing, no abbreviations"],
+  ["Empty, with “Leave empty for no filter.”", "off", "A placeholder isn’t a value"],
+];
+
+const SPECS = [
+  ["Field height", "32px · button/height/md", "24px · button/height/sm"],
+  ["Padding at the sides", "12px · space/3", "8px · space/2"],
+  ["Label", "type/label, above the field, 4px gap (space/1)", "Same"],
+  ["Value and placeholder", "type/body-sm · text/default and text/muted", "Same"],
+  ["Helper and error", "type/caption · text/secondary, or status/error/text with the error icon", "Same"],
+  ["Edge", "1px border/strong; 2px border/focus on focus, 2px border/error on error", "Same"],
+  ["Hover", "action/secondary-hover", "Same"],
+  ["Disabled", "action/disabled fill, border/disabled, text/disabled", "Same"],
+  ["Search field", "40px · input/height/lg (Large) or 32px (Medium), 20px or 16px search icon", "—"],
+  ["Text area", "4px padding above and below (space/1); one row is 32px", "No padding above and below; one row is 24px"],
+  ["Text area, Large", "40px for one row · input/height/lg, the Large Search field’s height · 12px at the sides (space/3), 6px above and below once it grows · type/body · radius/sm", "—"],
+  ["Text area rows", "rows × the line height (type/body-sm, or type/body in Large), growing to maxRows × the line height", "Same"],
+];
+
+const code = `import { SearchField, TextArea, TextInput } from "@ui";
+
+<TextInput label="Window start (s)" value={start} onChange={setStart}
+  unit="s" inputMode="decimal" helper="Seconds from the start of the session."
+  error={startError} />
+
+<SearchField label="Search Dandisets" value={query} onChange={setQuery}
+  onSearch={runSearch} loading={searching}
+  placeholder="Search Dandisets, for example “mouse hippocampus”" />
+
+<TextArea label="Session notes" value={notes} onChange={setNotes}
+  rows={2} maxRows={4} helper="Saved with this file in this browser only." />`;
+
+const areaCode = `const sendOnEnter = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+  if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
+  event.preventDefault();
+  send();
+};
+
+<TextArea label="Message" hideLabel placeholder="Ask about this Dandiset"
+  helper="Enter to send, Shift+Enter for a new line"
+  value={text} onChange={setText} onKeyDown={sendOnEnter}
+  size="lg" rows={1} maxRows={6} />
+<Button type="submit" variant="primary" size="lg">Send</Button>`;
+---
+
+<DocsLayout title="Text inputs and search" description="Text input, Text area and Search field: labels, units, helper text and errors in words.">
+  <Intro
+    lead="Text inputs take values people type: an API key, a time window, a number of bins, a filter cutoff. The search field finds Dandisets and datasets on the archive pages. Every field has a visible label, says which unit it expects, and explains what went wrong in words when a value doesn’t fit."
+    status="Updated November 10, 2026 · Components · Every field on this page is the component the app imports from @ui"
+    rules={[
+      { title: "Labels sit above the field", text: "A short noun, always visible. Placeholders show an example; they never replace the label." },
+      { title: "Units live in the label", text: "“Window start (s)”, “Low-pass cutoff (Hz)”. People shouldn’t have to guess seconds or milliseconds." },
+      { title: "Errors say what fits", text: "Name the allowed range or format, next to the field, as soon as people leave it." },
+    ]}
+  />
+
+  <Existing page="text-inputs" />
+
+  <DocSection title="Text input" lead="One component in two sizes. Focus thickens the edge to a 2px link-blue border, so the label and value don’t move. Click into a field here to see it.">
+    <div class="field-grid">
+      <TextInput label="Window start (s)" value="" onChange={noop} placeholder="For example, 0.5" helper={HELPER} />
+      <TextInput label="Window start (s)" value="0.18" onChange={noop} unit="s" helper={HELPER} />
+      <TextInput label="Window start (s)" value="2000" onChange={noop} unit="s" error="Use a start between 0 and 1,375.28 s, the length of this session." />
+      <TextInput label="Window start (s)" value="0.18" onChange={noop} unit="s" helper={HELPER} disabled />
+    </div>
+    <p class="doc-note">Empty with an example placeholder, filled, with an error, and disabled. A disabled field needs a reason nearby.</p>
+  </DocSection>
+
+  <DocSection title="Sizes" lead="Medium is the default. Small lines up with 24px compact rows in plot control panels, where the PSTH and spectrogram settings live.">
+    <div class="field-grid">
+      <TextInput label="Number of bins" value="50" onChange={noop} inputMode="numeric" />
+      <TextInput label="Number of bins" value="50" onChange={noop} inputMode="numeric" size="sm" />
+    </div>
+  </DocSection>
+
+  <DocSection title="Numbers and units" lead="Most fields take a number with a unit. Put the unit in the label and repeat it as a suffix inside the field, so it stays visible after people type. Screen readers hear it once, from the label.">
+    <div class="field-grid">
+      <TextInput label="Low-pass cutoff (Hz)" value="" onChange={noop} unit="Hz" inputMode="decimal" helper="Leave empty for no filter." />
+      <TextInput label="Number of bins" value="50" onChange={noop} inputMode="numeric" helper="Between 1 and 1,000." />
+    </div>
+  </DocSection>
+
+  <DocSection title="API key field" lead="A password field per archive, with a button to show and hide the key. The helper names the archive it opens, so DANDI and EMBER keys are never confused.">
+    <ApiKeyDemo client:visible />
+    <p class="doc-note">The key is hidden by default and hidden again on reload. The button reads “Show API key” or “Hide API key”, and showing changes only the field’s type, so focus, cursor and value stay put. The error shows after the archive answers 401, never while people type.</p>
+  </DocSection>
+
+  <DocSection title="Text area" lead="A Text input for text that runs over one line: a chat message, notes on a session, a description. It shares the Text input’s label, helper, error, disabled state, sizes and tokens. It starts at rows lines, grows with its text up to maxRows, then scrolls. Use a Text input for anything that fits on one line, such as a number, a name or a key.">
+    <TextAreaDemo client:visible />
+    <p class="doc-note">Empty with an example placeholder, with a helper, with an error, disabled, Small, Large, and grown to its maxRows of 4 with the rest of the text scrolling. Type in any of them to see the growth. Large is the message box on Neurosift Chat’s new chat: one row is as tall as the Large Search field, with the same padding, type and radius, and it grows with the message. The message box below shows the hidden label. Where a browser can’t size fields to their content, the field stays at rows lines and scrolls.</p>
+  </DocSection>
+
+  <DocSection title="Message box" lead="In a chat, Enter sends and Shift+Enter adds a line. The Text area doesn’t decide this: the caller handles Enter in onKeyDown, and leaves Shift+Enter and typing in an input method to the field. The label is hidden because the Send button and the conversation name the field; the helper says which key does what. The box is a Large Text area beside a Large Primary Send button, both 40px tall.">
+    <MessageBoxDemo client:visible />
+    <CodeSample label="React" code={areaCode} />
+  </DocSection>
+
+  <DocSection title="Text area props" lead="Everything else a <textarea> takes passes through, except className, style and id: the component links its own label and message.">
+    <DocTable caption="Text area props" columns={["Prop", "Type", "Default", "What it does"]}>
+      {AREA_PROPS.map(([prop, type, fallback, does]) => <tr><th scope="row"><code>{prop}</code></th><td><code>{type}</code></td><td>{fallback}</td><td>{does}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Search field" lead="For the DANDI, EMBER and OpenNeuro pages. The magnifier sits inside the field and search runs on Enter. A clear button appears once there is text, and Escape also clears. While results load, a spinner takes the clear button’s place.">
+    <div class="field-stack">
+      <SearchField label="Search Dandisets" value="" onChange={noop} onSearch={noop} placeholder="Search Dandisets, for example “mouse hippocampus”" />
+      <SearchField label="Search Dandisets, with a query" value="hippocampus place cells" onChange={noop} onSearch={noop} />
+      <SearchField label="Search Dandisets, loading" value="hippocampus place cells" onChange={noop} onSearch={noop} loading />
+      <SearchField label="Search files" value="" onChange={noop} onSearch={noop} size="md" placeholder="Search files in this Dandiset" />
+    </div>
+    <p class="doc-note">Large (40px) on archive pages, Medium (32px) inside panels. The label is visually hidden but always there for screen readers.</p>
+  </DocSection>
+
+  <DocSection title="Validation messages" lead="Check when people leave the field or submit, never on each keystroke. Messages are full sentences that name what fits.">
+    <DocTable caption="Validation messages" columns={["Message", "When"]}>
+      {MESSAGES.map(([message, when]) => <tr><th scope="row">{message}</th><td>{when}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Writing labels and help text" lead="Rewrites of strings in the app today. Sentence case, units in brackets, no abbreviations or trailing ellipses.">
+    <DocTable caption="Writing labels and help text" columns={["Use", "Instead of", "Why"]}>
+      {WRITING.map(([use, instead, why]) => <tr><th scope="row">{use}</th><td>{instead}</td><td>{why}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Accessibility">
+    <ul class="rule-list">
+      <li><strong>Labels.</strong> Every field has a &lt;label&gt; tied to it. In a search field or a message box it is visually hidden, never missing.</li>
+      <li><strong>Keys.</strong> A Text area keeps Enter for new lines unless the caller sends on Enter; then Shift+Enter still adds a line, and the helper says so.</li>
+      <li><strong>Errors.</strong> The field gets aria-invalid, the message is tied to it with aria-describedby, and an icon goes with the color.</li>
+      <li><strong>Descriptions add up.</strong> A description the caller links with aria-describedby stays, and the field’s helper or error is read after it, in the Text input and the Text area alike.</li>
+      <li><strong>Input hints.</strong> inputMode="decimal" for numbers, autocomplete="off" for keys, and type="search" in the search field.</li>
+      <li><strong>Contrast.</strong> Text 17.4:1, placeholder 5.3:1 and the field edge 21:1 on white; the 2px focus border is 7.2:1.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Usage">
+    <DoDont
+      dos={["Keep the label visible above the field at all times.", "Put units in the label and as a suffix.", "Give an example in the placeholder.", "Explain the allowed range in the error message."]}
+      donts={["Don’t use the placeholder as the label.", "Don’t write “off” or “n/a” inside an empty field.", "Don’t show an error while people are still typing.", "Don’t abbreviate labels to fit a narrow panel; widen the panel."]}
+    />
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Text input specs" columns={["Property", "Medium", "Small"]}>
+      {SPECS.map(([property, medium, small]) => <tr><th scope="row">{property}</th><td>{medium}</td><td>{small}</td></tr>)}
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="In code" lead="Import from @ui. All three components are controlled: they show the value they’re given and report each change.">
+    <CodeSample label="React" code={code} />
+  </DocSection>
+</DocsLayout>

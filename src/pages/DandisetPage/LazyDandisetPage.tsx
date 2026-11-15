@@ -1,11 +1,21 @@
-import { FunctionComponent, useCallback, useMemo, useState } from "react";
+import {
+  FunctionComponent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { Checkbox, LoadingState } from "@ui";
+import { addRecentDataset } from "../util/recentDatasets";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import ResponsiveLayout from "@components/ResponsiveLayout";
+import KeyRefusedFrame from "./KeyRefusedFrame";
 import DatasetWorkspace from "../common/DatasetWorkspace/DatasetWorkspace";
 import { DatasetFile } from "../common/DatasetWorkspace/plugins/pluginInterface";
 import DandisetOverview from "./DandisetOverview";
 import { useDandisetVersionInfo } from "./useDandisetVersionInfo";
-import useQueryDandiset from "./useQueryDandiset";
+import DandisetError from "./DandisetError";
+import { useDandisetResult } from "./useQueryDandiset";
 import useLazyDandisetPaths from "./hooks/useLazyDandisetPaths";
 import useRegisterAIComponent from "./useRegisterAIComponent";
 
@@ -24,14 +34,18 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
   const { dandisetId: urlDandisetId } = useParams();
   const [searchParams] = useSearchParams();
   const effectiveDandisetId = propDandisetId || urlDandisetId;
+
+  useEffect(() => {
+    if (effectiveDandisetId) addRecentDataset("DANDI", effectiveDandisetId);
+  }, [effectiveDandisetId]);
   const staging = false;
 
   // Query the dandiset info
-  const dandisetResponse = useQueryDandiset(
-    effectiveDandisetId,
-    staging,
-    false,
-  );
+  const {
+    dandiset: dandisetResponse,
+    failure,
+    keyRefusedUrl,
+  } = useDandisetResult(effectiveDandisetId, staging, false);
   const dandisetVersion = searchParams.get("dandisetVersion") || "";
   const dandisetVersionInfo = useDandisetVersionInfo(
     effectiveDandisetId,
@@ -45,13 +59,18 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
   const [nwbFilesOnly, setNwbFilesOnly] = useState(false);
 
   // Use lazy loading hook
-  const { topLevelFiles, loadFileFromPath, fetchDirectory, loading } =
-    useLazyDandisetPaths(
-      effectiveDandisetId,
-      dandisetVersionInfo,
-      staging,
-      nwbFilesOnly,
-    );
+  const {
+    topLevelFiles,
+    loadFileFromPath,
+    fetchDirectory,
+    fetchFolder,
+    loading,
+  } = useLazyDandisetPaths(
+    effectiveDandisetId,
+    dandisetVersionInfo,
+    staging,
+    nwbFilesOnly,
+  );
 
   // Special handler for NWB files
   const specialOpenFileHandler = useCallback(
@@ -69,24 +88,11 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
 
   // Controls for the main tab
   const mainTabAdditionalControls = (
-    <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
-      <label
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "5px",
-          fontSize: "14px",
-          cursor: "pointer",
-        }}
-      >
-        <input
-          type="checkbox"
-          checked={nwbFilesOnly}
-          onChange={(e) => setNwbFilesOnly(e.target.checked)}
-        />
-        Show NWB files only
-      </label>
-    </div>
+    <Checkbox
+      label="Show NWB files only"
+      checked={nwbFilesOnly}
+      onChange={setNwbFilesOnly}
+    />
   );
 
   const initialTabId = searchParams.get("tab");
@@ -120,37 +126,45 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
     [navigate, searchParams],
   );
 
+  if (failure && effectiveDandisetId) {
+    return <DandisetError dandisetId={effectiveDandisetId} failure={failure} />;
+  }
   if (loading || !dandisetResponse || !dandisetVersionInfo) {
-    return <div>Loading...</div>;
+    return <LoadingState label="Loading the Dandiset" phase="loading" />;
   }
 
   const initialSplitterPosition = Math.max(500, Math.min(650, (width * 2) / 5));
 
   return (
-    <ResponsiveLayout
-      width={width}
-      height={height}
-      initialSplitterPosition={initialSplitterPosition}
-      mobileBreakpoint={768}
-    >
-      <DandisetOverview
-        width={0}
-        height={0}
-        dandisetVersionInfo={dandisetVersionInfo}
-        availableVersions={availableVersions}
-        onVersionChange={handleVersionChange}
-      />
-      <DatasetWorkspace
-        width={0}
-        height={0}
-        topLevelFiles={topLevelFiles}
-        initialTab={initialTabId}
-        loadFileFromPath={loadFileFromPath}
-        fetchDirectory={fetchDirectory}
-        specialOpenFileHandler={specialOpenFileHandler}
-        mainTabAdditionalControls={mainTabAdditionalControls}
-      />
-    </ResponsiveLayout>
+    <KeyRefusedFrame url={keyRefusedUrl} height={height}>
+      {(pageHeight) => (
+        <ResponsiveLayout
+          width={width}
+          height={pageHeight}
+          initialSplitterPosition={initialSplitterPosition}
+          mobileBreakpoint={768}
+        >
+          <DandisetOverview
+            width={0}
+            height={0}
+            dandisetVersionInfo={dandisetVersionInfo}
+            availableVersions={availableVersions}
+            onVersionChange={handleVersionChange}
+          />
+          <DatasetWorkspace
+            width={0}
+            height={0}
+            topLevelFiles={topLevelFiles}
+            initialTab={initialTabId}
+            loadFileFromPath={loadFileFromPath}
+            fetchDirectory={fetchDirectory}
+            fetchFolder={fetchFolder}
+            specialOpenFileHandler={specialOpenFileHandler}
+            mainTabAdditionalControls={mainTabAdditionalControls}
+          />
+        </ResponsiveLayout>
+      )}
+    </KeyRefusedFrame>
   );
 };
 

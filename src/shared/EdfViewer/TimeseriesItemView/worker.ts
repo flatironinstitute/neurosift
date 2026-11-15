@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Opts,
   DataSeries,
@@ -87,7 +86,7 @@ async function draw() {
 
   if (opts.zoomInRequired && !zoomInRequiredForSpikeTrains) {
     // draw text in the center of the canvas in pink: "Zoom in to view raster plot"
-    canvasContext.fillStyle = "pink";
+    canvasContext.fillStyle = opts.textColor;
     canvasContext.textAlign = "center";
     canvasContext.textBaseline = "middle";
     canvasContext.font = "20px Arial";
@@ -100,7 +99,7 @@ async function draw() {
 
   if (zoomInRequiredForSpikeTrains) {
     // draw text in the center of the canvas in pink: "Zoom in to view spike trains"
-    canvasContext.fillStyle = "pink";
+    canvasContext.fillStyle = opts.textColor;
     canvasContext.textAlign = "center";
     canvasContext.textBaseline = "middle";
     canvasContext.font = "20px Arial";
@@ -203,7 +202,7 @@ const paintLegend = (context: CanvasRenderingContext2D) => {
   if (!opts) return;
   if (opts.hideLegend) return;
   if (!dataSeries) return;
-  const { legendOpts, margins, canvasWidth } = opts;
+  const { legendOpts, margins, canvasWidth, textColor } = opts;
   const seriesToInclude = dataSeries.filter((s) => s.title);
   if (seriesToInclude.length === 0) return;
   const { location } = legendOpts;
@@ -230,8 +229,8 @@ const paintLegend = (context: CanvasRenderingContext2D) => {
           }
         : undefined;
   if (!R) return; //unexpected
-  context.fillStyle = "white";
-  context.strokeStyle = "gray";
+  context.fillStyle = opts.surfaceColor;
+  context.strokeStyle = opts.borderColor;
   context.lineWidth = 1.5;
   context.fillRect(R.x, R.y, R.w, R.h);
   context.strokeRect(R.x, R.y, R.w, R.h);
@@ -251,7 +250,7 @@ const paintLegend = (context: CanvasRenderingContext2D) => {
       h: entryHeight,
     };
     const title = s.title || "untitled";
-    context.fillStyle = "black";
+    context.fillStyle = textColor;
     context.font = `${entryFontSize}px Arial`;
     context.fillText(
       title,
@@ -441,7 +440,7 @@ const applyLineAttributes = (
   context: CanvasRenderingContext2D,
   attributes: any,
 ) => {
-  context.strokeStyle = attributes["color"] ?? "black";
+  context.strokeStyle = attributes["color"] ?? opts?.markColor ?? "black";
   context.lineWidth = attributes["width"] ?? 1.1; // 1.1 hack--but fixes the 'disappearing lines' issue
   if (attributes["dash"]) context.setLineDash(attributes["dash"]);
 };
@@ -450,7 +449,7 @@ const applyMarkerAttributes = (
   context: CanvasRenderingContext2D,
   attributes: any,
 ) => {
-  context.fillStyle = attributes["color"] ?? "black";
+  context.fillStyle = attributes["color"] ?? opts?.markColor ?? "black";
 };
 
 function sleepMsec(msec: number) {
@@ -582,7 +581,7 @@ const drawAnnotations = async (o: {
         canvasContext.fillRect(R.x, R.y, R.w, R.h);
 
         // draw text at the top of the rectangle
-        canvasContext.fillStyle = `black`;
+        canvasContext.fillStyle = opts?.textColor ?? "black";
         const text = aa.data.label;
         canvasContext.font = "11px Arial";
         canvasContext.textAlign = "center";

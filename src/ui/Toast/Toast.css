@@ -1,0 +1,65 @@
+/* The one toast region: bottom center, in the top layer so panels and plots can't cover it. */
+.ns-toast-region {
+  inset: auto 0 var(--space-6);
+  inline-size: fit-content;
+  max-inline-size: calc(100vw - var(--space-8));
+  padding: 0;
+  margin: 0 auto;
+  overflow: visible;
+  background: none;
+  border: 0;
+}
+
+.ns-toast {
+  --focus-ring: var(--border-focus-inverse);
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  color: var(--text-on-inverse);
+  background: var(--surface-inverse);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--elevation-2);
+}
+
+.ns-toast-icon {
+  display: flex;
+}
+
+.ns-toast-message {
+  flex: 1;
+  margin: 0;
+  font: var(--type-body-sm);
+  letter-spacing: var(--type-body-sm-letter-spacing);
+}
+
+.ns-toast-action {
+  min-block-size: var(--layout-target-min);
+  padding: 0 var(--space-1);
+  color: inherit;
+  font: var(--type-label);
+  letter-spacing: var(--type-label-letter-spacing);
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-xs);
+}
+
+.ns-toast-action:focus-visible {
+  outline: var(--border-width-2) solid var(--focus-ring);
+  outline-offset: var(--space-0-5);
+}
+
+/* The dismiss button takes the navy surface's colors. */
+.ns-toast .ns-icon-button {
+  --control-fg: var(--text-on-inverse);
+  --control-bg-hover: var(--action-primary-hover);
+  --control-bg-pressed: var(--action-primary-pressed);
+}
+
+@media (forced-colors: active) {
+  .ns-toast {
+    border: var(--border-width-1) solid CanvasText;
+  }
+}

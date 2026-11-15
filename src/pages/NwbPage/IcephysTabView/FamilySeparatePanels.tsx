@@ -1,5 +1,6 @@
+import { useCssVars } from "@components/useCssVars";
 import { FunctionComponent, useMemo } from "react";
-import { facetColors } from "./FacetLegend";
+import { facetColors } from "./sweepGroups";
 import FamilyOverlayPlot from "./FamilyOverlayPlot";
 import { categorical } from "./palette";
 import { LoadedSweep } from "./useSweepData";
@@ -104,42 +105,24 @@ const FamilySeparatePanels: FunctionComponent<Props> = ({
     Math.min(groups.length, Math.floor(width / PANEL_MIN_W)),
   );
   const panelW = Math.floor(width / cols);
+  const ref = useCssVars<HTMLDivElement>({
+    "--icephys-w": width,
+    "--icephys-h": height,
+    "--panel-w": panelW,
+    "--panel-label-h": LABEL_H,
+  });
 
-  // Shared categorical colors (when the inner color is categorical) so the
-  // panels and the sidebar legend agree. The legend itself is rendered in the
-  // sidebar by IcephysTabView, not here, to keep the crowded plot area clean.
+  // Shared colors so the panels and the settings legend agree.
   const fc = innerColor !== "sweep" ? facetColors(sweeps, innerColor) : null;
 
   return (
-    <div
-      style={{
-        width,
-        height,
-        overflowY: "auto",
-        overflowX: "hidden",
-        display: "flex",
-        flexWrap: "wrap",
-        alignContent: "flex-start",
-      }}
-    >
+    <div ref={ref} className="icephys-chart-box icephys-panels">
       {groups.map((g, i) => (
-        <div key={i} style={{ width: panelW, boxSizing: "border-box" }}>
-          <div
-            style={{
-              height: LABEL_H,
-              fontSize: 11,
-              fontWeight: 600,
-              color: "#444",
-              padding: "0 6px",
-              textAlign: "center",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
+        <div key={i} className="icephys-panel">
+          <p className="icephys-panel-title">
             {g.label} · {g.sweeps.length} sweep
             {g.sweeps.length === 1 ? "" : "s"}
-          </div>
+          </p>
           <FamilyOverlayPlot
             sweeps={g.sweeps}
             width={panelW}

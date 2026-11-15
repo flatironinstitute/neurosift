@@ -1,0 +1,239 @@
+---
+import { Alert, Button } from "@ui";
+import { contrastRatio } from "../../../../tokens/contrast.mjs";
+import CodeSample from "../../components/CodeSample.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import ExamplePlot from "../../components/ExamplePlot.astro";
+import Intro from "../../components/Intro.astro";
+import Sample from "../../components/Sample.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { withBase } from "../../navigation";
+import { TokenView, tokenSet } from "../../tokens";
+
+interface Color {
+  hex: string;
+  alpha?: number;
+}
+
+const APP_THEMES = [
+  { id: "light", label: "Light", theme: undefined },
+  { id: "dark", label: "Dark", theme: "dark" },
+  { id: "high-contrast", label: "High contrast", theme: "high-contrast" },
+];
+
+const CHART_THEMES = [
+  { id: "light", label: "Light chart", theme: undefined },
+  { id: "dark", label: "Dark chart", theme: "plot-dark" },
+];
+
+const value = (path: string, theme?: string) => {
+  const { hex, alpha } = tokenSet.resolve(path, theme) as Color;
+  return alpha === undefined ? hex : `${hex} at ${Math.round(alpha * 100)}%`;
+};
+
+const ROLES = [
+  "surface.page",
+  "surface.panel",
+  "surface.inverse",
+  "surface.row-hover",
+  "text.default",
+  "text.secondary",
+  "text.muted",
+  "text.link",
+  "action.primary",
+  "action.secondary",
+  "border.subtle",
+  "border.strong",
+  "border.focus",
+  "status.error.text",
+  "status.warning.text",
+  "status.success.text",
+  "status.info.text",
+  "code.surface",
+  "code.keyword",
+].map(TokenView.of);
+
+const PAIRS: [string, string, number][] = [
+  ["text.default", "surface.page", 4.5],
+  ["text.secondary", "surface.panel", 4.5],
+  ["text.muted", "surface.panel", 4.5],
+  ["text.link", "surface.panel", 4.5],
+  ["text.on-inverse", "action.primary", 4.5],
+  ["status.error.text", "status.error.bg", 4.5],
+  ["status.info.text", "status.info.bg", 4.5],
+  ["code.keyword", "code.surface", 4.5],
+  ["border.strong", "surface.panel", 3],
+  ["border.focus", "surface.panel", 3],
+];
+
+const CHART_PAIRS: [string, string, number][] = [
+  ["plot.text", "plot.surface", 4.5],
+  ["plot.text-muted", "plot.surface", 4.5],
+  ["plot.mark", "plot.surface", 3],
+  ["data.cursor", "plot.surface", 3],
+  ...[1, 2, 3, 4, 5, 6].map((n): [string, string, number] => [`data.series.${n}`, "plot.surface", 3]),
+];
+
+const ratio = (fg: string, bg: string, theme?: string) =>
+  `${contrastRatio(tokenSet, fg, bg, theme).toFixed(1)}:1`;
+
+const CHART_TOKENS = [
+  "plot.surface",
+  "plot.text",
+  "plot.text-muted",
+  "plot.grid-major",
+  "plot.grid-minor",
+  "plot.mark",
+  "data.cursor",
+  ...[1, 2, 3, 4, 5, 6].map((n) => `data.series.${n}`),
+].map(TokenView.of);
+
+const name = (path: string) => path.replaceAll(".", "/");
+
+const cssCode = `/* Components name a role, never a color, so every theme reaches them. */
+.alert--info {
+  color: var(--status-info-text);
+  background: var(--status-info-bg);
+  border-color: var(--status-info-border);
+}
+
+/* A chart's box takes the chart surface; data-plot-theme on it picks light or dark. */
+.my-chart {
+  background: var(--plot-surface);
+}`;
+
+const canvasCode = `import { usePlotColors, usePlotTheme } from "@shared/plotTheme";
+import { readableOn } from "@shared/plotColors";
+
+const colors = usePlotColors(); // surface, text, grid, mark, series, …
+const { plotTheme } = usePlotTheme();
+ctx.strokeStyle = colors.gridMajor;
+// Data keeps its hue; on a dark chart it is only lightened as far as 3:1 needs.
+ctx.fillStyle =
+  plotTheme === "dark" ? readableOn(unitColor, colors.surface) : unitColor;`;
+---
+
+<DocsLayout title="Themes" description="Light, Dark and High contrast app themes, and a light or dark theme for every chart.">
+  <Intro
+    lead="Neurosift has three app themes, Light, Dark and High contrast, and its charts switch between light and dark on their own. A theme only changes semantic tokens; components name roles, never colors, so every screen follows."
+    status="Updated November 14, 2026 · Foundations · Previews draw with each theme’s real tokens, and every ratio is computed from the token files when the docs build"
+    rules={[
+      { title: "Themes change roles", text: "A theme redefines surface, text, action, border, status and code tokens. Primitives and components stay the same." },
+      { title: "Charts theme on their own", text: "Every chart has a Light/Dark switch, whatever the app theme. Until someone flips it, charts follow the app." },
+      { title: "Data keeps its hue", text: "On a dark chart a data color is only lightened as far as 3:1 needs. Colormaps and recorded pixels never change." },
+    ]}
+  />
+
+  <DocSection title="App themes" lead="The same components in each theme. Light is the default; Dark uses the navy scale; High contrast is black with white text and rules, and a yellow focus ring.">
+    <div class="themes-previews">
+      {
+        APP_THEMES.map(({ id, label }) => (
+          <figure class:list={["themes-preview", `theme-preview-${id}`]}>
+            <figcaption class="themes-preview-label">{label}</figcaption>
+            <p class="themes-preview-title">Dandiset 000673</p>
+            <p class="themes-preview-text">Control of working memory by phase–amplitude coupling of human hippocampal neurons.</p>
+            <p class="themes-preview-muted">44 files · 36 subjects · <a href="https://dandiarchive.org/dandiset/000673">View on DANDI</a></p>
+            <div class="themes-preview-actions">
+              <Button variant="primary" size="sm">Open file</Button>
+              <Button variant="secondary" size="sm">Copy link</Button>
+            </div>
+            <Alert status="info" title="Reload to use the new key">Neurosift reads API keys when a page opens.</Alert>
+          </figure>
+        ))
+      }
+    </div>
+  </DocSection>
+
+  <DocSection title="What each theme changes" lead="Each theme overrides the semantic tokens in design-system/tokens/themes. The swatches are drawn with the theme’s own values.">
+    <DocTable caption="Semantic colors in each theme" columns={["Token", ...APP_THEMES.map((t) => t.label)]}>
+      {
+        ROLES.map((view) => (
+          <tr>
+            <th scope="row"><code>{name(view.path)}</code></th>
+            {APP_THEMES.map(({ id, theme }) => (
+              <td>
+                <span class:list={["themes-cell", `theme-preview-${id}`]}>
+                  <Sample view={view} kind="swatch" />
+                  <code>{value(view.path, theme)}</code>
+                </span>
+              </td>
+            ))}
+          </tr>
+        ))
+      }
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Contrast in every theme" lead="WCAG 2.2 AA: 4.5:1 for text, 3:1 for borders, focus rings and marks. The contrast test checks every pairing in every theme; these are the ones people meet most.">
+    <DocTable caption="Contrast of common pairings in each theme" columns={["Pairing", "Needs", ...APP_THEMES.map((t) => t.label)]}>
+      {
+        PAIRS.map(([fg, bg, min]) => (
+          <tr>
+            <th scope="row"><code>{name(fg)}</code> on <code>{name(bg)}</code></th>
+            <td>{min}:1</td>
+            {APP_THEMES.map(({ theme }) => <td>{ratio(fg, bg, theme)}</td>)}
+          </tr>
+        ))
+      }
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Charts" lead="A chart draws from plot tokens, which data-plot-theme switches between light and dark. A dark chart also takes the dark app colors, so its legends, empty states and checkboxes match it, even inside the light app.">
+    <div class="themes-charts">
+      {
+        CHART_THEMES.map(({ id, label }) => (
+          <div class="themes-chart">
+            <p class="themes-preview-label">{label}</p>
+            <div data-plot-theme={id}>
+              <ExamplePlot kind="traces" />
+            </div>
+          </div>
+        ))
+      }
+    </div>
+    <DocTable caption="Chart colors, light and dark" columns={["Token", ...CHART_THEMES.map((t) => t.label)]}>
+      {
+        CHART_TOKENS.map((view) => (
+          <tr>
+            <th scope="row"><code>{name(view.path)}</code></th>
+            {CHART_THEMES.map(({ id, theme }) => (
+              <td>
+                <span class="themes-cell" data-plot-theme={id}>
+                  <Sample view={view} kind="swatch" />
+                  <code>{value(view.path, theme)}</code>
+                </span>
+              </td>
+            ))}
+          </tr>
+        ))
+      }
+    </DocTable>
+    <DocTable caption="Contrast of chart pairings, light and dark" columns={["Pairing", "Needs", ...CHART_THEMES.map((t) => t.label)]}>
+      {
+        CHART_PAIRS.map(([fg, bg, min]) => (
+          <tr>
+            <th scope="row"><code>{name(fg)}</code> on <code>{name(bg)}</code></th>
+            <td>{min}:1</td>
+            {CHART_THEMES.map(({ theme }) => <td>{ratio(fg, bg, theme)}</td>)}
+          </tr>
+        ))
+      }
+    </DocTable>
+    <p class="doc-note">Charts with their own palettes, such as unit colors and tab10 traces, keep those colors on light. On dark, each color that falls short of 3:1 is mixed toward white just far enough. Faint single-trial traces are lifted until they are exactly as faint on dark as on white. Viridis, other colormaps, video, images and two-photon frames never change.</p>
+  </DocSection>
+
+  <DocSection title="Where people choose" lead="Two places, one saved choice each.">
+    <ul class="rule-list">
+      <li><strong>Settings → Display.</strong> Theme: Light, Dark, High contrast or Match system, which follows the computer’s dark mode and increased-contrast setting. Charts: Match theme, Light or Dark. See <a href={withBase("/ui-library/settings/")}>Settings</a>.</li>
+      <li><strong>The chart switch.</strong> A moon or sun at the end of each chart’s summary line, or in the player bar for audio. Flipping it changes every chart and the Charts setting.</li>
+      <li>Both are saved in the browser. The app theme is applied before the first paint, so a dark page never flashes light.</li>
+    </ul>
+  </DocSection>
+
+  <DocSection title="Building with themes" lead="Use semantic tokens in CSS and the chart palette in canvas, Plotly and worker code. Never write a color into a component or a chart.">
+    <CodeSample label="CSS" code={cssCode} />
+    <CodeSample label="Canvas" code={canvasCode} />
+    <p class="doc-note">Workers can’t read CSS: post the colors they need with their options and repaint when the theme changes. Plotly layouts go through <code>themedLayout(colors, layout)</code>.</p>
+  </DocSection>
+</DocsLayout>

@@ -1,0 +1,71 @@
+.dataset-overview {
+  box-sizing: border-box;
+  display: grid;
+  align-content: start;
+  gap: var(--space-5);
+  block-size: 100%;
+  padding: var(--space-6) var(--space-8);
+  overflow-y: auto;
+  background: var(--surface-panel);
+}
+
+.dataset-header {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.dataset-id {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font: var(--type-code-sm);
+}
+
+.dataset-title {
+  margin: 0;
+  font: var(--type-h3);
+  font-weight: 400;
+  color: var(--text-default);
+}
+
+.dataset-version {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.dataset-section {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.dataset-section-title {
+  margin: 0;
+  font: var(--type-label);
+  color: var(--text-default);
+}
+
+.dataset-text,
+.dataset-text p {
+  margin: 0;
+  font: var(--type-body-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.dataset-tags,
+.dataset-chat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font: var(--type-body-sm);
+}
+
+.dataset-version > .ns-field {
+  flex: 1 1 12rem;
+  max-inline-size: 18rem;
+}

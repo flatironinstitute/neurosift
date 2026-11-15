@@ -1,0 +1,21 @@
+.segmentation-view {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-5);
+}
+
+.segmentation-side {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.segmentation-status {
+  margin: 0;
+  font: var(--type-caption);
+  color: var(--text-muted);
+}
+
+.segmentation-picker {
+  inline-size: 16rem;
+}

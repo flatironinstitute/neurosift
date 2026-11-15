@@ -1,0 +1,101 @@
+---
+import DocRows from "../../components/DocRows.astro";
+import DocSection from "../../components/DocSection.astro";
+import DocTable from "../../components/DocTable.astro";
+import Intro from "../../components/Intro.astro";
+import Screen from "../../components/Screen.astro";
+import LiveScreen from "../../components/LiveScreen.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const STATES = [
+  ["First visit", "Recently opened is hidden; nothing else moves."],
+  ["Returning", "Recently opened shows up to five datasets from this browser, newest first, from any archive, with their titles."],
+  ["Search submitted", "Enter opens the catalog with the query across all three archives. An empty search opens Browse all."],
+  ["Link pasted into search", "A link opens like Open a file by link instead of searching."],
+  ["Open a file by link", "A Text input opens under the links, with focus in it, beside Open file and Cancel. The links stay. Cancel or Escape closes it and returns focus to Open a file by link."],
+  ["Link isn’t a file Neurosift can open", "The field shows: “This link doesn’t point to an NWB file. Neurosift opens .nwb, .nwb.lindi.json and .zarr files.”"],
+  ["Dataset page link", "A DANDI, EMBER or OpenNeuro dataset link opens that dataset."],
+];
+
+const BEHAVIOR = [
+  ["Search", "Searches DANDI, EMBER and OpenNeuro at once and opens the catalog. The placeholder carries the live dataset count."],
+  ["Browse all datasets", "Opens the catalog with no query, newest first, across all three archives."],
+  ["Browse DANDI datasets", "Opens the same catalog with only DANDI checked in the Archive filter, since most visitors come for DANDI. EMBER and OpenNeuro are one click away."],
+  ["Open a file by link", "Enter or Open file submits. The link is checked first; nothing loads until it’s valid. Cancel or Escape closes the field."],
+  ["Recently opened", "Each row opens the dataset page. Kept in this browser only; there are no accounts."],
+  ["Footer", "NWB viewer guide, Neurosift Chat in a new tab, the source on GitHub, Report a problem, and the version with its build date."],
+];
+
+const DIFFERS = [
+  ["First thing on the page", "“Welcome to Neurosift” and a three-line description", "The logo and one sentence", "Built"],
+  ["Search", "Only on each archive’s own page", "One field across all three archives, leading to the catalog", "Built"],
+  ["Archive cards", "Four equal cards with full-width buttons", "Browse all datasets and Browse DANDI datasets; the catalog’s Archive filter picks archives", "Built"],
+  ["Open a file by link", "Not on home; only by building a /nwb?url= address", "A link under search that opens a field", "Built"],
+  ["Recent", "Dandiset IDs, only on the archive pages, one list per archive", "Recently opened on home, with titles and archive, one list", "Built"],
+  ["Neurosift Chat", "A panel with “(experimental)” in the title", "A footer link", "Built"],
+  ["Footer", "View source on GitHub, Submit Feedback / Issues, Built date", "Guide, Chat, View source on GitHub, Report a problem, version and build date", "Built"],
+];
+
+const SPECS = [
+  ["Column", "690px, centered"],
+  ["Title", "Logo, 40px, beside “Neurosift” in type/h1 · one sentence in type/body text/secondary"],
+  ["Search", "Search field, Large"],
+  ["Links", "type/body-sm text/link, underlined"],
+  ["Recently opened", "type/label heading · Recently opened rows: ID in type/code-sm, title, archive badge"],
+  ["Footer", "type/body-sm links · version in type/code-sm text/muted"],
+];
+---
+
+<DocsLayout title="Home" description="One search across the archives, a way to open a file by link, and what was opened last.">
+  <Intro
+    lead="Home is the first page of Neurosift. Today it welcomes people with four equal cards, one per archive and one for the guide, and search lives on each archive’s own page. The rebuild leads with one search across DANDI, EMBER and OpenNeuro, adds a way to open a file by its link, and shows the datasets opened last in this browser. Every link today’s home offers stays one click away."
+    status="Updated November 10, 2026 · UI library · Captured at 1440 × 900 and 390 × 844 · Built from Search field, Text input, Button, Recently opened and Badge"
+    rules={[
+      { title: "Search first", text: "One field searches every archive and leads to the catalog." },
+      { title: "Back to where you were", text: "Recently opened lists the last five datasets from any archive." },
+      { title: "A link just works", text: "Paste a file or dataset link and Neurosift opens it, or says what it can open." },
+    ]}
+  />
+
+  <DocSection title="Home today" lead="neurosift.app, captured with Playwright.">
+    <div class="captures">
+      <Screen file="home-today" alt="Today’s home: Welcome to Neurosift, a description, and four cards for DANDI, EMBER, OpenNeuro and the NWB viewer guide with full-width buttons, then a Chat panel and footer links." caption="Today: a welcome, four cards, a Chat panel and a footer." />
+    </div>
+  </DocSection>
+
+  <DocSection title="The rebuilt home" lead="The redesign, with the live dataset count.">
+    <div class="captures">
+      <Screen file="home-proposed" alt="The rebuilt home on a first visit: the logo and Neurosift, one sentence, a search field reading Search 2,635 datasets in DANDI, EMBER and OpenNeuro, Browse all datasets, Browse DANDI datasets and Open a file by link, and a footer." caption="First visit: search, three links, and the footer." />
+      <Screen file="home-proposed-recent" alt="The rebuilt home for a returning visitor: the same search, then Recently opened with Dandisets 000673 and 000728 and OpenNeuro ds000001, each with its title and archive." caption="Returning: Recently opened from any archive, with titles." />
+      <Screen file="home-proposed-narrow" alt="The rebuilt home at 390 pixels wide: the title, search, links, Recently opened and footer in one column." caption="At 390px everything stacks in one column." />
+    </div>
+  </DocSection>
+
+  <DocSection title="Try it" lead="Search, open a file by link, and see what was opened last.">
+    <LiveScreen path="" title="Home" size="default" />
+  </DocSection>
+
+  <DocSection title="States">
+    <DocTable caption="States" columns={["When", "What changes"]}>
+      <DocRows rows={STATES} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Behavior">
+    <DocTable caption="Behavior" columns={["Part", "Behavior"]}>
+      <DocRows rows={BEHAVIOR} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="What differs" lead="Built is in the app now.">
+    <DocTable caption="What differs" columns={["Area", "Existing", "Proposed", "Status"]}>
+      <DocRows rows={DIFFERS} />
+    </DocTable>
+  </DocSection>
+
+  <DocSection title="Specs" lead="Values for developers. Every value is a token.">
+    <DocTable caption="Specs" columns={["Property", "Value"]}>
+      <DocRows rows={SPECS} />
+    </DocTable>
+  </DocSection>
+</DocsLayout>

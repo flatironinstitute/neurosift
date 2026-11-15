@@ -1,0 +1,26 @@
+/* The view panel adds its padding to 100%, so leave room for it. */
+.edf-viewer {
+  inline-size: var(--edf-width);
+  block-size: calc(var(--edf-height) - 2 * var(--space-4));
+}
+
+.edf-separation {
+  inline-size: 9rem;
+}
+
+.edf-channels {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.edf-plot {
+  position: relative;
+  inline-size: var(--edf-plot-width);
+  block-size: var(--edf-plot-height);
+}
+
+.edf-plot-loading {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}

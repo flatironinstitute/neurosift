@@ -1,0 +1,23 @@
+.ns-search {
+  block-size: var(--input-height-lg);
+  padding: 0 var(--space-2) 0 var(--space-3);
+}
+
+.ns-search--md {
+  block-size: var(--button-height-md);
+  padding-inline-end: var(--space-1);
+}
+
+.ns-search-input {
+  block-size: 100%;
+  font: var(--type-body);
+  appearance: none;
+}
+
+.ns-search--md .ns-search-input {
+  font: var(--type-body-sm);
+}
+
+.ns-search-input::-webkit-search-cancel-button {
+  appearance: none;
+}

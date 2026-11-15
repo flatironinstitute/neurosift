@@ -1,0 +1,13 @@
+---
+interface Props {
+  label: string;
+  code: string;
+}
+
+const { label, code } = Astro.props;
+---
+
+<figure class="code-sample">
+  <figcaption class="type-label-sm">{label}</figcaption>
+  <pre class="type-code"><code>{code}</code></pre>
+</figure>
