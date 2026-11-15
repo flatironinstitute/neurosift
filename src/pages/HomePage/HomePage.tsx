@@ -10,6 +10,7 @@ import {
 } from "../SearchPage/archiveSources";
 import { getRecentDatasets, type RecentDataset } from "../util/recentDatasets";
 import { linkTarget } from "./openLink";
+import { BRAIN_URL } from "@shared/brain/brain";
 import "./HomePage.css";
 
 type HomePageProps = {
@@ -54,11 +55,6 @@ function useRecent() {
   }, []);
   return items;
 }
-
-/** Neurosift Brain: DANDI data by brain region, in 3D. Opens dark unless someone chose another theme there. */
-const BRAIN_URL =
-  import.meta.env.VITE_NEUROSIFT_BRAIN_URL ??
-  "https://jguerrero-prog.github.io/dandi-atlas/";
 
 /** One search across the archives, a way to open a file by link, and what was opened last. */
 const HomePage: FunctionComponent<HomePageProps> = () => {

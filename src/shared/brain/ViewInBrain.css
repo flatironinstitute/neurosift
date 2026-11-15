@@ -1,0 +1,5 @@
+/* BRAIN in capitals on screen, as on the homepage link; the text stays a word for screen readers. */
+.brain-name {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
