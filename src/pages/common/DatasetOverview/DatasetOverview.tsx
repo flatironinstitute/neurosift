@@ -7,7 +7,7 @@ import {
   Select,
   Tag,
 } from "@ui";
-import { FunctionComponent, useState } from "react";
+import { FunctionComponent, useState, type ReactNode } from "react";
 import "./DatasetOverview.css";
 
 export type DatasetFact = { term: string; value: string; code?: boolean };
@@ -34,6 +34,8 @@ export type DatasetOverviewProps = {
   versions?: { value: string; label: string }[];
   onVersionChange?: (version: string) => void;
   external: { label: string; href: string };
+  /** More ways to open the dataset, after the external link, such as View in BRAIN. */
+  actions?: ReactNode;
   facts: DatasetFact[];
   sections: DatasetSection[];
   chatHref?: string;
@@ -70,6 +72,7 @@ const DatasetOverview: FunctionComponent<DatasetOverviewProps> = ({
   versions,
   onVersionChange,
   external,
+  actions,
   facts,
   sections,
   chatHref,
@@ -113,6 +116,7 @@ const DatasetOverview: FunctionComponent<DatasetOverviewProps> = ({
       >
         {external.label}
       </Button>
+      {actions}
     </div>
 
     <DescriptionList label="Facts" layout="stacked" items={facts} />

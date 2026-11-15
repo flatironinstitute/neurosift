@@ -10,6 +10,7 @@ import {
 } from "../SearchPage/archiveSources";
 import { getRecentDatasets, type RecentDataset } from "../util/recentDatasets";
 import { linkTarget } from "./openLink";
+import { BRAIN_URL } from "@shared/brain/brain";
 import "./HomePage.css";
 
 type HomePageProps = {
@@ -134,6 +135,10 @@ const HomePage: FunctionComponent<HomePageProps> = () => {
           <a href={`${base}search?sort=newest`}>Browse all datasets</a>
           <a href={`${base}search?archive=dandi&sort=newest`}>
             Browse DANDI datasets
+          </a>
+          {/* Written "Brain" so screen readers say the word; the class sets it in capitals. */}
+          <a href={BRAIN_URL} className="home-link-brain">
+            Brain
           </a>
           <button
             ref={linkToggle}

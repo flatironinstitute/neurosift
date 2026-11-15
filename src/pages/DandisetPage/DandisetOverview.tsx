@@ -1,4 +1,6 @@
 import { FunctionComponent } from "react";
+import { useBrainLink } from "@shared/brain/brain";
+import { ViewInBrain } from "@shared/brain/ViewInBrain";
 import DatasetOverview from "../common/DatasetOverview/DatasetOverview";
 import { dandisetContent } from "../common/DatasetOverview/dandiOverview";
 import { DandisetVersionInfo } from "../DandiPage/dandi-types";
@@ -18,6 +20,8 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
   onVersionChange,
 }) => {
   const id = info.dandiset.identifier;
+  // Only for dandisets Neurosift Brain can place in an atlas.
+  const brain = useBrainLink(id);
   return (
     <DatasetOverview
       archive={{ name: "DANDI", href: `${import.meta.env.BASE_URL}dandi` }}
@@ -34,6 +38,7 @@ const DandisetOverview: FunctionComponent<DandisetOverviewProps> = ({
         label: "View on DANDI",
         href: `https://dandiarchive.org/dandiset/${id}/${info.version}`,
       }}
+      actions={brain && <ViewInBrain href={brain} />}
       {...dandisetContent(info)}
       chatHref={`https://dandiset-explorer.neurosift.app/chat?dandisetId=${id}&dandisetVersion=${info.version}`}
     />

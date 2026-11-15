@@ -18,6 +18,8 @@ import { useElementSize } from "./useElementSize";
 import { useStoredState } from "./useStoredState";
 import { useAssetPath } from "./useAssetPath";
 import { fileCrumbs } from "./fileCrumbs";
+import { assetIdFromUrl, useBrainLink } from "@shared/brain/brain";
+import { ViewInBrain } from "@shared/brain/ViewInBrain";
 import FileError from "./components/FileError";
 import FileAccessNotice from "./components/FileAccessNotice";
 import { useFileAccess } from "./components/useFileAccess";
@@ -223,6 +225,11 @@ const FileViewer: FunctionComponent<FileViewerProps> = ({
   const authError = useFileAccess(nwbUrl);
 
   const assetPath = useAssetPath(nwbUrl);
+  // Brain opens this file's session, for DANDI dandisets it can place in an atlas.
+  const brain = useBrainLink(
+    useEmber ? undefined : dandisetId,
+    assetIdFromUrl(nwbUrl),
+  );
   const crumbs = fileCrumbs({
     base: import.meta.env.BASE_URL,
     archive: dandisetId ? (useEmber ? "EMBER" : "DANDI") : undefined,
@@ -237,6 +244,7 @@ const FileViewer: FunctionComponent<FileViewerProps> = ({
     <div className="file-viewer-frame">
       <div className="file-viewer-crumbs">
         <Breadcrumbs items={crumbs} />
+        {brain && <ViewInBrain href={brain} size="sm" />}
       </div>
       {authError && (
         <FileAccessNotice
