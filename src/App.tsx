@@ -326,31 +326,18 @@ const AppContent = () => {
               >
                 Neurosift was updated
               </Button> */}
-              <Tooltip title="View this in Neurosift v1">
+              <Tooltip title="View this in Neurosift v3">
                 <IconButton
                   color="inherit"
                   onClick={() => {
-                    const loc = window.location;
-                    const path = loc.pathname;
-                    const search = loc.search;
-
-                    let v1Url = "https://v1.neurosift.app";
-
-                    if (path === "/dandi") {
-                      v1Url += "?p=/dandi";
-                    } else if (path.startsWith("/dandiset/")) {
-                      const dandisetId = path.split("/").pop();
-                      v1Url += `?p=/dandiset&dandisetId=${dandisetId}`;
-                    } else if (path === "/nwb") {
-                      // Convert search params to append to ?p=/nwb
-                      v1Url += `?p=/nwb${search.replace("?", "&")}`;
-                    }
-
-                    window.location.href = v1Url;
+                    // v3 serves the same paths and reads v2's links, including
+                    // the view settings v2 keeps in the query and after #.
+                    const { pathname, search, hash } = window.location;
+                    window.location.href = `https://v3.neurosift.app${pathname}${search}${hash}`;
                   }}
                   sx={{ ml: 2, fontSize: "0.75rem", padding: "4px" }}
                 >
-                  1
+                  3
                 </IconButton>
               </Tooltip>
             </Toolbar>
