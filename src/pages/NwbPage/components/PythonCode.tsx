@@ -1,5 +1,6 @@
 import { Button, CodeBlock } from "@ui";
 import { FunctionComponent, useId, useState } from "react";
+import { downloadNotebook, notebookFileName } from "./notebook";
 import "./PythonCode.css";
 
 type Props = {
@@ -9,6 +10,15 @@ type Props = {
   install?: string;
   /** Hides the code behind a button with this label, such as "Load in Python". */
   expandLabel?: string;
+  /** Offers the code as a notebook: the NWB file it loads, its title and a line on what it does. */
+  notebook?: {
+    file: string;
+    objectPath?: string;
+    title: string;
+    intro: string;
+    /** The notebook's install line, when the view shows none. */
+    install?: string;
+  };
 };
 
 const LINDI = "https://github.com/neurodatawithoutborders/lindi";
@@ -18,11 +28,33 @@ const PythonCode: FunctionComponent<Props> = ({
   script,
   install,
   expandLabel,
+  notebook,
 }) => {
   const [open, setOpen] = useState(false);
   const id = useId();
   const code = (
     <div className="python-code" id={id}>
+      {notebook && (
+        <div>
+          <Button
+            size="sm"
+            icon="download"
+            onClick={() =>
+              downloadNotebook(
+                notebookFileName(notebook.file, notebook.objectPath),
+                {
+                  title: notebook.title,
+                  intro: notebook.intro,
+                  install: notebook.install ?? install,
+                  script,
+                },
+              )
+            }
+          >
+            Download notebook (.ipynb)
+          </Button>
+        </div>
+      )}
       {install && (
         <CodeBlock code={`$ ${install}`} language="shell" title="Install" />
       )}
