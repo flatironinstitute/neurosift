@@ -40,6 +40,7 @@ type Props = {
   onMouseMove?: (e: React.MouseEvent) => void;
   onMouseOut?: (e: React.MouseEvent) => void;
   hideToolbar?: boolean;
+  barePosition?: CSSProperties["position"];
   showTimeseriesToolbar?: boolean; // // this is tricky... hideToolbar removes the space for the toolbar, whereas showTimeseriesToolbar=false just hides the toolbar
   shiftZoom?: boolean;
   requireClickToZoom?: boolean; // Whether mouse wheel zoom requires clicking in the view first (default: true)
@@ -101,6 +102,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
   onMouseOut,
   onMouseUp,
   hideToolbar,
+  barePosition = "absolute",
   showTimeseriesToolbar,
   yAxisInfo,
   shiftZoom,
@@ -442,7 +444,7 @@ const TimeScrollView2: FunctionComponent<Props> = ({
     return (
       <div
         ref={divRef}
-        style={{ position: "absolute", width, height, background: "white" }}
+        style={{ position: barePosition, width, height, background: "white" }}
       >
         {content2}
       </div>
