@@ -15,6 +15,9 @@ const MUI_REPLACEMENTS = [
   "reset",
   "chevron--left",
   "chevron--right",
+  // The overview toggle in HorizontalSplitter.
+  "side-panel--close",
+  "side-panel--open",
   "play",
   "pause",
   "stop",

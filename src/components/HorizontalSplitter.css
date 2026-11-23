@@ -1,0 +1,23 @@
+/* In the panel's top-right corner, so it never covers the tabs on the right. */
+.horizontal-splitter-toggle {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-end: var(--space-2);
+  z-index: 2;
+}
+
+/* Folded, the panel is a 40px rail; the 24px toggle 8px from its edge sits centered. */
+.horizontal-splitter-left[data-collapsed] {
+  border-inline-end: var(--border-width-1) solid var(--border-subtle);
+}
+
+.horizontal-splitter-handle {
+  z-index: 1000;
+  cursor: col-resize;
+  background: linear-gradient(var(--border-subtle), var(--border-subtle))
+    center / var(--border-width-1) 100% no-repeat;
+}
+
+.horizontal-splitter-handle[data-dragging] {
+  background-color: var(--border-strong);
+}
