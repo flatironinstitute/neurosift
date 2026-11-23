@@ -1,11 +1,20 @@
-.ns-tree {
+.ns-tree,
+.ns-tree [role="group"] {
   padding: 0;
   margin: 0;
-  color: var(--text-default);
   list-style: none;
 }
 
+.ns-tree {
+  color: var(--text-default);
+}
+
+.ns-tree-item:focus {
+  outline: none;
+}
+
 .ns-tree-row {
+  position: relative;
   display: flex;
   gap: var(--space-2);
   align-items: center;
@@ -20,25 +29,68 @@
 /* One 16px step per level below the first; the row's gap makes up the rest. */
 .ns-tree-indent {
   flex: none;
+  align-self: stretch;
   inline-size: calc(var(--space-4) - var(--space-2));
+}
+
+/* The indent's end lines up with the parent's chevron, so its edge is the guide. */
+.ns-tree--guides .ns-tree-indent {
+  border-inline-end: var(--border-width-1) solid var(--border-subtle);
 }
 
 .ns-tree-row:hover {
   background: var(--surface-row-hover);
 }
 
-.ns-tree-row[aria-selected="true"] {
+.ns-tree--pinned .ns-tree-item[aria-expanded="true"] > .ns-tree-row {
+  position: sticky;
+  z-index: 1;
+  background: var(--surface-panel);
+}
+
+.ns-tree--pinned .ns-tree-item[aria-expanded="true"] > .ns-tree-row:hover {
+  background: var(--surface-row-hover);
+}
+
+.ns-tree-item[data-level="1"] > .ns-tree-row {
+  inset-block-start: 0;
+}
+
+.ns-tree-item[data-level="2"] > .ns-tree-row {
+  inset-block-start: var(--layout-row-default);
+}
+
+.ns-tree-item[data-level="3"] > .ns-tree-row {
+  inset-block-start: calc(2 * var(--layout-row-default));
+}
+
+.ns-tree-item[data-level="4"] > .ns-tree-row {
+  inset-block-start: calc(3 * var(--layout-row-default));
+}
+
+.ns-tree-item[data-level="5"] > .ns-tree-row {
+  inset-block-start: calc(4 * var(--layout-row-default));
+}
+
+.ns-tree-item[data-level="6"] > .ns-tree-row {
+  inset-block-start: calc(5 * var(--layout-row-default));
+}
+
+.ns-tree-item[aria-selected="true"] > .ns-tree-row,
+.ns-tree--pinned
+  .ns-tree-item[aria-selected="true"][aria-expanded="true"]
+  > .ns-tree-row {
   --focus-ring: var(--border-focus-inverse);
   color: var(--text-on-inverse);
   background: var(--surface-row-selected);
   border-color: var(--surface-row-selected);
 }
 
-.ns-tree-row:focus {
-  outline: none;
+.ns-tree-item[aria-selected="true"] > .ns-tree-row .ns-tree-indent {
+  border-color: transparent;
 }
 
-.ns-tree-row:focus-visible {
+.ns-tree-item:focus-visible > .ns-tree-row {
   outline: var(--border-width-2) solid var(--focus-ring, var(--border-focus));
   outline-offset: calc(var(--border-width-2) * -1);
 }
@@ -62,6 +114,49 @@
   white-space: nowrap;
 }
 
-.ns-tree-row[aria-selected="true"] .ns-tree-size {
+.ns-tree-item[aria-selected="true"] > .ns-tree-row .ns-tree-size {
   color: inherit;
+}
+
+.ns-tree-note {
+  color: var(--text-secondary);
+}
+
+.ns-tree-more,
+.ns-tree-retry {
+  color: var(--text-link);
+}
+
+/* Over the end of the row, so sizes line up whether a row has an action or not. */
+.ns-tree-action {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: var(--space-2);
+  display: flex;
+  align-items: center;
+  padding-inline-start: var(--space-2);
+  visibility: hidden;
+  background: inherit;
+}
+
+.ns-tree-row:hover .ns-tree-action,
+.ns-tree-item:focus-visible > .ns-tree-row .ns-tree-action {
+  visibility: visible;
+}
+
+/* The row showing its action moves its size clear of the button. */
+.ns-tree-row:hover:has(.ns-tree-action) .ns-tree-size,
+.ns-tree-item:focus-visible > .ns-tree-row:has(.ns-tree-action) .ns-tree-size {
+  padding-inline-end: calc(var(--layout-target-min) + var(--space-2));
+}
+
+/* Touch screens have no hover, so the action is always there. */
+@media (hover: none) {
+  .ns-tree-action {
+    visibility: visible;
+  }
+
+  .ns-tree-row:has(.ns-tree-action) .ns-tree-size {
+    padding-inline-end: calc(var(--layout-target-min) + var(--space-2));
+  }
 }
