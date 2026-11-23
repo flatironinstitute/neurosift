@@ -379,12 +379,17 @@ test("the spinner stops moving under reduced motion", async ({ page }) => {
 });
 
 // The Select is a native select where the browser draws its list in the design, and a listbox where it can't.
-const isOpen = (select: Locator) =>
+const isSelectOpen = (select: Locator) =>
   select.evaluate((s) =>
     s instanceof HTMLSelectElement
       ? s.matches(":open")
       : s.getAttribute("aria-expanded") === "true",
   );
+// A native select needs no script; the listbox fallback waits for its island.
+const readySelect = async (select: Locator) =>
+  (await select.locator("xpath=ancestor::astro-island[1]").count())
+    ? hydrated(select)
+    : select.scrollIntoViewIfNeeded();
 const expectValue = async (select: Locator, value: string) =>
   (await select.evaluate((s) => s instanceof HTMLSelectElement))
     ? expect(select).toHaveValue(value)
@@ -402,20 +407,18 @@ test("selects: Space opens the list, Escape closes it and keeps the value and fo
   browserName,
 }) => {
   await page.goto("components/selects/");
-  await page.waitForFunction(
-    () => !document.querySelector("astro-island[ssr]"),
-  );
   const select = page.getByRole("combobox", { name: "Playback speed" });
+  await readySelect(select);
   await select.focus();
   await page.keyboard.press("Space");
-  expect(await isOpen(select)).toBe(true);
+  expect(await isSelectOpen(select)).toBe(true);
   test.skip(
     await isNativeIn(select, browserName, "firefox"),
     "Firefox's native list doesn't take synthetic keys",
   );
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Escape");
-  expect(await isOpen(select)).toBe(false);
+  expect(await isSelectOpen(select)).toBe(false);
   await expect(select).toBeFocused();
   await expectValue(select, "1×");
 });
@@ -425,10 +428,8 @@ test("selects: arrows and Enter pick from the styled list; typing jumps to an op
   browserName,
 }) => {
   await page.goto("components/selects/");
-  await page.waitForFunction(
-    () => !document.querySelector("astro-island[ssr]"),
-  );
   const select = page.getByRole("combobox", { name: "Playback speed" });
+  await readySelect(select);
   await select.focus();
   if (!(await isNativeIn(select, browserName, "firefox"))) {
     // Firefox's native list doesn't take synthetic keys; the styled list and the listbox do.
@@ -436,7 +437,7 @@ test("selects: arrows and Enter pick from the styled list; typing jumps to an op
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("Enter");
     await expectValue(select, "2×");
-    expect(await isOpen(select)).toBe(false);
+    expect(await isSelectOpen(select)).toBe(false);
   }
   await page.keyboard.type("8");
   await expectValue(select, "8×");
@@ -493,7 +494,7 @@ const tooltipOf = (page: Page, name: string) =>
   page
     .getByRole("button", { name })
     .locator("xpath=following-sibling::*[contains(@class, 'ns-tooltip')]");
-const isOpen = (tooltip: Locator) =>
+const isTooltipOpen = (tooltip: Locator) =>
   tooltip.evaluate((el) => el.matches(":popover-open"));
 
 test("tooltips: 500ms after hover, at once on keyboard focus, gone on Escape", async ({
@@ -508,16 +509,16 @@ test("tooltips: 500ms after hover, at once on keyboard focus, gone on Escape", a
   const tooltip = tooltipOf(page, "Settings");
   await settings.hover();
   await page.waitForTimeout(250);
-  expect(await isOpen(tooltip)).toBe(false);
-  await expect.poll(() => isOpen(tooltip)).toBe(true);
+  expect(await isTooltipOpen(tooltip)).toBe(false);
+  await expect.poll(() => isTooltipOpen(tooltip)).toBe(true);
   await page.mouse.move(0, 0);
-  await expect.poll(() => isOpen(tooltip)).toBe(false);
+  await expect.poll(() => isTooltipOpen(tooltip)).toBe(false);
   await page.getByRole("button", { name: "Earlier" }).focus();
   await page.keyboard.press(tab(browserName));
   await expect(settings).toBeFocused();
-  expect(await isOpen(tooltip)).toBe(true);
+  expect(await isTooltipOpen(tooltip)).toBe(true);
   await page.keyboard.press("Escape");
-  expect(await isOpen(tooltip)).toBe(false);
+  expect(await isTooltipOpen(tooltip)).toBe(false);
 });
 
 test("tooltips: the pointer can move onto a tooltip without it closing (WCAG 1.4.13)", async ({
@@ -529,13 +530,13 @@ test("tooltips: the pointer can move onto a tooltip without it closing (WCAG 1.4
   );
   await page.getByRole("button", { name: "Settings" }).hover();
   const tooltip = tooltipOf(page, "Settings");
-  await expect.poll(() => isOpen(tooltip)).toBe(true);
+  await expect.poll(() => isTooltipOpen(tooltip)).toBe(true);
   const box = (await tooltip.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
     steps: 5,
   });
   await page.waitForTimeout(300);
-  expect(await isOpen(tooltip)).toBe(true);
+  expect(await isTooltipOpen(tooltip)).toBe(true);
 });
 
 test("tooltips: never appear on touch", async ({ browser }) => {
@@ -547,7 +548,7 @@ test("tooltips: never appear on touch", async ({ browser }) => {
   );
   await page.getByRole("button", { name: "Settings" }).tap();
   await page.waitForTimeout(700);
-  expect(await isOpen(tooltipOf(page, "Settings"))).toBe(false);
+  expect(await isTooltipOpen(tooltipOf(page, "Settings"))).toBe(false);
   await context.close();
 });
 
