@@ -182,3 +182,11 @@
     padding-inline-end: calc(var(--layout-target-min) + var(--space-2));
   }
 }
+
+/* The chevron toggles a folder; padding widens its target without moving the row. */
+.ns-tree-chevron[data-toggle] {
+  box-sizing: content-box;
+  padding: var(--space-1);
+  margin: calc(var(--space-1) * -1);
+  cursor: pointer;
+}

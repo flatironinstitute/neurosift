@@ -167,8 +167,10 @@ export function Tree({
     }
     const { node } = row;
     if (onOpenFolder && node.kind === "folder") onOpenFolder(node);
-    else if (opens(node)) setOpen(node.id, !expanded.includes(node.id));
-    else onOpen?.(node);
+    // The row opens a folder and never closes it; the chevron toggles.
+    else if (opens(node)) {
+      if (!expanded.includes(node.id)) setOpen(node.id, true);
+    } else onOpen?.(node);
   };
 
   const onKeyDown = (event: KeyboardEvent, index: number) => {
@@ -292,7 +294,17 @@ export function Tree({
     return item(
       row,
       <>
-        <span className="ns-tree-chevron">
+        <span
+          className="ns-tree-chevron"
+          data-toggle={folder || undefined}
+          onClick={(event) => {
+            if (!folder) return;
+            event.stopPropagation();
+            setActive(row.id);
+            onSelect(row.id);
+            setOpen(node.id, !open);
+          }}
+        >
           {folder && <Icon name={open ? "chevron--down" : "chevron--right"} />}
         </span>
         <Icon name={open ? "folder--open" : KIND_ICONS[node.kind]} />

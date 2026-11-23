@@ -82,15 +82,22 @@ describe("Tree", () => {
     error.mockRestore();
   });
 
-  it("opens a folder from a click anywhere on its row", () => {
+  it("opens a folder from a click anywhere on its row, and only the chevron closes it", () => {
     render(<Files />);
     fireEvent.click(screen.getByText("2 files"));
-    expect(item("sub-491604967").getAttribute("aria-expanded")).toBe("true");
+    const folder = item("sub-491604967");
+    expect(folder.getAttribute("aria-expanded")).toBe("true");
     expect(item("sub-491604967_ses-01.nwb").getAttribute("aria-level")).toBe(
       "2",
     );
     fireEvent.click(screen.getByText("sub-491604967"));
+    expect(folder.getAttribute("aria-expanded")).toBe("true");
+    expect(folder.getAttribute("aria-selected")).toBe("true");
+    const chevron = folder.querySelector(".ns-tree-chevron")!;
+    fireEvent.click(chevron);
     expect(item("sub-491604967_ses-01.nwb")).toBeUndefined();
+    fireEvent.click(chevron);
+    expect(folder.getAttribute("aria-expanded")).toBe("true");
   });
 
   it("selects and opens a file from a click", () => {

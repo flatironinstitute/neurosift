@@ -110,6 +110,18 @@ describe("DatasetMainTab", () => {
     expect(screen.getByText("sub-1: 2 files · 2 KB")).toBeTruthy();
   });
 
+  it("makes an open folder current from a click without closing it", async () => {
+    const { onNavigate } = setup("sub-1/ses-1");
+    await screen.findByText("a.nwb");
+    fireEvent.click(row("sub-1").querySelector(".ns-tree-name")!);
+    expect(row("sub-1").getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByText("a.nwb")).toBeTruthy();
+    expect(onNavigate).toHaveBeenLastCalledWith(
+      "?dandisetVersion=draft&location=sub-1",
+      { replace: true },
+    );
+  });
+
   it("opens every folder down to the one in the address, keeping the rest of the list", async () => {
     const { onNavigate, onOpenFile } = setup("sub-1/ses-1");
     const nwb = await screen.findByText("a.nwb");

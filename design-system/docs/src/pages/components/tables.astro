@@ -101,7 +101,7 @@ const code = `import { DataTable, Tree } from "@ui";
 
   <DocSection title="File tree" lead="Folders and files of a Dandiset, and the groups and datasets of an HDF5 file. File names and sizes are illustrative.">
     <FileTreeDemo client:visible />
-    <p class="doc-note">Anywhere on a folder row opens or closes it; today only the ► arrow does, which the walkthrough found people missed. Clicking an NWB file opens it, and folders say how many files they hold.</p>
+    <p class="doc-note">Anywhere on a folder row opens it and makes it the current folder, and a click never closes it; the arrow opens and closes. The walkthrough found people missed the arrow when it was the only way in. Clicking an NWB file opens it, and folders say how many files they hold.</p>
   </DocSection>
 
   <DocSection title="Object tree" lead="The Main tab of a file: every object with its type, description and views. The name opens the object; the checkboxes add an object or one of its views to a combined view. Check two or more to see the selection bar.">

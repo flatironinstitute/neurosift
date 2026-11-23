@@ -274,7 +274,12 @@ const DatasetMainTab: FunctionComponent<Props> = ({
             expanded={expanded}
             onExpandedChange={onExpandedChange}
             selected={current || undefined}
-            onSelect={(id) => setSelectedFile(byPath.get(id))}
+            onSelect={(id) => {
+              const file = byPath.get(id);
+              setSelectedFile(file);
+              // A folder you click becomes the current one, open or not.
+              if (file && kindOf(file) === "folder") open(id);
+            }}
             onOpen={(node) => {
               const file = byPath.get(node.id);
               if (file) onOpenFile(file);
