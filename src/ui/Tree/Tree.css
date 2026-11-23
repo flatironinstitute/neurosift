@@ -156,6 +156,16 @@
   visibility: visible;
 }
 
+/* On the highlighted row the button sits on navy, so it takes the light text color. */
+.ns-tree-item[aria-selected="true"]
+  > .ns-tree-row
+  .ns-tree-action
+  .ns-icon-button {
+  --control-fg: var(--text-on-inverse);
+  --control-bg-hover: transparent;
+  --control-bg-pressed: transparent;
+}
+
 /* The row showing its action moves its size clear of the button. */
 .ns-tree-row:hover:has(.ns-tree-action) .ns-tree-size,
 .ns-tree-item:focus-visible > .ns-tree-row:has(.ns-tree-action) .ns-tree-size {
