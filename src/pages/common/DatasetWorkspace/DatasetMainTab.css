@@ -9,7 +9,7 @@
 
 .dataset-files-toolbar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
@@ -21,9 +21,15 @@
   color: var(--text-muted);
 }
 
+/* One line, so a long folder name in the totals can't push the list down. */
 .dataset-files-count {
+  flex: 1;
+  min-inline-size: 0;
+  overflow: hidden;
   font: var(--type-body-sm);
   color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* The folder breadcrumb with Copy link, ruled off from the list right below. */
