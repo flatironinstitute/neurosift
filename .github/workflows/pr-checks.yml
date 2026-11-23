@@ -2,7 +2,7 @@ name: Pull Request Checks
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ main, main-v3 ]
 
 jobs:
   check-format-and-build:

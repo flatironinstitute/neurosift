@@ -2,7 +2,7 @@ name: Design System
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, main-v3]
 
 permissions:
   contents: read
