@@ -52,27 +52,39 @@
   background: var(--surface-row-hover);
 }
 
-.ns-tree-item[data-level="1"] > .ns-tree-row {
+.ns-tree--pinned
+  .ns-tree-item[aria-expanded="true"][data-level="1"]
+  > .ns-tree-row {
   inset-block-start: 0;
 }
 
-.ns-tree-item[data-level="2"] > .ns-tree-row {
+.ns-tree--pinned
+  .ns-tree-item[aria-expanded="true"][data-level="2"]
+  > .ns-tree-row {
   inset-block-start: var(--layout-row-default);
 }
 
-.ns-tree-item[data-level="3"] > .ns-tree-row {
+.ns-tree--pinned
+  .ns-tree-item[aria-expanded="true"][data-level="3"]
+  > .ns-tree-row {
   inset-block-start: calc(2 * var(--layout-row-default));
 }
 
-.ns-tree-item[data-level="4"] > .ns-tree-row {
+.ns-tree--pinned
+  .ns-tree-item[aria-expanded="true"][data-level="4"]
+  > .ns-tree-row {
   inset-block-start: calc(3 * var(--layout-row-default));
 }
 
-.ns-tree-item[data-level="5"] > .ns-tree-row {
+.ns-tree--pinned
+  .ns-tree-item[aria-expanded="true"][data-level="5"]
+  > .ns-tree-row {
   inset-block-start: calc(4 * var(--layout-row-default));
 }
 
-.ns-tree-item[data-level="6"] > .ns-tree-row {
+.ns-tree--pinned
+  .ns-tree-item[aria-expanded="true"][data-level="6"]
+  > .ns-tree-row {
   inset-block-start: calc(5 * var(--layout-row-default));
 }
 
