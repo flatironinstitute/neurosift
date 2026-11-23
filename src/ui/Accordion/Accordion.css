@@ -92,3 +92,9 @@
   outline: var(--border-width-2) solid var(--border-focus);
   outline-offset: 0;
 }
+
+/* Fills a start-aligned grid, so a scrolling table inside can't shrink to nothing. */
+.ns-disclosure-content {
+  justify-self: stretch;
+  min-inline-size: 0;
+}
