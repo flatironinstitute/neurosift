@@ -9,6 +9,8 @@ export interface DatasetFile {
   size: number;
   directory: boolean;
   urls: string[];
+  /** How many files a folder holds, where the archive reports it. */
+  fileCount?: number;
 }
 
 export interface DatasetPluginProps {
