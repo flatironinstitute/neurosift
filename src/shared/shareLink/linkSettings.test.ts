@@ -101,6 +101,12 @@ describe("pageSearch", () => {
       ),
     ).toBe("dandisetVersion=draft&location=sub-1%2Fses-1");
   });
+
+  it("keeps a hidden overview, so folder links don't reopen it", () => {
+    expect(pageSearch("?location=sub-1&overview=hidden&tab=x")).toBe(
+      "location=sub-1&overview=hidden",
+    );
+  });
 });
 
 describe("linkedSettings", () => {

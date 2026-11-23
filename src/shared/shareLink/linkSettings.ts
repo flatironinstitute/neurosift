@@ -10,7 +10,7 @@ export type Setting = {
 export const changedSettings = (settings: Setting[]): Setting[] =>
   settings.filter((s) => s.value !== s.default);
 
-/** Parameters that name the page, folder and file; every other one belongs to a view. */
+/** Parameters that name the page, folder and file, and whether its overview is hidden; every other one belongs to a view. */
 export const PAGE_PARAMS = [
   "url",
   "versionId",
@@ -20,6 +20,7 @@ export const PAGE_PARAMS = [
   "location",
   "lindi",
   "embedded",
+  "overview",
 ];
 
 /** The query string with only the page parameters, without a tab or its settings. */

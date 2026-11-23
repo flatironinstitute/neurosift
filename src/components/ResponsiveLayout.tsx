@@ -1,5 +1,9 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import HorizontalSplitter from "./HorizontalSplitter";
+
+/** The link parameter that keeps the left panel folded: ?overview=hidden. */
+export const OVERVIEW_PARAM = "overview";
 
 export interface ResponsiveLayoutProps {
   width: number;
@@ -17,6 +21,18 @@ const ResponsiveLayout: FunctionComponent<ResponsiveLayoutProps> = ({
   children,
 }) => {
   const [isMobile, setIsMobile] = useState(false);
+  const { search, hash } = useLocation();
+  const navigate = useNavigate();
+  const collapsed =
+    new URLSearchParams(search).get(OVERVIEW_PARAM) === "hidden";
+  const setCollapsed = (next: boolean) => {
+    const params = new URLSearchParams(search);
+    if (next) params.set(OVERVIEW_PARAM, "hidden");
+    else params.delete(OVERVIEW_PARAM);
+    // Slashes read better unencoded and are allowed in a query.
+    const query = params.toString().replace(/%2F/gi, "/");
+    navigate({ search: query ? `?${query}` : "", hash }, { replace: true });
+  };
 
   useEffect(() => {
     setIsMobile(window.innerWidth <= mobileBreakpoint);
@@ -70,6 +86,8 @@ const ResponsiveLayout: FunctionComponent<ResponsiveLayoutProps> = ({
       width={width}
       height={height}
       initialSplitterPosition={initialSplitterPosition}
+      collapsed={collapsed}
+      onCollapsedChange={setCollapsed}
     >
       {children}
     </HorizontalSplitter>

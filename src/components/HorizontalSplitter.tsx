@@ -5,32 +5,37 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { IconButton } from "@mui/material";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import { IconButton } from "@ui";
+import "./HorizontalSplitter.css";
 
 export interface HorizontalSplitterProps {
   width: number;
   height: number;
   initialSplitterPosition: number;
   children: [React.ReactNode, React.ReactNode]; // Exactly two children required
+  /** Whether the left panel is folded to a rail; left out, the splitter keeps it itself. */
+  collapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 const SPLITTER_WIDTH = 8; // Width of the splitter handle area in pixels
+export const RAIL_WIDTH = 40;
 
 const HorizontalSplitter: FunctionComponent<HorizontalSplitterProps> = ({
   width,
   height,
   initialSplitterPosition,
   children,
+  collapsed: collapsedProp,
+  onCollapsedChange,
 }) => {
   const [splitterPosition, setSplitterPosition] = useState(
     initialSplitterPosition,
   );
   const [isDragging, setIsDragging] = useState(false);
-  const [isLeftPanelCollapsed, setIsLeftPanelCollapsed] = useState(false);
+  const [ownCollapsed, setOwnCollapsed] = useState(false);
+  const collapsed = collapsedProp ?? ownCollapsed;
   const containerRef = useRef<HTMLDivElement>(null);
-  const previousSplitterPosition = useRef(initialSplitterPosition);
 
   const handleMouseDown = useCallback(() => {
     setIsDragging(true);
@@ -70,29 +75,21 @@ const HorizontalSplitter: FunctionComponent<HorizontalSplitterProps> = ({
 
   // Ensure splitter stays within bounds if width changes
   useEffect(() => {
-    if (!isLeftPanelCollapsed) {
-      setSplitterPosition((prev) => Math.max(100, Math.min(width - 100, prev)));
-    }
-  }, [width, isLeftPanelCollapsed]);
+    setSplitterPosition((prev) => Math.max(100, Math.min(width - 100, prev)));
+  }, [width]);
 
-  const toggleLeftPanel = useCallback(() => {
-    if (isLeftPanelCollapsed) {
-      // Expand the panel to its previous position
-      setSplitterPosition(previousSplitterPosition.current);
-    } else {
-      // Save current position before collapsing
-      previousSplitterPosition.current = splitterPosition;
-      // Collapse the panel
-      setSplitterPosition(0);
-    }
-    setIsLeftPanelCollapsed(!isLeftPanelCollapsed);
-  }, [isLeftPanelCollapsed, splitterPosition]);
+  const setCollapsed = (next: boolean) => {
+    if (onCollapsedChange) onCollapsedChange(next);
+    else setOwnCollapsed(next);
+  };
 
-  const leftPanelWidth = isLeftPanelCollapsed
-    ? 0
+  const leftPanelWidth = collapsed
+    ? RAIL_WIDTH
     : splitterPosition - SPLITTER_WIDTH / 2;
-  const rightPanelWidth =
-    width - (isLeftPanelCollapsed ? 0 : splitterPosition) - SPLITTER_WIDTH / 2;
+  const rightPanelLeft = collapsed
+    ? RAIL_WIDTH
+    : splitterPosition + SPLITTER_WIDTH / 2;
+  const rightPanelWidth = width - rightPanelLeft;
 
   return (
     <div
@@ -104,6 +101,8 @@ const HorizontalSplitter: FunctionComponent<HorizontalSplitterProps> = ({
       }}
     >
       <div
+        className="horizontal-splitter-left"
+        data-collapsed={collapsed || undefined}
         style={{
           position: "absolute",
           left: 0,
@@ -111,78 +110,47 @@ const HorizontalSplitter: FunctionComponent<HorizontalSplitterProps> = ({
           width: leftPanelWidth,
           height,
           overflow: "hidden",
-          transition: isDragging ? "none" : "width 0.3s ease",
-          display: isLeftPanelCollapsed ? "none" : "block",
         }}
       >
-        {React.cloneElement(children[0] as React.ReactElement, {
-          width: leftPanelWidth,
-          height,
-        })}
+        {!collapsed &&
+          React.cloneElement(children[0] as React.ReactElement, {
+            width: leftPanelWidth,
+            height,
+          })}
+        <div className="horizontal-splitter-toggle">
+          <IconButton
+            icon={collapsed ? "side-panel--open" : "side-panel--close"}
+            label={collapsed ? "Show overview" : "Hide overview"}
+            variant="ghost"
+            size="sm"
+            tooltipPlacement="right"
+            aria-expanded={!collapsed}
+            onClick={() => setCollapsed(!collapsed)}
+          />
+        </div>
       </div>
-      <div
-        style={{
-          position: "absolute",
-          left: isLeftPanelCollapsed
-            ? 0
-            : splitterPosition - SPLITTER_WIDTH / 2,
-          top: 0,
-          width: SPLITTER_WIDTH,
-          height,
-          cursor: isLeftPanelCollapsed ? "default" : "col-resize",
-          backgroundColor: isDragging ? "#666" : "transparent",
-          zIndex: 1000,
-          transition: isDragging ? "none" : "left 0.3s ease",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-        onMouseDown={isLeftPanelCollapsed ? undefined : handleMouseDown}
-      >
+      {!collapsed && (
         <div
+          className="horizontal-splitter-handle"
+          data-dragging={isDragging || undefined}
           style={{
             position: "absolute",
-            left: SPLITTER_WIDTH / 2,
+            left: splitterPosition - SPLITTER_WIDTH / 2,
             top: 0,
-            width: 1,
-            height: "100%",
-            backgroundColor: "var(--border-subtle)",
-            display: isLeftPanelCollapsed ? "none" : "block",
+            width: SPLITTER_WIDTH,
+            height,
           }}
+          onMouseDown={handleMouseDown}
         />
-        {/* Toggle button at the top of the splitter */}
-        <IconButton
-          onClick={toggleLeftPanel}
-          size="small"
-          sx={{
-            backgroundColor: "var(--action-secondary)",
-            border: "1px solid var(--border-strong)",
-            color: "var(--text-default)",
-            boxShadow: "0 0 4px rgba(0, 0, 0, 0.2)",
-            "&:hover": { backgroundColor: "var(--action-secondary-hover)" },
-            position: "absolute",
-            top: 12,
-            left: isLeftPanelCollapsed ? 4 : -16,
-            zIndex: 1001,
-            width: 28,
-            height: 28,
-          }}
-          title={isLeftPanelCollapsed ? "Expand panel" : "Collapse panel"}
-        >
-          {isLeftPanelCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-        </IconButton>
-      </div>
+      )}
       <div
         style={{
           position: "absolute",
-          left: isLeftPanelCollapsed
-            ? SPLITTER_WIDTH
-            : splitterPosition + SPLITTER_WIDTH / 2,
+          left: rightPanelLeft,
           top: 0,
           width: rightPanelWidth,
           height,
           overflow: "hidden",
-          transition: isDragging ? "none" : "left 0.3s ease, width 0.3s ease",
         }}
       >
         {React.cloneElement(children[1] as React.ReactElement, {

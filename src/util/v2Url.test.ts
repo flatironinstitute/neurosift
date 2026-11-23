@@ -31,6 +31,7 @@ const V3_LINKS: [string, string][] = [
     "/dandiset/000673?tab=sub-1/sub-1_ses-1_ecephys%2Bimage.nwb|e5b5",
   ],
   ["/dandiset/000673?location=sub-1", "/dandiset/000673"],
+  ["/dandiset/000673?location=sub-1&overview=hidden", "/dandiset/000673"],
   ["/ember-dandiset/000207?tab=x.nwb", "/ember-dandiset/000207?tab=x.nwb"],
   [
     "/openneuro-dataset/ds000001?tab=participants.tsv",
