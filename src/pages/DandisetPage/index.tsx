@@ -1,4 +1,5 @@
 import ResponsiveLayout from "@components/ResponsiveLayout";
+import { ChatDock } from "@shared/chat/ChatDock";
 import {
   FunctionComponent,
   useCallback,
@@ -282,30 +283,38 @@ const DandisetPage: FunctionComponent<DandisetPageProps> = ({
   const initialSplitterPosition = Math.max(500, Math.min(650, (width * 2) / 5));
 
   return (
-    <ResponsiveLayout
+    <ChatDock
       width={width}
-      height={height}
-      initialSplitterPosition={initialSplitterPosition}
-      mobileBreakpoint={768}
+      dandisetId={dandisetVersionInfo.dandiset.identifier}
+      version={dandisetVersionInfo.version}
     >
-      <DandisetOverview
-        width={0}
-        height={0}
-        dandisetVersionInfo={dandisetVersionInfo}
-        availableVersions={availableVersions}
-        onVersionChange={handleVersionChange}
-      />
-      <DatasetWorkspace
-        width={0}
-        height={0}
-        topLevelFiles={topLevelFiles}
-        initialTab={initialTabId}
-        loadFileFromPath={loadFileFromPath}
-        fetchDirectory={fetchDirectory}
-        specialOpenFileHandler={specialOpenFileHandler}
-        mainTabAdditionalControls={mainTabAdditionalControls}
-      />
-    </ResponsiveLayout>
+      {(pageWidth) => (
+        <ResponsiveLayout
+          width={pageWidth}
+          height={height}
+          initialSplitterPosition={initialSplitterPosition}
+          mobileBreakpoint={768}
+        >
+          <DandisetOverview
+            width={0}
+            height={0}
+            dandisetVersionInfo={dandisetVersionInfo}
+            availableVersions={availableVersions}
+            onVersionChange={handleVersionChange}
+          />
+          <DatasetWorkspace
+            width={0}
+            height={0}
+            topLevelFiles={topLevelFiles}
+            initialTab={initialTabId}
+            loadFileFromPath={loadFileFromPath}
+            fetchDirectory={fetchDirectory}
+            specialOpenFileHandler={specialOpenFileHandler}
+            mainTabAdditionalControls={mainTabAdditionalControls}
+          />
+        </ResponsiveLayout>
+      )}
+    </ChatDock>
   );
 };
 

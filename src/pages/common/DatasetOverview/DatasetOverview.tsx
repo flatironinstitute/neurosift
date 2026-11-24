@@ -39,6 +39,8 @@ export type DatasetOverviewProps = {
   facts: DatasetFact[];
   sections: DatasetSection[];
   chatHref?: string;
+  /** Opens Chat in a panel beside the page, in place of chatHref. */
+  chat?: { open: boolean; onToggle: () => void };
 };
 
 const PREVIEW = 600;
@@ -76,6 +78,7 @@ const DatasetOverview: FunctionComponent<DatasetOverviewProps> = ({
   facts,
   sections,
   chatHref,
+  chat,
 }) => (
   <div className="dataset-overview">
     <Breadcrumbs
@@ -121,6 +124,15 @@ const DatasetOverview: FunctionComponent<DatasetOverviewProps> = ({
 
     <DescriptionList label="Facts" layout="stacked" items={facts} />
 
+    {chat && (
+      <p className="dataset-chat">
+        <Button pressed={chat.open} onClick={chat.onToggle}>
+          Ask about this dataset
+        </Button>
+        <Badge status="info">Experimental</Badge>
+      </p>
+    )}
+
     {sections.map((section) => (
       <section
         key={section.id}
@@ -153,7 +165,7 @@ const DatasetOverview: FunctionComponent<DatasetOverviewProps> = ({
       </section>
     ))}
 
-    {chatHref && (
+    {chatHref && !chat && (
       <p className="dataset-chat">
         <a href={chatHref} target="_blank" rel="noopener noreferrer">
           Ask about this dataset in Chat

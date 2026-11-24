@@ -102,6 +102,12 @@ describe("pageSearch", () => {
     ).toBe("dandisetVersion=draft&location=sub-1%2Fses-1");
   });
 
+  it("keeps an open Chat panel, so folder links don't close it", () => {
+    expect(pageSearch("?location=sub-1&chat=open&tab=x")).toBe(
+      "location=sub-1&chat=open",
+    );
+  });
+
   it("keeps a hidden overview, so folder links don't reopen it", () => {
     expect(pageSearch("?location=sub-1&overview=hidden&tab=x")).toBe(
       "location=sub-1&overview=hidden",

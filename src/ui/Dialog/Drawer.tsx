@@ -12,6 +12,12 @@ interface DrawerProps {
   side?: "left" | "right";
   /** Docked sits beside the workspace; overlay slides over it, with a backdrop. */
   mode?: "docked" | "overlay";
+  /** Beside the title, such as an Experimental badge. */
+  badge?: ReactNode;
+  /** Icon buttons before Close, such as New chat. */
+  actions?: ReactNode;
+  /** The body without padding, for content that fills it, such as an iframe. */
+  flush?: boolean;
 }
 
 /** A side panel that keeps the data in view. Overlay drawers trap focus; docked ones don't. */
@@ -22,6 +28,9 @@ export function Drawer({
   children,
   side = "left",
   mode = "overlay",
+  badge,
+  actions,
+  flush = false,
 }: DrawerProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -40,6 +49,8 @@ export function Drawer({
         >
           {title}
         </h2>
+        {badge && <span className="ns-dialog-badge">{badge}</span>}
+        {actions && <div className="ns-dialog-actions">{actions}</div>}
         <IconButton
           icon="close"
           label="Close"
@@ -48,7 +59,9 @@ export function Drawer({
           onClick={onClose}
         />
       </div>
-      <div className="ns-dialog-body">{children}</div>
+      <div className={`ns-dialog-body${flush ? " ns-dialog-body--flush" : ""}`}>
+        {children}
+      </div>
     </>
   );
 

@@ -9,6 +9,7 @@ import { Checkbox, LoadingState } from "@ui";
 import { addRecentDataset } from "../util/recentDatasets";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import ResponsiveLayout from "@components/ResponsiveLayout";
+import { ChatDock } from "@shared/chat/ChatDock";
 import KeyRefusedFrame from "./KeyRefusedFrame";
 import DatasetWorkspace from "../common/DatasetWorkspace/DatasetWorkspace";
 import { DatasetFile } from "../common/DatasetWorkspace/plugins/pluginInterface";
@@ -138,31 +139,39 @@ const LazyDandisetPage: FunctionComponent<LazyDandisetPageProps> = ({
   return (
     <KeyRefusedFrame url={keyRefusedUrl} height={height}>
       {(pageHeight) => (
-        <ResponsiveLayout
+        <ChatDock
           width={width}
-          height={pageHeight}
-          initialSplitterPosition={initialSplitterPosition}
-          mobileBreakpoint={768}
+          dandisetId={dandisetVersionInfo.dandiset.identifier}
+          version={dandisetVersionInfo.version}
         >
-          <DandisetOverview
-            width={0}
-            height={0}
-            dandisetVersionInfo={dandisetVersionInfo}
-            availableVersions={availableVersions}
-            onVersionChange={handleVersionChange}
-          />
-          <DatasetWorkspace
-            width={0}
-            height={0}
-            topLevelFiles={topLevelFiles}
-            initialTab={initialTabId}
-            loadFileFromPath={loadFileFromPath}
-            fetchDirectory={fetchDirectory}
-            fetchFolder={fetchFolder}
-            specialOpenFileHandler={specialOpenFileHandler}
-            mainTabAdditionalControls={mainTabAdditionalControls}
-          />
-        </ResponsiveLayout>
+          {(pageWidth) => (
+            <ResponsiveLayout
+              width={pageWidth}
+              height={pageHeight}
+              initialSplitterPosition={initialSplitterPosition}
+              mobileBreakpoint={768}
+            >
+              <DandisetOverview
+                width={0}
+                height={0}
+                dandisetVersionInfo={dandisetVersionInfo}
+                availableVersions={availableVersions}
+                onVersionChange={handleVersionChange}
+              />
+              <DatasetWorkspace
+                width={0}
+                height={0}
+                topLevelFiles={topLevelFiles}
+                initialTab={initialTabId}
+                loadFileFromPath={loadFileFromPath}
+                fetchDirectory={fetchDirectory}
+                fetchFolder={fetchFolder}
+                specialOpenFileHandler={specialOpenFileHandler}
+                mainTabAdditionalControls={mainTabAdditionalControls}
+              />
+            </ResponsiveLayout>
+          )}
+        </ChatDock>
       )}
     </KeyRefusedFrame>
   );

@@ -92,6 +92,7 @@ const code = `import { Dialog, Drawer, TextInput } from "@ui";
     <OverlayDrawerDemo client:visible />
     <DockedDrawerDemo client:visible />
     <p class="doc-note">On windows 1,024px and wider, the overview panel docks on the left, as today. Below that, the same panel opens over the plot from the app bar, and a click on the backdrop closes it.</p>
+    <p class="doc-note">Optional parts of the header: <code>badge</code> sits right after the title, such as Experimental; <code>actions</code> are ghost icon buttons before Close, such as New chat. <code>flush</code> drops the body’s padding for content that fills it, such as the Chat panel’s embedded chat, which docks on the right at 360px (<code>--layout-panel-wide</code>) on windows 1,280px and wider.</p>
   </DocSection>
 
   <DocSection title="Focus and keyboard" lead="Dialogs and overlay drawers trap focus and make the page behind them inert; docked drawers don’t.">

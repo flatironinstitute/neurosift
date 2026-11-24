@@ -27,7 +27,9 @@ const ARCHIVE_PAGES: Record<string, string> = {
 
 // The page parameters v2 reads; it has no folder links (location) or hidden overview.
 const V2_PAGE_PARAMS = [
-  ...PAGE_PARAMS.filter((key) => key !== "location" && key !== "overview"),
+  ...PAGE_PARAMS.filter(
+    (key) => key !== "location" && key !== "overview" && key !== "chat",
+  ),
   "tab",
 ];
 
