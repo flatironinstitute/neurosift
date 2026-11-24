@@ -1,0 +1,23 @@
+.chat-panel-frame {
+  flex: 1;
+  inline-size: 100%;
+  border: 0;
+}
+
+/* The page and the docked panel side by side. */
+.chat-dock {
+  display: flex;
+  block-size: 100%;
+}
+
+.chat-dock-page {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+/* The dock's height comes from the page beside it, so the panel stretches to it. */
+.chat-dock .ns-drawer--docked {
+  flex: none;
+  block-size: auto;
+  inline-size: var(--layout-panel-wide);
+}

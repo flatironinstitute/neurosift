@@ -21,6 +21,7 @@ export const PAGE_PARAMS = [
   "lindi",
   "embedded",
   "overview",
+  "chat",
 ];
 
 /** The query string with only the page parameters, without a tab or its settings. */

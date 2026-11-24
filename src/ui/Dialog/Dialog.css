@@ -46,6 +46,28 @@
   outline: none;
 }
 
+/* With a badge, the title only takes its own width and the badge follows it. */
+.ns-dialog-header:has(.ns-dialog-badge) .ns-dialog-title {
+  flex: 0 1 auto;
+}
+
+.ns-dialog-badge {
+  display: flex;
+  margin-inline: var(--space-2) auto;
+}
+
+.ns-dialog-actions {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.ns-dialog-body.ns-dialog-body--flush {
+  display: flex;
+  padding: 0;
+  overflow: hidden;
+}
+
 .ns-dialog-body {
   display: grid;
   flex: 1;

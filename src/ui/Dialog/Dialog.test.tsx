@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { TextInput } from "../TextInput/TextInput";
@@ -226,6 +232,36 @@ describe("Drawer", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(document.activeElement).toBe(outside);
     outside.remove();
+  });
+
+  it("puts a badge after the title and actions before Close, with a flush body", () => {
+    render(
+      <Drawer
+        open
+        onClose={vi.fn()}
+        title="Chat"
+        side="right"
+        mode="docked"
+        badge={<span>Experimental</span>}
+        actions={<button type="button">New chat</button>}
+        flush
+      >
+        <p>Frame</p>
+      </Drawer>,
+    );
+    const region = screen.getByRole("complementary", { name: "Chat" });
+    const buttons = within(region).getAllByRole("button");
+    expect(
+      buttons.map((b) => b.textContent || b.getAttribute("aria-label")),
+    ).toEqual(["New chat", "Close"]);
+    expect(region.querySelector(".ns-dialog-badge")?.textContent).toBe(
+      "Experimental",
+    );
+    expect(
+      screen
+        .getByText("Frame")
+        .parentElement?.classList.contains("ns-dialog-body--flush"),
+    ).toBe(true);
   });
 
   it("closing a dialog opened inside it leaves the drawer open", () => {
