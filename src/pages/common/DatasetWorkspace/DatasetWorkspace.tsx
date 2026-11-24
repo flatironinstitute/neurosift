@@ -185,7 +185,9 @@ const DatasetWorkspace: FunctionComponent<DatasetWorkspaceProps> = ({
                 location={location}
                 loadFolder={loadFolder}
                 hrefFor={hrefFor}
-                onNavigate={(href) => navigate({ search: href })}
+                onNavigate={(href, options) =>
+                  navigate({ search: href }, { replace: options?.replace })
+                }
                 onCopyLink={(path) =>
                   copy(
                     new URL(hrefFor(path), window.location.href).href,

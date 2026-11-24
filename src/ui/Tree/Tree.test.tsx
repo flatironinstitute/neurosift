@@ -58,6 +58,11 @@ const item = (name: string) =>
   screen
     .getAllByRole("treeitem")
     .find((t) => t.querySelector(".ns-tree-name")?.textContent === name)!;
+// An item's accessible name includes its nested items, so match on its own row.
+const ownRow = (text: string) =>
+  screen
+    .getAllByRole("treeitem")
+    .filter((t) => t.firstElementChild?.textContent?.includes(text));
 const key = (k: string) =>
   fireEvent.keyDown(document.activeElement!, { key: k });
 
@@ -77,15 +82,22 @@ describe("Tree", () => {
     error.mockRestore();
   });
 
-  it("opens a folder from a click anywhere on its row", () => {
+  it("opens a folder from a click anywhere on its row, and only the chevron closes it", () => {
     render(<Files />);
     fireEvent.click(screen.getByText("2 files"));
-    expect(item("sub-491604967").getAttribute("aria-expanded")).toBe("true");
+    const folder = item("sub-491604967");
+    expect(folder.getAttribute("aria-expanded")).toBe("true");
     expect(item("sub-491604967_ses-01.nwb").getAttribute("aria-level")).toBe(
       "2",
     );
     fireEvent.click(screen.getByText("sub-491604967"));
+    expect(folder.getAttribute("aria-expanded")).toBe("true");
+    expect(folder.getAttribute("aria-selected")).toBe("true");
+    const chevron = folder.querySelector(".ns-tree-chevron")!;
+    fireEvent.click(chevron);
     expect(item("sub-491604967_ses-01.nwb")).toBeUndefined();
+    fireEvent.click(chevron);
+    expect(folder.getAttribute("aria-expanded")).toBe("true");
   });
 
   it("selects and opens a file from a click", () => {
@@ -176,5 +188,133 @@ describe("Tree", () => {
     expect(onExpandedChange).not.toHaveBeenCalled();
     fireEvent.click(item("dandiset.yaml"));
     expect(onOpen).toHaveBeenCalledWith(NODES[2]);
+  });
+
+  it("nests an open folder's items in a group, and a click on one doesn't toggle the folder", () => {
+    render(<Files />);
+    fireEvent.click(item("sub-491604967"));
+    const group = item("sub-491604967").querySelector('[role="group"]');
+    expect(group?.contains(item("sub-491604967_ses-01.nwb"))).toBe(true);
+    fireEvent.click(screen.getByText("sub-491604967_ses-01.nwb"));
+    expect(item("sub-491604967").getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("draws guide lines and pins open folders only when asked", () => {
+    const { rerender } = render(
+      <Tree
+        label="Files"
+        nodes={NODES}
+        expanded={[]}
+        onExpandedChange={() => {}}
+        onSelect={() => {}}
+      />,
+    );
+    const tree = screen.getByRole("tree");
+    expect(tree.classList.contains("ns-tree--guides")).toBe(false);
+    expect(tree.classList.contains("ns-tree--pinned")).toBe(false);
+    rerender(
+      <Tree
+        label="Files"
+        nodes={NODES}
+        expanded={[]}
+        onExpandedChange={() => {}}
+        onSelect={() => {}}
+        guides
+        pinOpenFolders
+      />,
+    );
+    expect(tree.classList.contains("ns-tree--guides")).toBe(true);
+    expect(tree.classList.contains("ns-tree--pinned")).toBe(true);
+  });
+
+  it("shows a loading row, then an error row that retries, under an open folder", () => {
+    const onRetry = vi.fn();
+    const folder: TreeNode = { id: "f", name: "micr", kind: "folder" };
+    const { rerender } = render(
+      <Tree
+        label="Files"
+        nodes={[{ ...folder, status: "loading" }]}
+        expanded={["f"]}
+        onExpandedChange={() => {}}
+        onSelect={() => {}}
+        onRetry={onRetry}
+      />,
+    );
+    expect(screen.getByText("Loading…")).toBeTruthy();
+    rerender(
+      <Tree
+        label="Files"
+        nodes={[{ ...folder, status: "error" }]}
+        expanded={["f"]}
+        onExpandedChange={() => {}}
+        onSelect={() => {}}
+        onRetry={onRetry}
+      />,
+    );
+    const retry = ownRow("Couldn’t load this folder")[0];
+    expect(retry.getAttribute("aria-level")).toBe("2");
+    fireEvent.click(retry.firstElementChild!);
+    retry.focus();
+    key("Enter");
+    expect(onRetry).toHaveBeenCalledTimes(2);
+    expect(onRetry).toHaveBeenCalledWith(expect.objectContaining({ id: "f" }));
+  });
+
+  it("ends a partial list with a Show more row that the keys reach, in a folder and at the top", () => {
+    const onShowMore = vi.fn();
+    render(
+      <Tree
+        label="Files"
+        nodes={[{ ...NODES[0], more: { shown: 2, total: 30 } }, NODES[2]]}
+        more={{ shown: 2, total: 40 }}
+        expanded={["sub-1"]}
+        onExpandedChange={() => {}}
+        onSelect={() => {}}
+        onShowMore={onShowMore}
+      />,
+    );
+    const rows = ownRow("Show 25 more");
+    expect(rows.map((r) => r.textContent)).toEqual([
+      "Show 25 more2 of 30 shown",
+      "Show 25 more2 of 40 shown",
+    ]);
+    item("sub-491604967_ses-02.nwb").focus();
+    key("ArrowDown");
+    expect(document.activeElement).toBe(rows[0]);
+    key("Enter");
+    expect(onShowMore).toHaveBeenLastCalledWith(
+      expect.objectContaining({ id: "sub-1" }),
+    );
+    fireEvent.click(rows[1].firstElementChild!);
+    expect(onShowMore).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it("puts a row action only where asked, out of the tab order, without opening the row", () => {
+    const copy = vi.fn();
+    const onExpandedChange = vi.fn();
+    render(
+      <Tree
+        label="Files"
+        nodes={NODES}
+        expanded={[]}
+        onExpandedChange={onExpandedChange}
+        onSelect={() => {}}
+        rowAction={(node) =>
+          node.kind === "folder"
+            ? {
+                icon: "link",
+                label: `Copy link to ${node.name}`,
+                onClick: () => copy(node.id),
+              }
+            : undefined
+        }
+      />,
+    );
+    const buttons = document.querySelectorAll(".ns-tree-action button");
+    expect(buttons.length).toBe(2);
+    expect((buttons[0] as HTMLButtonElement).tabIndex).toBe(-1);
+    fireEvent.click(buttons[0]);
+    expect(copy).toHaveBeenCalledWith("sub-1");
+    expect(onExpandedChange).not.toHaveBeenCalled();
   });
 });

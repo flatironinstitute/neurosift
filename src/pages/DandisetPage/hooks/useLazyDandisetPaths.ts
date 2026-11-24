@@ -50,6 +50,7 @@ export const useLazyDandisetPaths = (
         parentId,
         size: item.aggregate_size,
         directory: isDirectory,
+        fileCount: isDirectory ? item.aggregate_files : undefined,
         urls: isDirectory
           ? []
           : [`${apiBase}/assets/${item.asset?.asset_id}/download/`],
